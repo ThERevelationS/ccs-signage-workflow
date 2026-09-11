@@ -198,7 +198,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
   const ageMs = started && Number.isFinite(started.getTime()) ? Date.now() - started.getTime() : Number.POSITIVE_INFINITY;
 
   if (state.status === 'clocking_in') {
-    const matches = requestId ? await entryEntity.filter({ user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true } }) : [];
+    const matches = requestId ? await entryEntity.filter({ user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }) : [];
     if (Array.isArray(matches) && matches.length === 1) {
       const entry = matches[0];
       const recovered = await setState(stateEntity, state, 'clocking_in', requestId, {
@@ -401,7 +401,7 @@ Deno.serve(async (req) => {
       if (lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
       const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
       const now = new Date().toISOString();
-      const nextFields = {
+      const nextFields: any = {
         clock_in: clockIn.toISOString(),
         clock_out: clockOut.toISOString(),
         lunch_minutes: lunchMinutes,
@@ -555,7 +555,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Another Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
       }
 
-      const existingActives = await entryEntity.filter({ user_email: target.email, status: 'clocked_in', archived_test_data: { $ne: true } });
+      const existingActives = await entryEntity.filter({ user_email: target.email, status: 'clocked_in', archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
       if (!Array.isArray(existingActives)) throw new Error('Active TimeEntry lookup did not return a record list.');
       if (existingActives.length > 0) {
         return Response.json({ success: false, error: `Found ${existingActives.length} existing active TimeEntry record${existingActives.length === 1 ? '' : 's'}. Reset or admin review is required before clock-in.` }, { status: 409 });
