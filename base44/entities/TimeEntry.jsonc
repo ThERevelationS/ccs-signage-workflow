@@ -13,12 +13,29 @@
     "clock_in": {
       "type": "string",
       "format": "date-time",
-      "description": "Clock in timestamp"
+      "description": "Official clock-in timestamp"
     },
     "clock_out": {
       "type": "string",
       "format": "date-time",
-      "description": "Clock out timestamp"
+      "description": "Official clock-out timestamp"
+    },
+    "clock_in_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the confirmed clock-in"
+    },
+    "clock_out_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the confirmed clock-out"
+    },
+    "clock_source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "legacy_client",
+        "admin_correction"
+      ],
+      "description": "Authority/source used for punch timestamps"
     },
     "lunch_minutes": {
       "type": "number",
@@ -54,6 +71,9 @@
             "type": "string"
           },
           "hours": {
+            "type": "number"
+          },
+          "minutes": {
             "type": "number"
           },
           "is_inhouse": {
