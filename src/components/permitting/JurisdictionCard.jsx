@@ -1,7 +1,6 @@
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, RefreshCw, Edit, MapPin, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 const DOC_TYPE_LABELS = {
