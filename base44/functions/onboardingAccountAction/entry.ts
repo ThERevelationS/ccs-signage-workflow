@@ -26,7 +26,12 @@ async function verifySignedSession(token: string, secret: string, entity: any) {
   try { payload = JSON.parse(b64urlDecode(payloadStr)); } catch { return null; }
   if (!payload?.email || (payload.exp && payload.exp < Date.now())) return null;
   const rows = await entity.filter({ email: String(payload.email).trim().toLowerCase() });
-  return Array.isArray(rows) && rows.length === 1 ? rows[0] : null;
+  if (!Array.isArray(rows) || rows.length !== 1) return null;
+  const user = rows[0];
+  const notBefore = Date.parse(String(user?.session_not_before || ''));
+  const issuedAt = Number(payload?.iat || 0);
+  if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
+  return user;
 }
 function secureToken() {
   const bytes = new Uint8Array(32);
@@ -151,6 +156,7 @@ Deno.serve(async (req) => {
         password_hash: await bcrypt.hash(password, 10),
         password_reset_token: null,
         password_reset_expires: null,
+        session_not_before: new Date().toISOString(),
       };
       if (Array.isArray(body?.face_descriptors) && body.face_descriptors.length) nextFields.face_descriptors = body.face_descriptors;
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
