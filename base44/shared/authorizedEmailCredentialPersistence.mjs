@@ -72,29 +72,39 @@ export async function replaceAuthorizedEmailCredentialFieldsIfUnchanged({
   throw new Error(`${label} changed repeatedly while saving.`);
 }
 
-export async function claimPasswordResetToken({ entity, user, resetToken, label = 'Password reset token' } = {}) {
+export async function claimPasswordResetToken({ entity, user, resetToken, resetTokenHash, label = 'Password reset token' } = {}) {
   const id = String(user?.id || '').trim();
   const token = String(resetToken || '').trim();
-  if (!id || !token || typeof entity?.get !== 'function' || typeof entity?.updateMany !== 'function') {
+  const tokenHash = String(resetTokenHash || '').trim();
+  if (!id || (!token && !tokenHash) || typeof entity?.get !== 'function' || typeof entity?.updateMany !== 'function') {
     throw new Error(`${label} could not initialize its single-use claim.`);
   }
 
   const current = await entity.get(id);
-  if (!current?.id || String(current.password_reset_token || '') !== token) {
+  const matchesHash = Boolean(tokenHash) && String(current?.password_reset_token_hash || '') === tokenHash;
+  const matchesLegacyRaw = !matchesHash && Boolean(token) && String(current?.password_reset_token || '') === token;
+  if (!current?.id || (!matchesHash && !matchesLegacyRaw)) {
     throw new Error('This password reset link has already been used or replaced.');
   }
   const version = String(current.updated_date || '').trim();
   if (!version) throw new Error(`${label} is missing its current version.`);
 
+  const claimQuery = matchesHash
+    ? { id, updated_date: version, password_reset_token_hash: tokenHash }
+    : { id, updated_date: version, password_reset_token: token };
+
   let result;
   try {
     result = await entity.updateMany(
-      { id, updated_date: version, password_reset_token: token },
-      { $set: { password_reset_token: null, password_reset_expires: null } },
+      claimQuery,
+      { $set: { password_reset_token: null, password_reset_token_hash: null, password_reset_expires: null } },
     );
   } catch (error) {
     const afterError = await entity.get(id).catch(() => null);
-    if (afterError && String(afterError.password_reset_token || '') !== token) {
+    const stillMatches = matchesHash
+      ? String(afterError?.password_reset_token_hash || '') === tokenHash
+      : String(afterError?.password_reset_token || '') === token;
+    if (afterError && !stillMatches) {
       throw new Error('The reset token claim outcome is ambiguous. Request a new reset link before retrying.');
     }
     throw error;
@@ -105,7 +115,7 @@ export async function claimPasswordResetToken({ entity, user, resetToken, label 
     throw new Error('This password reset link has already been used or changed.');
   }
   const claimed = await entity.get(id);
-  if (!claimed?.id || claimed.password_reset_token) {
+  if (!claimed?.id || claimed.password_reset_token || claimed.password_reset_token_hash) {
     throw new Error(`${label} was claimed but the single-use state could not be verified.`);
   }
   return claimed;
