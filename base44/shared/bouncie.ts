@@ -301,6 +301,37 @@ export function buildEventKey(event, payload, timestamp) {
   return parts.join("|").slice(0, 480);
 }
 
+export function milSemanticState(input) {
+  const raw = input?.raw_data || input || {};
+  const mil = raw?.mil || raw || {};
+  const rawState = mil?.milOn !== undefined ? mil.milOn : mil?.value;
+  const stateText = String(rawState ?? '').trim().toLowerCase();
+  const known = rawState === true || rawState === false || ['on','off','true','false','1','0'].includes(stateText);
+  const on = rawState === true || ['on','true','1'].includes(stateText);
+  const codes = [];
+  const dtcs = mil?.qualifiedDtcList || mil?.dtcList || [];
+  if (Array.isArray(dtcs)) {
+    for (const dtc of dtcs) {
+      const code = String(dtc?.code || dtc || '').trim().toUpperCase();
+      if (code) codes.push(code);
+    }
+  }
+  const rawCodes = String(mil?.codes || '').trim();
+  if (rawCodes) {
+    for (const code of rawCodes.split(/[,;\s]+/)) {
+      const normalized = String(code || '').trim().toUpperCase();
+      if (normalized) codes.push(normalized);
+    }
+  }
+  const uniqueCodes = [...new Set(codes)].sort();
+  return {
+    known,
+    on,
+    codes: uniqueCodes,
+    signature: known ? `${on ? 'on' : 'off'}|${uniqueCodes.join(',')}` : '',
+  };
+}
+
 export function normalizeWebhookEvent(event) {
   const eventType = event?.eventType;
   const { list, first, last } = extractPayload(event);
@@ -313,13 +344,14 @@ export function normalizeWebhookEvent(event) {
   let severity = "info";
 
   if (eventType === "mil") {
-    const on = payload.milOn === true || payload.value === "on" || payload.value === true;
-    title = on ? "Check engine light is on" : "Check engine light cleared";
+    const state = milSemanticState(payload);
+    const on = state.known ? state.on : null;
+    title = on === true ? "Check engine light is on" : on === false ? "Check engine light cleared" : "Check engine light status updated";
     const dtcs = payload.qualifiedDtcList || payload.dtcList || [];
     description = Array.isArray(dtcs) && dtcs.length
       ? dtcs.map((d) => `${d.code || ""} ${(Array.isArray(d.name) ? d.name.join(", ") : d.name) || ""}`.trim()).join(" · ")
-      : payload.codes || (on ? "Malfunction indicator lamp is on" : "Malfunction indicator lamp is off");
-    severity = on ? "warning" : "info";
+      : payload.codes || (on === true ? "Malfunction indicator lamp is on" : on === false ? "Malfunction indicator lamp is off" : "Malfunction indicator lamp status changed");
+    severity = on === true ? "warning" : "info";
   } else if (eventType === "battery") {
     const status = payload.status || payload.value || "unknown";
     title = `Battery level is ${status}`;
