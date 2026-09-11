@@ -7,6 +7,7 @@ import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot, updateWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { reorderWorkOrdersFromLoadedSnapshot } from "@/components/workflow/workOrderPriorityPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -18,6 +19,7 @@ export default function Estimating() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [riderConfig, setRiderConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReordering, setIsReordering] = useState(false);
 
   useEffect(() => {
     document.title = "Estimating - Workflow Manager";
@@ -62,7 +64,7 @@ export default function Estimating() {
     return ["Complete Estimate for Review", "Estimate - To Be Reviewed"];
   };
 
-  const loadWorkOrders = async () => {
+  const fetchWorkOrders = async () => {
     const orders = await loadAllEntityRows({
       entity: WorkOrder,
       query: {
@@ -74,18 +76,48 @@ export default function Estimating() {
       label: "Estimating Work Orders",
     });
     const taskDescriptions = getEstimatingTaskDescriptions();
-    // Filter to only show jobs with task descriptions assigned to Estimating page
-    const filtered = orders.filter(wo => 
-      wo.current_task_description && taskDescriptions.some(desc => 
-        wo.current_task_description.includes(desc)
+    // Filter to only show jobs with task descriptions assigned to Estimating page.
+    return orders
+      .filter(wo =>
+        wo.current_task_description && taskDescriptions.some(desc =>
+          wo.current_task_description.includes(desc)
+        )
       )
-    );
-    setWorkOrders(filtered.sort((a, b) => (a.priority || 0) - (b.priority || 0)));
-    setIsLoading(false);
+      .sort((a, b) => (a.priority || 0) - (b.priority || 0));
   };
 
-  const handleReorder = (reordered) => {
-    setWorkOrders(reordered);
+  const loadWorkOrders = async () => {
+    try {
+      setWorkOrders(await fetchWorkOrders());
+    } catch (error) {
+      console.error("Error loading Estimating Work Orders:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReorder = async (reorderedItems) => {
+    if (!isRegistered || isReordering) return;
+
+    const loadedItems = workOrders;
+    setWorkOrders(reorderedItems);
+    setIsReordering(true);
+    try {
+      const result = await reorderWorkOrdersFromLoadedSnapshot({
+        entity: WorkOrder,
+        loadedItems,
+        reorderedItems,
+        readCurrentItems: fetchWorkOrders,
+        label: "Estimating priority reorder",
+      });
+      setWorkOrders(result.items);
+    } catch (error) {
+      console.error("Error reordering Estimating Work Orders:", error);
+      alert(error?.message || "The Estimating priority order changed in another session. Reload and try the reorder again.");
+      await loadWorkOrders();
+    } finally {
+      setIsReordering(false);
+    }
   };
 
   const handleSave = async (workOrderData) => {
@@ -247,6 +279,7 @@ export default function Estimating() {
           <DragDropList
             workOrders={workOrders}
             onReorder={handleReorder}
+            reorderDisabled={isReordering}
             onMove={handleMove}
             onEdit={handleEdit}
             onSplit={handleSplit}
