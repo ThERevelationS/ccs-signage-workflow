@@ -118,7 +118,7 @@ export default function FleetTracking() {
         }))
       );
       const all = results.flatMap(r => r?.data?.data || []);
-      all.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+      all.sort((a, b) => (Date.parse(b?.startTime || "") || 0) - (Date.parse(a?.startTime || "") || 0));
       setTrips(all);
     } catch {
       setTrips([]);
