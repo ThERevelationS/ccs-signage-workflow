@@ -31,8 +31,13 @@ async function verifyTokenIsAdmin(token, secret, base44) {
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
   if (expectedSig !== providedSig) return null;
-  const payload = JSON.parse(b64urlDecode(payloadStr));
-  if (payload.exp && payload.exp < Date.now()) return null;
+  let payload;
+  try {
+    payload = JSON.parse(b64urlDecode(payloadStr));
+  } catch {
+    return null;
+  }
+  if (!payload?.email || (payload.exp && payload.exp < Date.now())) return null;
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: payload.email });
   if (!Array.isArray(users) || users.length !== 1) return null;
   const user = users[0];
@@ -48,8 +53,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { username, new_password, user_email, reset_token, session_token } = body || {};
 
-    if (!new_password || new_password.length < 4) {
-      return Response.json({ success: false, error: 'Password must be at least 4 characters' }, { status: 400 });
+    if (!new_password || new_password.length < 8) {
+      return Response.json({ success: false, error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
     const base44 = createClientFromRequest(req);
