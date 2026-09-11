@@ -55,10 +55,13 @@ Deno.serve(async (req) => {
     // Fetch fresh user data as service role
     const base44 = createClientFromRequest(req);
     const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: payload.email });
-    const user = users?.[0];
-    if (!user) {
-      return Response.json({ valid: false, error: 'User no longer exists' }, { status: 404 });
+    if (!Array.isArray(users) || users.length !== 1) {
+      return Response.json({
+        valid: false,
+        error: Array.isArray(users) && users.length === 0 ? 'User no longer exists' : 'User identity could not be verified uniquely'
+      }, { status: Array.isArray(users) && users.length === 0 ? 404 : 409 });
     }
+    const user = users[0];
 
     return Response.json({
       valid: true,
@@ -66,7 +69,7 @@ Deno.serve(async (req) => {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
-        username: payload.username,
+        username: user.username || payload.username,
         role: user.role,
         sales_roles: user.sales_roles,
         can_import_export: user.can_import_export,
