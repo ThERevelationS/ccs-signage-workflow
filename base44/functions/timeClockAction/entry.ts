@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
         const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
-        if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email) {
+        if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
         return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target) });
@@ -585,7 +585,7 @@ Deno.serve(async (req) => {
     if (action === 'clock_in') {
       if (state.status === 'clocked_in') {
         const entry = state.active_entry_id ? await entryEntity.get(state.active_entry_id).catch(() => null) : null;
-        if (entry?.id && entry.status === 'clocked_in' && asEmail(entry.user_email) === target.email) {
+        if (entry?.id && entry.status === 'clocked_in' && asEmail(entry.user_email) === target.email && !entry.archived_test_data && !entry.archived_admin) {
           return Response.json({ success: true, status: 'already_clocked_in', entry, reused: true, user: publicEmployee(target) });
         }
         return Response.json({ success: false, error: 'Clock state says this employee is already clocked in, but the active entry is invalid. Admin review is required.' }, { status: 409 });
@@ -657,7 +657,7 @@ Deno.serve(async (req) => {
       }
 
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
-      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email) {
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
       }
 
