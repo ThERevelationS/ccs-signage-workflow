@@ -193,22 +193,23 @@ Deno.serve(async (req) => {
     }
 
     if (!saved?.id || String(saved.token_hash || '') !== tokenHash || Number(saved.badge_version) !== badgeVersion) {
+      if (auditIntent?.id) await auditEntity.updateMany({ id: auditIntent.id }, { $set: { outcome: 'blocked' } });
       return Response.json({ success: false, error: 'Badge issuance could not be verified.' }, { status: 500 });
     }
 
     if (changed) {
-      const authenticationMethod = actorEmail === targetEmail ? 'session' : 'admin_kiosk';
-      await auditEntity.create({
-        action: existing ? 'badge_rotate' : 'badge_issue',
+      if (!auditIntent?.id) throw new Error('Badge changed without a durable audit intent.');
+      const auditResult = await auditEntity.updateMany({ id: auditIntent.id }, { $set: {
         outcome: 'confirmed',
-        user_email: targetEmail,
-        user_name: target.full_name || targetEmail,
-        actor_email: actorEmail,
-        actor_role: actor.role,
-        authentication_method: authenticationMethod,
-        server_timestamp: now,
-        details: { badge_version: badgeVersion },
-      }).catch((error: any) => console.error('Time Clock badge audit write failed:', error?.message || error));
+        server_timestamp: new Date().toISOString(),
+        details: {
+          previous_badge_version: existing ? (Number(existing.badge_version) || null) : (highestHistoricalVersion || null),
+          badge_version: badgeVersion,
+        },
+      } });
+      if (!auditResult || auditResult.updated !== 1) {
+        throw new Error('Badge changed but audit finalization could not be verified.');
+      }
     }
 
     return Response.json({
@@ -216,7 +217,7 @@ Deno.serve(async (req) => {
       badge_code: `TIMECLOCK2:${b64urlEncode(targetEmail)}:${badgeVersion}:${rawToken}`,
       badge_version: badgeVersion,
       issued_at: issuedAt,
-      rotated: Boolean(existing && rotate),
+      rotated: Boolean(rotate && existingRows.length > 0),
       reused: Boolean(existing && !changed),
     });
   } catch (error) {
