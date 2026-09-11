@@ -89,6 +89,16 @@
     "notes": {
       "type": "string",
       "description": "Additional notes"
+    },
+    "archived_test_data": {
+      "type": "boolean",
+      "default": false,
+      "description": "Pre-production Time Clock test record excluded from live timekeeping"
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When pre-production test data was reset/archived"
     }
   },
   "required": [
