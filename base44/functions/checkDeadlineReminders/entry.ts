@@ -131,8 +131,8 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('Error checking deadlines:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('checkDeadlineReminders error:', error?.message || error);
+    return Response.json({ error: 'Deadline reminders could not be checked safely' }, { status: 500 });
   }
 });
 
