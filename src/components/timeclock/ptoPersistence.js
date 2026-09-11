@@ -43,6 +43,7 @@ export async function createPendingTimeOffRequestIfAbsent({
     start_date: data.start_date,
     end_date: data.end_date,
     status: "pending",
+    archived_test_data: { $ne: true },
   };
   const desired = { ...data, user_email: userEmail, status: "pending" };
   const compareFields = ["user_email", "request_type", "start_date", "end_date", "hours_requested", "reason", "status"];
