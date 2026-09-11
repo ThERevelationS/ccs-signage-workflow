@@ -16,7 +16,14 @@
     },
     "password_hash": {
       "type": "string",
-      "description": "Hashed password for time clock login"
+      "description": "Hashed password for time clock login",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "password_reset_token": {
       "type": "string",
