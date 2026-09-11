@@ -39,6 +39,9 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               <Badge variant="outline" className="text-xs">{jurisdiction.state}</Badge>
               <Badge className="text-xs bg-gray-100 text-gray-600 capitalize">{jurisdiction.type}</Badge>
             </div>
+            {jurisdiction.type !== "county" && jurisdiction.parent_county?.name && (
+              <div className="mt-1 text-[11px] text-gray-500">Parent County: {jurisdiction.parent_county.name}</div>
+            )}
             {jurisdiction.permitting_url && (
               <a
                 href={jurisdiction.permitting_url}
