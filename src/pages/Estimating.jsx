@@ -60,7 +60,7 @@ export default function Estimating() {
           .filter(item => item.page === "Estimating")
           .map(item => item.text || item);
       }
-    } catch (e) {}
+    } catch {}
     return ["Complete Estimate for Review", "Estimate - To Be Reviewed"];
   };
 
@@ -231,14 +231,6 @@ export default function Estimating() {
       alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
     }
     loadWorkOrders();
-  };
-
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
   };
 
   const handleDoubleClick = (e) => {
