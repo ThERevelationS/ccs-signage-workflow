@@ -246,7 +246,9 @@ export default function FleetMaintenance() {
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "equipment" ? (
+        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "workspace" ? (
+          selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button onClick={showEquipmentView} className="mt-2 text-sm underline">Back to Maintenance</button></div>
+        ) : view === "equipment" ? (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Maintenance by Equipment</h2><p className="text-xs text-gray-500 dark:text-slate-400">Assets needing attention are shown first. Equipment with no schedule is kept visible so gaps are easy to spot.</p></div>
