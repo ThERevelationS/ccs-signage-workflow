@@ -34,6 +34,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   const [recognitionStatus, setRecognitionStatus] = useState("");
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
+  const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
   
   // Refs
@@ -79,6 +80,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     setRecognitionStatus("Starting camera...");
     setShowManualEntry(false);
     setUsernameInput("");
+    setManualPassword("");
     setUsernameError("");
 
     try {
@@ -243,6 +245,7 @@ export default function QuickClockSection({ allUsers, currentTime }) {
     setRecognitionStatus("");
     setShowManualEntry(false);
     setUsernameInput("");
+    setManualPassword("");
     setUsernameError("");
   };
 
@@ -301,17 +304,32 @@ export default function QuickClockSection({ allUsers, currentTime }) {
   };
 
   const handleManualSubmit = async () => {
-    const trimmed = usernameInput.trim().toLowerCase();
-    if (!trimmed) {
-      setUsernameError("Please enter a username");
+    const trimmed = usernameInput.trim();
+    if (!trimmed || !manualPassword) {
+      setUsernameError("Enter your username and password");
       return;
     }
-    
-    const user = allUsers.find(u => u.username?.toLowerCase() === trimmed);
-    if (user) {
-      handleUserRecognized(user);
-    } else {
-      setUsernameError("Username not found");
+
+    setIsLoading(true);
+    setUsernameError("");
+    try {
+      const response = await base44.functions.invoke("verifyLogin", {
+        username: trimmed,
+        password: manualPassword,
+      });
+      const data = response?.data || response;
+      if (!data?.success || !data?.user) {
+        setUsernameError(data?.error || "Invalid username or password");
+        return;
+      }
+
+      setManualPassword("");
+      await handleUserRecognized(data.user);
+    } catch (err) {
+      console.error("Manual Quick Clock login error:", err);
+      setUsernameError(err?.response?.data?.error || err?.message || "Invalid username or password");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -456,25 +474,38 @@ export default function QuickClockSection({ allUsers, currentTime }) {
               </Button>
             ) : (
               <div className="w-full max-w-xs space-y-3">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      value={usernameInput}
-                      onChange={(e) => {
-                        setUsernameInput(e.target.value);
-                        setUsernameError("");
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
-                      placeholder="Enter username..."
-                      className="pl-10"
-                      autoFocus
-                    />
-                  </div>
-                  <Button onClick={handleManualSubmit} className="bg-purple-600 hover:bg-purple-700">
-                    Go
-                  </Button>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    value={usernameInput}
+                    onChange={(e) => {
+                      setUsernameInput(e.target.value);
+                      setUsernameError("");
+                    }}
+                    placeholder="Username"
+                    className="pl-10"
+                    autoComplete="username"
+                    autoFocus
+                  />
                 </div>
+                <Input
+                  type="password"
+                  value={manualPassword}
+                  onChange={(e) => {
+                    setManualPassword(e.target.value);
+                    setUsernameError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
+                  placeholder="Password"
+                  autoComplete="current-password"
+                />
+                <Button
+                  onClick={handleManualSubmit}
+                  disabled={isLoading}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                </Button>
                 {usernameError && (
                   <p className="text-red-500 text-sm text-center">{usernameError}</p>
                 )}
