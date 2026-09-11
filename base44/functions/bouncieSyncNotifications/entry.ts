@@ -194,10 +194,13 @@ export default async function(req) {
     const pending = [];
     let created = 0;
 
-    // BouncieVehicleLiveState is a derived cache, not trip/history data. Repair any
-    // duplicate VIN rows here as a second safety net in addition to webhook-time
-    // coalescing. A cleanup failure never blocks Bouncie alert evaluation.
+    // BouncieVehicleLiveState is a derived cache, not trip/history data. Reconcile
+    // each VIN here as a second safety net in addition to webhook-time coalescing.
+    // This collapses duplicate cache rows and normalizes impossible ended-but-active
+    // state without ever touching trip or notification history. Cleanup failures never
+    // block Bouncie alert evaluation.
     let liveStateDuplicatesCollapsed = 0;
+    let liveStateVinsChecked = 0;
     const liveStateCleanupErrors = [];
     try {
       const liveRows = await loadAllEntityRows({ entity: LiveState, sort: '-last_seen_at', label: 'Bouncie live-state cache repair scan' });
@@ -210,10 +213,10 @@ export default async function(req) {
         byVin.set(vin, rows);
       }
       for (const [vin, rows] of byVin) {
-        if (rows.length < 2) continue;
         try {
           await coalesceLiveStateRows(LiveState, vin);
-          liveStateDuplicatesCollapsed += rows.length - 1;
+          liveStateVinsChecked += 1;
+          if (rows.length > 1) liveStateDuplicatesCollapsed += rows.length - 1;
         } catch (error) {
           liveStateCleanupErrors.push({ vin, error: error?.message || String(error) });
         }
@@ -302,10 +305,11 @@ export default async function(req) {
       vehicles: vehicles.length,
       created,
       configured_rules: settings.filter((row) => row?.enabled === true).length,
+      live_state_vins_checked: liveStateVinsChecked,
       live_state_duplicates_collapsed: liveStateDuplicatesCollapsed,
       live_state_cleanup_errors: liveStateCleanupErrors,
     });
-    return Response.json({ synced: true, vehicles: vehicles.length, created, live_state_duplicates_collapsed: liveStateDuplicatesCollapsed, live_state_cleanup_errors: liveStateCleanupErrors });
+    return Response.json({ synced: true, vehicles: vehicles.length, created, live_state_vins_checked: liveStateVinsChecked, live_state_duplicates_collapsed: liveStateDuplicatesCollapsed, live_state_cleanup_errors: liveStateCleanupErrors });
   } catch (error) {
     const base44 = createClientFromRequest(req);
     await maybeLogSync(base44, 'error', 'Fleet Bouncie alert sync failed.', {
