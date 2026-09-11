@@ -1,9 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 
 const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
-// Keep the legacy cross-app credential server-side until it can be rotated into
-// Base44 environment secrets. Never expose this value to browser code.
-const PERMITTING_API_KEY = '570bd85bbd4248b396864e2c628a6028';
+// Prefer the function secret when configured. The legacy fallback remains
+// server-only so the existing permitting integration keeps working until the
+// credential is rotated; browser code never receives either value.
+const PERMITTING_API_KEY = Deno.env.get('PERMITTING_API_KEY') || '570bd85bbd4248b396864e2c628a6028';
+
+const CREATE_FIELDS = [
+  'jurisdiction_name',
+  'state',
+  'city',
+  'county',
+  'ccs_jurisdiction_id',
+  'status',
+  'requested_by',
+];
+
+function researchCreatePayload(payload: Record<string, unknown>) {
+  const clean: Record<string, unknown> = {};
+  for (const field of CREATE_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(payload, field)) clean[field] = payload[field];
+  }
+  clean.status = 'pending';
+  if (!String(clean.jurisdiction_name || '').trim() || !String(clean.ccs_jurisdiction_id || '').trim()) {
+    throw new Error('ResearchRequest requires jurisdiction_name and ccs_jurisdiction_id');
+  }
+  return clean;
+}
 
 Deno.serve(async (req) => {
   try {
@@ -35,13 +58,22 @@ Deno.serve(async (req) => {
       url += `/${encodeURIComponent(id)}`;
     }
 
+    let createPayload = null;
+    if (action === 'create') {
+      try {
+        createPayload = researchCreatePayload(payload);
+      } catch (validationError) {
+        return Response.json({ error: validationError?.message || 'Invalid ResearchRequest payload' }, { status: 400 });
+      }
+    }
+
     const response = await fetch(url, {
       method: action === 'poll' ? 'GET' : 'POST',
       headers: {
         'Content-Type': 'application/json',
         'api_key': PERMITTING_API_KEY,
       },
-      ...(action === 'create' ? { body: JSON.stringify(payload) } : {}),
+      ...(action === 'create' ? { body: JSON.stringify(createPayload) } : {}),
     });
 
     if (!response.ok) {
