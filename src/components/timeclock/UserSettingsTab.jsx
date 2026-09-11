@@ -12,8 +12,9 @@ import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import { useAuth } from "@/components/auth/EmailGate";
 
-export default function UserSettingsTab({ currentUser, onUserUpdated }) {
-  const { sessionToken } = useAuth();
+export default function UserSettingsTab({ currentUser, sessionToken: sessionTokenOverride = "", onUserUpdated }) {
+  const { sessionToken: shellSessionToken } = useAuth();
+  const sessionToken = sessionTokenOverride || shellSessionToken;
   const [sendingReset, setSendingReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
@@ -87,7 +88,7 @@ export default function UserSettingsTab({ currentUser, onUserUpdated }) {
         <p className="text-sm text-gray-600 mb-4">
           Use your QR code for quick clock in/out. Download it to print or save on your phone.
         </p>
-        <UserQRCode user={currentUser} />
+        <UserQRCode user={currentUser} sessionToken={sessionToken} />
       </div>
 
       {/* Face Recognition Section */}
