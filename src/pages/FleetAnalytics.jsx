@@ -34,7 +34,7 @@ function recordedLineCost(rows) {
 
 function recordedServiceCost(workOrder) {
   const explicit = finiteOrNull(workOrder?.total_cost);
-  if (explicit !== null && explicit !== 0) return explicit;
+  if (explicit !== null) return explicit;
   return recordedLineCost(workOrder?.parts_used) + recordedLineCost(workOrder?.fluids_used);
 }
 
@@ -51,6 +51,7 @@ function isOverdueTask(task, today) {
 }
 
 export default function FleetAnalytics() {
+  const [user, setUser] = useState(null);
   const [equipment, setEquipment] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -62,6 +63,9 @@ export default function FleetAnalytics() {
     setLoading(true);
     setError("");
     try {
+      const currentUser = await base44.auth.me().catch(() => null);
+      setUser(currentUser);
+      if (currentUser?.role !== "admin") return;
       const [equipmentRows, workOrderRows, taskRows] = await Promise.all([
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment analytics" }),
         listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet maintenance work-order analytics" }),
@@ -173,6 +177,7 @@ export default function FleetAnalytics() {
   }, [equipment, workOrders, tasks, selectedYear]);
 
   if (loading) return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav /><div className="py-24 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div></div>;
+  if (user?.role !== "admin") return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav /><div className="max-w-3xl mx-auto p-6"><div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"><div className="font-semibold">Admin access required</div><p className="text-sm mt-1">Fleet cost and maintenance analytics are restricted to CCS administrators.</p></div></div></div>;
 
   const maxMonthCost = Math.max(...analytics.monthly.map(row => row.cost), 1);
   const rankedCost = analytics.byEquipment.slice().sort((a, b) => b.serviceCost - a.serviceCost);
