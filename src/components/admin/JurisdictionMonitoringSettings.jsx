@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, RefreshCw, Loader2, Plus, X, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function JurisdictionMonitoringSettings() {
+  const { sessionToken } = useAuth();
   const [automations, setAutomations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -100,7 +102,7 @@ export default function JurisdictionMonitoringSettings() {
 
   const handleRunNow = async () => {
     try {
-      const res = await base44.functions.invoke('monitorJurisdictionChanges', {});
+      const res = await base44.functions.invoke('monitorJurisdictionChanges', { session_token: sessionToken });
       if (res.data) {
         setLastRunInfo({
           ran_at: new Date(),
