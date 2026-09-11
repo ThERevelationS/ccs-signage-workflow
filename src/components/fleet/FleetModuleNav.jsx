@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard,
   Search,
+  Bell,
   Navigation,
   Truck,
   CalendarClock,
@@ -20,6 +21,7 @@ import {
 const items = [
   { title: "Overview", page: "FleetOverview", icon: LayoutDashboard },
   { title: "Search", page: "FleetSearch", icon: Search },
+  { title: "Notifications", page: "FleetNotifications", icon: Bell },
   { title: "Tracking", page: "FleetTracking", icon: Navigation },
   { title: "Equipment", page: "FleetEquipment", icon: Truck, activePages: ["FleetEquipment", "FleetEquipmentDetail"] },
   { title: "Maintenance", page: "FleetMaintenance", icon: CalendarClock },
