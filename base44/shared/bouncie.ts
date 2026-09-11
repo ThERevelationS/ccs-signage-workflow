@@ -423,9 +423,18 @@ function mergeLiveStateRows(rows) {
   });
   const latest = ordered[0] || {};
   const firstPresent = (field) => ordered.find((row) => row?.[field] !== undefined && row?.[field] !== null && row?.[field] !== "")?.[field];
-  const active = typeof latest?.is_trip_active === "boolean"
-    ? latest.is_trip_active
-    : ordered.find((row) => typeof row?.is_trip_active === "boolean")?.is_trip_active ?? false;
+  const latestEndedAt = timeValue(latest?.ended_at);
+  const latestStartedAt = timeValue(latest?.started_at);
+  const latestEventAt = timeValue(latest?.last_event_at);
+  const hasDefinitiveEnd = !!latest?.ended_at
+    && !String(latest?.transaction_id || "").trim()
+    && (!latestStartedAt || latestEndedAt >= latestStartedAt)
+    && (!latestEventAt || latestEndedAt >= latestEventAt);
+  const active = hasDefinitiveEnd
+    ? false
+    : typeof latest?.is_trip_active === "boolean"
+      ? latest.is_trip_active
+      : ordered.find((row) => typeof row?.is_trip_active === "boolean")?.is_trip_active ?? false;
   const merged = {
     vehicle_vin: firstPresent("vehicle_vin") || "",
     vehicle_imei: firstPresent("vehicle_imei") || "",
@@ -449,7 +458,13 @@ function mergeLiveStateRows(rows) {
 export async function coalesceLiveStateRows(LiveState, vin) {
   const rows = await LiveState.filter({ vehicle_vin: vin });
   if (!rows?.length) return null;
-  if (rows.length === 1) return rows[0];
+  if (rows.length === 1) {
+    const current = rows[0];
+    const normalized = mergeLiveStateRows(rows);
+    const needsEndNormalization = current?.is_trip_active === true && normalized?.is_trip_active === false;
+    if (!needsEndNormalization) return current;
+    return await LiveState.update(current.id, normalized) || { ...current, ...normalized };
+  }
 
   // Bouncie live state is a derived cache, not trip history. Keep one deterministic
   // row per VIN while merging the newest state and bounded path from duplicate cache rows.
@@ -498,7 +513,13 @@ export async function applyLiveState(base44, event, normalized) {
 
   const incomingAt = timeValue(timestamp);
   const currentAt = timeValue(current?.last_event_at);
-  const incomingIsCurrent = !currentAt || !incomingAt || incomingAt >= currentAt;
+  const endedAt = timeValue(current?.ended_at);
+  const delayedTelemetryAfterEnd = eventType === "tripData"
+    && current?.is_trip_active === false
+    && endedAt > 0
+    && incomingAt > 0
+    && incomingAt <= endedAt;
+  const incomingIsCurrent = (!currentAt || !incomingAt || incomingAt >= currentAt) && !delayedTelemetryAfterEnd;
   const patch = { last_seen_at: new Date().toISOString() };
 
   if (incomingIsCurrent) {
