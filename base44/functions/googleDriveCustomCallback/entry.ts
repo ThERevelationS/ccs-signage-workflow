@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { verifyOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -6,11 +7,12 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
-    const state = url.searchParams.get('state'); // user email
+    const state = url.searchParams.get('state');
     
     if (!code || !state) {
       return new Response('Missing code or state', { status: 400 });
     }
+    const identity = await verifyOAuthState(state, 'google_drive_custom');
 
     const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
@@ -37,16 +39,15 @@ Deno.serve(async (req) => {
 
     const tokens = await tokenResponse.json();
     
-    // Store access token in user record
-    const users = await base44.asServiceRole.entities.User.list();
-    const user = users.find(u => u.email === state);
-    
-    if (user) {
-      await base44.asServiceRole.entities.User.update(user.id, {
-        google_drive_token: tokens.access_token,
-        google_drive_refresh_token: tokens.refresh_token
-      });
+    // Bind the OAuth result only to the exact user who initiated the flow.
+    const users = await base44.asServiceRole.entities.User.filter({ email: identity.email });
+    if (!Array.isArray(users) || users.length !== 1 || String(users[0]?.id || '') !== identity.userId) {
+      return new Response('OAuth user identity could not be verified', { status: users?.length > 1 ? 409 : 401 });
     }
+    await base44.asServiceRole.entities.User.update(users[0].id, {
+      google_drive_token: tokens.access_token,
+      google_drive_refresh_token: tokens.refresh_token
+    });
 
     // Redirect back to app
     return new Response(
@@ -55,7 +56,9 @@ Deno.serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Callback error:', error);
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    console.error('googleDriveCustomCallback error:', error?.message || error);
+    return new Response(safeStatus === 500 ? 'OAuth connection failed safely' : error.message, { status: safeStatus });
   }
 });
