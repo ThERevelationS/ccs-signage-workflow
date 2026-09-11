@@ -25,7 +25,7 @@ export default function VehiclePanel({
   const stats = vehicle?.stats || {};
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
-  const linkConflict = ["vin_conflict", "imei_conflict"].includes(fleetLinkBasis);
+  const linkConflict = ["vin_conflict", "imei_conflict", "imei_vin_conflict"].includes(fleetLinkBasis);
   const equipmentDetailUrl = fleetEquipment ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetEquipment");
   const newWorkOrderUrl = fleetEquipment ? `${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetWorkOrders");
 
@@ -66,7 +66,7 @@ export default function VehiclePanel({
         </> : <>
           <div className={`text-[10px] uppercase tracking-wide font-semibold ${linkConflict ? "text-red-600" : "text-amber-600"}`}>CCS Fleet Maintenance</div>
           <div className="text-sm font-semibold text-gray-900 dark:text-slate-100 mt-0.5">{linkConflict ? "Fleet identity conflict" : "No proven FleetEquipment link"}</div>
-          <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">{linkConflict ? "Multiple Fleet equipment records match this Bouncie identity. Maintenance stays intentionally unlinked until an admin resolves the duplicate identity." : "Tracking remains available. Maintenance links only by one exact Fleet VIN match or one previously proven Fleet IMEI match."}</div>
+          <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">{fleetLinkBasis === "imei_vin_conflict" ? "This Bouncie device IMEI matches a Fleet record, but the current Bouncie VIN conflicts with that Fleet VIN. Maintenance stays intentionally unlinked until an admin confirms the device/vehicle identity." : linkConflict ? "Multiple Fleet equipment records match this Bouncie identity. Maintenance stays intentionally unlinked until an admin resolves the duplicate identity." : "Tracking remains available. Maintenance links by one exact Fleet VIN match, or by a previously proven Fleet IMEI only when it does not contradict VIN evidence."}</div>
           <Link to={equipmentDetailUrl} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">Review Fleet equipment <ArrowRight className="w-3.5 h-3.5" /></Link>
         </>}
       </div>
