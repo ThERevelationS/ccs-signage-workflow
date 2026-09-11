@@ -403,119 +403,97 @@ export default function FleetTracking() {
     );
   }
 
-  // Connected — main dashboard
+  // Connected — dispatch-style tracking dashboard. Bouncie continues to own
+  // tracking/telemetry; FleetEquipment linkage remains fail-closed above.
+  const selectedNotifications = notifications.filter(note => selectedNotificationVins.includes(normalizeVin(note.vehicle_vin)));
+  const vehiclePanelProps = {
+    vehicle: selectedVehicle,
+    fleetEquipment: selectedFleetEquipment,
+    fleetLinkBasis: selectedFleetLink.basis,
+    fleetOpenWorkOrders: selectedFleetOpenWorkOrders,
+    fleetMaintenanceTasks,
+    fleetEquipmentLogs,
+    fleetMaintenanceLoading,
+    trips,
+    tripsLoading,
+    selectedTripId: selectedTrip?.transactionId,
+    onSelectTrip: (trip) => setSelectedTrip(prev => prev?.transactionId === trip.transactionId ? null : trip),
+    notifications: selectedNotifications,
+    onClearNotifications: handleClearNotifications,
+    onMarkNotificationRead: handleMarkRead,
+    onOpenAlertSettings: () => setAlertSettingsOpen(true),
+    canManageAlerts: currentUser?.role === "admin",
+    onClose: () => setPanelOpen(false),
+    daysBack,
+    onDaysBackChange: setDaysBack,
+    avgBy,
+    onAvgByChange: setAvgBy,
+    onTripsRefresh: () => selectedVehicle?.imei && loadTrips(selectedVehicle.imei, daysBack),
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
       <FleetModuleNav />
-      <div className="flex-1 min-h-0 flex relative overflow-hidden" style={{ background: "#1b2029" }}>
-      {/* Desktop vehicle list. Mobile uses the compact selector in the Bouncie top bar. */}
-      <div className="hidden md:block h-full shrink-0">
-        <FleetSidebar
-          vehicles={vehicles}
-          selectedVin={selectedVin}
-          onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
-          onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
-          totalCount={vehicles.length}
-        />
-      </div>
-
-      {/* Map area */}
-      <div className="flex-1 relative">
-        {vehiclesLoading && vehicles.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          </div>
-        ) : (
-          <FleetMap
+      <div className="flex-1 min-h-0 flex overflow-hidden" style={{ background: "#1b2029" }}>
+        {/* Desktop dispatch vehicle list. Mobile uses the selector over the map. */}
+        <div className="hidden md:block h-full shrink-0">
+          <FleetSidebar
             vehicles={vehicles}
             selectedVin={selectedVin}
-            selectedTrip={selectedTrip}
             onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
+            onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
+            totalCount={vehicles.length}
           />
-        )}
-
-        {/* Top bar overlay */}
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-2 sm:px-4 py-2" style={{ background: "#1b1c21" }}>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="hidden sm:inline text-white font-bold text-lg tracking-tight">Bouncie</span>
-            <select
-              value={selectedVin || ""}
-              onChange={(e) => { setSelectedVin(e.target.value || null); setPanelOpen(!!e.target.value); }}
-              className="md:hidden min-w-0 max-w-[210px] flex-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-xs font-medium text-white"
-              aria-label="Select Bouncie vehicle"
-            >
-              <option value="">Select vehicle…</option>
-              {vehicles.map((vehicle) => <option key={vehicle.vin} value={vehicle.vin}>{vehicle.nickName || vehicle.model?.name || vehicle.vin}</option>)}
-            </select>
-            {status?.connectedEmail && (
-              <span className="text-xs text-gray-400 ml-3 hidden lg:inline truncate">Connected: {status.connectedEmail}</span>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-            <button
-              onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === "admin") syncNotifications(); }}
-              className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded"
-              title="Refresh"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            {currentUser?.role === "admin" && (
-              <button
-                onClick={handleConnect}
-                className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded"
-                title="Reconnect Bouncie"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-            <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer"
-              className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Open Bouncie App">
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
         </div>
 
-        {/* Floating vehicle panel */}
-        {panelOpen && selectedVehicle && (
-          <VehiclePanel
-            vehicle={selectedVehicle}
-            fleetEquipment={selectedFleetEquipment}
-            fleetLinkBasis={selectedFleetLink.basis}
-            fleetOpenWorkOrders={selectedFleetOpenWorkOrders}
-            fleetMaintenanceTasks={fleetMaintenanceTasks}
-            fleetEquipmentLogs={fleetEquipmentLogs}
-            fleetMaintenanceLoading={fleetMaintenanceLoading}
-            trips={trips}
-            tripsLoading={tripsLoading}
-            selectedTripId={selectedTrip?.transactionId}
-            onSelectTrip={(t) => setSelectedTrip(prev => prev?.transactionId === t.transactionId ? null : t)}
-            notifications={notifications.filter(n => selectedNotificationVins.includes(normalizeVin(n.vehicle_vin)))}
-            onClearNotifications={handleClearNotifications}
-            onMarkNotificationRead={handleMarkRead}
-            onOpenAlertSettings={() => setAlertSettingsOpen(true)}
-            canManageAlerts={currentUser?.role === "admin"}
-            onClose={() => setPanelOpen(false)}
-            daysBack={daysBack}
-            onDaysBackChange={setDaysBack}
-            avgBy={avgBy}
-            onAvgByChange={setAvgBy}
-            onTripsRefresh={() => selectedVehicle?.imei && loadTrips(selectedVehicle.imei, daysBack)}
-          />
-        )}
+        {/* Center dispatch map. */}
+        <main className="flex-1 min-w-0 relative">
+          {vehiclesLoading && vehicles.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+          ) : (
+            <FleetMap
+              vehicles={vehicles}
+              selectedVin={selectedVin}
+              selectedTrip={selectedTrip}
+              onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
+            />
+          )}
 
-        {/* Select-vehicle prompt when none selected */}
-        {!selectedVehicle && !vehiclesLoading && vehicles.length > 0 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-white/95 rounded-lg shadow-lg px-6 py-4 text-center">
-            <p className="text-gray-600 text-sm">Select a vehicle to view tracking and Fleet maintenance details.</p>
+          <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-2 sm:px-4 py-2" style={{ background: "#1b1c21" }}>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="hidden sm:block min-w-0"><div className="text-white font-bold text-sm sm:text-base tracking-tight">Fleet Tracking</div><div className="hidden xl:block text-[10px] uppercase tracking-wide text-gray-500">Live Bouncie dispatch map</div></div>
+              <select
+                value={selectedVin || ""}
+                onChange={(e) => { setSelectedVin(e.target.value || null); setPanelOpen(!!e.target.value); }}
+                className="md:hidden min-w-0 max-w-[230px] flex-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-xs font-medium text-white"
+                aria-label="Select Bouncie vehicle"
+              >
+                <option value="">Select vehicle…</option>
+                {vehicles.map((vehicle) => <option key={vehicle.vin} value={vehicle.vin}>{vehicle.nickName || vehicle.model?.name || vehicle.vin}</option>)}
+              </select>
+              {status?.connectedEmail && <span className="text-xs text-gray-400 ml-2 hidden 2xl:inline truncate">Bouncie: {status.connectedEmail}</span>}
+            </div>
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+              <button onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === "admin") syncNotifications(); }} className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Refresh Bouncie tracking"><RefreshCw className="w-4 h-4" /></button>
+              {currentUser?.role === "admin" && <button onClick={handleConnect} className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Reconnect Bouncie"><LogOut className="w-4 h-4" /></button>}
+              <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer" className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Open Bouncie App"><ExternalLink className="w-4 h-4" /></a>
+            </div>
           </div>
-        )}
 
-        {error && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-red-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
-            {error}
+          {/* Mobile/tablet selected vehicle panel stays over the map. */}
+          <div className="lg:hidden">
+            {panelOpen && selectedVehicle && <VehiclePanel {...vehiclePanelProps} />}
           </div>
-        )}
-      </div>
+
+          {!selectedVehicle && !vehiclesLoading && vehicles.length > 0 && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-white/95 dark:bg-slate-900/95 rounded-lg shadow-lg px-6 py-4 text-center"><p className="text-gray-600 dark:text-slate-300 text-sm">Select a vehicle to view live tracking, trips, maintenance, alerts, and details.</p></div>}
+
+          {error && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 bg-red-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">{error}</div>}
+        </main>
+
+        {/* Dedicated desktop vehicle pane. */}
+        <div className="hidden lg:block h-full shrink-0 bg-white dark:bg-slate-900">
+          {panelOpen && selectedVehicle ? <VehiclePanel {...vehiclePanelProps} docked /> : <div className="h-full w-[410px] xl:w-[440px] border-l border-slate-700 bg-slate-900 p-6 flex items-center justify-center"><div className="text-center"><div className="text-sm font-semibold text-slate-200">No vehicle selected</div><div className="text-xs text-slate-500 mt-1">Choose a vehicle from the dispatch list or map.</div></div></div>}
+        </div>
 
         <AlertSettingsModal
           open={currentUser?.role === "admin" && alertSettingsOpen}
