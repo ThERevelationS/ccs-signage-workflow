@@ -461,8 +461,9 @@ export async function coalesceLiveStateRows(LiveState, vin) {
   if (rows.length === 1) {
     const current = rows[0];
     const normalized = mergeLiveStateRows(rows);
-    const needsEndNormalization = current?.is_trip_active === true && normalized?.is_trip_active === false;
-    if (!needsEndNormalization) return current;
+    const stateFields = ["is_trip_active", "transaction_id", "ended_at", "speed"];
+    const needsStateNormalization = stateFields.some((field) => String(current?.[field] ?? "") !== String(normalized?.[field] ?? ""));
+    if (!needsStateNormalization) return current;
     return await LiveState.update(current.id, normalized) || { ...current, ...normalized };
   }
 
@@ -553,6 +554,12 @@ export async function applyLiveState(base44, event, normalized) {
     } else if (newPoints.length) {
       patch.recent_path_points = mergedLivePath(current ? [current] : [], newPoints);
       patch.is_trip_active = true;
+      const recoveringMissedTripStart = eventType === "tripData"
+        && (current?.is_trip_active !== true || (endedAt > 0 && incomingAt > endedAt));
+      if (recoveringMissedTripStart) {
+        patch.started_at = newPoints[0]?.ts || timestamp;
+        patch.ended_at = null;
+      }
     }
   } else if (newPoints.length) {
     // A delayed telemetry batch may still contribute path detail, but must never
