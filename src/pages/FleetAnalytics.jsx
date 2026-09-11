@@ -47,7 +47,8 @@ function dateSpanDays(startText, endText) {
 }
 
 function isOverdueTask(task, today) {
-  return task?.status === "overdue" || (task?.status === "pending" && !!task?.start_date && task.start_date < today);
+  if (task?.status === "overdue") return true;
+  return ["pending", "in_progress"].includes(task?.status) && !!task?.start_date && task.start_date < today;
 }
 
 export default function FleetAnalytics() {
@@ -107,7 +108,7 @@ export default function FleetAnalytics() {
 
     const monthly = Array.from({ length: 12 }, (_, month) => ({
       month,
-      label: new Intl.DateTimeFormat("en-US", { month: "short" }).format(new Date(2026, month, 1)),
+      label: new Intl.DateTimeFormat("en-US", { month: "short" }).format(new Date(Number(selectedYear), month, 1)),
       cost: 0,
       workOrders: 0,
       laborHours: 0,
