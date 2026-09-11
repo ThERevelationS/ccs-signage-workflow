@@ -1,0 +1,68 @@
+{
+  "name": "TimeClockEmployeeState",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email; one authoritative Time Clock state row per employee"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "clocked_out",
+        "clocked_in"
+      ],
+      "default": "clocked_out"
+    },
+    "active_entry_id": {
+      "type": "string",
+      "description": "Current active TimeEntry id when clocked in"
+    },
+    "last_action_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of the last confirmed clock action"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Client request id of the last confirmed clock action"
+    }
+  },
+  "required": [
+    "user_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
