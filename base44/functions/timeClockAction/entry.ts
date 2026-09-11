@@ -419,6 +419,16 @@ Deno.serve(async (req) => {
       const totalMinutes = clockOut ? Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000) : null;
       if (totalMinutes !== null && lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
       const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
+      const normalizedAllocations = allocations.map((job: any) => {
+        const editedHours = Number(job?.hours);
+        const storedMinutes = Number(job?.minutes);
+        const minutes = Number.isFinite(editedHours) && editedHours >= 0
+          ? Math.round(editedHours * 60)
+          : Number.isFinite(storedMinutes) && storedMinutes >= 0
+            ? Math.round(storedMinutes)
+            : 0;
+        return { ...job, minutes, hours: minutes / 60 };
+      });
       const now = new Date().toISOString();
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
@@ -427,7 +437,7 @@ Deno.serve(async (req) => {
         total_hours: totalMinutes === null ? Number(entry.total_hours || 0) : (totalMinutes - lunchMinutes) / 60,
         status: clockOut ? 'clocked_out' : 'clocked_in',
         notes: String(correction?.notes || '').trim(),
-        job_allocations: allocations,
+        job_allocations: normalizedAllocations,
         clock_source: 'admin_correction',
         last_corrected_at: now,
         last_corrected_by: actorEmail,
