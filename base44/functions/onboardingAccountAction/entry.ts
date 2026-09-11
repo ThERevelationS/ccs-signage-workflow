@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       const password = String(body?.password || '');
       if (!fullName) return Response.json({ success: false, error: 'Full name is required' }, { status: 400 });
       if (!/^[a-z0-9]{3,}$/.test(username)) return Response.json({ success: false, error: 'Username must be at least 3 letters/numbers with no spaces' }, { status: 400 });
-      if (password.length < 4) return Response.json({ success: false, error: 'Password must be at least 4 characters' }, { status: 400 });
+      if (password.length < 8) return Response.json({ success: false, error: 'Password must be at least 8 characters' }, { status: 400 });
       const usernameRows = await authorized.filter({ username });
       if (!Array.isArray(usernameRows)) return Response.json({ success: false, error: 'Username uniqueness could not be verified' }, { status: 503 });
       if (usernameRows.some((row: any) => row.id !== user.id)) return Response.json({ success: false, error: 'This username is already in use' }, { status: 409 });
