@@ -232,7 +232,9 @@ export default function GoogleDriveFileBrowser({
     try {
       const response = await googleDriveOperations({
         action: 'deleteFile',
-        fileId: file.id
+        fileId: file.id,
+        expectedFileName: file.name,
+        expectedModifiedTime: file.modifiedTime || ''
       });
 
       if (response.data.error) {
