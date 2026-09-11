@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { claimPermitFollowupForToday } from '../../shared/permitLineItemPersistence.mjs';
+import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
 
 // Scheduled: scans PermitLineItems for follow-up dates that are due today or overdue,
 // fires `permit_followup_due` and `permit_followup_overdue` automation triggers.
@@ -66,19 +67,22 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await base44.asServiceRole.functions.invoke('processWorkflowTriggers', {
-          event_type: claim.eventType,
-          work_order: {
-            ...wo,
-            locality_name: claimedLine.locality_name,
-            office_type: claimedLine.office_type,
-            row_name: claimedLine.row_name,
-            submitted_date: claimedLine.submitted_date,
-            next_followup_date: claimedLine.next_followup_date,
-            permit_received_date: claimedLine.permit_received_date
+        await processWorkflowTriggerEvent({
+          base44,
+          payload: {
+            event_type: claim.eventType,
+            work_order: {
+              ...wo,
+              locality_name: claimedLine.locality_name,
+              office_type: claimedLine.office_type,
+              row_name: claimedLine.row_name,
+              submitted_date: claimedLine.submitted_date,
+              next_followup_date: claimedLine.next_followup_date,
+              permit_received_date: claimedLine.permit_received_date,
+            },
+            old_data: {},
           },
-          old_data: {},
-          changed_by: 'Scheduled Reminder'
+          changedByOverride: 'Scheduled Reminder',
         });
         if (claim.eventType === 'permit_followup_due') dueFired++;
         else overdueFired++;
