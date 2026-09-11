@@ -156,7 +156,7 @@
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "timeclock_backend_only"
       }
     }
   }
