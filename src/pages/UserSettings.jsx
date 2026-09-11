@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
-import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,7 @@ import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedE
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function UserSettings() {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(true);
   const [allUsers, setAllUsers] = useState([]);
@@ -129,63 +128,22 @@ export default function UserSettings() {
   };
 
   const handleSendPasswordReset = async () => {
-    if (!userData?.email) return;
-    
+    if (!userData?.email || !sessionToken) return;
+
     setSendingPasswordReset(true);
+    setSaveError("");
     try {
-      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      const expires = new Date();
-      expires.setHours(expires.getHours() + 24);
-      
-      const resetUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: userData,
-        nextFields: {
-          password_reset_token: resetToken,
-          password_reset_expires: expires.toISOString()
-        },
-        exactVersion: false,
-        enforceIdentity: false,
-        label: `Password reset token for ${userData.full_name || userData.email}`
+      const response = await base44.functions.invoke("issuePasswordReset", {
+        session_token: sessionToken,
+        target_email: userData.email,
       });
-      setUserData(resetUser);
-      
-      const appUrl = window.location.origin;
-      const resetLink = `${appUrl}/ResetPassword?token=${resetToken}`;
-      
-      const emailBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%); padding: 30px; border-radius: 16px; text-align: center;">
-            <h1 style="color: #1F2937; margin: 0 0 10px 0;">🔐 Password Reset</h1>
-            <p style="color: #374151; margin: 0;">Sign Shop Time Clock</p>
-          </div>
-          
-          <div style="background: #FFFFFF; padding: 30px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <p style="color: #1F2937; font-size: 16px;">Hi ${userData.full_name || 'there'},</p>
-            <p style="color: #374151;">You requested to reset your Time Clock password. Click the button below:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetLink}" style="background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;">
-                Reset My Password
-              </a>
-            </div>
-            
-            <p style="color: #6B7280; font-size: 14px;">This link will expire in 24 hours.</p>
-          </div>
-        </div>
-      `;
-
-      await sendGmail({
-        to: userData.email,
-        subject: "Reset Your Time Clock Password",
-        body: emailBody
-      });
-
+      const result = response?.data || response;
+      if (!result?.success) throw new Error(result?.error || "Password reset could not be issued.");
       setPasswordResetSent(true);
       setTimeout(() => setPasswordResetSent(false), 5000);
     } catch (err) {
       console.error("Error sending password reset:", err);
-      setSaveError(err?.message || "Failed to issue the password reset safely. Reload before retrying.");
+      setSaveError(err?.response?.data?.error || err?.data?.error || err?.message || "Failed to issue the password reset safely. Reload before retrying.");
     }
     setSendingPasswordReset(false);
   };
