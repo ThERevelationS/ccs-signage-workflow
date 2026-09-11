@@ -602,10 +602,10 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
     return Response.json({ success: true, processed, results });
 
   } catch (error) {
-    console.error('processCorebridgeEmails error:', error);
+    console.error('processCorebridgeEmails error:', error?.message || error);
     logData.status = 'error';
-    logData.error_message = error.message;
+    logData.error_message = error?.message || 'Unknown processing error';
     await writeRunLogBestEffort(logData);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'CoreBridge email processing could not be completed safely' }, { status: 500 });
   }
 });
