@@ -429,7 +429,7 @@ function mergeLiveStateRows(rows) {
   const merged = {
     vehicle_vin: firstPresent("vehicle_vin") || "",
     vehicle_imei: firstPresent("vehicle_imei") || "",
-    transaction_id: firstPresent("transaction_id") || null,
+    transaction_id: active ? (firstPresent("transaction_id") || null) : null,
     is_trip_active: active,
     latitude: firstPresent("latitude"),
     longitude: firstPresent("longitude"),
@@ -505,7 +505,8 @@ export async function applyLiveState(base44, event, normalized) {
     patch.vehicle_vin = vin;
     patch.vehicle_imei = event.imei || current?.vehicle_imei || "";
     patch.last_event_at = timestamp;
-    if (payload.transactionId) patch.transaction_id = String(payload.transactionId);
+    const transactionId = payload.transactionId || event.transactionId;
+    if (transactionId) patch.transaction_id = String(transactionId);
     if (latest) {
       patch.latitude = latest.lat;
       patch.longitude = latest.lon;
@@ -524,6 +525,7 @@ export async function applyLiveState(base44, event, normalized) {
       patch.recent_path_points = newPoints.slice(-MAX_PATH_POINTS);
     } else if (eventType === "tripEnd") {
       patch.is_trip_active = false;
+      patch.transaction_id = null;
       patch.ended_at = timestamp;
       patch.speed = 0;
       if (current?.recent_path_points?.length) patch.recent_path_points = mergedLivePath([current]);
