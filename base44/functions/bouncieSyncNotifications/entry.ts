@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
-import { callBouncieApi, coalesceLiveStateRows } from '../../shared/bouncie.ts';
+import { callBouncieApi, coalesceLiveStateRows, milSemanticState } from '../../shared/bouncie.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Durable CCS-local alert evaluation against Bouncie vehicle stats.
@@ -67,6 +67,25 @@ function notificationFor(v, { key, category, eventType, title, description, seve
 async function ensureNotification(Notification, record) {
   const existing = canonical(await Notification.filter({ event_key: record.event_key }));
   if (existing) return { row: existing, created: false };
+
+  if (record?.event_type === 'mil') {
+    const recent = await Notification.filter({ vehicle_vin: record.vehicle_vin, event_type: 'mil' }, '-timestamp', 25);
+    const latest = (recent || []).slice().sort((a,b) => {
+      const at = Date.parse(a?.timestamp || a?.created_date || '') || 0;
+      const bt = Date.parse(b?.timestamp || b?.created_date || '') || 0;
+      if (at !== bt) return bt - at;
+      return String(b?.id || '').localeCompare(String(a?.id || ''));
+    })[0] || null;
+    const incomingState = milSemanticState(record);
+    const priorState = latest ? milSemanticState(latest) : null;
+    // Do not create an initial "cleared" snapshot when no prior MIL alert exists.
+    if (incomingState.known && !incomingState.on && !latest) return { row: null, created: false };
+    if (latest && incomingState.known && priorState?.known && incomingState.on === priorState.on) {
+      if (!incomingState.on) return { row: latest, created: false };
+      if (!incomingState.codes.length) return { row: latest, created: false };
+      if (priorState.codes.length && incomingState.signature === priorState.signature) return { row: latest, created: false };
+    }
+  }
 
   const created = await Notification.create(record);
   await new Promise((resolve) => setTimeout(resolve, 50));
@@ -234,7 +253,9 @@ export default async function(req) {
       const battery = mil.battery || {};
 
       // Bouncie-reported health snapshots. These do not modify Bouncie settings.
-      if (mil.milOn) {
+      // MIL snapshots are transition-aware in ensureNotification: repeated ON with the
+      // same DTC state is suppressed, while OFF or a genuinely different DTC set is kept.
+      if (mil.milOn === true) {
         const stamp = mil.lastUpdated || observationStamp(stats);
         const dtcs = mil.qualifiedDtcList || [];
         if (dtcs.length === 0) {
@@ -244,15 +265,27 @@ export default async function(req) {
             description: 'Malfunction indicator lamp is on', severity: 'warning', stamp,
             raw: { mil },
           }));
-        }
-        for (const dtc of dtcs) {
-          const names = Array.isArray(dtc.name) ? dtc.name.join(', ') : dtc.name || '';
+        } else {
+          const codeList = dtcs.map((dtc) => String(dtc?.code || '').trim()).filter(Boolean);
+          const descriptions = dtcs.map((dtc) => {
+            const names = Array.isArray(dtc.name) ? dtc.name.join(', ') : dtc.name || '';
+            return `${dtc.code || ''}${names ? ` — ${names}` : ''}`.trim();
+          }).filter(Boolean);
           pending.push(notificationFor(v, {
-            key: `mil-${dtc.code}`, category: 'care', eventType: 'mil', source: 'bouncie',
+            key: `mil-${codeList.sort().join('-') || 'dtc'}`, category: 'care', eventType: 'mil', source: 'bouncie',
             title: `${nickname}'s check engine light is on`,
-            description: `${dtc.code} — ${names}`, severity: 'warning', stamp, raw: dtc,
+            description: descriptions.join(' · ') || 'Malfunction indicator lamp is on', severity: 'warning', stamp,
+            raw: { mil },
           }));
         }
+      } else if (mil.milOn === false && mil.lastUpdated) {
+        const stamp = mil.lastUpdated || observationStamp(stats);
+        pending.push(notificationFor(v, {
+          key: 'mil-cleared', category: 'care', eventType: 'mil', source: 'bouncie',
+          title: `${nickname}'s check engine light cleared`,
+          description: 'Malfunction indicator lamp is off', severity: 'info', stamp,
+          raw: { mil },
+        }));
       }
 
       if (battery.status === 'low' || battery.status === 'critical') {
