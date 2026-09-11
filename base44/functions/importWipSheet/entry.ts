@@ -1,6 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+
+const MAX_WIP_FILE_BYTES = 50 * 1024 * 1024;
 
 const parseSheetDate = (name) => {
   const match = name.match(/WIP\s+(\d+)-(\d+)-(\d+)/);
@@ -139,6 +142,39 @@ const scoreMatch = (wipData, wo) => {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+async function readWipBytes(response) {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_WIP_FILE_BYTES) {
+    throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_WIP_FILE_BYTES) throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+    return bytes;
+  }
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_WIP_FILE_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw Object.assign(new Error('WIP file exceeds the 50 MB safety limit.'), { status: 413 });
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -159,11 +195,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required field: fileUrl' }, { status: 400 });
     }
 
-    // Download and parse
-    const fileRes = await fetch(fileUrl);
-    if (!fileRes.ok) throw new Error(`Failed to download file: ${fileRes.status}`);
-    const arrayBuffer = await fileRes.arrayBuffer();
-    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+    // Download and parse only from a public external URL, with a hard byte cap.
+    const fileRes = await safeExternalFetch(fileUrl);
+    if (!fileRes.ok) throw Object.assign(new Error(`Failed to download WIP file (HTTP ${fileRes.status})`), { status: 400 });
+    const fileBytes = await readWipBytes(fileRes);
+    const workbook = XLSX.read(fileBytes, { type: 'array' });
 
     const wipSheets = workbook.SheetNames.filter(name =>
       /^WIP\s+\d/.test(name) && name !== 'Formulas'
@@ -445,6 +481,11 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    console.error('importWipSheet error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'WIP import could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
