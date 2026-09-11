@@ -8,7 +8,7 @@ import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
-import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight } from "lucide-react";
+import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
@@ -23,6 +23,7 @@ export default function FleetWorkOrders() {
   const [priority, setPriority] = useState("all");
   const [attention, setAttention] = useState("all");
   const [equipmentFilter, setEquipmentFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("list");
   const [expanded, setExpanded] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
