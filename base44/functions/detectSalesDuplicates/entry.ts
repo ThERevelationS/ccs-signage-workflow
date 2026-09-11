@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
@@ -23,17 +24,17 @@ function similarity(a, b) {
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
+  const body = await req.json().catch(() => ({}));
+  const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');
 
-  // Allow scheduled (no user) or admin user
-  let isScheduled = false;
-  try {
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
+  if (!isScheduled) {
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
-  } catch {
-    // No user = scheduled call, allow it
-    isScheduled = true;
   }
 
   const workOrders = (await loadAllEntityRows({
