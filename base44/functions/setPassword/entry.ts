@@ -38,12 +38,17 @@ async function verifyTokenIsAdmin(token, secret, base44) {
   } catch {
     return null;
   }
-  if (!payload?.email || (payload.exp && payload.exp < Date.now())) return null;
+  const issuedAt = Number(payload?.iat);
+  const expiresAt = Number(payload?.exp);
+  if (
+    !payload?.email ||
+    !Number.isFinite(issuedAt) || issuedAt <= 0 ||
+    !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
+  ) return null;
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: payload.email });
   if (!Array.isArray(users) || users.length !== 1) return null;
   const user = users[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
-  const issuedAt = Number(payload?.iat || 0);
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
   if (user.role !== 'admin') return null;
   return user;
