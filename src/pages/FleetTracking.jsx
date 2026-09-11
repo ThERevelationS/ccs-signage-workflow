@@ -17,6 +17,9 @@ export default function FleetTracking() {
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
   const [fleetEquipment, setFleetEquipment] = useState([]);
   const [fleetWorkOrders, setFleetWorkOrders] = useState([]);
+  const [fleetMaintenanceTasks, setFleetMaintenanceTasks] = useState([]);
+  const [fleetEquipmentLogs, setFleetEquipmentLogs] = useState([]);
+  const [fleetMaintenanceLoading, setFleetMaintenanceLoading] = useState(false);
   const [selectedVin, setSelectedVin] = useState(() => new URLSearchParams(window.location.search).get("vin") || null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [trips, setTrips] = useState([]);
@@ -224,6 +227,35 @@ export default function FleetTracking() {
     ? fleetWorkOrders.filter(wo => wo.equipment_id === selectedFleetEquipment.id && !["completed", "cancelled"].includes(wo.status))
     : [];
 
+  useEffect(() => {
+    let mounted = true;
+    const equipmentId = selectedFleetEquipment?.id || "";
+    if (!equipmentId) {
+      setFleetMaintenanceTasks([]);
+      setFleetEquipmentLogs([]);
+      setFleetMaintenanceLoading(false);
+      return () => { mounted = false; };
+    }
+
+    setFleetMaintenanceLoading(true);
+    Promise.all([
+      filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: equipmentId }, "start_date", { label: "Selected Fleet equipment maintenance schedules" }),
+      filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipmentId }, "-created_date", { label: "Selected Fleet equipment usage history" }),
+    ]).then(([taskRows, logRows]) => {
+      if (!mounted) return;
+      setFleetMaintenanceTasks(taskRows || []);
+      setFleetEquipmentLogs(logRows || []);
+    }).catch(() => {
+      if (!mounted) return;
+      setFleetMaintenanceTasks([]);
+      setFleetEquipmentLogs([]);
+    }).finally(() => {
+      if (mounted) setFleetMaintenanceLoading(false);
+    });
+
+    return () => { mounted = false; };
+  }, [selectedFleetEquipment?.id]);
+
   // Loading state
   if (statusLoading) {
     return (
@@ -398,6 +430,9 @@ export default function FleetTracking() {
             vehicle={selectedVehicle}
             fleetEquipment={selectedFleetEquipment}
             fleetOpenWorkOrders={selectedFleetOpenWorkOrders}
+            fleetMaintenanceTasks={fleetMaintenanceTasks}
+            fleetEquipmentLogs={fleetEquipmentLogs}
+            fleetMaintenanceLoading={fleetMaintenanceLoading}
             trips={trips}
             tripsLoading={tripsLoading}
             selectedTripId={selectedTrip?.transactionId}
