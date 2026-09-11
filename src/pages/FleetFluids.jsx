@@ -32,7 +32,7 @@ export default function FleetFluids() {
     finally { setLoading(false); }
   },[]);
   useEffect(()=>{load();},[load]);
-  useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("stock")||"";if(["all","low","incomplete"].includes(requested))setStockFilter(requested);},[]);
+  useEffect(()=>{const params=new URLSearchParams(window.location.search);const requested=params.get("stock")||"";const requestedSearch=params.get("search")||"";if(["all","low","incomplete"].includes(requested))setStockFilter(requested);if(requestedSearch)setSearch(requestedSearch);},[]);
 
   const isAdmin=user?.role==="admin";
   const metrics=useMemo(()=>({low:fluids.filter(isFluidLowStock).length,tracked:fluids.filter(f=>f.quantity!=null&&f.unit).length,incomplete:fluids.filter(f=>f.quantity==null||!f.unit).length}),[fluids]);
