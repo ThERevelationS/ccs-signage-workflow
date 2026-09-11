@@ -27,12 +27,26 @@
     },
     "password_reset_token": {
       "type": "string",
-      "description": "Token for password reset"
+      "description": "Token for password reset",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "password_reset_expires": {
       "type": "string",
       "format": "date-time",
-      "description": "When the password reset token expires"
+      "description": "When the password reset token expires",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "role": {
       "type": "string",
