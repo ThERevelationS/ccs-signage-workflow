@@ -9,6 +9,26 @@ import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink } from "lucide-react";
 
+const normalizeVin = (value) => String(value || "").trim().toUpperCase();
+const normalizeImei = (value) => String(value || "").trim();
+
+function resolveFleetEquipmentLink(vehicle, equipmentRows = []) {
+  if (!vehicle) return { equipment: null, basis: null };
+  const vin = normalizeVin(vehicle.vin);
+  if (vin) {
+    const vinMatches = equipmentRows.filter((eq) => normalizeVin(eq.vin) === vin);
+    if (vinMatches.length === 1) return { equipment: vinMatches[0], basis: "vin" };
+    if (vinMatches.length > 1) return { equipment: null, basis: "vin_conflict" };
+  }
+  const imei = normalizeImei(vehicle.imei);
+  if (imei) {
+    const imeiMatches = equipmentRows.filter((eq) => normalizeImei(eq.bouncie_imei) === imei && ["matched", "manual"].includes(eq.bouncie_link_status));
+    if (imeiMatches.length === 1) return { equipment: imeiMatches[0], basis: "imei" };
+    if (imeiMatches.length > 1) return { equipment: null, basis: "imei_conflict" };
+  }
+  return { equipment: null, basis: null };
+}
+
 export default function FleetTracking() {
   const [status, setStatus] = useState(null); // {connected, user, ...}
   const [statusLoading, setStatusLoading] = useState(true);
@@ -21,6 +41,8 @@ export default function FleetTracking() {
   const [fleetEquipmentLogs, setFleetEquipmentLogs] = useState([]);
   const [fleetMaintenanceLoading, setFleetMaintenanceLoading] = useState(false);
   const [selectedVin, setSelectedVin] = useState(() => new URLSearchParams(window.location.search).get("vin") || null);
+  const requestedImeiRef = useRef(new URLSearchParams(window.location.search).get("imei") || "");
+  const deepLinkResolvedRef = useRef(false);
   const [panelOpen, setPanelOpen] = useState(true);
   const [trips, setTrips] = useState([]);
   const [tripsLoading, setTripsLoading] = useState(false);
@@ -145,6 +167,18 @@ export default function FleetTracking() {
     return () => clearInterval(refreshTimer.current);
   }, [status?.connected, status?.needsReconnect, loadVehicles, loadNotifications]);
 
+  // Resolve FleetEquipment deep links safely. VIN remains primary; IMEI is only a
+  // fallback when the requested VIN is not present in Bouncie's current vehicle list.
+  useEffect(() => {
+    if (deepLinkResolvedRef.current || vehiclesLoading || vehicles.length === 0) return;
+    deepLinkResolvedRef.current = true;
+    if (selectedVin && vehicles.some((vehicle) => normalizeVin(vehicle.vin) === normalizeVin(selectedVin))) return;
+    const requestedImei = normalizeImei(requestedImeiRef.current);
+    if (!requestedImei) return;
+    const matches = vehicles.filter((vehicle) => normalizeImei(vehicle.imei) === requestedImei);
+    if (matches.length === 1) setSelectedVin(matches[0].vin || null);
+  }, [vehicles, vehiclesLoading, selectedVin]);
+
   // Load trips when selection / range changes
   useEffect(() => {
     setSelectedTrip(null);
@@ -206,23 +240,28 @@ export default function FleetTracking() {
     }
   };
 
+  const selectedVehicle = vehicles.find(v => normalizeVin(v.vin) === normalizeVin(selectedVin));
+  const selectedFleetLink = resolveFleetEquipmentLink(selectedVehicle, fleetEquipment);
+  const selectedFleetEquipment = selectedFleetLink.equipment;
+  const selectedNotificationVins = [...new Set([
+    normalizeVin(selectedVehicle?.vin),
+    normalizeVin(selectedFleetEquipment?.vin),
+  ].filter(Boolean))];
+
   const handleClearNotifications = async () => {
-    const vin = vehicles.find(v => v.vin === selectedVin)?.vin;
-    if (!vin) return;
+    if (!selectedNotificationVins.length) return;
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin });
-      if (data?.error) throw new Error(data.error);
-      setNotifications(n => n.map(x => x.vehicle_vin === vin ? { ...x, is_read: true } : x));
+      const results = await Promise.all(selectedNotificationVins.map((vin) => base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin })));
+      const failed = results.find((result) => result?.data?.error);
+      if (failed?.data?.error) throw new Error(failed.data.error);
+      const selectedSet = new Set(selectedNotificationVins);
+      setNotifications(n => n.map(x => selectedSet.has(normalizeVin(x.vehicle_vin)) ? { ...x, is_read: true } : x));
       loadNotifications();
     } catch (e) {
       setError(e?.message || "Unable to mark this vehicle's Bouncie notifications read.");
     }
   };
 
-  const selectedVehicle = vehicles.find(v => v.vin === selectedVin);
-  const selectedFleetEquipment = selectedVehicle?.vin
-    ? fleetEquipment.find(eq => String(eq.vin || "").trim().toUpperCase() === String(selectedVehicle.vin || "").trim().toUpperCase()) || null
-    : null;
   const selectedFleetOpenWorkOrders = selectedFleetEquipment
     ? fleetWorkOrders.filter(wo => wo.equipment_id === selectedFleetEquipment.id && !["completed", "cancelled"].includes(wo.status))
     : [];
@@ -429,6 +468,7 @@ export default function FleetTracking() {
           <VehiclePanel
             vehicle={selectedVehicle}
             fleetEquipment={selectedFleetEquipment}
+            fleetLinkBasis={selectedFleetLink.basis}
             fleetOpenWorkOrders={selectedFleetOpenWorkOrders}
             fleetMaintenanceTasks={fleetMaintenanceTasks}
             fleetEquipmentLogs={fleetEquipmentLogs}
@@ -437,7 +477,7 @@ export default function FleetTracking() {
             tripsLoading={tripsLoading}
             selectedTripId={selectedTrip?.transactionId}
             onSelectTrip={(t) => setSelectedTrip(prev => prev?.transactionId === t.transactionId ? null : t)}
-            notifications={notifications.filter(n => n.vehicle_vin === selectedVehicle.vin)}
+            notifications={notifications.filter(n => selectedNotificationVins.includes(normalizeVin(n.vehicle_vin)))}
             onClearNotifications={handleClearNotifications}
             onMarkNotificationRead={handleMarkRead}
             onOpenAlertSettings={() => setAlertSettingsOpen(true)}
