@@ -244,9 +244,10 @@ export default function FleetMaintenance() {
         </div>
 
         {view !== "workspace" && <>
-          <div className="inline-flex w-full sm:w-auto rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
-            <button onClick={showEquipmentView} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "equipment" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><LayoutGrid className="w-4 h-4" />Equipment</button>
-            <button onClick={showAllSchedules} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "all_schedules" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><List className="w-4 h-4" />All Schedules</button>
+          <div className="inline-flex w-full sm:w-auto rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
+            <button onClick={showEquipmentView} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${view === "equipment" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><LayoutGrid className="w-4 h-4" />Equipment</button>
+            <button onClick={showCalendar} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${view === "calendar" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><CalendarClock className="w-4 h-4" />Calendar</button>
+            <button onClick={showAllSchedules} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors whitespace-nowrap ${view === "all_schedules" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><List className="w-4 h-4" />All Schedules</button>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -263,7 +264,9 @@ export default function FleetMaintenance() {
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
         {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "workspace" ? (
-          selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button onClick={showEquipmentView} className="mt-2 text-sm underline">Back to Maintenance</button></div>
+          selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} initialTab={workspaceInitialTab} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button onClick={showEquipmentView} className="mt-2 text-sm underline">Back to Maintenance</button></div>
+        ) : view === "calendar" ? (
+          <FleetMaintenanceCalendar tasks={tasks} equipment={equipment} search={search} onOpenSchedule={(task) => openEquipmentMaintenance(task.equipment_id, "schedule")} />
         ) : view === "equipment" ? (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
