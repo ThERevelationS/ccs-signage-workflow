@@ -61,7 +61,13 @@ async function authenticateSignShopSession(base44: any, token: unknown) {
   if (users.length !== 1) {
     throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
   }
-  return users[0];
+  const user = users[0];
+  const notBefore = Date.parse(String(user?.session_not_before || ''));
+  const issuedAt = Number(sessionPayload?.iat || 0);
+  if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
+    throw Object.assign(new Error('Authentication required'), { status: 401 });
+  }
+  return user;
 }
 
 Deno.serve(async (req) => {
