@@ -95,10 +95,36 @@
       "default": false,
       "description": "Pre-production Time Clock test record excluded from live timekeeping"
     },
+    "archived_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Administrative archival flag; archived records remain preserved but are excluded from normal timekeeping"
+    },
     "archived_at": {
       "type": "string",
       "format": "date-time",
-      "description": "When pre-production test data was reset/archived"
+      "description": "When this TimeEntry was archived"
+    },
+    "archived_by": {
+      "type": "string",
+      "description": "Administrator email that archived this TimeEntry"
+    },
+    "archive_reason": {
+      "type": "string",
+      "description": "Required reason for administrative archival"
+    },
+    "last_corrected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server timestamp of the latest administrator correction"
+    },
+    "last_corrected_by": {
+      "type": "string",
+      "description": "Administrator email that made the latest correction"
+    },
+    "last_correction_reason": {
+      "type": "string",
+      "description": "Required reason for the latest administrator correction"
     }
   },
   "required": [
@@ -107,16 +133,9 @@
   ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "data.user_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "read": {
       "$or": [
@@ -131,16 +150,9 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "data.user_email": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
+      "user_condition": {
+        "role": "admin"
+      }
     },
     "delete": {
       "user_condition": {
