@@ -202,6 +202,14 @@ export default function FleetWorkOrders() {
           <Summary label="Completed" value={summary.completed} />
         </div>
 
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900 w-full sm:w-auto">
+            <button onClick={() => setViewMode("list")} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${viewMode === "list" ? "bg-indigo-600 text-white" : "text-gray-600 dark:text-slate-300"}`}><List className="w-4 h-4" />List</button>
+            <button onClick={() => { setViewMode("board"); setStatus("all"); }} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${viewMode === "board" ? "bg-indigo-600 text-white" : "text-gray-600 dark:text-slate-300"}`}><Columns3 className="w-4 h-4" />Board</button>
+          </div>
+          {viewMode === "board" && <div className="text-xs text-gray-500 dark:text-slate-400">Board status changes are action-based only—there is no drag/drop status mutation.</div>}
+        </div>
+
         <div className="grid sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_150px_150px_180px_240px] gap-3">
           <div className="relative"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search work orders..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
           <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All statuses</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
