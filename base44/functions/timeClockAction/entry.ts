@@ -123,7 +123,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
   const ageMs = started && Number.isFinite(started.getTime()) ? Date.now() - started.getTime() : Number.POSITIVE_INFINITY;
 
   if (state.status === 'clocking_in') {
-    const matches = requestId ? await entryEntity.filter({ user_email: target.email, clock_in_request_id: requestId }) : [];
+    const matches = requestId ? await entryEntity.filter({ user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true } }) : [];
     if (Array.isArray(matches) && matches.length === 1) {
       const entry = matches[0];
       const recovered = await setState(stateEntity, state, 'clocking_in', requestId, {
@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Another Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
       }
 
-      const existingActives = await entryEntity.filter({ user_email: target.email, status: 'clocked_in' });
+      const existingActives = await entryEntity.filter({ user_email: target.email, status: 'clocked_in', archived_test_data: { $ne: true } });
       if (!Array.isArray(existingActives)) throw new Error('Active TimeEntry lookup did not return a record list.');
       if (existingActives.length > 0) {
         return Response.json({ success: false, error: `Found ${existingActives.length} existing active TimeEntry record${existingActives.length === 1 ? '' : 's'}. Reset or admin review is required before clock-in.` }, { status: 409 });
@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
       });
       if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
-      let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId }, 'Clock-in request');
+      let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-in request');
       if (!entry) {
         entry = await entryEntity.create({
           user_email: target.email,
@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
 
     if (action === 'clock_out') {
       if (state.status === 'clocked_out') {
-        const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId }, 'Clock-out request');
+        const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-out request');
         if (prior?.id && prior.status === 'clocked_out') {
           return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true });
         }
