@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { 
   Mail, 
@@ -8,53 +7,35 @@ import {
   Loader2,
   CheckCircle
 } from "lucide-react";
-import { sendGmail } from "@/functions/sendGmail";
 import UserQRCode from "@/components/timeclock/UserQRCode";
 import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
-import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
-
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function UserSettingsTab({ currentUser, onUserUpdated }) {
+  const { sessionToken } = useAuth();
   const [sendingReset, setSendingReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
   const [resetError, setResetError] = useState("");
 
   const handleSendPasswordReset = async () => {
-    if (!currentUser?.email) return;
-    
+    if (!currentUser?.email || !sessionToken) return;
+
     setSendingReset(true);
     setResetError("");
     try {
-      // Generate reset token
-      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      const resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
-      
-      await updateAuthorizedEmailIfUnchanged({
-        entity: AuthorizedEmail,
-        record: currentUser,
-        nextFields: { password_reset_token: resetToken, password_reset_expires: resetExpires },
-        exactVersion: false,
-        enforceIdentity: false,
-        label: `Password reset token for ${currentUser.full_name || currentUser.email}`
+      const response = await fetch('/api/functions/issuePasswordReset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_token: sessionToken,
+          target_email: currentUser.email,
+        }),
       });
-      
-      // Send email
-      const resetUrl = `${window.location.origin}/ResetPassword?token=${resetToken}`;
-      await sendGmail({
-        to: currentUser.email,
-        subject: "Time Clock Password Reset",
-        body: `
-          <h2>Password Reset Request</h2>
-          <p>Hello ${currentUser.full_name || currentUser.email},</p>
-          <p>You requested to reset your Time Clock password. Click the link below to set a new password:</p>
-          <p><a href="${resetUrl}" style="background: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">Reset Password</a></p>
-          <p>This link will expire in 24 hours.</p>
-          <p>If you didn't request this, you can ignore this email.</p>
-        `
-      });
-      
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || "Password reset could not be issued.");
+      }
       setResetSent(true);
       setTimeout(() => setResetSent(false), 5000);
     } catch (err) {
