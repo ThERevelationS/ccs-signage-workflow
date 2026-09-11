@@ -119,6 +119,23 @@ function minutesFromAllocation(job: any) {
   return 0;
 }
 
+function entryAuditSnapshot(entry: any) {
+  return {
+    id: entry?.id || null,
+    user_email: asEmail(entry?.user_email),
+    user_name: entry?.user_name || '',
+    clock_in: entry?.clock_in || null,
+    clock_out: entry?.clock_out || null,
+    lunch_minutes: Number(entry?.lunch_minutes || 0),
+    total_hours: Number(entry?.total_hours || 0),
+    status: entry?.status || '',
+    notes: entry?.notes || '',
+    job_allocations: Array.isArray(entry?.job_allocations) ? entry.job_allocations : [],
+    clock_source: entry?.clock_source || '',
+    updated_date: entry?.updated_date || null,
+  };
+}
+
 async function uniqueRow(entity: any, query: any, label: string) {
   const rows = await entity.filter(query);
   if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
@@ -318,6 +335,212 @@ Deno.serve(async (req) => {
     }
 
     if (!requestId) return Response.json({ success: false, error: 'A valid request id is required.' }, { status: 400 });
+
+    if (action === 'update_notes') {
+      if (actor.role === 'badge') {
+        return Response.json({ success: false, error: 'A signed-in employee session is required to edit notes.' }, { status: 403 });
+      }
+      const entryId = String(body?.entry_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const notes = String(body?.notes || '').trim();
+      if (!entryId || !expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'The loaded TimeEntry version is required before editing notes.' }, { status: 400 });
+      }
+      if (notes.length > 4000) return Response.json({ success: false, error: 'Time entry notes are limited to 4,000 characters.' }, { status: 400 });
+
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      const updateResult = await entryEntity.updateMany(
+        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        { $set: { notes } },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        return Response.json({ success: false, error: 'This time entry changed in another session. Reload before editing its notes.' }, { status: 409 });
+      }
+      const savedEntry = await entryEntity.get(entry.id);
+      const auditSaved = await audit(auditEntity, {
+        action: 'notes_update', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
+        details: { previous_notes: entry.notes || '', new_notes: notes },
+      });
+      return Response.json({ success: true, entry: savedEntry, audit_saved: auditSaved });
+    }
+
+    if (action === 'admin_correct_entry') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to correct time entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const reason = String(body?.reason || '').trim();
+      const correction = body?.correction || {};
+      if (!entryId || !expectedUpdatedDate) return Response.json({ success: false, error: 'The loaded TimeEntry version is required before correcting it.' }, { status: 400 });
+      if (reason.length < 3 || reason.length > 500) return Response.json({ success: false, error: 'A correction reason between 3 and 500 characters is required.' }, { status: 400 });
+
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      if (String(entry.updated_date || '') !== expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'This time entry changed in another session. Reload before correcting it.' }, { status: 409 });
+      }
+
+      const clockIn = new Date(String(correction?.clock_in || ''));
+      const clockOut = new Date(String(correction?.clock_out || ''));
+      if (!Number.isFinite(clockIn.getTime()) || !Number.isFinite(clockOut.getTime())) {
+        return Response.json({ success: false, error: 'Administrator corrections must include valid clock-in and clock-out timestamps.' }, { status: 400 });
+      }
+      if (clockOut.getTime() < clockIn.getTime()) return Response.json({ success: false, error: 'Clock-out cannot be earlier than clock-in.' }, { status: 400 });
+      const lunchMinutes = Math.round(Number(correction?.lunch_minutes || 0));
+      if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240) {
+        return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240.' }, { status: 400 });
+      }
+      const totalMinutes = Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000);
+      if (lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
+      const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
+      const now = new Date().toISOString();
+      const nextFields = {
+        clock_in: clockIn.toISOString(),
+        clock_out: clockOut.toISOString(),
+        lunch_minutes: lunchMinutes,
+        total_hours: (totalMinutes - lunchMinutes) / 60,
+        status: 'clocked_out',
+        notes: String(correction?.notes || '').trim(),
+        job_allocations: allocations,
+        clock_source: 'admin_correction',
+        last_corrected_at: now,
+        last_corrected_by: actorEmail,
+        last_correction_reason: reason,
+      };
+      if (entry.status === 'clocked_in') nextFields['clock_out_request_id'] = requestId;
+
+      if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
+        return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the state mismatch before correcting it.' }, { status: 409 });
+      }
+
+      const intent = await auditEntity.create({
+        action: 'admin_correction', outcome: 'pending', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: 'admin_kiosk', server_timestamp: now, request_id: requestId,
+        time_entry_id: entry.id, reason,
+        details: { original: entryAuditSnapshot(entry), requested: nextFields },
+      });
+      if (!intent?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
+
+      let claimedState: any = null;
+      if (entry.status === 'clocked_in') {
+        claimedState = await setState(stateEntity, state, 'clocked_in', null, {
+          status: 'clocking_out', last_request_id: requestId, pending_started_at: now,
+        });
+        if (!claimedState) {
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Authoritative state changed before correction claim.' } } });
+          return Response.json({ success: false, error: 'The employee clock state changed before the correction could be applied. Reload and review the shift.' }, { status: 409 });
+        }
+      }
+
+      const updateResult = await entryEntity.updateMany(
+        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        { $set: nextFields },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        if (claimedState) {
+          const freshClaim = await freshState(stateEntity, claimedState.id);
+          await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
+            status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+          });
+        }
+        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'TimeEntry changed before correction update.' } } });
+        return Response.json({ success: false, error: 'This time entry changed in another session. The correction was not applied.' }, { status: 409 });
+      }
+
+      const savedEntry = await entryEntity.get(entry.id);
+      if (claimedState) {
+        const freshClaim = await freshState(stateEntity, claimedState.id);
+        const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
+          status: 'clocked_out', active_entry_id: null, last_action_at: savedEntry.clock_out,
+          pending_started_at: null,
+        });
+        if (!finalized) {
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Correction saved but authoritative state finalization requires review.' } } });
+          return Response.json({ success: false, error: 'The correction was saved, but employee clock state could not be finalized safely. Admin review is required before another punch.' }, { status: 409 });
+        }
+      }
+
+      await auditEntity.updateMany({ id: intent.id }, { $set: {
+        outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+        details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry) },
+      } });
+      return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
+    }
+
+    if (action === 'admin_archive_entry') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to archive time entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const reason = String(body?.reason || '').trim();
+      if (!entryId || !expectedUpdatedDate) return Response.json({ success: false, error: 'The loaded TimeEntry version is required before archiving it.' }, { status: 400 });
+      if (reason.length < 3 || reason.length > 500) return Response.json({ success: false, error: 'An archive reason between 3 and 500 characters is required.' }, { status: 400 });
+
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is already archived.' }, { status: 404 });
+      }
+      if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This time entry changed in another session. Reload before archiving it.' }, { status: 409 });
+      if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
+        return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the mismatch before archiving it.' }, { status: 409 });
+      }
+
+      const now = new Date().toISOString();
+      const intent = await auditEntity.create({
+        action: 'admin_archive', outcome: 'pending', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: 'admin_kiosk', server_timestamp: now, request_id: requestId,
+        time_entry_id: entry.id, reason, details: { original: entryAuditSnapshot(entry) },
+      });
+      if (!intent?.id) throw new Error('Archive audit intent could not be persisted. No TimeEntry was changed.');
+
+      let claimedState: any = null;
+      if (entry.status === 'clocked_in') {
+        claimedState = await setState(stateEntity, state, 'clocked_in', null, {
+          status: 'clocking_out', last_request_id: requestId, pending_started_at: now,
+        });
+        if (!claimedState) {
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
+          return Response.json({ success: false, error: 'The employee clock state changed before archival could be applied.' }, { status: 409 });
+        }
+      }
+
+      const updateResult = await entryEntity.updateMany(
+        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        { $set: { archived_admin: true, archived_at: now, archived_by: actorEmail, archive_reason: reason } },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        if (claimedState) {
+          const freshClaim = await freshState(stateEntity, claimedState.id);
+          await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
+            status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+          });
+        }
+        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
+        return Response.json({ success: false, error: 'This time entry changed in another session. It was not archived.' }, { status: 409 });
+      }
+
+      if (claimedState) {
+        const freshClaim = await freshState(stateEntity, claimedState.id);
+        const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
+          status: 'clocked_out', active_entry_id: null, last_action_at: now, pending_started_at: null,
+        });
+        if (!finalized) {
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Entry archived but authoritative state finalization requires review.' } } });
+          return Response.json({ success: false, error: 'The entry was archived, but authoritative employee state could not be finalized. Admin review is required.' }, { status: 409 });
+        }
+      }
+
+      await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'confirmed', server_timestamp: new Date().toISOString() } });
+      return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
+    }
 
     if (action === 'clock_in') {
       if (state.status === 'clocked_in') {
