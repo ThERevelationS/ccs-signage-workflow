@@ -33,9 +33,12 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { folderId } = body;
 
-      // Get stored access token for this user
-      const userRecord = await base44.asServiceRole.entities.User.list();
-      const currentUser = userRecord.find(u => u.email === user.email);
+      // Read only the exact authenticated user's server-side token record.
+      const userRecords = await base44.asServiceRole.entities.User.filter({ email: user.email });
+      if (!Array.isArray(userRecords) || userRecords.length !== 1 || String(userRecords[0]?.id || '') !== String(user.id || '')) {
+        return Response.json({ error: 'Authenticated user identity could not be verified uniquely' }, { status: userRecords?.length > 1 ? 409 : 401 });
+      }
+      const currentUser = userRecords[0];
       const accessToken = currentUser?.google_drive_token;
 
       if (!accessToken) {
@@ -71,10 +74,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
     
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ 
-      error: 'Server error',
-      message: error.message 
-    }, { status: 500 });
+    console.error('googleDriveCustomAuth error:', error?.message || error);
+    return Response.json({ error: 'Google Drive request could not be completed safely' }, { status: 500 });
   }
 });
