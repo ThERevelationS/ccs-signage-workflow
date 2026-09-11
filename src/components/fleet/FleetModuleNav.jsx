@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import {
   LayoutDashboard,
+  Search,
   Navigation,
   Truck,
   CalendarClock,
@@ -18,6 +19,7 @@ import {
 
 const items = [
   { title: "Overview", page: "FleetOverview", icon: LayoutDashboard },
+  { title: "Search", page: "FleetSearch", icon: Search },
   { title: "Tracking", page: "FleetTracking", icon: Navigation },
   { title: "Equipment", page: "FleetEquipment", icon: Truck, activePages: ["FleetEquipment", "FleetEquipmentDetail"] },
   { title: "Maintenance", page: "FleetMaintenance", icon: CalendarClock },
@@ -32,6 +34,7 @@ const items = [
 
 export default function FleetModuleNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,16 @@ export default function FleetModuleNav() {
     }).catch(() => {});
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    const openFleetSearch = (event) => {
+      if (!(event.ctrlKey || event.metaKey) || String(event.key || "").toLowerCase() !== "k") return;
+      event.preventDefault();
+      navigate(createPageUrl("FleetSearch"));
+    };
+    window.addEventListener("keydown", openFleetSearch);
+    return () => window.removeEventListener("keydown", openFleetSearch);
+  }, [navigate]);
 
   return (
     <div className="border-b border-gray-200 bg-white/95 dark:bg-slate-900/95 dark:border-slate-700 backdrop-blur sticky top-0 z-30">
