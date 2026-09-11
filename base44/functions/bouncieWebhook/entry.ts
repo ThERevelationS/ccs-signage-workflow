@@ -2,6 +2,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { normalizeWebhookEvent, applyLiveState, patchConnection } from '../../shared/bouncie.ts';
 
+const canonical = (rows = []) => rows.slice().sort((a,b) => {
+  const at = Date.parse(a?.created_date || '') || 0;
+  const bt = Date.parse(b?.created_date || '') || 0;
+  if (at !== bt) return at - bt;
+  return String(a?.id || '').localeCompare(String(b?.id || ''));
+})[0] || null;
+
 export default async function(req) {
   try {
     const providedKey =
@@ -43,7 +50,7 @@ export default async function(req) {
       duplicate = !!(existing && existing.length);
 
       if (!duplicate) {
-        await base44.asServiceRole.entities.BouncieNotification.create({
+        const created = await base44.asServiceRole.entities.BouncieNotification.create({
           vehicle_vin: vin,
           vehicle_imei: event.imei || '',
           category: normalized.category,
@@ -57,6 +64,17 @@ export default async function(req) {
           is_read: false,
           raw_data: event
         });
+
+        // Collapse only concurrent same-key creates from this race. Historical rows are never scanned or rewritten.
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const contenders = await base44.asServiceRole.entities.BouncieNotification.filter({ event_key: normalized.eventKey });
+        const winner = canonical(contenders) || created;
+        duplicate = (contenders || []).length > 1;
+        for (const contender of contenders || []) {
+          if (contender.id !== winner.id) {
+            await base44.asServiceRole.entities.BouncieNotification.delete(contender.id).catch(() => null);
+          }
+        }
       }
     }
 

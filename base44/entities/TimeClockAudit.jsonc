@@ -1,0 +1,97 @@
+{
+  "name": "TimeClockAudit",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "clock_in",
+        "clock_out",
+        "state_recovery",
+        "admin_correction",
+        "delete",
+        "reset"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "reused",
+        "blocked",
+        "recovered"
+      ]
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string"
+    },
+    "authentication_method": {
+      "type": "string",
+      "enum": [
+        "session",
+        "admin_kiosk",
+        "system"
+      ]
+    },
+    "server_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "time_entry_id": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "action",
+    "outcome",
+    "user_email",
+    "server_timestamp"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
