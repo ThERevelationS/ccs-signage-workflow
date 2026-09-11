@@ -200,28 +200,24 @@ export default function GoogleDriveFileBrowser({
       if (response.data.error) {
         setError(response.data.error);
       } else if (response.data.type === 'view') {
-        window.open(response.data.url, '_blank');
-      } else {
-        // Download the file
-        const downloadResponse = await fetch(response.data.url, {
-          headers: {
-            'Authorization': `Bearer ${response.data.accessToken}`
-          }
-        });
-        
-        if (downloadResponse.ok) {
-          const blob = await downloadResponse.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = response.data.fileName || file.name;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          a.remove();
-        } else {
-          setError('Failed to download file');
+        window.open(response.data.url, '_blank', 'noopener,noreferrer');
+      } else if (response.data.type === 'download_data' && response.data.base64) {
+        const binary = atob(response.data.base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
         }
+        const blob = new Blob([bytes], { type: response.data.mimeType || 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = response.data.fileName || file.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } else {
+        setError('Failed to download file safely');
       }
     } catch (err) {
       setError(err.message);
