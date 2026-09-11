@@ -128,14 +128,32 @@ Deno.serve(async (req) => {
 
     let saved: any;
     let changed = false;
+    let auditIntent: any = null;
+    const authenticationMethod = actorEmail === targetEmail ? 'session' : 'admin_kiosk';
+    const auditAction = existingRows.length > 0 ? 'badge_rotate' : 'badge_issue';
+
     if (existing?.id) {
       const needsNormalization = String(existing.token_hash || '') !== tokenHash || Number(existing.badge_version) !== badgeVersion;
       if (rotate || needsNormalization) {
+        auditIntent = await auditEntity.create({
+          action: auditAction,
+          outcome: 'pending',
+          user_email: targetEmail,
+          user_name: target.full_name || targetEmail,
+          actor_email: actorEmail,
+          actor_role: actor.role,
+          authentication_method: authenticationMethod,
+          server_timestamp: now,
+          details: { previous_badge_version: Number(existing.badge_version) || null, requested_badge_version: badgeVersion },
+        });
+        if (!auditIntent?.id) throw new Error('Badge audit intent could not be persisted. No badge was changed.');
+
         const result = await badgeEntity.updateMany(
           { id: existing.id, updated_date: existing.updated_date, user_email: targetEmail, revoked_at: existing.revoked_at || null },
           { $set: { token_hash: tokenHash, badge_version: badgeVersion, issued_at: issuedAt, revoked_at: null, last_used_at: null } },
         );
         if (!result || result.updated !== 1) {
+          await auditEntity.updateMany({ id: auditIntent.id }, { $set: { outcome: 'blocked' } });
           return Response.json({ success: false, error: 'Badge changed in another session. Reload before trying again.' }, { status: 409 });
         }
         saved = await badgeEntity.get(existing.id);
@@ -144,6 +162,19 @@ Deno.serve(async (req) => {
         saved = existing;
       }
     } else {
+      auditIntent = await auditEntity.create({
+        action: auditAction,
+        outcome: 'pending',
+        user_email: targetEmail,
+        user_name: target.full_name || targetEmail,
+        actor_email: actorEmail,
+        actor_role: actor.role,
+        authentication_method: authenticationMethod,
+        server_timestamp: now,
+        details: { previous_badge_version: highestHistoricalVersion || null, requested_badge_version: badgeVersion },
+      });
+      if (!auditIntent?.id) throw new Error('Badge audit intent could not be persisted. No badge was changed.');
+
       saved = await badgeEntity.create({
         user_email: targetEmail,
         token_hash: tokenHash,
@@ -155,6 +186,7 @@ Deno.serve(async (req) => {
       const verifyRows = await badgeEntity.filter({ user_email: targetEmail });
       const verifyActiveRows = Array.isArray(verifyRows) ? verifyRows.filter((row: any) => !row?.revoked_at) : [];
       if (verifyActiveRows.length !== 1 || verifyActiveRows[0]?.id !== saved?.id) {
+        await auditEntity.updateMany({ id: auditIntent.id }, { $set: { outcome: 'blocked' } });
         return Response.json({ success: false, error: 'Badge issuance could not be verified uniquely. Admin review is required.' }, { status: 409 });
       }
       changed = true;
