@@ -95,8 +95,25 @@ export default async function(req) {
       }
     }
 
-    // Live map state for trip telemetry (bounded path buffer).
-    try { await applyLiveState(base44, event, normalized); } catch {}
+    // Live map state for trip telemetry (bounded path buffer). A cache failure must
+    // never cause Bouncie to retry an otherwise valid webhook, but it must be visible
+    // to Fleet admins instead of disappearing silently.
+    try {
+      await applyLiveState(base44, event, normalized);
+    } catch (error) {
+      console.error('bouncieWebhook live-state update failed:', error);
+      await base44.asServiceRole.entities.FleetSystemLog.create({
+        source: 'bouncieWebhook',
+        level: 'warning',
+        message: 'Bouncie webhook was accepted but Fleet live-state cache update failed.',
+        details: {
+          event_type: normalized.eventType,
+          vin,
+          timestamp: normalized.timestamp,
+          error: error?.message || String(error),
+        },
+      }).catch(() => null);
+    }
 
     try {
       await patchConnection(base44, {
