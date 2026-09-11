@@ -59,7 +59,8 @@ export default function PTOBalanceView({ currentUser }) {
           entity: TimeOffRequest,
           query: {
             user_email: currentUser.email,
-            status: { $in: ["pending", "approved"] }
+            status: { $in: ["pending", "approved"] },
+            archived_test_data: { $ne: true }
           },
           sort: null,
           label: `Upcoming time off for ${currentUser.email}`,
