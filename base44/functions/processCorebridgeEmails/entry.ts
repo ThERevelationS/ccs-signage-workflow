@@ -4,6 +4,7 @@ import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../.
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
 import { loadGlobalSettingSingleton } from '../../shared/globalSettingSingleton.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -78,16 +79,15 @@ function computeMatchScore(extracted, wo) {
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
 
-  // Scheduled invocations arrive without a request payload. Any caller that
-  // supplies a payload is using the manual/admin path and must be authenticated
-  // as an admin before this service-role importer can touch Gmail or production
-  // WorkOrder/PendingImport data.
+  // The workflow supplies a backend-only capability. Every other request,
+  // including an empty direct HTTP request, is an interactive/manual call and
+  // must authenticate as an admin before Gmail or production data is touched.
   let requestBody: Record<string, unknown> = {};
   try {
     requestBody = await req.clone().json();
   } catch (_) {}
-  const isManualRequest = requestBody && Object.keys(requestBody).length > 0;
-  if (isManualRequest) {
+  const isScheduledRun = await hasWorkflowInvocationCapability(requestBody, 'processCorebridgeEmails');
+  if (!isScheduledRun) {
     const user = await base44.auth.me().catch(() => null);
     if (!user) {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
@@ -110,8 +110,8 @@ Deno.serve(async (req) => {
     }
   };
 
-  // Preserve existing scheduled/manual run labeling using the already-parsed body.
-  const triggerType = isManualRequest ? 'manual' : 'scheduled';
+  // Preserve existing scheduled/manual run labeling using the verified boundary.
+  const triggerType = isScheduledRun ? 'scheduled' : 'manual';
 
   const runAt = new Date().toISOString();
   const logData = {
