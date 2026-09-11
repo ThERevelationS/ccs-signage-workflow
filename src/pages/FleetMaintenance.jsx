@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
+import FleetBulkMaintenanceDialog from "@/components/fleet/FleetBulkMaintenanceDialog";
 import FleetMaintenanceCalendar from "@/components/fleet/FleetMaintenanceCalendar";
 import FleetMaintenanceWorkspace from "@/components/fleet/FleetMaintenanceWorkspace";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
@@ -52,6 +53,7 @@ export default function FleetMaintenance() {
   const [equipmentFilter, setEquipmentFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
+  const [bulkPlannerOpen, setBulkPlannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -239,6 +241,7 @@ export default function FleetMaintenance() {
               <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
             </>}
+            {isAdmin && <button onClick={() => setBulkPlannerOpen(true)} className="px-4 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap"><LayoutGrid className="w-4 h-4" />Bulk Plan</button>}
             {isAdmin && <button onClick={() => openCreateDialog()} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap"><Plus className="w-4 h-4" />New Schedule</button>}
           </div>}
         </div>
@@ -300,6 +303,7 @@ export default function FleetMaintenance() {
       </div>
 
       <FleetMaintenanceDialog open={!!dialog} task={dialog?.task || null} initialEquipmentId={dialog?.equipmentId || ""} equipment={equipment} parts={parts} fluids={fluids} onClose={() => !saving && setDialog(null)} onSave={saveTask} saving={saving} />
+      <FleetBulkMaintenanceDialog open={bulkPlannerOpen} equipment={equipment} onClose={() => setBulkPlannerOpen(false)} onCompleted={loadData} />
     </div>
   );
 }
