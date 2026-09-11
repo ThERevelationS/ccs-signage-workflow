@@ -44,109 +44,50 @@ export default function DragDropList({
     );
   }
 
-  // Split work orders into two columns for display, but maintain single index order
-  const leftColumn = enrichedWorkOrders.filter((_, i) => i % 2 === 0);
-  const rightColumn = enrichedWorkOrders.filter((_, i) => i % 2 === 1);
-
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {/* Left Column */}
-        <Droppable droppableId="left-column">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="flex flex-col gap-4"
-            >
-              {leftColumn.map((workOrder) => {
-                const originalIndex = enrichedWorkOrders.findIndex(wo => wo.id === workOrder.id);
-                return (
-                  <Draggable 
-                    key={workOrder.id} 
-                    draggableId={workOrder.id} 
-                    index={originalIndex}
-                    isDragDisabled={reorderDisabled}
-                    
+      <Droppable droppableId="work-order-priority-list">
+        {(provided) => (
+          <div
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
+          >
+            {enrichedWorkOrders.map((workOrder, index) => (
+              <Draggable
+                key={workOrder.id}
+                draggableId={workOrder.id}
+                index={index}
+                isDragDisabled={reorderDisabled}
+              >
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    style={provided.draggableProps.style}
+                    className={`${snapshot.isDragging ? 'z-50 opacity-90' : ''}`}
                   >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        style={provided.draggableProps.style}
-                        className={`${snapshot.isDragging ? 'z-50 opacity-90' : ''}`}
-                      >
-                        <WorkOrderCard
-                          workOrder={workOrder}
-                          onEdit={onEdit}
-                          onMove={onMove}
-                          onSplit={onSplit}
-                          onComplete={onComplete}
-                          onRestore={onRestore}
-                          onUpdate={onUpdate}
-                          onDelete={onDelete}
-                          showMoveOptions={showMoveOptions}
-                          priorityNumber={originalIndex + 1}
-                          dragHandleProps={provided.dragHandleProps}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-
-        {/* Right Column */}
-        <Droppable droppableId="right-column">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="flex flex-col gap-4"
-            >
-              {rightColumn.map((workOrder) => {
-                const originalIndex = enrichedWorkOrders.findIndex(wo => wo.id === workOrder.id);
-                return (
-                  <Draggable 
-                    key={workOrder.id} 
-                    draggableId={workOrder.id} 
-                    index={originalIndex}
-                    isDragDisabled={reorderDisabled}
-                    
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        style={provided.draggableProps.style}
-                        className={`${snapshot.isDragging ? 'z-50 opacity-90' : ''}`}
-                      >
-                        <WorkOrderCard
-                          workOrder={workOrder}
-                          onEdit={onEdit}
-                          onMove={onMove}
-                          onSplit={onSplit}
-                          onComplete={onComplete}
-                          onRestore={onRestore}
-                          onUpdate={onUpdate}
-                          onDelete={onDelete}
-                          showMoveOptions={showMoveOptions}
-                          priorityNumber={originalIndex + 1}
-                          dragHandleProps={provided.dragHandleProps}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </div>
+                    <WorkOrderCard
+                      workOrder={workOrder}
+                      onEdit={onEdit}
+                      onMove={onMove}
+                      onSplit={onSplit}
+                      onComplete={onComplete}
+                      onRestore={onRestore}
+                      onUpdate={onUpdate}
+                      onDelete={onDelete}
+                      showMoveOptions={showMoveOptions}
+                      priorityNumber={index + 1}
+                      dragHandleProps={provided.dragHandleProps}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
     </DragDropContext>
   );
 }
