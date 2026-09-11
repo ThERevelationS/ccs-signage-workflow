@@ -148,6 +148,6 @@ Deno.serve(async (req) => {
     return Response.json({ success: true });
   } catch (error) {
     console.error('setPassword error:', error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    return Response.json({ success: false, error: 'Password update could not be completed safely' }, { status: 500 });
   }
 });
