@@ -383,14 +383,24 @@ async function markBuilderComplete(builder, result) {
 }
 
 async function migrationRows() {
-  return base44.entities.LegacyMigrationMap.filter({ migration_batch: LEGACY_BOM_RECONCILE_BATCH }).catch(() => []);
+  const rows = await base44.entities.LegacyMigrationMap.filter({ migration_batch: LEGACY_BOM_RECONCILE_BATCH });
+  if (!Array.isArray(rows)) {
+    throw new Error("Legacy BOM reconciliation status could not be verified. Reconciliation was paused without writing anything.");
+  }
+  return rows;
 }
 
 export async function verifyLegacyBomReconciliation() {
-  const builders = await base44.entities.BuilderProduct.filter({ price_state: "legacy_frozen" }).catch(() => []);
+  const builders = await base44.entities.BuilderProduct.filter({ price_state: "legacy_frozen" });
+  if (!Array.isArray(builders)) {
+    throw new Error("Legacy BOM verification could not load the Builder Product set.");
+  }
   const results = [];
-  for (const builder of builders || []) {
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id }).catch(() => []);
+  for (const builder of builders) {
+    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    if (!Array.isArray(parts)) {
+      throw new Error(`Legacy BOM verification could not load Parts for Product ${builder.id}.`);
+    }
     const sum = frozenSum(parts);
     results.push({
       builder_product_id: builder.id,
@@ -429,7 +439,10 @@ export async function runLegacyBomReconcile() {
 
   for (const builder of builders || []) {
     if (completedIds.has(builder.id) || builder.legacy_bom_reconciled) continue;
-    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id }).catch(() => []);
+    const parts = await base44.entities.BuilderPart.filter({ builder_product_id: builder.id });
+    if (!Array.isArray(parts)) {
+      throw new Error(`Legacy BOM reconciliation could not load Parts for Product ${builder.id}.`);
+    }
     const frozenTotal = num(builder.frozen_cost);
 
     let result = { mode: "zero_frozen_product", created: 0, deactivated: 0 };
