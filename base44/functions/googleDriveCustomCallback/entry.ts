@@ -32,9 +32,9 @@ Deno.serve(async (req) => {
     });
 
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      console.error('Token exchange failed:', error);
-      return new Response(`Token exchange failed: ${error}`, { status: 500 });
+      await tokenResponse.text().catch(() => '');
+      console.error('googleDriveCustomCallback token exchange failed with status:', tokenResponse.status);
+      return new Response('Token exchange failed safely', { status: 502 });
     }
 
     const tokens = await tokenResponse.json();
