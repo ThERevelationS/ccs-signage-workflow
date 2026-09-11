@@ -25,11 +25,15 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'listFiles': {
-        // With drive.file scope, we can only list files we created or user granted access to
-        // Try to list files in the folder - this works for shared folders user has access to
+        // With drive.file scope, we can only list files we created or user granted access to.
+        // Validate an optional folder id before interpolating it into Drive's query language.
+        const safeFolderId = String(folderId || '').trim();
+        if (safeFolderId && !/^[a-zA-Z0-9_-]+$/.test(safeFolderId)) {
+          return Response.json({ error: 'Invalid Google Drive folder id' }, { status: 400 });
+        }
         let query = "trashed=false";
-        if (folderId) {
-          query += ` and '${folderId}' in parents`;
+        if (safeFolderId) {
+          query += ` and '${safeFolderId}' in parents`;
         }
         
         const response = await fetch(
@@ -42,15 +46,16 @@ Deno.serve(async (req) => {
         );
         
         if (!response.ok) {
-          const errorText = await response.text();
-          // If we get a 403, it might be scope limitation
+          await response.text().catch(() => '');
+          // If we get a 403, it might be scope limitation.
           if (response.status === 403) {
             return Response.json({ 
               files: [], 
               notice: "Limited access: Can only see files created by this app. Use 'Open in Drive' to view all files." 
             });
           }
-          return Response.json({ error: `Failed to list files: ${errorText}` }, { status: response.status });
+          console.error('Failed to list Google Drive files:', response.status);
+          return Response.json({ error: 'Failed to list Google Drive files' }, { status: response.status });
         }
         
         const data = await response.json();
@@ -58,10 +63,18 @@ Deno.serve(async (req) => {
       }
 
       case 'createFolder': {
+        const safeFolderId = String(folderId || '').trim();
+        const safeFileName = String(fileName || '').trim();
+        if (safeFolderId && !/^[a-zA-Z0-9_-]+$/.test(safeFolderId)) {
+          return Response.json({ error: 'Invalid Google Drive parent folder id' }, { status: 400 });
+        }
+        if (!safeFileName) {
+          return Response.json({ error: 'Folder name is required' }, { status: 400 });
+        }
         const metadata = {
-          name: fileName,
+          name: safeFileName,
           mimeType: 'application/vnd.google-apps.folder',
-          parents: folderId ? [folderId] : []
+          parents: safeFolderId ? [safeFolderId] : []
         };
 
         const response = await fetch(
@@ -77,8 +90,9 @@ Deno.serve(async (req) => {
         );
 
         if (!response.ok) {
-          const error = await response.text();
-          return Response.json({ error: `Failed to create folder: ${error}` }, { status: response.status });
+          await response.text().catch(() => '');
+          console.error('Failed to create Google Drive folder:', response.status);
+          return Response.json({ error: 'Failed to create Google Drive folder' }, { status: response.status });
         }
 
         const folder = await response.json();
@@ -86,10 +100,19 @@ Deno.serve(async (req) => {
       }
 
       case 'uploadFile': {
+        const safeFolderId = String(folderId || '').trim();
+        const safeFileName = String(fileName || '').trim();
+        if (safeFolderId && !/^[a-zA-Z0-9_-]+$/.test(safeFolderId)) {
+          return Response.json({ error: 'Invalid Google Drive parent folder id' }, { status: 400 });
+        }
+        if (!safeFileName || typeof fileContent !== 'string') {
+          return Response.json({ error: 'A file name and file content are required' }, { status: 400 });
+        }
+
         // For multipart upload
         const metadata = {
-          name: fileName,
-          parents: folderId ? [folderId] : []
+          name: safeFileName,
+          parents: safeFolderId ? [safeFolderId] : []
         };
 
         // Decode base64 content
@@ -132,8 +155,9 @@ Deno.serve(async (req) => {
         );
 
         if (!response.ok) {
-          const error = await response.text();
-          return Response.json({ error: `Failed to upload file: ${error}` }, { status: response.status });
+          await response.text().catch(() => '');
+          console.error('Failed to upload Google Drive file:', response.status);
+          return Response.json({ error: 'Failed to upload Google Drive file' }, { status: response.status });
         }
 
         const file = await response.json();
