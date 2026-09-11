@@ -29,6 +29,8 @@ const DEFAULT_PREFS = {
   remember: true,
 };
 
+const googleMaps = () => /** @type {any} */ (window).google?.maps;
+
 function loadPreferences() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(PREF_KEY) || "null");
@@ -109,7 +111,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
   const selectedLocation = useMemo(() => vehicleLocation(selectedVehicle), [selectedVehicle]);
 
   const fitFleet = useCallback(() => {
-    const maps = window.google?.maps;
+    const maps = googleMaps();
     if (!maps || !mapRef.current) return;
     const bounds = new maps.LatLngBounds();
     let points = 0;
@@ -154,7 +156,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const maps = window.google?.maps;
+    const maps = googleMaps();
     if (!maps || !mapRef.current || !searchValue.trim()) return;
     const geocoder = new maps.Geocoder();
     geocoder.geocode({ address: searchValue }, (results, status) => {
@@ -223,7 +225,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
   }, [prefs.traffic, prefs.transit, prefs.bicycling, loading]);
 
   useEffect(() => {
-    const maps = window.google?.maps;
+    const maps = googleMaps();
     if (!maps || !mapRef.current) return;
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
@@ -261,7 +263,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
   }, [prefs.followSelected, selectedLocation, centerSelected]);
 
   useEffect(() => {
-    const maps = window.google?.maps;
+    const maps = googleMaps();
     if (!maps || !mapRef.current) return;
     tripLayerRef.current.forEach(layer => layer.setMap(null));
     tripLayerRef.current = [];
@@ -280,7 +282,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
   useEffect(() => {
     if (!containerRef.current || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(() => {
-      const maps = window.google?.maps;
+      const maps = googleMaps();
       if (maps && mapRef.current) maps.event.trigger(mapRef.current, "resize");
     });
     ro.observe(containerRef.current);
