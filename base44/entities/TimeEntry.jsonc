@@ -134,7 +134,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "timeclock_backend_only"
       }
     },
     "read": {
@@ -151,7 +151,7 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "timeclock_backend_only"
       }
     },
     "delete": {
