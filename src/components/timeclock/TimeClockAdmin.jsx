@@ -65,7 +65,7 @@ export default function TimeClockAdmin() {
     setIsLoading(true);
     try {
       const [entries, usersData] = await Promise.all([
-        loadAllEntityRows({ entity: TimeEntry, sort: "-clock_in", label: "Time Clock admin entries" }),
+        loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true } }, sort: "-clock_in", label: "Time Clock admin entries" }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock authorized users" })
       ]);
       setTimeEntries(entries);
