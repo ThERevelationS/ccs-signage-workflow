@@ -45,6 +45,7 @@ import QuoteSettings from './pages/QuoteSettings';
 import FleetTracking from './pages/FleetTracking';
 import FleetOverview from './pages/FleetOverview';
 import FleetSearch from './pages/FleetSearch';
+import FleetNotifications from './pages/FleetNotifications';
 import FleetEquipment from './pages/FleetEquipment';
 import FleetEquipmentDetail from './pages/FleetEquipmentDetail';
 import FleetMaintenance from './pages/FleetMaintenance';
@@ -97,6 +98,7 @@ const ESTIMATOR_PAGES = {
 const FLEET_PAGES = {
   FleetOverview,
   FleetSearch,
+  FleetNotifications,
   FleetTracking,
   FleetEquipment,
   FleetEquipmentDetail,
