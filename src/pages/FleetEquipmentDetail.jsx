@@ -205,7 +205,8 @@ export default function FleetEquipmentDetail() {
             </Card>
 
             <Card title="Recent Trips · 7 Days" icon={Navigation}>
-              {tripsLoading ? <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div> : <div className="space-y-2">{trips.slice(0,8).map(trip => <div key={trip.transactionId} className="py-2 border-b border-gray-100 dark:border-slate-800 last:border-0"><div className="text-sm text-gray-800 dark:text-slate-200">{trip.startTime ? new Date(trip.startTime).toLocaleString() : "Trip"}</div><div className="text-xs text-gray-400">{formatMiles(trip.distance || 0)} · avg {Math.round(trip.averageSpeed || 0)} mph</div></div>)}{trips.length === 0 && <Empty>No recent Bouncie trips.</Empty>}</div>}
+              {tripIdentityWarning && <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tripIdentityWarning}</div>}
+              {tripsLoading ? <div className="py-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div> : <div className="space-y-2">{trips.slice(0,8).map(trip => <div key={trip.transactionId} className="py-2 border-b border-gray-100 dark:border-slate-800 last:border-0"><div className="text-sm text-gray-800 dark:text-slate-200">{trip.startTime ? new Date(trip.startTime).toLocaleString() : "Trip"}</div><div className="text-xs text-gray-400">{formatMiles(trip.distance || 0)} · avg {Math.round(trip.averageSpeed || 0)} mph</div></div>)}{trips.length === 0 && !tripIdentityWarning && <Empty>No recent Bouncie trips.</Empty>}</div>}
             </Card>
 
             <Card title="Bouncie Notifications" icon={Bell}>
