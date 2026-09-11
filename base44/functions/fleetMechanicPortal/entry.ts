@@ -209,6 +209,10 @@ Deno.serve(async (req) => {
       if (action === 'admin_create_link') {
         const name = clean(body?.name || 'External Mechanic',80) || 'External Mechanic';
         const notes = clean(body?.notes,300);
+        const expiryRaw = body?.expires_in_days;
+        const expiryDays = expiryRaw == null || expiryRaw === '' ? 0 : Number(expiryRaw);
+        if (!Number.isInteger(expiryDays) || expiryDays < 0 || expiryDays > 3650) return json({error:'Mechanic link expiration must be between 0 and 3650 days.'},{status:400});
+        const expiresAt = expiryDays > 0 ? new Date(Date.now() + expiryDays * 86_400_000).toISOString() : '';
         const rawBytes = crypto.getRandomValues(new Uint8Array(32));
         const token = base64Url(rawBytes);
         const created = await Access.create({
@@ -216,9 +220,10 @@ Deno.serve(async (req) => {
           token_hash:await sha256(token),
           enabled:true,
           allowed_actions:['bootstrap','start','save'],
+          ...(expiresAt ? {expires_at:expiresAt} : {}),
           notes,
         });
-        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:created.id,name:created.name,created_by:auth.user.email || ''}}).catch(()=>null);
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:created.id,name:created.name,created_by:auth.user.email || '',expires_at:expiresAt}}).catch(()=>null);
         return json({success:true,link:publicGrant(created),token});
       }
 
