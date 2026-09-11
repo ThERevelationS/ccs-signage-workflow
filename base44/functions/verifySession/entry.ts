@@ -62,6 +62,11 @@ Deno.serve(async (req) => {
       }, { status: Array.isArray(users) && users.length === 0 ? 404 : 409 });
     }
     const user = users[0];
+    const notBefore = Date.parse(String(user?.session_not_before || ''));
+    const issuedAt = Number(payload?.iat || 0);
+    if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
+      return Response.json({ valid: false, error: 'Session has been revoked' }, { status: 401 });
+    }
 
     return Response.json({
       valid: true,
