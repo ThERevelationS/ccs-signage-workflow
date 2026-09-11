@@ -42,7 +42,11 @@ async function verifySessionToken(token: string, secret: string, authorized: any
 
   const rows = await authorized.filter({ email: String(payload.email).toLowerCase().trim() });
   if (!Array.isArray(rows) || rows.length !== 1) return null;
-  return rows[0];
+  const user = rows[0];
+  const notBefore = Date.parse(String(user?.session_not_before || ''));
+  const issuedAt = Number(payload?.iat || 0);
+  if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
+  return user;
 }
 
 function secureToken() {
