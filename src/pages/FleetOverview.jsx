@@ -242,22 +242,7 @@ export default function FleetOverview() {
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
-                  <div className="flex items-center justify-between gap-2 mb-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Needs Attention</h2><AlertTriangle className="w-5 h-5 text-amber-500" /></div>
-                  <div className="space-y-2">
-                    <AttentionRow icon={AlertTriangle} label="High / critical work orders" value={metrics.highPriorityOrders.length} page="FleetWorkOrders" query="attention=high_priority" />
-                    <AttentionRow icon={UserRoundX} label="Unassigned active work" value={metrics.unassignedOrders.length} page="FleetWorkOrders" query="attention=unassigned" />
-                    <AttentionRow icon={Clock3} label="Stale active work (30+ days)" value={metrics.staleOrders.length} page="FleetWorkOrders" query="attention=stale30" />
-                    <AttentionRow icon={AlertTriangle} label="Past projected completion" value={metrics.pastProjectedOrders.length} page="FleetWorkOrders" query="attention=past_projected" />
-                    <AttentionRow icon={CalendarClock} label="Overdue maintenance schedules" value={metrics.overdueTasks.length} page="FleetMaintenance" query="status=overdue" />
-                    <AttentionRow icon={Clock3} label="Maintenance due in 14 days" value={metrics.upcomingTasks.length} page="FleetMaintenance" query="status=pending" />
-                    <AttentionRow icon={Package} label="Low-stock parts" value={metrics.lowParts.length} page="FleetParts" query="stock=low" />
-                    <AttentionRow icon={Droplets} label="Low-stock fluids" value={metrics.lowFluids.length} page="FleetFluids" query="stock=low" />
-                    <AttentionRow icon={ShoppingCart} label="Pending / ordered requests" value={metrics.pendingRequests.length} page="FleetRequests" query="status=active" />
-                    <AttentionRow icon={Navigation} label="Bouncie identity conflicts" value={metrics.bouncieIdentityConflicts.length} page="FleetEquipment" query="view=tracking_issues" />
-                  </div>
-                  {metrics.upcomingTasks.length > 0 && <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Next due</div>{metrics.upcomingTasks.slice(0, 3).map(task => <div key={task.id} className="text-xs text-gray-600 dark:text-slate-300 py-1"><span className="font-medium">{task.start_date}</span> · {task.title}</div>)}</div>}
-                </div>
+                {metrics.upcomingTasks.length > 0 && <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm"><div className="flex items-center justify-between gap-2 mb-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Upcoming Maintenance</h2><CalendarClock className="w-5 h-5 text-indigo-500" /></div><div className="space-y-2">{metrics.upcomingTasks.slice(0, 5).map(task => { const eq = data.equipment.find(item => item.id === task.equipment_id); return <Link key={task.id} to={`${createPageUrl("FleetMaintenance")}?equipment=${encodeURIComponent(task.equipment_id || "")}&tab=schedule`} className="block rounded-lg px-2 py-2 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/60"><div className="text-xs font-semibold text-gray-900 dark:text-slate-100">{task.start_date} · {task.title}</div><div className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">{eq?.name || "Unresolved equipment"}</div></Link>; })}</div></div>}
                 <QuickLink icon={Navigation} title="Bouncie Tracking" text="Live vehicles, trips, alerts and telemetry" page="FleetTracking" />
                 <QuickLink icon={ShoppingCart} title="Requests" text={`${metrics.pendingRequests.length} pending or ordered`} page="FleetRequests" />
                 <QuickLink icon={Wrench} title="New Fleet Work Order" text="Start maintenance or repair work" page="FleetWorkOrders?new=1" rawPage />
