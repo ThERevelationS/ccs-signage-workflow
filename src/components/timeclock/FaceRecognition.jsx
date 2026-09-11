@@ -125,7 +125,6 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     if (modelsLoaded && !isEnrollMode && !isScanning) {
       startScanning();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelsLoaded]);
 
   const detectFace = async () => {
@@ -213,32 +212,6 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
-    }
-  };
-
-  const captureForEnrollment = async () => {
-    setScanStatus("Capturing...");
-    const detection = await detectFace();
-    
-    if (detection) {
-      const newDescriptors = [...capturedDescriptors, Array.from(detection.descriptor)];
-      setCapturedDescriptors(newDescriptors);
-      
-      if (newDescriptors.length >= 10) {
-        setScanStatus("Ready to save!");
-        setAutoCapturing(false);
-        handleEnrollCapture?.(newDescriptors);
-      } else {
-        setScanStatus(`Captured ${newDescriptors.length}/10. Move slightly...`);
-        // Auto-start next countdown
-        startCountdown(newDescriptors);
-      }
-    } else {
-      setScanStatus("No face detected. Look directly at camera.");
-      // Retry countdown
-      if (autoCapturing) {
-        startCountdown(capturedDescriptors);
-      }
     }
   };
 
