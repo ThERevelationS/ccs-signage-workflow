@@ -10,6 +10,13 @@ import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Be
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const TRACKED_LINK = new Set(["matched", "manual"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
+const hasDefinitiveTripEnd = row => {
+  if (!row?.ended_at || String(row?.transaction_id || "").trim()) return false;
+  const endedAt = Date.parse(row.ended_at) || 0;
+  const startedAt = Date.parse(row.started_at || "") || 0;
+  const lastEventAt = Date.parse(row.last_event_at || "") || 0;
+  return endedAt > 0 && (!startedAt || endedAt >= startedAt) && (!lastEventAt || endedAt >= lastEventAt);
+};
 
 export default function FleetEquipmentDetail() {
   const id = new URLSearchParams(window.location.search).get("id") || "";
@@ -91,6 +98,7 @@ export default function FleetEquipmentDetail() {
   const activeOrders = useMemo(() => workOrders.filter(row => ACTIVE.has(row.status)), [workOrders]);
   const completedOrders = useMemo(() => workOrders.filter(row => row.status === "completed"), [workOrders]);
   const isAdmin = currentUser?.role === "admin";
+  const liveDriving = !!live?.is_trip_active && !hasDefinitiveTripEnd(live);
 
   const saveMetadata = async () => {
     setSavingMeta(true);
@@ -167,7 +175,7 @@ export default function FleetEquipmentDetail() {
 
           <div className="space-y-5">
             <Card title="Tracking State" icon={Navigation}>
-              {TRACKED_LINK.has(equipment.bouncie_link_status) && live ? <div className="space-y-3"><Info label="Trip state" value={live.is_trip_active ? "Driving" : "Parked"} icon={Activity} /><Info label="Speed" value={live.speed != null ? `${Math.round(live.speed)} mph` : "—"} icon={Gauge} /><Info label="Odometer" value={live.odometer != null ? `${Number(live.odometer).toLocaleString()} mi` : "—"} icon={Gauge} /><Info label="Last seen" value={live.last_seen_at ? formatDateTimeShort(live.last_seen_at) : "—"} icon={MapPin} />{live.latitude != null && live.longitude != null && <Info label="Coordinates" value={`${Number(live.latitude).toFixed(5)}, ${Number(live.longitude).toFixed(5)}`} icon={MapPin} />}{liveStates.length > 1 && <div className="text-xs text-amber-700 dark:text-amber-300 rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2">{liveStates.length} Bouncie live-state rows exist for this VIN; this page uses the newest row only.</div>}</div> : <Empty>{equipment.bouncie_link_status === "not_applicable" ? "Bouncie tracking is not applicable to this asset." : "No proven Bouncie live state is linked."}</Empty>}
+              {TRACKED_LINK.has(equipment.bouncie_link_status) && live ? <div className="space-y-3"><Info label="Trip state" value={liveDriving ? "Driving" : "Parked"} icon={Activity} /><Info label="Speed" value={live.speed != null ? `${Math.round(live.speed)} mph` : "—"} icon={Gauge} /><Info label="Odometer" value={live.odometer != null ? `${Number(live.odometer).toLocaleString()} mi` : "—"} icon={Gauge} /><Info label="Last seen" value={live.last_seen_at ? formatDateTimeShort(live.last_seen_at) : "—"} icon={MapPin} />{live.latitude != null && live.longitude != null && <Info label="Coordinates" value={`${Number(live.latitude).toFixed(5)}, ${Number(live.longitude).toFixed(5)}`} icon={MapPin} />}{liveStates.length > 1 && <div className="text-xs text-amber-700 dark:text-amber-300 rounded-lg bg-amber-50 dark:bg-amber-950/30 p-2">{liveStates.length} Bouncie live-state rows exist for this VIN; this page uses the newest row only.</div>}</div> : <Empty>{equipment.bouncie_link_status === "not_applicable" ? "Bouncie tracking is not applicable to this asset." : "No proven Bouncie live state is linked."}</Empty>}
             </Card>
 
             <Card title="Recent Trips · 7 Days" icon={Navigation}>
