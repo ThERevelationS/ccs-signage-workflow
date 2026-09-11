@@ -91,9 +91,11 @@ async function verifyBadgeCredential(code: string, badgeEntity: any, authorized:
   const targetRows = await authorized.filter({ email });
   if (!Array.isArray(targetRows) || targetRows.length !== 1) return null;
   const badgeRows = await badgeEntity.filter({ user_email: email });
-  if (!Array.isArray(badgeRows) || badgeRows.length !== 1) return null;
-  const badge = badgeRows[0];
-  if (badge.revoked_at || Number(badge.badge_version) !== version) return null;
+  if (!Array.isArray(badgeRows)) return null;
+  const activeBadges = badgeRows.filter((row: any) => !row?.revoked_at);
+  if (activeBadges.length !== 1) return null;
+  const badge = activeBadges[0];
+  if (Number(badge.badge_version) !== version) return null;
 
   const expectedHash = await sha256Hex(`${email}|${version}|${rawToken}`);
   if (!constantTimeEqual(String(badge.token_hash || ''), expectedHash)) return null;
