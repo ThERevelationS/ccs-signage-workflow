@@ -63,7 +63,7 @@ export default function FleetWorkOrders() {
     const workOrderId = params.get("workOrder") || "";
     const attentionFilter = params.get("attention") || "";
     if (equipmentId) setEquipmentFilter(equipmentId);
-    if (["stale30", "past_projected", "unassigned"].includes(attentionFilter)) setAttention(attentionFilter);
+    if (["stale30", "past_projected", "unassigned", "high_priority"].includes(attentionFilter)) setAttention(attentionFilter);
     if (workOrderId) {
       setStatus("all");
       setExpanded(workOrderId);
@@ -98,6 +98,7 @@ export default function FleetWorkOrders() {
       if (attention === "stale30" && (!active || (workOrderAgeDays(w, todayText) ?? -1) < 30)) return false;
       if (attention === "past_projected" && !isWorkOrderPastProjected(w, todayText)) return false;
       if (attention === "unassigned" && (!active || String(w.assigned_to || "").trim())) return false;
+      if (attention === "high_priority" && (!active || !["critical", "high"].includes(w.priority))) return false;
       if (equipmentFilter !== "all" && w.equipment_id !== equipmentFilter) return false;
       if (!q) return true;
       return [w.work_order_number, w.title, w.description, w.assigned_to, equipmentNames[w.equipment_id], w.corrective_action].some(v => String(v || "").toLowerCase().includes(q));
@@ -204,7 +205,7 @@ export default function FleetWorkOrders() {
           <div className="relative"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search work orders..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
           <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All statuses</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
           <select value={priority} onChange={e => setPriority(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All priorities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-          <select value={attention} onChange={e => setAttention(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All attention states</option><option value="stale30">Stale 30+ days</option><option value="past_projected">Past projected completion</option><option value="unassigned">Unassigned active</option></select>
+          <select value={attention} onChange={e => setAttention(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All attention states</option><option value="high_priority">High / critical active</option><option value="stale30">Stale 30+ days</option><option value="past_projected">Past projected completion</option><option value="unassigned">Unassigned active</option></select>
           <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
         </div>
 
