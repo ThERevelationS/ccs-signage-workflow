@@ -70,26 +70,56 @@ export async function ensureQuoteDeliveryAudit(data = {}) {
   const findExisting = async () => {
     if (!messageId) return null;
     let rows = await base44.entities.EstimateQuoteDelivery.filter({ idempotency_key: idempotencyKey });
-    if (!(rows || []).length) rows = await base44.entities.EstimateQuoteDelivery.filter({ gmail_message_id: messageId });
-    const exact = (rows || []).find((row) => quoteDeliveryAuditMatches(row, withKey)) || null;
-    if (!exact && (rows || []).length) {
+    if (!Array.isArray(rows)) {
+      throw new Error("Quote delivery audit lookup did not return a delivery list.");
+    }
+    if (!rows.length) {
+      rows = await base44.entities.EstimateQuoteDelivery.filter({ gmail_message_id: messageId });
+      if (!Array.isArray(rows)) {
+        throw new Error("Quote delivery Gmail-id lookup did not return a delivery list.");
+      }
+    }
+    if (!rows.length) return null;
+
+    const exact = rows.filter((row) => quoteDeliveryAuditMatches(row, withKey));
+    if (exact.length !== rows.length) {
       throw new Error("A delivery audit with this Gmail message ID already exists but does not match this Estimate/version/PDF fingerprint.");
     }
-    return exact;
+    if (exact.length > 1) {
+      throw new Error("Multiple delivery audit rows exist for this Gmail message ID. No audit row was deleted automatically; review delivery history before retrying.");
+    }
+    return exact[0] || null;
   };
 
   const existing = await findExisting();
   if (existing) return existing;
 
+  let created = null;
+  let createError = null;
   try {
-    return await base44.entities.EstimateQuoteDelivery.create(withKey);
+    created = await base44.entities.EstimateQuoteDelivery.create(withKey);
   } catch (error) {
-    if (messageId) {
-      const recovered = await findExisting().catch(() => null);
-      if (recovered) return recovered;
-    }
-    throw error;
+    createError = error;
   }
+
+  // A Gmail message id is the durable identity for one sent-email event. Use it
+  // to verify create success and safely recover a lost create response.
+  if (messageId) {
+    let verified;
+    try {
+      verified = await findExisting();
+    } catch (verificationError) {
+      throw new Error(`Quote delivery audit create outcome could not be verified. The email is already sent; do not resend it just to repair audit history. ${verificationError?.message || "Reload delivery history first."}`);
+    }
+    if (verified) {
+      if (!created?.id || verified.id === created.id) return verified;
+      throw new Error("Quote delivery audit create returned one row but verification resolved a different row. The email is already sent; do not resend it. Review delivery history.");
+    }
+    throw new Error(`Quote delivery audit was not confirmed after its create attempt. The email is already sent; do not resend it just to repair audit history. ${createError?.message || "Reload delivery history first."}`);
+  }
+
+  if (created?.id) return created;
+  throw createError || new Error("Quote delivery audit could not be saved after the email was sent.");
 }
 
 export async function deliverEstimateQuote({
