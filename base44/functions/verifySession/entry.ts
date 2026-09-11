@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
     const [payloadStr, providedSig] = parts;
     const secret = Deno.env.get('SESSION_SIGNING_SECRET');
     if (!secret) {
-      return Response.json({ valid: false, error: 'Session secret not configured' }, { status: 500 });
+      console.error('verifySession session signing secret is unavailable');
+      return Response.json({ valid: false, error: 'Session verification service is unavailable' }, { status: 500 });
     }
 
     const expectedSig = await hmacSign(payloadStr, secret);
@@ -84,6 +85,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('verifySession error:', error);
-    return Response.json({ valid: false, error: error.message }, { status: 500 });
+    return Response.json({ valid: false, error: 'Session verification could not be completed safely' }, { status: 500 });
   }
 });
