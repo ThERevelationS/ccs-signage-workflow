@@ -158,8 +158,8 @@ Deno.serve(async (req) => {
         );
 
         if (!response.ok) {
-          const error = await response.text();
-          console.error('Failed to get Google Drive file metadata:', response.status, error);
+          await response.text().catch(() => '');
+          console.error('Failed to get Google Drive file metadata:', response.status);
           return Response.json({ error: 'Failed to get Google Drive file metadata' }, { status: response.status });
         }
 
@@ -188,8 +188,8 @@ Deno.serve(async (req) => {
         );
 
         if (!downloadResponse.ok) {
-          const error = await downloadResponse.text();
-          console.error('Failed to download Google Drive file:', downloadResponse.status, error);
+          await downloadResponse.text().catch(() => '');
+          console.error('Failed to download Google Drive file:', downloadResponse.status);
           return Response.json({ error: 'Failed to download Google Drive file' }, { status: downloadResponse.status });
         }
 
