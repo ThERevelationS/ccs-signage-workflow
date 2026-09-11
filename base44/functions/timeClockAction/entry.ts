@@ -388,25 +388,29 @@ Deno.serve(async (req) => {
       }
 
       const clockIn = new Date(String(correction?.clock_in || ''));
-      const clockOut = new Date(String(correction?.clock_out || ''));
-      if (!Number.isFinite(clockIn.getTime()) || !Number.isFinite(clockOut.getTime())) {
-        return Response.json({ success: false, error: 'Administrator corrections must include valid clock-in and clock-out timestamps.' }, { status: 400 });
+      const hasClockOut = Boolean(correction?.clock_out);
+      const clockOut = hasClockOut ? new Date(String(correction.clock_out)) : null;
+      if (!Number.isFinite(clockIn.getTime()) || (clockOut && !Number.isFinite(clockOut.getTime()))) {
+        return Response.json({ success: false, error: 'Administrator corrections require valid punch timestamps.' }, { status: 400 });
       }
-      if (clockOut.getTime() < clockIn.getTime()) return Response.json({ success: false, error: 'Clock-out cannot be earlier than clock-in.' }, { status: 400 });
+      if (clockOut && clockOut.getTime() < clockIn.getTime()) return Response.json({ success: false, error: 'Clock-out cannot be earlier than clock-in.' }, { status: 400 });
+      if (entry.status === 'clocked_out' && !clockOut) {
+        return Response.json({ success: false, error: 'A completed shift cannot be reopened by clearing its clock-out. Create a reviewed correction instead.' }, { status: 400 });
+      }
       const lunchMinutes = Math.round(Number(correction?.lunch_minutes || 0));
       if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240) {
         return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240.' }, { status: 400 });
       }
-      const totalMinutes = Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000);
-      if (lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
+      const totalMinutes = clockOut ? Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000) : null;
+      if (totalMinutes !== null && lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
       const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
       const now = new Date().toISOString();
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
-        clock_out: clockOut.toISOString(),
+        clock_out: clockOut ? clockOut.toISOString() : null,
         lunch_minutes: lunchMinutes,
-        total_hours: (totalMinutes - lunchMinutes) / 60,
-        status: 'clocked_out',
+        total_hours: totalMinutes === null ? Number(entry.total_hours || 0) : (totalMinutes - lunchMinutes) / 60,
+        status: clockOut ? 'clocked_out' : 'clocked_in',
         notes: String(correction?.notes || '').trim(),
         job_allocations: allocations,
         clock_source: 'admin_correction',
@@ -414,7 +418,7 @@ Deno.serve(async (req) => {
         last_corrected_by: actorEmail,
         last_correction_reason: reason,
       };
-      if (entry.status === 'clocked_in') nextFields['clock_out_request_id'] = requestId;
+      if (entry.status === 'clocked_in' && clockOut) nextFields['clock_out_request_id'] = requestId;
 
       if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
         return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the state mismatch before correcting it.' }, { status: 409 });
@@ -430,7 +434,7 @@ Deno.serve(async (req) => {
       if (!intent?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
 
       let claimedState: any = null;
-      if (entry.status === 'clocked_in') {
+      if (entry.status === 'clocked_in' && clockOut) {
         claimedState = await setState(stateEntity, state, 'clocked_in', null, {
           status: 'clocking_out', last_request_id: requestId, pending_started_at: now,
         });
@@ -456,6 +460,17 @@ Deno.serve(async (req) => {
       }
 
       const savedEntry = await entryEntity.get(entry.id);
+      if (entry.status === 'clocked_in' && !clockOut) {
+        const freshActiveState = await freshState(stateEntity, state.id);
+        if (freshActiveState.status !== 'clocked_in' || freshActiveState.active_entry_id !== entry.id) {
+          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Active entry corrected but authoritative state changed during correction.' } } });
+          return Response.json({ success: false, error: 'The active shift was corrected, but employee clock state changed during the operation. Admin review is required.' }, { status: 409 });
+        }
+        await stateEntity.updateMany(
+          { id: freshActiveState.id, updated_date: freshActiveState.updated_date, status: 'clocked_in', active_entry_id: entry.id },
+          { $set: { last_action_at: savedEntry.clock_in } },
+        );
+      }
       if (claimedState) {
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
