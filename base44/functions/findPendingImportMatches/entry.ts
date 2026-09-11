@@ -164,7 +164,7 @@ Return a JSON object with:
     });
 
   } catch (error) {
-    console.error('findPendingImportMatches error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('findPendingImportMatches error:', error?.message || error);
+    return Response.json({ error: 'Pending import matching could not be completed safely' }, { status: 500 });
   }
 });
