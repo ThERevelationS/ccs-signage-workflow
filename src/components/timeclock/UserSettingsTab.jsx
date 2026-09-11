@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { 
   Mail, 
@@ -24,18 +25,12 @@ export default function UserSettingsTab({ currentUser, onUserUpdated }) {
     setSendingReset(true);
     setResetError("");
     try {
-      const response = await fetch('/api/functions/issuePasswordReset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_token: sessionToken,
-          target_email: currentUser.email,
-        }),
+      const response = await base44.functions.invoke("issuePasswordReset", {
+        session_token: sessionToken,
+        target_email: currentUser.email,
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result?.success) {
-        throw new Error(result?.error || "Password reset could not be issued.");
-      }
+      const result = response?.data || response;
+      if (!result?.success) throw new Error(result?.error || "Password reset could not be issued.");
       setResetSent(true);
       setTimeout(() => setResetSent(false), 5000);
     } catch (err) {
