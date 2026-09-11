@@ -126,10 +126,10 @@ function sanitizeTask(row: any) {
     id:row.id, title:row.title || '', description:row.description || '', type:row.type || '', priority:row.priority || '',
     frequency:row.frequency || '', estimated_duration:row.estimated_duration ?? null, start_date:row.start_date || '', status:row.status || '',
     parts_needed:Array.isArray(row.parts_needed) ? row.parts_needed.map((item:any)=>({
-      part_name:clean(item?.part_name,160), quantity:Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : null, notes:clean(item?.notes,500),
+      part_name:clean(item?.part_name,160), quantity:item?.quantity == null || item.quantity === '' ? null : Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : null, notes:clean(item?.notes,500),
     })) : [],
     fluids_needed:Array.isArray(row.fluids_needed) ? row.fluids_needed.map((item:any)=>({
-      fluid_type:clean(item?.fluid_type,160), quantity:Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : null, unit:clean(item?.unit,32), notes:clean(item?.notes,500),
+      fluid_type:clean(item?.fluid_type,160), quantity:item?.quantity == null || item.quantity === '' ? null : Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : null, unit:clean(item?.unit,32), notes:clean(item?.notes,500),
     })) : [],
   };
 }
