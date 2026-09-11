@@ -85,7 +85,10 @@ Deno.serve(async (req) => {
   } catch (error) {
     const status = Number(error?.status || 500);
     const safeStatus = [400, 404].includes(status) ? status : 500;
-    return Response.json({ error: error.message }, { status: safeStatus });
+    console.error('refreshJurisdiction error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Jurisdiction refresh could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
 
