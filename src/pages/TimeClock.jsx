@@ -33,12 +33,16 @@ import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
-import { saveTimeEntryNotesIfUnchanged } from "@/components/timeclock/timeEntryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeOffRequest = base44.entities.TimeOffRequest;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+
+function newRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `tc-notes-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
 
 export default function TimeClock() {
   const [allUsers, setAllUsers] = useState([]);
@@ -55,6 +59,7 @@ export default function TimeClock() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [editingNotes, setEditingNotes] = useState(null);
   const [editNotesText, setEditNotesText] = useState("");
+  const [savingNotesId, setSavingNotesId] = useState(null);
   const [editingTimeOff, setEditingTimeOff] = useState(null);
   const [timeEntryError, setTimeEntryError] = useState("");
 
@@ -96,7 +101,7 @@ export default function TimeClock() {
       const [entries, requests] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
-          query: { user_email: loggedInUser.email, archived_test_data: { $ne: true } },
+          query: { user_email: loggedInUser.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
           sort: null,
           label: `Time entries for ${loggedInUser.email}`,
         }),
@@ -154,25 +159,34 @@ export default function TimeClock() {
 
   const handleSaveNotes = async (entryId) => {
     const loadedEntry = timeEntries.find(entry => entry.id === entryId);
-    if (!loadedEntry?.id) {
-      setTimeEntryError("This time entry is no longer loaded. Reload before editing its notes.");
+    if (!loadedEntry?.id || savingNotesId) return;
+    if (!timeClockSessionToken || !loggedInUser?.email) {
+      setTimeEntryError("Your signed Time Clock session is no longer available. Sign in again before editing notes.");
       return;
     }
     setTimeEntryError("");
+    setSavingNotesId(entryId);
     try {
-      await saveTimeEntryNotesIfUnchanged({
-        entity: TimeEntry,
-        entry: loadedEntry,
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "update_notes",
+        session_token: timeClockSessionToken,
+        target_email: loggedInUser.email,
+        request_id: newRequestId(),
+        entry_id: loadedEntry.id,
+        expected_updated_date: loadedEntry.updated_date,
         notes: editNotesText,
-        label: `Time entry notes for ${loadedEntry.user_name || loadedEntry.user_email || loadedEntry.id}`,
       });
+      const data = response?.data || response;
+      if (!data?.success) throw new Error(data?.error || "The notes update was not confirmed by the server.");
       setEditingNotes(null);
       setEditNotesText("");
       await loadData();
     } catch (err) {
       console.error("Error saving notes:", err);
-      setTimeEntryError(err?.message || "The notes changed in another session. Latest data was reloaded.");
+      setTimeEntryError(err?.response?.data?.error || err?.message || "The notes changed in another session. Latest data was reloaded.");
       await loadData();
+    } finally {
+      setSavingNotesId(null);
     }
   };
 
