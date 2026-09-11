@@ -7,7 +7,6 @@ import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEn
 import { easternTodayText, isFluidLowStock, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import {
   Activity,
-  AlertTriangle,
   Bell,
   CalendarClock,
   ClipboardList,
@@ -15,7 +14,6 @@ import {
   Loader2,
   Navigation,
   Package,
-  Settings,
   ShoppingCart,
   Truck,
   UserRoundX,
