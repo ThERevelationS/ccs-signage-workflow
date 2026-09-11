@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import FleetEquipmentTimeline from "@/components/fleet/FleetEquipmentTimeline";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
 import {
@@ -32,6 +33,7 @@ const TABS = [
   { key: "tracking", label: "Tracking" },
   { key: "maintenance", label: "Maintenance" },
   { key: "history", label: "History" },
+  { key: "timeline", label: "Timeline" },
   { key: "alerts", label: "Alerts" },
   { key: "details", label: "Details" },
 ];
@@ -227,6 +229,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "tracking" && <TrackingTab equipment={equipment} live={live} liveStates={liveStates} liveDriving={liveDriving} trips={trips} tripsLoading={tripsLoading} tripIdentityWarning={tripIdentityWarning} trackingUrl={trackingUrl} />}
         {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
+        {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
         {activeTab === "alerts" && <AlertsTab notifications={notifications} />}
         {activeTab === "details" && <DetailsTab equipment={equipment} metadata={metadata} isAdmin={isAdmin} editingMeta={editingMeta} setEditingMeta={setEditingMeta} metaForm={metaForm} setMetaForm={setMetaForm} savingMeta={savingMeta} saveMetadata={saveMetadata} />}
       </div>
