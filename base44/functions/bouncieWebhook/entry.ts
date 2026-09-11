@@ -2,12 +2,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { normalizeWebhookEvent, applyLiveState, patchConnection } from '../../shared/bouncie.ts';
 
+const SEMANTIC_TRIP_EVENTS = new Set(['tripStart', 'tripEnd', 'tripMetrics']);
+
 const canonical = (rows = []) => rows.slice().sort((a,b) => {
   const at = Date.parse(a?.created_date || '') || 0;
   const bt = Date.parse(b?.created_date || '') || 0;
   if (at !== bt) return at - bt;
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
+
+async function findNotificationContenders(Notification, normalized, vin) {
+  const exact = await Notification.filter({ event_key: normalized.eventKey });
+  if (exact?.length || !SEMANTIC_TRIP_EVENTS.has(normalized.eventType)) return exact || [];
+  // Some Bouncie retry/normalization paths can report the same trip boundary with a
+  // corrected odometer value. VIN + trip event type + event timestamp is the stable
+  // event identity; payload measurements are event data, not identity.
+  return await Notification.filter({
+    vehicle_vin: vin,
+    event_type: normalized.eventType,
+    timestamp: normalized.timestamp,
+  });
+}
 
 export default async function(req) {
   try {
@@ -44,13 +59,12 @@ export default async function(req) {
 
     let duplicate = false;
     if (normalized.createNotification && vin) {
-      const existing = await base44.asServiceRole.entities.BouncieNotification.filter({
-        event_key: normalized.eventKey
-      });
+      const Notification = base44.asServiceRole.entities.BouncieNotification;
+      const existing = await findNotificationContenders(Notification, normalized, vin);
       duplicate = !!(existing && existing.length);
 
       if (!duplicate) {
-        const created = await base44.asServiceRole.entities.BouncieNotification.create({
+        const created = await Notification.create({
           vehicle_vin: vin,
           vehicle_imei: event.imei || '',
           category: normalized.category,
@@ -65,14 +79,14 @@ export default async function(req) {
           raw_data: event
         });
 
-        // Collapse only concurrent same-key creates from this race. Historical rows are never scanned or rewritten.
+        // Collapse only concurrent deliveries of this same event. Historical rows are never scanned or rewritten.
         await new Promise((resolve) => setTimeout(resolve, 50));
-        const contenders = await base44.asServiceRole.entities.BouncieNotification.filter({ event_key: normalized.eventKey });
+        const contenders = await findNotificationContenders(Notification, normalized, vin);
         const winner = canonical(contenders) || created;
         duplicate = (contenders || []).length > 1;
         for (const contender of contenders || []) {
           if (contender.id !== winner.id) {
-            await base44.asServiceRole.entities.BouncieNotification.delete(contender.id).catch(() => null);
+            await Notification.delete(contender.id).catch(() => null);
           }
         }
       }
