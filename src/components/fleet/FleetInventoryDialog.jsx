@@ -101,7 +101,7 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
             <div className="text-xs text-gray-400 mt-2">No selections means unrestricted compatibility.</div>
           </div>
 
-          <Field label="Notes"><textarea rows="4" value={form.notes || ""} onChange={e => set("notes", e.target.value)} className="field" /></Field>
+          <Field label="Notes"><textarea rows={4} value={form.notes || ""} onChange={e => set("notes", e.target.value)} className="field" /></Field>
           <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{item ? "Save" : "Create"}</button></div>
         </form>
       </div>
