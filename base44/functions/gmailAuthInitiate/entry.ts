@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
 
         return Response.json({ authUrl: authUrl.toString() });
     } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+        console.error('gmailAuthInitiate error:', error?.message || error);
+        return Response.json({ error: 'Gmail authorization could not be started safely' }, { status: 500 });
     }
 });
