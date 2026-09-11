@@ -14,8 +14,9 @@ Deno.serve(async (req) => {
     const { action, workOrderId, fileIds } = body;
 
     if (action === 'getPickerToken') {
-      const { accessToken } = await base44.asServiceRole.connectors.getConnection('googledrive');
-      return Response.json({ token: accessToken });
+      return Response.json({
+        error: 'Direct Google Drive OAuth token export is disabled. Use the server-side Google Drive operations instead.'
+      }, { status: 410 });
     }
 
     if (action === 'saveFileAccess') {
