@@ -10,11 +10,13 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     if (!apiKey) {
-      return Response.json({ error: 'GOOGLE_MAPS_API_KEY not configured' }, { status: 500 });
+      console.error('getGoogleMapsKey is not configured');
+      return Response.json({ error: 'Google Maps is not configured' }, { status: 503 });
     }
 
     return Response.json({ apiKey });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('getGoogleMapsKey error:', error?.message || error);
+    return Response.json({ error: 'Google Maps configuration could not be loaded safely' }, { status: 500 });
   }
 });
