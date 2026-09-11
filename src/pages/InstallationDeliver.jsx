@@ -55,7 +55,7 @@ export default function InstallationDeliver() {
           .filter(item => item.page === "Installation")
           .map(item => item.text || item);
       }
-    } catch (e) {}
+    } catch {}
     return ["WIP - Installation", "WIP - Outsourced Installation"];
   };
 
@@ -210,22 +210,6 @@ export default function InstallationDeliver() {
       console.error("Error deleting work order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
       loadWorkOrders();
-    }
-  };
-
-  const toggleFullScreen = async () => {
-    try {
-      if (!document.fullscreenElement) { // Check if fullscreen is active using document.fullscreenElement
-        await document.documentElement.requestFullscreen();
-        setIsFullScreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullScreen(false);
-      }
-    } catch (error) {
-      console.error("Fullscreen API error:", error);
-      // If an error occurs, ensure isFullScreen state reflects the actual state (not fullscreen)
-      setIsFullScreen(false);
     }
   };
 
