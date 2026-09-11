@@ -2,6 +2,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 
+// Fixed bcrypt work factor for invalid/unknown credentials. This is not a real
+// account credential; it only keeps failed-login timing closer to valid-user
+// bcrypt verification so username existence is harder to infer remotely.
+const DUMMY_PASSWORD_HASH = '$2a$10$ApDRjqUs6Q5EbAw/6UybWuLWQOAa5Eg4dLKs/F9iQRZUXfcubNGKa';
+
 // Base64url helpers
 function b64urlEncode(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -52,12 +57,14 @@ Deno.serve(async (req) => {
     const users = await filterWithRetry();
     if (!Array.isArray(users) || users.length !== 1) {
       if (users?.length > 1) console.error(`verifyLogin duplicate username records for ${uname}`);
+      await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
     const user = users[0];
 
     const stored = user.password_hash || '';
     if (!stored) {
+      await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
@@ -69,6 +76,9 @@ Deno.serve(async (req) => {
     let match = isBcrypt ? await bcrypt.compare(password, stored) : password === stored;
 
     if (!match) {
+      if (!isBcrypt) {
+        await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
+      }
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
