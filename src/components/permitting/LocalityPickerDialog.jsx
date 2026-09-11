@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Loader2, MapPin, AlertTriangle, CheckCircle2, Zap, ZapOff, X, Save } from "lucide-react";
 import GoogleMapView from "./GoogleMapView";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function LocalityPickerDialog({
   isOpen,
@@ -13,6 +14,7 @@ export default function LocalityPickerDialog({
   localities,
   onApply,  // (localityId, { excludeElectrical }) => void
 }) {
+  const { sessionToken } = useAuth();
   const [address, setAddress] = useState("");
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null); // full AI result
@@ -38,7 +40,10 @@ export default function LocalityPickerDialog({
     setError("");
     setResult(null);
     try {
-      const { data } = await base44.functions.invoke('findLocalityByAddress', { address: address.trim() });
+      const { data } = await base44.functions.invoke('findLocalityByAddress', {
+        address: address.trim(),
+        session_token: sessionToken,
+      });
       if (data?.success === false) {
         setError(data.error || "Search failed");
       } else {
