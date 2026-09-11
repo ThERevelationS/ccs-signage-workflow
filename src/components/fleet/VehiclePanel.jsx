@@ -6,16 +6,18 @@ import TripsTab from "./TripsTab";
 import StatsTab from "./StatsTab";
 import NotificationsTab from "./NotificationsTab";
 import DetailsTab from "./DetailsTab";
+import MaintenanceTab from "./MaintenanceTab";
 
 const TABS = [
   { key: "trips", label: "TRIPS" },
   { key: "stats", label: "STATS" },
-  { key: "notifications", label: "NOTIFICATIONS" },
+  { key: "notifications", label: "ALERTS" },
+  { key: "maintenance", label: "MAINT" },
   { key: "details", label: "DETAILS" },
 ];
 
 export default function VehiclePanel({
-  vehicle, fleetEquipment, fleetOpenWorkOrders = [], trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
+  vehicle, fleetEquipment, fleetOpenWorkOrders = [], fleetMaintenanceTasks = [], fleetEquipmentLogs = [], fleetMaintenanceLoading = false, trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
   onOpenAlertSettings, canManageAlerts = false, onClose, daysBack, onDaysBackChange, avgBy, onAvgByChange,
   onTripsRefresh, selectedTripId, onSelectTrip
 }) {
@@ -83,6 +85,15 @@ export default function VehiclePanel({
           <NotificationsTab notifications={notifications} vehicle={vehicle}
             onClearAll={onClearNotifications} onMarkRead={onMarkNotificationRead}
             onOpenSettings={onOpenAlertSettings} canManageAlerts={canManageAlerts} />
+        )}
+        {activeTab === "maintenance" && (
+          <MaintenanceTab
+            equipment={fleetEquipment}
+            openWorkOrders={fleetOpenWorkOrders}
+            tasks={fleetMaintenanceTasks}
+            logs={fleetEquipmentLogs}
+            loading={fleetMaintenanceLoading}
+          />
         )}
         {activeTab === "details" && <DetailsTab vehicle={vehicle} fleetEquipment={fleetEquipment} />}
       </div>
