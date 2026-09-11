@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, ...results });
   } catch (error) {
-    console.error('migrateCredentials error:', error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    console.error('migrateCredentials error:', error?.message || error);
+    return Response.json({ success: false, error: 'Credential migration could not be completed safely' }, { status: 500 });
   }
 });
