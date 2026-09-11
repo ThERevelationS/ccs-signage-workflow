@@ -9,8 +9,13 @@ export default async function(req) {
       req.headers.get('Authorization') ||
       '';
     const expectedKey = secrets.get('BOUNCIE_WEBHOOK_KEY') || '';
+    if (!expectedKey) {
+      console.error('bouncieWebhook: BOUNCIE_WEBHOOK_KEY is not configured.');
+      return Response.json({ error: 'Webhook authentication is not configured.' }, { status: 503 });
+    }
 
-    if (expectedKey && providedKey.replace(/^Bearer\s+/i, '') !== expectedKey) {
+    const normalizedProvidedKey = providedKey.replace(/^Bearer\s+/i, '');
+    if (!normalizedProvidedKey || normalizedProvidedKey !== expectedKey) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
