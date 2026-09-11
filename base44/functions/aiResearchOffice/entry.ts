@@ -1,16 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // AI-powered office research — takes a rough office name + optional state,
 // returns corrected name, office type, contact info, and suggested workflow steps.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
+    await authenticateSignShopSession(base44, body?.session_token);
     const { query, state, existing_office_types } = body || {};
     if (!query || !String(query).trim()) {
       return Response.json({ error: 'Missing query' }, { status: 400 });
@@ -80,7 +77,11 @@ Return ONLY valid data. If you cannot find something, leave the field empty ("")
 
     return Response.json({ success: true, office: result });
   } catch (error) {
-    console.error('aiResearchOffice error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    console.error('aiResearchOffice error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Office research could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
