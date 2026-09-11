@@ -36,7 +36,7 @@ const MARITAL_STATUS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" }
 ];
 
-export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = false }) {
+export default function UserHRDataForm({ userData, onUpdate, onSave, section, isAdmin = false }) {
   const [hrData, setHrData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
@@ -56,14 +56,18 @@ export default function UserHRDataForm({ userData, onUpdate, section, isAdmin = 
     setSaveSuccess("");
     
     try {
-      await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: userData,
-        nextFields: { hr_data: hrData },
-        exactVersion: false,
-        enforceIdentity: false,
-        label: `HR data for ${userData.full_name || userData.email || userData.id}`
-      });
+      if (onSave) {
+        await onSave(hrData);
+      } else {
+        await updateAuthorizedEmailIfUnchanged({
+          entity: base44.entities.AuthorizedEmail,
+          record: userData,
+          nextFields: { hr_data: hrData },
+          exactVersion: false,
+          enforceIdentity: false,
+          label: `HR data for ${userData.full_name || userData.email || userData.id}`
+        });
+      }
       setSaveSuccess("Changes saved successfully!");
       setTimeout(() => setSaveSuccess(""), 3000);
       if (onUpdate) onUpdate();
