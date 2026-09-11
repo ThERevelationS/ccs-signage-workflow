@@ -171,6 +171,11 @@ export default function UserManagement() {
   const handleSave = async () => {
     if (!editingUser || userMutationSaving) return;
     setUserMutationError("");
+    const requestedPassword = String(formData.password_hash || "");
+    if (requestedPassword && requestedPassword.length < 8) {
+      setUserMutationError("Password must be at least 8 characters, or leave it blank to keep the existing password.");
+      return;
+    }
     setUserMutationSaving(true);
     try {
       const dataToSave = { ...formData };
@@ -604,7 +609,7 @@ export default function UserManagement() {
                         placeholder={formData.password_hash ? "••••••••" : "Set password"}
                         className="mt-1"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password</p>
+                      <p className="text-xs text-gray-500 mt-1">Leave blank to keep existing password; new passwords require at least 8 characters</p>
                     </div>
                   </div>
 
