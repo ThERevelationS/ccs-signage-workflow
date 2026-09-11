@@ -48,6 +48,11 @@
         }
       }
     },
+    "session_not_before": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Custom sign-shop sessions issued before this timestamp are invalid. Advanced on password changes and credential resets."
+    },
     "role": {
       "type": "string",
       "enum": [
