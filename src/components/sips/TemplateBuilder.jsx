@@ -32,6 +32,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [settingRecords, setSettingRecords] = useState({});
   const [persistenceError, setPersistenceError] = useState("");
+  const [isSubTemplateReordering, setIsSubTemplateReordering] = useState(false);
   
   // Template Selector state
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -608,16 +609,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const handleSubTemplateDragEnd = async (result) => {
-    if (!result.destination || result.source.index === result.destination.index) return;
+    if (isSubTemplateReordering || !result.destination || result.source.index === result.destination.index) return;
     const reordered = Array.from(subTemplates);
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
     setPersistenceError("");
+    setIsSubTemplateReordering(true);
     try {
       const savedRows = await reorderChecklistSubItemsIfUnchanged({
         entity: ChecklistSubItem,
         loadedRows: subTemplates,
         reorderedRows: reordered,
+        readCurrentRows: () => loadAllEntityRows({
+          entity: ChecklistSubItem,
+          sort: null,
+          label: 'SIP checklist sub-templates reorder verification',
+        }),
         label: 'SIP sub-template reorder',
       });
       setSubTemplates([...savedRows].sort((a, b) => (a.order || 0) - (b.order || 0)));
@@ -625,6 +632,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error reordering:", error);
       setPersistenceError(error?.message || "The sub-template order changed in another session. Latest data was reloaded.");
       await loadData();
+    } finally {
+      setIsSubTemplateReordering(false);
     }
   };
 
@@ -1245,7 +1254,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.droppableProps}>
                         {subTemplates.map((st, index) => (
-                          <Draggable key={st.id} draggableId={st.id} index={index}>
+                          <Draggable key={st.id} draggableId={st.id} index={index} isDragDisabled={isSubTemplateReordering}>
                             {(provided) => (
                               <div ref={provided.innerRef} {...provided.draggableProps}
                                 onClick={() => editingSubTemplateId !== st.id && selectSubTemplateForEditing(st)}
