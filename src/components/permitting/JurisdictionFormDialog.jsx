@@ -13,7 +13,7 @@ const DOC_TYPES = ["sign_ordinance","permit_application","zoning_code","fee_sche
 export default function JurisdictionFormDialog({ open, onClose, jurisdiction, onSave, onDelete }) {
   const isEdit = !!jurisdiction?.id;
   const [form, setForm] = useState({
-    name: "", state: "", type: "county",
+    name: "", state: "", type: "county", parent_county: null,
     website_url: "", permitting_url: "",
     notes: "", documents: [],
     contact_info: { department: "", phone: "", email: "", address: "" },
@@ -35,7 +35,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
 
   useEffect(() => {
     if (jurisdiction) setForm(current => ({ ...current, ...jurisdiction }));
-    else setForm({ name: "", state: "", type: "county", website_url: "", permitting_url: "", notes: "", documents: [], contact_info: { department: "", phone: "", email: "", address: "" }, auto_refresh: true });
+    else setForm({ name: "", state: "", type: "county", parent_county: null, website_url: "", permitting_url: "", notes: "", documents: [], contact_info: { department: "", phone: "", email: "", address: "" }, auto_refresh: true });
     setManualProtectionEdits({ website: false, permitting: false, requirements: false, documents: false });
   }, [jurisdiction, open]);
 
@@ -198,31 +198,10 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
         _manual_documents: !!(form._manual_documents || manualProtectionEdits.documents),
       };
 
-      // Check if this jurisdiction already exists (excluding current edit)
-      const existing = await base44.entities.JurisdictionProfile.filter({
-        name: form.name,
-        state: form.state
-      });
-
-      if (existing && existing.length > 0) {
-        // If editing, check if it's a different record
-        if (isEdit && existing[0].id === jurisdiction.id) {
-          // Same jurisdiction, proceed
-          await onSave(savePayload);
-        } else if (!isEdit) {
-          // Creating new and duplicate exists
-          alert(`${form.name}, ${form.state} already exists in the repository. Please edit the existing profile instead.`);
-          setSaving(false);
-          return;
-        } else {
-          // Editing but different duplicate exists
-          alert(`Another jurisdiction named ${form.name}, ${form.state} already exists. Please use a different name.`);
-          setSaving(false);
-          return;
-        }
-      } else {
-        await onSave(savePayload);
-      }
+      // Jurisdiction identity is validated centrally by the persistence layer.
+      // Parent County is part of the identity for non-county jurisdictions so
+      // legitimate same-named municipalities in different counties can coexist.
+      await onSave(savePayload);
     } catch (e) {
       console.error("Save error:", e);
       alert(e?.message || "Error saving jurisdiction");
@@ -262,6 +241,22 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
                 </SelectContent>
               </Select>
             </div>
+            {form.type !== "county" && (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Parent County <span className="font-normal text-gray-400">(recommended when names repeat)</span></label>
+                <Input
+                  value={form.parent_county?.name || ""}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    parent_county: e.target.value
+                      ? { ...(f.parent_county || {}), name: e.target.value }
+                      : null,
+                  }))}
+                  placeholder="e.g. Clermont County"
+                />
+                <p className="mt-1 text-[10px] text-gray-500">Used to distinguish jurisdictions with the same name in the same state, such as townships in different counties.</p>
+              </div>
+            )}
           </div>
 
           {/* AI Generate Button */}
