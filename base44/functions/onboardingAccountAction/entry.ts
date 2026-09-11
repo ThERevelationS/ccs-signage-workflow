@@ -111,7 +111,10 @@ Deno.serve(async (req) => {
             required: ['subject', 'body'],
           },
         });
-        if (aiEmail?.subject && aiEmail?.body) { subject = aiEmail.subject; html = aiEmail.body; }
+        if (aiEmail?.subject && aiEmail?.body && String(aiEmail.body).includes(registrationLink)) {
+          subject = aiEmail.subject;
+          html = aiEmail.body;
+        }
       } catch (aiError) {
         console.error('Onboarding invitation AI formatting failed; using safe fallback for user id:', target.id);
       }
