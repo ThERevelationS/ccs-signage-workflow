@@ -20,7 +20,12 @@ async function readActiveEntries(entity, userEmail, label) {
   if (typeof entity?.filter !== "function") {
     throw new Error(`${label} could not query active time entries.`);
   }
-  const rows = await entity.filter({ user_email: userEmail, status: "clocked_in" });
+  const rows = await entity.filter({
+    user_email: userEmail,
+    status: "clocked_in",
+    archived_test_data: { $ne: true },
+    archived_admin: { $ne: true },
+  });
   if (!Array.isArray(rows)) {
     throw new Error(`${label} active-entry lookup did not return a record list.`);
   }
