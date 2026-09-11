@@ -52,14 +52,15 @@ Deno.serve(async (req) => {
         const tokens = await tokenResponse.json();
 
         if (tokens.error) {
+            console.error('gmailAuthCallback token exchange failed:', String(tokens.error));
             return new Response(`
                 <html>
                     <body>
                         <h1>Token Exchange Failed</h1>
-                        <p>Error: ${tokens.error_description || tokens.error}</p>
+                        <p>The Gmail connection could not be completed safely. Please retry.</p>
                     </body>
                 </html>
-            `, { headers: { 'Content-Type': 'text/html' } });
+            `, { status: 502, headers: { 'Content-Type': 'text/html' } });
         }
 
         // Store the refresh token for the user
