@@ -18,7 +18,7 @@ const canonicalRow = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
-const stripBuiltIns = (input: any = {}) => {
+const stripCreationProtectedFields = (input: any = {}) => {
   const {
     id: _id,
     created_date: _createdDate,
@@ -26,6 +26,19 @@ const stripBuiltIns = (input: any = {}) => {
     created_by: _createdBy,
     created_by_id: _createdById,
     creation_request_key: _creationRequestKey,
+    work_order_id: _workOrderId,
+    line_items: _lineItems,
+    total_cost: _totalCost,
+    quote_total: _quoteTotal,
+    quote_issue_date: _quoteIssueDate,
+    quote_version: _quoteVersion,
+    cancel_reason: _cancelReason,
+    edit_reason: _editReason,
+    pipeline_sync_pending: _pipelineSyncPending,
+    pipeline_sync_error: _pipelineSyncError,
+    last_product_removal_key: _lastProductRemovalKey,
+    last_product_removal_line_id: _lastProductRemovalLineId,
+    last_product_removal_at: _lastProductRemovalAt,
     ...rest
   } = input || {};
   return rest;
@@ -75,7 +88,10 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const creationKey = clean(body?.creation_key);
     const estimateInput = body?.estimate && typeof body.estimate === 'object' ? body.estimate : {};
-    const estimate = stripBuiltIns(estimateInput);
+    // New Estimate creation establishes only a clean Draft shell. Relationships,
+    // Products, totals, issued-quote identity, lifecycle recovery markers, and
+    // removal receipts are created later by their dedicated guarded workflows.
+    const estimate = stripCreationProtectedFields(estimateInput);
     estimate.project_name = clean(estimate.project_name);
     estimate.client_name = clean(estimate.client_name);
     estimate.customer_id = clean(estimate.customer_id) || null;
