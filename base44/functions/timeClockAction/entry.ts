@@ -65,6 +65,15 @@ function authenticationMethodFor(actor: any, target: any) {
   return asEmail(actor?.email) === asEmail(target?.email) ? 'session' : 'admin_kiosk';
 }
 
+function publicEmployee(target: any) {
+  return {
+    id: target?.id,
+    email: asEmail(target?.email),
+    full_name: target?.full_name || asEmail(target?.email),
+    username: target?.username || '',
+  };
+}
+
 async function verifyBadgeCredential(code: string, badgeEntity: any, authorized: any) {
   const parts = String(code || '').trim().split(':');
   if (parts.length !== 4 || parts[0] !== 'TIMECLOCK2') return null;
@@ -302,9 +311,9 @@ Deno.serve(async (req) => {
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email) {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
-        return Response.json({ success: true, status: 'clocked_in', entry });
+        return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target) });
       }
-      if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null });
+      if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null, user: publicEmployee(target) });
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
 
@@ -314,7 +323,7 @@ Deno.serve(async (req) => {
       if (state.status === 'clocked_in') {
         const entry = state.active_entry_id ? await entryEntity.get(state.active_entry_id).catch(() => null) : null;
         if (entry?.id && entry.status === 'clocked_in' && asEmail(entry.user_email) === target.email) {
-          return Response.json({ success: true, status: 'already_clocked_in', entry, reused: true });
+          return Response.json({ success: true, status: 'already_clocked_in', entry, reused: true, user: publicEmployee(target) });
         }
         return Response.json({ success: false, error: 'Clock state says this employee is already clocked in, but the active entry is invalid. Admin review is required.' }, { status: 409 });
       }
@@ -363,14 +372,14 @@ Deno.serve(async (req) => {
         authentication_method: authenticationMethodFor(actor, target),
         server_timestamp: entry.clock_in, request_id: requestId, time_entry_id: entry.id,
       });
-      return Response.json({ success: true, status: 'clocked_in', entry, audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: auditSaved });
     }
 
     if (action === 'clock_out') {
       if (state.status === 'clocked_out') {
         const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-out request');
         if (prior?.id && prior.status === 'clocked_out') {
-          return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true });
+          return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true, user: publicEmployee(target) });
         }
         return Response.json({ success: false, error: 'Employee is not currently clocked in.' }, { status: 409 });
       }
@@ -453,7 +462,7 @@ Deno.serve(async (req) => {
         server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
         details: { lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours },
       });
-      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: auditSaved });
     }
 
     return Response.json({ success: false, error: 'Unsupported Time Clock action.' }, { status: 400 });
