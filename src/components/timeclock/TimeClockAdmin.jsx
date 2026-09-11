@@ -7,6 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Download, 
   Pencil, 
@@ -42,6 +52,8 @@ export default function TimeClockAdmin() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [editingEntryBaseline, setEditingEntryBaseline] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [timeEntryError, setTimeEntryError] = useState("");
 
   useEffect(() => {
@@ -173,8 +185,10 @@ export default function TimeClockAdmin() {
     }
   };
 
-  const handleDeleteEntry = async (entry) => {
-    if (!entry?.id || !confirm("Are you sure you want to delete this time entry?")) return;
+  const handleDeleteEntry = async () => {
+    const entry = deleteConfirm;
+    if (!entry?.id || deleteBusy) return;
+    setDeleteBusy(true);
     setTimeEntryError("");
     try {
       await deleteTimeEntryIfUnchanged({
@@ -182,11 +196,15 @@ export default function TimeClockAdmin() {
         entry,
         label: `Admin time entry deletion for ${entry.user_name || entry.user_email || entry.id}`,
       });
+      setDeleteConfirm(null);
       await loadData();
     } catch (err) {
       console.error("Error deleting entry:", err);
       setTimeEntryError(err?.message || "This time entry changed in another session and was not deleted.");
+      setDeleteConfirm(null);
       await loadData();
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -457,7 +475,7 @@ export default function TimeClockAdmin() {
                         <Button variant="ghost" size="icon" onClick={() => handleEditEntry(entry)} className="h-7 w-7">
                           <Pencil className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteEntry(entry)} className="h-7 w-7">
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(entry)} className="h-7 w-7">
                           <Trash2 className="w-3 h-3 text-red-500" />
                         </Button>
                       </div>
@@ -584,6 +602,23 @@ export default function TimeClockAdmin() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open && !deleteBusy) setDeleteConfirm(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Time Entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete the {deleteConfirm?.user_name || deleteConfirm?.user_email || "employee"} time entry from {deleteConfirm?.clock_in ? format(parseISO(deleteConfirm.clock_in), "MMM d, yyyy 'at' h:mm a") : "this shift"}? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEntry} className="bg-red-600 hover:bg-red-700" disabled={deleteBusy}>
+              {deleteBusy ? "Deleting..." : "Delete Time Entry"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
