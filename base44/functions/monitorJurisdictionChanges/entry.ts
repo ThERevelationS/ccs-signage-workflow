@@ -35,14 +35,19 @@ async function authenticateAdminSession(base44: any, token: unknown) {
   let payload: any;
   try { payload = JSON.parse(b64urlDecode(payloadStr)); } catch { throw Object.assign(new Error('Authentication required'), { status: 401 }); }
   const email = String(payload?.email || '').trim().toLowerCase();
-  if (!email || (payload?.exp && Number(payload.exp) < Date.now())) throw Object.assign(new Error('Authentication required'), { status: 401 });
+  const issuedAt = Number(payload?.iat);
+  const expiresAt = Number(payload?.exp);
+  if (
+    !email ||
+    !Number.isFinite(issuedAt) || issuedAt <= 0 ||
+    !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
+  ) throw Object.assign(new Error('Authentication required'), { status: 401 });
   const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email });
   if (!Array.isArray(users)) throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
   if (users.length === 0) throw Object.assign(new Error('Authentication required'), { status: 401 });
   if (users.length !== 1) throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
   const user = users[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
-  const issuedAt = Number(payload?.iat || 0);
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
