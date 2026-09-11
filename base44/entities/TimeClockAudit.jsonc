@@ -9,6 +9,8 @@
         "clock_out",
         "state_recovery",
         "admin_correction",
+        "admin_archive",
+        "notes_update",
         "delete",
         "reset",
         "badge_issue",
@@ -18,6 +20,7 @@
     "outcome": {
       "type": "string",
       "enum": [
+        "pending",
         "confirmed",
         "reused",
         "blocked",
