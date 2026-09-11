@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
-import { callBouncieApi } from '../../shared/bouncie.ts';
+import { callBouncieApi, coalesceLiveStateRows } from '../../shared/bouncie.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 // Durable CCS-local alert evaluation against Bouncie vehicle stats.
@@ -190,8 +190,37 @@ export default async function(req) {
 
     const Notification = base44.asServiceRole.entities.BouncieNotification;
     const Runtime = base44.asServiceRole.entities.FleetAlertRuntimeState;
+    const LiveState = base44.asServiceRole.entities.BouncieVehicleLiveState;
     const pending = [];
     let created = 0;
+
+    // BouncieVehicleLiveState is a derived cache, not trip/history data. Repair any
+    // duplicate VIN rows here as a second safety net in addition to webhook-time
+    // coalescing. A cleanup failure never blocks Bouncie alert evaluation.
+    let liveStateDuplicatesCollapsed = 0;
+    const liveStateCleanupErrors = [];
+    try {
+      const liveRows = await loadAllEntityRows({ entity: LiveState, sort: '-last_seen_at', label: 'Bouncie live-state cache repair scan' });
+      const byVin = new Map();
+      for (const row of liveRows || []) {
+        const vin = String(row?.vehicle_vin || '').trim().toUpperCase();
+        if (!vin) continue;
+        const rows = byVin.get(vin) || [];
+        rows.push(row);
+        byVin.set(vin, rows);
+      }
+      for (const [vin, rows] of byVin) {
+        if (rows.length < 2) continue;
+        try {
+          await coalesceLiveStateRows(LiveState, vin);
+          liveStateDuplicatesCollapsed += rows.length - 1;
+        } catch (error) {
+          liveStateCleanupErrors.push({ vin, error: error?.message || String(error) });
+        }
+      }
+    } catch (error) {
+      liveStateCleanupErrors.push({ vin: '', error: error?.message || String(error) });
+    }
 
     for (const v of vehicles) {
       if (!v.vin) continue;
@@ -268,12 +297,15 @@ export default async function(req) {
       if (result.created) created++;
     }
 
-    await maybeLogSync(base44, 'info', 'Fleet Bouncie alert sync heartbeat.', {
+    const syncLevel = liveStateCleanupErrors.length ? 'warning' : 'info';
+    await maybeLogSync(base44, syncLevel, liveStateCleanupErrors.length ? 'Fleet Bouncie alert sync completed with live-state cache cleanup warnings.' : 'Fleet Bouncie alert sync heartbeat.', {
       vehicles: vehicles.length,
       created,
       configured_rules: settings.filter((row) => row?.enabled === true).length,
+      live_state_duplicates_collapsed: liveStateDuplicatesCollapsed,
+      live_state_cleanup_errors: liveStateCleanupErrors,
     });
-    return Response.json({ synced: true, vehicles: vehicles.length, created });
+    return Response.json({ synced: true, vehicles: vehicles.length, created, live_state_duplicates_collapsed: liveStateDuplicatesCollapsed, live_state_cleanup_errors: liveStateCleanupErrors });
   } catch (error) {
     const base44 = createClientFromRequest(req);
     await maybeLogSync(base44, 'error', 'Fleet Bouncie alert sync failed.', {
