@@ -7,8 +7,13 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { query, state } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const query = String(body?.query || '').trim();
+    const state = String(body?.state || '').trim();
     if (!query) return Response.json({ error: 'query required' }, { status: 400 });
+    if (query.length > 500 || state.length > 100) {
+      return Response.json({ error: 'Jurisdiction search input is too large' }, { status: 400 });
+    }
 
     // First search existing jurisdictions
     const all = await loadAllEntityRows({
