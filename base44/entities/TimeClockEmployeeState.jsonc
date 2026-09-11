@@ -14,13 +14,15 @@
       "type": "string",
       "enum": [
         "clocked_out",
-        "clocked_in"
+        "clocking_in",
+        "clocked_in",
+        "clocking_out"
       ],
       "default": "clocked_out"
     },
     "active_entry_id": {
       "type": "string",
-      "description": "Current active TimeEntry id when clocked in"
+      "description": "Current or pending TimeEntry id"
     },
     "last_action_at": {
       "type": "string",
@@ -29,7 +31,12 @@
     },
     "last_request_id": {
       "type": "string",
-      "description": "Client request id of the last confirmed clock action"
+      "description": "Client request id of the last confirmed or in-progress clock action"
+    },
+    "pending_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an in-progress transition began"
     }
   },
   "required": [
