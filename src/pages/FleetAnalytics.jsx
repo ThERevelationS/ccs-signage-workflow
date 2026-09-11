@@ -7,7 +7,6 @@ import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   AlertTriangle,
   BarChart3,
-  CalendarClock,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
@@ -29,8 +28,6 @@ const EASTERN_TODAY = () => new Intl.DateTimeFormat("en-CA", {
 const money = (value) => Number(value || 0).toLocaleString(undefined, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 const finiteOrNull = (value) => value === null || value === undefined || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
-const pretty = (value) => String(value || "—").replaceAll("_", " ");
-
 function recordedLineCost(rows) {
   return (Array.isArray(rows) ? rows : []).reduce((sum, row) => sum + num(row?.cost), 0);
 }
