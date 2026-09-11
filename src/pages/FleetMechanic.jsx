@@ -4,7 +4,6 @@ import { Activity, AlertTriangle, Camera, CheckCircle2, Clock3, Loader2, Refresh
 
 const pretty = value => String(value || "—").replaceAll("_", " ");
 const fmtDate = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString() : "—";
-const fmtDateTime = value => value ? new Date(value).toLocaleString() : "—";
 
 function initialToken() {
   if (typeof window === "undefined") return "";
