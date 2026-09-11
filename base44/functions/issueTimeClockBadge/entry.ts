@@ -49,10 +49,17 @@ function asEmail(value: unknown) {
   return String(value || '').trim().toLowerCase();
 }
 
-function randomTokenHex(bytes = 32) {
-  const raw = new Uint8Array(bytes);
-  crypto.getRandomValues(raw);
-  return Array.from(raw, (value) => value.toString(16).padStart(2, '0')).join('');
+async function badgeTokenHex(email: string, version: number, secret: string) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, enc.encode(`timeclock-badge|${email}|${version}`));
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function sha256Hex(value: string) {
@@ -66,6 +73,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const sessionToken = String(body?.session_token || '').trim();
     const requestedEmail = asEmail(body?.target_email);
+    const rotate = body?.rotate === true;
     const secret = Deno.env.get('SESSION_SIGNING_SECRET') || '';
 
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
@@ -102,21 +110,34 @@ Deno.serve(async (req) => {
     }
 
     const existing = existingRows[0] || null;
-    const badgeVersion = existing ? Math.max(1, Number(existing.badge_version) || 1) + 1 : 1;
-    const rawToken = randomTokenHex(32);
+    if (existing?.revoked_at && !rotate) {
+      return Response.json({ success: false, error: 'This badge has been revoked. Replace the badge to issue a new one.' }, { status: 409 });
+    }
+
+    const currentVersion = existing ? Math.max(1, Number(existing.badge_version) || 1) : 1;
+    const badgeVersion = existing && rotate ? currentVersion + 1 : currentVersion;
+    const rawToken = await badgeTokenHex(targetEmail, badgeVersion, secret);
     const tokenHash = await sha256Hex(`${targetEmail}|${badgeVersion}|${rawToken}`);
-    const issuedAt = new Date().toISOString();
+    const now = new Date().toISOString();
+    const issuedAt = existing && !rotate ? (existing.issued_at || now) : now;
 
     let saved: any;
+    let changed = false;
     if (existing?.id) {
-      const result = await badgeEntity.updateMany(
-        { id: existing.id, updated_date: existing.updated_date, user_email: targetEmail },
-        { $set: { token_hash: tokenHash, badge_version: badgeVersion, issued_at: issuedAt, revoked_at: null, last_used_at: null } },
-      );
-      if (!result || result.updated !== 1) {
-        return Response.json({ success: false, error: 'Badge changed in another session. Reload before trying again.' }, { status: 409 });
+      const needsNormalization = String(existing.token_hash || '') !== tokenHash || Number(existing.badge_version) !== badgeVersion;
+      if (rotate || needsNormalization) {
+        const result = await badgeEntity.updateMany(
+          { id: existing.id, updated_date: existing.updated_date, user_email: targetEmail },
+          { $set: { token_hash: tokenHash, badge_version: badgeVersion, issued_at: issuedAt, revoked_at: null, last_used_at: null } },
+        );
+        if (!result || result.updated !== 1) {
+          return Response.json({ success: false, error: 'Badge changed in another session. Reload before trying again.' }, { status: 409 });
+        }
+        saved = await badgeEntity.get(existing.id);
+        changed = true;
+      } else {
+        saved = existing;
       }
-      saved = await badgeEntity.get(existing.id);
     } else {
       saved = await badgeEntity.create({
         user_email: targetEmail,
@@ -130,31 +151,35 @@ Deno.serve(async (req) => {
       if (!Array.isArray(verifyRows) || verifyRows.length !== 1 || verifyRows[0]?.id !== saved?.id) {
         return Response.json({ success: false, error: 'Badge issuance could not be verified uniquely. Admin review is required.' }, { status: 409 });
       }
+      changed = true;
     }
 
     if (!saved?.id || String(saved.token_hash || '') !== tokenHash || Number(saved.badge_version) !== badgeVersion) {
       return Response.json({ success: false, error: 'Badge issuance could not be verified.' }, { status: 500 });
     }
 
-    const authenticationMethod = actorEmail === targetEmail ? 'session' : 'admin_kiosk';
-    await auditEntity.create({
-      action: existing ? 'badge_rotate' : 'badge_issue',
-      outcome: 'confirmed',
-      user_email: targetEmail,
-      user_name: target.full_name || targetEmail,
-      actor_email: actorEmail,
-      actor_role: actor.role,
-      authentication_method: authenticationMethod,
-      server_timestamp: issuedAt,
-      details: { badge_version: badgeVersion },
-    }).catch((error: any) => console.error('Time Clock badge audit write failed:', error?.message || error));
+    if (changed) {
+      const authenticationMethod = actorEmail === targetEmail ? 'session' : 'admin_kiosk';
+      await auditEntity.create({
+        action: existing ? 'badge_rotate' : 'badge_issue',
+        outcome: 'confirmed',
+        user_email: targetEmail,
+        user_name: target.full_name || targetEmail,
+        actor_email: actorEmail,
+        actor_role: actor.role,
+        authentication_method: authenticationMethod,
+        server_timestamp: now,
+        details: { badge_version: badgeVersion },
+      }).catch((error: any) => console.error('Time Clock badge audit write failed:', error?.message || error));
+    }
 
     return Response.json({
       success: true,
       badge_code: `TIMECLOCK2:${b64urlEncode(targetEmail)}:${badgeVersion}:${rawToken}`,
       badge_version: badgeVersion,
       issued_at: issuedAt,
-      rotated: Boolean(existing),
+      rotated: Boolean(existing && rotate),
+      reused: Boolean(existing && !changed),
     });
   } catch (error) {
     console.error('issueTimeClockBadge error:', error?.message || error);
