@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { FLEET_MAINTENANCE_TEMPLATES, prettyMaintenanceFrequency } from "@/components/fleet/fleetMaintenanceTemplates";
 import { ArrowLeft, ArrowRight, CalendarClock, Check, Loader2, Plus, Sparkles, Trash2, WandSparkles, X } from "lucide-react";
 
 const EMPTY = {
@@ -24,17 +25,6 @@ const STEPS = [
   [2, "When"],
   [3, "Work Planning"],
   [4, "Parts & Fluids"],
-];
-
-const TEMPLATES = [
-  { name: "Oil Change", description: "Change engine oil and replace the oil filter. Verify oil specification, capacity, filter fitment, and service interval against the equipment/OEM documentation before work begins.", frequency: "every_6_months", duration: 1, partTerms: ["oil filter"], fluidTerms: ["engine oil", "motor oil"] },
-  { name: "Tire Rotation", description: "Rotate tires using the correct pattern for this vehicle, inspect tread and visible tire condition, and verify lug torque requirements before return to service.", frequency: "quarterly", duration: 1, partTerms: [], fluidTerms: [] },
-  { name: "Annual Inspection", description: "Perform an annual equipment inspection covering safety items, visible wear, operating condition, required documentation, and manufacturer-specific inspection points.", frequency: "annually", duration: 2, partTerms: [], fluidTerms: [] },
-  { name: "Generator Service", description: "Perform routine generator service. Inspect the air filter and spark plug, service engine oil when applicable, and verify the manufacturer service checklist before work begins.", frequency: "every_6_months", duration: 1.5, partTerms: ["air filter", "spark plug"], fluidTerms: ["engine oil", "motor oil"] },
-  { name: "Spark Plug Replacement", description: "Inspect and replace the spark plug using the correct specification and gap for this equipment. Verify fitment and torque requirements before installation.", frequency: "annually", duration: 1, partTerms: ["spark plug"], fluidTerms: [] },
-  { name: "Lift Inspection", description: "Inspect lift structure, controls, safety devices, visible hydraulic components, tires, fasteners, and required inspection points. Follow the manufacturer inspection procedure and applicable safety requirements.", frequency: "annually", duration: 2, partTerms: [], fluidTerms: [] },
-  { name: "Filter Replacement", description: "Inspect and replace the applicable service filter. Verify filter type, fitment, and replacement interval for this equipment before work begins.", frequency: "every_6_months", duration: 1, partTerms: ["filter"], fluidTerms: [] },
-  { name: "Fluid Service", description: "Inspect and service the applicable equipment fluid. Verify fluid specification, service interval, capacity, and disposal procedure before work begins.", frequency: "annually", duration: 1.5, partTerms: [], fluidTerms: ["fluid"] },
 ];
 
 export default function FleetMaintenanceDialog({ open, task, initialEquipmentId = "", equipment, parts = [], fluids = [], onClose, onSave, saving }) {
@@ -210,7 +200,7 @@ export default function FleetMaintenanceDialog({ open, task, initialEquipmentId 
           {validationError && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-3 py-2 text-sm">{validationError}</div>}
 
           {step === 1 && <div className="space-y-5">
-            {!task && <div><div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-indigo-500" /><h3 className="font-semibold text-gray-900 dark:text-slate-100">Start with a template</h3></div><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Templates fill in a safe editable starting point. Any matching Fleet inventory suggestions are review-only and existing planned items are preserved.</p><div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">{TEMPLATES.map(template => <button key={template.name} type="button" onClick={() => applyTemplate(template)} className="text-left rounded-xl border border-gray-200 dark:border-slate-700 p-3 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/20"><div className="text-sm font-semibold text-gray-900 dark:text-slate-100">{template.name}</div><div className="text-[11px] text-gray-400 mt-1 capitalize">{prettyFrequency(template.frequency)}</div></button>)}</div></div>}
+            {!task && <div><div className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-indigo-500" /><h3 className="font-semibold text-gray-900 dark:text-slate-100">Start with a template</h3></div><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Templates fill in a safe editable starting point. Any matching Fleet inventory suggestions are review-only and existing planned items are preserved.</p><div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">{FLEET_MAINTENANCE_TEMPLATES.map(template => <button key={template.name} type="button" onClick={() => applyTemplate(template)} className="text-left rounded-xl border border-gray-200 dark:border-slate-700 p-3 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/20"><div className="text-sm font-semibold text-gray-900 dark:text-slate-100">{template.name}</div><div className="text-[11px] text-gray-400 mt-1 capitalize">{prettyMaintenanceFrequency(template.frequency)}</div></button>)}</div></div>}
 
             <div className="grid md:grid-cols-2 gap-4">
               <Field label="Equipment *"><select value={form.equipment_id} onChange={e => set("equipment_id", e.target.value)} className="field"><option value="">Select equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
@@ -283,11 +273,10 @@ function findInventoryMatch(items, key, term) {
   return items.find(item => String(item?.[key] || "").toLowerCase() === needle) || items.find(item => String(item?.[key] || "").toLowerCase().includes(needle));
 }
 function normalizeFluidUnit(unit) { return ["quarts", "gallons", "pints", "ounces"].includes(String(unit || "").toLowerCase()) ? String(unit).toLowerCase() : "quarts"; }
-function prettyFrequency(value) { return ({ daily: "Every day", weekly: "Every week", bi_weekly: "Every 2 weeks", monthly: "Every month", bi_monthly: "Every 2 months", quarterly: "Every 3 months", every_6_months: "Every 6 months", annually: "Every year", custom: "Custom interval" })[value] || String(value || "").replaceAll("_", " "); }
 function buildRecurrencePreview(form) {
   const dateText = form.start_date ? new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date(`${form.start_date}T12:00:00`)) : "";
   if (form.type === "one_off") return dateText ? `One-time maintenance due ${dateText}.` : "One-time maintenance; choose a due date when ready.";
-  const cadence = form.frequency === "custom" ? (Number(form.custom_frequency_value) > 0 ? `Every ${Number(form.custom_frequency_value)} ${form.custom_frequency_unit || "months"}` : "Custom recurring maintenance") : prettyFrequency(form.frequency);
+  const cadence = form.frequency === "custom" ? (Number(form.custom_frequency_value) > 0 ? `Every ${Number(form.custom_frequency_value)} ${form.custom_frequency_unit || "months"}` : "Custom recurring maintenance") : prettyMaintenanceFrequency(form.frequency);
   return dateText ? `${cadence} starting ${dateText}.` : `${cadence}; choose a start date when ready.`;
 }
 function Field({ label, children }) { return <label className="block text-sm"><span className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">{label}</span>{children}</label>; }
