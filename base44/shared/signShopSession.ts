@@ -45,8 +45,13 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
   }
 
   const email = String(sessionPayload?.email || '').trim().toLowerCase();
-  if (!email) throw Object.assign(new Error('Authentication required'), { status: 401 });
-  if (sessionPayload?.exp && Number(sessionPayload.exp) < Date.now()) {
+  const issuedAt = Number(sessionPayload?.iat);
+  const expiresAt = Number(sessionPayload?.exp);
+  if (
+    !email ||
+    !Number.isFinite(issuedAt) || issuedAt <= 0 ||
+    !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
+  ) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
 
@@ -61,7 +66,6 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
 
   const user = users[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
-  const issuedAt = Number(sessionPayload?.iat || 0);
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
     throw Object.assign(new Error('Authentication required'), { status: 401 });
   }
