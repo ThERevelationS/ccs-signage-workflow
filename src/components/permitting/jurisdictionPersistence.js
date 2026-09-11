@@ -245,10 +245,13 @@ export async function createJurisdictionIfAbsent({ entity, data, label = "Jurisd
   }
 
   const afterClassification = classifyJurisdictionIdentity(afterCatalog, createPayload);
-  const afterExisting = assertUnambiguousJurisdictionIdentity(afterClassification, createPayload, label);
+  if (afterClassification.ambiguous.length) {
+    assertUnambiguousJurisdictionIdentity(afterClassification, createPayload, label);
+  }
   const exactRows = afterClassification.exact;
 
-  if (exactRows.length === 1 && afterExisting) {
+  if (exactRows.length === 1) {
+    const afterExisting = exactRows[0];
     if (created?.id && String(afterExisting.id) !== String(created.id)) {
       throw new Error(`${label} returned a create receipt, but a different Jurisdiction owns ${identityDescription(createPayload)}. No record was deleted; reload before continuing.`);
     }
