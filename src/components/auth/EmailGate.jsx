@@ -95,6 +95,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    sessionToken: currentUser ? (localStorage.getItem(TOKEN_KEY) || "") : "",
     isRegistered: !!currentUser,
     isLoading,
     logout,
