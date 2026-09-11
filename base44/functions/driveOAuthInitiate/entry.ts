@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ authUrl });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('driveOAuthInitiate error:', error?.message || error);
+    return Response.json({ error: 'Google Drive authorization could not be started safely' }, { status: 500 });
   }
 });
