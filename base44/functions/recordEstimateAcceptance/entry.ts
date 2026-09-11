@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const METHODS = new Set(['signed_quote', 'email', 'verbal', 'in_person', 'other']);
 
@@ -30,10 +31,8 @@ const canonicalAcceptance = (rows: any[] = []) => rows.slice().sort((a, b) => {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
     const estimateId = String(body?.estimate_id || '').trim();
     const quoteVersion = Math.max(0, whole(body?.quote_version));
     const acceptedByName = String(body?.accepted_by_name || '').trim();
@@ -167,7 +166,11 @@ Deno.serve(async (req) => {
 
     return Response.json({ acceptance: canonical, reused: false });
   } catch (error) {
-    console.error('recordEstimateAcceptance error:', error);
-    return Response.json({ error: error?.message || 'Customer acceptance could not be recorded.' }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    console.error('recordEstimateAcceptance error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Customer acceptance could not be recorded safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
