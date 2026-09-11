@@ -141,6 +141,8 @@ export default function FleetOverview() {
     };
   }, [data]);
 
+  const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
+
   if (!data && !error) {
     return (
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
@@ -190,6 +192,28 @@ export default function FleetOverview() {
                 {isAdmin && <Link to={createPageUrl("FleetSettings")} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1">Operations health <ArrowRight className="w-4 h-4" /></Link>}
               </div>
             </div>
+
+            <section className={`rounded-xl border shadow-sm ${attentionSignals > 0 ? "border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10" : "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900 dark:bg-emerald-950/10"}`}>
+              <div className="px-4 py-3 border-b border-gray-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div><div className="flex items-center gap-2"><AlertTriangle className={`w-5 h-5 ${attentionSignals > 0 ? "text-amber-500" : "text-emerald-500"}`} /><h2 className="font-semibold text-gray-900 dark:text-slate-100">Needs Attention</h2></div><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">One operational queue for maintenance, work orders, inventory, requests, Bouncie, and Fleet automation.</p></div>
+                <div className={`text-sm font-bold ${attentionSignals > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}>{attentionSignals} attention signal{attentionSignals === 1 ? "" : "s"}</div>
+              </div>
+              <div className="p-4 grid md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-1">
+                <AttentionRow icon={AlertTriangle} label="High / critical work orders" value={metrics.highPriorityOrders.length} page="FleetWorkOrders" query="attention=high_priority" />
+                <AttentionRow icon={UserRoundX} label="Unassigned active work" value={metrics.unassignedOrders.length} page="FleetWorkOrders" query="attention=unassigned" />
+                <AttentionRow icon={Clock3} label="Stale active work (30+ days)" value={metrics.staleOrders.length} page="FleetWorkOrders" query="attention=stale30" />
+                <AttentionRow icon={AlertTriangle} label="Past projected completion" value={metrics.pastProjectedOrders.length} page="FleetWorkOrders" query="attention=past_projected" />
+                <AttentionRow icon={CalendarClock} label="Overdue maintenance schedules" value={metrics.overdueTasks.length} page="FleetMaintenance" query="status=overdue" />
+                <AttentionRow icon={Clock3} label="Maintenance due in 14 days" value={metrics.upcomingTasks.length} page="FleetMaintenance" query="status=pending" />
+                <AttentionRow icon={Package} label="Low-stock parts" value={metrics.lowParts.length} page="FleetParts" query="stock=low" />
+                <AttentionRow icon={Droplets} label="Low-stock fluids" value={metrics.lowFluids.length} page="FleetFluids" query="stock=low" />
+                <AttentionRow icon={ShoppingCart} label="Pending / ordered requests" value={metrics.pendingRequests.length} page="FleetRequests" query="status=active" />
+                <AttentionRow icon={Navigation} label="Bouncie identity conflicts" value={metrics.bouncieIdentityConflicts.length} page="FleetEquipment" query="view=tracking_issues" />
+                <AttentionRow icon={AlertTriangle} label="Unread Bouncie warnings / critical" value={metrics.bouncieFaults.length} page="FleetTracking" />
+                {isAdmin && <AttentionRow icon={Activity} label="Fleet automation queue / receipts" value={adminHealth?.unresolved || 0} page="FleetSettings" />}
+                {isAdmin && <AttentionRow icon={Navigation} label="Bouncie connection / webhook health" value={adminHealth?.bouncieHealthy ? 0 : 1} page="FleetSettings" />}
+              </div>
+            </section>
 
             <div className="grid lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
