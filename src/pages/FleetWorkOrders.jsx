@@ -325,7 +325,6 @@ function BoardCard({ workOrder, equipmentName, starting, onOpen, onStart, onComp
   const active = !["completed", "cancelled"].includes(workOrder.status);
   const ageDays = active ? workOrderAgeDays(workOrder) : null;
   const projectedLate = isWorkOrderPastProjected(workOrder);
-  const highPriority = ["critical", "high"].includes(workOrder.priority);
   return <article className={`rounded-xl border bg-white dark:bg-slate-900 p-3 shadow-sm ${workOrder.priority === "critical" ? "border-red-300 dark:border-red-900" : workOrder.priority === "high" ? "border-orange-300 dark:border-orange-900" : "border-gray-200 dark:border-slate-700"}`}>
     <div className="flex items-start justify-between gap-2"><button onClick={onOpen} className="min-w-0 text-left"><div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{workOrder.work_order_number}</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 mt-1 line-clamp-2">{workOrder.title}</div></button><PriorityBadge priority={workOrder.priority} /></div>
     <div className="mt-2 text-xs text-gray-500 dark:text-slate-400 space-y-1"><div className="truncate">{equipmentName || (workOrder.source_equipment_id ? "Unresolved equipment" : "No equipment")}</div><div className={!String(workOrder.assigned_to || "").trim() && active ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>{workOrder.assigned_to || "Unassigned"}</div></div>
