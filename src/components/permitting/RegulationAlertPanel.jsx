@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Clock, Trash2, Loader2, RefreshCw, Bell } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function RegulationAlertPanel() {
+  const { sessionToken } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -31,7 +33,7 @@ export default function RegulationAlertPanel() {
   const handleRunMonitoring = async () => {
     setIsMonitoring(true);
     try {
-      const res = await base44.functions.invoke('monitorJurisdictionChanges', {});
+      const res = await base44.functions.invoke('monitorJurisdictionChanges', { session_token: sessionToken });
       if (res.data?.alerts_created > 0) {
         await loadAlerts();
       }
