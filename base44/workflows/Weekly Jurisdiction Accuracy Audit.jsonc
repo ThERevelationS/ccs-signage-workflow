@@ -1,6 +1,5 @@
 {
   "name": "Weekly Jurisdiction Accuracy Audit",
-  "description": "AI cross-references jurisdiction data against official government sources weekly and flags potential inaccuracies for review",
   "trigger": {
     "condition": null,
     "config": {
@@ -18,6 +17,7 @@
       "ends_after_count": null
     }
   },
+  "description": "AI cross-references jurisdiction data against official government sources weekly and flags potential inaccuracies for review",
   "definition": {
     "document": {
       "dsl": "1.0.0",
