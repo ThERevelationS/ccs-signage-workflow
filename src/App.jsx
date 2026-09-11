@@ -54,6 +54,7 @@ import FleetRequests from './pages/FleetRequests';
 import FleetHistory from './pages/FleetHistory';
 import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
+import NewUserSetup from './pages/NewUserSetup';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -149,6 +150,7 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
+      <Route path="/ResetPassword" element={<NewUserSetup />} />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
         <Route
           key={name}
