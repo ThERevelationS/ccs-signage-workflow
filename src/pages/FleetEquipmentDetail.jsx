@@ -210,7 +210,7 @@ function metadataSeed(meta, equipment) {
   return seed;
 }
 function Card({ title, icon: Icon, action, children }) { return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm"><div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Icon className="w-4 h-4 text-indigo-500" />{title}</h2>{action}</div><div className="p-4">{children}</div></section>; }
-function ProfileField({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1 capitalize">{value}</div></div>; }
+function ProfileField({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1">{value}</div></div>; }
 function Metric({ label, value }) { return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4"><div className="text-xs text-gray-400">{label}</div><div className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{value}</div></div>; }
 function Tag({ children }) { return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 capitalize">{children}</span>; }
 function Empty({ children }) { return <div className="text-sm text-gray-400 py-4">{children}</div>; }
