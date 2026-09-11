@@ -572,7 +572,7 @@ Deno.serve(async (req) => {
           });
       if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
-      let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-in request');
+      let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-in request');
       if (!entry) {
         entry = await entryEntity.create({
           user_email: target.email,
@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
 
     if (action === 'clock_out') {
       if (state.status === 'clocked_out') {
-        const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-out request');
+        const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-out request');
         if (prior?.id && prior.status === 'clocked_out') {
           return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true, user: publicEmployee(target) });
         }
