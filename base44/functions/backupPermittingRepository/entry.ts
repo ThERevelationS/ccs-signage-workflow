@@ -1,10 +1,46 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+
+const MAX_BACKUP_DOCUMENT_BYTES = 50 * 1024 * 1024;
+
+async function readBackupBlob(response: Response) {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BACKUP_DOCUMENT_BYTES) {
+    throw new Error('Backup document exceeds the 50 MB safety limit.');
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_BACKUP_DOCUMENT_BYTES) throw new Error('Backup document exceeds the 50 MB safety limit.');
+    return new Blob([bytes], { type: response.headers.get('content-type') || 'application/octet-stream' });
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_BACKUP_DOCUMENT_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw new Error('Backup document exceeds the 50 MB safety limit.');
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new Blob([bytes], { type: response.headers.get('content-type') || 'application/octet-stream' });
+}
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await base44.auth.me().catch(() => null);
 
     if (user?.role !== 'admin') {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
@@ -61,8 +97,9 @@ Deno.serve(async (req) => {
                 if (doc.file_url) {
                   // Download and reupload the file
                   const fileName = doc.title + '.pdf';
-                  const response = await fetch(doc.file_url);
-                  const blob = await response.blob();
+                  const response = await safeExternalFetch(doc.file_url);
+                  if (!response.ok) throw new Error(`Stored document fetch returned HTTP ${response.status}`);
+                  const blob = await readBackupBlob(response);
 
                   const formData = new FormData();
                   formData.append('file', blob, fileName);
@@ -141,7 +178,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("Backup error:", error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Permitting Repository backup could not be completed safely' }, { status: 500 });
   }
 });
 
