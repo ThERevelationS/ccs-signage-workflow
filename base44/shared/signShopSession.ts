@@ -1,3 +1,5 @@
+import { constantTimeEqual } from './constantTime.ts';
+
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -33,7 +35,7 @@ export async function authenticateSignShopSession(base44: any, token: unknown) {
 
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) throw Object.assign(new Error('Authentication required'), { status: 401 });
+  if (!constantTimeEqual(expectedSig, providedSig)) throw Object.assign(new Error('Authentication required'), { status: 401 });
 
   let sessionPayload: any;
   try {
