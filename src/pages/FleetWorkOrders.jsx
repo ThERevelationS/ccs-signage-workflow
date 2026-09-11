@@ -296,6 +296,49 @@ export default function FleetWorkOrders() {
   );
 }
 
+function WorkOrderBoard({ rows, equipmentNames, startingId, onOpen, onStart, onComplete }) {
+  const columns = [
+    { key: "open", label: "Open" },
+    { key: "assigned", label: "Assigned" },
+    { key: "in_progress", label: "In Progress" },
+    { key: "completed", label: "Completed" },
+  ];
+  const grouped = Object.fromEntries(columns.map(column => [column.key, rows.filter(row => row.status === column.key)]));
+  const visibleCount = columns.reduce((sum, column) => sum + grouped[column.key].length, 0);
+
+  if (visibleCount === 0) return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 py-12 text-center text-gray-500">No Fleet work orders match these board filters.</div>;
+
+  return <div className="overflow-x-auto pb-2">
+    <div className="grid grid-cols-4 gap-3 min-w-[1100px]">
+      {columns.map(column => <section key={column.key} className="rounded-xl border border-gray-200 bg-gray-100/70 dark:bg-slate-900/60 dark:border-slate-800 overflow-hidden">
+        <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between gap-2"><h2 className="text-sm font-bold text-gray-800 dark:text-slate-100">{column.label}</h2><span className="text-xs font-semibold rounded-full bg-white dark:bg-slate-800 px-2 py-0.5 text-gray-500 dark:text-slate-300">{grouped[column.key].length}</span></div>
+        <div className="p-2 space-y-2 max-h-[68vh] overflow-y-auto">
+          {grouped[column.key].map(workOrder => <BoardCard key={workOrder.id} workOrder={workOrder} equipmentName={equipmentNames[workOrder.equipment_id]} starting={startingId === workOrder.id} onOpen={() => onOpen(workOrder)} onStart={() => onStart(workOrder)} onComplete={() => onComplete(workOrder)} />)}
+          {grouped[column.key].length === 0 && <div className="py-8 px-3 text-center text-xs text-gray-400">No {column.label.toLowerCase()} work orders.</div>}
+        </div>
+      </section>)}
+    </div>
+  </div>;
+}
+
+function BoardCard({ workOrder, equipmentName, starting, onOpen, onStart, onComplete }) {
+  const active = !["completed", "cancelled"].includes(workOrder.status);
+  const ageDays = active ? workOrderAgeDays(workOrder) : null;
+  const projectedLate = isWorkOrderPastProjected(workOrder);
+  const highPriority = ["critical", "high"].includes(workOrder.priority);
+  return <article className={`rounded-xl border bg-white dark:bg-slate-900 p-3 shadow-sm ${workOrder.priority === "critical" ? "border-red-300 dark:border-red-900" : workOrder.priority === "high" ? "border-orange-300 dark:border-orange-900" : "border-gray-200 dark:border-slate-700"}`}>
+    <div className="flex items-start justify-between gap-2"><button onClick={onOpen} className="min-w-0 text-left"><div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{workOrder.work_order_number}</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 mt-1 line-clamp-2">{workOrder.title}</div></button><PriorityBadge priority={workOrder.priority} /></div>
+    <div className="mt-2 text-xs text-gray-500 dark:text-slate-400 space-y-1"><div className="truncate">{equipmentName || (workOrder.source_equipment_id ? "Unresolved equipment" : "No equipment")}</div><div className={!String(workOrder.assigned_to || "").trim() && active ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>{workOrder.assigned_to || "Unassigned"}</div></div>
+    {(ageDays != null || projectedLate) && <div className="mt-2 flex flex-wrap gap-1.5">{ageDays != null && <span className={`text-[10px] rounded-full px-2 py-1 ${ageDays >= 30 ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"}`}>{ageDays} day{ageDays === 1 ? "" : "s"} open</span>}{projectedLate && <span className="text-[10px] rounded-full px-2 py-1 bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300">Past projected</span>}</div>}
+    <div className="mt-3 flex flex-wrap gap-1.5"><button onClick={onOpen} className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-700 dark:text-slate-200">Open</button>{["open", "assigned"].includes(workOrder.status) && <button onClick={onStart} disabled={starting} className="px-2.5 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 text-xs font-semibold inline-flex items-center gap-1 disabled:opacity-50">{starting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}Start</button>}{active && <button onClick={onComplete} className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Complete</button>}</div>
+  </article>;
+}
+
+function PriorityBadge({ priority }) {
+  const style = priority === "critical" ? "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300" : priority === "high" ? "bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300" : priority === "medium" ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300";
+  return <span className={`shrink-0 text-[10px] uppercase font-bold rounded-full px-2 py-1 ${style}`}>{pretty(priority)}</span>;
+}
+
 function Summary({ label, value, attention = false }) { return <div className={`rounded-xl border p-3 ${attention ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}><div className="text-xs text-gray-400">{label}</div><div className={`text-2xl font-bold mt-1 ${attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div></div>; }
 function Info({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-gray-800 dark:text-slate-200 mt-0.5 capitalize">{value}</div></div>; }
 function Section({ title, text }) { return <div><div className="font-medium text-gray-900 dark:text-slate-100 mb-1">{title}</div><div className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">{text}</div></div>; }
