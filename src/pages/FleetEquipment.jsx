@@ -28,7 +28,10 @@ export default function FleetEquipment() {
   const [currentUser, setCurrentUser] = useState(null);
   const [bouncieVehicles, setBouncieVehicles] = useState([]);
   const [query, setQuery] = useState("");
-  const [viewFilter, setViewFilter] = useState("all");
+  const [viewFilter, setViewFilter] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("view") || "all";
+    return ["all", "operational", "maintenance", "down", "retired", "tracking_issues"].includes(requested) ? requested : "all";
+  });
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
