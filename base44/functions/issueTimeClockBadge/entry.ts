@@ -105,17 +105,22 @@ Deno.serve(async (req) => {
 
     const existingRows = await badgeEntity.filter({ user_email: targetEmail });
     if (!Array.isArray(existingRows)) throw new Error('Badge lookup did not return a record list.');
-    if (existingRows.length > 1) {
-      return Response.json({ success: false, error: 'Multiple Time Clock badge records exist for this employee. Admin review is required before issuing another badge.' }, { status: 409 });
+    const activeRows = existingRows.filter((row: any) => !row?.revoked_at);
+    if (activeRows.length > 1) {
+      return Response.json({ success: false, error: 'Multiple active Time Clock badges exist for this employee. Admin review is required before issuing another badge.' }, { status: 409 });
     }
 
-    const existing = existingRows[0] || null;
-    if (existing?.revoked_at && !rotate) {
-      return Response.json({ success: false, error: 'This badge has been revoked. Replace the badge to issue a new one.' }, { status: 409 });
+    const existing = activeRows[0] || null;
+    const highestHistoricalVersion = existingRows.reduce(
+      (max: number, row: any) => Math.max(max, Number(row?.badge_version) || 0),
+      0,
+    );
+    if (!existing && existingRows.length > 0 && !rotate) {
+      return Response.json({ success: false, error: 'The previous badge has been revoked. Replace the badge to issue a new one.' }, { status: 409 });
     }
 
-    const currentVersion = existing ? Math.max(1, Number(existing.badge_version) || 1) : 1;
-    const badgeVersion = existing && rotate ? currentVersion + 1 : currentVersion;
+    const currentVersion = existing ? Math.max(1, Number(existing.badge_version) || 1) : Math.max(0, highestHistoricalVersion);
+    const badgeVersion = existing ? (rotate ? currentVersion + 1 : currentVersion) : Math.max(1, currentVersion + 1);
     const rawToken = await badgeTokenHex(targetEmail, badgeVersion, secret);
     const tokenHash = await sha256Hex(`${targetEmail}|${badgeVersion}|${rawToken}`);
     const now = new Date().toISOString();
@@ -127,7 +132,7 @@ Deno.serve(async (req) => {
       const needsNormalization = String(existing.token_hash || '') !== tokenHash || Number(existing.badge_version) !== badgeVersion;
       if (rotate || needsNormalization) {
         const result = await badgeEntity.updateMany(
-          { id: existing.id, updated_date: existing.updated_date, user_email: targetEmail },
+          { id: existing.id, updated_date: existing.updated_date, user_email: targetEmail, revoked_at: existing.revoked_at || null },
           { $set: { token_hash: tokenHash, badge_version: badgeVersion, issued_at: issuedAt, revoked_at: null, last_used_at: null } },
         );
         if (!result || result.updated !== 1) {
@@ -148,7 +153,8 @@ Deno.serve(async (req) => {
         last_used_at: null,
       });
       const verifyRows = await badgeEntity.filter({ user_email: targetEmail });
-      if (!Array.isArray(verifyRows) || verifyRows.length !== 1 || verifyRows[0]?.id !== saved?.id) {
+      const verifyActiveRows = Array.isArray(verifyRows) ? verifyRows.filter((row: any) => !row?.revoked_at) : [];
+      if (verifyActiveRows.length !== 1 || verifyActiveRows[0]?.id !== saved?.id) {
         return Response.json({ success: false, error: 'Badge issuance could not be verified uniquely. Admin review is required.' }, { status: 409 });
       }
       changed = true;
