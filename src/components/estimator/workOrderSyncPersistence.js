@@ -1,3 +1,5 @@
+import { base44 } from "@/api/base44Client";
+
 export async function createEstimateLinkedWorkOrderWithRecovery({
   entity,
   estimateId,
@@ -69,17 +71,18 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
 } = {}) {
   const id = String(created?.id || "").trim();
   const expectedUpdatedAt = String(created?.updated_date || "").trim();
-  if (!id || !expectedUpdatedAt || typeof entity?.deleteMany !== "function" || typeof entity?.get !== "function") {
+  const estimateId = String(created?.estimate_id || "").trim();
+  if (!id || !expectedUpdatedAt || !estimateId || typeof entity?.get !== "function") {
     throw new Error(`${label} could not be identified safely for duplicate cleanup.`);
   }
 
-  const query = { id, updated_date: expectedUpdatedAt };
-  const estimateId = String(created?.estimate_id || "").trim();
-  if (estimateId) query.estimate_id = estimateId;
-
-  let result;
+  let response;
   try {
-    result = await entity.deleteMany(query);
+    response = await base44.functions.invoke("deleteCreatedDuplicateWorkOrder", {
+      id,
+      expected_updated_date: expectedUpdatedAt,
+      estimate_id: estimateId,
+    });
   } catch (error) {
     let afterError;
     try {
@@ -87,27 +90,25 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
     } catch (verificationError) {
       throw new Error(`${label} delete response failed and the record's absence could not be verified. Reload before retrying duplicate cleanup. ${verificationError?.message || ""}`.trim());
     }
-    if (!afterError) return { status: "already_absent" };
+    if (!afterError) return { status: "confirmed_absent" };
     throw error;
   }
 
-  if (!result || typeof result.deleted !== "number") {
-    throw new Error(`${label} deletion result could not be verified.`);
-  }
-  if (result.deleted === 1) return { status: "deleted_now" };
-  if (result.deleted > 1) {
-    throw new Error(`${label} deletion matched more than one Work Order unexpectedly.`);
+  const result = response?.data || response || {};
+  if (result?.error) throw new Error(result.error);
+  if (["deleted_now", "confirmed_absent", "already_absent"].includes(result?.status)) {
+    return { status: result.status };
   }
 
   let after;
   try {
     after = await entity.get(id);
   } catch (verificationError) {
-    throw new Error(`${label} deletion returned no confirmed delete and the record's current state could not be verified. Reload before retrying duplicate cleanup. ${verificationError?.message || ""}`.trim());
+    throw new Error(`${label} cleanup returned an unknown result and the record's current state could not be verified. Reload before retrying duplicate cleanup. ${verificationError?.message || ""}`.trim());
   }
-  if (!after) return { status: "already_absent" };
+  if (!after) return { status: "confirmed_absent" };
 
-  throw new Error(`${label} changed after it was created, so the losing duplicate was left intact for review instead of being deleted.`);
+  throw new Error(`${label} cleanup returned an unknown result, so the losing duplicate was left intact for review.`);
 }
 
 export function expectedWorkOrderFields(record = {}, nextFields = {}) {
