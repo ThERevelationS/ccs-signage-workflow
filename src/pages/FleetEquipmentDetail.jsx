@@ -10,6 +10,8 @@ import { ArrowLeft, Truck, Navigation, ClipboardList, CalendarClock, History, Be
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
 const TRACKED_LINK = new Set(["matched", "manual"]);
 const pretty = value => String(value || "—").replaceAll("_", " ");
+const normalizeVin = value => String(value || "").trim().toUpperCase();
+const normalizeImei = value => String(value || "").trim();
 const hasDefinitiveTripEnd = row => {
   if (!row?.ended_at || String(row?.transaction_id || "").trim()) return false;
   const endedAt = Date.parse(row.ended_at) || 0;
@@ -31,6 +33,7 @@ export default function FleetEquipmentDetail() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tripsLoading, setTripsLoading] = useState(false);
+  const [tripIdentityWarning, setTripIdentityWarning] = useState("");
   const [error, setError] = useState("");
   const [editingMeta, setEditingMeta] = useState(false);
   const [metaForm, setMetaForm] = useState({});
@@ -48,6 +51,7 @@ export default function FleetEquipmentDetail() {
       setEquipment(eq);
       setCurrentUser(user || null);
       setTrips([]);
+      setTripIdentityWarning("");
       if (!eq) {
         setWorkOrders([]); setTasks([]); setLogs([]); setLiveStates([]); setNotifications([]); setMetadata(null); setMetaForm({});
         return;
@@ -70,7 +74,7 @@ export default function FleetEquipmentDetail() {
       const meta = (metaRows || [])[0] || null;
       setMetadata(meta);
       setMetaForm(metadataSeed(meta, eq));
-      if (eq.bouncie_imei && TRACKED_LINK.has(eq.bouncie_link_status)) loadTrips(eq.bouncie_imei);
+      if (eq.bouncie_imei && TRACKED_LINK.has(eq.bouncie_link_status)) loadTrips(eq);
     } catch (e) {
       setError(e?.message || "Unable to load Fleet equipment detail.");
     } finally {
@@ -80,15 +84,37 @@ export default function FleetEquipmentDetail() {
 
   useEffect(() => { load(); }, [id]);
 
-  const loadTrips = async (imei) => {
+  const loadTrips = async (eq) => {
     setTripsLoading(true);
+    setTripIdentityWarning("");
     try {
+      const fleetVin = normalizeVin(eq?.vin);
+      const fleetImei = normalizeImei(eq?.bouncie_imei);
+      if (!fleetVin || !fleetImei) {
+        setTrips([]);
+        setTripIdentityWarning("Recent Bouncie trips are hidden because this Fleet record does not have both a VIN and a trusted Bouncie IMEI.");
+        return;
+      }
+
+      const { data: vehicleResult } = await base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} });
+      const vehicles = vehicleResult?.data || [];
+      const exactIdentity = vehicles.find(vehicle => normalizeVin(vehicle?.vin) === fleetVin && normalizeImei(vehicle?.imei) === fleetImei);
+      if (!exactIdentity) {
+        const currentImeiVehicle = vehicles.find(vehicle => normalizeImei(vehicle?.imei) === fleetImei);
+        setTrips([]);
+        setTripIdentityWarning(currentImeiVehicle?.vin && normalizeVin(currentImeiVehicle.vin) !== fleetVin
+          ? `Bouncie device ${fleetImei} currently reports VIN ${normalizeVin(currentImeiVehicle.vin)}, not Fleet VIN ${fleetVin}. Trip history is hidden until an administrator confirms the device/vehicle identity.`
+          : "CCS could not prove a current Bouncie VIN + IMEI match for this Fleet record. Trip history is hidden rather than risking another vehicle's trips.");
+        return;
+      }
+
       const ranges = buildWeeklyRanges(7);
-      const results = await Promise.all(ranges.map(range => base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/trips", query: { imei, ...range, "gps-format": "geojson" } })));
+      const results = await Promise.all(ranges.map(range => base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/trips", query: { imei: fleetImei, ...range, "gps-format": "geojson" } })));
       const all = results.flatMap(result => result?.data?.data || []).sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
       setTrips(all);
     } catch {
       setTrips([]);
+      setTripIdentityWarning("CCS could not verify the current Bouncie vehicle identity, so trip history is temporarily hidden.");
     } finally {
       setTripsLoading(false);
     }
