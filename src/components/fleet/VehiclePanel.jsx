@@ -17,7 +17,7 @@ const TABS = [
 ];
 
 export default function VehiclePanel({
-  vehicle, fleetEquipment, fleetOpenWorkOrders = [], fleetMaintenanceTasks = [], fleetEquipmentLogs = [], fleetMaintenanceLoading = false, trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
+  vehicle, fleetEquipment, fleetLinkBasis = null, fleetOpenWorkOrders = [], fleetMaintenanceTasks = [], fleetEquipmentLogs = [], fleetMaintenanceLoading = false, trips, tripsLoading, notifications, onClearNotifications, onMarkNotificationRead,
   onOpenAlertSettings, canManageAlerts = false, onClose, daysBack, onDaysBackChange, avgBy, onAvgByChange,
   onTripsRefresh, selectedTripId, onSelectTrip
 }) {
@@ -25,6 +25,7 @@ export default function VehiclePanel({
   const stats = vehicle?.stats || {};
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const linkConflict = ["vin_conflict", "imei_conflict"].includes(fleetLinkBasis);
   const equipmentDetailUrl = fleetEquipment ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetEquipment");
   const newWorkOrderUrl = fleetEquipment ? `${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(fleetEquipment.id)}` : createPageUrl("FleetWorkOrders");
 
@@ -54,18 +55,18 @@ export default function VehiclePanel({
         </button>
       </div>
 
-      <div className={`mx-3 mt-3 rounded-lg border p-3 ${fleetEquipment ? "border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/30" : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"}`}>
+      <div className={`mx-3 mt-3 rounded-lg border p-3 ${fleetEquipment ? "border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/30" : linkConflict ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30" : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"}`}>
         {fleetEquipment ? <>
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0"><div className="text-[10px] uppercase tracking-wide font-semibold text-indigo-500">CCS Fleet Maintenance</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 truncate mt-0.5">{fleetEquipment.name}</div><div className="text-xs text-gray-600 dark:text-slate-300 mt-1 capitalize">{String(fleetEquipment.status || "unknown").replaceAll("_", " ")} · {fleetOpenWorkOrders.length} open work order{fleetOpenWorkOrders.length === 1 ? "" : "s"}</div></div>
+            <div className="min-w-0"><div className="text-[10px] uppercase tracking-wide font-semibold text-indigo-500">CCS Fleet Maintenance</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 truncate mt-0.5">{fleetEquipment.name}</div><div className="text-xs text-gray-600 dark:text-slate-300 mt-1 capitalize">{String(fleetEquipment.status || "unknown").replaceAll("_", " ")} · {fleetOpenWorkOrders.length} open work order{fleetOpenWorkOrders.length === 1 ? "" : "s"}</div>{fleetLinkBasis === "imei" && <div className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-300">Linked by unique Bouncie IMEI because the current Bouncie VIN ({vehicle?.vin || "—"}) differs from the Fleet VIN ({fleetEquipment.vin || "—"}).</div>}</div>
             <ClipboardList className="w-5 h-5 text-indigo-500 shrink-0" />
           </div>
           {fleetOpenWorkOrders.length > 0 && <div className="mt-2 space-y-1">{fleetOpenWorkOrders.slice(0, 2).map(wo => <Link key={wo.id} to={`${createPageUrl("FleetWorkOrders")}?workOrder=${encodeURIComponent(wo.id)}&equipment=${encodeURIComponent(fleetEquipment.id)}`} className="block text-xs text-gray-700 dark:text-slate-300 truncate hover:text-indigo-700 dark:hover:text-indigo-300"><span className={`font-semibold ${["critical","high"].includes(wo.priority) ? "text-red-600" : ""}`}>{wo.work_order_number}</span> · {wo.title}</Link>)}{fleetOpenWorkOrders.length > 2 && <Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(fleetEquipment.id)}`} className="block text-xs text-indigo-600 hover:underline">+{fleetOpenWorkOrders.length - 2} more open</Link>}</div>}
           <div className="mt-3 flex items-center gap-2"><Link to={equipmentDetailUrl} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:underline">Open maintenance record <ArrowRight className="w-3.5 h-3.5" /></Link><Link to={newWorkOrderUrl} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-indigo-600 text-white text-xs font-semibold"><Plus className="w-3.5 h-3.5" />Work order</Link></div>
         </> : <>
-          <div className="text-[10px] uppercase tracking-wide font-semibold text-amber-600">CCS Fleet Maintenance</div>
-          <div className="text-sm font-semibold text-gray-900 dark:text-slate-100 mt-0.5">No FleetEquipment VIN match</div>
-          <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">Tracking remains available, but maintenance is not linked until an exact FleetEquipment VIN match exists.</div>
+          <div className={`text-[10px] uppercase tracking-wide font-semibold ${linkConflict ? "text-red-600" : "text-amber-600"}`}>CCS Fleet Maintenance</div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-slate-100 mt-0.5">{linkConflict ? "Fleet identity conflict" : "No proven FleetEquipment link"}</div>
+          <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">{linkConflict ? "Multiple Fleet equipment records match this Bouncie identity. Maintenance stays intentionally unlinked until an admin resolves the duplicate identity." : "Tracking remains available. Maintenance links only by one exact Fleet VIN match or one previously proven Fleet IMEI match."}</div>
           <Link to={equipmentDetailUrl} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">Review Fleet equipment <ArrowRight className="w-3.5 h-3.5" /></Link>
         </>}
       </div>
