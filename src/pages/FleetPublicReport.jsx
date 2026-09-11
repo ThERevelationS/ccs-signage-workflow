@@ -78,7 +78,10 @@ export default function FleetPublicReport() {
         const {data}=await base44.functions.invoke("fleetPublicIssueReport",{action:"list"});
         if(!mounted)return;
         setDisabled(!!data?.disabled);
-        setEquipment(data?.equipment||[]);
+        const safeEquipment=data?.equipment||[];
+        setEquipment(safeEquipment);
+        const requestedEquipment=new URLSearchParams(window.location.search).get("equipment")||"";
+        if(requestedEquipment&&safeEquipment.some(item=>item.id===requestedEquipment))setForm(prev=>({...prev,equipment_id:requestedEquipment}));
       }catch(e){if(mounted)setError(e?.message||"Unable to load Fleet equipment.");}
       finally{if(mounted)setLoading(false);}
     })();
