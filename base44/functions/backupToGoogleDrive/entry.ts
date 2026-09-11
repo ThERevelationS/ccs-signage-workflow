@@ -634,7 +634,7 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
-    console.error("Backup error:", error);
-    return Response.json({ error: error.message || 'Unknown error occurred' }, { status: 500 });
+    console.error('backupToGoogleDrive error:', error?.message || error);
+    return Response.json({ error: 'Google Drive backup could not be completed safely' }, { status: 500 });
   }
 });
