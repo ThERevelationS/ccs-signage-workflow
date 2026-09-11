@@ -196,48 +196,88 @@ function canonical(rows = []) {
   })[0] || null;
 }
 
+function normalizedStoredValue(value) {
+  if (Array.isArray(value)) return value.map(normalizedStoredValue);
+  if (!value || typeof value !== "object") return value ?? "";
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = normalizedStoredValue(value[key]);
+    return out;
+  }, {});
+}
+
+function jurisdictionCreatePayloadMatches(row, payload) {
+  return !!row?.id && Object.entries(payload || {}).every(([field, value]) =>
+    JSON.stringify(normalizedStoredValue(row?.[field])) === JSON.stringify(normalizedStoredValue(value))
+  );
+}
+
 export async function createJurisdictionIfAbsent({ entity, data, label = "Jurisdiction create" } = {}) {
   const payload = jurisdictionFormPayload(data);
   const name = String(payload.name || "").trim();
   const state = String(payload.state || "").trim();
-  if (!name || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
+  if (!name || typeof entity?.create !== "function") {
     throw new Error(`${label} could not initialize its duplicate-safe create.`);
   }
-  const query = { name, state };
-  const before = await entity.filter(query);
-  if (!Array.isArray(before)) throw new Error(`${label} duplicate preflight did not return a record list.`);
-  if (before.length > 1) throw new Error(`${label} found ${before.length} existing records for ${name}, ${state || "(no state)"}. Review duplicates before creating another.`);
-  if (before.length === 1) return { record: before[0], status: "existing" };
+  const createPayload = { ...payload, name, state };
+
+  const beforeCatalog = await loadJurisdictionIdentityCatalog(entity, label);
+  const beforeClassification = classifyJurisdictionIdentity(beforeCatalog, createPayload);
+  const beforeExisting = assertUnambiguousJurisdictionIdentity(beforeClassification, createPayload, label);
+  if (beforeExisting) return { record: beforeExisting, status: "existing" };
 
   let created = null;
   let createError = null;
   try {
-    created = await entity.create({ ...payload, name, state });
+    created = await entity.create(createPayload);
   } catch (error) {
     createError = error;
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 40));
-  let after = await entity.filter(query);
-  if (!Array.isArray(after)) throw new Error(`${label} final verification did not return a record list.`);
-  if (after.length === 1) return { record: after[0], status: created?.id === after[0].id ? "created" : "recovered" };
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  let afterCatalog;
+  try {
+    afterCatalog = await loadJurisdictionIdentityCatalog(entity, label);
+  } catch (verificationError) {
+    throw new Error(
+      `${created?.id ? `${label} was created, but` : `${label} create response was unavailable and`} its identity recovery catalog could not be verified. ` +
+      `Do not retry blindly; reload the Permitting Repository first. ${verificationError?.message || ""}`.trim()
+    );
+  }
 
-  if (after.length > 1 && created?.id) {
-    const keep = canonical(after);
+  const afterClassification = classifyJurisdictionIdentity(afterCatalog, createPayload);
+  const afterExisting = assertUnambiguousJurisdictionIdentity(afterClassification, createPayload, label);
+  const exactRows = afterClassification.exact;
+
+  if (exactRows.length === 1 && afterExisting) {
+    if (created?.id && String(afterExisting.id) !== String(created.id)) {
+      throw new Error(`${label} returned a create receipt, but a different Jurisdiction owns ${identityDescription(createPayload)}. No record was deleted; reload before continuing.`);
+    }
+    if (!created?.id && !jurisdictionCreatePayloadMatches(afterExisting, createPayload)) {
+      throw new Error(`${label} create response was unavailable and a different Jurisdiction state now owns ${identityDescription(createPayload)}. Reload and review it before retrying.`);
+    }
+    return { record: afterExisting, status: created?.id ? "created" : "recovered" };
+  }
+
+  if (exactRows.length > 1 && created?.id) {
+    const keep = canonical(exactRows);
     if (keep?.id && keep.id !== created.id) {
-      const own = after.find((row) => row.id === created.id);
-      if (own?.id) {
+      const own = exactRows.find((row) => row.id === created.id);
+      if (own?.id && jurisdictionCreatePayloadMatches(own, createPayload)) {
         await deleteJurisdictionFromLoadedSnapshot({ entity, jurisdiction: own, label: `${label} race duplicate cleanup` });
-        after = await entity.filter(query);
-        if (Array.isArray(after) && after.length === 1 && after[0]?.id === keep.id) {
-          return { record: after[0], status: "concurrent_duplicate_discarded" };
+        const finalCatalog = await loadJurisdictionIdentityCatalog(entity, label);
+        const finalClassification = classifyJurisdictionIdentity(finalCatalog, createPayload);
+        const finalExisting = assertUnambiguousJurisdictionIdentity(finalClassification, createPayload, label);
+        if (finalClassification.exact.length === 1 && finalExisting?.id === keep.id) {
+          return { record: finalExisting, status: "concurrent_duplicate_discarded" };
         }
       }
     }
-    throw new Error(`${label} detected simultaneous duplicate creation. No other session's Jurisdiction was deleted; review the ${after.length} records before continuing.`);
+    throw new Error(`${label} detected simultaneous duplicate creation for ${identityDescription(createPayload)}. No other session's Jurisdiction was deleted; reload and review the matching records before continuing.`);
   }
 
-  if (createError) throw createError;
+  if (createError) {
+    throw new Error(`${createError?.message || `${label} could not be created.`} No matching Jurisdiction was visible after recovery. Reload before retrying.`);
+  }
   if (created?.id) throw new Error(`${label} returned a create receipt but could not be verified. Reload before retrying.`);
   throw new Error(`${label} could not verify whether the Jurisdiction was created.`);
 }
