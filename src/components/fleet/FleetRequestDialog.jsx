@@ -4,7 +4,7 @@ import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { Loader2, X, Upload, ImagePlus } from "lucide-react";
 
 export default function FleetRequestDialog({ open, mode, request, equipment, parts = [], fluids = [], onClose, onSubmit }) {
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(/** @type {any} */ ({}));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirmReceive, setConfirmReceive] = useState(false);
