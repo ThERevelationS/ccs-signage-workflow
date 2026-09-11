@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { constantTimeEqual } from '../../shared/constantTime.ts';
+import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -103,12 +104,14 @@ Deno.serve(async (req) => {
     const target = targetRows[0];
 
     const resetToken = secureToken();
+    const resetTokenHash = await hashBearerToken(resetToken);
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
       entity: authorized,
       user: target,
       nextFields: {
-        password_reset_token: resetToken,
+        password_reset_token: null,
+        password_reset_token_hash: resetTokenHash,
         password_reset_expires: expires,
       },
       guardFields: { email: target.email },
