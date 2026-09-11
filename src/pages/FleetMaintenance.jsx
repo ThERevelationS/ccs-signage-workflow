@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
+import FleetMaintenanceCalendar from "@/components/fleet/FleetMaintenanceCalendar";
 import FleetMaintenanceWorkspace from "@/components/fleet/FleetMaintenanceWorkspace";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
@@ -35,14 +36,17 @@ export default function FleetMaintenance() {
   const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const requestedStatus = initialParams.get("status") || "";
   const requestedEquipment = initialParams.get("equipment") || "";
+  const requestedView = initialParams.get("view") || "";
+  const requestedTab = initialParams.get("tab") || "";
   const [tasks, setTasks] = useState([]);
   const [equipment, setEquipment] = useState([]);
   const [activeWorkOrders, setActiveWorkOrders] = useState([]);
   const [parts, setParts] = useState([]);
   const [fluids, setFluids] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : "equipment");
+  const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : requestedView === "calendar" ? "calendar" : "equipment");
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(requestedEquipment);
+  const [workspaceInitialTab, setWorkspaceInitialTab] = useState(["overview", "schedule", "active", "history", "usage"].includes(requestedTab) ? requestedTab : "overview");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(["pending", "in_progress", "completed", "overdue"].includes(requestedStatus) ? requestedStatus : "all");
   const [equipmentFilter, setEquipmentFilter] = useState("all");
@@ -161,8 +165,9 @@ export default function FleetMaintenance() {
     });
   }, [tasks, search, statusFilter, equipmentFilter, names]);
 
-  const openEquipmentMaintenance = (equipmentId) => {
+  const openEquipmentMaintenance = (equipmentId, initialTab = "overview") => {
     setSelectedEquipmentId(equipmentId);
+    setWorkspaceInitialTab(initialTab);
     setEquipmentFilter(equipmentId);
     setStatusFilter("all");
     setSearch("");
@@ -170,6 +175,7 @@ export default function FleetMaintenance() {
     const url = new URL(window.location.href);
     url.search = "";
     url.searchParams.set("equipment", equipmentId);
+    if (initialTab !== "overview") url.searchParams.set("tab", initialTab);
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -177,15 +183,25 @@ export default function FleetMaintenance() {
   const showEquipmentView = () => {
     setView("equipment");
     setSelectedEquipmentId("");
+    setWorkspaceInitialTab("overview");
     setEquipmentFilter("all");
     setStatusFilter("all");
     setSearch("");
     window.history.replaceState({}, "", window.location.pathname);
   };
 
+  const showCalendar = () => {
+    setView("calendar");
+    setSelectedEquipmentId("");
+    setWorkspaceInitialTab("overview");
+    setSearch("");
+    window.history.replaceState({}, "", `${window.location.pathname}?view=calendar`);
+  };
+
   const showAllSchedules = () => {
     setView("all_schedules");
     setSelectedEquipmentId("");
+    setWorkspaceInitialTab("overview");
     setSearch("");
     window.history.replaceState({}, "", window.location.pathname);
   };
