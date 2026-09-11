@@ -39,8 +39,14 @@ async function authenticateAdminSession(base44: any, token: unknown) {
   if (!Array.isArray(users)) throw Object.assign(new Error('Authenticated user identity could not be verified'), { status: 503 });
   if (users.length === 0) throw Object.assign(new Error('Authentication required'), { status: 401 });
   if (users.length !== 1) throw Object.assign(new Error('Authenticated user identity is ambiguous'), { status: 409 });
-  if (users[0].role !== 'admin') throw Object.assign(new Error('Forbidden: Admin access required'), { status: 403 });
-  return users[0];
+  const user = users[0];
+  const notBefore = Date.parse(String(user?.session_not_before || ''));
+  const issuedAt = Number(payload?.iat || 0);
+  if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
+    throw Object.assign(new Error('Authentication required'), { status: 401 });
+  }
+  if (user.role !== 'admin') throw Object.assign(new Error('Forbidden: Admin access required'), { status: 403 });
+  return user;
 }
 
 Deno.serve(async (req) => {
