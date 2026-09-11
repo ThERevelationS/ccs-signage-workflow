@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { constantTimeEqual } from '../../shared/constantTime.ts';
+import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import {
   claimPasswordResetToken,
   replaceAuthorizedEmailCredentialFieldsIfUnchanged,
@@ -71,8 +72,14 @@ Deno.serve(async (req) => {
     let isResetFlow = false;
 
     if (reset_token) {
-      const users = await authorized.filter({ password_reset_token: reset_token });
-      if (!users || users.length !== 1) {
+      const resetTokenHash = await hashBearerToken(reset_token);
+      let users = await authorized.filter({ password_reset_token_hash: resetTokenHash });
+      if (Array.isArray(users) && users.length === 0) {
+        // Backward-compatible rollout guard for a legacy raw token issued by an
+        // older deployed function immediately before hash-at-rest became active.
+        users = await authorized.filter({ password_reset_token: reset_token });
+      }
+      if (!Array.isArray(users) || users.length !== 1) {
         return Response.json({ success: false, error: 'Invalid or already-used reset link' }, { status: 401 });
       }
       const candidate = users[0];
@@ -84,6 +91,7 @@ Deno.serve(async (req) => {
           entity: authorized,
           user: candidate,
           resetToken: reset_token,
+          resetTokenHash,
           label: `Password reset token for ${candidate.email}`,
         });
       } catch (claimError) {
@@ -125,6 +133,7 @@ Deno.serve(async (req) => {
     // were already claimed atomically above.
     if (!isResetFlow) {
       nextFields.password_reset_token = null;
+      nextFields.password_reset_token_hash = null;
       nextFields.password_reset_expires = null;
     }
 
