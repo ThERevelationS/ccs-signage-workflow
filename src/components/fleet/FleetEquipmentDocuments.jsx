@@ -4,7 +4,6 @@ import { filterAllFleetRows } from "./fleetEntityLoaders";
 import FleetConfirmDialog from "./FleetConfirmDialog";
 import {
   Archive,
-  CalendarClock,
   ExternalLink,
   FileImage,
   FileText,
