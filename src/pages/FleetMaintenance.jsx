@@ -217,30 +217,32 @@ export default function FleetMaintenance() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Maintenance</h1>
             <p className="text-sm text-gray-500 dark:text-slate-400">Manage maintenance by vehicle or equipment first. The full schedule table remains available when you need a global view.</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
+          {view !== "workspace" && <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
             <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder={view === "equipment" ? "Search equipment or maintenance..." : "Search schedules..."} className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
             {view === "all_schedules" && <>
               <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
             </>}
             {isAdmin && <button onClick={() => openCreateDialog()} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2 whitespace-nowrap"><Plus className="w-4 h-4" />New Schedule</button>}
+          </div>}
+        </div>
+
+        {view !== "workspace" && <>
+          <div className="inline-flex w-full sm:w-auto rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+            <button onClick={showEquipmentView} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "equipment" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><LayoutGrid className="w-4 h-4" />Equipment</button>
+            <button onClick={showAllSchedules} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "all_schedules" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><List className="w-4 h-4" />All Schedules</button>
           </div>
-        </div>
 
-        <div className="inline-flex w-full sm:w-auto rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
-          <button onClick={() => { setView("equipment"); setEquipmentFilter("all"); setStatusFilter("all"); }} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "equipment" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><LayoutGrid className="w-4 h-4" />Equipment</button>
-          <button onClick={() => setView("all_schedules")} className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${view === "all_schedules" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><List className="w-4 h-4" />All Schedules</button>
-        </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <Metric icon={Clock3} label="Pending" value={metrics.pending.length} />
+            <Metric icon={Activity} label="In progress" value={metrics.inProgress.length} />
+            <Metric icon={CalendarClock} label="Overdue" value={metrics.overdue.length} danger={metrics.overdue.length > 0} />
+            <Metric icon={CalendarClock} label="Due in 14 days" value={metrics.dueSoon.length} attention={metrics.dueSoon.length > 0} />
+            <Metric icon={Wrench} label="Active work orders" value={activeWorkOrders.length} />
+          </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          <Metric icon={Clock3} label="Pending" value={metrics.pending.length} />
-          <Metric icon={Activity} label="In progress" value={metrics.inProgress.length} />
-          <Metric icon={CalendarClock} label="Overdue" value={metrics.overdue.length} danger={metrics.overdue.length > 0} />
-          <Metric icon={CalendarClock} label="Due in 14 days" value={metrics.dueSoon.length} attention={metrics.dueSoon.length > 0} />
-          <Metric icon={Wrench} label="Active work orders" value={activeWorkOrders.length} />
-        </div>
-
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">Automatic generation is live and idempotent. This redesign changes how schedules are organized on screen; it does not change schedule generation, work-order completion, or inventory behavior.</div>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">Automatic generation is live and idempotent. This redesign changes how schedules are organized on screen; it does not change schedule generation, work-order completion, or inventory behavior.</div>
+        </>}
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
