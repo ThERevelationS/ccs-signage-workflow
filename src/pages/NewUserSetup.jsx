@@ -17,10 +17,6 @@ import {
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
-import {
-  assertAuthorizedEmailIdentityAvailable,
-  updateAuthorizedEmailIfUnchanged,
-} from "@/components/admin/authorizedEmailPersistence";
 
 export default function NewUserSetup() {
   const resetMode = typeof window !== "undefined" && window.location.pathname.toLowerCase() === "/resetpassword";
@@ -67,34 +63,15 @@ export default function NewUserSetup() {
     }
     
     try {
-      // Find user with this onboarding token
-      const users = await base44.entities.AuthorizedEmail.filter({ onboarding_token: token });
-      
-      if (users.length === 0) {
-        setError("This registration link is invalid or has already been used. Please contact your administrator.");
-        setLoading(false);
-        return;
+      const response = await base44.functions.invoke("onboardingAccountAction", {
+        action: "validate",
+        token,
+      });
+      const result = response?.data || response;
+      if (!result?.success || !result?.user?.id) {
+        throw new Error(result?.error || "This registration link could not be verified.");
       }
-      
-      const foundUser = users[0];
-      
-      // Check if token is expired
-      if (foundUser.onboarding_expires) {
-        const expires = new Date(foundUser.onboarding_expires);
-        if (expires < new Date()) {
-          setError("This registration link has expired. Please contact your administrator for a new invitation.");
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Check if already completed
-      if (foundUser.onboarding_complete) {
-        setError("You have already completed your registration. You can now use the Time Clock to clock in.");
-        setLoading(false);
-        return;
-      }
-      
+      const foundUser = result.user;
       setUser(foundUser);
       // Pre-fill name
       setFullName(foundUser.full_name || "");
@@ -187,18 +164,7 @@ export default function NewUserSetup() {
       return;
     }
     
-    // Check username uniqueness against the same guarded identity rules used by admin settings.
-    try {
-      await assertAuthorizedEmailIdentityAvailable({
-        entity: base44.entities.AuthorizedEmail,
-        recordId: user.id,
-        username: username.toLowerCase().trim(),
-      });
-    } catch (identityError) {
-      setFormError(identityError?.message || "This username is already taken. Please choose a different one.");
-      return;
-    }
-    
+    // Username uniqueness is revalidated server-side when credentials are saved.
     // Move to face enrollment step
     setStep(3);
   };
@@ -213,57 +179,20 @@ export default function NewUserSetup() {
     setFormError("");
 
     try {
-      // Update only the onboarding-owned profile fields. Guard the invitation token so
-      // an expired/reissued onboarding session cannot overwrite a newer user record.
-      const profileFields = {
+      const token = new URLSearchParams(window.location.search).get("token") || "";
+      const response = await base44.functions.invoke("onboardingAccountAction", {
+        action: "save_credentials",
+        token,
         full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
-      };
-      if (faceDescriptors.length > 0) profileFields.face_descriptors = faceDescriptors;
-      const profileUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: user,
-        nextFields: profileFields,
-        exactVersion: false,
-        enforceIdentity: true,
-        guardFields: {
-          onboarding_token: user.onboarding_token,
-          onboarding_complete: user.onboarding_complete,
-        },
-        label: `Onboarding profile for ${user.full_name || user.email}`
+        password,
+        face_descriptors: faceDescriptors,
       });
-      setUser(profileUser);
-
-      // Reuse the onboarding token as the one-time password reset credential.
-      // setPassword claims this token atomically on the server before changing a password.
-      const resetUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: profileUser,
-        nextFields: {
-          password_reset_token: profileUser.onboarding_token,
-          password_reset_expires: profileUser.onboarding_expires,
-        },
-        exactVersion: false,
-        enforceIdentity: false,
-        guardFields: { onboarding_token: profileUser.onboarding_token },
-        label: `Onboarding password token for ${profileUser.full_name || profileUser.email}`
-      });
-      setUser(resetUser);
-
-      const res = await setPasswordFn({
-        reset_token: user.onboarding_token,
-        new_password: password,
-        username: username.toLowerCase().trim(),
-      });
-
-      if (!res?.data?.success) {
-        setFormError(res?.data?.error || "Failed to save password");
-        setSaving(false);
-        return;
+      const result = response?.data || response;
+      if (!result?.success || !result?.user?.id) {
+        throw new Error(result?.error || "Failed to save onboarding credentials.");
       }
-
-      await reloadUser();
-      // Move to HR data step
+      setUser(result.user);
       setStep(4);
     } catch (err) {
       console.error("Error saving:", err);
@@ -278,21 +207,16 @@ export default function NewUserSetup() {
     setFormError("");
     
     try {
-      // Mark onboarding as complete only while this invitation token is still the current one.
-      const completedUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: user,
-        nextFields: {
-          onboarding_complete: true,
-          onboarding_token: null,
-          onboarding_expires: null
-        },
-        exactVersion: false,
-        enforceIdentity: false,
-        guardFields: { onboarding_token: user.onboarding_token },
-        label: `Complete onboarding for ${user.full_name || user.email}`
+      const token = new URLSearchParams(window.location.search).get("token") || "";
+      const response = await base44.functions.invoke("onboardingAccountAction", {
+        action: "complete",
+        token,
       });
-      setUser(completedUser);
+      const result = response?.data || response;
+      if (!result?.success || !result?.user?.id) {
+        throw new Error(result?.error || "Failed to complete onboarding.");
+      }
+      setUser(result.user);
       setStep(5);
     } catch (err) {
       console.error("Error completing setup:", err);
@@ -302,15 +226,29 @@ export default function NewUserSetup() {
     setSaving(false);
   };
 
-  const reloadUser = async () => {
-    if (!user?.id) return null;
-    const updated = await base44.entities.AuthorizedEmail.filter({ id: user.id });
-    if (updated.length === 1) {
-      setUser(updated[0]);
-      return updated[0];
+  const saveOnboardingHrData = async (hrData) => {
+    const token = new URLSearchParams(window.location.search).get("token") || "";
+    const response = await base44.functions.invoke("onboardingAccountAction", {
+      action: "save_hr",
+      token,
+      hr_data: hrData,
+    });
+    const result = response?.data || response;
+    if (!result?.success || !result?.user?.id) {
+      throw new Error(result?.error || "HR data could not be saved.");
     }
-    if (updated.length > 1) throw new Error("Duplicate onboarding user records were found. Contact an administrator before continuing.");
-    return null;
+    setUser(result.user);
+    return result.user;
+  };
+
+  const reloadUser = async () => {
+    const token = new URLSearchParams(window.location.search).get("token") || "";
+    if (!token || resetMode) return user;
+    const response = await base44.functions.invoke("onboardingAccountAction", { action: "validate", token });
+    const result = response?.data || response;
+    if (!result?.success || !result?.user?.id) return null;
+    setUser(result.user);
+    return result.user;
   };
 
   if (loading) {
@@ -643,6 +581,7 @@ export default function NewUserSetup() {
           <UserHRDataForm 
             userData={user} 
             onUpdate={reloadUser}
+            onSave={saveOnboardingHrData}
             section="all"
             isAdmin={false}
           />
