@@ -17,7 +17,9 @@ function migrationRetentionStats(rows:any[]) {
 }
 
 function countFromAudit(audit:any, key:string) {
-  const n = Number(audit?.destination_counts?.[key]);
+  const counts = audit?.destination_counts || {};
+  const raw = counts[key] ?? counts[`${key}_migrated`];
+  const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 }
 
