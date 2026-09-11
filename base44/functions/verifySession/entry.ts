@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { constantTimeEqual } from '../../shared/constantTime.ts';
 
 function b64urlEncode(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
     }
 
     const expectedSig = await hmacSign(payloadStr, secret);
-    if (expectedSig !== providedSig) {
+    if (!constantTimeEqual(expectedSig, providedSig)) {
       return Response.json({ valid: false, error: 'Invalid signature' }, { status: 401 });
     }
 
