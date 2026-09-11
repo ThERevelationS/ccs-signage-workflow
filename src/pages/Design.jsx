@@ -55,7 +55,7 @@ export default function Design() {
           .filter(item => item.page === "Design")
           .map(item => item.text || item);
       }
-    } catch (e) {}
+    } catch {}
     return ["WIP - In Final Design Queue", "WIP - Designing"];
   };
 
@@ -211,20 +211,6 @@ export default function Design() {
       console.error("Error deleting work order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
       loadWorkOrders();
-    }
-  };
-
-  const toggleFullScreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullScreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullScreen(false);
-      }
-    } catch (error) {
-      console.error("Fullscreen error:", error);
     }
   };
 
