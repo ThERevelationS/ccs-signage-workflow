@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 
 /**
  * Wrapper function that calls the jurisdictionResearch agent
@@ -11,11 +12,14 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { jurisdictionName, jurisdictionState, jurisdictionType = 'county', includeParentCounty = true } = await req.json();
-    
-    if (!jurisdictionName || !jurisdictionState) {
-      return Response.json({ error: 'jurisdictionName and jurisdictionState required' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    let researchInput;
+    try {
+      researchInput = normalizePermittingResearchInput(body);
+    } catch (validationError) {
+      return Response.json({ error: validationError?.message || 'Invalid permitting research input' }, { status: 400 });
     }
+    const { jurisdictionName, jurisdictionState, jurisdictionType, includeParentCounty } = researchInput;
 
     // For now, fallback to direct LLM call since agent API may have timing issues
     // The agent prompt instructions are documented in agents/jurisdictionResearch.json
@@ -92,6 +96,7 @@ Return ONLY valid JSON with these fields (use null for unfound data):
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('callJurisdictionAgent error:', error?.message || error);
+    return Response.json({ error: 'Jurisdiction research could not be completed safely' }, { status: 500 });
   }
 });
