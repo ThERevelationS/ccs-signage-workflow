@@ -59,16 +59,16 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, connectionRows, auditRows, statusResult, integrityResult, health] = await Promise.all([
+          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
-            base44.entities.BouncieConnection.list("-updated_date", 10),
+            base44.functions.invoke("bouncieStatus", {}).catch(() => null),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
             base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
             base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
           ]);
           setSettings((settingsRows || [])[0] || null);
-          setConnection((connectionRows || [])[0] || null);
+          setConnection(bouncieStatusResult?.data || null);
           setAudit((auditRows || []).find((row) => row.mode === "verification") || (auditRows || [])[0] || null);
           setServerStatus(statusResult?.data || null);
           setIntegrity(integrityResult?.data || null);
@@ -108,8 +108,8 @@ export default function FleetSettings() {
       { label: "Fleet migration snapshot reconciled", ok: !!audit?.summary?.migration_snapshot_reconciled, detail: audit?.run_key || "No verification audit found" },
       { label: "CCS Fleet production URL configured", ok: !!settings.fleet_app_base_url, detail: settings.fleet_app_base_url || "Not configured" },
       { label: "FleetMaster source freeze confirmed", ok: !!settings.source_freeze_confirmed, detail: settings.source_freeze_confirmed_at || "Not yet frozen" },
-      { label: "Bouncie webhook active", ok: !!connection?.webhook_active, detail: connection?.last_webhook_at ? `Last event ${new Date(connection.last_webhook_at).toLocaleString()}` : "No recent webhook timestamp" },
-      { label: "Bouncie REST authorization healthy", ok: !!connection && !connection.needs_reconnect, detail: connection?.needs_reconnect ? "Administrator OAuth reconnect required" : "No reconnect flag" },
+      { label: "Bouncie webhook active", ok: !!connection?.webhookActive, detail: connection?.lastWebhookAt ? `Last event ${new Date(connection.lastWebhookAt).toLocaleString()}` : "No recent webhook timestamp" },
+      { label: "Bouncie REST authorization healthy", ok: !!connection?.connected && !connection.needsReconnect, detail: connection?.needsReconnect ? "Administrator OAuth reconnect required" : "No reconnect flag" },
     ];
   }, [settings, connection, audit, serverStatus]);
 
@@ -118,13 +118,13 @@ export default function FleetSettings() {
     try {
       const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
       setServerStatus(data || null);
-      const [settingsRows, connectionRows, health] = await Promise.all([
+      const [settingsRows, bouncieStatusResult, health] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
-        base44.entities.BouncieConnection.list("-updated_date", 10),
+        base44.functions.invoke("bouncieStatus", {}).catch(() => null),
         loadAutomationHealthData(),
       ]);
       setSettings((settingsRows || [])[0] || null);
-      setConnection((connectionRows || [])[0] || null);
+      setConnection(bouncieStatusResult?.data || null);
       setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
       setQueueRows(health.notifications || []);
       setReceiptRows(health.receipts || []);
@@ -286,7 +286,7 @@ export default function FleetSettings() {
 
     <IntegrityPanel data={integrity} busy={integrityBusy} onRefresh={runIntegrityAudit} />
 
-    {connection?.needs_reconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page to restore full Fleet tracking.</p></div></div>}
+    {connection?.needsReconnect && <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-red-600 shrink-0"/><div><div className="font-semibold text-red-800 dark:text-red-200">Bouncie administrator reconnect required</div><p className="text-sm text-red-700 dark:text-red-300 mt-1">The stored refresh credential was rejected. Webhooks may continue independently, but Fleet Tracking REST vehicles/trips must be reauthorized from the Tracking page to restore full Fleet tracking.</p></div></div>}
 
     {oldUrl && <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4 flex gap-3"><AlertTriangle className="w-5 h-5 text-amber-600 shrink-0"/><div><div className="font-semibold text-amber-800 dark:text-amber-200">Legacy FleetMaster URL still preserved in a template</div><p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Notifications are live. Update this template immediately so future Fleet messages do not send users to the retired FleetMaster route.</p></div></div>}
 
