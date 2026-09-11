@@ -11,17 +11,20 @@ const canonical = (rows = []) => rows.slice().sort((a,b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
-async function findNotificationContenders(Notification, normalized, vin) {
+async function findNotificationContenders(Notification, normalized, vin, event) {
   const exact = await Notification.filter({ event_key: normalized.eventKey });
   if (exact?.length || !SEMANTIC_TRIP_EVENTS.has(normalized.eventType)) return exact || [];
   // Some Bouncie retry/normalization paths can report the same trip boundary with a
-  // corrected odometer value. VIN + trip event type + event timestamp is the stable
-  // event identity; payload measurements are event data, not identity.
-  return await Notification.filter({
+  // corrected measurement. Treat transactionId + VIN + type + timestamp as the stable
+  // event identity; payload measurements such as odometer are event data, not identity.
+  const candidates = await Notification.filter({
     vehicle_vin: vin,
     event_type: normalized.eventType,
     timestamp: normalized.timestamp,
   });
+  const incomingTransactionId = String(event?.transactionId || normalized?.payload?.transactionId || '').trim();
+  if (!incomingTransactionId) return candidates || [];
+  return (candidates || []).filter((row) => String(row?.raw_data?.transactionId || row?.raw_data?.[row?.event_type]?.transactionId || '').trim() === incomingTransactionId);
 }
 
 export default async function(req) {
@@ -60,7 +63,7 @@ export default async function(req) {
     let duplicate = false;
     if (normalized.createNotification && vin) {
       const Notification = base44.asServiceRole.entities.BouncieNotification;
-      const existing = await findNotificationContenders(Notification, normalized, vin);
+      const existing = await findNotificationContenders(Notification, normalized, vin, event);
       duplicate = !!(existing && existing.length);
 
       if (!duplicate) {
@@ -81,7 +84,7 @@ export default async function(req) {
 
         // Collapse only concurrent deliveries of this same event. Historical rows are never scanned or rewritten.
         await new Promise((resolve) => setTimeout(resolve, 50));
-        const contenders = await findNotificationContenders(Notification, normalized, vin);
+        const contenders = await findNotificationContenders(Notification, normalized, vin, event);
         const winner = canonical(contenders) || created;
         duplicate = (contenders || []).length > 1;
         for (const contender of contenders || []) {
