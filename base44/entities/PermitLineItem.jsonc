@@ -111,6 +111,16 @@
       "format": "date",
       "description": "When the permit was received \u2014 marks complete"
     },
+    "last_submitted_trigger_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact submitted_date value already claimed for workflow automation. Prevents duplicate permit_submitted actions while allowing a later corrected date to fire once."
+    },
+    "last_permit_received_trigger_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Exact permit_received_date value already claimed for workflow automation. Prevents duplicate permit_received actions while allowing a later corrected date to fire once."
+    },
     "last_followup_fired_date": {
       "type": "string",
       "format": "date",
