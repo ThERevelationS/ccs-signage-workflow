@@ -117,19 +117,6 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
 
-  // Standalone external mechanic portal. This route intentionally bypasses the CCS
-  // authenticated shell, but every read/write is independently authorized by a
-  // revocable Fleet-scoped bearer link in fleetMechanicPortal.
-  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase() === '/fleetmechanic') {
-    return <FleetMechanic />;
-  }
-
-  // Tightly scoped login-free Fleet issue reporting. The backend independently
-  // enforces FleetSettings.public_reporting_enabled and exposes only id/name/type.
-  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase() === '/fleetreport') {
-    return <FleetPublicReport />;
-  }
-
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -200,7 +187,28 @@ const AuthenticatedApp = () => {
 };
 
 
+function standaloneFleetPage() {
+  if (typeof window === 'undefined') return null;
+  const path = window.location.pathname.replace(/\/+$/, '').toLowerCase() || '/';
+  if (path === '/fleetmechanic') return FleetMechanic;
+  if (path === '/fleetreport') return FleetPublicReport;
+  return null;
+}
+
 function App() {
+  const StandaloneFleetPage = standaloneFleetPage();
+
+  // These two Fleet surfaces are intentionally outside CCS authentication, navigation,
+  // layout, navigation tracking, and the visual editor shell. Their backend functions
+  // independently enforce their narrow public/mechanic authorization boundaries.
+  if (StandaloneFleetPage) {
+    return (
+      <QueryClientProvider client={queryClientInstance}>
+        <StandaloneFleetPage />
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <AuthProvider>
