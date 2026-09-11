@@ -1,10 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { verifyOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
     try {
         const url = new URL(req.url);
         const code = url.searchParams.get('code');
-        const userEmail = url.searchParams.get('state');
+        const state = url.searchParams.get('state');
         const error = url.searchParams.get('error');
 
         if (error) {
@@ -12,14 +13,14 @@ Deno.serve(async (req) => {
                 <html>
                     <body>
                         <h1>Authorization Failed</h1>
-                        <p>Error: ${error}</p>
+                        <p>Google did not authorize the requested Gmail connection.</p>
                         <script>setTimeout(() => window.close(), 3000);</script>
                     </body>
                 </html>
             `, { headers: { 'Content-Type': 'text/html' } });
         }
 
-        if (!code) {
+        if (!code || !state) {
             return new Response(`
                 <html>
                     <body>
@@ -30,6 +31,7 @@ Deno.serve(async (req) => {
             `, { headers: { 'Content-Type': 'text/html' } });
         }
 
+        const identity = await verifyOAuthState(state, 'gmail_oauth');
         const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
         const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
         const redirectUri = `https://clay-flow-signage-suite-387da97c.base44.app/api/functions/gmailAuthCallback`;
@@ -63,15 +65,15 @@ Deno.serve(async (req) => {
         // Store the refresh token for the user
         const base44 = createClientFromRequest(req);
         
-        // Find the user by email and update their refresh token
-        const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-        
-        if (users && users.length > 0) {
-            await base44.asServiceRole.entities.User.update(users[0].id, {
-                gmail_refresh_token: tokens.refresh_token,
-                gmail_connected: true
-            });
+        // Bind the OAuth result only to the exact user who initiated the flow.
+        const users = await base44.asServiceRole.entities.User.filter({ email: identity.email });
+        if (!Array.isArray(users) || users.length !== 1 || String(users[0]?.id || '') !== identity.userId) {
+            return new Response('OAuth user identity could not be verified', { status: users?.length > 1 ? 409 : 401 });
         }
+        await base44.asServiceRole.entities.User.update(users[0].id, {
+            gmail_refresh_token: tokens.refresh_token,
+            gmail_connected: true
+        });
 
         // Return success page that closes itself
         return new Response(`
@@ -92,13 +94,9 @@ Deno.serve(async (req) => {
         `, { headers: { 'Content-Type': 'text/html' } });
 
     } catch (error) {
-        return new Response(`
-            <html>
-                <body>
-                    <h1>Error</h1>
-                    <p>${error.message}</p>
-                </body>
-            </html>
-        `, { headers: { 'Content-Type': 'text/html' } });
+        const status = Number(error?.status || 500);
+        const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+        console.error('gmailAuthCallback error:', error?.message || error);
+        return new Response(safeStatus === 500 ? 'OAuth connection failed safely' : error.message, { status: safeStatus });
     }
 });
