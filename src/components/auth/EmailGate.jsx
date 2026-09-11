@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, LogIn, Eye, AlertCircle, ShieldCheck } from "lucide-react";
+import { Loader2, LogIn, Eye, AlertCircle } from "lucide-react";
 
 const TOKEN_KEY = "sss_session_token";
 
@@ -72,24 +72,6 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const adminBootstrap = useCallback(async () => {
-    try {
-      const res = await base44.functions.invoke("adminBootstrapLogin", {});
-      const data = res?.data || res;
-      if (data?.success && data.token) {
-        localStorage.setItem(TOKEN_KEY, data.token);
-        setCurrentUser(data.user);
-        setBrowseOnly(false);
-        setShowLogin(false);
-        return { success: true };
-      }
-      return { success: false, error: data?.error || "Bootstrap failed" };
-    } catch (err) {
-      const apiError = err?.response?.data?.error;
-      return { success: false, error: apiError || "Bootstrap failed" };
-    }
-  }, []);
-
   const getUserFirstName = useCallback(() => {
     if (!currentUser?.full_name) return "";
     return currentUser.full_name.split(" ")[0];
@@ -117,7 +99,6 @@ export function AuthProvider({ children }) {
     isLoading,
     logout,
     loginWithCredentials,
-    adminBootstrap,
     getUserFirstName,
     showLoginDialog: () => { setBrowseOnly(false); setShowLogin(true); },
     requireLogin,
@@ -141,18 +122,16 @@ export function AuthProvider({ children }) {
           setShowLogin(false);
         }}
         onLogin={loginWithCredentials}
-        onAdminBootstrap={adminBootstrap}
       />
     </AuthContext.Provider>
   );
 }
 
-function LoginDialog({ open, onLogin, onBrowseOnly, onAdminBootstrap }) {
+function LoginDialog({ open, onLogin, onBrowseOnly }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [bootstrapping, setBootstrapping] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -165,14 +144,6 @@ function LoginDialog({ open, onLogin, onBrowseOnly, onAdminBootstrap }) {
       setUsername("");
       setPassword("");
     }
-  };
-
-  const handleBootstrap = async () => {
-    setError("");
-    setBootstrapping(true);
-    const res = await onAdminBootstrap();
-    setBootstrapping(false);
-    if (!res.success) setError(res.error);
   };
 
   return (
@@ -231,20 +202,6 @@ function LoginDialog({ open, onLogin, onBrowseOnly, onAdminBootstrap }) {
             onClick={onBrowseOnly}
           >
             <Eye className="w-4 h-4 mr-2" /> Continue browsing without signing in
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full text-xs text-gray-500"
-            onClick={handleBootstrap}
-            disabled={bootstrapping}
-          >
-            {bootstrapping ? (
-              <Loader2 className="w-3 h-3 animate-spin mr-2" />
-            ) : (
-              <ShieldCheck className="w-3 h-3 mr-2" />
-            )}
-            Admin emergency sign-in (via Base44 account)
           </Button>
         </div>
       </DialogContent>
