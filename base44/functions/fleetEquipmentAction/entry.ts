@@ -122,8 +122,8 @@ Deno.serve(async (req) => {
       if (!equipmentId) return Response.json({ error: 'Fleet equipment id is required.' }, { status: 400 });
       const equipment = await Equipment.get(equipmentId);
       if (!equipment) return Response.json({ error: 'Fleet equipment not found.' }, { status: 404 });
-      const vin = normalizeVin(equipment.vin || equipment.serial_number);
-      if (!vin) return Response.json({ error: 'Vehicle metadata requires a VIN-linked Fleet equipment record.' }, { status: 409 });
+      const vin = normalizeVin(equipment.vin);
+      if (!vin) return Response.json({ error: 'Vehicle metadata requires an actual VIN on the Fleet equipment record; serial numbers are not used as vehicle identity.' }, { status: 409 });
       const allowed = ['license_plate','assigned_driver','department','unit_number','insurance_provider','insurance_policy_number','insurance_agent','insurance_agent_contact','insurance_effective_date','insurance_expiration_date','registration_expiration_date','maintenance_notes','notes'];
       const patch: any = {};
       for (const key of allowed) if (Object.prototype.hasOwnProperty.call(body?.metadata || {}, key)) patch[key] = body.metadata[key];
