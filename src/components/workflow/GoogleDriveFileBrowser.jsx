@@ -27,6 +27,7 @@ import {
   X
 } from "lucide-react";
 import { googleDriveOperations } from "@/functions/googleDriveOperations";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const getFileIcon = (mimeType) => {
   if (!mimeType) return File;
@@ -55,6 +56,7 @@ export default function GoogleDriveFileBrowser({
   workOrderTitle,
   onFileIdsUpdate 
 }) {
+  const { sessionToken } = useAuth();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -65,6 +67,7 @@ export default function GoogleDriveFileBrowser({
   const [uploading, setUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
   const fileInputRef = useRef(null);
+  const runDriveOperation = (payload) => runDriveOperation({ ...payload, session_token: sessionToken });
 
   // Extract folder ID from URL if provided
   useEffect(() => {
@@ -91,7 +94,7 @@ export default function GoogleDriveFileBrowser({
     setLoading(true);
     setError(null);
     try {
-      const response = await googleDriveOperations({
+      const response = await runDriveOperation({
         action: 'listFiles',
         folderId: targetFolderId
       });
@@ -129,7 +132,7 @@ export default function GoogleDriveFileBrowser({
     if (!newFolderName.trim()) return;
     setLoading(true);
     try {
-      const response = await googleDriveOperations({
+      const response = await runDriveOperation({
         action: 'createFolder',
         fileName: newFolderName,
         folderId: currentFolderId
@@ -161,7 +164,7 @@ export default function GoogleDriveFileBrowser({
       reader.onload = async (event) => {
         const base64 = event.target.result.split(',')[1];
         
-        const response = await googleDriveOperations({
+        const response = await runDriveOperation({
           action: 'uploadFile',
           fileName: file.name,
           fileContent: base64,
@@ -192,7 +195,7 @@ export default function GoogleDriveFileBrowser({
   const handleDownload = async (file) => {
     setDownloadingId(file.id);
     try {
-      const response = await googleDriveOperations({
+      const response = await runDriveOperation({
         action: 'getDownloadUrl',
         fileId: file.id
       });
@@ -230,7 +233,7 @@ export default function GoogleDriveFileBrowser({
     
     setLoading(true);
     try {
-      const response = await googleDriveOperations({
+      const response = await runDriveOperation({
         action: 'deleteFile',
         fileId: file.id,
         expectedFileName: file.name,
