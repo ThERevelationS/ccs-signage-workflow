@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -6,11 +7,14 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { jurisdictionName, jurisdictionState, jurisdictionType = 'county', includeParentCounty = true } = await req.json();
-    
-    if (!jurisdictionName || !jurisdictionState) {
-      return Response.json({ error: 'jurisdictionName and jurisdictionState required' }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    let researchInput;
+    try {
+      researchInput = normalizePermittingResearchInput(body);
+    } catch (validationError) {
+      return Response.json({ error: validationError?.message || 'Invalid permitting research input' }, { status: 400 });
     }
+    const { jurisdictionName, jurisdictionState, jurisdictionType, includeParentCounty } = researchInput;
 
     // Main research agent prompt - with detailed instructions for accurate data gathering
     const researchPrompt = `You are a specialized research agent for gathering sign permitting information. Your goal is to find ACCURATE, VERIFIED information from official sources.
@@ -166,6 +170,7 @@ Before returning:
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('jurisdictionResearchAgent error:', error?.message || error);
+    return Response.json({ error: 'Jurisdiction research could not be completed safely' }, { status: 500 });
   }
 });
