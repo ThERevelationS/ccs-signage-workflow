@@ -24,6 +24,17 @@ import {
   XCircle,
 } from "lucide-react";
 
+const normalizeVin = value => String(value || "").trim().toUpperCase();
+const normalizeImei = value => String(value || "").trim();
+
+function hasRuntimeBouncieIdentityConflict(equipment, bouncieVehicles) {
+  const vin = normalizeVin(equipment?.vin);
+  const imei = normalizeImei(equipment?.bouncie_imei);
+  if (!vin || !imei || !["matched", "manual"].includes(equipment?.bouncie_link_status) || !bouncieVehicles.length) return false;
+  if (bouncieVehicles.some(vehicle => normalizeVin(vehicle?.vin) === vin && normalizeImei(vehicle?.imei) === imei)) return false;
+  return bouncieVehicles.some(vehicle => normalizeImei(vehicle?.imei) === imei && normalizeVin(vehicle?.vin) && normalizeVin(vehicle?.vin) !== vin);
+}
+
 const statusClass = (status) => {
   const map = {
     completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200",
@@ -47,7 +58,7 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, parts, fluids, requests, liveState] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
@@ -55,8 +66,9 @@ export default function FleetOverview() {
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
           listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
+          base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
-        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState });
+        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
         if (user?.role === "admin") {
           const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
@@ -101,6 +113,7 @@ export default function FleetOverview() {
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
+    const bouncieIdentityConflicts = data.equipment.filter(e => e.bouncie_link_status === "ambiguous" || hasRuntimeBouncieIdentityConflict(e, data.bouncieVehicles || []));
     const horizonDate = new Date(`${todayText}T00:00:00Z`);
     horizonDate.setUTCDate(horizonDate.getUTCDate() + 14);
     const horizonText = horizonDate.toISOString().slice(0, 10);
@@ -119,6 +132,7 @@ export default function FleetOverview() {
       lowStock: lowParts.length + lowFluids.length,
       pendingRequests,
       uniqueTracked,
+      bouncieIdentityConflicts,
       overdueTasks,
       upcomingTasks,
     };
@@ -213,6 +227,7 @@ export default function FleetOverview() {
                     <AttentionRow icon={Package} label="Low-stock parts" value={metrics.lowParts.length} page="FleetParts" query="stock=low" />
                     <AttentionRow icon={Droplets} label="Low-stock fluids" value={metrics.lowFluids.length} page="FleetFluids" query="stock=low" />
                     <AttentionRow icon={ShoppingCart} label="Pending / ordered requests" value={metrics.pendingRequests.length} page="FleetRequests" query="status=active" />
+                    <AttentionRow icon={Navigation} label="Bouncie identity conflicts" value={metrics.bouncieIdentityConflicts.length} page="FleetEquipment" query="view=tracking_issues" />
                   </div>
                   {metrics.upcomingTasks.length > 0 && <div className="mt-3 pt-3 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">Next due</div>{metrics.upcomingTasks.slice(0, 3).map(task => <div key={task.id} className="text-xs text-gray-600 dark:text-slate-300 py-1"><span className="font-medium">{task.start_date}</span> · {task.title}</div>)}</div>}
                 </div>
