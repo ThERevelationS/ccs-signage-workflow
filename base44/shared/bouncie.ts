@@ -197,6 +197,9 @@ export async function fetchBouncieUser(base44, accessToken) {
 export async function upsertWebhook(base44, origin) {
   const webhookUrl = `${origin}/functions/bouncieWebhook`;
   const authKey = secrets.get("BOUNCIE_WEBHOOK_KEY") || "";
+  if (!authKey) {
+    throw new Error("BOUNCIE_WEBHOOK_KEY_NOT_CONFIGURED");
+  }
 
   const existing = await callBouncieApi(base44, "GET", "/v1/webhooks");
   const list = Array.isArray(existing) ? existing : existing?.data || [];
