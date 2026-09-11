@@ -14,7 +14,9 @@
         "delete",
         "reset",
         "badge_issue",
-        "badge_rotate"
+        "badge_rotate",
+        "correction_request",
+        "correction_review"
       ]
     },
     "outcome": {
