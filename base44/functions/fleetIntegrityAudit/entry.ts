@@ -123,9 +123,26 @@ Deno.serve(async (req) => {
     const liveVinGroups = groupBy(liveState,(r:any)=>normVin(r.vehicle_vin));
     const duplicateLive:any[] = [];
     for (const [vin,rows] of liveVinGroups) if (rows.length > 1) duplicateLive.push({vin,rows:rows.map((r:any)=>({id:r.id,imei:r.vehicle_imei,last_seen_at:r.last_seen_at,is_trip_active:r.is_trip_active}))});
-    add('warning','duplicate_bouncie_live_state','Duplicate Bouncie live-state rows',duplicateLive,'This is a preserved pre-existing Bouncie condition. Do not deduplicate automatically without validating webhook ownership.');
+    add('warning','duplicate_bouncie_live_state','Duplicate Bouncie live-state rows',duplicateLive,'Bouncie live state is a derived cache. Duplicate VIN rows should be coalesced without changing trip or notification history.');
+
+    const contradictoryLive = liveState.filter((row:any)=>{
+      if (row?.is_trip_active !== true || !row?.ended_at || String(row?.transaction_id || '').trim()) return false;
+      const endedAt = Date.parse(row.ended_at) || 0;
+      const startedAt = Date.parse(row.started_at || '') || 0;
+      const lastEventAt = Date.parse(row.last_event_at || '') || 0;
+      return endedAt > 0 && (!startedAt || endedAt >= startedAt) && (!lastEventAt || endedAt >= lastEventAt);
+    });
+    add('warning','bouncie_live_state_ended_but_active','Bouncie live-state rows marked active after a definitive trip end',contradictoryLive.map((row:any)=>({id:row.id,vin:row.vehicle_vin || '',imei:row.vehicle_imei || '',started_at:row.started_at || '',ended_at:row.ended_at || '',last_event_at:row.last_event_at || ''})),'A derived live-state row cannot remain active when its latest known trip has ended and no active transaction remains. The cache self-heal should normalize this state without touching history.');
 
     const liveVins = new Set(Array.from(liveVinGroups.keys()));
+    const equipmentVins = new Set(Array.from(equipmentVinGroups.keys()));
+    const trackingOnly:any[] = [];
+    for (const [vin,rows] of liveVinGroups) {
+      if (equipmentVins.has(vin)) continue;
+      const newest = rows.slice().sort((a:any,b:any)=>(Date.parse(b?.last_seen_at || b?.updated_date || '') || 0)-(Date.parse(a?.last_seen_at || a?.updated_date || '') || 0))[0] || {};
+      trackingOnly.push({vin,imei:newest.vehicle_imei || '',last_seen_at:newest.last_seen_at || ''});
+    }
+    add('info','bouncie_tracking_without_fleet_equipment','Bouncie tracked vehicles without a FleetEquipment maintenance identity',trackingOnly,'Tracking-only Bouncie vehicles are allowed. Do not auto-create FleetEquipment; link or create maintenance identity only after an administrator confirms the asset belongs in CCS Fleet maintenance.');
     const brokenMatched = equipment.filter((eq:any)=>['matched','manual'].includes(eq.bouncie_link_status) && (!normVin(eq.vin) || !liveVins.has(normVin(eq.vin))));
     add('warning','matched_equipment_without_live_bouncie','Bouncie-linked equipment without a live-state VIN',brokenMatched.map((eq:any)=>({id:eq.id,name:eq.name,vin:eq.vin || '',link_status:eq.bouncie_link_status})),'Matched/manual links should resolve to current Bouncie live state; unlinked road assets are not considered errors.');
     add('warning','ambiguous_bouncie_equipment_link','Equipment marked with ambiguous Bouncie link',equipment.filter((eq:any)=>eq.bouncie_link_status === 'ambiguous').map((eq:any)=>({id:eq.id,name:eq.name,vin:eq.vin || ''})),'Ambiguous VIN matching requires admin review and is never auto-resolved.');
