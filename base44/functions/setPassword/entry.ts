@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
+import { constantTimeEqual } from '../../shared/constantTime.ts';
 import {
   claimPasswordResetToken,
   replaceAuthorizedEmailCredentialFieldsIfUnchanged,
@@ -30,7 +31,7 @@ async function verifyTokenIsAdmin(token, secret, base44) {
   if (parts.length !== 2) return null;
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) return null;
+  if (!constantTimeEqual(expectedSig, providedSig)) return null;
   let payload;
   try {
     payload = JSON.parse(b64urlDecode(payloadStr));
