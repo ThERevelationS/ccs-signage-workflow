@@ -5,38 +5,51 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user = null;
-    try { user = await base44.auth.me(); } catch {}
-    // Allow scheduled calls (no user) or admin users
-    if (user && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const user = await base44.auth.me().catch(() => null);
 
-    let body = {};
+    let body: any = {};
     try { body = await req.json(); } catch {}
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const id = jurisdiction_id || jurisdictionId;
 
-    // Scheduled/batch mode: refresh up to 5 oldest auto_refresh jurisdictions
-    if (!id) {
-      const all = await loadAllEntityRows({
-        entity: base44.asServiceRole.entities.JurisdictionProfile,
-        sort: 'last_updated',
-        label: 'Scheduled jurisdiction refresh catalog',
-      });
-      const toRefresh = all.filter(j => j.auto_refresh !== false).slice(0, 5);
-      const results = [];
-      for (const j of toRefresh) {
-        try {
-          const r = await base44.asServiceRole.functions.invoke('refreshJurisdiction', { jurisdiction_id: j.id });
-          results.push({ id: j.id, name: j.name, success: true });
-        } catch (e) {
-          results.push({ id: j.id, name: j.name, success: false, error: e.message });
-        }
-      }
-      return Response.json({ batch: true, processed: results.length, results });
+    // A caller-selected jurisdiction or caller-selected refresh settings are a
+    // manual mutation request and must never inherit the scheduled no-user path.
+    if (id || settings) {
+      if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
+      if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+      if (!id) return Response.json({ error: 'Jurisdiction id is required for a manual refresh' }, { status: 400 });
+      const result = await refreshJurisdictionRecord(base44, id, settings);
+      return Response.json(result);
     }
 
+    // Scheduled/batch mode: no caller-controlled payload. Admins may also run it.
+    if (user && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const all = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.JurisdictionProfile,
+      sort: 'last_updated',
+      label: 'Scheduled jurisdiction refresh catalog',
+    });
+    const toRefresh = all.filter(j => j.auto_refresh !== false).slice(0, 5);
+    const results = [];
+    for (const j of toRefresh) {
+      try {
+        await refreshJurisdictionRecord(base44, j.id, undefined);
+        results.push({ id: j.id, name: j.name, success: true });
+      } catch (e) {
+        results.push({ id: j.id, name: j.name, success: false, error: e.message });
+      }
+    }
+    return Response.json({ batch: true, processed: results.length, results });
+  } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 404].includes(status) ? status : 500;
+    return Response.json({ error: error.message }, { status: safeStatus });
+  }
+});
+
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any) {
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
-    if (!jurisdiction) return Response.json({ error: 'Jurisdiction not found' }, { status: 404 });
+    if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
 
     const batchSettings = settings || {
       updateWebsites: true,
@@ -178,8 +191,5 @@ Deno.serve(async (req) => {
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
     });
 
-    return Response.json({ success: true, jurisdiction: updated });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-});
+    return { success: true, jurisdiction: updated };
+}
