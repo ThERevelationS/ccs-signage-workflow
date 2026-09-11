@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "auditJurisdictionAccuracy",
-            "args": {}
+            "args": {
+              "_workflow_capability": "2OAkhtYuhEb9nwbVMCVlknTyFBLjYDKEuJ0445ejngU"
+            }
           },
           "then": "end"
         }
