@@ -367,22 +367,30 @@ Deno.serve(async (req) => {
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
+      const now = new Date().toISOString();
+      const intent = await auditEntity.create({
+        action: 'notes_update', outcome: 'pending', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: now, request_id: requestId, time_entry_id: entry.id,
+        details: { previous_notes: entry.notes || '', requested_notes: notes },
+      });
+      if (!intent?.id) throw new Error('Notes audit intent could not be persisted. No TimeEntry was changed.');
+
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
         { $set: { notes } },
       );
       if (!updateResult || updateResult.updated !== 1) {
+        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
         return Response.json({ success: false, error: 'This time entry changed in another session. Reload before editing its notes.' }, { status: 409 });
       }
       const savedEntry = await entryEntity.get(entry.id);
-      const auditSaved = await audit(auditEntity, {
-        action: 'notes_update', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target),
-        server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
+      await auditEntity.updateMany({ id: intent.id }, { $set: {
+        outcome: 'confirmed', server_timestamp: new Date().toISOString(),
         details: { previous_notes: entry.notes || '', new_notes: notes },
-      });
-      return Response.json({ success: true, entry: savedEntry, audit_saved: auditSaved });
+      } });
+      return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
 
     if (action === 'admin_correct_entry') {
