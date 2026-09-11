@@ -58,7 +58,7 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
@@ -66,9 +66,11 @@ export default function FleetOverview() {
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
           listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
+          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warnings" }),
+          filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie alerts" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
-        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
         if (user?.role === "admin") {
           const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
