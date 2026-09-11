@@ -218,7 +218,16 @@ export default function FleetWorkOrders() {
           <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
         </div>
 
-        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : (
+        {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : viewMode === "board" ? (
+          <WorkOrderBoard
+            rows={rows}
+            equipmentNames={equipmentNames}
+            startingId={startingId}
+            onOpen={(workOrder) => { setViewMode("list"); setStatus("all"); setExpanded(workOrder.id); }}
+            onStart={(workOrder) => setStartWorkOrder(workOrder)}
+            onComplete={(workOrder) => setDialog({ mode: "complete", workOrder })}
+          />
+        ) : (
           <div className="space-y-3">
             {rows.map(w => {
               const photos = [...(w.before_photos || []), ...(w.problem_photos || []), ...(w.after_photos || [])];
