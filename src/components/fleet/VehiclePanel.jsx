@@ -8,7 +8,6 @@ import {
   ClipboardList,
   Clock3,
   Cpu,
-  ExternalLink,
   Fuel,
   Gauge,
   MapPin,
