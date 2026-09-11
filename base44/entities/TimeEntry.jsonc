@@ -125,6 +125,10 @@
     "last_correction_reason": {
       "type": "string",
       "description": "Required reason for the latest administrator correction"
+    },
+    "last_correction_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the latest confirmed correction"
     }
   },
   "required": [
