@@ -10,6 +10,15 @@ const MAX_PHOTO_B64_CHARS = Math.ceil(MAX_PHOTO_BYTES / 3) * 4 + 16;
 const clean = (value: unknown, max: number) => String(value ?? '').trim().slice(0, max);
 const nowIso = () => new Date().toISOString();
 const todayEastern = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const json = (body: any, init: ResponseInit = {}) => Response.json(body, {
+  ...init,
+  headers: {
+    'Cache-Control':'no-store, max-age=0',
+    'Pragma':'no-cache',
+    'Referrer-Policy':'no-referrer',
+    ...(init.headers || {}),
+  },
+});
 
 function base64Url(bytes: Uint8Array) {
   let binary = '';
@@ -55,10 +64,10 @@ async function readJson(req: Request) {
 
 async function requireAdmin(base44: any) {
   const user = await base44.auth.me().catch(()=>null);
-  if (!user?.email) return { error:Response.json({error:'Unauthorized'},{status:401}) };
+  if (!user?.email) return { error:json({error:'Unauthorized'},{status:401}) };
   if (user.role === 'admin') return { user };
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
-  if (rows?.[0]?.role !== 'admin') return { error:Response.json({error:'Fleet mechanic link management requires a CCS admin.'},{status:403}) };
+  if (rows?.[0]?.role !== 'admin') return { error:json({error:'Fleet mechanic link management requires a CCS admin.'},{status:403}) };
   return { user };
 }
 
@@ -182,7 +191,7 @@ async function uploadPhotos(base44: any, photos: Uint8Array[]) {
 Deno.serve(async (req) => {
   try {
     const parsed = await readJson(req);
-    if (parsed.error) return Response.json({error:parsed.error},{status:parsed.status});
+    if (parsed.error) return json({error:parsed.error},{status:parsed.status});
     const body:any = parsed.payload || {};
     const action = String(body?.action || '').trim();
     const base44 = createClientFromRequest(req);
@@ -193,10 +202,10 @@ Deno.serve(async (req) => {
       const auth = await requireAdmin(base44);
       if (auth.error) return auth.error;
       const settings = await getFleetSettings(base44);
-      if (!settings?.id) return Response.json({error:'FleetSettings general record was not found.'},{status:404});
+      if (!settings?.id) return json({error:'FleetSettings general record was not found.'},{status:404});
       const grants = Array.isArray(settings.mechanic_access_links) ? settings.mechanic_access_links : [];
 
-      if (action === 'admin_list_links') return Response.json({success:true,links:grants.map(publicGrant)});
+      if (action === 'admin_list_links') return json({success:true,links:grants.map(publicGrant)});
 
       if (action === 'admin_create_link') {
         const name = clean(body?.name || 'External Mechanic',80) || 'External Mechanic';
@@ -209,35 +218,35 @@ Deno.serve(async (req) => {
         };
         await updateFleetRecordIfCurrent({entity:Settings,id:settings.id,expectedUpdatedAt:String(settings.updated_date || ''),patch:{mechanic_access_links:[...grants,grant]},label:'Fleet mechanic access links'});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:grant.id,name:grant.name,created_by:grant.created_by}}).catch(()=>null);
-        return Response.json({success:true,link:publicGrant(grant),token});
+        return json({success:true,link:publicGrant(grant),token});
       }
 
       if (action === 'admin_revoke_link') {
         const id = String(body?.id || '').trim();
         const found = grants.find((row:any)=>String(row?.id || '') === id);
-        if (!found) return Response.json({error:'Mechanic access link was not found.'},{status:404});
+        if (!found) return json({error:'Mechanic access link was not found.'},{status:404});
         const next = grants.map((row:any)=>String(row?.id || '') === id ? {...row,enabled:false} : row);
         await updateFleetRecordIfCurrent({entity:Settings,id:settings.id,expectedUpdatedAt:String(settings.updated_date || ''),patch:{mechanic_access_links:next},label:'Fleet mechanic access links'});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || ''}}).catch(()=>null);
-        return Response.json({success:true,links:next.map(publicGrant)});
+        return json({success:true,links:next.map(publicGrant)});
       }
-      return Response.json({error:'Unsupported Fleet mechanic admin action.'},{status:400});
+      return json({error:'Unsupported Fleet mechanic admin action.'},{status:400});
     }
 
     const settings = await getFleetSettings(base44);
     const grant = await validateGrant(settings,body?.token);
-    if (!grant) return Response.json({error:'This mechanic portal link is invalid, expired, or revoked.'},{status:403});
+    if (!grant) return json({error:'This mechanic portal link is invalid, expired, or revoked.'},{status:403});
 
-    if (action === 'bootstrap') return Response.json(await portalPayload(base44,grant));
+    if (action === 'bootstrap') return json(await portalPayload(base44,grant));
 
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
     const id = String(body?.work_order_id || '').trim();
-    if (!id) return Response.json({error:'Fleet work-order id is required.'},{status:400});
+    if (!id) return json({error:'Fleet work-order id is required.'},{status:400});
     const current = await WorkOrder.get(id).catch(()=>null);
-    if (!current) return Response.json({error:'Fleet work order was not found.'},{status:404});
-    if (!ACTIVE.has(current.status)) return Response.json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
+    if (!current) return json({error:'Fleet work order was not found.'},{status:404});
+    if (!ACTIVE.has(current.status)) return json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
     const expected = String(body?.expected_updated_date || '').trim();
-    if (!expected || expected !== String(current.updated_date || '')) return Response.json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
+    if (!expected || expected !== String(current.updated_date || '')) return json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
 
     if (action === 'start') {
       const note = clean(body?.note,1200);
@@ -247,18 +256,18 @@ Deno.serve(async (req) => {
         action:'update', id, expected_updated_date:expected,
         work_order:{status:'in_progress',started_date:current.started_date || todayEastern(),notes},
       });
-      if (result?.data?.error) return Response.json({error:result.data.error},{status:409});
-      return Response.json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
+      if (result?.data?.error) return json({error:result.data.error},{status:409});
+      return json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
     }
 
     if (action === 'save') {
       const actualHoursRaw = body?.actual_hours;
       const actualHours = actualHoursRaw === '' || actualHoursRaw == null ? current.actual_hours : Number(actualHoursRaw);
-      if (actualHours != null && (!Number.isFinite(actualHours) || actualHours < 0 || actualHours > 10000)) return Response.json({error:'Labor hours must be a valid non-negative number.'},{status:400});
+      if (actualHours != null && (!Number.isFinite(actualHours) || actualHours < 0 || actualHours > 10000)) return json({error:'Labor hours must be a valid non-negative number.'},{status:400});
       const correctiveAction = clean(body?.corrective_action,5000);
       const mechanicNote = clean(body?.mechanic_note,2000);
       const decoded = decodePhotos(body?.photos);
-      if (decoded.error) return Response.json({error:decoded.error},{status:400});
+      if (decoded.error) return json({error:decoded.error},{status:400});
       const uploaded = decoded.photos.length ? await uploadPhotos(base44,decoded.photos) : [];
       const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
       const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
@@ -268,14 +277,14 @@ Deno.serve(async (req) => {
         action:'update', id, expected_updated_date:expected,
         work_order:{actual_hours:actualHours,corrective_action:correctiveAction,notes,after_photos:afterPhotos},
       });
-      if (result?.data?.error) return Response.json({error:result.data.error},{status:409});
-      return Response.json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
+      if (result?.data?.error) return json({error:result.data.error},{status:409});
+      return json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
     }
 
-    return Response.json({error:'Unsupported mechanic portal action.'},{status:400});
+    return json({error:'Unsupported mechanic portal action.'},{status:400});
   } catch (error:any) {
     console.error('fleetMechanicPortal error:',error);
     const status = error?.code === 'FLEET_RECORD_CONFLICT' ? 409 : 500;
-    return Response.json({error:error?.message || 'Fleet mechanic portal request failed.'},{status});
+    return json({error:error?.message || 'Fleet mechanic portal request failed.'},{status});
   }
 });
