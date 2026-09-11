@@ -115,7 +115,7 @@ export default function FleetSettings() {
     }
     if (!settings) return [];
     return [
-      { label: "Fleet migration snapshot reconciled", ok: !!audit?.summary?.migration_snapshot_reconciled, detail: audit?.run_key || "No verification audit found" },
+      { label: "Fleet migration snapshot reconciled", ok: !!(audit?.summary?.migration_snapshot_reconciled || audit?.summary?.migration_reconciled), detail: audit?.run_key || "No verification audit found" },
       { label: "CCS Fleet production URL configured", ok: !!settings.fleet_app_base_url, detail: settings.fleet_app_base_url || "Not configured" },
       { label: "FleetMaster source freeze confirmed", ok: !!settings.source_freeze_confirmed, detail: settings.source_freeze_confirmed_at || "Not yet frozen" },
       { label: "Bouncie webhook active", ok: !!connection?.webhookActive, detail: connection?.lastWebhookAt ? `Last event ${new Date(connection.lastWebhookAt).toLocaleString()}` : "No recent webhook timestamp" },
