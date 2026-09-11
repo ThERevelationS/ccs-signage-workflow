@@ -194,6 +194,6 @@ Deno.serve(async (req) => {
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
     console.error('ensureEstimateLifecycleRevision error:', error);
-    return Response.json({ error: error?.message || 'Estimate lifecycle revision could not be recorded.' }, { status: 500 });
+    return Response.json({ error: 'Estimate lifecycle revision could not be recorded safely.' }, { status: 500 });
   }
 });
