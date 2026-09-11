@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { callBouncieApi } from '../../shared/bouncie.ts';
 
 const ROAD_TRACKING_STATUSES = new Set(['unlinked', 'matched', 'ambiguous', 'manual']);
 const EQUIPMENT_TYPES = new Set(['car','truck','boom_lift','forklift','generator','excavator','bulldozer','crane','compressor','other']);
@@ -54,12 +55,33 @@ const equipmentPatch = (source: any) => {
 
 async function evaluateBouncieLink(base44: any, vin: string, trackingApplicable: boolean) {
   if (!trackingApplicable) return { bouncie_link_status: 'not_applicable', bouncie_imei: null };
-  if (!vin) return { bouncie_link_status: 'unlinked', bouncie_imei: null };
-  const rows = await base44.asServiceRole.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin });
-  const imeis = [...new Set((rows || []).map((row: any) => String(row.vehicle_imei || '').trim()).filter(Boolean))];
-  if (imeis.length === 1) return { bouncie_link_status: 'matched', bouncie_imei: imeis[0] };
-  if (imeis.length > 1) return { bouncie_link_status: 'ambiguous', bouncie_imei: null };
-  return { bouncie_link_status: 'unlinked', bouncie_imei: null };
+  const normalizedVin = normalizeVin(vin);
+  if (!normalizedVin) return { bouncie_link_status: 'unlinked', bouncie_imei: null };
+
+  try {
+    // Current Bouncie REST identity is authoritative for automatic VIN↔IMEI matching.
+    // Derived live-state cache rows are intentionally not used here because a device
+    // move/reassignment can leave historical cache evidence for an old VIN.
+    const raw = await callBouncieApi(base44, 'GET', '/v1/vehicles');
+    const vehicles = Array.isArray(raw) ? raw : raw?.data || [];
+    const vinMatches = (vehicles || []).filter((vehicle: any) => normalizeVin(vehicle?.vin) === normalizedVin);
+    const imeis = [...new Set(vinMatches.map((vehicle: any) => String(vehicle?.imei || '').trim()).filter(Boolean))];
+    if (imeis.length !== 1) return { bouncie_link_status: imeis.length > 1 ? 'ambiguous' : 'unlinked', bouncie_imei: null };
+
+    const imei = imeis[0];
+    const imeiVins = [...new Set((vehicles || [])
+      .filter((vehicle: any) => String(vehicle?.imei || '').trim() === imei)
+      .map((vehicle: any) => normalizeVin(vehicle?.vin))
+      .filter(Boolean))];
+    if (imeiVins.length !== 1 || imeiVins[0] !== normalizedVin) {
+      return { bouncie_link_status: 'ambiguous', bouncie_imei: null };
+    }
+    return { bouncie_link_status: 'matched', bouncie_imei: imei };
+  } catch {
+    // A transient Bouncie/API failure is not permission to infer identity from stale cache.
+    // Keep automatic linkage fail-closed; the asset continues to work as FleetEquipment.
+    return { bouncie_link_status: 'unlinked', bouncie_imei: null };
+  }
 }
 
 Deno.serve(async (req) => {
