@@ -3,6 +3,7 @@ import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } fr
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { constantTimeEqual } from '../../shared/constantTime.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -30,7 +31,7 @@ async function authenticateAdminSession(base44: any, token: unknown) {
   if (!secret) throw Object.assign(new Error('Session authentication is unavailable'), { status: 503 });
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) throw Object.assign(new Error('Authentication required'), { status: 401 });
+  if (!constantTimeEqual(expectedSig, providedSig)) throw Object.assign(new Error('Authentication required'), { status: 401 });
   let payload: any;
   try { payload = JSON.parse(b64urlDecode(payloadStr)); } catch { throw Object.assign(new Error('Authentication required'), { status: 401 }); }
   const email = String(payload?.email || '').trim().toLowerCase();
