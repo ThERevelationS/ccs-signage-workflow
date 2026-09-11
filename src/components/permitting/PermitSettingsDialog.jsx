@@ -31,8 +31,12 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const [localities, setLocalities] = useState(initialLocalities || []);
   const [officeTypes, setOfficeTypes] = useState(initialOfficeTypes || []);
   const [officeCatalog, setOfficeCatalog] = useState([]);
-  const [catalogSettingRecord, setCatalogSettingRecord] = useState(null);
-  const [officeTypesSettingRecord, setOfficeTypesSettingRecord] = useState(null);
+  const catalogSettingRecordRef = useRef(null);
+  const officeTypesSettingRecordRef = useRef(null);
+  const permitSettingSaveQueuesRef = useRef({ catalog: Promise.resolve(true), types: Promise.resolve(true) });
+  const permitSettingSaveEpochRef = useRef({ catalog: 0, types: 0 });
+  const permitSettingPendingRef = useRef({ catalog: 0, types: 0 });
+  const permitSettingSaveBlockedRef = useRef({ catalog: false, types: false });
   const [selectedLocality, setSelectedLocality] = useState(null);
   const [editingLocality, setEditingLocality] = useState(null);
   const [newOfficeType, setNewOfficeType] = useState("");
@@ -50,8 +54,8 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
           loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeCatalog', label: 'Permit Office Catalog' }),
           loadSingleGlobalSetting({ entity: GlobalSettings, settingKey: 'permitOfficeTypes', label: 'Permit Office Types' }),
         ]);
-        setCatalogSettingRecord(catalogSetting);
-        setOfficeTypesSettingRecord(typesSetting);
+        catalogSettingRecordRef.current = catalogSetting;
+        officeTypesSettingRecordRef.current = typesSetting;
         if (catalogSetting?.id) setOfficeCatalog(catalogSetting.setting_value?.items || []);
         if (typesSetting?.id) setOfficeTypes(typesSetting.setting_value?.items || []);
       } catch (error) {
@@ -75,9 +79,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   // Snapshot of the form at the last "clean" point (load or save)
   const cleanSnapshot = useRef(null);
-  // Also track catalog/officeTypes dirty state via separate booleans
-  const [catalogDirty, setCatalogDirty] = useState(false);
-  const [typesDirty, setTypesDirty] = useState(false);
+  // Office Catalog and Office Types autosave; these flags mean a serialized save is still in flight.
+  const [catalogSaving, setCatalogSaving] = useState(false);
+  const [typesSaving, setTypesSaving] = useState(false);
 
   // Compare current form against last snapshot
   useEffect(() => {
@@ -88,7 +92,10 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     setIsDirty(JSON.stringify(form) !== cleanSnapshot.current);
   }, [form, editingLocality]);
 
-  const anyDirty = isDirty || catalogDirty || typesDirty;
+  const anyDirty = isDirty;
+  const settingsSaving = catalogSaving || typesSaving;
+  const hasPendingPermitSettingSaves = () =>
+    permitSettingPendingRef.current.catalog > 0 || permitSettingPendingRef.current.types > 0;
 
   const migrateLocality = (loc) => {
     return loc.offices && loc.offices.length > 0
@@ -292,6 +299,50 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     setForm(prev => ({ ...prev, offices: prev.offices.filter(o => o.id !== officeId) }));
   };
 
+  const queuePermitSettingSave = ({ queueKey, settingKey, nextValue, label, baselineRef, setSaving, restoreFromLatest }) => {
+    if (permitSettingSaveBlockedRef.current[queueKey]) {
+      setLocalitySaveError(`${label} is blocked because the latest saved value could not be reloaded safely. Close and reopen Permitting Settings before editing it again.`);
+      return Promise.resolve(null);
+    }
+
+    const epoch = permitSettingSaveEpochRef.current[queueKey];
+    permitSettingPendingRef.current[queueKey] += 1;
+    setSaving(true);
+    const previous = permitSettingSaveQueuesRef.current[queueKey] || Promise.resolve(true);
+    const queued = previous.catch(() => null).then(async () => {
+      if (epoch !== permitSettingSaveEpochRef.current[queueKey]) return null;
+      const saved = await saveGlobalSettingValueIfUnchanged({
+        entity: GlobalSettings,
+        loadedRecord: baselineRef.current,
+        settingKey,
+        nextValue,
+        label,
+      });
+      baselineRef.current = saved;
+      return saved;
+    }).catch(async (error) => {
+      if (epoch === permitSettingSaveEpochRef.current[queueKey]) {
+        permitSettingSaveEpochRef.current[queueKey] += 1;
+        try {
+          const latest = await loadSingleGlobalSetting({ entity: GlobalSettings, settingKey, label: `${label} recovery` });
+          baselineRef.current = latest;
+          restoreFromLatest(latest);
+          permitSettingSaveBlockedRef.current[queueKey] = false;
+          setLocalitySaveError(error?.message || `${label} changed in another session. The latest saved value was reloaded before further editing.`);
+        } catch (reloadError) {
+          permitSettingSaveBlockedRef.current[queueKey] = true;
+          setLocalitySaveError(`${error?.message || `${label} save failed.`} The latest saved value could not be reloaded safely: ${reloadError?.message || "unknown reload error"}`);
+        }
+      }
+      return null;
+    }).finally(() => {
+      permitSettingPendingRef.current[queueKey] = Math.max(0, permitSettingPendingRef.current[queueKey] - 1);
+      if (permitSettingPendingRef.current[queueKey] === 0) setSaving(false);
+    });
+    permitSettingSaveQueuesRef.current[queueKey] = queued;
+    return queued;
+  };
+
   // Office Types (simple labels used as categories)
   // Ensure permanent types are always present at the top of the list
   const ensurePermanentTypes = (types) => {
@@ -310,23 +361,21 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   const saveOfficeTypes = async (types) => {
     const finalTypes = ensurePermanentTypes(types);
     setLocalitySaveError("");
-    try {
-      const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: GlobalSettings,
-        loadedRecord: officeTypesSettingRecord,
-        settingKey: 'permitOfficeTypes',
-        nextValue: { items: finalTypes },
-        label: 'Permit Office Types',
-      });
-      setOfficeTypes(finalTypes);
-      setOfficeTypesSettingRecord(saved);
-      setTypesDirty(false);
-      return true;
-    } catch (error) {
-      console.error("Permit Office Types save blocked:", error);
-      setLocalitySaveError(error?.message || "Permit Office Types changed in another session. Close and reopen settings before retrying.");
+    if (permitSettingSaveBlockedRef.current.types) {
+      setLocalitySaveError("Permit Office Types are blocked because the latest saved value could not be reloaded safely. Close and reopen Permitting Settings before editing them again.");
       return false;
     }
+    setOfficeTypes(finalTypes);
+    const saved = await queuePermitSettingSave({
+      queueKey: 'types',
+      settingKey: 'permitOfficeTypes',
+      nextValue: { items: finalTypes },
+      label: 'Permit Office Types',
+      baselineRef: officeTypesSettingRecordRef,
+      setSaving: setTypesSaving,
+      restoreFromLatest: (latest) => setOfficeTypes(ensurePermanentTypes(latest?.setting_value?.items || [])),
+    });
+    return !!saved;
   };
 
   const addOfficeType = () => {
@@ -339,27 +388,36 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   // Office Catalog save
   const saveOfficeCatalog = async (newCatalog) => {
     setLocalitySaveError("");
-    try {
-      const saved = await saveGlobalSettingValueIfUnchanged({
-        entity: GlobalSettings,
-        loadedRecord: catalogSettingRecord,
-        settingKey: 'permitOfficeCatalog',
-        nextValue: { items: newCatalog },
-        label: 'Permit Office Catalog',
-      });
-      setOfficeCatalog(newCatalog);
-      setCatalogSettingRecord(saved);
-      setCatalogDirty(false);
-      return true;
-    } catch (error) {
-      console.error("Permit Office Catalog save blocked:", error);
-      setLocalitySaveError(error?.message || "Permit Office Catalog changed in another session. Close and reopen settings before retrying.");
+    if (permitSettingSaveBlockedRef.current.catalog) {
+      setLocalitySaveError("Permit Office Catalog is blocked because the latest saved value could not be reloaded safely. Close and reopen Permitting Settings before editing it again.");
       return false;
     }
+    // Apply immediately so typing and drag/drop stay responsive; serialized saves below
+    // advance one authoritative server baseline at a time.
+    setOfficeCatalog(newCatalog);
+    const saved = await queuePermitSettingSave({
+      queueKey: 'catalog',
+      settingKey: 'permitOfficeCatalog',
+      nextValue: { items: newCatalog },
+      label: 'Permit Office Catalog',
+      baselineRef: catalogSettingRecordRef,
+      setSaving: setCatalogSaving,
+      restoreFromLatest: (latest) => setOfficeCatalog(latest?.setting_value?.items || []),
+    });
+    return !!saved;
   };
 
   // Close-guard handlers
-  const attemptClose = () => {
+  const attemptClose = async () => {
+    const catalogPending = permitSettingPendingRef.current.catalog > 0;
+    const typesPending = permitSettingPendingRef.current.types > 0;
+    if (catalogPending || typesPending) {
+      const [catalogResult, typesResult] = await Promise.all([
+        permitSettingSaveQueuesRef.current.catalog,
+        permitSettingSaveQueuesRef.current.types,
+      ]);
+      if ((catalogPending && !catalogResult) || (typesPending && !typesResult)) return;
+    }
     if (anyDirty) {
       setShowUnsavedConfirm(true);
     } else {
@@ -373,15 +431,14 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
 
   const discardAndExit = () => {
     setIsDirty(false);
-    setCatalogDirty(false);
-    setTypesDirty(false);
     setShowUnsavedConfirm(false);
     onClose();
   };
 
   const saveDirtyAndExit = async () => {
     if (isDirty && editingLocality && form.name.trim()) {
-      await saveLocality();
+      const saved = await saveLocality();
+      if (!saved) return;
     }
     setShowUnsavedConfirm(false);
     onClose();
@@ -406,9 +463,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className="clay-card border-none max-w-6xl w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden"
-        onPointerDownOutside={(e) => { if (anyDirty) e.preventDefault(); }}
-        onEscapeKeyDown={(e) => { if (anyDirty) { e.preventDefault(); attemptClose(); } }}
-        onInteractOutside={(e) => { if (anyDirty) e.preventDefault(); }}
+        onPointerDownOutside={(e) => { if (anyDirty || hasPendingPermitSettingSaves()) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (anyDirty || hasPendingPermitSettingSaves()) { e.preventDefault(); attemptClose(); } }}
+        onInteractOutside={(e) => { if (anyDirty || hasPendingPermitSettingSaves()) e.preventDefault(); }}
       >
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
@@ -417,6 +474,11 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
               {anyDirty && (
                 <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium border border-amber-300">
                   Unsaved changes
+                </span>
+              )}
+              {settingsSaving && (
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium border border-blue-300">
+                  Saving settings…
                 </span>
               )}
             </div>
