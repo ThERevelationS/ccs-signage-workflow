@@ -44,6 +44,10 @@ export default function FleetMaintenance() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("status") || "";
+    if (["all", "pending", "in_progress", "completed", "overdue"].includes(requested)) setStatusFilter(requested);
+  }, []);
 
   const openCreateDialog = useCallback(() => setDialog({ task: null, createKey: crypto.randomUUID() }), []);
   const isAdmin = currentUser?.role === "admin";
