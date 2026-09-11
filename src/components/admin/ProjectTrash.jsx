@@ -26,7 +26,15 @@ import {
 } from "@/components/admin/projectTrashPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const SYSTEM_RESET_PASSWORD = "Heinlein56!!";
+const SYSTEM_RESET_CONFIRMATION = "DELETE ALL CLIENTS";
+
+async function requireCurrentAdmin(label) {
+  const me = await base44.auth.me().catch(() => null);
+  if (me?.role !== "admin") {
+    throw new Error(`${label} requires a currently authenticated administrator. Reload Admin Settings and sign in again before retrying.`);
+  }
+  return me;
+}
 
 export default function ProjectTrash() {
   const [deletedProjects, setDeletedProjects] = useState([]);
@@ -38,7 +46,7 @@ export default function ProjectTrash() {
   const [permanentDeleteBusy, setPermanentDeleteBusy] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
-  const [bulkDeletePassword, setBulkDeletePassword] = useState("");
+  const [bulkDeletePhrase, setBulkDeletePhrase] = useState("");
   const [bulkDeleteError, setBulkDeleteError] = useState("");
   const [bulkDeleteProgress, setBulkDeleteProgress] = useState({ active: false, current: 0, total: 0 });
 
@@ -89,6 +97,7 @@ export default function ProjectTrash() {
     setActionError("");
     setPermanentDeleteBusy(true);
     try {
+      await requireCurrentAdmin("Project Trash permanent delete");
       await permanentlyDeleteTrashWorkOrderFromLoadedSnapshot({
         entity: WorkOrder,
         workOrder: target,
@@ -107,8 +116,8 @@ export default function ProjectTrash() {
 
   const handleBulkDeleteAllClients = async () => {
     if (bulkDeleteBusy) return;
-    if (bulkDeletePassword !== SYSTEM_RESET_PASSWORD) {
-      setBulkDeleteError("Incorrect password");
+    if (bulkDeletePhrase !== SYSTEM_RESET_CONFIRMATION) {
+      setBulkDeleteError(`Type ${SYSTEM_RESET_CONFIRMATION} exactly to confirm this irreversible reset.`);
       return;
     }
 
@@ -121,7 +130,8 @@ export default function ProjectTrash() {
     // individual hard delete on that row's exact verified updated_date.
     let verifiedWorkOrders;
     try {
-      const loadedWorkOrders = await loadAllEntityRows({
+      await requireCurrentAdmin("System Reset");
+      const loadedWorkOrders = await loadAllEntityRows({ 
         entity: WorkOrder,
         sort: "created_date",
         label: "System Reset Work Orders",
@@ -167,7 +177,7 @@ export default function ProjectTrash() {
     } catch (error) {
       console.error("System Reset stopped before completing:", error);
       setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
-      setBulkDeletePassword("");
+      setBulkDeletePhrase("");
       setBulkDeleteBusy(false);
       await loadDeletedProjects();
       const notConfirmed = verifiedWorkOrders.length - confirmedAbsent;
@@ -190,7 +200,7 @@ export default function ProjectTrash() {
     } catch (error) {
       console.error("Could not verify final Work Order catalog after system reset:", error);
       setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
-      setBulkDeletePassword("");
+      setBulkDeletePhrase("");
       setBulkDeleteBusy(false);
       await loadDeletedProjects();
       setActionError(
@@ -201,7 +211,7 @@ export default function ProjectTrash() {
     }
 
     setBulkDeleteProgress({ active: false, current: confirmedAbsent, total: verifiedWorkOrders.length });
-    setBulkDeletePassword("");
+    setBulkDeletePhrase("");
     setBulkDeleteBusy(false);
     await loadDeletedProjects();
     if (remainingWorkOrders.length > 0) {
@@ -366,7 +376,7 @@ export default function ProjectTrash() {
       <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => {
         if (bulkDeleteBusy) return;
         setBulkDeleteConfirm(open);
-        setBulkDeletePassword("");
+        setBulkDeletePhrase("");
         setBulkDeleteError("");
       }}>
         <AlertDialogContent className="clay-card border-none">
@@ -379,13 +389,14 @@ export default function ProjectTrash() {
               <p>This will <span className="font-bold text-red-600">permanently delete ALL clients/work orders</span> from the system, not just items in trash.</p>
               <p className="text-red-600 font-bold">This action cannot be undone!</p>
               <div className="space-y-2 pt-2">
-                <Label htmlFor="bulk-delete-password">Enter password to confirm:</Label>
+                <Label htmlFor="bulk-delete-confirmation">Type <span className="font-mono font-bold">{SYSTEM_RESET_CONFIRMATION}</span> to confirm:</Label>
                 <Input
-                  id="bulk-delete-password"
-                  type="password"
-                  value={bulkDeletePassword}
-                  onChange={(e) => { setBulkDeletePassword(e.target.value); setBulkDeleteError(""); }}
-                  placeholder="Enter system reset password"
+                  id="bulk-delete-confirmation"
+                  type="text"
+                  autoComplete="off"
+                  value={bulkDeletePhrase}
+                  onChange={(e) => { setBulkDeletePhrase(e.target.value); setBulkDeleteError(""); }}
+                  placeholder={SYSTEM_RESET_CONFIRMATION}
                 />
                 {bulkDeleteError && <p className="text-red-500 text-sm">{bulkDeleteError}</p>}
               </div>
@@ -393,7 +404,7 @@ export default function ProjectTrash() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="clay-button" disabled={bulkDeleteBusy}>Cancel</AlertDialogCancel>
-            <Button onClick={handleBulkDeleteAllClients} disabled={bulkDeleteBusy} className="bg-red-600 text-white hover:bg-red-700">
+            <Button onClick={handleBulkDeleteAllClients} disabled={bulkDeleteBusy || bulkDeletePhrase !== SYSTEM_RESET_CONFIRMATION} className="bg-red-600 text-white hover:bg-red-700">
               {bulkDeleteBusy ? "Verifying Complete Catalog..." : "Delete All Clients"}
             </Button>
           </AlertDialogFooter>
