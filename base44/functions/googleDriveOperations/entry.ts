@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, folderId, fileName, fileContent, fileType, fileId } = await req.json();
+    const { action, folderId, fileName, fileContent, fileType, fileId, expectedFileName, expectedModifiedTime } = await req.json();
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
     switch (action) {
@@ -212,19 +212,73 @@ Deno.serve(async (req) => {
       }
 
       case 'deleteFile': {
-        const response = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}`,
-          {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          }
-        );
+        const safeFileId = String(fileId || '').trim();
+        if (!safeFileId || !/^[a-zA-Z0-9_-]+$/.test(safeFileId)) {
+          return Response.json({ error: 'Invalid Google Drive file id' }, { status: 400 });
+        }
 
-        if (!response.ok && response.status !== 204) {
-          const error = await response.text();
-          return Response.json({ error: `Failed to delete file: ${error}` }, { status: response.status });
+        const metadataUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?fields=id,name,modifiedTime,trashed&supportsAllDrives=true`;
+        const readCurrentFile = async () => {
+          const currentResponse = await fetch(metadataUrl, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          });
+          if (currentResponse.status === 404) return null;
+          if (!currentResponse.ok) {
+            await currentResponse.text().catch(() => '');
+            throw new Error(`Google Drive file verification failed with status ${currentResponse.status}`);
+          }
+          return await currentResponse.json();
+        };
+
+        let currentFile;
+        try {
+          currentFile = await readCurrentFile();
+        } catch (verificationError) {
+          console.error('Could not verify Google Drive file before delete:', verificationError?.message || verificationError);
+          return Response.json({ error: 'Could not verify the Google Drive file before deleting it. Nothing was deleted.' }, { status: 502 });
+        }
+
+        if (!currentFile) {
+          return Response.json({ success: true, alreadyDeleted: true });
+        }
+
+        const expectedName = String(expectedFileName || '').trim();
+        const expectedModified = String(expectedModifiedTime || '').trim();
+        if (expectedName && String(currentFile.name || '') !== expectedName) {
+          return Response.json({ error: 'The Google Drive file was renamed after this list was loaded. Reload before deleting it.' }, { status: 409 });
+        }
+        if (expectedModified && String(currentFile.modifiedTime || '') !== expectedModified) {
+          return Response.json({ error: 'The Google Drive file changed after this list was loaded. Reload before deleting it.' }, { status: 409 });
+        }
+
+        const deleteUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?supportsAllDrives=true`;
+        let deleteResponse;
+        try {
+          deleteResponse = await fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+          });
+        } catch (deleteError) {
+          // A network failure can happen after Google has already committed the
+          // deletion. Reread the exact id before deciding whether retry is safe.
+          try {
+            const afterError = await readCurrentFile();
+            if (!afterError) return Response.json({ success: true, recovered: true });
+          } catch (verificationError) {
+            console.error('Google Drive delete outcome is ambiguous:', verificationError?.message || verificationError);
+            return Response.json({ error: 'The Google Drive delete outcome could not be verified. Reload Drive before trying again.' }, { status: 502 });
+          }
+          console.error('Google Drive delete failed before absence could be confirmed:', deleteError?.message || deleteError);
+          return Response.json({ error: 'The Google Drive file was not confirmed deleted. Reload before trying again.' }, { status: 502 });
+        }
+
+        if (deleteResponse.status === 404) {
+          return Response.json({ success: true, alreadyDeleted: true });
+        }
+        if (!deleteResponse.ok && deleteResponse.status !== 204) {
+          await deleteResponse.text().catch(() => '');
+          console.error('Google Drive delete failed:', deleteResponse.status);
+          return Response.json({ error: 'Failed to delete Google Drive file' }, { status: deleteResponse.status });
         }
 
         return Response.json({ success: true });
