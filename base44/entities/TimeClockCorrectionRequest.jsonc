@@ -1,0 +1,114 @@
+{
+  "name": "TimeClockCorrectionRequest",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee who owns the TimeEntry and submitted the correction request"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "time_entry_id": {
+      "type": "string",
+      "description": "TimeEntry being disputed/corrected"
+    },
+    "time_entry_updated_date": {
+      "type": "string",
+      "description": "TimeEntry version observed when the employee submitted the request"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Idempotency key for employee submission"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when submitted"
+    },
+    "employee_reason": {
+      "type": "string",
+      "description": "Employee explanation for the requested correction"
+    },
+    "original_snapshot": {
+      "type": "object",
+      "description": "Immutable snapshot of the TimeEntry at request time"
+    },
+    "requested_changes": {
+      "type": "object",
+      "description": "Employee-requested punch/lunch/notes values"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "approved_modified",
+        "rejected",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of manager decision"
+    },
+    "reviewer_email": {
+      "type": "string",
+      "description": "Administrator who reviewed the request"
+    },
+    "reviewer_reason": {
+      "type": "string",
+      "description": "Manager review note/reason"
+    },
+    "applied_audit_id": {
+      "type": "string",
+      "description": "TimeClockAudit record that applied the approved correction"
+    },
+    "review_request_id": {
+      "type": "string",
+      "description": "Idempotency key for manager decision"
+    }
+  },
+  "required": [
+    "user_email",
+    "time_entry_id",
+    "request_id",
+    "requested_at",
+    "employee_reason",
+    "original_snapshot",
+    "requested_changes",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
