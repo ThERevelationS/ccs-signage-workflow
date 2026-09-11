@@ -16,8 +16,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'folderId required' }, { status: 400 });
     }
 
-    // Get user's tokens
+    // Read only the exact authenticated user's server-side token record.
     const users = await base44.asServiceRole.entities.User.filter({ email: user.email });
+    if (!Array.isArray(users) || users.length !== 1 || String(users[0]?.id || '') !== String(user.id || '')) {
+      return Response.json({ error: 'Authenticated user identity could not be verified uniquely' }, { status: users?.length > 1 ? 409 : 401 });
+    }
     const userData = users[0];
     
     if (!userData?.google_drive_access_token) {
@@ -70,6 +73,7 @@ Deno.serve(async (req) => {
     return Response.json({ files: data.files || [] });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('driveBrowseFolder error:', error?.message || error);
+    return Response.json({ error: 'Google Drive folder could not be browsed safely' }, { status: 500 });
   }
 });
