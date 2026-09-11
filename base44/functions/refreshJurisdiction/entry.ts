@@ -1,29 +1,35 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
 
     let body: any = {};
     try { body = await req.json(); } catch {}
+    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'refreshJurisdiction');
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const id = jurisdiction_id || jurisdictionId;
 
-    // A caller-selected jurisdiction or caller-selected refresh settings are a
-    // manual mutation request and must never inherit the scheduled no-user path.
-    if (id || settings) {
+    let user: any = null;
+    if (!isScheduledRun) {
+      user = await base44.auth.me().catch(() => null);
       if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // A caller-selected jurisdiction or caller-selected refresh settings are a
+    // manual mutation request. Workflow calls never supply either field.
+    if (id || settings) {
+      if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a manual refresh' }, { status: 400 });
       const result = await refreshJurisdictionRecord(base44, id, settings);
       return Response.json(result);
     }
 
-    // Scheduled/batch mode: no caller-controlled payload. Admins may also run it.
-    if (user && user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    // Scheduled/batch mode: verified workflow capability or authenticated admin.
     const all = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.JurisdictionProfile,
       sort: 'last_updated',
