@@ -106,8 +106,8 @@ export default function NewUserSetup() {
       setFormError("This password reset link is incomplete. Request a new reset email.");
       return;
     }
-    if (!password || password.length < 4) {
-      setFormError("Password must be at least 4 characters.");
+    if (!password || password.length < 8) {
+      setFormError("Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPassword) {
@@ -154,8 +154,8 @@ export default function NewUserSetup() {
       return;
     }
     
-    if (password.length < 4) {
-      setFormError("Password must be at least 4 characters");
+    if (password.length < 8) {
+      setFormError("Password must be at least 8 characters");
       return;
     }
     
