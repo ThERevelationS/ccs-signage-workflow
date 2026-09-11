@@ -31,7 +31,7 @@ export default function FleetParts() {
     finally { setLoading(false); }
   },[]);
   useEffect(()=>{load();},[load]);
-  useEffect(()=>{const requested=new URLSearchParams(window.location.search).get("stock")||"";if(["all","low","zero"].includes(requested))setStockFilter(requested);},[]);
+  useEffect(()=>{const params=new URLSearchParams(window.location.search);const requested=params.get("stock")||"";const requestedSearch=params.get("search")||"";if(["all","low","zero"].includes(requested))setStockFilter(requested);if(requestedSearch)setSearch(requestedSearch);},[]);
 
   const isAdmin=user?.role==="admin";
   const isLow=(p)=>p.enable_low_stock_alerts!==false&&p.quantity_on_hand!=null&&p.minimum_stock!=null&&Number(p.quantity_on_hand)<=Number(p.minimum_stock);
