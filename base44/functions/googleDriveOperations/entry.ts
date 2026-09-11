@@ -1,5 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
+const MAX_INLINE_DOWNLOAD_BYTES = 5 * 1024 * 1024;
+
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)));
+  }
+  return btoa(binary);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -130,9 +141,15 @@ Deno.serve(async (req) => {
       }
 
       case 'getDownloadUrl': {
-        // Get file metadata with download link
+        const safeFileId = String(fileId || '').trim();
+        if (!safeFileId || !/^[a-zA-Z0-9_-]+$/.test(safeFileId)) {
+          return Response.json({ error: 'Invalid Google Drive file id' }, { status: 400 });
+        }
+
+        // Resolve metadata on the server. The browser must never receive the
+        // Google OAuth access token just to download a file.
         const response = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,webContentLink,webViewLink`,
+          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?fields=id,name,mimeType,webViewLink,size`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -142,24 +159,55 @@ Deno.serve(async (req) => {
 
         if (!response.ok) {
           const error = await response.text();
-          return Response.json({ error: `Failed to get file: ${error}` }, { status: response.status });
+          console.error('Failed to get Google Drive file metadata:', response.status, error);
+          return Response.json({ error: 'Failed to get Google Drive file metadata' }, { status: response.status });
         }
 
         const file = await response.json();
-        
-        // For Google Docs/Sheets/etc, return view link
-        // For regular files, return download link
-        if (file.mimeType?.startsWith('application/vnd.google-apps')) {
-          return Response.json({ url: file.webViewLink, type: 'view' });
+        const viewUrl = file.webViewLink || `https://drive.google.com/file/d/${encodeURIComponent(safeFileId)}/view`;
+
+        // Google-native files must be opened in Drive. Large regular files also
+        // use the Drive view so this JSON function never serializes huge blobs.
+        const declaredSize = Number(file.size || 0);
+        if (file.mimeType?.startsWith('application/vnd.google-apps') || declaredSize > MAX_INLINE_DOWNLOAD_BYTES) {
+          return Response.json({
+            url: viewUrl,
+            type: 'view',
+            fileName: file.name,
+            reason: declaredSize > MAX_INLINE_DOWNLOAD_BYTES ? 'large_file' : 'google_native'
+          });
         }
-        
-        // Generate download URL
-        return Response.json({ 
-          url: `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-          accessToken,
-          type: 'download',
+
+        const downloadResponse = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(safeFileId)}?alt=media`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+
+        if (!downloadResponse.ok) {
+          const error = await downloadResponse.text();
+          console.error('Failed to download Google Drive file:', downloadResponse.status, error);
+          return Response.json({ error: 'Failed to download Google Drive file' }, { status: downloadResponse.status });
+        }
+
+        const bytes = new Uint8Array(await downloadResponse.arrayBuffer());
+        if (bytes.byteLength > MAX_INLINE_DOWNLOAD_BYTES) {
+          return Response.json({
+            url: viewUrl,
+            type: 'view',
+            fileName: file.name,
+            reason: 'large_file'
+          });
+        }
+
+        return Response.json({
+          type: 'download_data',
           fileName: file.name,
-          mimeType: file.mimeType
+          mimeType: file.mimeType || 'application/octet-stream',
+          base64: bytesToBase64(bytes)
         });
       }
 
