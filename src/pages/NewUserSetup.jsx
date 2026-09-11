@@ -23,6 +23,7 @@ import {
 } from "@/components/admin/authorizedEmailPersistence";
 
 export default function NewUserSetup() {
+  const resetMode = typeof window !== "undefined" && window.location.pathname.toLowerCase() === "/resetpassword";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
@@ -35,6 +36,7 @@ export default function NewUserSetup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [resetComplete, setResetComplete] = useState(false);
   
   // Face enrollment state
   const [showFaceEnroll, setShowFaceEnroll] = useState(false);
@@ -52,7 +54,14 @@ export default function NewUserSetup() {
     const token = urlParams.get("token");
     
     if (!token) {
-      setError("Invalid registration link. Please contact your administrator for a new invitation.");
+      setError(resetMode
+        ? "This password reset link is incomplete. Request a new reset email."
+        : "Invalid registration link. Please contact your administrator for a new invitation.");
+      setLoading(false);
+      return;
+    }
+
+    if (resetMode) {
       setLoading(false);
       return;
     }
@@ -111,6 +120,38 @@ export default function NewUserSetup() {
     }
     
     setLoading(false);
+  };
+
+  const handleResetPasswordSubmit = async () => {
+    setFormError("");
+    const token = new URLSearchParams(window.location.search).get("token") || "";
+    if (!token) {
+      setFormError("This password reset link is incomplete. Request a new reset email.");
+      return;
+    }
+    if (!password || password.length < 4) {
+      setFormError("Password must be at least 4 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setFormError("Passwords do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await setPasswordFn({ reset_token: token, new_password: password });
+      if (!res?.data?.success) {
+        throw new Error(res?.data?.error || "Password could not be reset.");
+      }
+      setPassword("");
+      setConfirmPassword("");
+      setResetComplete(true);
+    } catch (err) {
+      setFormError(err?.response?.data?.error || err?.message || "This reset link could not be used. Request a new password reset email.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCredentialsSubmit = async () => {
@@ -278,6 +319,53 @@ export default function NewUserSetup() {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Validating your registration link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (resetMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+        <div className="clay-card p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
+              <Lock className="w-8 h-8 text-purple-700" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">Reset Password</h2>
+            <p className="text-sm text-gray-500 mt-1">Sign Shop Workflow</p>
+          </div>
+
+          {error ? (
+            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          ) : resetComplete ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+                <div className="flex items-center gap-2 font-medium"><CheckCircle2 className="w-5 h-5" /> Password updated</div>
+                <p className="text-sm mt-1">This one-time reset link has been used. You can now sign in with your new password.</p>
+              </div>
+              <Button onClick={() => window.location.href = "/TimeClock"} className="w-full bg-purple-600 hover:bg-purple-700 text-white">Continue to Sign Shop Workflow</Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>New Password</Label>
+                <Input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
+              </div>
+              <div>
+                <Label>Confirm New Password</Label>
+                <Input type="password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFormError(""); }} autoComplete="new-password" className="mt-1" />
+              </div>
+              {formError && <p className="text-red-500 text-sm">{formError}</p>}
+              <Button onClick={handleResetPasswordSubmit} disabled={saving} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Set New Password
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
