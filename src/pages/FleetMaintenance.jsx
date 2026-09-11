@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetMaintenanceDialog from "@/components/fleet/FleetMaintenanceDialog";
+import FleetMaintenanceWorkspace from "@/components/fleet/FleetMaintenanceWorkspace";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   Activity,
@@ -33,13 +34,15 @@ const humanDate = (value) => {
 export default function FleetMaintenance() {
   const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const requestedStatus = initialParams.get("status") || "";
+  const requestedEquipment = initialParams.get("equipment") || "";
   const [tasks, setTasks] = useState([]);
   const [equipment, setEquipment] = useState([]);
   const [activeWorkOrders, setActiveWorkOrders] = useState([]);
   const [parts, setParts] = useState([]);
   const [fluids, setFluids] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [view, setView] = useState(requestedStatus ? "all_schedules" : "equipment");
+  const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : "equipment");
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState(requestedEquipment);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(["pending", "in_progress", "completed", "overdue"].includes(requestedStatus) ? requestedStatus : "all");
   const [equipmentFilter, setEquipmentFilter] = useState("all");
@@ -80,6 +83,8 @@ export default function FleetMaintenance() {
   const openCreateDialog = useCallback((equipmentId = "") => setDialog({ task: null, equipmentId, createKey: crypto.randomUUID() }), []);
   const isAdmin = currentUser?.role === "admin";
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
+  const selectedEquipment = useMemo(() => equipment.find(item => item.id === selectedEquipmentId) || null, [equipment, selectedEquipmentId]);
+  const selectedTasks = useMemo(() => tasks.filter(task => task.equipment_id === selectedEquipmentId), [tasks, selectedEquipmentId]);
 
   const metrics = useMemo(() => {
     const today = todayText();
@@ -157,11 +162,32 @@ export default function FleetMaintenance() {
   }, [tasks, search, statusFilter, equipmentFilter, names]);
 
   const openEquipmentMaintenance = (equipmentId) => {
+    setSelectedEquipmentId(equipmentId);
     setEquipmentFilter(equipmentId);
     setStatusFilter("all");
     setSearch("");
-    setView("all_schedules");
+    setView("workspace");
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("equipment", equipmentId);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const showEquipmentView = () => {
+    setView("equipment");
+    setSelectedEquipmentId("");
+    setEquipmentFilter("all");
+    setStatusFilter("all");
+    setSearch("");
+    window.history.replaceState({}, "", window.location.pathname);
+  };
+
+  const showAllSchedules = () => {
+    setView("all_schedules");
+    setSelectedEquipmentId("");
+    setSearch("");
+    window.history.replaceState({}, "", window.location.pathname);
   };
 
   const saveTask = async (payload) => {
