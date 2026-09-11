@@ -8,7 +8,7 @@ function liveSpeed(vehicle) {
   return Number.isFinite(Number(raw)) ? Math.max(0, Math.round(Number(raw))) : null;
 }
 
-export default function FleetSidebar({ vehicles, selectedVin, onSelectVehicle, onAddVehicle, onMenu, totalCount }) {
+export default function FleetSidebar({ vehicles, selectedVin, onSelectVehicle, onAddVehicle, onMenu = null, totalCount }) {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
