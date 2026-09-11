@@ -135,12 +135,16 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
     setDialog({ mode: "edit", document });
   };
 
-  const closeDialog = () => {
-    if (saving) return;
+  const resetDialog = () => {
     setDialog(null);
     setFile(null);
     setPendingUpload(null);
     setForm(EMPTY_FORM);
+  };
+
+  const closeDialog = () => {
+    if (saving) return;
+    resetDialog();
   };
 
   const chooseFile = (event) => {
@@ -189,7 +193,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
         if (!updated?.id) throw new Error("Fleet document was not returned after save.");
         setDocuments(current => current.map(row => row.id === updated.id ? updated : row));
         setNotice("Fleet document details updated.");
-        closeDialog();
+        resetDialog();
         return;
       }
 
@@ -224,7 +228,7 @@ export default function FleetEquipmentDocuments({ equipment, isAdmin }) {
       if (!created?.id) throw new Error("Fleet document was not returned after save.");
       setDocuments(current => [created, ...current.filter(row => row.id !== created.id)]);
       setNotice(data?.reused ? "This Fleet document was already saved; the existing record was reused safely." : "Fleet document saved.");
-      closeDialog();
+      resetDialog();
     } catch (e) {
       setError(e?.message || "Unable to save Fleet document.");
     } finally {
