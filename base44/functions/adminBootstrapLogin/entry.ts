@@ -46,7 +46,8 @@ Deno.serve(async (req) => {
 
     const secret = Deno.env.get('SESSION_SIGNING_SECRET');
     if (!secret) {
-      return Response.json({ success: false, error: 'Session secret not configured' }, { status: 500 });
+      console.error('adminBootstrapLogin session signing secret is unavailable');
+      return Response.json({ success: false, error: 'Emergency admin sign-in service is unavailable' }, { status: 500 });
     }
 
     const payload = {
@@ -77,6 +78,6 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('adminBootstrapLogin error:', error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    return Response.json({ success: false, error: 'Emergency admin sign-in could not be completed safely' }, { status: 500 });
   }
 });
