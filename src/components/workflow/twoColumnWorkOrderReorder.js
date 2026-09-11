@@ -19,6 +19,10 @@ export function combineTwoColumnWorkOrders(left = [], right = []) {
   return combined;
 }
 
+function logicalIndex(droppableId, columnIndex) {
+  return columnIndex * 2 + (droppableId === "work-order-right" ? 1 : 0);
+}
+
 export function reorderTwoColumnWorkOrders(items = [], result = {}) {
   const source = result?.source;
   const destination = result?.destination;
@@ -26,28 +30,31 @@ export function reorderTwoColumnWorkOrders(items = [], result = {}) {
   if (!COLUMN_IDS.has(source?.droppableId) || !COLUMN_IDS.has(destination?.droppableId)) {
     throw new Error("The Work Order drag target could not be identified safely.");
   }
-  if (source.droppableId === destination.droppableId && source.index === destination.index) {
-    return items;
+  if (!Number.isInteger(source.index) || source.index < 0 || !Number.isInteger(destination.index) || destination.index < 0) {
+    throw new Error("The Work Order drag position could not be identified safely.");
   }
 
   const { left, right } = splitTwoColumnWorkOrders(items);
-  const columns = {
-    "work-order-left": left,
-    "work-order-right": right,
-  };
-  const sourceColumn = columns[source.droppableId];
-  const destinationColumn = columns[destination.droppableId];
-
-  if (!Number.isInteger(source.index) || source.index < 0 || source.index >= sourceColumn.length) {
+  const sourceColumn = source.droppableId === "work-order-left" ? left : right;
+  const destinationColumn = destination.droppableId === "work-order-left" ? left : right;
+  if (source.index >= sourceColumn.length) {
     throw new Error("The Work Order drag source changed before the reorder could be applied.");
   }
-  if (!Number.isInteger(destination.index) || destination.index < 0 || destination.index > destinationColumn.length) {
+  const sameColumn = source.droppableId === destination.droppableId;
+  const maxDestinationIndex = destinationColumn.length - (sameColumn ? 1 : 0);
+  if (destination.index > maxDestinationIndex) {
     throw new Error("The Work Order drag destination changed before the reorder could be applied.");
   }
+  if (sameColumn && source.index === destination.index) return items;
 
-  const [moved] = sourceColumn.splice(source.index, 1);
-  destinationColumn.splice(destination.index, 0, moved);
-  const reordered = combineTwoColumnWorkOrders(left, right);
+  const sourceIndex = logicalIndex(source.droppableId, source.index);
+  const requestedDestinationIndex = logicalIndex(destination.droppableId, destination.index);
+  const reordered = Array.from(items);
+  const [moved] = reordered.splice(sourceIndex, 1);
+  // A canonical row-major list cannot represent an orphan right-column cell.
+  // Clamp that one edge case to the final valid priority position.
+  const destinationIndex = Math.min(requestedDestinationIndex, reordered.length);
+  reordered.splice(destinationIndex, 0, moved);
 
   if (reordered.length !== items.length || new Set(reordered.map((item) => item?.id)).size !== items.length) {
     throw new Error("The Work Order reorder changed list membership unexpectedly.");
