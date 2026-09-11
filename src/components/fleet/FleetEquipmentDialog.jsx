@@ -120,7 +120,7 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
             <span><span className="block font-medium text-gray-900 dark:text-slate-100">Bouncie tracking applicable</span><span className="block text-xs text-gray-500 dark:text-slate-400 mt-0.5">When enabled, CCS checks existing Bouncie live state for an exact VIN. Zero matches stays unlinked; conflicting IMEIs becomes ambiguous. CCS never creates or edits Bouncie vehicles.</span></span>
           </label>
 
-          <Field label="Notes"><textarea rows="4" value={form.notes} onChange={e => set("notes", e.target.value)} className="field" /></Field>
+          <Field label="Notes"><textarea rows={4} value={form.notes} onChange={e => set("notes", e.target.value)} className="field" /></Field>
           <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{(saving || uploadingPhoto) && <Loader2 className="w-4 h-4 animate-spin" />}{uploadingPhoto ? "Uploading Photo…" : equipment ? "Save Equipment" : "Create Equipment"}</button></div>
         </form>
       </div>
