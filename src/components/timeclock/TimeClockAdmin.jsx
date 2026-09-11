@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,13 +35,22 @@ import {
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
-import { deleteTimeEntryIfUnchanged, updateTimeEntryIfUnchanged } from "@/components/timeclock/timeEntryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
+function newRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `tc-admin-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function functionData(response) {
+  return response?.data || response;
+}
+
 export default function TimeClockAdmin() {
+  const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +65,9 @@ export default function TimeClockAdmin() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [correctionReason, setCorrectionReason] = useState("");
+  const [archiveReason, setArchiveReason] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
 
   useEffect(() => {
@@ -65,7 +78,7 @@ export default function TimeClockAdmin() {
     setIsLoading(true);
     try {
       const [entries, usersData] = await Promise.all([
-        loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true } }, sort: "-clock_in", label: "Time Clock admin entries" }),
+        loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock admin entries" }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock authorized users" })
       ]);
       setTimeEntries(entries);
@@ -147,72 +160,95 @@ export default function TimeClockAdmin() {
 
   const handleEditEntry = (entry) => {
     setTimeEntryError("");
+    setCorrectionReason("");
     setEditingEntryBaseline(entry);
     setEditingEntry({ ...entry });
     setShowEditDialog(true);
   };
 
   const handleSaveEntry = async () => {
-    if (!editingEntryBaseline?.id || !editingEntry?.id) return;
+    if (!editingEntryBaseline?.id || !editingEntry?.id || saveBusy) return;
     setTimeEntryError("");
+    if (!sessionToken) {
+      setTimeEntryError("Your administrator session is not available. Sign in again before correcting time.");
+      return;
+    }
+    if (correctionReason.trim().length < 3) {
+      setTimeEntryError("Enter a correction reason before saving.");
+      return;
+    }
+    if (!editingEntry.clock_out) {
+      setTimeEntryError("Administrator corrections must leave the shift completed. Enter a corrected clock-out time.");
+      return;
+    }
+    setSaveBusy(true);
     try {
-      // Preserve the existing admin correction formula exactly.
-      const clockIn = new Date(editingEntry.clock_in);
-      const clockOut = editingEntry.clock_out ? new Date(editingEntry.clock_out) : null;
-      let totalHours = editingEntry.total_hours;
-      
-      if (clockOut) {
-        if (clockOut < clockIn) {
-          throw new Error("Clock-out cannot be earlier than clock-in.");
-        }
-        const totalMinutes = Math.floor((clockOut - clockIn) / (1000 * 60));
-        const lunchMins = editingEntry.lunch_minutes || 0;
-        totalHours = Math.max(0, (totalMinutes - lunchMins) / 60);
-      }
-
-      await updateTimeEntryIfUnchanged({
-        entity: TimeEntry,
-        entry: editingEntryBaseline,
-        nextFields: {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_correct_entry",
+        session_token: sessionToken,
+        target_email: editingEntryBaseline.user_email,
+        request_id: newRequestId(),
+        entry_id: editingEntryBaseline.id,
+        expected_updated_date: editingEntryBaseline.updated_date,
+        reason: correctionReason.trim(),
+        correction: {
           clock_in: editingEntry.clock_in,
           clock_out: editingEntry.clock_out,
-          lunch_minutes: editingEntry.lunch_minutes,
-          total_hours: totalHours,
-          status: clockOut ? "clocked_out" : "clocked_in",
-          notes: editingEntry.notes,
-          job_allocations: editingEntry.job_allocations
+          lunch_minutes: editingEntry.lunch_minutes || 0,
+          notes: editingEntry.notes || "",
+          job_allocations: editingEntry.job_allocations || [],
         },
-        label: `Admin time entry correction for ${editingEntryBaseline.user_name || editingEntryBaseline.user_email || editingEntryBaseline.id}`,
       });
-      
+      const data = functionData(response);
+      if (!data?.success) throw new Error(data?.error || "The correction was not confirmed by the server.");
+
       setShowEditDialog(false);
       setEditingEntry(null);
       setEditingEntryBaseline(null);
+      setCorrectionReason("");
       await loadData();
     } catch (err) {
       console.error("Error saving entry:", err);
-      setTimeEntryError(err?.message || "This time entry changed in another session. The stale correction was not applied.");
+      setTimeEntryError(err?.response?.data?.error || err?.message || "This time entry changed in another session. The correction was not applied.");
       await loadData();
+    } finally {
+      setSaveBusy(false);
     }
   };
 
-  const handleDeleteEntry = async () => {
+  const handleArchiveEntry = async () => {
     const entry = deleteConfirm;
     if (!entry?.id || deleteBusy) return;
-    setDeleteBusy(true);
     setTimeEntryError("");
+    if (!sessionToken) {
+      setTimeEntryError("Your administrator session is not available. Sign in again before archiving time.");
+      return;
+    }
+    if (archiveReason.trim().length < 3) {
+      setTimeEntryError("Enter an archive reason before continuing.");
+      return;
+    }
+    setDeleteBusy(true);
     try {
-      await deleteTimeEntryIfUnchanged({
-        entity: TimeEntry,
-        entry,
-        label: `Admin time entry deletion for ${entry.user_name || entry.user_email || entry.id}`,
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_archive_entry",
+        session_token: sessionToken,
+        target_email: entry.user_email,
+        request_id: newRequestId(),
+        entry_id: entry.id,
+        expected_updated_date: entry.updated_date,
+        reason: archiveReason.trim(),
       });
+      const data = functionData(response);
+      if (!data?.success) throw new Error(data?.error || "The archive was not confirmed by the server.");
       setDeleteConfirm(null);
+      setArchiveReason("");
       await loadData();
     } catch (err) {
-      console.error("Error deleting entry:", err);
-      setTimeEntryError(err?.message || "This time entry changed in another session and was not deleted.");
+      console.error("Error archiving entry:", err);
+      setTimeEntryError(err?.response?.data?.error || err?.message || "This time entry changed in another session and was not archived.");
       setDeleteConfirm(null);
+      setArchiveReason("");
       await loadData();
     } finally {
       setDeleteBusy(false);
