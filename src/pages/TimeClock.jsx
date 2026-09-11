@@ -104,13 +104,13 @@ export default function TimeClock() {
       const [entries, requests] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
-          query: { user_email: loggedInUser.email },
+          query: { user_email: loggedInUser.email, archived_test_data: { $ne: true } },
           sort: null,
           label: `Time entries for ${loggedInUser.email}`,
         }),
         loadAllEntityRows({
           entity: TimeOffRequest,
-          query: { user_email: loggedInUser.email },
+          query: { user_email: loggedInUser.email, archived_test_data: { $ne: true } },
           sort: null,
           label: `Time off requests for ${loggedInUser.email}`,
         })
