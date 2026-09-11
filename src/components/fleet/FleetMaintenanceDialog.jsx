@@ -19,7 +19,7 @@ const EMPTY = {
   fluids_needed: [],
 };
 
-export default function FleetMaintenanceDialog({ open, task, equipment, parts = [], fluids = [], onClose, onSave, saving }) {
+export default function FleetMaintenanceDialog({ open, task, initialEquipmentId = "", equipment, parts = [], fluids = [], onClose, onSave, saving }) {
   const [form, setForm] = useState(EMPTY);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -39,8 +39,8 @@ export default function FleetMaintenanceDialog({ open, task, equipment, parts = 
       estimated_duration: task.estimated_duration ?? "",
       parts_needed: Array.isArray(task.parts_needed) ? task.parts_needed : [],
       fluids_needed: Array.isArray(task.fluids_needed) ? task.fluids_needed : [],
-    } : EMPTY);
-  }, [open, task]);
+    } : { ...EMPTY, equipment_id: initialEquipmentId || "", parts_needed: [], fluids_needed: [] });
+  }, [open, task, initialEquipmentId]);
 
   if (!open) return null;
 
