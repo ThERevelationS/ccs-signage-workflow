@@ -71,29 +71,24 @@ async function requireAdmin(base44: any) {
   return { user };
 }
 
-async function getFleetSettings(base44: any) {
-  const rows = await base44.asServiceRole.entities.FleetSettings.filter({setting_type:'general'});
-  return rows?.[0] || (await base44.asServiceRole.entities.FleetSettings.list('-updated_date',1))?.[0] || null;
-}
-
 const publicGrant = (row: any) => ({
   id: String(row?.id || ''),
   name: String(row?.name || 'External Mechanic'),
   enabled: row?.enabled !== false,
-  created_at: row?.created_at || '',
+  created_at: row?.created_date || '',
   created_by: row?.created_by || '',
   expires_at: row?.expires_at || '',
   last_used_at: row?.last_used_at || '',
   notes: row?.notes || '',
 });
 
-async function validateGrant(settings: any, token: unknown) {
+async function validateGrant(Access: any, token: unknown) {
   const raw = String(token || '').trim();
   if (raw.length < 40 || raw.length > 200 || !/^[A-Za-z0-9_-]+$/.test(raw)) return null;
   const hash = await sha256(raw);
+  const rows = await Access.filter({token_hash:hash,enabled:true});
   const now = Date.now();
-  return (settings?.mechanic_access_links || []).find((row: any) => {
-    if (row?.enabled === false || String(row?.token_hash || '') !== hash) return false;
+  return (rows || []).find((row: any) => {
     const expiry = Date.parse(String(row?.expires_at || ''));
     return !Number.isFinite(expiry) || expiry > now;
   }) || null;
@@ -195,47 +190,51 @@ Deno.serve(async (req) => {
     const body:any = parsed.payload || {};
     const action = String(body?.action || '').trim();
     const base44 = createClientFromRequest(req);
-    const Settings = base44.asServiceRole.entities.FleetSettings;
+    const Access = base44.asServiceRole.entities.FleetMechanicAccess;
     const Log = base44.asServiceRole.entities.FleetSystemLog;
 
     if (action.startsWith('admin_')) {
       const auth = await requireAdmin(base44);
       if (auth.error) return auth.error;
-      const settings = await getFleetSettings(base44);
-      if (!settings?.id) return json({error:'FleetSettings general record was not found.'},{status:404});
-      const grants = Array.isArray(settings.mechanic_access_links) ? settings.mechanic_access_links : [];
 
-      if (action === 'admin_list_links') return json({success:true,links:grants.map(publicGrant)});
+      if (action === 'admin_list_links') {
+        const grants = await loadAllEntityRows({entity:Access,sort:'-created_date',label:'Fleet mechanic access links'});
+        return json({success:true,links:(grants || []).map(publicGrant)});
+      }
 
       if (action === 'admin_create_link') {
         const name = clean(body?.name || 'External Mechanic',80) || 'External Mechanic';
         const notes = clean(body?.notes,300);
         const rawBytes = crypto.getRandomValues(new Uint8Array(32));
         const token = base64Url(rawBytes);
-        const grant = {
-          id:crypto.randomUUID(), name, token_hash:await sha256(token), enabled:true,
-          created_at:nowIso(), created_by:auth.user.email || '', notes,
-        };
-        await updateFleetRecordIfCurrent({entity:Settings,id:settings.id,expectedUpdatedAt:String(settings.updated_date || ''),patch:{mechanic_access_links:[...grants,grant]},label:'Fleet mechanic access links'});
-        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:grant.id,name:grant.name,created_by:grant.created_by}}).catch(()=>null);
-        return json({success:true,link:publicGrant(grant),token});
+        const created = await Access.create({
+          name,
+          token_hash:await sha256(token),
+          enabled:true,
+          allowed_actions:['bootstrap','start','save'],
+          notes,
+        });
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:created.id,name:created.name,created_by:auth.user.email || ''}}).catch(()=>null);
+        return json({success:true,link:publicGrant(created),token});
       }
 
       if (action === 'admin_revoke_link') {
         const id = String(body?.id || '').trim();
-        const found = grants.find((row:any)=>String(row?.id || '') === id);
+        const found = await Access.get(id).catch(()=>null);
         if (!found) return json({error:'Mechanic access link was not found.'},{status:404});
-        const next = grants.map((row:any)=>String(row?.id || '') === id ? {...row,enabled:false} : row);
-        await updateFleetRecordIfCurrent({entity:Settings,id:settings.id,expectedUpdatedAt:String(settings.updated_date || ''),patch:{mechanic_access_links:next},label:'Fleet mechanic access links'});
+        await Access.update(id,{enabled:false});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || ''}}).catch(()=>null);
-        return json({success:true,links:next.map(publicGrant)});
+        const grants = await loadAllEntityRows({entity:Access,sort:'-created_date',label:'Fleet mechanic access links'});
+        return json({success:true,links:(grants || []).map(publicGrant)});
       }
       return json({error:'Unsupported Fleet mechanic admin action.'},{status:400});
     }
 
-    const settings = await getFleetSettings(base44);
-    const grant = await validateGrant(settings,body?.token);
+    const grant = await validateGrant(Access,body?.token);
     if (!grant) return json({error:'This mechanic portal link is invalid, expired, or revoked.'},{status:403});
+    const allowed = new Set(Array.isArray(grant.allowed_actions) && grant.allowed_actions.length ? grant.allowed_actions : ['bootstrap','start','save']);
+    if (!allowed.has(action)) return json({error:'This mechanic link is not allowed to perform that action.'},{status:403});
+    if (action === 'bootstrap') await Access.update(grant.id,{last_used_at:nowIso()}).catch(()=>null);
 
     if (action === 'bootstrap') return json(await portalPayload(base44,grant));
 
