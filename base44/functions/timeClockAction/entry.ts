@@ -327,7 +327,8 @@ Deno.serve(async (req) => {
         }
         return Response.json({ success: false, error: 'Clock state says this employee is already clocked in, but the active entry is invalid. Admin review is required.' }, { status: 409 });
       }
-      if (state.status !== 'clocked_out') {
+      const resumingClockIn = state.status === 'clocking_in' && String(state.last_request_id || '') === requestId;
+      if (state.status !== 'clocked_out' && !resumingClockIn) {
         return Response.json({ success: false, error: 'Another Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
       }
 
@@ -337,11 +338,15 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: `Found ${existingActives.length} existing active TimeEntry record${existingActives.length === 1 ? '' : 's'}. Reset or admin review is required before clock-in.` }, { status: 409 });
       }
 
-      const officialClockIn = new Date().toISOString();
-      const claimed = await setState(stateEntity, state, 'clocked_out', null, {
-        status: 'clocking_in', active_entry_id: null, last_request_id: requestId,
-        pending_started_at: officialClockIn,
-      });
+      const officialClockIn = resumingClockIn && state.pending_started_at
+        ? state.pending_started_at
+        : new Date().toISOString();
+      const claimed = resumingClockIn
+        ? state
+        : await setState(stateEntity, state, 'clocked_out', null, {
+            status: 'clocking_in', active_entry_id: null, last_request_id: requestId,
+            pending_started_at: officialClockIn,
+          });
       if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
       let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true } }, 'Clock-in request');
@@ -383,7 +388,8 @@ Deno.serve(async (req) => {
         }
         return Response.json({ success: false, error: 'Employee is not currently clocked in.' }, { status: 409 });
       }
-      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+      const resumingClockOut = state.status === 'clocking_out' && String(state.last_request_id || '') === requestId;
+      if ((state.status !== 'clocked_in' && !resumingClockOut) || !state.active_entry_id) {
         return Response.json({ success: false, error: 'Another Time Clock action is still in progress or the active entry is missing.' }, { status: 409 });
       }
 
@@ -405,7 +411,9 @@ Deno.serve(async (req) => {
         }
       }
 
-      const officialClockOut = new Date().toISOString();
+      const officialClockOut = resumingClockOut && state.pending_started_at
+        ? state.pending_started_at
+        : new Date().toISOString();
       const clockInMs = new Date(entry.clock_in).getTime();
       const clockOutMs = new Date(officialClockOut).getTime();
       if (!Number.isFinite(clockInMs) || clockOutMs < clockInMs) {
@@ -419,9 +427,11 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: `Allocated time must match official worked time within 5 minutes. Official remaining difference is ${Math.abs(allocatedMinutes - workableMinutes)} minutes.` }, { status: 400 });
       }
 
-      const claimed = await setState(stateEntity, state, 'clocked_in', null, {
-        status: 'clocking_out', last_request_id: requestId, pending_started_at: officialClockOut,
-      });
+      const claimed = resumingClockOut
+        ? state
+        : await setState(stateEntity, state, 'clocked_in', null, {
+            status: 'clocking_out', last_request_id: requestId, pending_started_at: officialClockOut,
+          });
       if (!claimed) return Response.json({ success: false, error: 'Clock-out lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
       const nextFields = {
