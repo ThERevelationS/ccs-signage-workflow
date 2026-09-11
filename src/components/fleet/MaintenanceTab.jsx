@@ -11,7 +11,7 @@ export default function MaintenanceTab({ equipment, openWorkOrders = [], tasks =
       <div className="p-4 space-y-3">
         <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-4">
           <div className="font-semibold text-sm text-amber-900 dark:text-amber-100">No CCS Fleet maintenance link</div>
-          <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">This Bouncie vehicle does not have an exact FleetEquipment VIN match. Tracking remains available, but maintenance history cannot be joined safely.</div>
+          <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">This Bouncie vehicle does not have a safe FleetEquipment maintenance link. Tracking remains available, but maintenance history is not joined unless VIN or a unique trusted IMEI proves the identity.</div>
           <Link to={createPageUrl("FleetEquipment")} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-800 dark:text-amber-200 hover:underline">Review Fleet equipment <ArrowRight className="w-3.5 h-3.5" /></Link>
         </div>
       </div>
