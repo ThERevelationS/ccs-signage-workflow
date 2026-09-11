@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardPaste, FileMinus, LockKeyhole } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import AioEstimateHeader from "@/components/estimator/aio/AioEstimateHeader";
 import AioStepRail from "@/components/estimator/aio/AioStepRail";
 import AddProductGrid from "@/components/estimator/aio/AddProductGrid";
@@ -88,6 +89,7 @@ function assertNoPendingPriceAcceptance(record, action = "continuing") {
 
 export default function EstimateDetail() {
   const navigate = useNavigate();
+  const { sessionToken, isRegistered } = useAuth();
   const id = new URLSearchParams(window.location.search).get("id");
   const [estimate, setEstimate] = useState(null);
   const [persistedEstimate, setPersistedEstimate] = useState(null);
@@ -847,6 +849,7 @@ export default function EstimateDetail() {
         delivery_id: deliveryId || "",
         evidence_reference: evidenceReference || "",
         notes: notes || "",
+        session_token: sessionToken,
       });
       acceptanceResponse = response?.data || response;
     } catch (error) {
@@ -1202,6 +1205,7 @@ export default function EstimateDetail() {
                 persistedEstimate={persistedEstimate}
                 onRecordAcceptance={handleRecordAcceptance}
                 refreshKey={revisionRefreshKey + deliveryRefreshKey}
+                isRegistered={isRegistered}
               />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <PricingSummary estimate={estimate} pricing={pricing} onChange={patch} readOnly={readOnly} />
