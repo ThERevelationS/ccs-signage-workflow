@@ -137,6 +137,7 @@ export default function FleetOverview() {
       bouncieIdentityConflicts,
       overdueTasks,
       upcomingTasks,
+      bouncieFaults: data.bouncieFaults || [],
     };
   }, [data]);
 
