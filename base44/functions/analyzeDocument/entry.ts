@@ -9,11 +9,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { doc_text, doc_title, jurisdiction_name } = body;
+    const body = await req.json().catch(() => ({}));
+    const doc_text = String(body?.doc_text || '');
+    const doc_title = String(body?.doc_title || '').trim();
+    const jurisdiction_name = String(body?.jurisdiction_name || '').trim();
 
     if (!doc_text || !doc_title) {
       return Response.json({ error: 'Missing doc_text or doc_title' }, { status: 400 });
+    }
+    if (doc_text.length > 250000 || doc_title.length > 300 || jurisdiction_name.length > 200) {
+      return Response.json({ error: 'Document analysis input is too large' }, { status: 400 });
     }
 
     const prompt = `Analyze this permitting document and extract key information in JSON format.
@@ -105,7 +110,7 @@ Return ONLY valid JSON, no other text.`;
     });
 
   } catch (error) {
-    console.error('Document analysis error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('analyzeDocument error:', error?.message || error);
+    return Response.json({ error: 'Document analysis could not be completed safely' }, { status: 500 });
   }
 });
