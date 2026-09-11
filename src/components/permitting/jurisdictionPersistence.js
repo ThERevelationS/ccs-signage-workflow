@@ -26,6 +26,12 @@ const parentCountyName = (row) => normIdentity(
   typeof row?.parent_county === "string" ? row.parent_county : row?.parent_county?.name
 );
 
+export function jurisdictionIdentityKey(data = {}) {
+  const type = normalizedJurisdictionType(data);
+  const parent = type === "county" ? "" : parentCountyName(data);
+  return [normIdentity(data?.name), normIdentity(data?.state), type, parent].join("|");
+}
+
 function sameNameStateType(row, data) {
   return normIdentity(row?.name) === normIdentity(data?.name) &&
     normIdentity(row?.state) === normIdentity(data?.state) &&
