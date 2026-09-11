@@ -1,16 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    const body = await req.json().catch(() => ({}));
+    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'auditJurisdictionAccuracy');
+
+    if (!isScheduledRun) {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) {
+        return Response.json({ error: 'Authentication required' }, { status: 401 });
+      }
+      if (user.role !== 'admin') {
+        return Response.json({ error: 'Admin access required' }, { status: 403 });
+      }
     }
 
-    const body = await req.json().catch(() => ({}));
     const { jurisdictionId, batchSize = 1, auditOptions = {} } = body;
 
     const options = {
