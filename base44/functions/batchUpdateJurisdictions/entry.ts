@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       total: jurisdictionIds.length
     });
   } catch (error) {
-    console.error("Batch update error:", error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('batchUpdateJurisdictions error:', error?.message || error);
+    return Response.json({ error: 'Jurisdiction batch update could not be completed safely' }, { status: 500 });
   }
 });
