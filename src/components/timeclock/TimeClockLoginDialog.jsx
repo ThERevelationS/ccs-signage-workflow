@@ -24,7 +24,7 @@ export default function TimeClockLoginDialog({ isOpen, onClose, onLogin, allUser
         const full = (allUsers || []).find(
           (u) => u.email === data.user.email || u.username === data.user.username
         );
-        onLogin(full || data.user);
+        onLogin(full || data.user, data.token || "");
         setUsername("");
         setPassword("");
       } else {
