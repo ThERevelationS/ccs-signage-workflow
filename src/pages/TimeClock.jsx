@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
-import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -42,13 +41,11 @@ const TimeOffRequest = base44.entities.TimeOffRequest;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function TimeClock() {
-  const { currentUser: authUser, isRegistered } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [timeClockSessionToken, setTimeClockSessionToken] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   
-  const [activeEntry, setActiveEntry] = useState(null);
   const [timeEntries, setTimeEntries] = useState([]);
   const [timeOffRequests, setTimeOffRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,10 +116,7 @@ export default function TimeClock() {
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
       if (activeEntries.length > 1) {
-        setActiveEntry(null);
         setTimeEntryError(`Multiple active time entries were found for ${loggedInUser.email}. No clock-out row was selected automatically; an admin must review the duplicates.`);
-      } else {
-        setActiveEntry(activeEntries[0] || null);
       }
     } catch (err) {
       console.error("Error loading data:", err);
@@ -141,7 +135,6 @@ export default function TimeClock() {
     setTimeClockSessionToken("");
     setTimeEntries([]);
     setTimeOffRequests([]);
-    setActiveEntry(null);
   };
 
   // Calculate weekly hours
@@ -250,7 +243,6 @@ export default function TimeClock() {
         {/* Quick Clock In/Out Section - Always Visible */}
         <QuickClockSection
           allUsers={allUsers}
-          currentTime={currentTime}
           employeeSessionToken={timeClockSessionToken}
           employeeSessionUser={loggedInUser}
         />
