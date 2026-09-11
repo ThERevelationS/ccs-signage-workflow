@@ -5,11 +5,25 @@
   "properties": {
     "access_token": {
       "type": "string",
-      "description": "Bouncie API access token (sent raw in the Authorization header, no Bearer prefix)."
+      "description": "Bouncie API access token. Server-side only; never exposed through normal client entity reads.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__bouncie_connection_service_only__"
+          }
+        }
+      }
     },
     "refresh_token": {
       "type": "string",
-      "description": "Bouncie OAuth refresh token used to obtain new access tokens. Bouncie rotates this on every refresh."
+      "description": "Bouncie OAuth refresh token used to obtain new access tokens. Server-side only; never exposed through normal client entity reads.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "__bouncie_connection_service_only__"
+          }
+        }
+      }
     },
     "expires_at": {
       "type": "string",
@@ -100,7 +114,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__bouncie_connection_service_only__"
       }
     },
     "read": {
@@ -110,12 +124,12 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__bouncie_connection_service_only__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__bouncie_connection_service_only__"
       }
     }
   }
