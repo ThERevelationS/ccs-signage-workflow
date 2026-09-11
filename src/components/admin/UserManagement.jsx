@@ -124,67 +124,23 @@ export default function UserManagement() {
   };
 
   const handleSendPasswordReset = async (user) => {
-    if (!user.email) return;
-    
+    if (!user.email || !sessionToken) return;
+
     setSendingPasswordReset(user.id);
+    setUserMutationError("");
     try {
-      // Generate a reset token
-      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      const expires = new Date();
-      expires.setHours(expires.getHours() + 24);
-      
-      await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: user,
-        nextFields: {
-          password_reset_token: resetToken,
-          password_reset_expires: expires.toISOString()
-        },
-        exactVersion: false,
-        enforceIdentity: false,
-        label: `Password reset token for ${user.full_name || user.email}`
+      const response = await base44.functions.invoke("issuePasswordReset", {
+        session_token: sessionToken,
+        target_email: user.email,
       });
-      
-      // Build the reset link
-      const appUrl = window.location.origin;
-      const resetLink = `${appUrl}/ResetPassword?token=${resetToken}`;
-      
-      // Send email with reset link
-      const emailBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%); padding: 30px; border-radius: 16px; text-align: center;">
-            <h1 style="color: #1F2937; margin: 0 0 10px 0;">🔐 Password Reset</h1>
-            <p style="color: #374151; margin: 0;">Sign Shop Time Clock</p>
-          </div>
-          
-          <div style="background: #FFFFFF; padding: 30px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <p style="color: #1F2937; font-size: 16px;">Hi ${user.full_name || 'there'},</p>
-            <p style="color: #374151;">Click the button below to set your Time Clock password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetLink}" style="background-color: #7C3AED; color: #FFFFFF; padding: 16px 32px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold;">
-                Set My Password
-              </a>
-            </div>
-            
-            <p style="color: #6B7280; font-size: 14px;">This link will expire in 24 hours.</p>
-            <p style="color: #6B7280; font-size: 14px;">If the button doesn't work, copy and paste this link:</p>
-            <p style="color: #7C3AED; font-size: 12px; word-break: break-all;">${resetLink}</p>
-          </div>
-        </div>
-      `;
-
-      await sendGmail({
-        to: user.email,
-        subject: "Set Your Time Clock Password",
-        body: emailBody
-      });
-
+      const result = response?.data || response;
+      if (!result?.success) throw new Error(result?.error || "Password reset could not be issued.");
       alert(`Password reset email sent to ${user.email}`);
     } catch (err) {
       console.error("Error sending password reset:", err);
-      setUserMutationError(err?.message || "Failed to issue the password reset safely.");
-      alert("Failed to send password reset email");
+      const message = err?.response?.data?.error || err?.data?.error || err?.message || "Failed to issue the password reset safely.";
+      setUserMutationError(message);
+      alert(message);
     }
     setSendingPasswordReset(null);
   };
