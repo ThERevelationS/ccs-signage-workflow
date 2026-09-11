@@ -77,6 +77,26 @@ function computeMatchScore(extracted, wo) {
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
+
+  // Scheduled invocations arrive without a request payload. Any caller that
+  // supplies a payload is using the manual/admin path and must be authenticated
+  // as an admin before this service-role importer can touch Gmail or production
+  // WorkOrder/PendingImport data.
+  let requestBody: Record<string, unknown> = {};
+  try {
+    requestBody = await req.clone().json();
+  } catch (_) {}
+  const isManualRequest = requestBody && Object.keys(requestBody).length > 0;
+  if (isManualRequest) {
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+  }
+
   const WorkOrder = base44.asServiceRole.entities.WorkOrder;
   const CorebridgeLog = base44.asServiceRole.entities.CorebridgeLog;
   const PendingImport = base44.asServiceRole.entities.PendingImport;
@@ -90,12 +110,8 @@ Deno.serve(async (req) => {
     }
   };
 
-  // Detect trigger type from request body
-  let triggerType = 'scheduled';
-  try {
-    const body = await req.clone().json();
-    if (body && Object.keys(body).length > 0) triggerType = 'manual';
-  } catch (_) {}
+  // Preserve existing scheduled/manual run labeling using the already-parsed body.
+  const triggerType = isManualRequest ? 'manual' : 'scheduled';
 
   const runAt = new Date().toISOString();
   const logData = {
