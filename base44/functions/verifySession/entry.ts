@@ -50,8 +50,14 @@ Deno.serve(async (req) => {
     }
 
     const payload = JSON.parse(b64urlDecode(payloadStr));
-    if (payload.exp && payload.exp < Date.now()) {
-      return Response.json({ valid: false, error: 'Token expired' }, { status: 401 });
+    const issuedAt = Number(payload?.iat);
+    const expiresAt = Number(payload?.exp);
+    if (
+      !payload?.email ||
+      !Number.isFinite(issuedAt) || issuedAt <= 0 ||
+      !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
+    ) {
+      return Response.json({ valid: false, error: 'Token expired or invalid' }, { status: 401 });
     }
 
     // Fetch fresh user data as service role
@@ -65,7 +71,6 @@ Deno.serve(async (req) => {
     }
     const user = users[0];
     const notBefore = Date.parse(String(user?.session_not_before || ''));
-    const issuedAt = Number(payload?.iat || 0);
     if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
       return Response.json({ valid: false, error: 'Session has been revoked' }, { status: 401 });
     }
