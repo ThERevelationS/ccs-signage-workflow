@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { claimRegulationAlertNotification, ensureConvergentRegulationAlertCreate } from '../../shared/regulationAlertPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const isScheduledRun = body && Object.keys(body).length === 0;
+    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'monitorJurisdictionChanges');
     const user = isScheduledRun ? null : await authenticateAdminSession(base44, body?.session_token);
 
     // Load notification settings (email list). Scheduled runs rely on configured recipients.
