@@ -30,8 +30,8 @@ const formatDate = value => {
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 };
 
-export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdmin, onBack, onEditSchedule, onNewSchedule }) {
-  const [tab, setTab] = useState("overview");
+export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdmin, initialTab = "overview", onBack, onEditSchedule, onNewSchedule }) {
+  const [tab, setTab] = useState(initialTab);
   const [workOrders, setWorkOrders] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
 
   useEffect(() => {
     let mounted = true;
-    setTab("overview");
+    setTab(initialTab);
     setLoading(true);
     setError("");
     Promise.all([
@@ -55,7 +55,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
       if (mounted) setLoading(false);
     });
     return () => { mounted = false; };
-  }, [equipment.id, equipment.name]);
+  }, [equipment.id, equipment.name, initialTab]);
 
   const activeOrders = useMemo(() => workOrders.filter(row => ACTIVE.has(row.status)), [workOrders]);
   const historicalOrders = useMemo(() => workOrders.filter(row => !ACTIVE.has(row.status)), [workOrders]);
