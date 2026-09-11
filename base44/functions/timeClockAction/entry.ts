@@ -237,6 +237,21 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
 
   if (state.status === 'clocking_out') {
     const entry = state.active_entry_id ? await entryEntity.get(state.active_entry_id).catch(() => null) : null;
+    if (entry?.id && entry.archived_admin && requestId) {
+      const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
+        status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || new Date().toISOString(), pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target),
+          server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
+          reason: 'Recovered interrupted administrative archive finalization',
+        });
+        return recovered;
+      }
+    }
     if (entry?.id && entry.status === 'clocked_out' && String(entry.clock_out_request_id || '') === requestId) {
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
@@ -427,7 +442,7 @@ Deno.serve(async (req) => {
       const intent = await auditEntity.create({
         action: 'admin_correction', outcome: 'pending', user_email: target.email,
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: 'admin_kiosk', server_timestamp: now, request_id: requestId,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
         time_entry_id: entry.id, reason,
         details: { original: entryAuditSnapshot(entry), requested: nextFields },
       });
@@ -511,7 +526,7 @@ Deno.serve(async (req) => {
       const intent = await auditEntity.create({
         action: 'admin_archive', outcome: 'pending', user_email: target.email,
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: 'admin_kiosk', server_timestamp: now, request_id: requestId,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
         time_entry_id: entry.id, reason, details: { original: entryAuditSnapshot(entry) },
       });
       if (!intent?.id) throw new Error('Archive audit intent could not be persisted. No TimeEntry was changed.');
