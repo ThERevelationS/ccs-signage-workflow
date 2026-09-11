@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { constantTimeEqual } from '../../shared/constantTime.ts';
+import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -64,15 +65,24 @@ function sanitizedUser(user: any) {
 async function loadInvitation(entity: any, token: string) {
   const cleanToken = String(token || '').trim();
   if (!cleanToken) throw Object.assign(new Error('Onboarding token is required'), { status: 400 });
-  const rows = await entity.filter({ onboarding_token: cleanToken });
+  const tokenHash = await hashBearerToken(cleanToken);
+  let rows = await entity.filter({ onboarding_token_hash: tokenHash });
   if (!Array.isArray(rows)) throw Object.assign(new Error('Onboarding token lookup could not be verified'), { status: 503 });
+  let tokenGuard: Record<string, unknown> = { onboarding_token_hash: tokenHash };
+  if (rows.length === 0) {
+    // Backward-compatible rollout guard for a legacy raw invitation issued by
+    // an older deployed function immediately before hash-at-rest became active.
+    rows = await entity.filter({ onboarding_token: cleanToken });
+    if (!Array.isArray(rows)) throw Object.assign(new Error('Onboarding token lookup could not be verified'), { status: 503 });
+    tokenGuard = { onboarding_token: cleanToken };
+  }
   if (rows.length !== 1) throw Object.assign(new Error(rows.length ? 'Onboarding identity is ambiguous' : 'This onboarding link is invalid or already used'), { status: rows.length ? 409 : 401 });
   const user = rows[0];
   if (user.onboarding_complete === true) throw Object.assign(new Error('This onboarding link has already been completed'), { status: 409 });
   if (user.onboarding_expires && new Date(user.onboarding_expires).getTime() < Date.now()) {
     throw Object.assign(new Error('This onboarding link has expired'), { status: 401 });
   }
-  return user;
+  return { user, tokenGuard };
 }
 function invitationUrl(token: string) {
   const appUrl = String(Deno.env.get('PUBLIC_APP_URL') || 'https://clay-flow-signage-suite-387da97c.base44.app').replace(/\/$/, '');
@@ -100,11 +110,12 @@ Deno.serve(async (req) => {
       }
       const target = targets[0];
       const token = secureToken();
+      const tokenHash = await hashBearerToken(token);
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user: target,
-        nextFields: { onboarding_token: token, onboarding_expires: expires, onboarding_complete: false },
+        nextFields: { onboarding_token: null, onboarding_token_hash: tokenHash, onboarding_expires: expires, onboarding_complete: false },
         guardFields: { email: target.email },
         label: `Onboarding invitation for ${target.email}`,
       });
@@ -139,7 +150,9 @@ Deno.serve(async (req) => {
     }
 
     const token = String(body?.token || '').trim();
-    const user = await loadInvitation(authorized, token);
+    const invitation = await loadInvitation(authorized, token);
+    const user = invitation.user;
+    const invitationTokenGuard = invitation.tokenGuard;
 
     if (action === 'validate') {
       return Response.json({ success: true, user: sanitizedUser(user) });
@@ -161,6 +174,7 @@ Deno.serve(async (req) => {
         username,
         password_hash: await bcrypt.hash(password, 10),
         password_reset_token: null,
+        password_reset_token_hash: null,
         password_reset_expires: null,
         session_not_before: new Date().toISOString(),
       };
@@ -169,7 +183,7 @@ Deno.serve(async (req) => {
         entity: authorized,
         user,
         nextFields,
-        guardFields: { onboarding_token: token, onboarding_complete: false, email: user.email },
+        guardFields: { ...invitationTokenGuard, onboarding_complete: false, email: user.email },
         label: `Onboarding credentials for ${user.email}`,
       });
       return Response.json({ success: true, user: sanitizedUser(saved) });
@@ -182,7 +196,7 @@ Deno.serve(async (req) => {
         entity: authorized,
         user,
         nextFields: { hr_data: hrData },
-        guardFields: { onboarding_token: token, onboarding_complete: false, email: user.email },
+        guardFields: { ...invitationTokenGuard, onboarding_complete: false, email: user.email },
         label: `Onboarding HR data for ${user.email}`,
       });
       return Response.json({ success: true, user: sanitizedUser(saved) });
@@ -192,8 +206,8 @@ Deno.serve(async (req) => {
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: authorized,
         user,
-        nextFields: { onboarding_complete: true, onboarding_token: null, onboarding_expires: null },
-        guardFields: { onboarding_token: token, onboarding_complete: false, email: user.email },
+        nextFields: { onboarding_complete: true, onboarding_token: null, onboarding_token_hash: null, onboarding_expires: null },
+        guardFields: { ...invitationTokenGuard, onboarding_complete: false, email: user.email },
         label: `Complete onboarding for ${user.email}`,
       });
       return Response.json({ success: true, user: sanitizedUser(saved) });
