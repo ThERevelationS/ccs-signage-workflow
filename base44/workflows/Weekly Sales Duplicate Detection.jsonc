@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "detectSalesDuplicates",
-            "args": {}
+            "args": {
+              "_workflow_capability": "YqR3Km8KOj5307pAz4LbplXvD3xV2gaF-6bCESsl7YE"
+            }
           },
           "then": "end"
         }
