@@ -67,7 +67,7 @@ export default function GoogleDriveFileBrowser({
   const [uploading, setUploading] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
   const fileInputRef = useRef(null);
-  const runDriveOperation = (payload) => runDriveOperation({ ...payload, session_token: sessionToken });
+  const runDriveOperation = (payload) => googleDriveOperations({ ...payload, session_token: sessionToken });
 
   // Extract folder ID from URL if provided
   useEffect(() => {
