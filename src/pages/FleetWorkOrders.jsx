@@ -267,7 +267,7 @@ export default function FleetWorkOrders() {
       <FleetConfirmDialog
         open={!!confirmReopen}
         title={`Reopen ${confirmReopen?.work_order_number || "Fleet work order"}?`}
-        description="This returns the work order to In Progress. Inventory consumed by the prior completion is not restored, matching the preserved Fleet workflow."
+        description="This returns the work order to In Progress. Inventory consumed by the prior completion is not restored, and any recurring maintenance schedule already advanced by that completion is not rolled back. This matches the preserved FleetMaster workflow."
         confirmLabel="Reopen Work Order"
         tone="warning"
         busy={!!reopeningId}
