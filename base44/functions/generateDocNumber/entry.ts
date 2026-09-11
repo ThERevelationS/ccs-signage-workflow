@@ -11,7 +11,11 @@ export default async function (req) {
     const body = await req.json().catch(() => ({}));
     const docType = body.doc_type === 'order' ? 'order' : 'estimate';
     const prefix = docType === 'order' ? 'INV-' : 'EST-';
-    const count = Math.min(Math.max(parseInt(body.count || 1, 10) || 1, 1), 50);
+    const requestedCount = Math.min(Math.max(parseInt(body.count || 1, 10) || 1, 1), 50);
+    if (requestedCount > 1 && user.role !== 'admin') {
+      return Response.json({ error: 'Batch document-number allocation requires admin access' }, { status: 403 });
+    }
+    const count = requestedCount;
 
     const svc = base44.asServiceRole;
     const Counter = svc.entities.DocNumberCounter;
@@ -71,6 +75,7 @@ export default async function (req) {
 
     throw new Error('Document number allocation was busy because the shared counter kept changing. Try again.');
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('generateDocNumber error:', error?.message || error);
+    return Response.json({ error: 'Document number allocation could not be completed safely' }, { status: 500 });
   }
 }
