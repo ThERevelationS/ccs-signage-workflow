@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { constantTimeEqual } from '../../shared/constantTime.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -30,7 +31,7 @@ async function verifySessionToken(token: string, secret: string, authorized: any
   if (parts.length !== 2) return null;
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) return null;
+  if (!constantTimeEqual(expectedSig, providedSig)) return null;
 
   let payload: any;
   try {
