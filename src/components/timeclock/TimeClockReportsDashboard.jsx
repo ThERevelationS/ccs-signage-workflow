@@ -26,14 +26,12 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16'];
 
 export default function TimeClockReportsDashboard() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
-  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
   
@@ -51,14 +49,12 @@ export default function TimeClockReportsDashboard() {
     setIsLoading(true);
     setReadError("");
     try {
-      const [entries, orders, usersData] = await Promise.all([
+      const [entries, orders] = await Promise.all([
         loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock entries" }),
-        loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock reporting authorized users" })
+        loadAllEntityRows({ entity: WorkOrder, query: { deleted: false }, sort: "created_date", label: "Time Clock Work Orders" })
       ]);
       setTimeEntries(entries);
       setWorkOrders(orders);
-      setUsers(usersData);
     } catch (err) {
       console.error("Error loading data:", err);
       setTimeEntries([]);
@@ -472,7 +468,7 @@ export default function TimeClockReportsDashboard() {
           </h3>
           {metrics.hoursByWorkOrder.length > 0 ? (
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {metrics.hoursByWorkOrder.map((wo, i) => (
+              {metrics.hoursByWorkOrder.map((wo) => (
                 <div key={wo.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{wo.title}</p>
@@ -529,7 +525,7 @@ export default function TimeClockReportsDashboard() {
             Employee Breakdown
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {metrics.hoursByEmployee.slice(0, 6).map((emp, i) => (
+            {metrics.hoursByEmployee.slice(0, 6).map((emp) => (
               <div key={emp.name} className="p-2 bg-gray-50 rounded">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium">{emp.name}</span>
