@@ -9,6 +9,7 @@ import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDial
 import {
   createJurisdictionIfAbsent,
   deleteJurisdictionFromLoadedSnapshot,
+  jurisdictionIdentityKey,
   saveJurisdictionFromLoadedSnapshot,
 } from "@/components/permitting/jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -204,14 +205,18 @@ export default function PermittingRepository() {
     setAiDiscoverLoading(false);
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
   const displayList = jurisdictions.filter(j =>
-    !searchTerm || j.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    !normalizedSearch ||
+    j.name?.toLowerCase().includes(normalizedSearch) ||
+    j.state?.toLowerCase().includes(normalizedSearch) ||
+    j.parent_county?.name?.toLowerCase().includes(normalizedSearch)
   );
 
   const duplicateMap = new Map();
   jurisdictions.forEach((jurisdiction) => {
-    const key = `${String(jurisdiction.name || "").trim().toLowerCase()}|${String(jurisdiction.state || "").trim().toLowerCase()}`;
-    if (!key.startsWith("|")) duplicateMap.set(key, [...(duplicateMap.get(key) || []), jurisdiction]);
+    const key = jurisdictionIdentityKey(jurisdiction);
+    if (String(jurisdiction.name || "").trim()) duplicateMap.set(key, [...(duplicateMap.get(key) || []), jurisdiction]);
   });
   const duplicateJurisdictionGroups = [...duplicateMap.values()].filter((rows) => rows.length > 1);
 
@@ -265,7 +270,11 @@ export default function PermittingRepository() {
           <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
             <div className="font-semibold">Duplicate jurisdiction profiles require review</div>
             <div className="mt-1">
-              {duplicateJurisdictionGroups.map((rows) => `${rows[0].name}, ${rows[0].state} (${rows.length})`).join(" · ")}
+              {duplicateJurisdictionGroups.map((rows) => {
+                const first = rows[0];
+                const parent = first.type !== "county" && first.parent_county?.name ? ` · ${first.parent_county.name}` : "";
+                return `${first.name}, ${first.state}${parent} (${rows.length})`;
+              }).join(" · ")}
             </div>
             <div className="mt-1 text-amber-800">No profile was merged or deleted automatically. Review the records and keep the correct history before removing any duplicate.</div>
           </div>
