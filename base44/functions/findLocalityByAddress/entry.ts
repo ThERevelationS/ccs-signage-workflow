@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 /**
  * AI-powered address lookup.
@@ -26,12 +27,8 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) {
-      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
+    await authenticateSignShopSession(base44, body?.session_token);
     const address = (body.address || "").trim();
 
     if (!address) {
@@ -160,7 +157,12 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       confidence: aiResult.confidence || "medium"
     });
   } catch (error) {
-    console.error('findLocalityByAddress error:', error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    console.error('findLocalityByAddress error:', error?.message || error);
+    return Response.json({
+      success: false,
+      error: safeStatus === 500 ? 'Address research could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
