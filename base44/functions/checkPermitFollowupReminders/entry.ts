@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { claimPermitFollowupForToday } from '../../shared/permitLineItemPersistence.mjs';
 import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 // Scheduled: scans PermitLineItems for follow-up dates that are due today or overdue,
 // fires `permit_followup_due` and `permit_followup_overdue` automation triggers.
@@ -9,11 +10,17 @@ import { processWorkflowTriggerEvent } from '../../shared/workflowTriggerEngine.
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    const isScheduledRun = await hasWorkflowInvocationCapability(body, 'checkPermitFollowupReminders');
 
-    // Auth check — only admins or scheduled invocations
-    const user = await base44.auth.me().catch(() => null);
-    if (user && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isScheduledRun) {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) {
+        return Response.json({ error: 'Authentication required' }, { status: 401 });
+      }
+      if (user.role !== 'admin') {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     const today = new Date().toISOString().split('T')[0];
