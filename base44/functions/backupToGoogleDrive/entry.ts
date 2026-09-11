@@ -2,32 +2,24 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Scheduled workflow invocations have no user auth and currently call this
-    // function with an empty payload. Keep that path working, but never let an
-    // unauthenticated request reach interactive admin actions or manual-backup args.
-    let isScheduledBackup = false;
-    let user = null;
-    
-    try {
-      user = await base44.auth.me();
-    } catch (e) {
-      isScheduledBackup = true;
-    }
-
     const body = await req.json().catch(() => ({}));
     const { dataTypes, folderId, action } = body;
+    const isScheduledBackup = await hasWorkflowInvocationCapability(body, 'backupToGoogleDrive');
 
-    if (isScheduledBackup) {
-      if (body && typeof body === 'object' && Object.keys(body).length > 0) {
-        return Response.json({ error: 'Forbidden: unauthenticated backup calls may only use the scheduled empty-payload path' }, { status: 403 });
+    if (!isScheduledBackup) {
+      const user = await base44.auth.me().catch(() => null);
+      if (!user) {
+        return Response.json({ error: 'Authentication required' }, { status: 401 });
       }
-    } else if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      if (user.role !== 'admin') {
+        return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      }
     }
     
     // Get Google Drive access token
