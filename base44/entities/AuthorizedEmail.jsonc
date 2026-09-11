@@ -27,7 +27,18 @@
     },
     "password_reset_token": {
       "type": "string",
-      "description": "Token for password reset",
+      "description": "Legacy raw password reset token. New reset links store only password_reset_token_hash.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "password_reset_token_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the active password reset bearer token",
       "rls": {
         "read": {
           "user_condition": {
@@ -214,7 +225,18 @@
     },
     "onboarding_token": {
       "type": "string",
-      "description": "Token for new user onboarding",
+      "description": "Legacy raw onboarding token. New invitations store only onboarding_token_hash.",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
+    },
+    "onboarding_token_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the active onboarding bearer token",
       "rls": {
         "read": {
           "user_condition": {
