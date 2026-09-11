@@ -248,12 +248,12 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
       didInitialFitRef.current = true;
       fitFleet();
     }
-  }, [vehicles, selectedVin, prefs.vehicleLabels, prefs.autoFit, fitFleet]);
+  }, [vehicles, selectedVin, prefs.vehicleLabels, prefs.autoFit, fitFleet, loading]);
 
   useEffect(() => {
     if (!selectedVin || !selectedLocation) return;
     centerSelected(16);
-  }, [selectedVin]);
+  }, [selectedVin, selectedLocation, centerSelected, loading]);
 
   useEffect(() => {
     if (!prefs.followSelected || !selectedLocation) return;
@@ -275,7 +275,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
     const bounds = new maps.LatLngBounds();
     path.forEach(point => bounds.extend(point));
     mapRef.current.fitBounds(bounds, 80);
-  }, [selectedTrip]);
+  }, [selectedTrip, loading]);
 
   useEffect(() => {
     if (!containerRef.current || typeof ResizeObserver === "undefined") return;
