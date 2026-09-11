@@ -43,12 +43,18 @@
       "type": "string",
       "enum": [
         "pending",
+        "reviewing",
         "approved",
         "approved_modified",
         "rejected",
         "cancelled"
       ],
       "default": "pending"
+    },
+    "review_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when a manager claimed the request for review"
     },
     "reviewed_at": {
       "type": "string",
