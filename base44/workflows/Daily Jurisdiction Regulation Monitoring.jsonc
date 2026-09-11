@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "monitorJurisdictionChanges",
-            "args": {}
+            "args": {
+              "_workflow_capability": "IXQuWtG1aW-mKLqu938anwFhyKSBOJZ_iiu_aAQ9K2c"
+            }
           },
           "then": "end"
         }
