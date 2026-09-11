@@ -75,7 +75,8 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('auditJurisdictionAccuracy error:', error?.message || error);
+    return Response.json({ error: 'Jurisdiction accuracy audit could not be completed safely' }, { status: 500 });
   }
 });
 
