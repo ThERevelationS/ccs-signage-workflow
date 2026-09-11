@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "backupToGoogleDrive",
-            "args": {}
+            "args": {
+              "_workflow_capability": "NHBvHoZ85hFcXxCy6czmQ42wxvsClFLSS4WslZQ9lMo"
+            }
           },
           "then": "end"
         }
