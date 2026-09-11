@@ -379,6 +379,93 @@ export function normalizeWebhookEvent(event) {
 
 const MAX_PATH_POINTS = 250;
 
+const timeValue = (value) => {
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+function latestDateValue(rows, field) {
+  let winner = null;
+  let winnerTime = 0;
+  for (const row of rows || []) {
+    const value = row?.[field];
+    const parsed = timeValue(value);
+    if (parsed >= winnerTime && value) {
+      winner = value;
+      winnerTime = parsed;
+    }
+  }
+  return winner;
+}
+
+function mergedLivePath(rows, extraPoints = []) {
+  const all = [...(rows || []).flatMap((row) => Array.isArray(row?.recent_path_points) ? row.recent_path_points : []), ...(extraPoints || [])]
+    .filter((point) => point && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lon)));
+  const seen = new Set();
+  const unique = [];
+  for (const point of all) {
+    const key = `${point.ts || ""}|${point.lat}|${point.lon}|${point.speed ?? ""}|${point.heading ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(point);
+  }
+  unique.sort((a, b) => timeValue(a?.ts) - timeValue(b?.ts));
+  return unique.slice(-MAX_PATH_POINTS);
+}
+
+function mergeLiveStateRows(rows) {
+  const ordered = (rows || []).slice().sort((a, b) => {
+    const eventDelta = timeValue(b?.last_event_at) - timeValue(a?.last_event_at);
+    if (eventDelta) return eventDelta;
+    const seenDelta = timeValue(b?.last_seen_at) - timeValue(a?.last_seen_at);
+    if (seenDelta) return seenDelta;
+    return timeValue(b?.updated_date || b?.created_date) - timeValue(a?.updated_date || a?.created_date);
+  });
+  const latest = ordered[0] || {};
+  const firstPresent = (field) => ordered.find((row) => row?.[field] !== undefined && row?.[field] !== null && row?.[field] !== "")?.[field];
+  const active = typeof latest?.is_trip_active === "boolean"
+    ? latest.is_trip_active
+    : ordered.find((row) => typeof row?.is_trip_active === "boolean")?.is_trip_active ?? false;
+  const merged = {
+    vehicle_vin: firstPresent("vehicle_vin") || "",
+    vehicle_imei: firstPresent("vehicle_imei") || "",
+    transaction_id: firstPresent("transaction_id") || null,
+    is_trip_active: active,
+    latitude: firstPresent("latitude"),
+    longitude: firstPresent("longitude"),
+    heading: firstPresent("heading"),
+    speed: active ? firstPresent("speed") : 0,
+    fuel_level: firstPresent("fuel_level"),
+    odometer: firstPresent("odometer"),
+    started_at: latestDateValue(ordered, "started_at"),
+    ended_at: active ? null : latestDateValue(ordered, "ended_at"),
+    last_event_at: latestDateValue(ordered, "last_event_at"),
+    last_seen_at: latestDateValue(ordered, "last_seen_at"),
+    recent_path_points: mergedLivePath(ordered),
+  };
+  return Object.fromEntries(Object.entries(merged).filter(([, value]) => value !== undefined));
+}
+
+async function coalesceLiveStateRows(LiveState, vin) {
+  const rows = await LiveState.filter({ vehicle_vin: vin });
+  if (!rows?.length) return null;
+  if (rows.length === 1) return rows[0];
+
+  // Bouncie live state is a derived cache, not trip history. Keep one deterministic
+  // row per VIN while merging the newest state and bounded path from duplicate cache rows.
+  const winner = rows.slice().sort((a, b) => {
+    const createdDelta = timeValue(a?.created_date) - timeValue(b?.created_date);
+    if (createdDelta) return createdDelta;
+    return String(a?.id || "").localeCompare(String(b?.id || ""));
+  })[0];
+  const patch = mergeLiveStateRows(rows);
+  const saved = await LiveState.update(winner.id, patch);
+  for (const row of rows) {
+    if (row.id !== winner.id) await LiveState.delete(row.id).catch(() => null);
+  }
+  return saved || { ...winner, ...patch };
+}
+
 function pointsFrom(list, payload) {
   const src = Array.isArray(list) ? list : payload ? [payload] : [];
   return src
@@ -403,53 +490,62 @@ export async function applyLiveState(base44, event, normalized) {
   const { eventType, payload, points, timestamp } = normalized;
   if (!["tripStart", "tripData", "tripEnd", "tripMetrics"].includes(eventType)) return;
 
-  const existing = await base44.asServiceRole.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin });
-  const current = existing && existing.length ? existing[0] : null;
+  const LiveState = base44.asServiceRole.entities.BouncieVehicleLiveState;
+  let current = await coalesceLiveStateRows(LiveState, vin);
 
   const newPoints = pointsFrom(points, payload);
   const latest = newPoints[newPoints.length - 1];
 
-  const patch = {
-    vehicle_vin: vin,
-    vehicle_imei: event.imei || current?.vehicle_imei || "",
-    last_event_at: timestamp,
-    last_seen_at: new Date().toISOString()
-  };
+  const incomingAt = timeValue(timestamp);
+  const currentAt = timeValue(current?.last_event_at);
+  const incomingIsCurrent = !currentAt || !incomingAt || incomingAt >= currentAt;
+  const patch = { last_seen_at: new Date().toISOString() };
 
-  if (payload.transactionId) patch.transaction_id = String(payload.transactionId);
-  if (latest) {
-    patch.latitude = latest.lat;
-    patch.longitude = latest.lon;
-    if (latest.heading != null) patch.heading = latest.heading;
-    if (latest.speed != null) patch.speed = latest.speed;
-  }
-  const fuel = firstNumber(payload.fuelLevel, payload.fuel);
-  if (fuel != null) patch.fuel_level = fuel;
-  const odo = firstNumber(payload.odometer);
-  if (odo != null) patch.odometer = odo;
+  if (incomingIsCurrent) {
+    patch.vehicle_vin = vin;
+    patch.vehicle_imei = event.imei || current?.vehicle_imei || "";
+    patch.last_event_at = timestamp;
+    if (payload.transactionId) patch.transaction_id = String(payload.transactionId);
+    if (latest) {
+      patch.latitude = latest.lat;
+      patch.longitude = latest.lon;
+      if (latest.heading != null) patch.heading = latest.heading;
+      if (latest.speed != null) patch.speed = latest.speed;
+    }
+    const fuel = firstNumber(payload.fuelLevel, payload.fuel);
+    if (fuel != null) patch.fuel_level = fuel;
+    const odo = firstNumber(payload.odometer);
+    if (odo != null) patch.odometer = odo;
 
-  if (eventType === "tripStart") {
-    patch.is_trip_active = true;
-    patch.started_at = timestamp;
-    patch.ended_at = null;
-    patch.recent_path_points = newPoints.slice(-MAX_PATH_POINTS);
-  } else if (eventType === "tripEnd") {
-    patch.is_trip_active = false;
-    patch.ended_at = timestamp;
-    patch.speed = 0;
+    if (eventType === "tripStart") {
+      patch.is_trip_active = true;
+      patch.started_at = timestamp;
+      patch.ended_at = null;
+      patch.recent_path_points = newPoints.slice(-MAX_PATH_POINTS);
+    } else if (eventType === "tripEnd") {
+      patch.is_trip_active = false;
+      patch.ended_at = timestamp;
+      patch.speed = 0;
+      if (current?.recent_path_points?.length) patch.recent_path_points = mergedLivePath([current]);
+    } else if (newPoints.length) {
+      patch.recent_path_points = mergedLivePath(current ? [current] : [], newPoints);
+      patch.is_trip_active = true;
+    }
   } else if (newPoints.length) {
-    const merged = [...(current?.recent_path_points || []), ...newPoints];
-    // De-dupe identical consecutive points, then bound the buffer.
-    const deduped = merged.filter(
-      (p, i) => i === 0 || p.lat !== merged[i - 1].lat || p.lon !== merged[i - 1].lon || p.ts !== merged[i - 1].ts
-    );
-    patch.recent_path_points = deduped.slice(-MAX_PATH_POINTS);
-    patch.is_trip_active = true;
+    // A delayed telemetry batch may still contribute path detail, but must never
+    // roll the current trip state, odometer, position, or active/ended flags backward.
+    patch.recent_path_points = mergedLivePath(current ? [current] : [], newPoints);
   }
 
   if (current) {
-    await base44.asServiceRole.entities.BouncieVehicleLiveState.update(current.id, patch);
+    await LiveState.update(current.id, patch);
   } else {
-    await base44.asServiceRole.entities.BouncieVehicleLiveState.create(patch);
+    await LiveState.create({ vehicle_vin: vin, vehicle_imei: event.imei || "", ...patch });
+    await new Promise((resolve) => setTimeout(resolve, 75));
   }
+
+  // Collapse only this VIN's duplicate derived cache rows. This preserves the newest
+  // live state/path while preventing first-event races from leaving permanent duplicates.
+  current = await coalesceLiveStateRows(LiveState, vin);
+  return current;
 }
