@@ -1,16 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 
-const ALLOWED_MODULES = new Set([
-  'channel_letter_installation',
-  'foundation',
-  'brick_stone',
-  'paint',
-  'laser',
-  'cnc',
-  'metal_fabrication',
-  'vinyl',
-  'sign_maintenance',
-]);
+const MODULE_PROJECT_ENTITIES: Record<string, string> = {
+  channel_letter_installation: 'ChannelLetterInstallation',
+  foundation: 'FoundationProject',
+  brick_stone: 'BrickStoneProject',
+  paint: 'Project',
+  laser: 'LaserProject',
+  cnc: 'CNCProject',
+  metal_fabrication: 'MetalProject',
+  vinyl: 'VinylProject',
+  sign_maintenance: 'MaintenanceProject',
+};
+const ALLOWED_MODULES = new Set(Object.keys(MODULE_PROJECT_ENTITIES));
 
 const PAGE_SIZE = 500;
 const VERIFY_LIMIT = 50000;
@@ -236,14 +237,29 @@ Deno.serve(async (req) => {
     const normalizedName = norm(clientName);
     const module = String(body?.module || '').trim();
     const projectId = String(body?.project_id || '').trim();
-    const projectName = String(body?.project_name || '');
-    const estimateNumber = String(body?.estimate_number || '').trim();
-
     if (!clientName || !normalizedName || !ALLOWED_MODULES.has(module) || !projectId) {
       return Response.json({ error: 'Client name, supported module, and project id are required.' }, { status: 400 });
     }
 
-    const requestedLink = { module, project_id: projectId, project_name: projectName };
+    // A Customer Summary link is convenience metadata, but it must still point
+    // at a real source project the authenticated caller can read. Never trust a
+    // caller-supplied project name/client identity for an immutable relationship.
+    const sourceEntityName = MODULE_PROJECT_ENTITIES[module];
+    const SourceProject = base44.entities[sourceEntityName];
+    const sourceProject = await SourceProject?.get(projectId).catch(() => null);
+    if (!sourceProject?.id) {
+      return Response.json({ error: 'The source estimator project could not be verified before updating the Customer Summary.' }, { status: 404 });
+    }
+    if (norm(sourceProject.client_name) !== normalizedName) {
+      return Response.json({ error: 'The source estimator project belongs to a different client. Customer Summary was not changed.' }, { status: 409 });
+    }
+
+    const requestedLink = {
+      module,
+      project_id: projectId,
+      project_name: String(sourceProject.project_name || ''),
+    };
+    const estimateNumber = String(sourceProject.estimate_number || '').trim();
     const summaryKey = summaryKeyFor(normalizedName);
     const Summary = base44.entities.CustomerSummary;
 
