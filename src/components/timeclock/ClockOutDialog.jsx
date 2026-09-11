@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText } from "lucide-react";
+import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -32,13 +32,15 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [totalAllocatedHours, setTotalAllocatedHours] = useState(0);
   const [error, setError] = useState("");
   const [notes, setNotes] = useState("");
+  const [displayNow, setDisplayNow] = useState(() => new Date());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate total working hours
+  // Display time is refreshed while the dialog is open. The backend still owns
+  // the official clock-out timestamp and recalculates the final duration.
   const clockInTime = timeEntry ? new Date(timeEntry.clock_in) : new Date();
-  const clockOutTime = new Date();
+  const clockOutTime = displayNow;
   const totalMinutesWorked = Math.floor((clockOutTime - clockInTime) / (1000 * 60));
   const lunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
   const workableMinutes = totalMinutesWorked - lunchMins;
@@ -53,9 +55,11 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const remainingMinutes = workableMinutes - totalAllocatedMinutes;
 
   useEffect(() => {
-    const totalMins = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
-    setTotalAllocatedHours(totalMins / 60);
-  }, [jobAllocations]);
+    if (!isOpen) return undefined;
+    setDisplayNow(new Date());
+    const timer = setInterval(() => setDisplayNow(new Date()), 15000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
 
   useEffect(() => {
     if (searchTerm.length >= 2) {
@@ -125,36 +129,41 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
     setJobAllocations(jobAllocations.filter((_, i) => i !== index));
   };
 
-  const handleClockOut = () => {
+  const handleClockOut = async () => {
     setError("");
 
-    // Validate lunch is entered
     if (lunchMinutes === "" || lunchMinutes === null) {
       setError("Please enter your lunch break time");
       return;
     }
 
-    // Validate lunch
-    if (lunchMins < 0) {
-      setError("Lunch break cannot be negative");
+    if (lunchMins < 0 || lunchMins > 240) {
+      setError("Lunch break must be between 0 and 240 minutes");
       return;
     }
 
-    // Validate allocations
     if (jobAllocations.length === 0) {
       setError("Please add at least one job allocation");
       return;
     }
 
-    // Validate total minutes match (allow 5 min tolerance)
-    // workableMinutes already has lunch subtracted
-    const diff = Math.abs(totalAllocatedMinutes - workableMinutes);
-    if (diff > 5) {
-      setError(`All time must be allocated. You have ${formatDuration(remainingMinutes)} remaining.`);
+    const finalClockOutTime = new Date();
+    setDisplayNow(finalClockOutTime);
+    const finalTotalMinutes = Math.floor((finalClockOutTime - clockInTime) / (1000 * 60));
+    const finalWorkableMinutes = finalTotalMinutes - lunchMins;
+    const finalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
+    const finalRemainingMinutes = finalWorkableMinutes - finalAllocatedMinutes;
+
+    if (finalWorkableMinutes < 0) {
+      setError("Lunch time cannot exceed the shift duration");
       return;
     }
 
-    // Validate in-house tasks have a task selected
+    if (Math.abs(finalRemainingMinutes) > 5) {
+      setError(`All time must be allocated using the current shift duration. ${formatDuration(Math.abs(finalRemainingMinutes))}${finalRemainingMinutes < 0 ? " is over-allocated" : " remains"}.`);
+      return;
+    }
+
     for (const job of jobAllocations) {
       if (job.is_inhouse && !job.inhouse_task) {
         setError("Please select a task for all In House Projects");
@@ -166,13 +175,20 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
       }
     }
 
-    onClockOut({
-      lunchMinutes: lunchMins,
-      jobAllocations,
-      totalHours: workableHours,
-      clockOutTime: clockOutTime.toISOString(),
-      notes: notes.trim()
-    });
+    setIsSubmitting(true);
+    try {
+      await onClockOut({
+        lunchMinutes: lunchMins,
+        jobAllocations,
+        totalHours: Math.max(0, finalWorkableMinutes / 60),
+        clockOutTime: finalClockOutTime.toISOString(),
+        notes: notes.trim(),
+      });
+    } catch (err) {
+      setError(err?.message || "Clock-out was not confirmed by the server. Nothing was shown as successful.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatTime = (date) => format(date, "h:mm a");
@@ -225,7 +241,7 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
             <Input
               type="number"
               min="0"
-              max="120"
+              max="240"
               value={lunchMinutes}
               onChange={(e) => setLunchMinutes(e.target.value)}
               placeholder="Enter minutes..."
@@ -465,12 +481,12 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleClockOut} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
-              <Clock className="w-4 h-4 mr-2" />
-              Clock Out
+            <Button onClick={handleClockOut} disabled={isSubmitting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
+              {isSubmitting ? "Confirming..." : "Clock Out"}
             </Button>
           </div>
         </div>
