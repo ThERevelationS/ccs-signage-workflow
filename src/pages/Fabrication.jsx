@@ -55,7 +55,7 @@ export default function Fabrication() {
           .filter(item => item.page === "Fabrication")
           .map(item => item.text || item);
       }
-    } catch (e) {}
+    } catch {}
     return ["WIP - Outsourced Fabrication"];
   };
 
@@ -211,21 +211,6 @@ export default function Fabrication() {
       console.error("Error deleting work order:", error);
       alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
       loadWorkOrders();
-    }
-  };
-
-  const toggleFullScreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        setIsFullScreen(true);
-      } else {
-        await document.exitFullscreen();
-        setIsFullScreen(false);
-      }
-    } catch (error) {
-      console.error("Fullscreen API error:", error);
-      // Handle cases where fullscreen might be denied or unsupported
     }
   };
 
