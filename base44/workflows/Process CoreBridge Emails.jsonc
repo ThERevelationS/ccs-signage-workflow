@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "processCorebridgeEmails",
-            "args": {}
+            "args": {
+              "_workflow_capability": "mJ5W-RZCeS_swT5cSQYQolsebB6isPqRoePOdKrQXbA"
+            }
           },
           "then": "end"
         }
