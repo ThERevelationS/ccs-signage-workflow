@@ -16,23 +16,21 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
-const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
-const PERMITTING_API_KEY = '570bd85bbd4248b396864e2c628a6028';
+async function permittingProxy(action, payload) {
+  const response = await base44.functions.invoke('permittingProxy', { action, payload });
+  const result = response?.data || response;
+  if (result?.error) {
+    throw new Error(result.detail ? `${result.error}: ${result.detail}` : result.error);
+  }
+  return result;
+}
 
 async function createResearchRequest(payload) {
-  const res = await fetch(`https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api_key': PERMITTING_API_KEY },
-    body: JSON.stringify(payload)
-  });
-  return res.json();
+  return permittingProxy('create', payload);
 }
 
 async function pollResearchRequest(id) {
-  const res = await fetch(`https://app.base44.com/api/apps/${PERMITTING_APP_ID}/entities/ResearchRequest/${id}`, {
-    headers: { 'api_key': PERMITTING_API_KEY }
-  });
-  return res.json();
+  return permittingProxy('poll', { id });
 }
 
 export default function PermittingRepository() {
