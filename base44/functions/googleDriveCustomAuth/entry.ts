@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { issueOAuthState } from '../../shared/oauthState.ts';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -15,6 +16,7 @@ Deno.serve(async (req) => {
     if (action === 'initiate') {
       const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
       const redirectUri = `${url.origin}/functions/googleDriveCustomCallback`;
+      const state = await issueOAuthState(user, 'google_drive_custom');
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
@@ -22,7 +24,7 @@ Deno.serve(async (req) => {
         `response_type=code&` +
         `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly email')}&` +
         `access_type=offline&` +
-        `state=${user.email}`;
+        `state=${encodeURIComponent(state)}`;
 
       return Response.json({ authUrl });
     }
