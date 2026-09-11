@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     if (text(current.updated_date) !== expectedUpdatedAt) {
       return Response.json({ error: 'The duplicate Work Order changed after creation and was left intact for review.' }, { status: 409 });
     }
-    if (text(current.estimate_id) !== estimateId || current.deleted === true) {
+    if (text(current.estimate_id) !== estimateId || current.deleted !== false) {
       return Response.json({ error: 'The Work Order is no longer the active estimate-linked duplicate that was created.' }, { status: 409 });
     }
 
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         id,
         updated_date: expectedUpdatedAt,
         estimate_id: estimateId,
-        deleted: { $ne: true },
+        deleted: false,
       });
     } catch (error: any) {
       const afterError = await entity.get(id).catch(() => null);
