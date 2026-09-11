@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const MAX_INLINE_DOWNLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -14,13 +15,9 @@ function bytesToBase64(bytes: Uint8Array) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { action, folderId, fileName, fileContent, fileType, fileId, expectedFileName, expectedModifiedTime } = await req.json();
+    const body = await req.json();
+    await authenticateSignShopSession(base44, body?.session_token);
+    const { action, folderId, fileName, fileContent, fileType, fileId, expectedFileName, expectedModifiedTime } = body;
     const { accessToken } = await base44.asServiceRole.connectors.getConnection("googledrive");
 
     switch (action) {
@@ -312,6 +309,11 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
+    console.error('googleDriveOperations error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Google Drive operation could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
