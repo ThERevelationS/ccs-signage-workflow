@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (!user || user.role !== 'admin') return Response.json({ error:'Forbidden' }, { status:403 });
 
     const E = base44.asServiceRole.entities;
-    const [equipment,tasks,workOrders,parts,fluids,logs,requests,metadata,liveState,receipts,queue] = await Promise.all([
+    const [equipment,tasks,workOrders,parts,fluids,logs,requests,metadata,liveState,recentBouncieNotifications,receipts,queue] = await Promise.all([
       loadAllEntityRows({ entity:E.FleetEquipment, sort:'name', label:'Fleet equipment integrity data' }),
       loadAllEntityRows({ entity:E.FleetMaintenanceTask, sort:'-created_date', label:'Fleet maintenance integrity data' }),
       loadAllEntityRows({ entity:E.FleetMaintenanceWorkOrder, sort:'-created_date', label:'Fleet work-order integrity data' }),
@@ -33,6 +33,7 @@ Deno.serve(async (req) => {
       loadAllEntityRows({ entity:E.FleetPartFluidRequest, sort:'-created_date', label:'Fleet request integrity data' }),
       loadAllEntityRows({ entity:E.FleetVehicleMetadata, sort:'-created_date', label:'Fleet vehicle metadata integrity data' }),
       loadAllEntityRows({ entity:E.BouncieVehicleLiveState, sort:'-last_seen_at', label:'Bouncie live-state integrity data' }),
+      E.BouncieNotification.list('-created_date',500,0).catch(()=>[]),
       loadAllEntityRows({ entity:E.FleetOperationReceipt, sort:'-created_date', label:'Fleet operation-receipt integrity data' }),
       loadAllEntityRows({ entity:E.FleetNotificationQueue, sort:'-created_date', label:'Fleet notification-queue integrity data' }),
     ]);
@@ -133,6 +134,20 @@ Deno.serve(async (req) => {
       return endedAt > 0 && (!startedAt || endedAt >= startedAt) && (!lastEventAt || endedAt >= lastEventAt);
     });
     add('warning','bouncie_live_state_ended_but_active','Bouncie live-state rows marked active after a definitive trip end',contradictoryLive.map((row:any)=>({id:row.id,vin:row.vehicle_vin || '',imei:row.vehicle_imei || '',started_at:row.started_at || '',ended_at:row.ended_at || '',last_event_at:row.last_event_at || ''})),'A derived live-state row cannot remain active when its latest known trip has ended and no active transaction remains. The cache self-heal should normalize this state without touching history.');
+
+    const observedImeiGroups = groupBy([
+      ...liveState.map((row:any)=>({vin:normVin(row.vehicle_vin),imei:String(row.vehicle_imei || '').trim(),observed_at:row.last_seen_at || row.updated_date || '',source:'live_state'})),
+      ...(recentBouncieNotifications || []).map((row:any)=>({vin:normVin(row.vehicle_vin),imei:String(row.vehicle_imei || '').trim(),observed_at:row.timestamp || row.created_date || '',source:'notification'})),
+    ],(row:any)=>row.imei);
+    const multiVinImei:any[] = [];
+    for (const [imei,rows] of observedImeiGroups) {
+      const vins = [...new Set(rows.map((row:any)=>row.vin).filter(Boolean))];
+      if (vins.length <= 1) continue;
+      const linkedEquipment = equipment.filter((eq:any)=>String(eq.bouncie_imei || '').trim() === imei).map((eq:any)=>({id:eq.id,name:eq.name,vin:eq.vin || '',link_status:eq.bouncie_link_status || ''}));
+      const newest = rows.slice().sort((a:any,b:any)=>(Date.parse(b.observed_at || '') || 0)-(Date.parse(a.observed_at || '') || 0))[0] || {};
+      multiVinImei.push({imei,vins,latest_vin:newest.vin || '',latest_observed_at:newest.observed_at || '',linked_equipment:linkedEquipment});
+    }
+    add('warning','bouncie_imei_observed_with_multiple_vins','Bouncie device IMEIs observed with multiple VINs',multiVinImei,'A Bouncie device has reported more than one VIN in recent live/notification evidence. Do not auto-relink FleetEquipment. An administrator should confirm whether the device moved vehicles, Bouncie changed VIN identity, or historical/test data is involved.');
 
     const liveVins = new Set(Array.from(liveVinGroups.keys()));
     const equipmentVins = new Set(Array.from(equipmentVinGroups.keys()));
