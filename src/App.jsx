@@ -54,6 +54,7 @@ import FleetRequests from './pages/FleetRequests';
 import FleetHistory from './pages/FleetHistory';
 import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
+import FleetMechanic from './pages/FleetMechanic';
 import NewUserSetup from './pages/NewUserSetup';
 
 const ESTIMATOR_PAGES = {
@@ -115,6 +116,13 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
+
+  // Standalone external mechanic portal. This route intentionally bypasses the CCS
+  // authenticated shell, but every read/write is independently authorized by a
+  // revocable Fleet-scoped bearer link in fleetMechanicPortal.
+  if (typeof window !== 'undefined' && window.location.pathname.toLowerCase() === '/fleetmechanic') {
+    return <FleetMechanic />;
+  }
 
   // Tightly scoped login-free Fleet issue reporting. The backend independently
   // enforces FleetSettings.public_reporting_enabled and exposes only id/name/type.
