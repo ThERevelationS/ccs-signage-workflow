@@ -22,7 +22,6 @@ import {
   Save,
   ShoppingCart,
   Truck,
-  Wrench,
   X,
 } from "lucide-react";
 
