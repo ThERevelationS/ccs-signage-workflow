@@ -4,7 +4,7 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
 const LEGACY_FLEET_QR_DISPLAY_SRC = "/fleet/fleetmaster-public-report-qr-200.png";
@@ -51,6 +51,12 @@ export default function FleetSettings() {
   const [manualError, setManualError] = useState("");
   const [manualResult, setManualResult] = useState("");
   const [qrCopied, setQrCopied] = useState(false);
+  const [mechanicLinks, setMechanicLinks] = useState([]);
+  const [mechanicName, setMechanicName] = useState("External Mechanic");
+  const [generatedMechanicLink, setGeneratedMechanicLink] = useState("");
+  const [mechanicBusy, setMechanicBusy] = useState("");
+  const [mechanicError, setMechanicError] = useState("");
+  const [mechanicCopied, setMechanicCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,13 +65,14 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health] = await Promise.all([
+          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
             base44.functions.invoke("bouncieStatus", {}).catch(() => null),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
             base44.functions.invoke("fleetCutoverControl", { action: "status" }).catch(() => null),
             base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
+            base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection(bouncieStatusResult?.data || null);
@@ -75,6 +82,7 @@ export default function FleetSettings() {
           setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
           setQueueRows(health.notifications || []);
           setReceiptRows(health.receipts || []);
+          setMechanicLinks(mechanicResult?.data?.links || []);
         }
       } finally {
         setLoading(false);
@@ -118,16 +126,18 @@ export default function FleetSettings() {
     try {
       const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
       setServerStatus(data || null);
-      const [settingsRows, bouncieStatusResult, health] = await Promise.all([
+      const [settingsRows, bouncieStatusResult, health, mechanicResult] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
         base44.functions.invoke("bouncieStatus", {}).catch(() => null),
         loadAutomationHealthData(),
+        base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
       ]);
       setSettings((settingsRows || [])[0] || null);
       setConnection(bouncieStatusResult?.data || null);
       setAutomationLogs((health.logs || []).filter(row => AUTOMATION_SOURCES.includes(row.source)));
       setQueueRows(health.notifications || []);
       setReceiptRows(health.receipts || []);
+      setMechanicLinks(mechanicResult?.data?.links || []);
     } finally {
       setChecking(false);
     }
@@ -184,6 +194,49 @@ export default function FleetSettings() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const createMechanicLink = async () => {
+    setMechanicBusy("create");
+    setMechanicError("");
+    setGeneratedMechanicLink("");
+    try {
+      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic" });
+      if (data?.error || !data?.token) throw new Error(data?.error || "Mechanic access link was not generated.");
+      setGeneratedMechanicLink(`${window.location.origin}/FleetMechanic#${data.token}`);
+      const listed = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" });
+      setMechanicLinks(listed?.data?.links || []);
+    } catch (error) {
+      setMechanicError(error?.message || "Mechanic access link could not be created.");
+    } finally {
+      setMechanicBusy("");
+    }
+  };
+
+  const revokeMechanicLink = async (id) => {
+    setMechanicBusy(id);
+    setMechanicError("");
+    try {
+      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_revoke_link", id });
+      if (data?.error) throw new Error(data.error);
+      setMechanicLinks(data?.links || []);
+      setGeneratedMechanicLink("");
+    } catch (error) {
+      setMechanicError(error?.message || "Mechanic access link could not be revoked.");
+    } finally {
+      setMechanicBusy("");
+    }
+  };
+
+  const copyMechanicLink = async () => {
+    if (!generatedMechanicLink) return;
+    try {
+      await navigator.clipboard.writeText(generatedMechanicLink);
+      setMechanicCopied(true);
+      window.setTimeout(() => setMechanicCopied(false), 1500);
+    } catch {
+      setMechanicCopied(false);
+    }
   };
 
   const runCutoverAction = async (action) => {
