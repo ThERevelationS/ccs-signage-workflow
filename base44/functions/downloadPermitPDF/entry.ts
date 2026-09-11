@@ -1,5 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { patchJurisdictionDocuments } from '../../shared/jurisdictionPersistence.mjs';
+import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+
+const MAX_PERMIT_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
 // Maps content-type to file extension
 function getExtFromContentType(contentType, fallbackUrl) {
@@ -25,10 +28,48 @@ function getExtFromContentType(contentType, fallbackUrl) {
   return 'pdf'; // final fallback
 }
 
+async function readResponseBytes(response: Response) {
+  const declaredLength = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_PERMIT_DOCUMENT_BYTES) {
+    throw Object.assign(new Error('Permit document exceeds the 50 MB safety limit.'), { status: 413 });
+  }
+
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_PERMIT_DOCUMENT_BYTES) {
+      throw Object.assign(new Error('Permit document exceeds the 50 MB safety limit.'), { status: 413 });
+    }
+    return bytes;
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_PERMIT_DOCUMENT_BYTES) {
+      await reader.cancel().catch(() => {});
+      throw Object.assign(new Error('Permit document exceeds the 50 MB safety limit.'), { status: 413 });
+    }
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await base44.auth.me().catch(() => null);
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -48,28 +89,29 @@ Deno.serve(async (req) => {
 
     let fileResponse;
     try {
-      fileResponse = await fetch(document_url, { headers });
+      fileResponse = await safeExternalFetch(document_url, { headers });
     } catch (fetchErr) {
-      fileResponse = await fetch(document_url);
+      if (Number(fetchErr?.status || 0) === 400) throw fetchErr;
+      fileResponse = await safeExternalFetch(document_url);
     }
 
     if (!fileResponse.ok) {
-      return Response.json({ error: `Failed to download file: ${fileResponse.statusText}` }, { status: 400 });
+      return Response.json({ error: `Failed to download file (HTTP ${fileResponse.status})` }, { status: 400 });
     }
 
     const contentType = fileResponse.headers.get('content-type') || '';
     const ext = getExtFromContentType(contentType, document_url);
 
-    // Accept any non-empty file — don't filter by content type
-    const arrayBuffer = await fileResponse.arrayBuffer();
-    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    // Accept any non-empty file type, but cap bytes before buffering/uploading.
+    const fileBytes = await readResponseBytes(fileResponse);
+    if (fileBytes.byteLength === 0) {
       return Response.json({ error: 'Downloaded file is empty' }, { status: 400 });
     }
 
     const safeTitle = (document_title || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
     const fileName = `${safeTitle}.${ext}`;
     const mimeType = contentType.split(';')[0].trim() || 'application/octet-stream';
-    const file = new File([arrayBuffer], fileName, { type: mimeType });
+    const file = new File([fileBytes], fileName, { type: mimeType });
 
     // Upload to app's file system
     const uploadResult = await base44.integrations.Core.UploadFile({ file });
@@ -98,6 +140,11 @@ Deno.serve(async (req) => {
       jurisdiction: updatedJurisdiction,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 413].includes(status) ? status : 500;
+    console.error('downloadPermitPDF error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Permit document could not be downloaded safely' : error.message,
+    }, { status: safeStatus });
   }
 });
