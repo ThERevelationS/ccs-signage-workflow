@@ -25,12 +25,17 @@ async function verifySignedSession(token: string, secret: string, entity: any) {
   if (!constantTimeEqual(await hmacSign(payloadStr, secret), suppliedSig)) return null;
   let payload: any;
   try { payload = JSON.parse(b64urlDecode(payloadStr)); } catch { return null; }
-  if (!payload?.email || (payload.exp && payload.exp < Date.now())) return null;
+  const issuedAt = Number(payload?.iat);
+  const expiresAt = Number(payload?.exp);
+  if (
+    !payload?.email ||
+    !Number.isFinite(issuedAt) || issuedAt <= 0 ||
+    !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
+  ) return null;
   const rows = await entity.filter({ email: String(payload.email).trim().toLowerCase() });
   if (!Array.isArray(rows) || rows.length !== 1) return null;
   const user = rows[0];
   const notBefore = Date.parse(String(user?.session_not_before || ''));
-  const issuedAt = Number(payload?.iat || 0);
   if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
   return user;
 }
