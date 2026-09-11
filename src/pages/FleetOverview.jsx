@@ -58,13 +58,14 @@ export default function FleetOverview() {
         ]);
         if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState });
         if (user?.role === "admin") {
-          const [maintenanceLog, reminderLog, workerLog, bouncieLog, connectionRows, pendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
+          const [maintenanceLog, reminderLog, workerLog, bouncieLog, connectionRows, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledReminders" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "fleetNotificationWorker" }, "-created_date", 1),
             base44.entities.FleetSystemLog.filter({ source: "bouncieSyncNotifications" }, "-created_date", 1),
             base44.entities.BouncieConnection.list("-updated_date", 1),
             filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "pending" }, "-created_date", { label: "Pending Fleet notifications" }),
+            filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "sending" }, "-created_date", { label: "Sending Fleet notifications" }),
             filterAllFleetRows(base44.entities.FleetNotificationQueue, { status: "failed" }, "-created_date", { label: "Failed Fleet notifications" }),
             filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "started" }, "-created_date", { label: "Started Fleet operation receipts" }),
             filterAllFleetRows(base44.entities.FleetOperationReceipt, { status: "failed" }, "-created_date", { label: "Failed Fleet operation receipts" }),
@@ -73,7 +74,7 @@ export default function FleetOverview() {
           const connectionFreshMs = Math.max(Date.parse(connection?.last_sync_at || "") || 0, Date.parse(connection?.last_webhook_at || "") || 0);
           if (mounted) setAdminHealth({
             logs: [maintenanceLog?.[0], reminderLog?.[0], workerLog?.[0], bouncieLog?.[0]].filter(Boolean),
-            unresolved: (pendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
+            unresolved: (pendingQueue?.length || 0) + (sendingQueue?.length || 0) + (failedQueue?.length || 0) + (startedReceipts?.length || 0) + (failedReceipts?.length || 0),
             bouncieHealthy: !!connection && !connection.needs_reconnect && !connection.last_error && !connection.webhook_error && connection.webhook_active === true,
             bouncieFreshMinutes: connectionFreshMs ? Math.floor((Date.now() - connectionFreshMs) / 60000) : null,
           });
@@ -100,15 +101,13 @@ export default function FleetOverview() {
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
     const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    const today = new Date(`${todayText}T12:00:00`);
-    const horizon = new Date(today);
-    horizon.setDate(horizon.getDate() + 14);
+    const horizonDate = new Date(`${todayText}T00:00:00Z`);
+    horizonDate.setUTCDate(horizonDate.getUTCDate() + 14);
+    const horizonText = horizonDate.toISOString().slice(0, 10);
     const pendingTasks = data.tasks.filter(t => ["pending", "overdue"].includes(t.status) && t.start_date);
-    const overdueTasks = pendingTasks.filter(t => t.status === "overdue" || new Date(`${t.start_date}T12:00:00`) < today);
-    const upcomingTasks = pendingTasks.filter(t => {
-      const due = new Date(`${t.start_date}T12:00:00`);
-      return due >= today && due <= horizon;
-    }).sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+    const overdueTasks = pendingTasks.filter(t => t.status === "overdue" || String(t.start_date) < todayText);
+    const upcomingTasks = pendingTasks.filter(t => String(t.start_date) >= todayText && String(t.start_date) <= horizonText)
+      .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
     return {
       activeOrders,
       highPriorityOrders,
