@@ -36,9 +36,10 @@ Deno.serve(async (req) => {
         return Response.json({ connected: true, email: profile.emailAddress });
 
     } catch (error) {
-        if (error.message && (error.message.includes('401') || error.message.includes('Authentication required'))) {
+        if (error?.message && (error.message.includes('401') || error.message.includes('Authentication required'))) {
             return Response.json({ connected: false, error: 'Not authenticated' }, { status: 401 });
         }
-        return Response.json({ connected: false, error: error.message });
+        console.error('checkGmailConnection error:', error?.message || error);
+        return Response.json({ connected: false, error: 'Gmail connection could not be checked safely' }, { status: 500 });
     }
 });
