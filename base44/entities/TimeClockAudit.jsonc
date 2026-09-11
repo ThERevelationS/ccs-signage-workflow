@@ -10,7 +10,9 @@
         "state_recovery",
         "admin_correction",
         "delete",
-        "reset"
+        "reset",
+        "badge_issue",
+        "badge_rotate"
       ]
     },
     "outcome": {
@@ -39,6 +41,7 @@
       "enum": [
         "session",
         "admin_kiosk",
+        "badge",
         "system"
       ]
     },
