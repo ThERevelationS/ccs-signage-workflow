@@ -18,7 +18,7 @@ import {
 const items = [
   { title: "Overview", page: "FleetOverview", icon: LayoutDashboard },
   { title: "Tracking", page: "FleetTracking", icon: Navigation },
-  { title: "Equipment", page: "FleetEquipment", icon: Truck },
+  { title: "Equipment", page: "FleetEquipment", icon: Truck, activePages: ["FleetEquipment", "FleetEquipmentDetail"] },
   { title: "Maintenance", page: "FleetMaintenance", icon: CalendarClock },
   { title: "Work Orders", page: "FleetWorkOrders", icon: ClipboardList },
   { title: "Parts", page: "FleetParts", icon: Package },
@@ -46,7 +46,8 @@ export default function FleetModuleNav() {
         <div className="font-bold text-gray-900 dark:text-slate-100 pr-2 whitespace-nowrap">CCS Fleet</div>
         {items.filter(item => !item.adminOnly || isAdmin).map((item) => {
           const url = createPageUrl(item.page);
-          const active = location.pathname === url;
+          const activePages = item.activePages || [item.page];
+          const active = activePages.some(page => location.pathname === createPageUrl(page));
           const Icon = item.icon;
           return (
             <Link
