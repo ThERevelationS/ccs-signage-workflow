@@ -187,13 +187,13 @@ export default function FleetOverview() {
                   {metrics.activeOrders.slice(0, 8).map(wo => {
                     const eq = data.equipment.find(e => e.id === wo.equipment_id);
                     return (
-                      <div key={wo.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                      <Link key={wo.id} to={`${createPageUrl("FleetWorkOrders")}?workOrder=${encodeURIComponent(wo.id)}${wo.equipment_id ? `&equipment=${encodeURIComponent(wo.equipment_id)}` : ""}`} className="px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                         <div className="min-w-0">
                           <div className="font-medium text-gray-900 dark:text-slate-100 truncate">{wo.work_order_number} · {wo.title}</div>
                           <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{eq?.name || (wo.source_equipment_id ? "Unresolved equipment" : "No equipment")} · {wo.priority || "medium"} priority</div>
                         </div>
                         <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${statusClass(wo.status)}`}>{(wo.status || "open").replaceAll("_", " ")}</span>
-                      </div>
+                      </Link>
                     );
                   })}
                   {metrics.activeOrders.length === 0 && <div className="px-4 py-8 text-center text-sm text-gray-500">No active Fleet work orders.</div>}
