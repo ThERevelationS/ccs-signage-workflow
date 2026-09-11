@@ -3,6 +3,7 @@ import {
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const EDITABLE_FIELDS = [
   "name", "state", "type", "website_url", "permitting_url", "cagis_database_url",
@@ -19,11 +20,82 @@ export function jurisdictionFormPayload(data = {}) {
   );
 }
 
+const normIdentity = (value) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+const normalizedJurisdictionType = (row) => normIdentity(row?.type || "county") || "county";
+const parentCountyName = (row) => normIdentity(
+  typeof row?.parent_county === "string" ? row.parent_county : row?.parent_county?.name
+);
+
+function sameNameStateType(row, data) {
+  return normIdentity(row?.name) === normIdentity(data?.name) &&
+    normIdentity(row?.state) === normIdentity(data?.state) &&
+    normalizedJurisdictionType(row) === normalizedJurisdictionType(data);
+}
+
+function classifyJurisdictionIdentity(rows, data, excludeId = "") {
+  const targetType = normalizedJurisdictionType(data);
+  const targetParent = targetType === "county" ? "" : parentCountyName(data);
+  const sameBase = (rows || []).filter((row) =>
+    String(row?.id || "") !== String(excludeId || "") && sameNameStateType(row, data)
+  );
+
+  if (targetType === "county") {
+    return { exact: sameBase, ambiguous: [] };
+  }
+
+  if (targetParent) {
+    return {
+      exact: sameBase.filter((row) => parentCountyName(row) === targetParent),
+      ambiguous: [],
+    };
+  }
+
+  const unqualified = sameBase.filter((row) => !parentCountyName(row));
+  const qualified = sameBase.filter((row) => !!parentCountyName(row));
+  return { exact: unqualified, ambiguous: qualified };
+}
+
+async function loadJurisdictionIdentityCatalog(entity, label) {
+  return loadAllEntityRows({
+    entity,
+    sort: null,
+    label: `${label} identity catalog`,
+  });
+}
+
+function identityDescription(data) {
+  const type = normalizedJurisdictionType(data);
+  const parent = type === "county" ? "" : parentCountyName(data);
+  return `${String(data?.name || "").trim()}, ${String(data?.state || "").trim()} (${type}${parent ? ` · ${typeof data?.parent_county === "string" ? data.parent_county : data?.parent_county?.name}` : ""})`;
+}
+
+function assertUnambiguousJurisdictionIdentity(classification, data, label) {
+  if (classification.ambiguous.length) {
+    throw new Error(
+      `${label} is ambiguous because ${classification.ambiguous.length} ${String(data?.name || "Jurisdiction").trim()} record${classification.ambiguous.length === 1 ? "" : "s"} already exist with parent-county context. ` +
+      `Choose the Parent County before saving so the correct jurisdiction can be identified.`
+    );
+  }
+  if (classification.exact.length > 1) {
+    throw new Error(`${label} found multiple stored records for ${identityDescription(data)}. No row was changed; review the duplicate Jurisdictions first.`);
+  }
+  return classification.exact[0] || null;
+}
+
 export async function saveJurisdictionFromLoadedSnapshot({ entity, jurisdiction, formData, label = "Jurisdiction" } = {}) {
   const payload = jurisdictionFormPayload(formData);
   if (!jurisdiction?.id || Object.keys(payload).length === 0) {
     throw new Error(`${label} could not initialize its concurrency-safe save.`);
   }
+
+  const identityData = { ...jurisdiction, ...payload };
+  const catalog = await loadJurisdictionIdentityCatalog(entity, label);
+  const classification = classifyJurisdictionIdentity(catalog, identityData, jurisdiction.id);
+  const collision = assertUnambiguousJurisdictionIdentity(classification, identityData, label);
+  if (collision?.id) {
+    throw new Error(`${label} cannot use the same jurisdiction identity as another stored record (${identityDescription(identityData)}). No row was changed.`);
+  }
+
   return replaceEntityFieldsIfUnchanged({
     entity,
     id: jurisdiction.id,
