@@ -24,6 +24,10 @@ async function hmacSign(message, secret) {
 
 Deno.serve(async (req) => {
   try {
+    if (Deno.env.get('ADMIN_BOOTSTRAP_ENABLED') !== 'true') {
+      return Response.json({ success: false, error: 'Emergency admin sign-in is disabled' }, { status: 403 });
+    }
+
     const base44 = createClientFromRequest(req);
     const me = await base44.auth.me().catch(() => null);
     if (!me) {
@@ -32,8 +36,11 @@ Deno.serve(async (req) => {
 
     // Cross-check they're an admin in our AuthorizedEmail list
     const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: me.email });
-    const user = users?.[0];
-    if (!user || user.role !== 'admin') {
+    if (!Array.isArray(users) || users.length !== 1) {
+      return Response.json({ success: false, error: 'Authorized admin identity could not be verified uniquely' }, { status: 403 });
+    }
+    const user = users[0];
+    if (user.role !== 'admin') {
       return Response.json({ success: false, error: 'Not an admin in AuthorizedEmail' }, { status: 403 });
     }
 
