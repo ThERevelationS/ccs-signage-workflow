@@ -23,7 +23,15 @@ function resolveFleetEquipmentLink(vehicle, equipmentRows = []) {
   const imei = normalizeImei(vehicle.imei);
   if (imei) {
     const imeiMatches = equipmentRows.filter((eq) => normalizeImei(eq.bouncie_imei) === imei && ["matched", "manual"].includes(eq.bouncie_link_status));
-    if (imeiMatches.length === 1) return { equipment: imeiMatches[0], basis: "imei" };
+    if (imeiMatches.length === 1) {
+      const candidate = imeiMatches[0];
+      const candidateVin = normalizeVin(candidate.vin);
+      // IMEI may fill in missing identity, but it must never override contradictory
+      // non-empty VIN evidence. This prevents a moved/reassigned Bouncie device from
+      // attaching another vehicle's maintenance record merely because the IMEI matches.
+      if (vin && candidateVin && vin !== candidateVin) return { equipment: null, basis: "imei_vin_conflict" };
+      return { equipment: candidate, basis: "imei" };
+    }
     if (imeiMatches.length > 1) return { equipment: null, basis: "imei_conflict" };
   }
   return { equipment: null, basis: null };
@@ -167,8 +175,8 @@ export default function FleetTracking() {
     return () => clearInterval(refreshTimer.current);
   }, [status?.connected, status?.needsReconnect, loadVehicles, loadNotifications]);
 
-  // Resolve FleetEquipment deep links safely. VIN remains primary; IMEI is only a
-  // fallback when the requested VIN is not present in Bouncie's current vehicle list.
+  // Resolve FleetEquipment deep links safely. VIN remains primary. IMEI may only
+  // recover a vehicle when it does not contradict a non-empty requested Fleet VIN.
   useEffect(() => {
     if (deepLinkResolvedRef.current || vehiclesLoading || vehicles.length === 0) return;
     deepLinkResolvedRef.current = true;
@@ -176,7 +184,11 @@ export default function FleetTracking() {
     const requestedImei = normalizeImei(requestedImeiRef.current);
     if (!requestedImei) return;
     const matches = vehicles.filter((vehicle) => normalizeImei(vehicle.imei) === requestedImei);
-    if (matches.length === 1) setSelectedVin(matches[0].vin || null);
+    if (matches.length !== 1) return;
+    const matchedVin = normalizeVin(matches[0].vin);
+    const requestedVin = normalizeVin(selectedVin);
+    if (requestedVin && matchedVin && requestedVin !== matchedVin) return;
+    setSelectedVin(matches[0].vin || null);
   }, [vehicles, vehiclesLoading, selectedVin]);
 
   // Load trips when selection / range changes
