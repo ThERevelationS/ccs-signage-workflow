@@ -1,6 +1,7 @@
 import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import WorkOrderCard from "./WorkOrderCard";
+import { reorderTwoColumnWorkOrders, splitTwoColumnWorkOrders } from "./twoColumnWorkOrderReorder";
 
 export default function DragDropList({ 
   workOrders, 
@@ -16,15 +17,15 @@ export default function DragDropList({
   reorderDisabled = false
 }) {
   const handleDragEnd = (result) => {
-    if (reorderDisabled) return;
-    if (!result.destination) return;
-    if (result.source.index === result.destination.index) return;
-    
-    const items = Array.from(workOrders);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    onReorder(items);
+    if (reorderDisabled || !result.destination) return;
+    try {
+      const reordered = reorderTwoColumnWorkOrders(workOrders, result);
+      if (reordered === workOrders) return;
+      onReorder(reordered);
+    } catch (error) {
+      console.error("Work Order drag reorder was blocked:", error);
+      onUpdate?.();
+    }
   };
 
   // Pre-compute riders and parents from the already-loaded list to avoid per-card API calls
@@ -44,20 +45,22 @@ export default function DragDropList({
     );
   }
 
-  return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="work-order-priority-list">
-        {(provided) => (
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className="grid grid-cols-1 xl:grid-cols-2 gap-4"
-          >
-            {enrichedWorkOrders.map((workOrder, index) => (
+  const { left: leftColumn, right: rightColumn } = splitTwoColumnWorkOrders(enrichedWorkOrders);
+  const renderColumn = (columnItems, droppableId, side) => (
+    <Droppable droppableId={droppableId}>
+      {(provided) => (
+        <div
+          {...provided.droppableProps}
+          ref={provided.innerRef}
+          className="flex flex-col gap-4"
+        >
+          {columnItems.map((workOrder, columnIndex) => {
+            const logicalIndex = columnIndex * 2 + (side === "right" ? 1 : 0);
+            return (
               <Draggable
                 key={workOrder.id}
                 draggableId={workOrder.id}
-                index={index}
+                index={columnIndex}
                 isDragDisabled={reorderDisabled}
               >
                 {(provided, snapshot) => (
@@ -77,17 +80,26 @@ export default function DragDropList({
                       onUpdate={onUpdate}
                       onDelete={onDelete}
                       showMoveOptions={showMoveOptions}
-                      priorityNumber={index + 1}
+                      priorityNumber={logicalIndex + 1}
                       dragHandleProps={provided.dragHandleProps}
                     />
                   </div>
                 )}
               </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+            );
+          })}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  );
+
+  return (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {renderColumn(leftColumn, "work-order-left", "left")}
+        {renderColumn(rightColumn, "work-order-right", "right")}
+      </div>
     </DragDropContext>
   );
 }
