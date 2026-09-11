@@ -98,39 +98,83 @@ export async function deleteChecklistSubItemIfUnchanged({ entity, record, label 
   });
 }
 
-export async function reorderChecklistSubItemsIfUnchanged({ entity, loadedRows = [], reorderedRows = [], label = "Checklist sub-template reorder" } = {}) {
-  const loadedById = new Map((loadedRows || []).map((row) => [row.id, row]));
-  const desired = (reorderedRows || []).map((row, index) => ({ row, order: index }));
-  if (desired.length !== loadedRows.length || desired.some(({ row }) => !loadedById.has(row.id))) {
+function checklistSnapshotMap(rows, label) {
+  if (!Array.isArray(rows)) throw new Error(`${label} could not verify the complete sub-template catalog.`);
+  const map = new Map();
+  for (const row of rows) {
+    const id = String(row?.id || "").trim();
+    const updatedDate = String(row?.updated_date || "").trim();
+    if (!id || !updatedDate) throw new Error(`${label} requires complete loaded sub-template identities and versions.`);
+    if (map.has(id)) throw new Error(`${label} found a duplicate sub-template id.`);
+    map.set(id, { row, updatedDate });
+  }
+  return map;
+}
+
+function sameChecklistMembership(left, right) {
+  if (left.size !== right.size) return false;
+  for (const id of left.keys()) if (!right.has(id)) return false;
+  return true;
+}
+
+export async function reorderChecklistSubItemsIfUnchanged({ entity, loadedRows = [], reorderedRows = [], readCurrentRows, label = "Checklist sub-template reorder" } = {}) {
+  if (typeof readCurrentRows !== "function") throw new Error(`${label} requires a complete-catalog reader before reordering.`);
+  const loadedById = checklistSnapshotMap(loadedRows, label);
+  const reorderedById = checklistSnapshotMap(reorderedRows, label);
+  if (!sameChecklistMembership(loadedById, reorderedById)) {
     throw new Error(`${label} could not verify the loaded row set.`);
   }
-
-  const liveRows = await Promise.all(desired.map(({ row }) => entity.get(row.id)));
-  for (let i = 0; i < desired.length; i += 1) {
-    const loaded = loadedById.get(desired[i].row.id);
-    const live = liveRows[i];
-    if (!live?.id || String(live.updated_date || "") !== String(loaded.updated_date || "") || !sameValue(live.order, loaded.order)) {
-      throw new Error(`${label} was blocked because ${loaded.name || loaded.id} changed in another session.`);
+  for (const [id, loaded] of loadedById) {
+    if (reorderedById.get(id)?.updatedDate !== loaded.updatedDate) {
+      throw new Error(`${label} received a stale reordered row set.`);
     }
   }
 
+  const liveRows = await readCurrentRows();
+  const liveById = checklistSnapshotMap(liveRows, label);
+  if (!sameChecklistMembership(loadedById, liveById)) {
+    throw new Error(`${label} was blocked because the sub-template catalog changed in another session. Nothing was reordered.`);
+  }
+  for (const [id, loaded] of loadedById) {
+    const live = liveById.get(id);
+    if (live.updatedDate !== loaded.updatedDate || !sameValue(live.row.order, loaded.row.order)) {
+      throw new Error(`${label} was blocked because ${loaded.row.name || id} changed in another session. Nothing was reordered.`);
+    }
+  }
+
+  const desired = reorderedRows.map((row, index) => ({ row, order: index }));
   const saved = [];
   try {
-    for (let i = 0; i < desired.length; i += 1) {
-      const loaded = loadedById.get(desired[i].row.id);
-      if (sameValue(loaded.order, desired[i].order)) continue;
+    for (const step of desired) {
+      const loaded = loadedById.get(step.row.id)?.row;
+      const live = liveById.get(step.row.id)?.row;
+      if (sameValue(loaded.order, step.order)) continue;
       const updated = await replaceEntityFieldsIfUnchanged({
         entity,
         id: loaded.id,
-        expectedUpdatedAt: liveRows[i].updated_date || "",
+        expectedUpdatedAt: live.updated_date || "",
         expectedFields: { order: loaded.order },
-        nextFields: { order: desired[i].order },
+        nextFields: { order: step.order },
         guardFields: { name: loaded.name },
         label: `${label}: ${loaded.name || loaded.id}`,
       });
       saved.push({ loaded, updated });
     }
+
+    const finalRows = await readCurrentRows();
+    const finalById = checklistSnapshotMap(finalRows, label);
+    if (!sameChecklistMembership(reorderedById, finalById)) {
+      throw new Error(`${label} changed membership during final verification.`);
+    }
+    for (let index = 0; index < reorderedRows.length; index += 1) {
+      const current = finalById.get(reorderedRows[index].id)?.row;
+      if (!current || !sameValue(current.order, index)) {
+        throw new Error(`${label} final order changed before it could be verified.`);
+      }
+    }
+    return finalRows;
   } catch (error) {
+    if (saved.length === 0) throw error;
     const rollbackErrors = [];
     for (const step of [...saved].reverse()) {
       try {
@@ -152,8 +196,6 @@ export async function reorderChecklistSubItemsIfUnchanged({ entity, loadedRows =
       : " Earlier order changes were rolled back.";
     throw new Error(`${error?.message || `${label} failed.`}${suffix}`);
   }
-
-  return Promise.all(reorderedRows.map((row) => entity.get(row.id)));
 }
 
 export async function saveSettingMapEntryIfUnchanged({
