@@ -20,7 +20,7 @@ const PermitLocality = base44.entities.PermitLocality;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function Permitting() {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [lineItems, setLineItems] = useState([]);
   const [localities, setLocalities] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -245,28 +245,15 @@ export default function Permitting() {
     const savedLine = await persistPermitLineItemFields(lineItemId, lineUpdate, "Permit workflow step update");
     if (!savedLine) return;
 
-    // ── Fire email automations for permit events ──
-    const wo = workOrders.find(w => w.id === item.work_order_id);
+    // ── Fire permit automations only after the PermitLineItem update is durable. ──
+    // The server authenticates the Sign Shop session and rereads both the PermitLineItem
+    // and WorkOrder, so browser-supplied WorkOrder state cannot forge automation context.
     const fireTrigger = async (event_type) => {
       try {
         await base44.functions.invoke('processWorkflowTriggers', {
           event_type,
-          work_order: {
-            ...(wo || {}),
-            id: wo?.id || item.work_order_id,
-            title: wo?.title || item.work_order_title,
-            client_name: wo?.client_name || item.work_order_title,
-            description: wo?.description || item.work_order_description,
-            // Permit line context (exposed as template variables)
-            locality_name: item.locality_name,
-            office_type: item.office_type,
-            row_name: item.row_name,
-            submitted_date: submittedDate,
-            next_followup_date: nextFollowup,
-            permit_received_date: permitReceived
-          },
-          old_data: { submitted_date: item.submitted_date, permit_received_date: item.permit_received_date },
-          changed_by: currentUser?.full_name || currentUser?.email || 'System'
+          permit_line_item_id: savedLine.id,
+          session_token: sessionToken,
         });
       } catch (e) {
         console.warn('Permit trigger failed:', e);
