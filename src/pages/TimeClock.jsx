@@ -29,17 +29,12 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
-import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import TimeOffRequestDialog from "@/components/timeclock/TimeOffRequestDialog";
 import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
-import {
-  clockOutTimeEntryIfUnchanged,
-  createActiveTimeEntryIfAbsent,
-  saveTimeEntryNotesIfUnchanged,
-} from "@/components/timeclock/timeEntryPersistence";
+import { saveTimeEntryNotesIfUnchanged } from "@/components/timeclock/timeEntryPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -50,13 +45,13 @@ export default function TimeClock() {
   const { currentUser: authUser, isRegistered } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
+  const [timeClockSessionToken, setTimeClockSessionToken] = useState("");
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   
   const [activeEntry, setActiveEntry] = useState(null);
   const [timeEntries, setTimeEntries] = useState([]);
   const [timeOffRequests, setTimeOffRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showClockOut, setShowClockOut] = useState(false);
   const [showTimeOffRequest, setShowTimeOffRequest] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [activeTab, setActiveTab] = useState("clock");
@@ -135,58 +130,18 @@ export default function TimeClock() {
     setIsLoading(false);
   };
 
-  const handleLogin = (user) => {
+  const handleLogin = (user, token = "") => {
     setLoggedInUser(user);
+    setTimeClockSessionToken(token);
     setShowLoginDialog(false);
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
+    setTimeClockSessionToken("");
     setTimeEntries([]);
     setTimeOffRequests([]);
     setActiveEntry(null);
-  };
-
-  const handleClockIn = async () => {
-    setTimeEntryError("");
-    try {
-      const result = await createActiveTimeEntryIfAbsent({
-        entity: TimeEntry,
-        data: {
-          user_email: loggedInUser.email,
-          user_name: loggedInUser.full_name || loggedInUser.email,
-          clock_in: new Date().toISOString(),
-          status: "clocked_in"
-        },
-        label: `Time clock entry for ${loggedInUser.full_name || loggedInUser.email}`,
-      });
-      setActiveEntry(result.record);
-      await loadData();
-    } catch (err) {
-      console.error("Clock in error:", err);
-      setTimeEntryError(err?.message || "Clock-in could not be saved safely. Reload before trying again.");
-      await loadData();
-    }
-  };
-
-  const handleClockOut = async (data) => {
-    if (!activeEntry?.id) return;
-    setTimeEntryError("");
-    try {
-      await clockOutTimeEntryIfUnchanged({
-        entity: TimeEntry,
-        entry: activeEntry,
-        clockOutData: data,
-        label: `Time clock-out for ${activeEntry.user_name || activeEntry.user_email || activeEntry.id}`,
-      });
-      setActiveEntry(null);
-      setShowClockOut(false);
-      await loadData();
-    } catch (err) {
-      console.error("Clock out error:", err);
-      setTimeEntryError(err?.message || "This time entry changed in another session. It was not clocked out from this stale screen.");
-      await loadData();
-    }
   };
 
   // Calculate weekly hours
@@ -203,19 +158,6 @@ export default function TimeClock() {
   // Calculate overtime (OH law: OT only for hours WORKED over 40, PTO doesn't count)
   const regularHours = Math.min(weeklyHours, 40);
   const overtimeHours = Math.max(0, weeklyHours - 40);
-
-  // Calculate elapsed time for active entry
-  const getElapsedTime = () => {
-    if (!activeEntry) return null;
-    const start = new Date(activeEntry.clock_in);
-    const diff = currentTime - start;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return { hours, minutes, seconds, formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}` };
-  };
-
-  const elapsed = getElapsedTime();
 
   const handleSaveNotes = async (entryId) => {
     const loadedEntry = timeEntries.find(entry => entry.id === entryId);
@@ -306,7 +248,12 @@ export default function TimeClock() {
         </div>
 
         {/* Quick Clock In/Out Section - Always Visible */}
-        <QuickClockSection allUsers={allUsers} currentTime={currentTime} />
+        <QuickClockSection
+          allUsers={allUsers}
+          currentTime={currentTime}
+          employeeSessionToken={timeClockSessionToken}
+          employeeSessionUser={loggedInUser}
+        />
 
         {/* Login Required Section */}
         {!loggedInUser ? (
@@ -586,7 +533,8 @@ export default function TimeClock() {
 
               <TabsContent value="settings">
                 <UserSettingsTab 
-                  currentUser={loggedInUser} 
+                  currentUser={loggedInUser}
+                  sessionToken={timeClockSessionToken}
                   onUserUpdated={async () => {
                     const users = await loadAllEntityRows({
                       entity: AuthorizedEmail,
@@ -605,15 +553,6 @@ export default function TimeClock() {
       </div>
 
       {/* Dialogs */}
-      {showClockOut && activeEntry && (
-        <ClockOutDialog
-          isOpen={showClockOut}
-          onClose={() => setShowClockOut(false)}
-          timeEntry={activeEntry}
-          onClockOut={handleClockOut}
-        />
-      )}
-
       {showTimeOffRequest && loggedInUser && (
         <TimeOffRequestDialog
           isOpen={showTimeOffRequest}
