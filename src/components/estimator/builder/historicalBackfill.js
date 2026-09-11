@@ -44,7 +44,11 @@ function releaseLocalLock() {
 }
 
 async function migrationRows() {
-  return base44.entities.LegacyMigrationMap.filter({ migration_batch: MIGRATION_BATCH }).catch(() => []);
+  const rows = await base44.entities.LegacyMigrationMap.filter({ migration_batch: MIGRATION_BATCH });
+  if (!Array.isArray(rows)) {
+    throw new Error("Historical Product/BOM migration status could not be verified. Migration was paused without writing anything.");
+  }
+  return rows;
 }
 
 function completedEstimateIds(rows) {
