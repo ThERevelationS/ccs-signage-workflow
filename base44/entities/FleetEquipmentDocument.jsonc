@@ -1,0 +1,111 @@
+{
+  "name": "FleetEquipmentDocument",
+  "type": "object",
+  "description": "Private CCS Fleet document metadata for one FleetEquipment asset. Files remain Fleet-specific and are never exposed through public reporting or the standalone mechanic portal unless explicitly added there in the future.",
+  "properties": {
+    "equipment_id": {
+      "type": "string",
+      "description": "Linked FleetEquipment id."
+    },
+    "title": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "registration",
+        "insurance",
+        "manual",
+        "receipt",
+        "service_document",
+        "inspection_document",
+        "photo",
+        "other"
+      ]
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Base44-hosted private/internal Fleet file URL. Never surface through public/mechanic endpoints."
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "file_size_bytes": {
+      "type": "number",
+      "minimum": 0
+    },
+    "document_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "uploaded_by_email": {
+      "type": "string"
+    },
+    "uploaded_by_name": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string",
+      "description": "Stable client-generated idempotency key for a logical Fleet equipment document create operation."
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "archived_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "title",
+    "document_type",
+    "file_url",
+    "file_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
