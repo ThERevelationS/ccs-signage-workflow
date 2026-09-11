@@ -48,6 +48,55 @@ function asEmail(value: unknown) {
   return String(value || '').trim().toLowerCase();
 }
 
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function constantTimeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function authenticationMethodFor(actor: any, target: any) {
+  if (actor?.role === 'badge') return 'badge';
+  return asEmail(actor?.email) === asEmail(target?.email) ? 'session' : 'admin_kiosk';
+}
+
+async function verifyBadgeCredential(code: string, badgeEntity: any, authorized: any) {
+  const parts = String(code || '').trim().split(':');
+  if (parts.length !== 4 || parts[0] !== 'TIMECLOCK2') return null;
+
+  let email = '';
+  try {
+    email = asEmail(b64urlDecode(parts[1]));
+  } catch {
+    return null;
+  }
+  const version = Number(parts[2]);
+  const rawToken = String(parts[3] || '').trim().toLowerCase();
+  if (!email || !Number.isInteger(version) || version < 1 || !/^[a-f0-9]{64}$/.test(rawToken)) return null;
+
+  const targetRows = await authorized.filter({ email });
+  if (!Array.isArray(targetRows) || targetRows.length !== 1) return null;
+  const badgeRows = await badgeEntity.filter({ user_email: email });
+  if (!Array.isArray(badgeRows) || badgeRows.length !== 1) return null;
+  const badge = badgeRows[0];
+  if (badge.revoked_at || Number(badge.badge_version) !== version) return null;
+
+  const expectedHash = await sha256Hex(`${email}|${version}|${rawToken}`);
+  if (!constantTimeEqual(String(badge.token_hash || ''), expectedHash)) return null;
+
+  badgeEntity.updateMany(
+    { id: badge.id, updated_date: badge.updated_date, user_email: email, badge_version: version },
+    { $set: { last_used_at: new Date().toISOString() } },
+  ).catch((error: any) => console.error('Time Clock badge last-used update failed:', error?.message || error));
+
+  return { target: targetRows[0], badge };
+}
+
 function validRequestId(value: unknown) {
   const id = String(value || '').trim();
   return id.length >= 8 && id.length <= 128 ? id : '';
@@ -136,7 +185,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         await audit(auditEntity, {
           action: 'state_recovery', outcome: 'recovered', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
-          authentication_method: actor.email === target.email ? 'session' : 'admin_kiosk',
+          authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
           reason: 'Recovered interrupted clock-in finalization',
         });
@@ -151,7 +200,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         await audit(auditEntity, {
           action: 'state_recovery', outcome: 'recovered', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
-          authentication_method: actor.email === target.email ? 'session' : 'admin_kiosk',
+          authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId,
           reason: 'Rolled back abandoned clock-in transition with no TimeEntry',
         });
@@ -170,7 +219,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         await audit(auditEntity, {
           action: 'state_recovery', outcome: 'recovered', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
-          authentication_method: actor.email === target.email ? 'session' : 'admin_kiosk',
+          authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
           reason: 'Recovered interrupted clock-out finalization',
         });
@@ -185,7 +234,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         await audit(auditEntity, {
           action: 'state_recovery', outcome: 'recovered', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
-          authentication_method: actor.email === target.email ? 'session' : 'admin_kiosk',
+          authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
           reason: 'Rolled back abandoned clock-out transition before TimeEntry update',
         });
@@ -203,6 +252,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || '').trim();
     const sessionToken = String(body?.session_token || '').trim();
+    const badgeCode = String(body?.badge_code || '').trim();
     const targetEmail = asEmail(body?.target_email);
     const requestId = validRequestId(body?.request_id);
     const secret = Deno.env.get('SESSION_SIGNING_SECRET') || '';
@@ -211,20 +261,37 @@ Deno.serve(async (req) => {
     const entryEntity = base44.asServiceRole.entities.TimeEntry;
     const stateEntity = base44.asServiceRole.entities.TimeClockEmployeeState;
     const auditEntity = base44.asServiceRole.entities.TimeClockAudit;
+    const badgeEntity = base44.asServiceRole.entities.TimeClockBadge;
 
-    const actor = await verifySessionToken(sessionToken, secret, authorized);
-    if (!actor?.id) return Response.json({ success: false, error: 'A valid signed-in session is required.' }, { status: 401 });
+    let actor: any = await verifySessionToken(sessionToken, secret, authorized);
+    let target: any = null;
 
-    const actorEmail = asEmail(actor.email);
-    const wantedEmail = targetEmail || actorEmail;
-    if (!wantedEmail) return Response.json({ success: false, error: 'Employee identity is required.' }, { status: 400 });
-    if (wantedEmail !== actorEmail && actor.role !== 'admin') {
-      return Response.json({ success: false, error: 'Admin access is required to clock another employee.' }, { status: 403 });
+    if (actor?.id) {
+      const actorEmail = asEmail(actor.email);
+      const wantedEmail = targetEmail || actorEmail;
+      if (!wantedEmail) return Response.json({ success: false, error: 'Employee identity is required.' }, { status: 400 });
+      if (wantedEmail !== actorEmail && actor.role !== 'admin') {
+        return Response.json({ success: false, error: 'Admin access is required to clock another employee.' }, { status: 403 });
+      }
+      target = await uniqueRow(authorized, { email: wantedEmail }, 'Authorized employee');
+    } else if (badgeCode) {
+      const badgeAuth = await verifyBadgeCredential(badgeCode, badgeEntity, authorized);
+      if (!badgeAuth?.target?.id) {
+        return Response.json({ success: false, error: 'Time Clock badge is invalid, expired, or has been replaced.' }, { status: 401 });
+      }
+      target = badgeAuth.target;
+      target.email = asEmail(target.email);
+      if (targetEmail && targetEmail !== target.email) {
+        return Response.json({ success: false, error: 'Badge identity does not match the requested employee.' }, { status: 403 });
+      }
+      actor = { id: `badge:${target.id}`, email: target.email, role: 'badge' };
+    } else {
+      return Response.json({ success: false, error: 'A valid signed-in session or Time Clock badge is required.' }, { status: 401 });
     }
 
-    const target = await uniqueRow(authorized, { email: wantedEmail }, 'Authorized employee');
     if (!target?.id) return Response.json({ success: false, error: 'Authorized employee not found.' }, { status: 404 });
     target.email = asEmail(target.email);
+    const actorEmail = asEmail(actor.email);
 
     let state = await ensureState(stateEntity, target);
     state = await recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor });
@@ -293,7 +360,7 @@ Deno.serve(async (req) => {
       const auditSaved = await audit(auditEntity, {
         action: 'clock_in', outcome: 'confirmed', user_email: target.email,
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: actorEmail === target.email ? 'session' : 'admin_kiosk',
+        authentication_method: authenticationMethodFor(actor, target),
         server_timestamp: entry.clock_in, request_id: requestId, time_entry_id: entry.id,
       });
       return Response.json({ success: true, status: 'clocked_in', entry, audit_saved: auditSaved });
@@ -382,7 +449,7 @@ Deno.serve(async (req) => {
       const auditSaved = await audit(auditEntity, {
         action: 'clock_out', outcome: 'confirmed', user_email: target.email,
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: actorEmail === target.email ? 'session' : 'admin_kiosk',
+        authentication_method: authenticationMethodFor(actor, target),
         server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
         details: { lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours },
       });
