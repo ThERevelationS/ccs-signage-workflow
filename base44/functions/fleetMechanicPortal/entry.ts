@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
-import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
