@@ -37,7 +37,6 @@ import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -51,7 +50,6 @@ function functionData(response) {
 export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
-  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -76,12 +74,13 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, usersData] = await Promise.all([
-        loadAllEntityRows({ entity: TimeEntry, query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, sort: "-clock_in", label: "Time Clock admin entries" }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Time Clock authorized users" })
-      ]);
+      const entries = await loadAllEntityRows({
+        entity: TimeEntry,
+        query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        sort: "-clock_in",
+        label: "Time Clock admin entries",
+      });
       setTimeEntries(entries);
-      setUsers(usersData);
     } catch (err) {
       console.error("Error loading data:", err);
     }
