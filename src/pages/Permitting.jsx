@@ -268,7 +268,7 @@ export default function Permitting() {
     if (updatedStep?.type === 'permit_received_date' && updates.value && !item.permit_received_date) {
       fireTrigger('permit_received');
     }
-  }, [lineItems, workOrders, currentUser, persistPermitLineItemFields]);
+  }, [lineItems, sessionToken, persistPermitLineItemFields]);
 
   const updateField = useCallback(async (lineItemId, field, value) => {
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, [field]: value } : li));
