@@ -57,6 +57,7 @@ export default function FleetSettings() {
   const [mechanicBusy, setMechanicBusy] = useState("");
   const [mechanicError, setMechanicError] = useState("");
   const [mechanicCopied, setMechanicCopied] = useState(false);
+  const [mechanicRevoke, setMechanicRevoke] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -221,6 +222,7 @@ export default function FleetSettings() {
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(data?.links || []);
       setGeneratedMechanicLink("");
+      setMechanicRevoke(null);
     } catch (error) {
       setMechanicError(error?.message || "Mechanic access link could not be revoked.");
     } finally {
@@ -318,6 +320,21 @@ export default function FleetSettings() {
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
+        <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Standalone Mechanic Portal</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Private Fleet-only bearer links for outside mechanics. No CCS account, app shell, signage workflow, Bouncie admin, inventory administration, requests, or settings access.</p></div>
+        <UserCog className="w-5 h-5 text-gray-400 shrink-0"/>
+      </div>
+      {mechanicError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{mechanicError}</div>}
+      <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <input value={mechanicName} onChange={e=>setMechanicName(e.target.value)} maxLength={80} placeholder="Mechanic name" className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-slate-950 dark:border-slate-700"/>
+        <button type="button" onClick={createMechanicLink} disabled={!!mechanicBusy} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">{mechanicBusy==="create"?<Loader2 className="w-4 h-4 animate-spin"/>:<Link2 className="w-4 h-4"/>}Generate Private Link</button>
+      </div>
+      {generatedMechanicLink && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 p-3"><div className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Copy this link now</div><p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">The raw access key is shown only for this newly generated link. If it is lost, revoke it and generate another.</p><div className="mt-3 flex flex-col sm:flex-row gap-2"><input readOnly value={generatedMechanicLink} className="flex-1 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-mono text-gray-700 dark:bg-slate-950 dark:border-emerald-800 dark:text-slate-200"/><button type="button" onClick={copyMechanicLink} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-emerald-300 bg-white text-sm font-medium text-emerald-800 dark:bg-slate-950 dark:border-emerald-800 dark:text-emerald-200"><Copy className="w-4 h-4"/>{mechanicCopied?"Copied":"Copy Link"}</button></div></div>}
+      <div className="mt-4 space-y-2">{mechanicLinks.length ? mechanicLinks.map(link => <div key={link.id} className="rounded-lg border border-gray-200 dark:border-slate-800 px-3 py-3 flex flex-col sm:flex-row sm:items-center gap-3"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="text-sm font-medium text-gray-900 dark:text-slate-100">{link.name || "External Mechanic"}</span><span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${link.enabled!==false?"bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300":"bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400"}`}>{link.enabled!==false?"ACTIVE":"REVOKED"}</span></div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">Created {link.created_at?new Date(link.created_at).toLocaleString():"—"}{link.created_by?` by ${link.created_by}`:""}</div></div>{link.enabled!==false&&<button type="button" onClick={()=>setMechanicRevoke(link)} disabled={!!mechanicBusy} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-red-300 text-sm font-medium text-red-700 disabled:opacity-50 dark:border-red-900 dark:text-red-300"><Ban className="w-4 h-4"/>Revoke</button>}</div>) : <div className="rounded-lg bg-gray-50 dark:bg-slate-950/50 px-3 py-3 text-xs text-gray-500 dark:text-slate-400">No external mechanic links have been created.</div>}</div>
+      <div className="mt-3 text-xs text-gray-500 dark:text-slate-400">Portal access is limited server-side to active Fleet maintenance work orders, linked equipment/task details, starting work, labor hours, corrective action, appended mechanic notes, and after photos. Final completion and inventory posting remain inside authenticated CCS Fleet.</div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
         <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Public Work Order Submission</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Exact legacy FleetMaster QR preserved for existing equipment labels and printed materials.</p></div>
         <QrCode className="w-5 h-5 text-gray-400 shrink-0"/>
       </div>
@@ -353,6 +370,16 @@ export default function FleetSettings() {
       <div className="md:col-span-2"><Card title="Templates"><Row label="New WO subject" value={settings.email_subject_template}/><Row label="Completed WO subject" value={settings.email_completed_subject_template}/><Row label="Items reminder subject" value={settings.item_order_reminder_subject_template}/><Row label="Open WO reminder subject" value={settings.open_work_order_reminder_subject_template}/></Card></div>
     </div> : <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-8 text-center text-gray-500">No Fleet settings record found.</div>}
     <FleetSettingsEditor open={editorOpen} settings={settings} onClose={()=>setEditorOpen(false)} onSaved={(updated)=>{ if(updated) setSettings(updated); runServerCheck(); }}/>
+    <FleetConfirmDialog
+      open={!!mechanicRevoke}
+      title={`Revoke ${mechanicRevoke?.name || "mechanic"} portal link?`}
+      description="That private link will stop working immediately. Existing Fleet data and work-order history are not changed. Generate a new link later if access needs to be restored."
+      confirmLabel="Revoke Link"
+      tone="warning"
+      busy={!!mechanicBusy}
+      onCancel={()=>!mechanicBusy&&setMechanicRevoke(null)}
+      onConfirm={()=>revokeMechanicLink(mechanicRevoke?.id)}
+    />
     <FleetConfirmDialog
       open={!!manualAction}
       title={manualAction==="maintenance"?"Run Fleet maintenance generation now?":"Run Fleet reminders now?"}
