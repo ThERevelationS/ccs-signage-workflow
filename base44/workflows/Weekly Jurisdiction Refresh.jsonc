@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "refreshJurisdiction",
-            "args": {}
+            "args": {
+              "_workflow_capability": "1hCL8LTLicGzU-CbX4alPNHmjI42cDj1HypDJp2RhHo"
+            }
           },
           "then": "end"
         }
