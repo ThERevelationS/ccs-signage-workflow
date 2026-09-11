@@ -133,6 +133,21 @@ export default function FleetEquipmentDetail() {
           <Metric label="Trips · last 7 days" value={tripsLoading ? "…" : trips.length} />
         </div>
 
+        <Card title="Asset Profile" icon={Truck}>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ProfileField label="Asset type" value={pretty(equipment.type)} />
+            <ProfileField label="Location" value={equipment.location || "—"} />
+            <ProfileField label="Serial / original ID" value={equipment.serial_number || "—"} />
+            <ProfileField label="Mileage / Hours" value={equipment.mileage_hours != null ? Number(equipment.mileage_hours).toLocaleString() : "—"} />
+            <ProfileField label="Purchase date" value={equipment.purchase_date || "—"} />
+            <ProfileField label="Last service" value={equipment.last_service_date || "—"} />
+            <ProfileField label="Next service due" value={equipment.next_service_due || "—"} />
+            <ProfileField label="License plate" value={metadata?.license_plate || equipment.license_plate || "—"} />
+          </div>
+          {equipment.engine_details && <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase text-gray-400 mb-1">Engine / Powertrain</div><div className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{equipment.engine_details}</div></div>}
+          {equipment.notes && <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase text-gray-400 mb-1">Equipment Notes</div><div className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{equipment.notes}</div></div>}
+        </Card>
+
         <div className="grid xl:grid-cols-3 gap-5">
           <div className="xl:col-span-2 space-y-5">
             <Card title="Maintenance" icon={ClipboardList}>
@@ -166,7 +181,7 @@ export default function FleetEquipmentDetail() {
         </div>
 
         <Card title="CCS Vehicle Metadata" icon={Truck} action={isAdmin ? (editingMeta ? null : <button onClick={() => { setMetaForm(metadataSeed(metadata, equipment)); setEditingMeta(true); }} className="inline-flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-300"><Pencil className="w-4 h-4" />Edit</button>) : null}>
-          {!equipment.vin ? <Empty>This asset has no VIN, so VIN-keyed FleetVehicleMetadata does not apply.</Empty> : editingMeta ? <div className="space-y-4"><div className="grid md:grid-cols-3 gap-3">{META_FIELDS.map(field => <label key={field.key} className="text-sm"><span className="block text-xs text-gray-400 mb-1">{field.label}</span><input type={field.type || "text"} value={metaForm[field.key] || ""} onChange={e => setMetaForm(prev => ({ ...prev, [field.key]: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-950 dark:border-slate-700" /></label>)}</div><label className="text-sm block"><span className="block text-xs text-gray-400 mb-1">Notes</span><textarea rows="3" value={metaForm.notes || ""} onChange={e => setMetaForm(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-950 dark:border-slate-700" /></label><div className="flex justify-end gap-2"><button onClick={() => setEditingMeta(false)} disabled={savingMeta} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-1"><X className="w-4 h-4" />Cancel</button><button onClick={saveMetadata} disabled={savingMeta} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center gap-1 disabled:opacity-50">{savingMeta ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save Metadata</button></div></div> : <div className="grid md:grid-cols-4 gap-4">{META_FIELDS.map(field => <div key={field.key}><div className="text-xs text-gray-400">{field.label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1">{metadata?.[field.key] || (field.key === "license_plate" ? equipment.license_plate : "") || "—"}</div></div>)}</div>}
+          {!equipment.vin ? <Empty>This asset has no VIN, so VIN-keyed FleetVehicleMetadata does not apply.</Empty> : editingMeta ? <div className="space-y-4"><div className="grid md:grid-cols-3 gap-3">{META_FIELDS.map(field => <label key={field.key} className="text-sm"><span className="block text-xs text-gray-400 mb-1">{field.label}</span><input type={field.type || "text"} value={metaForm[field.key] || ""} onChange={e => setMetaForm(prev => ({ ...prev, [field.key]: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-950 dark:border-slate-700" /></label>)}</div><label className="text-sm block"><span className="block text-xs text-gray-400 mb-1">Maintenance Notes</span><textarea rows="3" value={metaForm.maintenance_notes || ""} onChange={e => setMetaForm(prev => ({ ...prev, maintenance_notes: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-950 dark:border-slate-700" /></label><label className="text-sm block"><span className="block text-xs text-gray-400 mb-1">General Notes</span><textarea rows="3" value={metaForm.notes || ""} onChange={e => setMetaForm(prev => ({ ...prev, notes: e.target.value }))} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-950 dark:border-slate-700" /></label><div className="flex justify-end gap-2"><button onClick={() => setEditingMeta(false)} disabled={savingMeta} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center gap-1"><X className="w-4 h-4" />Cancel</button><button onClick={saveMetadata} disabled={savingMeta} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center gap-1 disabled:opacity-50">{savingMeta ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}Save Metadata</button></div></div> : <div className="space-y-4"><div className="grid md:grid-cols-4 gap-4">{META_FIELDS.map(field => <div key={field.key}><div className="text-xs text-gray-400">{field.label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1">{metadata?.[field.key] || (field.key === "license_plate" ? equipment.license_plate : "") || "—"}</div></div>)}</div>{metadata?.maintenance_notes && <div className="pt-4 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase text-gray-400 mb-1">Maintenance Notes</div><div className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{metadata.maintenance_notes}</div></div>}{metadata?.notes && <div className="pt-4 border-t border-gray-100 dark:border-slate-800"><div className="text-xs font-semibold uppercase text-gray-400 mb-1">General Notes</div><div className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{metadata.notes}</div></div>}</div>}
         </Card>
       </div>
     </div>
@@ -190,10 +205,12 @@ const META_FIELDS = [
 function metadataSeed(meta, equipment) {
   const seed = {};
   for (const field of META_FIELDS) seed[field.key] = meta?.[field.key] || (field.key === "license_plate" ? equipment?.license_plate || "" : "");
+  seed.maintenance_notes = meta?.maintenance_notes || "";
   seed.notes = meta?.notes || "";
   return seed;
 }
 function Card({ title, icon: Icon, action, children }) { return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm"><div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Icon className="w-4 h-4 text-indigo-500" />{title}</h2>{action}</div><div className="p-4">{children}</div></section>; }
+function ProfileField({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1 capitalize">{value}</div></div>; }
 function Metric({ label, value }) { return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4"><div className="text-xs text-gray-400">{label}</div><div className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{value}</div></div>; }
 function Tag({ children }) { return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 capitalize">{children}</span>; }
 function Empty({ children }) { return <div className="text-sm text-gray-400 py-4">{children}</div>; }
