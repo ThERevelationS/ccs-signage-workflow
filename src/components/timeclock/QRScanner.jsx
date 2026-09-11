@@ -3,7 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, QrCode } from "lucide-react";
 
-export default function QRScanner({ onScan, allUsers, inline = false }) {
+export default function QRScanner({ onScan, inline = false }) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
   const scannerRef = useRef(null);
@@ -23,20 +23,14 @@ export default function QRScanner({ onScan, allUsers, inline = false }) {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText) => {
-          // Check if it's a valid time clock QR code
-          if (decodedText.startsWith("TIMECLOCK:")) {
-            const email = decodedText.replace("TIMECLOCK:", "");
-            const user = allUsers.find(u => u.email === email);
-            if (user) {
-              onScan(user);
-              // Brief pause before continuing to scan
-              html5QrCodeRef.current?.pause();
-              setTimeout(() => {
-                html5QrCodeRef.current?.resume();
-              }, 2000);
-            } else {
-              setError("User not found");
-            }
+          if (decodedText.startsWith("TIMECLOCK2:")) {
+            onScan(decodedText);
+            html5QrCodeRef.current?.pause();
+            setTimeout(() => {
+              html5QrCodeRef.current?.resume();
+            }, 2000);
+          } else {
+            setError("Old or invalid badge. Generate a new secure Time Clock badge.");
           }
         },
         () => {} // Ignore scan failures
