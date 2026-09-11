@@ -44,11 +44,11 @@ export default async function(req) {
         'The authorization response was missing its security token. Please start the connection again from Fleet Tracking.', false), 400);
     }
     const matches = await base44.asServiceRole.entities.BouncieOAuthState.filter({ state: stateParam });
-    const stateRecord = matches && matches.length ? matches[0] : null;
-    if (!stateRecord) {
+    if (!matches || matches.length !== 1) {
       return html(renderPage('Invalid Security Token',
-        'This authorization request could not be verified. Please start the connection again from Fleet Tracking.', false), 400);
+        'This authorization request could not be verified uniquely. Please start the connection again from Fleet Tracking.', false), 400);
     }
+    const stateRecord = matches[0];
     if (stateRecord.used) {
       return html(renderPage('Authorization Already Used',
         'This authorization link has already been used. Please start a new connection from Fleet Tracking.', false), 400);
@@ -57,10 +57,15 @@ export default async function(req) {
       return html(renderPage('Authorization Expired',
         'This authorization request expired. Please start the connection again from Fleet Tracking.', false), 400);
     }
-    // One-time use — burn it before exchanging the code.
-    await base44.asServiceRole.entities.BouncieOAuthState.update(stateRecord.id, {
-      used: true, used_at: new Date().toISOString()
-    });
+    // One-time use — atomically claim the exact unused state before exchanging the code.
+    const claimed = await base44.asServiceRole.entities.BouncieOAuthState.updateMany(
+      { id: stateRecord.id, updated_date: stateRecord.updated_date, used: false },
+      { $set: { used: true, used_at: new Date().toISOString() } }
+    );
+    if (!claimed || claimed.updated !== 1) {
+      return html(renderPage('Authorization Already Used',
+        'This authorization link was already consumed or changed. Please start a new connection from Fleet Tracking.', false), 400);
+    }
 
     const redirectUri = stateRecord.redirect_uri || `${url.origin}/functions/bouncieAuthCallback`;
     const tokens = await exchangeAuthorizationCode(base44, code, redirectUri);
