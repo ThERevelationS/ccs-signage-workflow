@@ -177,10 +177,6 @@ export default function TimeClockAdmin() {
       setTimeEntryError("Enter a correction reason before saving.");
       return;
     }
-    if (!editingEntry.clock_out) {
-      setTimeEntryError("Administrator corrections must leave the shift completed. Enter a corrected clock-out time.");
-      return;
-    }
     setSaveBusy(true);
     try {
       const response = await base44.functions.invoke("timeClockAction", {
@@ -673,13 +669,35 @@ export default function TimeClockAdmin() {
                 </div>
               )}
 
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                Corrections are permanent business-record changes. The original values, corrected values, administrator, server timestamp, and reason are retained in the Time Clock audit history.
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Correction Reason <span className="text-red-600">*</span></Label>
+                <Textarea
+                  value={correctionReason}
+                  onChange={(e) => setCorrectionReason(e.target.value)}
+                  placeholder="Example: Employee forgot to clock out; verified shift end with supervisor."
+                  rows={3}
+                  maxLength={500}
+                  disabled={saveBusy}
+                />
+                <p className="mt-1 text-xs text-gray-500">Required. This reason is stored with the audit record.</p>
+              </div>
+
               <div className="flex gap-3 pt-4">
-                <Button variant="outline" onClick={() => { setShowEditDialog(false); setEditingEntry(null); setEditingEntryBaseline(null); }} className="flex-1">
+                <Button
+                  variant="outline"
+                  disabled={saveBusy}
+                  onClick={() => { setShowEditDialog(false); setEditingEntry(null); setEditingEntryBaseline(null); setCorrectionReason(""); }}
+                  className="flex-1"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveEntry} className="flex-1 gap-2">
-                  <Save className="w-4 h-4" />
-                  Save Changes
+                <Button onClick={handleSaveEntry} disabled={saveBusy || correctionReason.trim().length < 3} className="flex-1 gap-2">
+                  {saveBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saveBusy ? "Saving..." : "Save Audited Correction"}
                 </Button>
               </div>
             </div>
@@ -687,19 +705,35 @@ export default function TimeClockAdmin() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open && !deleteBusy) setDeleteConfirm(null); }}>
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open && !deleteBusy) { setDeleteConfirm(null); setArchiveReason(""); } }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Time Entry?</AlertDialogTitle>
+            <AlertDialogTitle>Archive Time Entry?</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete the {deleteConfirm?.user_name || deleteConfirm?.user_email || "employee"} time entry from {deleteConfirm?.clock_in ? format(parseISO(deleteConfirm.clock_in), "MMM d, yyyy 'at' h:mm a") : "this shift"}? This cannot be undone.
+              Archive the {deleteConfirm?.user_name || deleteConfirm?.user_email || "employee"} time entry from {deleteConfirm?.clock_in ? format(parseISO(deleteConfirm.clock_in), "MMM d, yyyy 'at' h:mm a") : "this shift"}? It will disappear from normal Time Clock reports and job labor, but the original record and audit trail will be preserved.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label className="text-sm font-medium">Archive Reason <span className="text-red-600">*</span></Label>
+            <Textarea
+              value={archiveReason}
+              onChange={(e) => setArchiveReason(e.target.value)}
+              placeholder="Explain why this record should be removed from normal timekeeping."
+              rows={3}
+              maxLength={500}
+              disabled={deleteBusy}
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteBusy}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteEntry} className="bg-red-600 hover:bg-red-700" disabled={deleteBusy}>
-              {deleteBusy ? "Deleting..." : "Delete Time Entry"}
-            </AlertDialogAction>
+            <Button
+              type="button"
+              onClick={handleArchiveEntry}
+              className="bg-amber-600 hover:bg-amber-700"
+              disabled={deleteBusy || archiveReason.trim().length < 3}
+            >
+              {deleteBusy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Archiving...</> : "Archive Time Entry"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
