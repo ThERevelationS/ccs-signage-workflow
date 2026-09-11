@@ -209,12 +209,26 @@
     },
     "onboarding_token": {
       "type": "string",
-      "description": "Token for new user onboarding"
+      "description": "Token for new user onboarding",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "onboarding_expires": {
       "type": "string",
       "format": "date-time",
-      "description": "When the onboarding token expires"
+      "description": "When the onboarding token expires",
+      "rls": {
+        "read": {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      }
     },
     "onboarding_complete": {
       "type": "boolean",
