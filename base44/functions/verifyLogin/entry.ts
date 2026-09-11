@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
+import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 
 // Base64url helpers
 function b64urlEncode(str) {
@@ -47,8 +48,9 @@ Deno.serve(async (req) => {
       }
       throw lastErr;
     };
+    const authorized = base44.asServiceRole.entities.AuthorizedEmail;
     const users = await filterWithRetry();
-    if (!users || users.length !== 1) {
+    if (!Array.isArray(users) || users.length !== 1) {
       if (users?.length > 1) console.error(`verifyLogin duplicate username records for ${uname}`);
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
@@ -59,17 +61,39 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
     }
 
-    // Support both bcrypt hashes ($2a/$2b/$2y) and legacy plaintext passwords
+    // Support both bcrypt hashes ($2a/$2b/$2y) and legacy plaintext passwords.
+    // Once a legacy credential successfully authenticates, upgrade it in place
+    // before issuing the session so plaintext storage disappears naturally as
+    // users sign in. Never expose the plaintext or generated hash in logs.
     const isBcrypt = /^\$2[aby]\$/.test(stored);
-    let match = false;
-    if (isBcrypt) {
-      match = await bcrypt.compare(password, stored);
-    } else {
-      match = password === stored;
-    }
+    let match = isBcrypt ? await bcrypt.compare(password, stored) : password === stored;
 
     if (!match) {
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    if (!isBcrypt) {
+      const upgradedHash = await bcrypt.hash(password, 10);
+      try {
+        await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+          entity: authorized,
+          user,
+          nextFields: { password_hash: upgradedHash },
+          guardFields: { email: user.email },
+          label: `Legacy password hash upgrade for ${user.email}`,
+        });
+      } catch (upgradeError) {
+        // A simultaneous successful login may have upgraded the same plaintext
+        // credential with a different bcrypt salt. Accept that convergence only
+        // if the freshly stored bcrypt hash still verifies this password.
+        const current = await authorized.get(user.id).catch(() => null);
+        const currentStored = String(current?.password_hash || '');
+        const concurrentlyUpgraded = /^\$2[aby]\$/.test(currentStored) && await bcrypt.compare(password, currentStored).catch(() => false);
+        if (!concurrentlyUpgraded) {
+          console.error('Legacy password upgrade could not be verified for user id:', user.id);
+          return Response.json({ success: false, error: 'Credential security upgrade could not be verified. Please retry sign in.' }, { status: 409 });
+        }
+      }
     }
 
     // Build signed session token: base64url(payload).base64url(signature)
