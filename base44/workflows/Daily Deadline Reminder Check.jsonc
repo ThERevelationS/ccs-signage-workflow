@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "checkDeadlineReminders",
-            "args": {}
+            "args": {
+              "_workflow_capability": "oPPooa6i-r7vC44cPbfJU-g8fOZEnwGxxu_q9t8Mjvc"
+            }
           },
           "then": "end"
         }
