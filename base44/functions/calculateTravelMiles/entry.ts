@@ -16,11 +16,17 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const shop_address = (body?.shop_address || '').trim();
-    const site_address = (body?.site_address || '').trim();
+    const shop_address = String(body?.shop_address || '').trim().replace(/\s+/g, ' ');
+    const site_address = String(body?.site_address || '').trim().replace(/\s+/g, ' ');
 
     if (!shop_address || !site_address) {
       return Response.json({ error: 'shop_address and site_address are required' }, { status: 400 });
+    }
+    if (shop_address.length > 500 || site_address.length > 500) {
+      return Response.json({ error: 'Travel addresses must be 500 characters or fewer' }, { status: 400 });
+    }
+    if (/[\u0000-\u001F\u007F]/.test(shop_address) || /[\u0000-\u001F\u007F]/.test(site_address)) {
+      return Response.json({ error: 'Travel addresses contain invalid control characters' }, { status: 400 });
     }
 
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -44,8 +50,8 @@ If the addresses are clearly invalid or impossible to route, return one_way_mile
 
     const oneWay = parseFloat(result?.one_way_miles);
     if (!isFinite(oneWay) || oneWay < 0 || oneWay > 5000) {
-      console.error("Invalid miles returned:", result);
-      return Response.json({ error: 'Could not estimate distance', llm_result: result }, { status: 502 });
+      console.error('Invalid miles returned by travel estimator');
+      return Response.json({ error: 'Could not estimate distance' }, { status: 502 });
     }
 
     return Response.json({
@@ -54,7 +60,7 @@ If the addresses are clearly invalid or impossible to route, return one_way_mile
       source: result?.source || 'web',
     });
   } catch (error) {
-    console.error("calculateTravelMiles error:", error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('calculateTravelMiles error:', error?.message || error);
+    return Response.json({ error: 'Travel distance could not be estimated safely' }, { status: 500 });
   }
 });
