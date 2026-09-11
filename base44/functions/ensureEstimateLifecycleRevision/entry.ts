@@ -125,6 +125,19 @@ Deno.serve(async (req) => {
     const existing = canonicalRevision(matches || []);
     if (existing) return Response.json({ revision: existing, reused: true });
 
+    // A new immutable lifecycle row must belong to a real current Estimate.
+    // Idempotent retries above can still recover historical rows later.
+    const estimate = await base44.entities.AllInOneEstimate.get(estimateId).catch(() => null);
+    if (!estimate?.id) {
+      return Response.json({ error: 'Estimate could not be verified before recording lifecycle history.' }, { status: 404 });
+    }
+    if (revisionType === 'conversion') {
+      const workOrderId = String(revision?.work_order_id || '').trim();
+      if (!workOrderId || String(estimate.work_order_id || '') !== workOrderId) {
+        return Response.json({ error: 'Conversion lifecycle history does not match the linked Work Order.' }, { status: 409 });
+      }
+    }
+
     const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
