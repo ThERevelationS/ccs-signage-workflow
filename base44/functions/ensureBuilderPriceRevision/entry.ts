@@ -121,6 +121,23 @@ Deno.serve(async (req) => {
       return Response.json({ revision: existing, reused: true });
     }
 
+    // Before creating immutable pricing history, verify the caller-supplied IDs
+    // still describe a real Product attached to this Estimate. Existing audit
+    // retries above remain reusable even if the Product is removed later.
+    const [builder, estimate] = await Promise.all([
+      base44.entities.BuilderProduct.get(builderProductId).catch(() => null),
+      base44.entities.AllInOneEstimate.get(estimateId).catch(() => null),
+    ]);
+    if (!builder?.id) return Response.json({ error: 'Builder Product could not be verified for this pricing revision.' }, { status: 404 });
+    if (!estimate?.id) return Response.json({ error: 'Estimate could not be verified for this pricing revision.' }, { status: 404 });
+    if (String(builder.estimate_id || '') !== estimateId) {
+      return Response.json({ error: 'Builder Product does not belong to the supplied Estimate.' }, { status: 409 });
+    }
+    const estimateLine = (estimate.line_items || []).find((line: any) => String(line?.builder_product_id || '') === builderProductId);
+    if (!estimateLine) {
+      return Response.json({ error: 'Builder Product is no longer attached to the supplied Estimate.' }, { status: 409 });
+    }
+
     const allRows = await RevisionService.filter({ builder_product_id: builderProductId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const created = await RevisionUser.create({
@@ -163,6 +180,6 @@ Deno.serve(async (req) => {
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
     console.error('ensureBuilderPriceRevision error:', error);
-    return Response.json({ error: error?.message || 'Builder price revision could not be recorded.' }, { status: 500 });
+    return Response.json({ error: 'Builder price revision could not be recorded safely.' }, { status: 500 });
   }
 });
