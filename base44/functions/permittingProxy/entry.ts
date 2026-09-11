@@ -1,10 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 
 const PERMITTING_APP_ID = '69b1840cf75aba55e115d020';
-// Prefer the function secret when configured. The legacy fallback remains
-// server-only so the existing permitting integration keeps working until the
-// credential is rotated; browser code never receives either value.
-const PERMITTING_API_KEY = Deno.env.get('PERMITTING_API_KEY') || '570bd85bbd4248b396864e2c628a6028';
+// Cross-app credentials must come only from Base44 function secrets. Never
+// keep a source-code fallback: repository history is not a secret store.
+const PERMITTING_API_KEY = Deno.env.get('PERMITTING_API_KEY') || '';
 
 const CREATE_FIELDS = [
   'jurisdiction_name',
@@ -41,6 +40,11 @@ Deno.serve(async (req) => {
       body = await req.json();
     } catch (_) {
       return Response.json({ error: 'Failed to parse request body' }, { status: 400 });
+    }
+
+    if (!PERMITTING_API_KEY) {
+      console.error('permittingProxy PERMITTING_API_KEY is unavailable');
+      return Response.json({ error: 'Permitting research service is not configured' }, { status: 503 });
     }
 
     const action = String(body?.action || '').trim();
