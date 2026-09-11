@@ -31,7 +31,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "checkPermitFollowupReminders",
-            "args": {}
+            "args": {
+              "_workflow_capability": "BnuESG0zUlhPfmZRunszT2qn6F69cBW_JZKPq74OP7Y"
+            }
           },
           "then": "end"
         }
