@@ -21,7 +21,7 @@ import {
 import { 
   Download, 
   Pencil, 
-  Trash2, 
+  Archive, 
   User, 
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -553,8 +553,14 @@ export default function TimeClockAdmin() {
                         <Button variant="ghost" size="icon" onClick={() => handleEditEntry(entry)} className="h-7 w-7">
                           <Pencil className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(entry)} className="h-7 w-7">
-                          <Trash2 className="w-3 h-3 text-red-500" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setArchiveReason(""); setDeleteConfirm(entry); }}
+                          className="h-7 w-7"
+                          title="Archive time entry"
+                        >
+                          <Archive className="w-3 h-3 text-amber-600" />
                         </Button>
                       </div>
                     </td>
@@ -567,7 +573,7 @@ export default function TimeClockAdmin() {
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); } }}>
+      <Dialog open={showEditDialog} onOpenChange={(open) => { if (saveBusy) return; setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); setCorrectionReason(""); } }}>
         <DialogContent className="clay-card border-none max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
