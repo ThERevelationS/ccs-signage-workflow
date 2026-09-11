@@ -29,7 +29,8 @@ import {
   Save,
   Briefcase,
   Home,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -119,6 +120,12 @@ export default function TimeClockAdmin() {
   // Calculate totals
   const totalHours = filteredEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
 
+  const staleActiveEntries = timeEntries.filter(entry => {
+    if (entry.status !== "clocked_in" || !entry.clock_in) return false;
+    const clockIn = new Date(entry.clock_in);
+    return Number.isFinite(clockIn.getTime()) && (Date.now() - clockIn.getTime()) > 24 * 60 * 60 * 1000;
+  });
+
   // Group by user for summary
   const userSummary = filteredEntries.reduce((acc, entry) => {
     const key = entry.user_email;
@@ -155,6 +162,9 @@ export default function TimeClockAdmin() {
       let totalHours = editingEntry.total_hours;
       
       if (clockOut) {
+        if (clockOut < clockIn) {
+          throw new Error("Clock-out cannot be earlier than clock-in.");
+        }
         const totalMinutes = Math.floor((clockOut - clockIn) / (1000 * 60));
         const lunchMins = editingEntry.lunch_minutes || 0;
         totalHours = Math.max(0, (totalMinutes - lunchMins) / 60);
@@ -168,6 +178,7 @@ export default function TimeClockAdmin() {
           clock_out: editingEntry.clock_out,
           lunch_minutes: editingEntry.lunch_minutes,
           total_hours: totalHours,
+          status: clockOut ? "clocked_out" : "clocked_in",
           notes: editingEntry.notes,
           job_allocations: editingEntry.job_allocations
         },
@@ -253,6 +264,37 @@ export default function TimeClockAdmin() {
             <div className="mt-1 text-xs">{timeEntryError}</div>
           </div>
           <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
+        </div>
+      )}
+
+      {staleActiveEntries.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-semibold text-amber-900">
+                {staleActiveEntries.length} forgotten clock-out{staleActiveEntries.length === 1 ? "" : "s"} need review
+              </div>
+              <p className="text-sm text-amber-800 mt-1">
+                These entries have remained clocked in for more than 24 hours. Nothing was changed automatically.
+              </p>
+              <div className="mt-3 space-y-2">
+                {staleActiveEntries.map(entry => (
+                  <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/80 border border-amber-200 px-3 py-2">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{entry.user_name || entry.user_email}</div>
+                      <div className="text-xs text-gray-600">
+                        Clocked in {format(parseISO(entry.clock_in), "MMM d, yyyy 'at' h:mm a")}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleEditEntry(entry)}>
+                      Review Entry
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -510,7 +552,7 @@ export default function TimeClockAdmin() {
                   <Label className="text-sm font-medium">Clock In</Label>
                   <Input
                     type="datetime-local"
-                    value={editingEntry.clock_in?.slice(0, 16)}
+                    value={editingEntry.clock_in ? format(parseISO(editingEntry.clock_in), "yyyy-MM-dd'T'HH:mm") : ""}
                     onChange={(e) => setEditingEntry({
                       ...editingEntry,
                       clock_in: new Date(e.target.value).toISOString()
@@ -521,7 +563,7 @@ export default function TimeClockAdmin() {
                   <Label className="text-sm font-medium">Clock Out</Label>
                   <Input
                     type="datetime-local"
-                    value={editingEntry.clock_out?.slice(0, 16) || ""}
+                    value={editingEntry.clock_out ? format(parseISO(editingEntry.clock_out), "yyyy-MM-dd'T'HH:mm") : ""}
                     onChange={(e) => setEditingEntry({
                       ...editingEntry,
                       clock_out: e.target.value ? new Date(e.target.value).toISOString() : null
