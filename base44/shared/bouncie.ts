@@ -446,7 +446,7 @@ function mergeLiveStateRows(rows) {
   return Object.fromEntries(Object.entries(merged).filter(([, value]) => value !== undefined));
 }
 
-async function coalesceLiveStateRows(LiveState, vin) {
+export async function coalesceLiveStateRows(LiveState, vin) {
   const rows = await LiveState.filter({ vehicle_vin: vin });
   if (!rows?.length) return null;
   if (rows.length === 1) return rows[0];
