@@ -29,7 +29,7 @@ async function verifySessionToken(token: string, secret: string, authorized: any
   if (parts.length !== 2) return null;
   const [payloadStr, providedSig] = parts;
   const expectedSig = await hmacSign(payloadStr, secret);
-  if (expectedSig !== providedSig) return null;
+  if (!constantTimeEqual(expectedSig, providedSig)) return null;
 
   let payload: any;
   try {
