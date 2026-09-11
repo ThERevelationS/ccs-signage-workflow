@@ -20,7 +20,7 @@ export default function WorkOrderTimeEntries({ workOrderId, workOrderTitle }) {
       // Get all completed time entries
       const allEntries = await loadAllEntityRows({
         entity: TimeEntry,
-        query: { status: "clocked_out" },
+        query: { status: "clocked_out", archived_test_data: { $ne: true } },
         sort: "-clock_in",
         label: "Completed Time Entries",
       });
