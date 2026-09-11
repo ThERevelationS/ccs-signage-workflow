@@ -1,6 +1,6 @@
 {
-  "name": "Process CoreBridge Emails",
   "description": "Checks Gmail every 10 minutes for CoreBridge estimate/invoice emails and auto-creates or updates work orders in the Sales Pipeline",
+  "name": "Process CoreBridge Emails",
   "trigger": {
     "condition": null,
     "config": {
