@@ -444,14 +444,16 @@ export default function TimeClock() {
                                   size="sm" 
                                   className="h-7 px-3 bg-green-600 hover:bg-green-700"
                                   onClick={() => handleSaveNotes(entry.id)}
+                                  disabled={savingNotesId === entry.id}
                                 >
-                                  <Save className="w-3 h-3 mr-1" />
-                                  Save
+                                  {savingNotesId === entry.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                                  {savingNotesId === entry.id ? "Saving..." : "Save"}
                                 </Button>
                                 <Button 
                                   size="sm" 
                                   variant="outline"
                                   className="h-7 px-3"
+                                  disabled={savingNotesId === entry.id}
                                   onClick={() => { setEditingNotes(null); setEditNotesText(""); }}
                                 >
                                   <X className="w-3 h-3 mr-1" />
