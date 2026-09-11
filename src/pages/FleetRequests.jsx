@@ -54,6 +54,8 @@ export default function FleetRequests() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const requestedStatus = params.get("status") || "";
+    if (["active", "all", "pending", "ordered", "received", "cancelled"].includes(requestedStatus)) setStatus(requestedStatus);
     if (params.get("new") !== "1") return;
     openCreateDialog({
       item_type: params.get("type") === "fluid" ? "fluid" : "part",
