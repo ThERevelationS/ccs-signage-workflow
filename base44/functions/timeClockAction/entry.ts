@@ -1274,6 +1274,75 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
 
+    if (action === 'admin_set_entry_approval') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to approve time entries.' }, { status: 403 });
+      const entryId = String(body?.entry_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      const decision = String(body?.decision || '').trim();
+      const note = String(body?.note || '').trim();
+      if (!entryId || !expectedUpdatedDate) return Response.json({ success: false, error: 'The loaded TimeEntry version is required before approval.' }, { status: 400 });
+      if (!['approve', 'reopen'].includes(decision)) return Response.json({ success: false, error: 'A valid approval decision is required.' }, { status: 400 });
+      if (note.length > 500) return Response.json({ success: false, error: 'Approval notes are limited to 500 characters.' }, { status: 400 });
+      if (decision === 'reopen' && note.length < 3) return Response.json({ success: false, error: 'A reason is required when sending an approved shift back for review.' }, { status: 400 });
+
+      const entry = await entryEntity.get(entryId).catch(() => null);
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+      }
+      if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
+      if (String(entry.approval_request_id || '') === requestId) {
+        const expectedStatus = decision === 'approve' ? 'approved' : 'needs_review';
+        if ((entry.approval_status || 'unreviewed') === expectedStatus) {
+          return Response.json({ success: true, entry, reused: true });
+        }
+        return Response.json({ success: false, error: 'This approval request id is already associated with a different approval state.' }, { status: 409 });
+      }
+      if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
+
+      const now = new Date().toISOString();
+      const intent = await auditEntity.create({
+        action: 'time_approval', outcome: 'pending', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
+        request_id: requestId, time_entry_id: entry.id, reason: note || (decision === 'approve' ? 'Manager reviewed completed shift' : 'Returned shift for manager review'),
+        details: { original: entryAuditSnapshot(entry), decision, note },
+      });
+      if (!intent?.id) throw new Error('Approval audit intent could not be persisted. No TimeEntry was changed.');
+
+      const update = decision === 'approve'
+        ? {
+            $set: {
+              approval_status: 'approved', approved_at: now, approved_by: actorEmail,
+              approval_note: note, approval_request_id: requestId,
+            },
+          }
+        : {
+            $set: { approval_status: 'needs_review', approval_request_id: requestId },
+            $unset: { approved_at: '', approved_by: '', approval_note: '' },
+          };
+      const result = await entryEntity.updateMany(
+        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, status: 'clocked_out', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        update,
+      );
+      if (!result || result.updated !== 1) {
+        await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+        return Response.json({ success: false, error: 'The TimeEntry changed before approval could be saved. Reload before trying again.' }, { status: 409 });
+      }
+      const savedEntry = await entryEntity.get(entry.id);
+      const auditFinalized = await auditEntity.updateMany(
+        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+        { $set: {
+          outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+          details: { original: entryAuditSnapshot(entry), updated: entryAuditSnapshot(savedEntry), decision, note },
+        } },
+      );
+      if (!auditFinalized || auditFinalized.updated !== 1) {
+        const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+        if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but audit finalization was interrupted. Retry the same approval action.' }, { status: 409 });
+      }
+      return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
+    }
+
     if (action === 'admin_archive_entry') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to archive time entries.' }, { status: 403 });
       const entryId = String(body?.entry_id || '').trim();
