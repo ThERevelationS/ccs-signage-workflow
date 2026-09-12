@@ -182,6 +182,34 @@ Deno.serve(async (req) => {
         kind: 'request', id: row.id, equipment_id: row.equipment_id || '', title: row.item_name || 'Fleet request',
         subtitle: [row.item_type, equipmentName(row.equipment_id)].filter(Boolean).join(' · '), meta: [row.status, row.part_number, row.requested_by_person].filter(Boolean).join(' · '),
       })),
+      inspections: sortByRelevance(query, [
+        ...(inspectionRows || []).map((row:any)=>({...row,_search_kind:'inspection'})),
+        ...(inspectionTemplateRows || []).map((row:any)=>({...row,_search_kind:'inspection_template'})),
+      ], (row:any)=>row._search_kind === 'inspection_template'
+        ? [row.name,row.description,row.inspection_type]
+        : [row.template_name,row.inspection_type,row.inspector_email,row.inspector_name,row.status,row.notes]
+      ).map((row:any)=>row._search_kind === 'inspection_template' ? ({
+        kind:'inspection_template',id:row.id,title:row.name || 'Inspection template',subtitle:`${text(row.inspection_type).replaceAll('_',' ')} template`,meta:[row.active === false ? 'inactive' : 'active',Array.isArray(row.items)?`${row.items.length} items`:''].filter(Boolean).join(' · '),
+      }) : ({
+        kind:'inspection',id:row.id,equipment_id:row.equipment_id || '',title:row.template_name || 'Fleet inspection',subtitle:equipmentName(row.equipment_id) || 'Unresolved equipment',meta:[row.status,text(row.inspection_type).replaceAll('_',' '),row.inspector_name || row.inspector_email,row.completed_at ? `Completed ${String(row.completed_at).slice(0,10)}` : row.started_at ? `Started ${String(row.started_at).slice(0,10)}` : ''].filter(Boolean).join(' · '),
+      })),
+      warranties: sortByRelevance(query, warrantyRows || [], (row:any)=>[row.name,row.category,row.provider,row.reference_number,row.status,row.coverage_description,row.contact,row.notes]).map((row:any)=>({
+        kind:'warranty',id:row.id,equipment_id:row.equipment_id || '',title:row.name || 'Fleet warranty',subtitle:[equipmentName(row.equipment_id),row.provider].filter(Boolean).join(' · ') || 'Fleet warranty',meta:[row.status,row.category,row.reference_number,row.end_date ? `Ends ${row.end_date}`:''].filter(Boolean).join(' · '),
+      })),
+      assignments: sortByRelevance(query, reservationRows || [], (row:any)=>[row.reserved_by_email,row.reserved_by_name,row.assignment_label,row.job_site,row.status,row.notes]).map((row:any)=>({
+        kind:'assignment',id:row.id,equipment_id:row.equipment_id || '',title:row.assignment_label || `${equipmentName(row.equipment_id) || 'Fleet equipment'} assignment`,subtitle:[equipmentName(row.equipment_id),row.reserved_by_name || row.reserved_by_email].filter(Boolean).join(' · '),meta:[row.status,row.job_site,row.start_at ? String(row.start_at).slice(0,16).replace('T',' '):'',row.end_at ? `to ${String(row.end_at).slice(0,16).replace('T',' ')}`:''].filter(Boolean).join(' · '),
+      })),
+      fuel: sortByRelevance(query, fuelRows || [], (row:any)=>[row.vendor,row.notes,row.source]).map((row:any)=>({
+        kind:'fuel',id:row.id,equipment_id:row.equipment_id || '',title:row.vendor ? `Fuel · ${row.vendor}` : 'Fleet fuel entry',subtitle:equipmentName(row.equipment_id) || 'Unresolved equipment',meta:[row.fueled_at ? String(row.fueled_at).slice(0,10):'',row.gallons != null ? `${row.gallons} gal`:'',row.total_cost != null ? `$${Number(row.total_cost).toFixed(2)}`:''].filter(Boolean).join(' · '),
+      })),
+      ...(isAdmin ? {
+        lifecycle: sortByRelevance(query, lifecycleRows || [], (row:any)=>[row.replacement_status,row.notes]).map((row:any)=>({
+          kind:'lifecycle',id:row.id,equipment_id:row.equipment_id || '',title:`Lifecycle · ${equipmentName(row.equipment_id) || 'Fleet equipment'}`,subtitle:text(row.replacement_status).replaceAll('_',' ') || 'monitor',meta:[row.target_replacement_date ? `Target ${row.target_replacement_date}`:'',row.target_mileage_hours != null ? `Target meter ${row.target_mileage_hours}`:''].filter(Boolean).join(' · '),
+        })),
+        repair_estimates: sortByRelevance(query, estimateRows || [], (row:any)=>[row.status,row.approval_tier,row.notes,row.mechanic_name,row.estimate_source]).map((row:any)=>({
+          kind:'repair_estimate',id:row.id,work_order_id:row.work_order_id || '',equipment_id:row.equipment_id || '',title:`Repair estimate · ${equipmentName(row.equipment_id) || 'Fleet work order'}`,subtitle:[row.status,text(row.estimate_source).replaceAll('_',' '),row.mechanic_name].filter(Boolean).join(' · '),meta:[row.approval_tier,row.estimated_total != null ? `$${Number(row.estimated_total).toFixed(2)}`:''].filter(Boolean).join(' · '),
+        })),
+      } : {}),
     };
 
     const total = Object.values(groups).reduce((sum: number, rows: any) => sum + (Array.isArray(rows) ? rows.length : 0), 0);
