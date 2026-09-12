@@ -483,6 +483,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     debounceTimers.current = {};
     pendingChangesRef.current = {};
     pendingBaselinesRef.current = {};
+    pendingHistoryFieldsRef.current = {};
     setQuickEditError("");
     await loadWorkOrders(false);
   };
