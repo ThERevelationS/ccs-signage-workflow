@@ -245,16 +245,30 @@ Deno.serve(async (req) => {
         const expiresAt = expiryDays > 0 ? new Date(Date.now() + expiryDays * 86_400_000).toISOString() : '';
         const rawBytes = crypto.getRandomValues(new Uint8Array(32));
         const token = base64Url(rawBytes);
+        const allowEstimates = body?.allow_estimates === true;
         const created = await Access.create({
           name,
           token_hash:await sha256(token),
           enabled:true,
-          allowed_actions:['bootstrap','start','save'],
+          allowed_actions:['bootstrap','start','save',...(allowEstimates?['estimate_save','estimate_submit']:[])],
           ...(expiresAt ? {expires_at:expiresAt} : {}),
           notes,
         });
         await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link created.',details:{grant_id:created.id,name:created.name,created_by:auth.user.email || '',expires_at:expiresAt}}).catch(()=>null);
         return json({success:true,link:publicGrant(created),token});
+      }
+
+      if (action === 'admin_update_estimate_permission') {
+        const id = String(body?.id || '').trim();
+        const found = await Access.get(id).catch(()=>null);
+        if (!found) return json({error:'Mechanic access link was not found.'},{status:404});
+        const allowEstimates = body?.allow_estimates === true;
+        const currentActions = Array.isArray(found.allowed_actions) && found.allowed_actions.length ? found.allowed_actions : ['bootstrap','start','save'];
+        const retained = currentActions.filter((item:string)=>!['estimate_save','estimate_submit'].includes(item));
+        const allowedActions = [...new Set([...retained,...(allowEstimates?['estimate_save','estimate_submit']:[])])];
+        const updated = await Access.update(id,{allowed_actions:allowedActions});
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:`Standalone Fleet mechanic estimate permission ${allowEstimates?'enabled':'disabled'}.`,details:{grant_id:id,name:found.name || '',changed_by:auth.user.email || ''}}).catch(()=>null);
+        return json({success:true,link:publicGrant(updated)});
       }
 
       if (action === 'admin_revoke_link') {
@@ -285,6 +299,53 @@ Deno.serve(async (req) => {
     if (!ACTIVE.has(current.status)) return json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
     const expected = String(body?.expected_updated_date || '').trim();
     if (!expected || expected !== String(current.updated_date || '')) return json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
+
+    if (action === 'estimate_save' || action === 'estimate_submit') {
+      const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
+      const Policy = base44.asServiceRole.entities.FleetRepairApprovalPolicy;
+      const rows = await Estimate.filter({work_order_id:id});
+      if (rows.length > 1) return json({error:'Multiple repair estimates exist for this work order. CCS must resolve them before the mechanic estimate can continue.'},{status:409});
+      let estimate = rows[0] || null;
+      if (estimate && (estimate.estimate_source !== 'mechanic_portal' || String(estimate.mechanic_access_id||'') !== String(grant.id||''))) {
+        return json({error:'CCS or another mechanic already manages the estimate for this work order. This portal cannot view or overwrite that financial record.'},{status:409});
+      }
+
+      if (action === 'estimate_save') {
+        if (estimate && !['draft','changes_requested'].includes(estimate.status)) return json({error:'This estimate is locked while submitted, approved, or rejected.'},{status:409});
+        const patch = repairEstimatePatch(body?.estimate || {});
+        const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
+        if (!estimate) {
+          const created = await Estimate.create({...patch,work_order_id:id,equipment_id:current.equipment_id||'',status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,estimate_source:'mechanic_portal',mechanic_name:clean(grant.name,80),mechanic_access_id:String(grant.id||''),creation_key:`repair-estimate:${id}`});
+          await new Promise(resolve=>setTimeout(resolve,75));
+          const contenders = await Estimate.filter({work_order_id:id});
+          if (contenders.length > 1) {
+            const foreign = contenders.find((row:any)=>row.id!==created.id && (row.estimate_source!=='mechanic_portal' || String(row.mechanic_access_id||'')!==String(grant.id||'')));
+            if (foreign) {
+              await Estimate.delete(created.id).catch(()=>null);
+              return json({error:'CCS or another mechanic created an estimate at the same time. Your draft was not kept; refresh before continuing.'},{status:409});
+            }
+            const winner=contenders.slice().sort((a:any,b:any)=>String(a.id).localeCompare(String(b.id)))[0];
+            for(const row of contenders)if(row.id!==winner.id)await Estimate.delete(row.id).catch(()=>null);
+            estimate=winner;
+          } else estimate=created;
+        } else {
+          const estimateExpected=String(body?.estimate_expected_updated_date||'').trim();
+          if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before saving.'},{status:409});
+          estimate=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{...patch,status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},label:'Mechanic Fleet repair estimate'});
+        }
+        return json({success:true,estimate:sanitizeEstimate(estimate),policy});
+      }
+
+      if (!estimate) return json({error:'Save the mechanic estimate before submitting it.'},{status:404});
+      if (!['draft','changes_requested'].includes(estimate.status)) return json({error:'Only a draft or changes-requested estimate can be submitted.'},{status:409});
+      const estimateExpected=String(body?.estimate_expected_updated_date||'').trim();
+      if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before submitting.'},{status:409});
+      const policy=await evaluateRepairApprovalPolicy(Policy,Number(estimate.estimated_total||0));
+      const autoApproved=policy.approval_required===false;
+      const updated=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{approval_required:policy.approval_required,approval_tier:policy.approval_tier,status:autoApproved?'approved':'submitted',submitted_by_email:'',submitted_at:nowIso(),mechanic_name:clean(grant.name,80),decision_by_email:autoApproved?'policy:auto':'',decision_at:autoApproved?nowIso():null,decision_notes:autoApproved?'Automatically approved by Fleet repair approval policy.':estimate.decision_notes||''},label:'Mechanic Fleet repair estimate submission'});
+      await Log.create({source:'fleetMechanicPortal',level:'info',message:'External mechanic submitted Fleet repair estimate.',details:{grant_id:grant.id,mechanic_name:grant.name||'',work_order_id:id,estimate_id:updated.id,estimated_total:updated.estimated_total,status:updated.status}}).catch(()=>null);
+      return json({success:true,estimate:sanitizeEstimate(updated),policy,auto_approved:autoApproved});
+    }
 
     if (action === 'start') {
       const note = clean(body?.note,1200);
