@@ -168,6 +168,57 @@ function WorkOrdersTab({ equipment, rows, active = false }) {
   return <Panel title={active ? "Active Work" : "Work Orders"} icon={Wrench} action={<Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(equipment.id)}`} className="text-xs text-indigo-600 dark:text-indigo-300">Open full Work Orders</Link>}><div className="space-y-2">{rows.map(row => <WorkOrderCompact key={row.id} equipment={equipment} row={row} detailed />)}{rows.length === 0 && <Empty>{active ? "No active Fleet work orders." : "No Fleet work orders."}</Empty>}</div></Panel>;
 }
 
+function MaintenanceTimeline({ equipment, tasks, workOrders, logs, meterRows = [] }) {
+  const meterByTask = Object.fromEntries(meterRows.map(row => [row.rule?.maintenance_task_id, row]));
+  const scheduleRows = tasks
+    .filter(task => task.start_date && task.status !== "completed")
+    .slice()
+    .sort((a,b) => String(a.start_date).localeCompare(String(b.start_date)));
+  const historyRows = [];
+  for (const order of workOrders) {
+    const date = order.completed_date || order.started_date || String(order.created_date || "").slice(0,10);
+    if (!date) continue;
+    historyRows.push({
+      key:`wo:${order.id}`,
+      date,
+      timestamp:Date.parse(order.completed_date || order.updated_date || order.created_date || date) || 0,
+      kind:"work_order",
+      title:`${order.work_order_number || "Fleet WO"} · ${order.title || "Maintenance work"}`,
+      detail:order.status === "completed" ? `Completed${order.actual_hours != null ? ` · ${order.actual_hours} hr` : ""}${order.total_cost != null ? ` · $${Number(order.total_cost).toFixed(2)}` : ""}` : `${pretty(order.status)} · ${pretty(order.priority)} priority`,
+      href:`${createPageUrl("FleetWorkOrders")}?workOrder=${encodeURIComponent(order.id)}&equipment=${encodeURIComponent(equipment.id)}`,
+    });
+  }
+  for (const log of logs) {
+    const raw = log.created_date || log.updated_date || "";
+    if (!raw) continue;
+    historyRows.push({
+      key:`log:${log.id}`,
+      date:String(raw).slice(0,10),
+      timestamp:Date.parse(raw) || 0,
+      kind:log.item_type === "fluid" ? "fluid" : "part",
+      title:`${log.item_name || "Fleet item"} used`,
+      detail:`${log.quantity_used ?? "—"} ${log.unit || ""}${log.recorded_by ? ` · ${log.recorded_by}` : ""}`,
+    });
+  }
+  historyRows.sort((a,b) => b.timestamp - a.timestamp);
+  return <div className="space-y-4">
+    <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/20 dark:text-indigo-300">This timeline is assembled from preserved Fleet schedules, work orders, and usage logs. It is read-only and does not rewrite maintenance history.</div>
+    <div className="grid xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.4fr)] gap-4">
+      <Panel title="Upcoming & Due" icon={CalendarClock}>
+        <div className="space-y-2">{scheduleRows.map(task => { const meter = meterByTask[task.id]; const meterState = meter?.state?.state || ""; const danger = isOverdue(task) || meterState === "due"; return <Link key={task.id} to={`${createPageUrl("FleetMaintenance")}?equipment=${encodeURIComponent(equipment.id)}&tab=schedule`} className={`block rounded-xl border p-3 ${danger ? "border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20" : meterState === "due_soon" ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/15" : "border-gray-200 dark:border-slate-700"}`}><div className="flex items-start gap-3"><div className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${danger ? "bg-red-500" : meterState === "due_soon" ? "bg-amber-500" : "bg-indigo-500"}`} /><div className="min-w-0 flex-1"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{task.title}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">Due {formatDate(task.start_date)} · {pretty(task.priority)} priority</div>{meter && <div className="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">Meter: {meterState === "due" ? "due now" : meterState === "due_soon" ? "due soon" : meter?.reading?.available ? `${Number(meter.reading.value).toLocaleString()} ${meter.reading.unit || "units"} current · next ${Number(meter.rule?.next_due_value || 0).toLocaleString()}` : "reading unavailable"}</div>}</div></div></Link>; })}{scheduleRows.length === 0 && <Empty>No pending maintenance schedule events.</Empty>}</div>
+      </Panel>
+      <Panel title="Maintenance History" icon={History}>
+        <div className="relative pl-5">{historyRows.map((event,index) => <div key={event.key} className="relative pb-4 last:pb-0"><span className="absolute -left-5 top-1 w-3 h-3 rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-500 z-10" />{index < historyRows.length - 1 && <span className="absolute -left-[15px] top-4 bottom-0 w-px bg-gray-200 dark:bg-slate-700" />} {event.href ? <Link to={event.href} className="block rounded-lg px-2 py-1.5 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/50"><TimelineBody event={event} /></Link> : <div className="rounded-lg px-2 py-1.5 -mx-2"><TimelineBody event={event} /></div>}</div>)}{historyRows.length === 0 && <Empty>No maintenance work or usage history recorded yet.</Empty>}</div>
+      </Panel>
+    </div>
+  </div>;
+}
+
+function TimelineBody({ event }) {
+  const Icon = event.kind === "work_order" ? ClipboardList : event.kind === "fluid" ? Droplets : Package;
+  return <div className="flex items-start gap-2"><Icon className="w-4 h-4 mt-0.5 text-gray-400 shrink-0"/><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><div className="text-sm font-medium text-gray-900 dark:text-slate-100">{event.title}</div><div className="text-[11px] text-gray-400 whitespace-nowrap">{formatDate(event.date)}</div></div><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{event.detail}</div></div></div>;
+}
+
 function HistoryTab({ equipment, workOrders, logs }) {
   return <div className="grid xl:grid-cols-2 gap-4">
     <Panel title="Completed / Closed Work" icon={History}><div className="space-y-2">{workOrders.map(row => <WorkOrderCompact key={row.id} equipment={equipment} row={row} detailed />)}{workOrders.length === 0 && <Empty>No completed or cancelled work orders.</Empty>}</div></Panel>
