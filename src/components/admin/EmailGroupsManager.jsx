@@ -28,7 +28,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 const EmailGroup = base44.entities.EmailGroup;
 const AutomationRule = base44.entities.AutomationRule;
 
-export default function EmailGroupsManager() {
+export default function EmailGroupsManager({ adminCapability }) {
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -92,15 +92,15 @@ export default function EmailGroupsManager() {
     try {
       if (editingGroup) {
         await updateEmailGroupIfUnchanged({
-          entity: EmailGroup,
           group: editingGroup,
           nextFields: formData,
+          adminCapability,
           label: `Email group ${editingGroup.name || editingGroup.id}`,
         });
       } else {
         const result = await createEmailGroupIfAbsent({
-          entity: EmailGroup,
           data: formData,
+          adminCapability,
           label: `Email group ${formData.name}`,
         });
         if (result.status === "existing") {
@@ -124,9 +124,8 @@ export default function EmailGroupsManager() {
     setPersistenceError("");
     try {
       await deleteEmailGroupIfUnused({
-        entity: EmailGroup,
-        automationRuleEntity: AutomationRule,
         group,
+        adminCapability,
         label: `Email group ${group.name || group.id} deletion`,
       });
       setDeleteConfirm(null);
