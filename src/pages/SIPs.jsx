@@ -252,13 +252,57 @@ export default function SIPs() {
     <div className="h-full overflow-auto p-6">
       <div className="w-full">
         {/* Header */}
-        <div className="clay-card p-6 mb-6">
-          <div className="flex items-center justify-between">
+        <div className="clay-card p-4 sm:p-6 mb-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
-              <p className="text-gray-500 mt-1">Production & Installation Planning - {workOrders.length} items</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
+                <Badge variant="outline" className="bg-white">{workOrders.length} total</Badge>
+              </div>
+              <p className="text-gray-500 mt-1">Production & Installation Planning</p>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              {currentUser?.role === "admin" && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)}>
+                  <ClipboardList className="w-4 h-4 mr-2" />
+                  Manage Templates
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={() => loadWorkOrders(false)} disabled={isRefreshing}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+            <div className="rounded-lg border bg-white/70 p-3">
+              <div className="text-xs text-gray-500">Active queue</div>
+              <div className="text-xl font-bold text-gray-800">{activeWorkOrders.length}</div>
+            </div>
+            <div className="rounded-lg border bg-amber-50/80 p-3">
+              <div className="text-xs text-amber-700 flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />Revisit later</div>
+              <div className="text-xl font-bold text-amber-800">{futureRevisitOrders.length}</div>
+            </div>
+            <div className="rounded-lg border bg-green-50/80 p-3">
+              <div className="text-xs text-green-700 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Completed WIP</div>
+              <div className="text-xl font-bold text-green-800">{completedWipItems.length}</div>
+            </div>
+            <div className="rounded-lg border bg-white/70 p-3">
+              <div className="text-xs text-gray-500">Last refreshed</div>
+              <div className="text-sm font-semibold text-gray-700 mt-1">{lastUpdated ? format(lastUpdated, "h:mm a") : "—"}</div>
+            </div>
+          </div>
+
+          <div className="relative mt-4 max-w-2xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search customer, job, task, employee, estimate or invoice…"
+              className="pl-9 bg-white"
+            />
           </div>
         </div>
 
@@ -277,7 +321,7 @@ export default function SIPs() {
         {/* Spreadsheet */}
         <div className="clay-card p-4 w-full overflow-x-auto">
           <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr className="border-b">
                 <th 
                   className="px-2 py-3 border-r text-center font-bold text-white" 
@@ -305,10 +349,8 @@ export default function SIPs() {
               </tr>
             </thead>
             <tbody>
-              {activeWorkOrders.map((wo, index) => {
+              {visibleActiveWorkOrders.map((wo, index) => {
                 const progress = getChecklistProgress(wo);
-                const progressPercent = (progress.completed / progress.total) * 100;
-                
                 const isWip = isWipItem(wo);
                 
                 return (
@@ -568,10 +610,10 @@ export default function SIPs() {
                   </React.Fragment>
                 );
               })}
-              {activeWorkOrders.length === 0 && (
+              {visibleActiveWorkOrders.length === 0 && (
                 <tr>
                   <td colSpan={14} className="px-3 py-12 text-center text-gray-500 text-base">
-                    No items assigned to SIPs. Assign "SIPs" to the Task Assigned column or check WIP/SIP on a task description to see items here.
+                    {searchQuery.trim() ? "No active SIPs items match your search." : "No items assigned to SIPs. Assign \"SIPs\" to the Task Assigned column or check WIP/SIP on a task description to see items here."}
                   </td>
                 </tr>
               )}
@@ -580,10 +622,10 @@ export default function SIPs() {
         </div>
 
         {/* Future Revisit Section */}
-        {futureRevisitOrders.length > 0 && (
+        {visibleFutureRevisitOrders.length > 0 && (
           <div className="clay-card p-4 w-full mt-6 overflow-x-auto" style={{ borderLeft: '4px solid #f59e0b' }}>
             <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
-              📅 Revisit Later ({futureRevisitOrders.length})
+              📅 Revisit Later ({visibleFutureRevisitOrders.length})
               <span className="text-xs text-gray-400 font-normal">— future revisit date set, not in active queue</span>
             </h3>
             <table className="w-full border-collapse text-sm" style={{ tableLayout: 'auto', minWidth: '900px' }}>
@@ -600,7 +642,7 @@ export default function SIPs() {
                 </tr>
               </thead>
               <tbody>
-                {futureRevisitOrders.map((wo) => {
+                {visibleFutureRevisitOrders.map((wo) => {
                   const progress = getChecklistProgress(wo);
                   return (
                     <tr key={wo.id} className="border-b hover:bg-amber-50/50 bg-yellow-50/30">
@@ -657,9 +699,9 @@ export default function SIPs() {
         )}
 
         {/* Completed WIP Items Section */}
-        {completedWipItems.length > 0 && (
+        {visibleCompletedWipItems.length > 0 && (
           <div className="clay-card p-4 w-full mt-6">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">Completed WIP Items ({completedWipItems.length})</h3>
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">Completed WIP Items ({visibleCompletedWipItems.length})</h3>
             <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
               <thead className="bg-gray-50">
                 <tr className="border-b">
@@ -673,7 +715,7 @@ export default function SIPs() {
                 </tr>
               </thead>
               <tbody>
-                {completedWipItems.map((wo) => (
+                {visibleCompletedWipItems.map((wo) => (
                   <tr key={wo.id} className="border-b hover:bg-gray-50 bg-green-50/30">
                     <td className="px-2 py-2 border-r text-center">
                       <Checkbox
