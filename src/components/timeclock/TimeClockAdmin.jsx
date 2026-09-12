@@ -32,7 +32,9 @@ import {
   Loader2,
   AlertTriangle,
   Coffee,
-  Clock3
+  Clock3,
+  CheckCircle2,
+  RotateCcw
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -73,6 +75,12 @@ export default function TimeClockAdmin() {
   const [correctionReason, setCorrectionReason] = useState("");
   const [archiveReason, setArchiveReason] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
+  const [approvalEntry, setApprovalEntry] = useState(null);
+  const [approvalDecision, setApprovalDecision] = useState("approve");
+  const [approvalNote, setApprovalNote] = useState("");
+  const [approvalBusy, setApprovalBusy] = useState(false);
+  const [approvalRequestId, setApprovalRequestId] = useState("");
+  const [approvalError, setApprovalError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -253,6 +261,60 @@ export default function TimeClockAdmin() {
       await loadData();
     } finally {
       setSaveBusy(false);
+    }
+  };
+
+  const openApprovalDialog = (entry, decision) => {
+    setApprovalEntry(entry);
+    setApprovalDecision(decision);
+    setApprovalNote("");
+    setApprovalError("");
+    setApprovalRequestId(newRequestId());
+  };
+
+  const handleApproval = async () => {
+    if (!approvalEntry?.id || approvalBusy) return;
+    if (!sessionToken) {
+      setApprovalError("Your administrator session is not available. Sign in again before reviewing time.");
+      return;
+    }
+    if (approvalDecision === "reopen" && approvalNote.trim().length < 3) {
+      setApprovalError("Enter a reason before sending this shift back for review.");
+      return;
+    }
+    setApprovalBusy(true);
+    setApprovalError("");
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "admin_set_entry_approval",
+        session_token: sessionToken,
+        target_email: approvalEntry.user_email,
+        request_id: approvalRequestId,
+        entry_id: approvalEntry.id,
+        expected_updated_date: approvalEntry.updated_date,
+        decision: approvalDecision,
+        note: approvalNote.trim(),
+      });
+      const data = functionData(response);
+      if (!data?.success) {
+        const err = new Error(data?.error || "The approval was not confirmed by the server.");
+        err.retrySameRequest = data?.retry_same_request === true;
+        throw err;
+      }
+      setApprovalEntry(null);
+      setApprovalNote("");
+      setApprovalRequestId("");
+      await loadData();
+    } catch (err) {
+      const data = err?.response?.data || {};
+      const retrySameRequest = err?.retrySameRequest === true || data?.retry_same_request === true;
+      setApprovalError(data?.error || err?.message || "The approval could not be completed safely.");
+      if (!retrySameRequest) {
+        await loadData();
+        setApprovalRequestId(newRequestId());
+      }
+    } finally {
+      setApprovalBusy(false);
     }
   };
 
