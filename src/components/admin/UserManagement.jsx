@@ -670,6 +670,43 @@ export default function UserManagement() {
                     <p className="text-xs text-gray-500 mt-2">Select which sales pipeline roles this user can be assigned to</p>
                   </div>
 
+                  <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="w-4 h-4 text-purple-700" />
+                      <Label className="font-semibold text-purple-900">Time Clock Settings</Label>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm">Employment Type</Label>
+                        <Select
+                          value={formData.employment_type || "hourly"}
+                          onValueChange={(val) => setFormData({ ...formData, employment_type: val })}
+                        >
+                          <SelectTrigger className="mt-1 bg-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hourly">Hourly</SelectItem>
+                            <SelectItem value="salary">Salary</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-gray-500 mt-1">Classification only. Salary does not automatically enable Work Pause.</p>
+                      </div>
+                      <div className="rounded-lg border border-purple-200 bg-white p-3">
+                        <div className="flex items-start gap-2">
+                          <Checkbox
+                            checked={formData.can_work_pause === true}
+                            onCheckedChange={(checked) => setFormData({ ...formData, can_work_pause: checked === true })}
+                          />
+                          <div>
+                            <label className="text-sm font-medium">Allow Work Pause</label>
+                            <p className="text-xs text-gray-500 mt-1">Lets this user pause counted work time without clocking out. Default is OFF and must be assigned individually.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <Label>Permissions</Label>
                     <div className="mt-2 space-y-2">
