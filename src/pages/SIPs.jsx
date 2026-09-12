@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, X } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
@@ -413,7 +413,7 @@ export default function SIPs() {
                       </button>
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
                     </div>
-                    <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                    <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" title={wo.sip_completed ? "Reopen this WIP item" : "Open checklist to complete"} />
                   </div>
 
                   <div className="flex flex-wrap gap-1.5 mt-3">
@@ -436,6 +436,33 @@ export default function SIPs() {
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="justify-center">Open Work Order</Button>
                   </div>
+                  <Popover
+                    open={openDatePopover === `revisit-active-mobile-${wo.id}`}
+                    onOpenChange={(open) => setOpenDatePopover(open ? `revisit-active-mobile-${wo.id}` : null)}
+                  >
+                    <PopoverTrigger asChild disabled={!isRegistered}>
+                      <Button variant="ghost" size="sm" className="w-full mt-2 text-amber-700 hover:bg-amber-50">
+                        <CalendarClock className="w-4 h-4 mr-2" />
+                        {wo.sip_revisit_date ? "Change Revisit Date" : "Set Revisit Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={parseLocalDate(wo.sip_revisit_date)}
+                        disabled={{ before: addDays(today, 1) }}
+                        onSelect={(date) => {
+                          updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                          setOpenDatePopover(null);
+                        }}
+                      />
+                      {wo.sip_revisit_date && (
+                        <div className="p-2 border-t">
+                          <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear revisit date</button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
                 </div>
               );
             })}
@@ -770,7 +797,7 @@ export default function SIPs() {
                         </button>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
                       </div>
-                      <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                      <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" title={wo.sip_completed ? "Reopen this WIP item" : "Open checklist to complete"} />
                     </div>
 
                     <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
