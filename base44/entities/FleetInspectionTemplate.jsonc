@@ -1,0 +1,120 @@
+{
+  "name": "FleetInspectionTemplate",
+  "type": "object",
+  "description": "Reusable CCS Fleet inspection/checklist template. Fleet-only and separate from signage workflows.",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "inspection_type": {
+      "type": "string",
+      "enum": [
+        "pre_trip",
+        "post_trip",
+        "daily",
+        "weekly",
+        "monthly",
+        "safety",
+        "custom"
+      ]
+    },
+    "applicable_equipment_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "response_type": {
+            "type": "string",
+            "enum": [
+              "pass_fail",
+              "checkbox",
+              "text",
+              "number"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "fail_creates_work_order": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "created_by_email": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "inspection_type",
+    "items",
+    "active",
+    "creation_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

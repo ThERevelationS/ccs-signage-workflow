@@ -1,0 +1,166 @@
+{
+  "name": "FleetInspection",
+  "type": "object",
+  "description": "Completed or in-progress Fleet equipment inspection/checklist record with evidence and guarded Fleet work-order follow-up.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "template_id": {
+      "type": "string"
+    },
+    "template_name": {
+      "type": "string"
+    },
+    "inspection_type": {
+      "type": "string",
+      "enum": [
+        "pre_trip",
+        "post_trip",
+        "daily",
+        "weekly",
+        "monthly",
+        "safety",
+        "custom"
+      ]
+    },
+    "inspector_email": {
+      "type": "string"
+    },
+    "inspector_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "passed",
+        "failed",
+        "needs_attention"
+      ],
+      "default": "draft"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "meter_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "meter_unit": {
+      "type": "string",
+      "enum": [
+        "miles",
+        "hours"
+      ]
+    },
+    "responses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "photo_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "fail_creates_work_order": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "failed_item_count": {
+      "type": "number",
+      "minimum": 0
+    },
+    "notes": {
+      "type": "string"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "generated_work_order_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "template_id",
+    "template_name",
+    "inspection_type",
+    "status",
+    "started_at",
+    "creation_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
