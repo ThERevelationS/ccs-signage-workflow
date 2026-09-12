@@ -61,6 +61,30 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when an in-progress break transition began"
+    },
+    "work_pause_status": {
+      "type": "string",
+      "enum": [
+        "working",
+        "pausing",
+        "paused",
+        "resuming"
+      ],
+      "default": "working",
+      "description": "Authoritative work-pause state while the employee is clocked in"
+    },
+    "active_work_pause_id": {
+      "type": "string",
+      "description": "Current or pending TimeClockWorkPause record id"
+    },
+    "last_work_pause_request_id": {
+      "type": "string",
+      "description": "Client request id of the last confirmed or in-progress work-pause action"
+    },
+    "work_pause_pending_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an in-progress work-pause transition began"
     }
   },
   "required": [
