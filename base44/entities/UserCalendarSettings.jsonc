@@ -74,5 +74,27 @@
   },
   "required": [
     "user_email"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__user_calendar_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__user_calendar_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__user_calendar_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__user_calendar_backend_only__"
+      }
+    }
+  }
 }
