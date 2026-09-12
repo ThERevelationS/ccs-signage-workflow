@@ -3,6 +3,7 @@ import * as XLSX from 'npm:xlsx@0.18.5';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { loadGlobalSettingSingleton, saveGlobalSettingFromSnapshot } from '../../shared/globalSettingSingleton.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -11,13 +12,11 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { dataTypes, folderId, action } = body;
     const isScheduledBackup = await hasWorkflowInvocationCapability(body, 'backupToGoogleDrive');
+    let actor = null;
 
     if (!isScheduledBackup) {
-      const user = await base44.auth.me().catch(() => null);
-      if (!user) {
-        return Response.json({ error: 'Authentication required' }, { status: 401 });
-      }
-      if (user.role !== 'admin') {
+      actor = await authenticateSignShopSession(base44, body?.session_token);
+      if (actor?.role !== 'admin') {
         return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
       }
     }
@@ -621,7 +620,7 @@ Deno.serve(async (req) => {
         })),
         success_count: successCount,
         error_count: errorCount,
-        triggered_by: isScheduledBackup ? 'system' : (user?.email || 'unknown')
+        triggered_by: isScheduledBackup ? 'system' : (actor?.email || 'unknown')
       });
     } catch (logError) {
       console.error("Error logging backup:", logError);
@@ -634,7 +633,11 @@ Deno.serve(async (req) => {
     });
     
   } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
     console.error('backupToGoogleDrive error:', error?.message || error);
-    return Response.json({ error: 'Google Drive backup could not be completed safely' }, { status: 500 });
+    return Response.json({
+      error: safeStatus === 500 ? 'Google Drive backup could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 });
