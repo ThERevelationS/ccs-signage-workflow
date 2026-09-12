@@ -1,24 +1,18 @@
-import {
-  deleteEntityIfUnchanged,
-  expectedEntityFields,
-  replaceEntityFieldsIfUnchanged,
-} from "@/components/estimator/builder/builderEntityPersistence";
+import { base44 } from "@/api/base44Client";
 
-function normalize(value) {
-  if (Array.isArray(value)) return value.map(normalize);
-  if (!value || typeof value !== "object") return value;
-  return Object.keys(value).sort().reduce((out, key) => {
-    out[key] = normalize(value[key]);
-    return out;
-  }, {});
+function requireAdminCapability(adminCapability, label) {
+  const token = String(adminCapability || "").trim();
+  if (!token) throw new Error(`${label} requires an active Admin Settings authorization.`);
+  return token;
 }
 
-function sameValue(a, b) {
-  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
-}
-
-function fieldsMatch(record, desired) {
-  return Object.entries(desired || {}).every(([field, value]) => sameValue(record?.[field], value));
+async function invokeCalendarEvent(payload) {
+  try {
+    const response = await base44.functions.invoke("manageCalendarEvents", payload);
+    return response?.data || response;
+  } catch (error) {
+    throw new Error(error?.response?.data?.error || error?.message || "Calendar event could not be changed safely.");
+  }
 }
 
 export function calendarEventFieldsFromForm(form = {}) {
@@ -45,73 +39,35 @@ export function calendarEventFieldsFromForm(form = {}) {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
 }
 
-export async function createCalendarEventWithRecovery({ entity, data, label = "Calendar event" } = {}) {
-  if (!entity || typeof entity.create !== "function" || typeof entity.filter !== "function") {
-    throw new Error(`${label} could not initialize its retry-safe create.`);
-  }
-  const identity = {
-    title: data?.title,
-    start_datetime: data?.start_datetime,
-  };
-  if (!identity.title || !identity.start_datetime) {
-    throw new Error(`${label} requires a title and start date before it can be created.`);
-  }
-
-  const before = await entity.filter(identity);
-  if (!Array.isArray(before)) throw new Error(`${label} preflight did not return a record list.`);
-  const beforeIds = new Set(before.map(row => row?.id).filter(Boolean));
-
-  let created = null;
-  let createError = null;
-  try {
-    created = await entity.create(data);
-  } catch (error) {
-    createError = error;
-  }
-
-  if (created?.id) {
-    const verified = typeof entity.get === "function" ? await entity.get(created.id).catch(() => null) : created;
-    if (verified?.id && fieldsMatch(verified, data)) return { record: verified, status: "created" };
-  }
-
-  let after;
-  try {
-    after = await entity.filter(identity);
-  } catch (verifyError) {
-    if (createError) throw createError;
-    throw verifyError;
-  }
-  if (!Array.isArray(after)) throw new Error(`${label} final verification did not return a record list.`);
-  const candidates = after.filter(row => !beforeIds.has(row.id) && fieldsMatch(row, data));
-  if (candidates.length === 1) {
-    return { record: candidates[0], status: createError ? "recovered_after_response_loss" : "created_verified" };
-  }
-  if (candidates.length > 1) {
-    throw new Error(`${label} create is ambiguous: multiple identical new events appeared. No event was deleted automatically; reload and review before retrying.`);
-  }
-  if (createError) throw createError;
-  throw new Error(`${label} could not verify whether the event was created. Reload before retrying.`);
-}
-
-export async function updateCalendarEventIfUnchanged({ entity, event, nextFields, label = "Calendar event" } = {}) {
-  if (!event?.id) throw new Error(`${label} is no longer loaded. Reload before saving.`);
-  return replaceEntityFieldsIfUnchanged({
-    entity,
-    id: event.id,
-    expectedUpdatedAt: event.updated_date || "",
-    expectedFields: expectedEntityFields(event, nextFields),
-    nextFields,
-    guardFields: {},
-    label,
+export async function createCalendarEventWithRecovery({ data, adminCapability, label = "Calendar event" } = {}) {
+  const result = await invokeCalendarEvent({
+    action: "create",
+    data,
+    admin_capability: requireAdminCapability(adminCapability, label),
   });
+  if (!result?.record?.id) throw new Error(`${label} create could not be verified.`);
+  return result;
 }
 
-export async function deleteCalendarEventIfUnchanged({ entity, event, label = "Calendar event deletion" } = {}) {
-  if (!event?.id) throw new Error(`${label} is no longer loaded. Reload before deleting.`);
-  return deleteEntityIfUnchanged({
-    entity,
-    record: event,
-    guardFields: {},
-    label,
+export async function updateCalendarEventIfUnchanged({ event, nextFields, adminCapability, label = "Calendar event" } = {}) {
+  if (!event?.id || !event?.updated_date) throw new Error(`${label} is no longer loaded. Reload before saving.`);
+  const result = await invokeCalendarEvent({
+    action: "update",
+    id: event.id,
+    expected_updated_date: event.updated_date,
+    next_fields: nextFields,
+    admin_capability: requireAdminCapability(adminCapability, label),
+  });
+  if (!result?.record?.id) throw new Error(`${label} update could not be verified.`);
+  return result.record;
+}
+
+export async function deleteCalendarEventIfUnchanged({ event, adminCapability, label = "Calendar event deletion" } = {}) {
+  if (!event?.id || !event?.updated_date) throw new Error(`${label} is no longer loaded. Reload before deleting.`);
+  return invokeCalendarEvent({
+    action: "delete",
+    id: event.id,
+    expected_updated_date: event.updated_date,
+    admin_capability: requireAdminCapability(adminCapability, label),
   });
 }
