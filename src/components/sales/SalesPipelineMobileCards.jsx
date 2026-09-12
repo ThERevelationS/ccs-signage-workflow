@@ -30,6 +30,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const status = SALES_STATUSES.find(s => s.value === wo.sales_status);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
         const followUp = wo.follow_up_date ? safeDate(wo.follow_up_date) : null;
+        const expectedClose = wo.expected_close_date ? safeDate(wo.expected_close_date) : null;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
@@ -74,6 +75,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               {followUp && (
                 <span className={followUpDue ? "font-semibold text-red-700" : ""}>
                   Follow-up: <span>{format(followUp, 'MMM d, yyyy')}{followUpDue ? " • due" : ""}</span>
+                </span>
+              )}
+              {expectedClose && (
+                <span className={expectedClose < today && !["won", "lost"].includes(wo.sales_status) ? "font-semibold text-red-700" : ""}>
+                  Expected close: <span>{format(expectedClose, 'MMM d, yyyy')}</span>
                 </span>
               )}
             </div>
