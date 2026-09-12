@@ -14,7 +14,7 @@ async function requireAdmin(base44: any) {
 const units = new Set(['quarts', 'gallons', 'pints', 'ounces']);
 const fluidOuncesPerUnit: Record<string, number> = { ounces: 1, pints: 16, quarts: 32, gallons: 128 };
 const USAGE_STALE_MS = 60 * 1000;
-const partFields = ['part_name','part_number','category','manufacturer','quantity_on_hand','minimum_stock','unit_cost','location','notes','enable_low_stock_alerts','compatible_equipment_ids'];
+const partFields = ['part_name','part_number','alternate_part_numbers','barcode_value','category','subcategory','manufacturer','description','specification','quantity_on_hand','minimum_stock','unit_cost','location','storage_zone','storage_cabinet','storage_shelf','storage_bin','preferred_vendor','vendor_sku','vendor_url','primary_photo_url','photo_urls','source_urls','tags','identity_status','identification_confidence','identification_method','identification_notes','last_identified_at','last_identified_by','notes','enable_low_stock_alerts','compatible_equipment_ids','compatibility_notes','created_from_identification_id'];
 const fluidFields = ['fluid_name','fluid_type','viscosity','brand','quantity','unit','minimum_stock','minimum_stock_unit','cost_per_unit','location','notes','enable_low_stock_alerts','compatible_equipment_ids'];
 
 function pick(source: any, fields: string[]) {
@@ -120,10 +120,27 @@ function normalizePart(source: any) {
   }
   out.part_name = String(out.part_name || '').trim();
   out.part_number = String(out.part_number || '').trim();
+  out.barcode_value = String(out.barcode_value || '').trim();
   out.category = String(out.category || '').trim();
+  out.subcategory = String(out.subcategory || '').trim();
   out.manufacturer = String(out.manufacturer || '').trim();
+  out.description = String(out.description || '').trim();
+  out.specification = String(out.specification || '').trim();
   out.location = String(out.location || '').trim();
+  out.storage_zone = String(out.storage_zone || '').trim();
+  out.storage_cabinet = String(out.storage_cabinet || '').trim();
+  out.storage_shelf = String(out.storage_shelf || '').trim();
+  out.storage_bin = String(out.storage_bin || '').trim();
+  out.preferred_vendor = String(out.preferred_vendor || '').trim();
+  out.vendor_sku = String(out.vendor_sku || '').trim();
+  out.vendor_url = String(out.vendor_url || '').trim();
+  out.primary_photo_url = String(out.primary_photo_url || '').trim();
+  out.identification_notes = String(out.identification_notes || '').trim();
+  out.last_identified_by = String(out.last_identified_by || '').trim();
   out.notes = String(out.notes || '').trim();
+  out.compatibility_notes = String(out.compatibility_notes || '').trim();
+  out.created_from_identification_id = String(out.created_from_identification_id || '').trim();
+  for (const key of ['alternate_part_numbers','photo_urls','source_urls','tags']) out[key] = Array.isArray(out[key]) ? [...new Set(out[key].map((value: any) => String(value || '').trim()).filter(Boolean))] : [];
   out.compatible_equipment_ids = Array.isArray(out.compatible_equipment_ids) ? [...new Set(out.compatible_equipment_ids.map(String).filter(Boolean))] : [];
   return out;
 }
@@ -148,13 +165,37 @@ const sortedIds = (value: any) => Array.isArray(value) ? [...new Set(value.map(S
 const inventoryCreateComparable = (itemType: string, source: any) => itemType === 'part' ? {
   part_name: String(source?.part_name || '').trim(),
   part_number: String(source?.part_number || '').trim(),
+  alternate_part_numbers: Array.isArray(source?.alternate_part_numbers) ? [...new Set(source.alternate_part_numbers.map((value: any) => String(value || '').trim()).filter(Boolean))].sort() : [],
+  barcode_value: String(source?.barcode_value || '').trim(),
   category: String(source?.category || '').trim(),
+  subcategory: String(source?.subcategory || '').trim(),
   manufacturer: String(source?.manufacturer || '').trim(),
+  description: String(source?.description || '').trim(),
+  specification: String(source?.specification || '').trim(),
   quantity_on_hand: Number(source?.quantity_on_hand ?? 0),
   minimum_stock: Number(source?.minimum_stock ?? 1),
   unit_cost: optionalNumber(source?.unit_cost),
   location: String(source?.location || '').trim(),
+  storage_zone: String(source?.storage_zone || '').trim(),
+  storage_cabinet: String(source?.storage_cabinet || '').trim(),
+  storage_shelf: String(source?.storage_shelf || '').trim(),
+  storage_bin: String(source?.storage_bin || '').trim(),
+  preferred_vendor: String(source?.preferred_vendor || '').trim(),
+  vendor_sku: String(source?.vendor_sku || '').trim(),
+  vendor_url: String(source?.vendor_url || '').trim(),
+  primary_photo_url: String(source?.primary_photo_url || '').trim(),
+  photo_urls: Array.isArray(source?.photo_urls) ? [...new Set(source.photo_urls.map((value: any) => String(value || '').trim()).filter(Boolean))].sort() : [],
+  source_urls: Array.isArray(source?.source_urls) ? [...new Set(source.source_urls.map((value: any) => String(value || '').trim()).filter(Boolean))].sort() : [],
+  tags: Array.isArray(source?.tags) ? [...new Set(source.tags.map((value: any) => String(value || '').trim()).filter(Boolean))].sort() : [],
+  identity_status: String(source?.identity_status || 'unverified'),
+  identification_confidence: String(source?.identification_confidence || ''),
+  identification_method: String(source?.identification_method || ''),
+  identification_notes: String(source?.identification_notes || '').trim(),
+  last_identified_at: String(source?.last_identified_at || ''),
+  last_identified_by: String(source?.last_identified_by || '').trim(),
   notes: String(source?.notes || '').trim(),
+  compatibility_notes: String(source?.compatibility_notes || '').trim(),
+  created_from_identification_id: String(source?.created_from_identification_id || '').trim(),
   enable_low_stock_alerts: source?.enable_low_stock_alerts !== false,
   compatible_equipment_ids: sortedIds(source?.compatible_equipment_ids),
 } : {
