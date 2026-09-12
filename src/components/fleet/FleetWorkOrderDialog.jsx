@@ -206,10 +206,10 @@ export default function FleetWorkOrderDialog({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto">
-      <div className="max-w-4xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
+      <div role="dialog" aria-modal="true" aria-labelledby="fleet-work-order-dialog-title" className="max-w-4xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-2xl">
-          <div><div className="font-semibold text-gray-900 dark:text-slate-100">{mode === "create" ? "New Fleet Work Order" : mode === "complete" ? `Complete ${workOrder?.work_order_number || "Work Order"}` : `Edit ${workOrder?.work_order_number || "Work Order"}`}</div><div className="text-xs text-gray-500">Fleet maintenance only — never enters signage production.</div></div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
+          <div><div id="fleet-work-order-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{mode === "create" ? "New Fleet Work Order" : mode === "complete" ? `Complete ${workOrder?.work_order_number || "Work Order"}` : `Edit ${workOrder?.work_order_number || "Work Order"}`}</div><div className="text-xs text-gray-500">Fleet maintenance only — never enters signage production.</div></div>
+          <button type="button" onClick={onClose} aria-label="Close Fleet work order dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
         <form onSubmit={submit} className="p-4 sm:p-6 space-y-6">
           {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
