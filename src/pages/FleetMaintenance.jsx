@@ -88,6 +88,8 @@ export default function FleetMaintenance() {
 
   const openCreateDialog = useCallback((equipmentId = "") => setDialog({ task: null, equipmentId, createKey: crypto.randomUUID() }), []);
   const isAdmin = currentUser?.role === "admin";
+  const activeEquipment = useMemo(() => equipment.filter(item => item.status !== "retired"), [equipment]);
+  const activeEquipmentIds = useMemo(() => new Set(activeEquipment.map(item => item.id)), [activeEquipment]);
   const names = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
   const selectedEquipment = useMemo(() => equipment.find(item => item.id === selectedEquipmentId) || null, [equipment, selectedEquipmentId]);
   const selectedTasks = useMemo(() => tasks.filter(task => task.equipment_id === selectedEquipmentId), [tasks, selectedEquipmentId]);
