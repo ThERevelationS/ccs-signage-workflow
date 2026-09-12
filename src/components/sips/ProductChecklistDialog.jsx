@@ -706,7 +706,6 @@ export default function ProductChecklistDialog({
   
   // All items expanded by default - using a ref to track
   const [expandedItems, setExpandedItems] = useState({});
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
@@ -1133,9 +1132,7 @@ export default function ProductChecklistDialog({
                         <div key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
                           {/* Main checklist item */}
                           <div 
-                            className="flex items-center gap-2 group"
-                            onMouseEnter={() => setHoveredItem(displayItem.id)}
-                            onMouseLeave={() => setHoveredItem(null)}
+                            className="flex flex-wrap items-center gap-2 group"
                           >
                             <button 
                               onClick={() => toggleExpanded(displayItem.id)}
@@ -1189,7 +1186,7 @@ export default function ProductChecklistDialog({
                               onValueChange={(val) => updateChecklistItem(displayItem.id, { approved_by: val })}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-7 text-xs w-32">
+                              <SelectTrigger className="h-7 text-xs w-full sm:w-32">
                                 <SelectValue placeholder="Answered by..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -1230,7 +1227,7 @@ export default function ProductChecklistDialog({
                               }}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-7 text-xs w-36">
+                              <SelectTrigger className="h-7 text-xs w-full sm:w-36">
                                 <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Answer..."}>
                                   {displayItem.custom_dropdown_value || "Answer..."}
                                 </SelectValue>
@@ -1410,7 +1407,7 @@ export default function ProductChecklistDialog({
                                       onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-6 text-xs w-28">
+                                      <SelectTrigger className="h-7 text-xs w-full sm:w-28">
                                         <SelectValue placeholder="Answered..." />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1452,7 +1449,7 @@ export default function ProductChecklistDialog({
                                       }}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-6 text-xs w-32">
+                                      <SelectTrigger className="h-7 text-xs w-full sm:w-32">
                                         <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Answer..."}>
                                           {detail.custom_dropdown_value || "Answer..."}
                                         </SelectValue>
@@ -1601,9 +1598,7 @@ export default function ProductChecklistDialog({
                           return (
                           <div key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
                             <div 
-                              className="flex items-center gap-2 group"
-                              onMouseEnter={() => setHoveredItem(stDisplayItem.id)}
-                              onMouseLeave={() => setHoveredItem(null)}
+                              className="flex flex-wrap items-center gap-2 group"
                             >
                               <button 
                                 onClick={() => toggleExpanded(stDisplayItem.id)}
@@ -1657,7 +1652,7 @@ export default function ProductChecklistDialog({
                                 onValueChange={(val) => updateChecklistItem(stDisplayItem.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-6 text-xs w-28">
+                                <SelectTrigger className="h-7 text-xs w-full sm:w-28">
                                   <SelectValue placeholder="Answered..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1699,7 +1694,7 @@ export default function ProductChecklistDialog({
                                 }}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-6 text-xs w-32">
+                                <SelectTrigger className="h-7 text-xs w-full sm:w-32">
                                   <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Answer..."}>
                                     {stDisplayItem.custom_dropdown_value || "Answer..."}
                                   </SelectValue>
