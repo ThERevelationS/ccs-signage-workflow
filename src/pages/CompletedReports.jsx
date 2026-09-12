@@ -37,7 +37,7 @@ const TYPE_CONFIG = {
 };
 
 export default function CompletedReports() {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [readError, setReadError] = useState("");
@@ -76,9 +76,9 @@ export default function CompletedReports() {
     setMutationError("");
     try {
       await updateFeatureReportFields({
-        entity: FeatureReport,
         record: report,
         nextFields: { status: "open", completed_date: null },
+        sessionToken,
         label: `Completed report “${report.title || "Report"}”`,
       });
       await loadReports();
@@ -97,7 +97,7 @@ export default function CompletedReports() {
     actionRef.current.add(lockKey);
     setMutationError("");
     try {
-      await deleteFeatureReportSafely({ entity: FeatureReport, record: report, label: `Completed report “${report.title || "Report"}”` });
+      await deleteFeatureReportSafely({ record: report, sessionToken, label: `Completed report “${report.title || "Report"}”` });
       setDeleteConfirm(null);
       await loadReports();
     } catch (error) {
