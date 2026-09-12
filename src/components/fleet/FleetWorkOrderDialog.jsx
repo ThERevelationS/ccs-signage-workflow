@@ -71,7 +71,10 @@ export default function FleetWorkOrderDialog({
     setError("");
   }, [open, workOrder, equipment]);
 
-  const filteredTasks = useMemo(() => tasks.filter((t) => !form.equipment_id || t.equipment_id === form.equipment_id), [tasks, form.equipment_id]);
+  const filteredTasks = useMemo(() => {
+    const allowedEquipmentIds = new Set(equipment.map((row) => row.id));
+    return tasks.filter((t) => form.equipment_id ? t.equipment_id === form.equipment_id : allowedEquipmentIds.has(t.equipment_id));
+  }, [tasks, equipment, form.equipment_id]);
   const compatibleParts = useMemo(() => parts.filter((p) => !form.equipment_id || !p.compatible_equipment_ids?.length || p.compatible_equipment_ids.includes(form.equipment_id)), [parts, form.equipment_id]);
   const compatibleFluids = useMemo(() => fluids.filter((f) => !form.equipment_id || !f.compatible_equipment_ids?.length || f.compatible_equipment_ids.includes(form.equipment_id)), [fluids, form.equipment_id]);
   const usageIssues = useMemo(() => {
