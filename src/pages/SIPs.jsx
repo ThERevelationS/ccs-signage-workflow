@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, CircleDollarSign, Focus, X } from "lucide-react";
+import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, X } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
@@ -27,20 +27,6 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
-// Default SIP checklist items - can be customized per work order
-const DEFAULT_SIP_CHECKLIST = [
-  { id: 1, text: "Design Approved", checked: false },
-  { id: 2, text: "Materials Ordered", checked: false },
-  { id: 3, text: "Permit Submitted", checked: false },
-  { id: 4, text: "Permit Approved", checked: false },
-  { id: 5, text: "Production Started", checked: false },
-  { id: 6, text: "Production Complete", checked: false },
-  { id: 7, text: "QC Passed", checked: false },
-  { id: 8, text: "Ready for Install", checked: false },
-  { id: 9, text: "Install Scheduled", checked: false },
-  { id: 10, text: "Install Complete", checked: false }
-];
-
 export default function SIPs() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
@@ -51,15 +37,14 @@ export default function SIPs() {
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
   const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
   const [focusedRowId, setFocusedRowId] = useState(null);
-  const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [quickEditError, setQuickEditError] = useState("");
+  const [boardError, setBoardError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortMode, setSortMode] = useState("meeting");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const parentRef = useRef(null);
 
   // Set document title
   useEffect(() => {
