@@ -6,6 +6,7 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
   AlertTriangle,
   Archive,
@@ -198,7 +199,8 @@ export default function FleetEquipment() {
               const speed = Number.isFinite(Number(rawSpeed)) ? Math.max(0, Math.round(Number(rawSpeed))) : null;
               const driving = !!stats.isRunning || (speed != null && speed > 0);
               const compliance = overdue.length ? { label: `${overdue.length} overdue`, tone: "danger" } : dueSoon.length ? { label: `${dueSoon.length} due soon`, tone: "attention" } : activeTasks.length ? { label: "On track", tone: "good" } : { label: "No schedule", tone: "neutral" };
-              return <EquipmentCard key={eq.id} eq={eq} activeOrders={activeOrders} activeTasks={activeTasks} nextMaintenance={nextMaintenance} overdue={overdue} identityConflict={identityConflict} trackedVehicle={trackedVehicle} driving={driving} speed={speed} compliance={compliance} isAdmin={isAdmin} onEdit={() => setDialog({ equipment: eq })} onReactivate={() => setReactivateTarget(eq)} />;
+              const health = fleetHealthScore({ equipment: eq, tasks: eqTasks, workOrders: activeOrders, identityConflict: !!identityConflict });
+              return <EquipmentCard key={eq.id} eq={eq} activeOrders={activeOrders} activeTasks={activeTasks} nextMaintenance={nextMaintenance} overdue={overdue} identityConflict={identityConflict} trackedVehicle={trackedVehicle} driving={driving} speed={speed} compliance={compliance} health={health} isAdmin={isAdmin} onEdit={() => setDialog({ equipment: eq })} onReactivate={() => setReactivateTarget(eq)} />;
             })}
             {filtered.length === 0 && <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 py-12 text-center text-gray-500">No Fleet equipment found.</div>}
           </div>
@@ -211,7 +213,7 @@ export default function FleetEquipment() {
   );
 }
 
-function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue, identityConflict, trackedVehicle, driving, speed, compliance, isAdmin, onEdit, onReactivate }) {
+function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue, identityConflict, trackedVehicle, driving, speed, compliance, health, isAdmin, onEdit, onReactivate }) {
   const retired = eq.status === "retired";
   const detailUrl = `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(eq.id)}`;
   const maintenanceUrl = `${createPageUrl("FleetMaintenance")}?equipment=${encodeURIComponent(eq.id)}`;
@@ -224,7 +226,7 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
   return <article className={`rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${retired ? "border-gray-300 dark:border-slate-700" : identityConflict || eq.bouncie_link_status === "ambiguous" ? "border-amber-300 dark:border-amber-900" : overdue.length ? "border-red-200 dark:border-red-900" : "border-gray-200 dark:border-slate-800"}`}>
     <Link to={detailUrl} className="block h-36 bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">{eq.photo_url ? <img src={eq.photo_url} alt={eq.name} className="w-full h-full object-cover" /> : <Truck className="w-12 h-12 text-gray-300" />}</Link>
     <div className="p-4 space-y-3">
-      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link to={detailUrl} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-300 line-clamp-1">{eq.name}</Link><p className="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">{[eq.year, eq.make, eq.model].filter(Boolean).join(" ") || eq.type}</p></div><StatusBadge status={eq.status} /></div>
+      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><Link to={detailUrl} className="font-semibold text-gray-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-300 line-clamp-1">{eq.name}</Link><p className="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">{[eq.year, eq.make, eq.model].filter(Boolean).join(" ") || eq.type}</p><div className="mt-2"><StatusBadge status={eq.status} /></div></div><HealthRing health={health} /></div>
 
       <div className="grid grid-cols-3 gap-2">
         <MiniStat label="Open WOs" value={activeOrders.length} danger={activeOrders.some(order => ["critical", "high"].includes(order.priority))} />
@@ -259,6 +261,15 @@ function EquipmentCard({ eq, activeOrders, activeTasks, nextMaintenance, overdue
       {isAdmin && <button onClick={onEdit} className="w-full text-xs text-gray-500 dark:text-slate-400 inline-flex items-center justify-center gap-1 py-1"><Pencil className="w-3.5 h-3.5" />Edit equipment</button>}
     </div>
   </article>;
+}
+
+function HealthRing({ health }) {
+  if (health?.score == null) return <div className="h-14 w-14 rounded-full border-4 border-gray-200 dark:border-slate-700 flex flex-col items-center justify-center shrink-0"><span className="text-[10px] font-bold text-gray-500">N/A</span><span className="text-[8px] text-gray-400">Health</span></div>;
+  const color = health.score >= 90 ? "#059669" : health.score >= 75 ? "#16a34a" : health.score >= 60 ? "#d97706" : "#dc2626";
+  return <div className="relative h-14 w-14 shrink-0" title={`${health.label} Fleet health · ${health.signals.join(" · ")}`}>
+    <svg viewBox="0 0 44 44" className="h-14 w-14 -rotate-90" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-200 dark:text-slate-700" /><circle cx="22" cy="22" r="18" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeDasharray={`${health.score * 1.131} 113.1`} /></svg>
+    <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold text-gray-900 dark:text-slate-100">{health.score}</span><span className="text-[8px] text-gray-400">Health</span></div>
+  </div>;
 }
 
 function StatusBadge({ status }) {
