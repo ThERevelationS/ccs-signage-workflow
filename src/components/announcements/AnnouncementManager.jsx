@@ -67,7 +67,7 @@ const defaultForm = {
   priority: "normal",
 };
 
-export default function AnnouncementManager({ isOpen, onClose, currentUserEmail }) {
+export default function AnnouncementManager({ isOpen, onClose, currentUserEmail, sessionToken }) {
   const [savedAnnouncements, setSavedAnnouncements] = useState([]);
   const [form, setForm] = useState(defaultForm);
   const [editingId, setEditingId] = useState(null);
@@ -170,16 +170,15 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
     }
     if (loadedRecord) {
       return updateAnnouncementIfUnchanged({
-        entity: Announcement,
         record: loadedRecord,
         nextFields: { ...form },
-        exactVersion: true,
+        sessionToken,
         label: `Announcement ${loadedRecord.name || loadedRecord.title || loadedRecord.id}`,
       });
     }
     const created = await createAnnouncementWithRecovery({
-      entity: Announcement,
       data: { ...form, is_active: false },
+      sessionToken,
       label: `Announcement ${form.name || form.title}`,
     });
     setEditingId(created.record.id);
@@ -216,10 +215,9 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
         throw new Error("The announcement being broadcast is no longer in the loaded list. Reload before broadcasting.");
       }
       const result = await publishAnnouncementSafely({
-        entity: Announcement,
         loadedRecord,
         form: { ...form },
-        sentBy: currentUserEmail || "admin",
+        sessionToken,
         label: `Announcement broadcast ${form.name || form.title}`,
       });
       setEditingId(result.published.id);
@@ -244,8 +242,8 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
     setSending(true);
     try {
       await stopAnnouncementIfUnchanged({
-        entity: Announcement,
         record: activeAnnouncement,
+        sessionToken,
         label: `Stop announcement ${activeAnnouncement.title || activeAnnouncement.id}`,
       });
       setActiveAnnouncement(null);
@@ -289,8 +287,8 @@ export default function AnnouncementManager({ isOpen, onClose, currentUserEmail 
     setSaving(true);
     try {
       await deleteAnnouncementIfUnchanged({
-        entity: Announcement,
         record: announcement,
+        sessionToken,
         label: `Announcement ${announcement.name || announcement.title || announcement.id} deletion`,
       });
       if (editingId === announcement.id) {
