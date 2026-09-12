@@ -47,6 +47,10 @@ export default function QuickClockSection({
   const [breakStatus, setBreakStatus] = useState("working");
   const [activeBreak, setActiveBreak] = useState(null);
   const [breakSummary, setBreakSummary] = useState({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+  const [workPauseAllowed, setWorkPauseAllowed] = useState(false);
+  const [workPauseStatus, setWorkPauseStatus] = useState("working");
+  const [activeWorkPause, setActiveWorkPause] = useState(null);
+  const [workPauseSummary, setWorkPauseSummary] = useState({ count: 0, total_minutes: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -207,6 +211,10 @@ export default function QuickClockSection({
     setBreakStatus("working");
     setActiveBreak(null);
     setBreakSummary({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+    setWorkPauseAllowed(false);
+    setWorkPauseStatus("working");
+    setActiveWorkPause(null);
+    setWorkPauseSummary({ count: 0, total_minutes: 0 });
     setShowClockOut(false);
     setIsRecognizing(false);
     setRecognitionMethod(null);
@@ -236,6 +244,10 @@ export default function QuickClockSection({
       setBreakStatus(data.break_status || "working");
       setActiveBreak(data.active_break || null);
       setBreakSummary(data.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+      setWorkPauseAllowed(data.work_pause_allowed === true);
+      setWorkPauseStatus(data.work_pause_status || "working");
+      setActiveWorkPause(data.active_work_pause || null);
+      setWorkPauseSummary(data.work_pause_summary || { count: 0, total_minutes: 0 });
 
       if (data.status === "already_clocked_in") {
         setActiveEntry(data.entry || null);
@@ -276,6 +288,10 @@ export default function QuickClockSection({
       setBreakStatus(status.break_status || "working");
       setActiveBreak(status.active_break || null);
       setBreakSummary(status.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+      setWorkPauseAllowed(status.work_pause_allowed === true);
+      setWorkPauseStatus(status.work_pause_status || "working");
+      setActiveWorkPause(status.active_work_pause || null);
+      setWorkPauseSummary(status.work_pause_summary || { count: 0, total_minutes: 0 });
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
 
       if (status.status === "clocked_in" && status.entry?.id) {
