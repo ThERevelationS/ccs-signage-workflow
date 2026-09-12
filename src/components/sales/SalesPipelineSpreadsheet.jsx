@@ -1477,20 +1477,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {globalSettingsWarning}
         <SalesPipelineMobileCards
           workOrders={filteredWorkOrders}
-          onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
+          onOpenDetails={openOpportunityDetails}
           onUpdateWorkOrder={updateWorkOrder}
+          onRequestStatusChange={requestSalesStatusChange}
           isRegistered={isRegistered}
         />
-        {selectedWorkOrder && (
-          <WorkOrderDetailsDialog
-            workOrder={selectedWorkOrder}
-            onClose={() => setSelectedWorkOrder(null)}
-            onUpdate={(updated) => {
-              setWorkOrders(prev => prev.map(w => w.id === updated.id ? updated : w));
-              setSelectedWorkOrder(null);
-            }}
-          />
-        )}
+        {renderOpportunityDialogs()}
       </>
     );
   }
@@ -1506,20 +1498,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           <SalesPipelineKanban
             workOrders={filteredWorkOrders}
             onUpdateWorkOrder={updateWorkOrder}
-            onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
+            onRequestStatusChange={requestSalesStatusChange}
+            onOpenDetails={openOpportunityDetails}
             isRegistered={isRegistered}
           />
         </div>
-        {selectedWorkOrder && (
-          <WorkOrderDetailsDialog
-            workOrder={selectedWorkOrder}
-            onClose={() => setSelectedWorkOrder(null)}
-            onUpdate={(updated) => {
-              setWorkOrders(prev => prev.map(w => w.id === updated.id ? updated : w));
-              setSelectedWorkOrder(null);
-            }}
-          />
-        )}
+        {renderOpportunityDialogs()}
       </div>
     );
   }
