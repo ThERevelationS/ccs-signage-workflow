@@ -52,7 +52,31 @@ const isLegacyClosedRecord = (workOrder) => {
   return /^(lost\b|completed sale\b|closed\b)/i.test(legacyTask);
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
+const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
+
+const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, currentUser) => {
+  if (!attentionFilter || attentionFilter === "all") return true;
+  const followUp = workOrder?.follow_up_date || "";
+  const isOpen = isOpenOpportunity(workOrder);
+  if (attentionFilter === "due") return isOpen && followUp && followUp <= todayStamp;
+  if (attentionFilter === "overdue") return isOpen && followUp && followUp < todayStamp;
+  if (attentionFilter === "today") return isOpen && followUp === todayStamp;
+  if (attentionFilter === "upcoming") return isOpen && followUp > todayStamp && followUp <= upcomingStamp;
+  if (attentionFilter === "quote_no_followup") {
+    return isOpen && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
+  }
+  if (attentionFilter === "no_next_action") return isOpen && !followUp && !workOrder?.current_task_deadline;
+  if (attentionFilter === "mine") {
+    const names = [currentUser?.full_name, currentUser?.name, currentUser?.email].filter(Boolean).map((value) => String(value).trim().toLowerCase());
+    if (!names.length) return false;
+    return [workOrder?.sales_rep, workOrder?.current_task_assigned_to, workOrder?.estimator]
+      .filter(Boolean)
+      .some((value) => names.includes(String(value).trim().toLowerCase()));
+  }
+  return true;
+};
+
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
