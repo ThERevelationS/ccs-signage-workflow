@@ -156,6 +156,11 @@ function entryAuditSnapshot(entry: any) {
     notes: entry?.notes || '',
     job_allocations: Array.isArray(entry?.job_allocations) ? entry.job_allocations : [],
     clock_source: entry?.clock_source || '',
+    approval_status: entry?.approval_status || 'unreviewed',
+    approved_at: entry?.approved_at || null,
+    approved_by: entry?.approved_by || '',
+    approval_note: entry?.approval_note || '',
+    approval_request_id: entry?.approval_request_id || '',
     updated_date: entry?.updated_date || null,
   };
 }
@@ -1073,6 +1078,7 @@ Deno.serve(async (req) => {
           job_allocations: normalizedAllocations, status: 'clocked_out', clock_source: 'admin_correction',
           last_corrected_at: now, last_corrected_by: actorEmail, last_correction_reason: reviewerReason,
           last_correction_request_id: correctionRequest.id,
+          approval_status: 'needs_review',
         };
         if (!correctionAudit?.id) {
           correctionAudit = await auditEntity.create({
@@ -1090,7 +1096,7 @@ Deno.serve(async (req) => {
         correctionAuditId = correctionAudit.id;
         const updated = await entryEntity.updateMany(
           { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_out', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-          { $set: nextFields },
+          { $set: nextFields, $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' } },
         );
         if (!updated || updated.updated !== 1) {
           await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
@@ -1190,6 +1196,7 @@ Deno.serve(async (req) => {
         last_corrected_at: now,
         last_corrected_by: actorEmail,
         last_correction_reason: reason,
+        approval_status: clockOut ? 'needs_review' : (entry.approval_status || 'unreviewed'),
       };
       if (entry.status === 'clocked_in' && clockOut) nextFields['clock_out_request_id'] = requestId;
 
@@ -1222,7 +1229,7 @@ Deno.serve(async (req) => {
 
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-        { $set: nextFields },
+        { $set: nextFields, ...(clockOut ? { $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' } } : {}) },
       );
       if (!updateResult || updateResult.updated !== 1) {
         if (claimedState) {
@@ -1477,6 +1484,7 @@ Deno.serve(async (req) => {
         tracked_break_minutes: breakSummary.total_minutes,
         tracked_paid_break_minutes: breakSummary.paid_minutes,
         tracked_unpaid_break_minutes: breakSummary.unpaid_minutes,
+        approval_status: 'unreviewed',
       };
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_in' },
