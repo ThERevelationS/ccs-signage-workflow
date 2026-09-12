@@ -76,7 +76,6 @@ export default function VehiclePanel({
   onDaysBackChange,
   avgBy,
   onAvgByChange,
-  onTripsRefresh,
   selectedTripId,
   onSelectTrip,
   docked = false,
