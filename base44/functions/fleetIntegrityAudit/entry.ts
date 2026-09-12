@@ -181,6 +181,82 @@ Deno.serve(async (req) => {
     for (const [vin,rows] of metadataGroups) if (rows.length > 1) duplicateMetadata.push({vin,rows:rows.map((r:any)=>({id:r.id}))});
     add('warning','duplicate_vehicle_metadata','Duplicate FleetVehicleMetadata VIN rows',duplicateMetadata,'CCS vehicle metadata should have one row per VIN.');
 
+    // Expansion-system integrity. These checks intentionally use the same Fleet-only
+    // identities as the feature actions; they never infer or repair links automatically.
+    const badMeterRules = meterRules.filter((rule:any)=>!equipmentIds.has(rule.equipment_id) || !taskById.has(rule.maintenance_task_id) || (taskById.get(rule.maintenance_task_id) as any)?.equipment_id !== rule.equipment_id);
+    add('error','meter_rule_broken_link','Mileage/hour maintenance rules with invalid equipment or schedule links',badMeterRules.map((rule:any)=>({id:rule.id,equipment_id:rule.equipment_id,maintenance_task_id:rule.maintenance_task_id})),'A meter rule must point to an existing FleetEquipment record and a maintenance schedule for that same asset.');
+    const meterRuleGroups = groupBy(meterRules,(rule:any)=>String(rule.maintenance_task_id || ''));
+    const duplicateMeterRules:any[] = [];
+    for (const [taskId,rows] of meterRuleGroups) if (rows.length > 1) duplicateMeterRules.push({maintenance_task_id:taskId,rule_ids:rows.map((row:any)=>row.id)});
+    add('error','duplicate_meter_rules_for_schedule','Maintenance schedules with multiple mileage/hour rules',duplicateMeterRules,'A FleetMaintenanceTask may have at most one meter rule so date-or-meter generation remains deterministic.');
+
+    const badEstimateWo = repairEstimates.filter((row:any)=>!workOrderIds.has(row.work_order_id));
+    add('error','repair_estimate_missing_work_order','Repair estimates pointing to missing Fleet work orders',badEstimateWo.map((row:any)=>({id:row.id,work_order_id:row.work_order_id,equipment_id:row.equipment_id||''})),'Fleet repair estimates must stay attached to FleetMaintenanceWorkOrder only.');
+    const mismatchedEstimates = repairEstimates.filter((row:any)=>{
+      const wo:any = workOrderById.get(row.work_order_id);
+      return wo && row.equipment_id && wo.equipment_id && row.equipment_id !== wo.equipment_id;
+    });
+    add('error','repair_estimate_equipment_mismatch','Repair estimate and work-order equipment do not match',mismatchedEstimates.map((row:any)=>({id:row.id,work_order_id:row.work_order_id,equipment_id:row.equipment_id,work_order_equipment_id:(workOrderById.get(row.work_order_id) as any)?.equipment_id||''})),'Repair-estimate equipment identity must match its Fleet maintenance work order.');
+    const estimateGroups = groupBy(repairEstimates,(row:any)=>String(row.work_order_id || ''));
+    const duplicateEstimates:any[] = [];
+    for (const [workOrderId,rows] of estimateGroups) if (rows.length > 1) duplicateEstimates.push({work_order_id:workOrderId,estimate_ids:rows.map((row:any)=>row.id)});
+    add('error','duplicate_repair_estimates','Fleet work orders with multiple repair estimates',duplicateEstimates,'Each Fleet maintenance work order may have at most one repair-estimate/approval record.');
+
+    const badLifecycle = lifecycleProfiles.filter((row:any)=>!equipmentIds.has(row.equipment_id));
+    add('error','lifecycle_missing_equipment','Lifecycle profiles pointing to missing equipment',badLifecycle.map((row:any)=>({id:row.id,equipment_id:row.equipment_id})),'Lifecycle planning must point to current FleetEquipment.');
+    const lifecycleGroups = groupBy(lifecycleProfiles,(row:any)=>String(row.equipment_id || ''));
+    const duplicateLifecycle:any[] = [];
+    for (const [equipmentId,rows] of lifecycleGroups) if (rows.length > 1) duplicateLifecycle.push({equipment_id:equipmentId,profile_ids:rows.map((row:any)=>row.id)});
+    add('error','duplicate_lifecycle_profiles','Equipment with multiple lifecycle profiles',duplicateLifecycle,'Each Fleet asset should have one lifecycle/replacement-planning profile.');
+
+    add('error','fuel_entry_missing_equipment','Fuel entries pointing to missing equipment',fuelEntries.filter((row:any)=>!equipmentIds.has(row.equipment_id)).map((row:any)=>({id:row.id,equipment_id:row.equipment_id,fueled_at:row.fueled_at||''})),'Fleet fuel history must stay linked to a current FleetEquipment identity.');
+    add('error','warranty_missing_equipment','Warranty records pointing to missing equipment',warranties.filter((row:any)=>!equipmentIds.has(row.equipment_id)).map((row:any)=>({id:row.id,equipment_id:row.equipment_id,name:row.name||''})),'Fleet warranty coverage must stay linked to FleetEquipment.');
+    add('error','reservation_missing_equipment','Reservations pointing to missing equipment',reservations.filter((row:any)=>!equipmentIds.has(row.equipment_id)).map((row:any)=>({id:row.id,equipment_id:row.equipment_id,status:row.status||''})),'Fleet reservations/assignments must point to current FleetEquipment.');
+    const activeReservationGroups = groupBy(reservations.filter((row:any)=>['reserved','checked_out'].includes(row.status)),(row:any)=>String(row.equipment_id || ''));
+    const reservationConflicts:any[] = [];
+    for (const [equipmentId,rows] of activeReservationGroups) {
+      for (let i=0;i<rows.length;i+=1) for (let j=i+1;j<rows.length;j+=1) {
+        const a:any=rows[i], b:any=rows[j];
+        const aStart=Date.parse(a.start_at||''), aEnd=Date.parse(a.end_at||''), bStart=Date.parse(b.start_at||''), bEnd=Date.parse(b.end_at||'');
+        const checkedOut = a.status === 'checked_out' || b.status === 'checked_out';
+        const overlap = [aStart,aEnd,bStart,bEnd].every(Number.isFinite) && aStart < bEnd && bStart < aEnd;
+        if (checkedOut || overlap) reservationConflicts.push({equipment_id:equipmentId,reservation_ids:[a.id,b.id],statuses:[a.status,b.status]});
+      }
+    }
+    add('error','active_reservation_conflict','Conflicting active reservations/checkouts',reservationConflicts,'The reservation action prevents overlapping active assignments. Existing conflicts require admin review rather than automatic deletion.');
+
+    const dashboardGroups = groupBy(dashboardPreferences,(row:any)=>normIdentity(row.user_email));
+    const duplicateDashboardPreferences:any[] = [];
+    for (const [email,rows] of dashboardGroups) if (rows.length > 1) duplicateDashboardPreferences.push({user_email:email,preference_ids:rows.map((row:any)=>row.id)});
+    add('warning','duplicate_dashboard_preferences','Users with multiple Fleet dashboard preferences',duplicateDashboardPreferences,'Dashboard customization is one preference row per signed-in user.');
+
+    const enabledPolicies = approvalPolicies.filter((row:any)=>row.enabled !== false).slice().sort((a:any,b:any)=>Number(a.minimum_amount||0)-Number(b.minimum_amount||0));
+    const overlappingPolicies:any[] = [];
+    for (let i=0;i<enabledPolicies.length;i+=1) for (let j=i+1;j<enabledPolicies.length;j+=1) {
+      const a:any=enabledPolicies[i], b:any=enabledPolicies[j];
+      const aMin=Math.max(0,Number(a.minimum_amount||0)), bMin=Math.max(0,Number(b.minimum_amount||0));
+      const aMax=Number(a.maximum_amount||0)>0?Number(a.maximum_amount):Infinity;
+      const bMax=Number(b.maximum_amount||0)>0?Number(b.maximum_amount):Infinity;
+      if (aMin <= bMax && bMin <= aMax) overlappingPolicies.push({policy_ids:[a.id,b.id],names:[a.name||'',b.name||''],ranges:[[aMin,Number.isFinite(aMax)?aMax:null],[bMin,Number.isFinite(bMax)?bMax:null]]});
+    }
+    add('warning','overlapping_repair_approval_policies','Enabled repair-approval tiers with overlapping amount ranges',overlappingPolicies,'Overlapping tiers make policy selection order-sensitive. Adjust ranges so one estimate amount maps to one intended approval tier.');
+
+    const badIdentificationPromotions = partIdentifications.filter((row:any)=>row.promoted_part_id && !partIds.has(row.promoted_part_id));
+    add('warning','part_identification_missing_promoted_part','Part-identification records pointing to missing promoted parts',badIdentificationPromotions.map((row:any)=>({id:row.id,promoted_part_id:row.promoted_part_id,status:row.status||''})),'Promoted identification history should resolve to the FleetPart it created or matched.');
+    const badIdentificationEquipment:any[] = [];
+    for (const row of partIdentifications) for (const id of [...(row.confirmed_equipment_ids||[]),...(row.suggested_equipment_ids||[])]) if (id && !equipmentIds.has(id)) badIdentificationEquipment.push({id:row.id,equipment_id:id,status:row.status||''});
+    add('warning','part_identification_missing_equipment','Part-identification fitment references missing equipment',badIdentificationEquipment,'AI suggestions and confirmed fitment references should resolve to current FleetEquipment records.');
+
+    const emptyInspectionTemplates = inspectionTemplates.filter((row:any)=>row.active !== false && (!Array.isArray(row.items) || row.items.length === 0));
+    add('warning','active_inspection_template_empty','Active inspection templates with no checklist items',emptyInspectionTemplates.map((row:any)=>({id:row.id,name:row.name||'',inspection_type:row.inspection_type||''})),'An active Fleet inspection template should contain at least one checklist item.');
+    const badInspections = inspections.filter((row:any)=>!equipmentIds.has(row.equipment_id) || !inspectionTemplateIds.has(row.template_id));
+    add('error','inspection_broken_link','Inspections pointing to missing equipment or templates',badInspections.map((row:any)=>({id:row.id,equipment_id:row.equipment_id,template_id:row.template_id,status:row.status||''})),'Fleet inspections must retain their equipment and inspection-template relationships.');
+    const badInspectionWorkOrders:any[] = [];
+    for (const inspection of inspections) for (const id of inspection.generated_work_order_ids || []) if (id && !workOrderIds.has(id)) badInspectionWorkOrders.push({inspection_id:inspection.id,work_order_id:id});
+    add('error','inspection_missing_generated_work_order','Inspections referencing missing generated Fleet work orders',badInspectionWorkOrders,'Failed inspection follow-up IDs must resolve to FleetMaintenanceWorkOrder records.');
+    const incompleteCompletedInspections = inspections.filter((row:any)=>['passed','failed'].includes(row.status) && !row.completed_at);
+    add('warning','completed_inspection_missing_timestamp','Passed/failed inspections without completion timestamps',incompleteCompletedInspections.map((row:any)=>({id:row.id,status:row.status,equipment_id:row.equipment_id})),'Completed inspection history should carry a completion timestamp.');
+
     const unresolvedReceipts = receipts.filter((r:any)=>['started','failed'].includes(r.status));
     add('error','unresolved_operation_receipts','Unresolved Fleet operation receipts',unresolvedReceipts.map((r:any)=>({id:r.id,operation_key:r.operation_key,operation_type:r.operation_type,status:r.status,error:r.error_message || ''})),'Unresolved receipts can indicate an interrupted or ambiguous side effect and must not be silently replayed.');
     const unresolvedQueue = queue.filter((r:any)=>['pending','sending','failed'].includes(r.status));
