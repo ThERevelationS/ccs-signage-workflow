@@ -168,6 +168,7 @@ Deno.serve(async (req) => {
 
     const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
+    const Equipment = base44.asServiceRole.entities.FleetEquipment;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
     const today = todayEastern();
     const due = (await loadAllEntityRows({ entity:Task, sort:'-created_date', label:'Fleet maintenance schedules' })).filter((task:any)=>DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date<=today);
@@ -224,6 +225,16 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      const equipmentBeforeClaim = await Equipment.get(task.equipment_id).catch(()=>null);
+      if (!equipmentBeforeClaim) {
+        results.push({task_id:task.id,status:'error',reason:'equipment_missing'});
+        continue;
+      }
+      if (equipmentBeforeClaim.status === 'retired') {
+        results.push({task_id:task.id,status:'skipped',reason:'equipment_retired'});
+        continue;
+      }
+
       const receipt = await claim(Receipt,key,task);
       if (receipt.applied) {
         const found = canonical(await WorkOrder.filter({generation_key:key}));
@@ -262,11 +273,28 @@ Deno.serve(async (req) => {
         const lockedTask = lock.task;
         receipt.receipt = lock.receipt;
 
+        const equipmentAfterLock = await Equipment.get(lockedTask.equipment_id).catch(()=>null);
+        if (!equipmentAfterLock || equipmentAfterLock.status === 'retired') {
+          const released = await releaseTaskGenerationLock(Task,lockedTask,receipt.receipt);
+          await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),skipped:true,skip_reason:equipmentAfterLock?'equipment_retired':'equipment_missing',task_lock_released:released}});
+          results.push({task_id:task.id,status:'skipped',reason:equipmentAfterLock?'equipment_retired':'equipment_missing'});
+          continue;
+        }
+
         const activeNow = (await loadAllEntityRows({ entity:WorkOrder, query:{maintenance_task_id:task.id}, sort:'-created_date', label:`Fleet work orders for maintenance task ${task.id}` })).find((wo:any)=>ACTIVE.has(wo.status));
         if (activeNow) {
           const released = await releaseTaskGenerationLock(Task,lockedTask,receipt.receipt);
           await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),existing_work_order_id:activeNow.id,skipped:true,task_lock_released:released}});
           results.push({task_id:task.id,status:'skipped',reason:'active_work_order_exists',work_order_id:activeNow.id});
+          continue;
+        }
+
+        const equipmentBeforeCreate = await Equipment.get(lockedTask.equipment_id).catch(()=>null);
+        if (!equipmentBeforeCreate || equipmentBeforeCreate.status === 'retired') {
+          const currentLockedTask = await Task.get(lockedTask.id).catch(()=>lockedTask);
+          const released = await releaseTaskGenerationLock(Task,currentLockedTask,receipt.receipt);
+          await Receipt.update(receipt.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...(receipt.receipt.result_summary||{}),skipped:true,skip_reason:equipmentBeforeCreate?'equipment_retired':'equipment_missing',task_lock_released:released}});
+          results.push({task_id:task.id,status:'skipped',reason:equipmentBeforeCreate?'equipment_retired':'equipment_missing'});
           continue;
         }
 
