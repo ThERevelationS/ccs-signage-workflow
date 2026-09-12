@@ -768,8 +768,9 @@ export default function ProductChecklistDialog({
     });
   };
   
-  // All items expanded by default - using a ref to track
+  // Checklist rows and product groups are expanded by default.
   const [expandedItems, setExpandedItems] = useState({});
+  const [collapsedProducts, setCollapsedProducts] = useState({});
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
@@ -1149,6 +1150,15 @@ export default function ProductChecklistDialog({
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setCollapsedProducts(prev => ({ ...prev, [productName]: !prev[productName] }))}
+                      className="p-1 rounded hover:bg-purple-100 text-purple-700 shrink-0"
+                      title={collapsedProducts[productName] ? "Expand product checklist" : "Collapse product checklist"}
+                      aria-label={collapsedProducts[productName] ? `Expand ${productName}` : `Collapse ${productName}`}
+                    >
+                      {collapsedProducts[productName] ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
                     {isRegistered && (
                       <button
                         onClick={(e) => { 
@@ -1196,7 +1206,8 @@ export default function ProductChecklistDialog({
                       </div>
                     )}
                   </div>
-                  
+
+                  <div className={collapsedProducts[productName] ? "hidden" : ""}>
                   {/* Inline add checklist item for this product */}
                   {newItemInput.show && newItemInput.parentId === null && newItemInput.type === 'checklist' && newItemInput.productName === productName && (
                     <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
@@ -2031,6 +2042,7 @@ export default function ProductChecklistDialog({
                       </div>
                     </div>
                   ))}
+                  </div>
                 </div>
                 ))}
                 
