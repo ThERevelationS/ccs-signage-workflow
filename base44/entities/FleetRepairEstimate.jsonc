@@ -112,6 +112,20 @@
     "decision_notes": {
       "type": "string"
     },
+    "estimate_source": {
+      "type": "string",
+      "enum": [
+        "ccs_admin",
+        "mechanic_portal"
+      ],
+      "default": "ccs_admin"
+    },
+    "mechanic_name": {
+      "type": "string"
+    },
+    "mechanic_access_id": {
+      "type": "string"
+    },
     "creation_key": {
       "type": "string"
     }
