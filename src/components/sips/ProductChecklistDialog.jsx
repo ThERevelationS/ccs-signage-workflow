@@ -464,24 +464,12 @@ export default function ProductChecklistDialog({
   };
 
   const proceedWithCheckOff = async () => {
-    try {
-      setSaveError("");
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
-        workOrderId: workOrder.id,
-        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
-        nextFields: { sip_completed: true },
-        label: "SIP checklist completion",
-      });
-      setLoadedSipCompletedSnapshot(saved.sip_completed);
-      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
-      if (onUpdate) onUpdate();
-      setNoChecklistWarning(false);
-      onClose();
-    } catch (error) {
-      console.error("Could not complete SIP checklist safely:", error);
-      setNoChecklistWarning(false);
-      setSaveError(error?.message || "SIP completion changed in another session. Reload before checking it off.");
-    }
+    if (isSaving) return;
+    setNoChecklistWarning(false);
+    // Preserve any local product edits and complete the SIP in the same
+    // concurrency-safe write, even when the user explicitly overrides the
+    // missing-checklist warning.
+    await saveChecklist(undefined, { markComplete: true });
   };
 
   // Called when Save button is clicked - first show revisit date popup
@@ -2286,7 +2274,8 @@ export default function ProductChecklistDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={proceedWithCheckOff} className="bg-green-600 hover:bg-green-700">
+            <AlertDialogAction onClick={proceedWithCheckOff} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Yes, Mark Complete
             </AlertDialogAction>
           </AlertDialogFooter>
