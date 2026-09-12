@@ -88,5 +88,23 @@
   "required": [
     "title",
     "message"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__announcement_backend_only__"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "__announcement_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__announcement_backend_only__"
+      }
+    }
+  }
 }
