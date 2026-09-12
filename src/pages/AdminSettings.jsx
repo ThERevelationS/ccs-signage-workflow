@@ -1010,7 +1010,7 @@ export default function AdminSettings() {
                     <TimeClockReportsDashboard />
                   </TabsContent>
                   <TabsContent value="pto">
-                    <PTOManagement />
+                    <PTOManagement adminCapability={adminCapability} />
                   </TabsContent>
                   <TabsContent value="overtime">
                     <OvertimeRulesManager />
