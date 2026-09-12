@@ -197,7 +197,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
           setRecognizedUser(user);
           setScanStatus(`Recognized: ${user.full_name || user.email}`);
           stopScanning();
-          onRecognized?.(user);
+          onRecognized?.(user, Array.from(detection.descriptor));
         } else {
           setScanStatus("Face not recognized.");
         }
