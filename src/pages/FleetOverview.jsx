@@ -254,8 +254,9 @@ export default function FleetOverview() {
         {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">{error}</div>}
 
         {data && metrics && (
-          <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
+          <div className={`flex flex-col ${dashboardPreference.density === "compact" ? "gap-3" : "gap-6"}`}>
+            {widgetVisible("summary") && <div style={{ order: widgetOrder("summary") }}>
+            <div className={`grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 ${dashboardPreference.density === "compact" ? "gap-2" : "gap-3 sm:gap-4"}`}> 
               <MetricCard icon={Activity} label="Fleet Health" value={metrics.averageHealth == null ? "—" : `${metrics.averageHealth}%`} sub={`${metrics.needsHealthAttention} asset${metrics.needsHealthAttention === 1 ? "" : "s"} below 75`} />
               <MetricCard icon={Truck} label="Available Now" value={metrics.availableEquipment.length} sub={`${metrics.currentAssignments.length} currently assigned · ${metrics.retiredEquipment.length} retired`} />
               <MetricCard icon={Navigation} label="Tracked" value={metrics.uniqueTracked} sub="Current active VINs" />
@@ -264,8 +265,9 @@ export default function FleetOverview() {
               <MetricCard icon={Package} label="Low Stock" value={metrics.lowStock} sub={`${metrics.lowParts.length} parts · ${metrics.lowFluids.length} fluids`} />
               <MetricCard icon={CalendarClock} label="Due in 14 Days" value={metrics.upcomingTasks.length} sub={`${metrics.overdueTasks.length} overdue schedule${metrics.overdueTasks.length === 1 ? "" : "s"}`} />
             </div>
+            </div>}
 
-            <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
+            {widgetVisible("today") && <div style={{ order: widgetOrder("today") }}><section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Today</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">The operational picture to act on first.</p></div>
               <div className="grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
                 <TodayCell label="Ready / available" value={`${metrics.availableEquipment.length} of ${metrics.activeEquipment.length}`} detail={`${metrics.currentAssignments.length} currently reserved / checked out`} attention={metrics.pastDueAssignments.length > 0} />
@@ -273,9 +275,9 @@ export default function FleetOverview() {
                 <TodayCell label="Priority repairs" value={metrics.highPriorityOrders.length} detail={`${metrics.unassignedOrders.length} active work order${metrics.unassignedOrders.length === 1 ? "" : "s"} unassigned`} attention={metrics.highPriorityOrders.length > 0} />
                 <TodayCell label="Inventory / requests" value={metrics.lowStock + metrics.pendingRequests.length} detail={`${metrics.lowStock} low-stock · ${metrics.pendingRequests.length} requested`} attention={metrics.lowStock + metrics.pendingRequests.length > 0} />
               </div>
-            </section>
+            </section></div>}
 
-            <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+            {widgetVisible("system_health") && <div style={{ order: widgetOrder("system_health") }}><div className={`rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm ${dashboardPreference.density === "compact" ? "p-3" : "p-4"}`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${!isAdmin || adminHealth?.bouncieHealthy ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
@@ -293,9 +295,9 @@ export default function FleetOverview() {
                 </div>
                 {isAdmin && <Link to={createPageUrl("FleetSettings")} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1">Operations health <ArrowRight className="w-4 h-4" /></Link>}
               </div>
-            </div>
+            </div></div>}
 
-            <section className={`rounded-xl border shadow-sm ${attentionSignals > 0 ? "border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10" : "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900 dark:bg-emerald-950/10"}`}>
+            {widgetVisible("attention") && <div style={{ order: widgetOrder("attention") }}><section className={`rounded-xl border shadow-sm ${attentionSignals > 0 ? "border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10" : "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900 dark:bg-emerald-950/10"}`}> 
               <div className="px-4 py-3 border-b border-gray-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div><div className="flex items-center gap-2"><AlertTriangle className={`w-5 h-5 ${attentionSignals > 0 ? "text-amber-500" : "text-emerald-500"}`} /><h2 className="font-semibold text-gray-900 dark:text-slate-100">Needs Attention</h2></div><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">One operational queue for maintenance, work orders, inventory, requests, Bouncie, and Fleet automation.</p></div>
                 <div className="flex items-center gap-3"><div className={`text-sm font-bold ${attentionSignals > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}>{attentionSignals} attention signal{attentionSignals === 1 ? "" : "s"}</div><Link to={createPageUrl("FleetNotifications")} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1">Notification Center <ArrowRight className="w-3.5 h-3.5" /></Link></div>
@@ -316,9 +318,9 @@ export default function FleetOverview() {
                 {isAdmin && <AttentionRow icon={Activity} label="Fleet automation queue / receipts" value={adminHealth?.unresolved || 0} page="FleetSettings" />}
                 {isAdmin && <AttentionRow icon={Navigation} label="Bouncie connection / webhook health" value={adminHealth?.bouncieHealthy ? 0 : 1} page="FleetSettings" />}
               </div>
-            </section>
+            </section></div>}
 
-            <div className="grid lg:grid-cols-3 gap-4">
+            {widgetVisible("operations") && <div style={{ order: widgetOrder("operations") }}><div className="grid lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
                   <div>
@@ -351,9 +353,10 @@ export default function FleetOverview() {
                 <QuickLink icon={Wrench} title="New Fleet Work Order" text="Start maintenance or repair work" page="FleetWorkOrders?new=1" rawPage />
                 <div className="grid grid-cols-2 gap-3"><QuickLink icon={Package} title="Parts" text={`${data.parts.length} records`} page="FleetParts" /><QuickLink icon={Droplets} title="Fluids" text={`${data.fluids.length} records`} page="FleetFluids" /></div>
               </div>
-            </div>
-          </>
+            </div></div>}
+          </div>
         )}
+        {customizeOpen && <DashboardCustomizer preference={dashboardPreference} saving={savingDashboard} onClose={() => !savingDashboard && setCustomizeOpen(false)} onSave={saveDashboardPreference} onReset={resetDashboardPreference} />}
       </div>
     </div>
   );
