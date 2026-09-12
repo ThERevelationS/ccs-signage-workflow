@@ -72,6 +72,7 @@ import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import {
   createWorkOrderArrayItemLocator,
   createWorkOrderWithRecovery,
@@ -1785,7 +1786,8 @@ export default function WorkOrderDetailsDialog({
                     </div>
                   ) : workOrder.google_drive_folder_url ? (
                     <Button
-                      onClick={() => window.open(workOrder.google_drive_folder_url, '_blank')}
+                      onClick={() => openExternalHttpUrl(workOrder.google_drive_folder_url)}
+                      disabled={!safeExternalHttpUrl(workOrder.google_drive_folder_url)}
                       className="w-full mt-2 gap-2"
                       size="sm"
                     >
