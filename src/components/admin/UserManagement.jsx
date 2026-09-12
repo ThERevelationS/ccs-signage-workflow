@@ -56,8 +56,6 @@ import {
 } from "@/components/admin/authorizedEmailPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
-const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
-
 export default function UserManagement() {
   const { sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
@@ -80,7 +78,9 @@ export default function UserManagement() {
     role: "user",
     sales_roles: ["Task Assigned"],
     can_import_export: false,
-    can_view_resources: false
+    can_view_resources: false,
+    employment_type: "hourly",
+    can_work_pause: false
   });
   const [sendingPasswordReset, setSendingPasswordReset] = useState(null);
   const [sendingOnboardingEmail, setSendingOnboardingEmail] = useState(null);
@@ -117,7 +117,9 @@ export default function UserManagement() {
       role: user.role || "user",
       sales_roles: user.sales_roles || ["Task Assigned"],
       can_import_export: user.can_import_export || false,
-      can_view_resources: user.role === 'admin' || user.can_view_resources || false
+      can_view_resources: user.role === 'admin' || user.can_view_resources || false,
+      employment_type: user.employment_type || "hourly",
+      can_work_pause: user.can_work_pause === true
     });
     setIsDialogOpen(true);
   };
@@ -252,6 +254,8 @@ export default function UserManagement() {
           full_name: fullName || null,
           role: inviteRole,
           sales_roles: ["Task Assigned"],
+          employment_type: "hourly",
+          can_work_pause: false,
           onboarding_complete: false
         },
         label: `Authorized user invitation ${email}`
