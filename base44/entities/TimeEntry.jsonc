@@ -150,6 +150,16 @@
       "default": 0,
       "description": "Completed tracked unpaid break minutes deducted from worked time"
     },
+    "work_pause_tracking_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this shift used authoritative Work Pause records"
+    },
+    "tracked_work_pause_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Completed Work Pause minutes excluded from actual worked time"
+    },
     "approval_status": {
       "type": "string",
       "enum": [
