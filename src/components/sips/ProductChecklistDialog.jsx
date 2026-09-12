@@ -160,15 +160,6 @@ export default function ProductChecklistDialog({
         };
       });
       
-      console.log("Loaded checklist with reconstructed hierarchy:", 
-        reconstructedChecklist.map(i => ({ 
-          id: i.id?.substring(0, 40), 
-          text: i.text?.substring(0, 20),
-          type: i.type,
-          parent_id: i.parent_id?.substring(0, 40)
-        }))
-      );
-      
       setChecklist(reconstructedChecklist);
       setLoadedUiChecklistSnapshot(cloneLoadedValue(reconstructedChecklist) || []);
 
@@ -205,7 +196,6 @@ export default function ProductChecklistDialog({
 
   // Handle template application from TemplateBuilder - APPENDS to existing checklist
   const handleApplyTemplate = (templateData) => {
-    console.log("handleApplyTemplate called with:", templateData);
     const newItems = [];
     
     // Helper to flatten hierarchical items
@@ -304,7 +294,6 @@ export default function ProductChecklistDialog({
     const appliedProductNames = new Set(templateData.map(s => s.productName || s.parentProduct).filter(Boolean));
     
     // Remove existing items for those products, then append new ones
-    console.log("Setting checklist replacing products:", [...appliedProductNames], "new items:", newItems.length);
     setChecklist(prev => {
       const kept = prev.filter(item => !appliedProductNames.has(item.product_name));
       return [...kept, ...newItems];
@@ -825,7 +814,6 @@ export default function ProductChecklistDialog({
       actualProductName = productName || 'General Items';
     }
     
-    console.log("Adding new item with product_name:", actualProductName, "parent_id:", parentId, "type:", type);
     
     // Create ID that includes product name for proper grouping (matching template item pattern)
     const timestamp = Date.now();
@@ -847,7 +835,6 @@ export default function ProductChecklistDialog({
       parent_id: parentId
     };
     
-    console.log("New item created:", JSON.stringify(newItem));
     
     // Insert the new item right after its parent in the checklist array
     // This ensures the item stays in the correct position
@@ -2182,7 +2169,6 @@ export default function ProductChecklistDialog({
             setShowTemplateBuilder(false);
           }}
           onApplyTemplate={(templateData) => {
-            console.log("Received template data:", templateData.length, "sections");
             handleApplyTemplate(templateData);
             setShowTemplateBuilder(false);
           }}
