@@ -24,14 +24,19 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
     } catch { return undefined; }
   };
 
-  const [selected, setSelected] = useState(() => parseDate(currentDate));
+  const [selected, setSelected] = useState(() => {
+    const parsed = parseDate(currentDate);
+    return parsed && parsed > startOfDay(new Date()) ? parsed : undefined;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const today = startOfDay(new Date());
+  const earliestRevisitDate = addDays(today, 1);
 
   // Reset whenever popup opens so it shows fresh state
   React.useEffect(() => {
     if (isOpen) {
-      setSelected(parseDate(currentDate));
+      const parsed = parseDate(currentDate);
+      setSelected(parsed && parsed > startOfDay(new Date()) ? parsed : undefined);
       setIsSubmitting(false);
     }
   }, [isOpen, currentDate]);
@@ -50,6 +55,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
   ];
 
   const currentParsedDate = parseDate(currentDate);
+  const currentDateIsFuture = currentParsedDate && currentParsedDate > today;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -69,6 +75,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
           <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
             <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
             Current revisit: <strong className="text-gray-800">{format(currentParsedDate, "MMM d, yyyy")}</strong>
+            {!currentDateIsFuture && <span className="text-amber-700">— active now</span>}
           </div>
         )}
 
@@ -101,7 +108,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
             mode="single"
             selected={selected}
             onSelect={setSelected}
-            disabled={{ before: today }}
+            disabled={{ before: earliestRevisitDate }}
             className="rounded-lg border mx-auto"
           />
         </div>
@@ -116,7 +123,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
         <div className="space-y-2 pt-1">
           <Button
             onClick={() => submitDate(selected)}
-            disabled={!selected || isSubmitting}
+            disabled={!selected || selected < earliestRevisitDate || isSubmitting}
             className="w-full h-10 bg-blue-600 hover:bg-blue-700"
           >
             Save with Revisit Date
