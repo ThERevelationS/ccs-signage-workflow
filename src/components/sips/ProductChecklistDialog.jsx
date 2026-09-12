@@ -520,8 +520,8 @@ export default function ProductChecklistDialog({
         sip_checklist: savedChecklist,
         products: savedProducts,
         sip_revisit_date: saved.sip_revisit_date,
-        sip_completed: saved.sip_completed,
         updated_date: saved.updated_date,
+        ...(markComplete ? { sip_completed: saved.sip_completed } : {}),
       });
       setLoadedChecklistSnapshot(saved.sip_checklist === undefined ? undefined : JSON.parse(JSON.stringify(saved.sip_checklist)));
       setLoadedProductsSnapshot(saved.products === undefined ? undefined : JSON.parse(JSON.stringify(saved.products)));
@@ -1172,13 +1172,19 @@ export default function ProductChecklistDialog({
                                 } else if (val !== "select_value") {
                                   // Require approved_by before allowing any status selection
                                   if (!displayItem.approved_by) {
-                                    alert("Please select an approver first before setting the status.");
+                                    setValidationDialog({
+                                      title: "Approver Required",
+                                      message: "Select who approved this checklist item before setting its status."
+                                    });
                                     return;
                                   }
                                   // Check if children are complete before allowing completion
                                   const selectedCondition = dropdownConditions.find(dd => dd.name === val);
                                   if (selectedCondition?.is_completed && !areChildrenComplete(displayItem.id)) {
-                                    alert("Please complete all tasks and details under this checklist item first.");
+                                    setValidationDialog({
+                                      title: "Tasks Still Open",
+                                      message: "Complete the tasks and details under this checklist item before marking it completed."
+                                    });
                                     return;
                                   }
                                   updateChecklistItem(displayItem.id, { custom_dropdown_value: val });
@@ -1394,7 +1400,10 @@ export default function ProductChecklistDialog({
 
                                           // Check if children are complete before allowing completion
                                           if (selectedCondition?.is_completed && !areChildrenComplete(detail.id)) {
-                                            alert("Please complete all tasks under this detail first.");
+                                            setValidationDialog({
+                                              title: "Tasks Still Open",
+                                              message: "Complete the tasks under this detail before marking it completed."
+                                            });
                                             return;
                                           }
                                           updateChecklistItem(detail.id, { custom_dropdown_value: val });
@@ -1976,6 +1985,24 @@ export default function ProductChecklistDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>OK</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Validation guidance */}
+      <AlertDialog open={!!validationDialog} onOpenChange={(open) => { if (!open) setValidationDialog(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              {validationDialog?.title || "Checklist Needs Attention"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {validationDialog?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setValidationDialog(null)}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
