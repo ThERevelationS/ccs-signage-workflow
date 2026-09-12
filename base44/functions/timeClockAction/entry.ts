@@ -215,6 +215,129 @@ async function setState(stateEntity: any, state: any, expectedStatus: string, ex
   return freshState(stateEntity, state.id);
 }
 
+function breakStatusOf(state: any) {
+  const value = String(state?.break_status || 'working');
+  return ['working', 'starting_break', 'on_break', 'ending_break'].includes(value) ? value : 'working';
+}
+
+async function setBreakState(stateEntity: any, state: any, expectedBreakStatus: string, expectedRequestId: string | null, nextFields: any) {
+  const query: any = {
+    id: state.id,
+    updated_date: state.updated_date,
+    status: 'clocked_in',
+    break_status: expectedBreakStatus,
+  };
+  if (expectedRequestId !== null) query.last_break_request_id = expectedRequestId;
+  const result = await stateEntity.updateMany(query, { $set: nextFields });
+  if (!result || typeof result.updated !== 'number') throw new Error('Time Clock break-state update could not be verified.');
+  if (result.updated !== 1) return null;
+  return freshState(stateEntity, state.id);
+}
+
+async function breakSummaryForEntry(breakEntity: any, entryId: string, userEmail: string) {
+  const rows = await breakEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'completed' });
+  if (!Array.isArray(rows)) throw new Error('Completed break lookup did not return a record list.');
+  let total = 0;
+  let paid = 0;
+  let unpaid = 0;
+  for (const row of rows) {
+    const minutes = Math.max(0, Math.round(Number(row?.duration_minutes || 0)));
+    total += minutes;
+    if (row?.is_paid === true) paid += minutes;
+    else unpaid += minutes;
+  }
+  return {
+    count: rows.length,
+    total_minutes: total,
+    paid_minutes: paid,
+    unpaid_minutes: unpaid,
+  };
+}
+
+async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor }: any) {
+  if (state?.status !== 'clocked_in') return state;
+  const breakStatus = breakStatusOf(state);
+  if (!['starting_break', 'ending_break'].includes(breakStatus)) return state;
+  const requestId = String(state.last_break_request_id || '');
+  const started = state.break_pending_started_at ? new Date(state.break_pending_started_at) : null;
+  const ageMs = started && Number.isFinite(started.getTime()) ? Date.now() - started.getTime() : Number.POSITIVE_INFINITY;
+
+  if (breakStatus === 'starting_break') {
+    const matches = requestId
+      ? await breakEntity.filter({ user_email: target.email, time_entry_id: state.active_entry_id, start_request_id: requestId })
+      : [];
+    if (!Array.isArray(matches)) throw new Error('Break-start recovery lookup did not return a record list.');
+    if (matches.length > 1) throw new Error('Break-start recovery is ambiguous.');
+    if (matches.length === 1 && matches[0]?.status === 'active') {
+      const breakRow = matches[0];
+      const recovered = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+        break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Recovered interrupted break-start finalization', details: { break_id: breakRow.id },
+        });
+        return recovered;
+      }
+    }
+    if (matches.length === 0 && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+        break_status: 'working', active_break_id: null, break_pending_started_at: null,
+      });
+      if (rolledBack) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Rolled back abandoned break-start transition with no break record',
+        });
+        return rolledBack;
+      }
+    }
+  }
+
+  if (breakStatus === 'ending_break') {
+    const breakRow = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+    if (breakRow?.id && breakRow.status === 'completed' && String(breakRow.end_request_id || '') === requestId) {
+      const recovered = await setBreakState(stateEntity, state, 'ending_break', requestId, {
+        break_status: 'working', active_break_id: null, break_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Recovered interrupted break-end finalization', details: { break_id: breakRow.id },
+        });
+        return recovered;
+      }
+    }
+    if (breakRow?.id && breakRow.status === 'active' && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setBreakState(stateEntity, state, 'ending_break', requestId, {
+        break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
+      });
+      if (rolledBack) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Rolled back abandoned break-end transition before break update', details: { break_id: breakRow.id },
+        });
+        return rolledBack;
+      }
+    }
+  }
+
+  return freshState(stateEntity, state.id);
+}
+
 async function recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor }: any) {
   if (!['clocking_in', 'clocking_out'].includes(String(state?.status || ''))) return state;
   const requestId = String(state.last_request_id || '');
@@ -328,6 +451,7 @@ Deno.serve(async (req) => {
     const auditEntity = base44.asServiceRole.entities.TimeClockAudit;
     const badgeEntity = base44.asServiceRole.entities.TimeClockBadge;
     const correctionRequestEntity = base44.asServiceRole.entities.TimeClockCorrectionRequest;
+    const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
@@ -361,6 +485,7 @@ Deno.serve(async (req) => {
 
     let state = await ensureState(stateEntity, target);
     state = await recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor });
+    state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
 
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
@@ -368,9 +493,17 @@ Deno.serve(async (req) => {
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
-        return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target) });
+        const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+        if (activeBreak?.id && (activeBreak.status !== 'active' || asEmail(activeBreak.user_email) !== target.email || activeBreak.time_entry_id !== entry.id)) {
+          return Response.json({ success: false, error: 'Stored break state does not match the active break record. Admin review is required.' }, { status: 409 });
+        }
+        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        return Response.json({
+          success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+          break_status: breakStatusOf(state), active_break: activeBreak || null, break_summary: breakSummary,
+        });
       }
-      if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null, user: publicEmployee(target) });
+      if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null, user: publicEmployee(target), break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 } });
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
 
