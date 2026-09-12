@@ -121,7 +121,7 @@ const STANDARD_COLUMN_PRESETS = [
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }) {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [filters, setFilters] = useState([]);
   const [columnPresets, setColumnPresets] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
@@ -247,9 +247,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     setPersistenceError("");
     try {
       if (editingItem && !editingItem.is_standard) {
-        await updateSalesFilterIfUnchanged({ entity: SalesFilter, record: editingItem, nextFields: data, label: `Saved filter ${editingItem.name || editingItem.id}` });
+        await updateSalesFilterIfUnchanged({ record: editingItem, nextFields: data, sessionToken, label: `Saved filter ${editingItem.name || editingItem.id}` });
       } else {
-        const result = await createSalesFilterIfAbsent({ entity: SalesFilter, data, label: `Saved filter ${data.name}` });
+        const result = await createSalesFilterIfAbsent({ data, sessionToken, label: `Saved filter ${data.name}` });
         if (result.status === "existing") throw new Error(`A ${data.type === "column_preset" ? "column preset" : "filter"} named "${data.name}" already exists.`);
       }
       await loadData();
@@ -264,13 +264,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const duplicateItem = async (item) => {
-    const SalesFilter = base44.entities.SalesFilter;
     setPersistenceError("");
     try {
       await createUniqueSalesFilterCopy({
-        entity: SalesFilter,
         source: item,
-        createdByName: currentUser?.full_name || currentUser?.email || "Unknown",
+        sessionToken,
         label: `Saved filter copy ${item.name}`,
       });
       await loadData();
@@ -294,12 +292,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const confirmDelete = async () => {
-    const SalesFilter = base44.entities.SalesFilter;
     if (!deleteConfirm?.id || isSaving) return;
     setIsSaving(true);
     setPersistenceError("");
     try {
-      await deleteSalesFilterIfUnchanged({ entity: SalesFilter, record: deleteConfirm, label: `Saved filter ${deleteConfirm.name || deleteConfirm.id} deletion` });
+      await deleteSalesFilterIfUnchanged({ record: deleteConfirm, sessionToken, label: `Saved filter ${deleteConfirm.name || deleteConfirm.id} deletion` });
       await loadData();
       setDeleteConfirm(null);
     } catch (error) {
@@ -332,16 +329,14 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       // Force re-render
       setFilters([...filters]);
     } else {
-      const SalesFilter = base44.entities.SalesFilter;
       const selectedBy = item.selected_by || [];
       const isSelected = selectedBy.includes(userEmail);
       
       try {
         await setSalesFilterSelectionSafely({
-          entity: SalesFilter,
           recordId: item.id,
-          userEmail,
           selected: !isSelected,
+          sessionToken,
           label: `Saved filter ${item.name || item.id} selection`,
         });
         await loadData();
@@ -382,7 +377,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     if (item.is_standard) return false;
     // Admins can delete any custom filter, others can only delete their own
     if (currentUser?.role === "admin") return true;
-    return item.created_by === currentUser?.email;
+    const currentEmail = String(currentUser?.email || "").toLowerCase();
+    return String(item.owner_email || "").toLowerCase() === currentEmail ||
+      (String(item.created_by || "").toLowerCase() !== "anonymous" && String(item.created_by || "").toLowerCase() === currentEmail);
   };
 
   return (
