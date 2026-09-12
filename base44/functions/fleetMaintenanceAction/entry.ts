@@ -118,11 +118,24 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'generate_due') {
-      const allTasks = await loadAllEntityRows({ entity: Task, sort: '-created_date', label: 'Fleet maintenance schedules' });
+      const [allTasks, allEquipment] = await Promise.all([
+        loadAllEntityRows({ entity: Task, sort: '-created_date', label: 'Fleet maintenance schedules' }),
+        loadAllEntityRows({ entity: Equipment, sort: 'name', label: 'Fleet equipment for maintenance generation preview' }),
+      ]);
+      const equipmentById = new Map(allEquipment.map((row: any) => [row.id, row]));
       const due = allTasks.filter((task: any) => DUE_TASK_STATUSES.has(task.status) && task.start_date && task.start_date <= today());
       const report: any[] = [];
 
       for (const task of due) {
+        const equipment = equipmentById.get(task.equipment_id);
+        if (!equipment) {
+          report.push({ task_id: task.id, title: task.title, due_date: task.start_date, action: 'skip', reason: 'equipment_missing' });
+          continue;
+        }
+        if (equipment.status === 'retired') {
+          report.push({ task_id: task.id, title: task.title, due_date: task.start_date, action: 'skip', reason: 'equipment_retired' });
+          continue;
+        }
         const existingOrders = await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: task.id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${task.id}` });
         const active = existingOrders.find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         const key = `fleetmaint:${task.id}:due:${task.start_date}`;
