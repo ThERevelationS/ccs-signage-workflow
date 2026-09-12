@@ -53,5 +53,27 @@
   "required": [
     "name",
     "items"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_legacy_checklist_template__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled_legacy_checklist_template__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled_legacy_checklist_template__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_legacy_checklist_template__"
+      }
+    }
+  }
 }
