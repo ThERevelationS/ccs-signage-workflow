@@ -1346,7 +1346,8 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Approved punch times are invalid.' }, { status: 400 });
         }
         const totalMinutes = Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000);
-        if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240 || lunchMinutes > totalMinutes) {
+        const trackedWorkPauseMinutes = Math.max(0, Math.round(Number(entry.tracked_work_pause_minutes || 0)));
+        if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240 || (lunchMinutes + trackedWorkPauseMinutes) > totalMinutes) {
           if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
           await releaseReview();
           return Response.json({ success: false, error: 'Approved lunch minutes are invalid for this shift.' }, { status: 400 });
@@ -1358,7 +1359,7 @@ Deno.serve(async (req) => {
         });
         const nextFields = {
           clock_in: clockIn.toISOString(), clock_out: clockOut.toISOString(), lunch_minutes: lunchMinutes,
-          total_hours: (totalMinutes - lunchMinutes) / 60,
+          total_hours: (totalMinutes - lunchMinutes - trackedWorkPauseMinutes) / 60,
           notes: String(requestedCorrection?.notes ?? entry.notes ?? '').trim().slice(0, 4000),
           job_allocations: normalizedAllocations, status: 'clocked_out', clock_source: 'admin_correction',
           last_corrected_at: now, last_corrected_by: actorEmail, last_correction_reason: reviewerReason,
@@ -1456,7 +1457,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240.' }, { status: 400 });
       }
       const totalMinutes = clockOut ? Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000) : null;
-      if (totalMinutes !== null && lunchMinutes > totalMinutes) return Response.json({ success: false, error: 'Lunch time cannot exceed the corrected shift duration.' }, { status: 400 });
+      const trackedWorkPauseMinutes = Math.max(0, Math.round(Number(entry.tracked_work_pause_minutes || 0)));
+      if (totalMinutes !== null && (lunchMinutes + trackedWorkPauseMinutes) > totalMinutes) return Response.json({ success: false, error: 'Lunch and Work Pause time cannot exceed the corrected shift duration.' }, { status: 400 });
       const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
       const normalizedAllocations = allocations.map((job: any) => {
         const editedHours = Number(job?.hours);
@@ -1473,7 +1475,7 @@ Deno.serve(async (req) => {
         clock_in: clockIn.toISOString(),
         clock_out: clockOut ? clockOut.toISOString() : null,
         lunch_minutes: lunchMinutes,
-        total_hours: totalMinutes === null ? Number(entry.total_hours || 0) : (totalMinutes - lunchMinutes) / 60,
+        total_hours: totalMinutes === null ? Number(entry.total_hours || 0) : (totalMinutes - lunchMinutes - trackedWorkPauseMinutes) / 60,
         status: clockOut ? 'clocked_out' : 'clocked_in',
         notes: String(correction?.notes || '').trim(),
         job_allocations: normalizedAllocations,
