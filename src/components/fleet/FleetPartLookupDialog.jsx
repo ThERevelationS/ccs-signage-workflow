@@ -31,6 +31,8 @@ const emptyCandidate = () => ({
   vendor_sku: "",
   vendor_url: "",
   source_urls: [],
+  primary_photo_url: "",
+  photo_urls: [],
   identification_confidence: "",
   identification_notes: "",
   compatible_equipment_ids: [],
