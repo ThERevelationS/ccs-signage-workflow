@@ -1324,6 +1324,35 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     );
   }
 
+  if (viewMode === "board") {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {quickEditWarning}
+        {destructiveActionWarning}
+        {globalSettingsWarning}
+        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={importFromExcel} className="hidden" />
+        <div className="min-h-0 flex-1">
+          <SalesPipelineKanban
+            workOrders={filteredWorkOrders}
+            onUpdateWorkOrder={updateWorkOrder}
+            onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
+            isRegistered={isRegistered}
+          />
+        </div>
+        {selectedWorkOrder && (
+          <WorkOrderDetailsDialog
+            workOrder={selectedWorkOrder}
+            onClose={() => setSelectedWorkOrder(null)}
+            onUpdate={(updated) => {
+              setWorkOrders(prev => prev.map(w => w.id === updated.id ? updated : w));
+              setSelectedWorkOrder(null);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div 
       className="flex flex-col min-h-0 h-full overflow-visible" 
