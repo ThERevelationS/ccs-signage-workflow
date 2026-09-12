@@ -79,7 +79,8 @@ export default function SalesPipeline() {
 
   const isStandardFilterEnabled = (value) => {
     const key = `sales_standard_${value}_selected`;
-    return localStorage.getItem(key) === "true";
+    const stored = localStorage.getItem(key);
+    return stored === null ? true : stored === "true";
   };
 
   return (
@@ -163,7 +164,7 @@ export default function SalesPipeline() {
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
               <SelectContent>
-                {isStandardFilterEnabled("all") && <SelectItem value="all">All Leads</SelectItem>}
+                {isStandardFilterEnabled("all") && <SelectItem value="all">All Statuses</SelectItem>}
                 {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
                 {isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
                 {isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
@@ -189,15 +190,15 @@ export default function SalesPipeline() {
             <div className="flex flex-col">
               <span className="text-xs font-medium text-gray-500 mb-1">Column Filters</span>
               <Select 
-              value={activeColumnPreset?.id || ""} 
+              value={activeColumnPreset?.id || "default"} 
               onValueChange={(value) => {
                 if (value === "manage_columns") {
                   setShowColumnFilterDialog(true);
+                } else if (value === "default") {
+                  setActiveColumnPreset(null);
                 } else if (value) {
                   const preset = activeFilters.find(f => f.id === value);
                   setActiveColumnPreset(preset || null);
-                } else {
-                  setActiveColumnPreset(null);
                 }
               }}
             >
@@ -206,7 +207,7 @@ export default function SalesPipeline() {
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>Default View</SelectItem>
+                <SelectItem value="default">Default View</SelectItem>
                 {activeFilters.filter(f => f.type === "column_preset").map(preset => (
                   <SelectItem key={preset.id} value={preset.id}>
                     {preset.name}
