@@ -10,6 +10,7 @@ import {
   Truck,
   ClipboardList,
   CalendarClock,
+  CalendarDays,
   Package,
   Droplets,
   ShoppingCart,
@@ -59,19 +60,20 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
           listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
           listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
+          base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warnings" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie alerts" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
-        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, reservations: reservationResult?.data?.reservations || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
         if (user?.role === "admin") {
           const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
@@ -139,7 +141,11 @@ export default function FleetOverview() {
     const scoredHealth = equipmentHealth.filter(item => item.score != null);
     const averageHealth = scoredHealth.length ? Math.round(scoredHealth.reduce((sum, item) => sum + item.score, 0) / scoredHealth.length) : null;
     const needsHealthAttention = scoredHealth.filter(item => item.score < 75).length;
-    const availableEquipment = activeEquipment.filter(item => item.status === "operational");
+    const nowMs = Date.now();
+    const currentAssignments = (data.reservations || []).filter(row => row.status === "checked_out" || (row.status === "reserved" && (Date.parse(row.start_at || "") || 0) <= nowMs && (Date.parse(row.end_at || "") || 0) >= nowMs));
+    const pastDueAssignments = (data.reservations || []).filter(row => row.status === "reserved" && (Date.parse(row.end_at || "") || 0) > 0 && Date.parse(row.end_at || "") < nowMs);
+    const currentlyAssignedIds = new Set(currentAssignments.map(row => row.equipment_id));
+    const availableEquipment = activeEquipment.filter(item => item.status === "operational" && !currentlyAssignedIds.has(item.id));
     return {
       activeEquipment,
       retiredEquipment,
@@ -160,11 +166,13 @@ export default function FleetOverview() {
       averageHealth,
       needsHealthAttention,
       availableEquipment,
+      currentAssignments,
+      pastDueAssignments,
       bouncieFaults: data.bouncieFaults || [],
     };
   }, [data]);
 
-  const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
+  const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.pastDueAssignments.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
 
   if (!data && !error) {
     return (
@@ -190,7 +198,7 @@ export default function FleetOverview() {
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
               <MetricCard icon={Activity} label="Fleet Health" value={metrics.averageHealth == null ? "—" : `${metrics.averageHealth}%`} sub={`${metrics.needsHealthAttention} asset${metrics.needsHealthAttention === 1 ? "" : "s"} below 75`} />
-              <MetricCard icon={Truck} label="Available Now" value={metrics.availableEquipment.length} sub={`${metrics.activeEquipment.length} active · ${metrics.retiredEquipment.length} retired`} />
+              <MetricCard icon={Truck} label="Available Now" value={metrics.availableEquipment.length} sub={`${metrics.currentAssignments.length} currently assigned · ${metrics.retiredEquipment.length} retired`} />
               <MetricCard icon={Navigation} label="Tracked" value={metrics.uniqueTracked} sub="Current active VINs" />
               <MetricCard icon={ClipboardList} label="Open Work Orders" value={metrics.activeOrders.length} sub={`${data.workOrders.length} total history`} />
               <MetricCard icon={AlertTriangle} label="High / Critical" value={metrics.highPriorityOrders.length} sub="Active work orders" />
@@ -201,7 +209,7 @@ export default function FleetOverview() {
             <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Today</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">The operational picture to act on first.</p></div>
               <div className="grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
-                <TodayCell label="Ready / operational" value={`${metrics.availableEquipment.length} of ${metrics.activeEquipment.length}`} detail="Active assets currently marked operational" />
+                <TodayCell label="Ready / available" value={`${metrics.availableEquipment.length} of ${metrics.activeEquipment.length}`} detail={`${metrics.currentAssignments.length} currently reserved / checked out`} attention={metrics.pastDueAssignments.length > 0} />
                 <TodayCell label="Maintenance due today" value={metrics.dueToday.length} detail={`${metrics.overdueTasks.length} already overdue`} attention={metrics.dueToday.length > 0 || metrics.overdueTasks.length > 0} />
                 <TodayCell label="Priority repairs" value={metrics.highPriorityOrders.length} detail={`${metrics.unassignedOrders.length} active work order${metrics.unassignedOrders.length === 1 ? "" : "s"} unassigned`} attention={metrics.highPriorityOrders.length > 0} />
                 <TodayCell label="Inventory / requests" value={metrics.lowStock + metrics.pendingRequests.length} detail={`${metrics.lowStock} low-stock · ${metrics.pendingRequests.length} requested`} attention={metrics.lowStock + metrics.pendingRequests.length > 0} />
@@ -243,6 +251,7 @@ export default function FleetOverview() {
                 <AttentionRow icon={Package} label="Low-stock parts" value={metrics.lowParts.length} page="FleetParts" query="stock=low" />
                 <AttentionRow icon={Droplets} label="Low-stock fluids" value={metrics.lowFluids.length} page="FleetFluids" query="stock=low" />
                 <AttentionRow icon={ShoppingCart} label="Pending / ordered requests" value={metrics.pendingRequests.length} page="FleetRequests" query="status=active" />
+                <AttentionRow icon={CalendarDays} label="Past-due reservations" value={metrics.pastDueAssignments.length} page="FleetReservations" query="view=attention" />
                 <AttentionRow icon={Navigation} label="Bouncie identity conflicts" value={metrics.bouncieIdentityConflicts.length} page="FleetEquipment" query="view=tracking_issues" />
                 <AttentionRow icon={AlertTriangle} label="Unread Bouncie warnings / critical" value={metrics.bouncieFaults.length} page="FleetTracking" />
                 {isAdmin && <AttentionRow icon={Activity} label="Fleet automation queue / receipts" value={adminHealth?.unresolved || 0} page="FleetSettings" />}
