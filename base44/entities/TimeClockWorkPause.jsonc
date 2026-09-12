@@ -1,0 +1,91 @@
+{
+  "name": "TimeClockWorkPause",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email for this Work Pause"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "time_entry_id": {
+      "type": "string",
+      "description": "Active TimeEntry this Work Pause belongs to"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend Work Pause start timestamp"
+    },
+    "resumed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend resume timestamp"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Completed Work Pause duration in whole minutes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "start_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for Work Pause start"
+    },
+    "resume_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for Work Pause resume"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "admin_correction"
+      ],
+      "default": "server"
+    }
+  },
+  "required": [
+    "user_email",
+    "time_entry_id",
+    "started_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
