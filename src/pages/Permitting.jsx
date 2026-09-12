@@ -323,9 +323,16 @@ export default function Permitting() {
   // create one line item per OFFICE configured in that locality's settings.
   // Each office has its own workflow_steps.
   const selectLocalityForWorkOrder = useCallback(async (workOrderId, localityId, opts = {}) => {
-    const { excludeElectrical = false } = opts;
-    const locality = localities.find(l => l.id === localityId);
+    const { excludeElectrical = false, locality: localityOverride = null } = opts;
+    const locality = localityOverride?.id === localityId
+      ? localityOverride
+      : localities.find(l => l.id === localityId);
     if (!locality) return;
+    if (localityOverride?.id) {
+      setLocalities(prev => prev.some(l => l.id === localityOverride.id)
+        ? prev.map(l => l.id === localityOverride.id ? localityOverride : l)
+        : [...prev, localityOverride]);
+    }
     const wo = workOrders.find(w => w.id === workOrderId);
     if (!wo) return;
 
