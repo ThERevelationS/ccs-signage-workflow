@@ -401,7 +401,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const updatedWo = { ...currentWo, ...nextChanges };
     // Apply task assignment rules once against the complete proposed record.
     const ruleUpdates = applyRules(taskAssignmentRules, updatedWo);
-    const mergedUpdates = { ...nextChanges, ...ruleUpdates };
+    const proposedUpdates = { ...nextChanges, ...ruleUpdates };
+    const salesActivityChanged = Object.keys(proposedUpdates).some((changedField) =>
+      SALES_ACTIVITY_FIELDS.has(changedField) && JSON.stringify(currentWo[changedField]) !== JSON.stringify(proposedUpdates[changedField])
+    );
+    const activityStamp = salesActivityChanged ? new Date().toISOString() : "";
+    const trackingUpdates = salesActivityChanged ? {
+      sales_last_activity_at: activityStamp,
+      ...(Object.prototype.hasOwnProperty.call(proposedUpdates, "sales_status") && currentWo.sales_status !== proposedUpdates.sales_status
+        ? { sales_stage_changed_at: activityStamp }
+        : {}),
+    } : {};
+    const mergedUpdates = { ...proposedUpdates, ...trackingUpdates };
     const changedFields = Object.keys(mergedUpdates).filter((changedField) =>
       JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])
     );
@@ -424,7 +435,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     if (!skipHistory) {
       const trackedFields = new Set(pendingHistoryFieldsRef.current[orderId] || []);
-      changedFields.forEach((changedField) => trackedFields.add(changedField));
+      changedFields.filter((changedField) => !INTERNAL_SALES_TRACKING_FIELDS.has(changedField)).forEach((changedField) => trackedFields.add(changedField));
       pendingHistoryFieldsRef.current[orderId] = trackedFields;
     }
     setQuickEditError("");
