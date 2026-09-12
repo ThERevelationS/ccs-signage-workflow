@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Activity, AlertTriangle, Camera, CheckCircle2, Clock3, Loader2, RefreshCw, Save, Truck, Wrench, X } from "lucide-react";
+import { Activity, AlertTriangle, Camera, CheckCircle2, CircleDollarSign, Clock3, Loader2, Plus, RefreshCw, Save, Trash2, Truck, Wrench, X } from "lucide-react";
 
 const pretty = value => String(value || "—").replaceAll("_", " ");
 const fmtDate = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString() : "—";
+const blankEstimate = () => ({estimated_labor_hours:"",labor_rate:"",misc_total:"",estimated_completion_date:"",parts_estimate:[],fluids_estimate:[],notes:""});
+const estimateSeed = row => row?.visibility === "mechanic" ? ({estimated_labor_hours:String(row.estimated_labor_hours??""),labor_rate:String(row.labor_rate??""),misc_total:String(row.misc_total??""),estimated_completion_date:row.estimated_completion_date||"",parts_estimate:(row.parts_estimate||[]).map(line=>({...line,quantity:String(line.quantity??""),estimated_cost:String(line.estimated_cost??"")})),fluids_estimate:(row.fluids_estimate||[]).map(line=>({...line,quantity:String(line.quantity??""),estimated_cost:String(line.estimated_cost??"")})),notes:row.notes||""}) : blankEstimate();
+const estimateTotal = form => Number(form.estimated_labor_hours||0)*Number(form.labor_rate||0)+(form.parts_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+(form.fluids_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+Number(form.misc_total||0);
 
 function initialToken() {
   if (typeof window === "undefined") return "";
@@ -53,6 +56,7 @@ export default function FleetMechanic() {
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ actual_hours: "", corrective_action: "", mechanic_note: "" });
   const [photos, setPhotos] = useState([]);
+  const [estimateForm, setEstimateForm] = useState(blankEstimate);
   const [busy, setBusy] = useState("");
   const [actionError, setActionError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
@@ -82,11 +86,13 @@ export default function FleetMechanic() {
 
   const equipmentById = useMemo(() => Object.fromEntries((data?.equipment || []).map(row => [row.id, row])), [data]);
   const taskById = useMemo(() => Object.fromEntries((data?.tasks || []).map(row => [row.id, row])), [data]);
+  const estimateByWorkOrder = useMemo(() => Object.fromEntries((data?.repair_estimates || []).map(row => [row.work_order_id, row])), [data]);
   const rows = tab === "active" ? (data?.active_work_orders || []) : (data?.recent_completed || []);
 
   const openJob = workOrder => {
     setSelected(workOrder);
     setForm({ actual_hours: workOrder.actual_hours ?? "", corrective_action: workOrder.corrective_action || "", mechanic_note: "" });
+    setEstimateForm(estimateSeed(estimateByWorkOrder[workOrder.id]));
     photos.forEach(row => URL.revokeObjectURL(row.preview));
     setPhotos([]);
     setActionError("");
@@ -124,6 +130,32 @@ export default function FleetMechanic() {
       setSavedMessage("Work started. CCS Fleet has been updated.");
       await load(true);
     } catch (e) { setActionError(e?.message || "Work order could not be started."); }
+    finally { setBusy(""); }
+  };
+
+  const saveEstimate = async (submit = false) => {
+    if (!selected || !data?.portal?.capabilities?.estimates) return;
+    const currentEstimate = estimateByWorkOrder[selected.id] || null;
+    if (currentEstimate && currentEstimate.visibility !== "mechanic") { setActionError("This estimate is managed by CCS or another mechanic and cannot be viewed or overwritten here."); return; }
+    setBusy(submit ? "estimate-submit" : "estimate-save"); setActionError(""); setSavedMessage("");
+    try {
+      const payloadEstimate = {
+        estimated_labor_hours:Number(estimateForm.estimated_labor_hours||0), labor_rate:Number(estimateForm.labor_rate||0), misc_total:Number(estimateForm.misc_total||0), estimated_completion_date:estimateForm.estimated_completion_date||"",
+        parts_estimate:(estimateForm.parts_estimate||[]).map(line=>({description:line.description||"",quantity:Number(line.quantity||0),estimated_cost:Number(line.estimated_cost||0)})),
+        fluids_estimate:(estimateForm.fluids_estimate||[]).map(line=>({description:line.description||"",quantity:Number(line.quantity||0),unit:line.unit||"",estimated_cost:Number(line.estimated_cost||0)})), notes:estimateForm.notes||"",
+      };
+      const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
+      if (saved?.data?.error) throw new Error(saved.data.error);
+      let finalEstimate = saved?.data?.estimate;
+      if (submit) {
+        const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
+        if (submitted?.data?.error) throw new Error(submitted.data.error);
+        finalEstimate = submitted?.data?.estimate;
+        setSavedMessage(submitted?.data?.auto_approved ? "Estimate submitted and automatically approved by CCS Fleet policy." : "Estimate submitted to CCS for approval.");
+      } else setSavedMessage("Estimate draft saved.");
+      setEstimateForm(estimateSeed({...finalEstimate,visibility:"mechanic"}));
+      await load(true);
+    } catch (e) { setActionError(e?.message || "Repair estimate could not be saved."); }
     finally { setBusy(""); }
   };
 
@@ -176,7 +208,7 @@ export default function FleetMechanic() {
       </div>
     </main>
 
-    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage}/>} 
+    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)}/>} 
   </Standalone>;
 }
 
@@ -184,7 +216,7 @@ function Standalone({children, portalName = ""}) {
   return <div className="min-h-screen bg-slate-50 text-slate-900"><header className="bg-slate-950 text-white"><div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><Wrench className="w-5 h-5"/></div><div><div className="font-bold leading-tight">CCS Fleet</div><div className="text-xs text-slate-300">{portalName || "Mechanic Portal"}</div></div></div></header>{children}<footer className="border-t border-slate-200 bg-white"><div className="max-w-5xl mx-auto px-4 py-4 text-xs text-slate-400 text-center">Standalone external mechanic portal · No access to CCS Signage Workflow navigation or administration</div></footer></div>;
 }
 
-function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved}) {
+function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved,canEstimate,estimate,estimateForm,setEstimateForm,onSaveEstimate,onSubmitEstimate}) {
   const completed = workOrder.status === "completed";
   return <div className="fixed inset-0 z-[100] bg-black/60 p-3 sm:p-6 overflow-y-auto"><div className="max-w-3xl mx-auto rounded-2xl bg-white shadow-2xl overflow-hidden">
     <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-start justify-between gap-3"><div><div className="text-xs font-semibold text-slate-400">{workOrder.work_order_number}</div><h2 className="text-xl font-bold text-slate-950">{workOrder.title}</h2><div className="text-sm text-slate-500 mt-0.5">{equipment?.name || "Unlinked equipment"}</div></div><button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100"><X className="w-5 h-5"/></button></div>
