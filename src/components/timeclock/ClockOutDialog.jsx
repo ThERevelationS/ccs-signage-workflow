@@ -603,12 +603,12 @@ export default function ClockOutDialog({
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1">
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting || breakActionBusy} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleClockOut} disabled={isSubmitting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={handleClockOut} disabled={isSubmitting || breakActionBusy || onBreak} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
               {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
-              {isSubmitting ? "Confirming..." : "Clock Out"}
+              {isSubmitting ? "Confirming..." : onBreak ? "End Break First" : "Clock Out"}
             </Button>
           </div>
         </div>
