@@ -165,6 +165,7 @@ export default function FleetEquipmentDetail() {
   const pendingTasks = useMemo(() => tasks.filter(row => ["pending", "overdue", "in_progress"].includes(row.status)), [tasks]);
   const nextMaintenance = useMemo(() => pendingTasks.filter(row => row.start_date).slice().sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)))[0] || null, [pendingTasks]);
   const isAdmin = currentUser?.role === "admin";
+  const retired = equipment?.status === "retired";
   const liveDriving = !!live?.is_trip_active && !hasDefinitiveTripEnd(live);
   const unreadAlerts = notifications.filter(note => !note.is_read).length;
 
@@ -213,11 +214,12 @@ export default function FleetEquipmentDetail() {
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <Link to={trackingUrl} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2 text-sm"><Navigation className="w-4 h-4" />Tracking</Link>
             <Link to={maintenanceUrl} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2 text-sm"><CalendarClock className="w-4 h-4" />Maintenance</Link>
-            <Link to={`${createPageUrl("FleetRequests")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2 text-sm"><ShoppingCart className="w-4 h-4" />Request Item</Link>
-            <Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center justify-center gap-2 text-sm font-medium"><Plus className="w-4 h-4" />New Work Order</Link>
+            {!retired && <Link to={`${createPageUrl("FleetRequests")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2 text-sm"><ShoppingCart className="w-4 h-4" />Request Item</Link>}
+            {!retired && <Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg bg-indigo-600 text-white inline-flex items-center justify-center gap-2 text-sm font-medium"><Plus className="w-4 h-4" />New Work Order</Link>}
           </div>
         </div>
 
+        {retired && <div className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-slate-900 dark:border-slate-700 px-4 py-3 text-sm text-gray-700 dark:text-slate-300"><b>Retired Fleet archive:</b> tracking references, documents, maintenance history, usage, requests, alerts, and timeline remain preserved. New work orders, requests, schedules, and public reports are disabled until this equipment is reactivated.</div>}
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
         {tripIdentityWarning && activeTab === "tracking" && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tripIdentityWarning}</div>}
 
@@ -229,7 +231,7 @@ export default function FleetEquipmentDetail() {
 
         {activeTab === "overview" && <OverviewTab equipment={equipment} metadata={metadata} live={live} liveDriving={liveDriving} activeOrders={activeOrders} tasks={tasks} nextMaintenance={nextMaintenance} logs={logs} activeRequests={activeRequests} trips={trips} tripsLoading={tripsLoading} unreadAlerts={unreadAlerts} maintenanceUrl={maintenanceUrl} onSelectTab={selectTab} />}
         {activeTab === "tracking" && <TrackingTab equipment={equipment} live={live} liveStates={liveStates} liveDriving={liveDriving} trips={trips} tripsLoading={tripsLoading} tripIdentityWarning={tripIdentityWarning} trackingUrl={trackingUrl} />}
-        {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} />}
+        {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} retired={retired} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
         {activeTab === "documents" && <FleetEquipmentDocuments equipment={equipment} isAdmin={isAdmin} />}
@@ -288,9 +290,9 @@ function TrackingTab({ equipment, live, liveStates, liveDriving, trips, tripsLoa
   </div>;
 }
 
-function MaintenanceTab({ equipment, activeOrders, completedOrders, tasks, maintenanceUrl }) {
+function MaintenanceTab({ equipment, activeOrders, completedOrders, tasks, maintenanceUrl, retired = false }) {
   return <div className="grid xl:grid-cols-2 gap-5">
-    <Card title="Active Work Orders" icon={ClipboardList} action={<Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300"><Plus className="w-3.5 h-3.5" />New work order</Link>}>
+    <Card title="Active Work Orders" icon={ClipboardList} action={!retired ? <Link to={`${createPageUrl("FleetWorkOrders")}?new=1&equipment=${encodeURIComponent(equipment.id)}`} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300"><Plus className="w-3.5 h-3.5" />New work order</Link> : null}>
       <div className="space-y-2">{activeOrders.map(order => <WorkOrderRow key={order.id} order={order} equipment={equipment} />)}{activeOrders.length === 0 && <Empty>No active work orders.</Empty>}</div>
       {completedOrders.length > 0 && <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800"><div className="text-xs uppercase font-semibold text-gray-400 mb-2">Recent completed</div>{completedOrders.slice(0,5).map(order => <div key={order.id} className="py-2 flex justify-between gap-3 text-sm"><span>{order.work_order_number} · {order.title}</span><span className="text-gray-400 whitespace-nowrap">{order.completed_date || "—"}</span></div>)}</div>}
     </Card>
