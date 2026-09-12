@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const MAX_WIP_FILE_BYTES = 50 * 1024 * 1024;
 
@@ -178,17 +179,12 @@ async function readWipBytes(response) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user = null;
-    try {
-      user = await base44.auth.me();
-    } catch (e) {
-      return Response.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const body = await req.json().catch(() => ({}));
+    const actor = await authenticateSignShopSession(base44, body?.session_token);
+    if (actor?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const body = await req.json();
     const { fileUrl, mode } = body;
 
     if (!fileUrl) {
