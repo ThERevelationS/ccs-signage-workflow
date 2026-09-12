@@ -1,18 +1,20 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-export function fleetHealthScore({
-  equipment,
-  tasks = [],
-  workOrders = [],
-  notifications = [],
-  identityConflict = false,
-  todayText = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date()),
-} = {}) {
+/** @param {any} input */
+export function fleetHealthScore(input = {}) {
+  const {
+    equipment,
+    tasks = [],
+    workOrders = [],
+    notifications = [],
+    identityConflict = false,
+    todayText = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date()),
+  } = input;
   if (!equipment) return { score: 0, label: "Unknown", tone: "danger", deductions: [], signals: [] };
   if (equipment.status === "retired") return { score: null, label: "Retired", tone: "neutral", deductions: [], signals: ["Archived asset"] };
 
