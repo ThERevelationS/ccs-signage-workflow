@@ -641,6 +641,9 @@ Deno.serve(async (req) => {
       if (state.status !== 'clocked_in' || !state.active_entry_id) {
         return Response.json({ success: false, error: 'Employee must be clocked in before starting a break.' }, { status: 409 });
       }
+      if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
+        return Response.json({ success: false, error: 'Resume Work before starting a break or lunch.' }, { status: 409 });
+      }
       const breakType = String(body?.break_type || '').trim();
       if (!['lunch', 'break', 'other'].includes(breakType)) {
         return Response.json({ success: false, error: 'A valid break type is required.' }, { status: 400 });
