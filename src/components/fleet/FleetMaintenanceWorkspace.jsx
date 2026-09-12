@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import FleetMeterRuleDialog from "@/components/fleet/FleetMeterRuleDialog";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
   ClipboardList,
   Clock3,
   Droplets,
+  Gauge,
   History,
   Loader2,
   Package,
@@ -35,6 +37,8 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
   const [tab, setTab] = useState(initialTab);
   const [workOrders, setWorkOrders] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [meterRows, setMeterRows] = useState([]);
+  const [meterDialog, setMeterDialog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,10 +50,13 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     Promise.all([
       filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet work-order history` }),
       filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: equipment.id }, "-created_date", { label: `${equipment.name} Fleet equipment usage history` }),
-    ]).then(([woRows, logRows]) => {
+      base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }),
+    ]).then(([woRows, logRows, meterResponse]) => {
       if (!mounted) return;
       setWorkOrders(woRows || []);
       setLogs(logRows || []);
+      if (meterResponse?.data?.error) throw new Error(meterResponse.data.error);
+      setMeterRows(meterResponse?.data?.rows || []);
     }).catch(err => {
       if (mounted) setError(err?.message || "Unable to load this equipment maintenance workspace.");
     }).finally(() => {
@@ -71,6 +78,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
   const tabs = [
     ["overview", "Overview"],
     ["schedule", "Schedule"],
+    ["meter", "Mileage / Hours"],
     ["active", "Active Work"],
     ["history", "History"],
     ["usage", "Parts & Fluids"],
@@ -98,11 +106,13 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
       {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
       {loading ? <div className="py-16 flex justify-center"><Loader2 className="w-7 h-7 animate-spin text-gray-400" /></div> : <>
         {tab === "overview" && <Overview equipment={equipment} tasks={tasks} activeOrders={activeOrders} overdueSchedules={overdueSchedules} nextMaintenance={nextMaintenance} historicalOrders={historicalOrders} onOpenSchedule={() => setTab("schedule")} onOpenActive={() => setTab("active")} />}
-        {tab === "schedule" && <ScheduleTab tasks={tasks} isAdmin={isAdmin} retired={retired} onEditSchedule={onEditSchedule} onNewSchedule={onNewSchedule} />}
+        {tab === "schedule" && <ScheduleTab tasks={tasks} meterRows={meterRows} isAdmin={isAdmin} retired={retired} onEditSchedule={onEditSchedule} onNewSchedule={onNewSchedule} />}
+        {tab === "meter" && <MeterTab equipment={equipment} tasks={tasks} rows={meterRows} isAdmin={isAdmin} retired={retired} onAdd={() => setMeterDialog({ rule: null })} onEdit={rule => setMeterDialog({ rule })} />}
         {tab === "active" && <WorkOrdersTab equipment={equipment} rows={activeOrders} active />}
         {tab === "history" && <HistoryTab equipment={equipment} workOrders={historicalOrders} logs={logs} />}
         {tab === "usage" && <UsageTab plannedParts={plannedParts} plannedFluids={plannedFluids} partLogs={partLogs} fluidLogs={fluidLogs} />}
       </>}
+      <FleetMeterRuleDialog open={!!meterDialog} equipment={equipment} tasks={tasks} rule={meterDialog?.rule || null} onClose={() => setMeterDialog(null)} onSaved={async () => { const { data } = await base44.functions.invoke("fleetMeterMaintenanceAction", { action: "status", equipment_id: equipment.id }); if (data?.error) throw new Error(data.error); setMeterRows(data?.rows || []); }} />
     </div>
   );
 }
