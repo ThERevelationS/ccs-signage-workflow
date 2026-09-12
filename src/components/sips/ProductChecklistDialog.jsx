@@ -976,6 +976,17 @@ export default function ProductChecklistDialog({
   }).length;
   const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
   const completedTaskCount = taskItems.filter(item => item.approved_by).length;
+  const expandableChecklistIds = checklist
+    .filter(item => !item.parent_id && (item.type === 'checklist' || !item.type))
+    .map(item => item.id);
+  const allDetailsCollapsed = expandableChecklistIds.length > 0 && expandableChecklistIds.every(id => expandedItems[id] === false);
+  const toggleAllDetails = () => {
+    const nextExpanded = { ...expandedItems };
+    expandableChecklistIds.forEach(id => {
+      nextExpanded[id] = allDetailsCollapsed;
+    });
+    setExpandedItems(nextExpanded);
+  };
   const hasUnsavedChanges = !isLoading && (
     JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
     JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot)
@@ -1021,7 +1032,8 @@ export default function ProductChecklistDialog({
           </DialogHeader>
 
           {!isLoading && checklist.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border bg-slate-50 p-2 sm:p-3">
+            <div className="rounded-xl border bg-slate-50 p-2 sm:p-3 space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <div className="text-[11px] text-gray-500">Checklist complete</div>
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
@@ -1038,6 +1050,13 @@ export default function ProductChecklistDialog({
                 <div className="text-[11px] text-gray-500">Revisit date</div>
                 <div className="text-sm font-semibold text-purple-700">{loadedRevisitDateSnapshot || "None"}</div>
               </div>
+              </div>
+              {expandableChecklistIds.length > 0 && (
+                <Button type="button" variant="ghost" size="sm" onClick={toggleAllDetails} className="w-full sm:w-auto h-8 text-xs text-gray-600">
+                  {allDetailsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
+                  {allDetailsCollapsed ? "Expand task details" : "Collapse task details"}
+                </Button>
+              )}
             </div>
           )}
 
@@ -2125,7 +2144,7 @@ export default function ProductChecklistDialog({
               className="sm:flex-1 h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save
+              Save & Revisit
             </Button>
           </div>
         </DialogContent>
