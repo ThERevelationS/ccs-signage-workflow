@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2 } from "lucide-react";
+import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2, Pause } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -33,8 +33,11 @@ export default function ClockOutDialog({
   breakStatus = "working",
   activeBreak = null,
   breakSummary = { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+  workPauseAllowed = false,
+  workPauseSummary = { count: 0, total_minutes: 0 },
   onStartBreak,
   onEndBreak,
+  onStartWorkPause,
 }) {
   const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
@@ -47,6 +50,7 @@ export default function ClockOutDialog({
   const [displayNow, setDisplayNow] = useState(() => new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [breakActionBusy, setBreakActionBusy] = useState(false);
+  const [workPauseBusy, setWorkPauseBusy] = useState(false);
 
   // Display time is refreshed while the dialog is open. The backend still owns
   // the official clock-out timestamp and recalculates the final duration.
@@ -59,7 +63,8 @@ export default function ClockOutDialog({
   const hasTrackedUnpaid = trackedUnpaidMinutes > 0;
   const manualLunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
   const lunchMins = hasTrackedUnpaid ? trackedUnpaidMinutes : manualLunchMins;
-  const workableMinutes = totalMinutesWorked - lunchMins;
+  const trackedWorkPauseMinutes = Math.max(0, Number(workPauseSummary?.total_minutes || 0));
+  const workableMinutes = totalMinutesWorked - lunchMins - trackedWorkPauseMinutes;
   const workableHours = Math.max(0, workableMinutes / 60);
   const onBreak = breakStatus === "on_break";
   const activeBreakMinutes = activeBreak?.started_at
@@ -175,6 +180,19 @@ export default function ClockOutDialog({
     }
   };
 
+  const handleStartWorkPause = async () => {
+    if (!onStartWorkPause || workPauseBusy || breakActionBusy || onBreak) return;
+    setError("");
+    setWorkPauseBusy(true);
+    try {
+      await onStartWorkPause();
+    } catch (err) {
+      setError(err?.message || "Work Pause was not confirmed by the server.");
+    } finally {
+      setWorkPauseBusy(false);
+    }
+  };
+
   const handleClockOut = async () => {
     setError("");
 
@@ -201,7 +219,7 @@ export default function ClockOutDialog({
     const finalClockOutTime = new Date();
     setDisplayNow(finalClockOutTime);
     const finalTotalMinutes = Math.floor((finalClockOutTime - clockInTime) / (1000 * 60));
-    const finalWorkableMinutes = finalTotalMinutes - lunchMins;
+    const finalWorkableMinutes = finalTotalMinutes - lunchMins - trackedWorkPauseMinutes;
     const finalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
     const finalRemainingMinutes = finalWorkableMinutes - finalAllocatedMinutes;
 
