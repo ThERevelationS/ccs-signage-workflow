@@ -41,6 +41,7 @@ const FILTER_FIELDS = [
   { value: "quote_date", label: "Quote Date", type: "date" },
   { value: "follow_up_date", label: "Follow Up Date", type: "date" },
   { value: "close_date", label: "Close Date", type: "date" },
+  { value: "lost_reason", label: "Lost Reason", type: "text" },
   { value: "start_date", label: "Start Date", type: "date" },
   { value: "est_inv_at", label: "Est/Inv Location", type: "text" },
   { value: "corbridge_invoice_number", label: "Corbridge Invoice #", type: "text" },
