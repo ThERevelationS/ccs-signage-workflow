@@ -39,11 +39,17 @@ import { estimateServerMatchesIntendedSave, intendedQuoteIssueMetadata } from "@
 import { assertEstimateProductMutationAllowed, getPendingEstimatePriceAcceptance } from "@/components/estimator/estimateMutationGuard";
 import { expectedEstimateFields, replaceEstimateFieldsIfUnchanged } from "@/components/estimator/estimatePersistence";
 
-const STEP_TITLES = {
-  1: "Step 1: Estimate Details",
-  2: "Step 2: Edit Products",
-  3: "Step 3: Finalize Estimate",
+const WORKSPACE_TITLES = {
+  1: "Estimate Details",
+  2: "Products & Parts",
+  3: "Pricing, Quote & Finalize",
 };
+
+const WORKSPACE_TABS = [
+  { n: 1, label: "Details" },
+  { n: 2, label: "Products & Parts" },
+  { n: 3, label: "Pricing & Finalize" },
+];
 
 function assertNoPendingPriceAcceptance(record, action = "continuing") {
   const entry = getPendingEstimatePriceAcceptance(record);
@@ -1024,31 +1030,40 @@ export default function EstimateDetail() {
     return acc;
   }, {});
 
-  const StepNav = () => (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        <span className="text-[15px] font-bold text-gray-900">{STEP_TITLES[step]}</span>
-        {step === 2 && (
-          <span className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200">
-            {lines.length} products
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setStep(Math.max(1, step - 1))}
-          disabled={step === 1}
-          className="h-[28px] px-3 rounded border border-gray-200 bg-white text-[12px] font-semibold text-gray-600 disabled:opacity-40"
-        >
-          ← Previous Step
-        </button>
-        <button
-          onClick={() => setStep(Math.min(3, step + 1))}
-          disabled={step === 3}
-          className="h-[28px] px-3 rounded bg-lime-200 border border-lime-300 text-[12px] font-semibold text-gray-800 disabled:opacity-40"
-        >
-          Next Step →
-        </button>
+  const WorkspaceNav = ({ compact = false }) => (
+    <div className={`${compact ? "pt-1" : "sticky top-0 z-20 -mx-1 px-1 py-1.5 bg-gray-50/95 backdrop-blur-sm"}`}>
+      <div className="bg-white border border-gray-300 rounded-sm shadow-sm flex items-center justify-between gap-3 px-2.5 py-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold tracking-wider uppercase text-gray-400">Estimate Workspace</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[14px] font-bold text-gray-900 truncate">{WORKSPACE_TITLES[step]}</span>
+            {step === 2 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-sm bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
+                {lines.length} product{lines.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="inline-flex items-stretch rounded-sm border border-gray-300 overflow-hidden bg-gray-50 flex-shrink-0">
+          {WORKSPACE_TABS.map((tab) => {
+            const active = tab.n === step;
+            return (
+              <button
+                key={tab.n}
+                type="button"
+                onClick={() => setStep(tab.n)}
+                aria-current={active ? "page" : undefined}
+                className={`h-[32px] px-3 text-[11px] font-bold border-r border-gray-300 last:border-r-0 transition-colors ${
+                  active
+                    ? "bg-lime-200 text-gray-950 shadow-inner"
+                    : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
