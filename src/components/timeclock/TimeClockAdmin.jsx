@@ -159,6 +159,8 @@ export default function TimeClockAdmin() {
   const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status));
   const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
   const activeBreakById = new Map(activeBreaks.map(breakRow => [breakRow.id, breakRow]));
+  const referencedBreakIds = new Set(employeeStates.map(state => state.active_break_id).filter(Boolean));
+  const orphanActiveBreaks = activeBreaks.filter(breakRow => !referencedBreakIds.has(breakRow.id));
 
   const statusLabel = (state) => {
     if (state.break_status === "on_break") return "On break";
@@ -443,6 +445,11 @@ export default function TimeClockAdmin() {
         {transitionalStates.length > 0 && (
           <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
             A transition is still being finalized for {transitionalStates.length} employee{transitionalStates.length === 1 ? "" : "s"}. If it persists, reload before making an administrative correction.
+          </div>
+        )}
+        {orphanActiveBreaks.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveBreaks.length} active break record{orphanActiveBreaks.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Do not correct or close the affected shift until the mismatch is reviewed.
           </div>
         )}
       </div>
