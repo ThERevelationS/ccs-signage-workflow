@@ -76,6 +76,19 @@
     "review_request_id": {
       "type": "string",
       "description": "Idempotency key for manager decision"
+    },
+    "review_decision": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "approve_modified",
+        "reject"
+      ],
+      "description": "Manager decision bound to review_request_id"
+    },
+    "review_payload_hash": {
+      "type": "string",
+      "description": "SHA-256 fingerprint binding the manager decision, reason, and edited correction payload to review_request_id"
     }
   },
   "required": [
