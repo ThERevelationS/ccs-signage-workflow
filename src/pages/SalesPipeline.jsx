@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -17,6 +17,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 export default function SalesPipeline() {
   const { isRegistered, currentUser } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
+  const [recordScope, setRecordScope] = useState("current");
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [showCustomFilterDialog, setShowCustomFilterDialog] = useState(false);
@@ -121,11 +122,26 @@ export default function SalesPipeline() {
             )}
 
             <div className="flex flex-col">
+              <span className="text-xs font-medium text-gray-500 mb-1">Workspace</span>
+              <Select value={recordScope} onValueChange={setRecordScope}>
+                <SelectTrigger className="w-44 h-9">
+                  {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Current Pipeline</SelectItem>
+                  <SelectItem value="history">Legacy History</SelectItem>
+                  <SelectItem value="all">All Records</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col">
               <span className="text-xs font-medium text-gray-500 mb-1">Search</span>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Search leads..."
+                  placeholder="Customer, contact, estimate, address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 w-64 h-9"
@@ -266,6 +282,7 @@ export default function SalesPipeline() {
             ref={spreadsheetRef}
             searchTerm={searchTerm} 
             filterStatus={filterStatus}
+            recordScope={recordScope}
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
             customFilters={activeFilters.filter(f => f.type === "filter")}
