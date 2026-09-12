@@ -120,15 +120,20 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       const estimateProducts = buildEstimateWorkOrderProducts(estimate, pricing);
       const products = mergeWorkOrderProducts(existing?.products || [], estimateProducts);
       const generatedDescription = [estimate.notes, sections].filter(Boolean).join("\n\n");
-      const workOrderFields = buildConvertedWorkOrderFields({
-        estimate,
-        pricing,
-        existing,
-        products,
-        generatedDescription,
-        conversionDate: localDateStamp(),
-        verifiedCustomerId,
-      });
+      const conversionActivityStamp = new Date().toISOString();
+      const workOrderFields = {
+        ...buildConvertedWorkOrderFields({
+          estimate,
+          pricing,
+          existing,
+          products,
+          generatedDescription,
+          conversionDate: localDateStamp(),
+          verifiedCustomerId,
+        }),
+        sales_last_activity_at: conversionActivityStamp,
+        ...(existing?.sales_status !== "won" ? { sales_stage_changed_at: conversionActivityStamp } : {}),
+      };
 
       let workOrder;
       if (existing?.id) {
