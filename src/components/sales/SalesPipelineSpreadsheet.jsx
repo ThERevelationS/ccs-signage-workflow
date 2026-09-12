@@ -49,6 +49,25 @@ const SALES_STATUSES = [
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
 
+const SALES_ACTIVITY_FIELDS = new Set([
+  "sales_status",
+  "sales_rep",
+  "lead_source",
+  "estimate_amount",
+  "quoted_amount",
+  "probability",
+  "quote_date",
+  "date_estimate_sent",
+  "follow_up_date",
+  "close_date",
+  "expected_close_date",
+  "lost_reason",
+  "current_task_description",
+  "current_task_deadline",
+  "current_task_assigned_to",
+]);
+const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
+
 const isLegacyClosedRecord = (workOrder) => {
   if (workOrder?.in_pipeline === true) return false;
   const legacyTask = String(workOrder?.current_task_description || "").trim();
