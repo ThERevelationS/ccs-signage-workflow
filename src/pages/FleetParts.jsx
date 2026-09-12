@@ -84,8 +84,9 @@ export default function FleetParts() {
     if(stock==="low")setQueue("low"); else if(stock==="zero")setQueue("zero");
     if(["all","low","zero","review","unassigned","unlocated","incomplete"].includes(requestedQueue))setQueue(requestedQueue);
     if(requestedSearch)setSearch(requestedSearch);
-    if(params.get("identify")==="1")setLookup({organizeMode:false});
-    if(params.get("organize")==="1")setLookup({organizeMode:true});
+    const equipmentId=params.get("equipment")||"";
+    if(params.get("identify")==="1")setLookup({organizeMode:false,equipmentId});
+    if(params.get("organize")==="1")setLookup({organizeMode:true,equipmentId});
   },[]);
 
   const isAdmin=user?.role==="admin";
