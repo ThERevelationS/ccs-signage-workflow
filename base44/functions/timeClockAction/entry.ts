@@ -602,12 +602,36 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Stored break state contains an unexpected active break. Admin review is required.' }, { status: 409 });
         }
         const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        const currentWorkPauseStatus = workPauseStatusOf(state);
+        if (['pausing', 'resuming'].includes(currentWorkPauseStatus)) {
+          return Response.json({ success: false, error: 'A Work Pause action is still in progress. Retry status shortly.' }, { status: 409 });
+        }
+        const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        if (currentWorkPauseStatus === 'paused') {
+          if (!activeWorkPause?.id || activeWorkPause.status !== 'active' || asEmail(activeWorkPause.user_email) !== target.email || activeWorkPause.time_entry_id !== entry.id) {
+            return Response.json({ success: false, error: 'Stored Work Pause state does not match the active pause record. Admin review is required.' }, { status: 409 });
+          }
+        } else if (state.active_work_pause_id || activeWorkPause?.id) {
+          return Response.json({ success: false, error: 'Stored Work Pause state contains an unexpected active pause. Admin review is required.' }, { status: 409 });
+        }
+        const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
+          work_pause_allowed: target.can_work_pause === true,
+          employment_type: target.employment_type || 'hourly',
+          work_pause_status: currentWorkPauseStatus,
+          active_work_pause: activeWorkPause || null,
+          work_pause_summary: workPauseSummary,
         });
       }
-      if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null, user: publicEmployee(target), break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 } });
+      if (state.status === 'clocked_out') return Response.json({
+        success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
+        break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+        work_pause_allowed: target.can_work_pause === true,
+        employment_type: target.employment_type || 'hourly',
+        work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
+      });
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
 
