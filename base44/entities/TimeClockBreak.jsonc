@@ -1,0 +1,106 @@
+{
+  "name": "TimeClockBreak",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email for this break"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "time_entry_id": {
+      "type": "string",
+      "description": "Active TimeEntry this break belongs to"
+    },
+    "break_type": {
+      "type": "string",
+      "enum": [
+        "lunch",
+        "break",
+        "other"
+      ],
+      "description": "Employee-selected break category"
+    },
+    "is_paid": {
+      "type": "boolean",
+      "description": "Whether this break remains paid/worked time"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend break-start timestamp"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend break-end timestamp"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Completed break duration in whole minutes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "start_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for break start"
+    },
+    "end_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for break end"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "admin_correction"
+      ],
+      "default": "server"
+    }
+  },
+  "required": [
+    "user_email",
+    "time_entry_id",
+    "break_type",
+    "is_paid",
+    "started_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
