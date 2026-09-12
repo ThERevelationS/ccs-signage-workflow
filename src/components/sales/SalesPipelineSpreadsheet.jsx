@@ -46,7 +46,13 @@ const SALES_STATUSES = [
   { value: "on_hold", label: "On Hold", color: "bg-gray-100" }
 ];
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
+const isLegacyClosedRecord = (workOrder) => {
+  if (workOrder?.in_pipeline === true) return false;
+  const legacyTask = String(workOrder?.current_task_description || "").trim();
+  return /^(lost\b|completed sale\b|closed\b)/i.test(legacyTask);
+};
+
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -1030,6 +1036,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const sortedWorkOrders = useMemo(() => {
     // First filter
     let result = workOrders.filter(wo => {
+      const legacyClosed = isLegacyClosedRecord(wo);
+      if (recordScope === "current" && legacyClosed) return false;
+      if (recordScope === "history" && !legacyClosed) return false;
+
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
       }
@@ -1042,7 +1052,27 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
-        const searchable = [wo.title, wo.client_name, wo.contact_name, wo.sales_rep].filter(Boolean).join(' ').toLowerCase();
+        const searchable = [
+          wo.title,
+          wo.client_name,
+          wo.contact_name,
+          wo.contact_email,
+          wo.contact_phone,
+          wo.sales_rep,
+          wo.estimator,
+          wo.project_manager,
+          wo.current_task_assigned_to,
+          wo.current_task_description,
+          wo.description,
+          wo.est_inv_at,
+          wo.corbridge_invoice_number,
+          wo.install_location,
+          wo.billing_address,
+          wo.township_city,
+          wo.county,
+          wo.project_type,
+          wo.lead_source,
+        ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
       }
       
@@ -1112,7 +1142,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [workOrders, filterStatus, searchTerm, sortConfig, customFilters]);
+  }, [workOrders, filterStatus, recordScope, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
 
@@ -1205,6 +1235,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <SalesPipelineMobileCards
           workOrders={filteredWorkOrders}
           onOpenDetails={(wo) => setSelectedWorkOrder(wo)}
+          onUpdateWorkOrder={updateWorkOrder}
+          isRegistered={isRegistered}
         />
         {selectedWorkOrder && (
           <WorkOrderDetailsDialog
@@ -1297,7 +1329,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </Button>
 
           </div>
-          <span className="text-xs text-gray-500">{filteredWorkOrders.length} leads</span>
+          <span className="text-xs text-gray-500">{filteredWorkOrders.length} opportunities</span>
         </div>
       )}
 
@@ -1345,6 +1377,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '32px', minWidth: '32px' }}>#</th>
               {isColumnVisible("client_name") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
                 <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
+              </th>}
+              {isColumnVisible("sales_status") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_status' ? 'bg-blue-100' : ''}`} style={{ minWidth: '95px' }} onClick={() => handleSort('sales_status')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_status', 'Sales Status')}>
+                <div className="flex items-center gap-1">Status {getSortIcon('sales_status')}</div>
               </th>}
               {isColumnVisible("description") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '150px' }} onClick={() => handleSort('description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'description', 'Job Description')}>
                 <div className="flex items-center gap-1">Job Description {getSortIcon('description')}</div>
