@@ -188,8 +188,9 @@ export default function ProductChecklistDialog({
   };
 
   const handleCreateCustomValue = (itemId) => {
-    if (!customDropdownValue.trim()) return;
-    updateChecklistItem(itemId, { custom_dropdown_value: customDropdownValue.trim() });
+    const value = customDropdownValue.trim();
+    if (!value) return;
+    if (!applyChecklistStatus(itemId, value)) return;
     setCustomDropdownValue("");
     setShowOtherPopup(null);
   };
@@ -381,6 +382,34 @@ export default function ProductChecklistDialog({
       }
       return true;
     });
+  };
+
+  const applyChecklistStatus = (itemId, value) => {
+    const item = checklist.find(entry => entry.id === itemId);
+    if (!item || !value) return false;
+
+    const itemLabel = item.type === 'detail' ? 'detail' : 'checklist item';
+    if (!item.approved_by) {
+      setValidationDialog({
+        title: "Approver Required",
+        message: `Select who approved this ${itemLabel} before setting its status.`
+      });
+      return false;
+    }
+
+    const selectedCondition = dropdownConditions.find(dd => dd.name === value);
+    if (selectedCondition?.is_completed && !areChildrenComplete(itemId)) {
+      setValidationDialog({
+        title: "Tasks Still Open",
+        message: item.type === 'detail'
+          ? "Complete the tasks under this detail before marking it completed."
+          : "Complete the tasks and details under this checklist item before marking it completed."
+      });
+      return false;
+    }
+
+    updateChecklistItem(itemId, { custom_dropdown_value: value });
+    return true;
   };
 
   const getItemAttentionLabel = (item) => {
