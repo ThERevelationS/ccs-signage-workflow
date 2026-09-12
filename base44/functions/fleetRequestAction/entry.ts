@@ -188,6 +188,7 @@ Deno.serve(async (req) => {
       if (patch.equipment_id) {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+        if (equipment.status === 'retired') return Response.json({ error: 'Retired Fleet equipment is archived and cannot receive a new parts/fluid request. Reactivate the equipment first.' }, { status: 409 });
       }
 
       const matchesCreateIntent = (row: any) =>
@@ -278,6 +279,7 @@ Deno.serve(async (req) => {
       if (patch.equipment_id) {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+        if (patch.equipment_id !== existing.equipment_id && equipment.status === 'retired') return Response.json({ error: 'A Fleet request cannot be reassigned to retired equipment. Reactivate the equipment first.' }, { status: 409 });
       }
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
       if (!expectedUpdatedAt) return Response.json({ error: 'Fleet request version is missing. Reload before saving.' }, { status: 409 });
