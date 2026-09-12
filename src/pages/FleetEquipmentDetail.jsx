@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Bell,
   CalendarClock,
+  CalendarDays,
   ClipboardCheck,
   ClipboardList,
   Gauge,
@@ -42,6 +43,7 @@ const TABS = [
   { key: "parts", label: "Parts" },
   { key: "fuel", label: "Fuel & Costs" },
   { key: "warranties", label: "Warranties" },
+  { key: "assignments", label: "Assignments" },
   { key: "lifecycle", label: "Lifecycle" },
   { key: "history", label: "History" },
   { key: "timeline", label: "Timeline" },
@@ -253,6 +255,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "parts" && <PartsTab equipment={equipment} parts={parts} retired={retired} />}
         {activeTab === "fuel" && <FuelTab equipment={equipment} retired={retired} />}
         {activeTab === "warranties" && <WarrantyTab equipment={equipment} retired={retired} isAdmin={isAdmin} />}
+        {activeTab === "assignments" && <AssignmentsTab equipment={equipment} retired={retired} />}
         {activeTab === "lifecycle" && <FleetLifecyclePanel equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
@@ -407,6 +410,37 @@ function WarrantyTab({ equipment, retired = false, isAdmin = false }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><Metric label="Warranties" value={rows.length} /><Metric label="Active" value={active} /><Metric label="Needs attention" value={attention} attention={attention>0} /><Metric label="Claimed" value={claimed} /></div>
       <Card title={`${equipment.name} Warranties`} icon={ShieldCheck} action={<div className="flex flex-wrap gap-2"><Link to={listUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Warranty center</Link>{isAdmin&&!retired&&<Link to={addUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Add warranty</Link>}</div>}>
         <div className="space-y-2">{rows.map(row=>{const warranty=row.warranty||{};const danger=['expired','orphaned'].includes(row.effective_status);const warn=row.effective_status==='expiring_soon';return <Link key={warranty.id} to={listUrl} className={`block rounded-xl border p-3 ${danger?"border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/10":warn?"border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10":"border-gray-200 dark:border-slate-700"}`}><div className="flex flex-wrap items-start justify-between gap-2"><div><div className="font-semibold text-gray-900 dark:text-slate-100">{warranty.name}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{pretty(warranty.category)}{warranty.provider?` · ${warranty.provider}`:""}{warranty.end_date?` · ends ${warranty.end_date}`:""}</div></div><Tag>{pretty(row.effective_status)}</Tag></div>{row.reasons?.[0]&&<div className={`text-xs mt-2 ${danger?"text-red-700 dark:text-red-300":warn?"text-amber-700 dark:text-amber-300":"text-gray-500 dark:text-slate-400"}`}>{row.reasons[0]}</div>}</Link>})}{rows.length===0&&<Empty>No warranty coverage is recorded for this asset.</Empty>}</div>
+      </Card>
+    </>}
+  </div>;
+}
+
+function AssignmentsTab({ equipment, retired = false }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true); setError("");
+    base44.functions.invoke("fleetReservationAction", { action: "list", equipment_id: equipment.id })
+      .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setRows(data?.reservations || []); })
+      .catch(err => mounted && setError(err?.message || "Unable to load this asset's assignments."))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [equipment.id]);
+  const now = Date.now();
+  const current = rows.filter(row => row.status === "checked_out" || (row.status === "reserved" && Date.parse(row.start_at || "") <= now && Date.parse(row.end_at || "") >= now));
+  const upcoming = rows.filter(row => row.status === "reserved" && Date.parse(row.start_at || "") > now).sort((a,b)=>Date.parse(a.start_at)-Date.parse(b.start_at));
+  const history = rows.filter(row => ["returned","cancelled"].includes(row.status)).sort((a,b)=>(Date.parse(b.returned_at||b.end_at||"")||0)-(Date.parse(a.returned_at||a.end_at||"")||0));
+  const pastDue = rows.filter(row => row.status === "reserved" && Date.parse(row.end_at || "") < now);
+  const centerUrl = `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(equipment.id)}`;
+  const reserveUrl = `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(equipment.id)}&new=1`;
+  return <div className="space-y-5">
+    {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+    {loading ? <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div> : <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><Metric label="Current / checked out" value={current.length} attention={current.length>0} /><Metric label="Upcoming" value={upcoming.length} /><Metric label="Past due" value={pastDue.length} attention={pastDue.length>0} /><Metric label="History" value={history.length} /></div>
+      <Card title={`${equipment.name} Assignments`} icon={CalendarDays} action={<div className="flex flex-wrap gap-2"><Link to={centerUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Assignment center</Link>{!retired&&<Link to={reserveUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Reserve</Link>}</div>}>
+        <div className="space-y-3">{[...current,...pastDue,...upcoming.slice(0,6)].map(row=>{const start=new Date(row.start_at);const end=new Date(row.end_at);const overdue=row.status==='reserved'&&end.getTime()<now;return <Link key={row.id} to={centerUrl} className={`block rounded-xl border p-3 ${overdue?"border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/10":row.status==='checked_out'?"border-indigo-200 bg-indigo-50/40 dark:border-indigo-900 dark:bg-indigo-950/10":"border-gray-200 dark:border-slate-700"}`}><div className="flex flex-wrap items-start justify-between gap-2"><div><div className="font-semibold text-gray-900 dark:text-slate-100">{row.reserved_by_name||row.reserved_by_email}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{row.assignment_label||"Fleet assignment"}{row.job_site?` · ${row.job_site}`:""}</div></div><Tag>{overdue?"past due":pretty(row.status)}</Tag></div><div className="text-xs text-gray-400 mt-2">{Number.isNaN(start.getTime())?row.start_at:start.toLocaleString()} → {Number.isNaN(end.getTime())?row.end_at:end.toLocaleString()}</div></Link>})}{current.length===0&&pastDue.length===0&&upcoming.length===0&&<Empty>No active or upcoming assignments for this asset.</Empty>}</div>
       </Card>
     </>}
   </div>;
