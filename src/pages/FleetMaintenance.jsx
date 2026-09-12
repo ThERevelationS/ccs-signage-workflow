@@ -272,7 +272,7 @@ export default function FleetMaintenance() {
         {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div> : view === "workspace" ? (
           selectedEquipment ? <FleetMaintenanceWorkspace equipment={selectedEquipment} tasks={selectedTasks} isAdmin={isAdmin} initialTab={workspaceInitialTab} onBack={showEquipmentView} onEditSchedule={(task) => setDialog({ task })} onNewSchedule={() => openCreateDialog(selectedEquipment.id)} /> : <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 p-5 text-red-700 dark:text-red-300"><div className="font-semibold">Fleet equipment not found.</div><button onClick={showEquipmentView} className="mt-2 text-sm underline">Back to Maintenance</button></div>
         ) : view === "calendar" ? (
-          <FleetMaintenanceCalendar tasks={tasks} equipment={equipment} search={search} onOpenSchedule={(task) => openEquipmentMaintenance(task.equipment_id, "schedule")} />
+          <FleetMaintenanceCalendar tasks={tasks.filter(task => activeEquipmentIds.has(task.equipment_id))} equipment={activeEquipment} search={search} onOpenSchedule={(task) => openEquipmentMaintenance(task.equipment_id, "schedule")} />
         ) : view === "equipment" ? (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -305,8 +305,8 @@ export default function FleetMaintenance() {
         )}
       </div>
 
-      <FleetMaintenanceDialog open={!!dialog} task={dialog?.task || null} initialEquipmentId={dialog?.equipmentId || ""} equipment={equipment} parts={parts} fluids={fluids} onClose={() => !saving && setDialog(null)} onSave={saveTask} saving={saving} />
-      <FleetBulkMaintenanceDialog open={bulkPlannerOpen} equipment={equipment} onClose={() => setBulkPlannerOpen(false)} onCompleted={loadData} />
+      <FleetMaintenanceDialog open={!!dialog} task={dialog?.task || null} initialEquipmentId={dialog?.equipmentId || ""} equipment={dialog?.task ? equipment : activeEquipment} parts={parts} fluids={fluids} onClose={() => !saving && setDialog(null)} onSave={saveTask} saving={saving} />
+      <FleetBulkMaintenanceDialog open={bulkPlannerOpen} equipment={activeEquipment} onClose={() => setBulkPlannerOpen(false)} onCompleted={loadData} />
     </div>
   );
 }
