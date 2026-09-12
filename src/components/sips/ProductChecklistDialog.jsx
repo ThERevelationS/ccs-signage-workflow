@@ -1392,7 +1392,10 @@ export default function ProductChecklistDialog({
                                         } else if (val !== "select_value") {
                                           // Require approved_by before allowing any status selection
                                           if (!detail.approved_by) {
-                                            alert("Please select an approver first before setting the status.");
+                                            setValidationDialog({
+                                              title: "Approver Required",
+                                              message: "Select who approved this detail before setting its status."
+                                            });
                                             return;
                                           }
                                           // Check if it's switching TO a continued condition - allow bringing back
@@ -1636,7 +1639,10 @@ export default function ProductChecklistDialog({
                                   } else if (val !== "select_value") {
                                     // Require approved_by before allowing any status selection
                                     if (!stDisplayItem.approved_by) {
-                                      alert("Please select an approver first before setting the status.");
+                                      setValidationDialog({
+                                        title: "Approver Required",
+                                        message: "Select who approved this checklist item before setting its status."
+                                      });
                                       return;
                                     }
                                     // Allow switching TO continued conditions (bringing back from completed)
@@ -1644,7 +1650,10 @@ export default function ProductChecklistDialog({
                                     
                                     // Check if children are complete before allowing completion
                                     if (selectedCondition?.is_completed && !areChildrenComplete(stDisplayItem.id)) {
-                                      alert("Please complete all tasks and details under this checklist item first.");
+                                      setValidationDialog({
+                                        title: "Tasks Still Open",
+                                        message: "Complete the tasks and details under this checklist item before marking it completed."
+                                      });
                                       return;
                                     }
                                     updateChecklistItem(stDisplayItem.id, { custom_dropdown_value: val });
