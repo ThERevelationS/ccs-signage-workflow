@@ -1291,7 +1291,7 @@ export default function ProductChecklistDialog({
 
                           {/* Expanded: Tasks and Details - expanded by default */}
                           {(expandedItems[displayItem.id] !== false) && (
-                            <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-3">
+                            <div className="ml-2 sm:ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-2 sm:pl-3">
                               {/* Tasks under main item */}
                               {displayItem.tasks?.map(task => (
                               <div key={task.id} className="bg-orange-50 p-1 rounded border-l-2 border-orange-300 group">
@@ -1335,7 +1335,7 @@ export default function ProductChecklistDialog({
                                     </button>
                                   )}
                                   {isRegistered && (
-                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 md:opacity-0 md:group-hover:opacity-100">
+                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-4 md:w-4 p-0 text-red-500 md:opacity-0 md:group-hover:opacity-100">
                                       <Trash2 className="w-2.5 h-2.5" />
                                     </Button>
                                   )}
@@ -1365,7 +1365,7 @@ export default function ProductChecklistDialog({
                                       </div>
                                     )}
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/subtask:opacity-100">
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/subtask:opacity-100">
                                         <Trash2 className="w-2 h-2" />
                                       </Button>
                                     )}
@@ -1394,7 +1394,7 @@ export default function ProductChecklistDialog({
 
                               {/* Inline add task input */}
                               {newItemInput.show && newItemInput.parentId === displayItem.id && newItemInput.type === 'task' && (
-                              <div className="flex items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                              <div className="flex flex-wrap items-center gap-2 bg-orange-50 p-2 rounded border-l-4 border-orange-400">
                                 <Input
                                   value={newItemText}
                                   onChange={(e) => setNewItemText(e.target.value)}
@@ -1601,7 +1601,7 @@ export default function ProductChecklistDialog({
                                               </button>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100">
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100">
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
@@ -1631,7 +1631,7 @@ export default function ProductChecklistDialog({
                                       </div>
                                     )}
                                               {isRegistered && (
-                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100">
+                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100">
                                                   <Trash2 className="w-2 h-2" />
                                                 </Button>
                                               )}
@@ -1820,7 +1820,7 @@ export default function ProductChecklistDialog({
                             {(expandedItems[stDisplayItem.id] !== false) && (
                               <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
                                 {stDisplayItem.tasks?.map(task => (
-                                  <div key={task.id} className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask">
+                                  <div key={task.id} className="flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask">
                                     <Checkbox 
                                       checked={!!task.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
@@ -1849,7 +1849,7 @@ export default function ProductChecklistDialog({
                                       disabled={!isRegistered}
                                     />
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-4 w-4 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100">
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-4 md:w-4 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100">
                                         <Trash2 className="w-2.5 h-2.5" />
                                       </Button>
                                     )}
@@ -1858,7 +1858,7 @@ export default function ProductChecklistDialog({
                                 
                                 {/* Inline add task for sub-template */}
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'task' && (
-                                  <div className="flex items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
+                                  <div className="flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
@@ -1879,7 +1879,20 @@ export default function ProductChecklistDialog({
                                   <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs group/stdetail">
                                     <div className="flex flex-wrap items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
-                                      <span className="flex-1">{detail.text}</span>
+                                      {editingItemId === detail.id ? (
+                                        <div className="flex-1 flex gap-1 min-w-0">
+                                          <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                          <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                        </div>
+                                      ) : (
+                                        <div className="flex-1 flex items-center gap-1 min-w-0">
+                                          <span className="flex-1 min-w-0">{detail.text}</span>
+                                          {isRegistered && (
+                                            <button type="button" onClick={(e) => startEditItem(detail, e)} className="p-1 rounded hover:bg-purple-100 text-purple-700 shrink-0" title="Edit detail"><Pencil className="w-3 h-3" /></button>
+                                          )}
+                                        </div>
+                                      )}
                                       {isRegistered && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
@@ -1890,7 +1903,7 @@ export default function ProductChecklistDialog({
                                         </button>
                                       )}
                                       {isRegistered && (
-                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-4 w-4 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100">
+                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-7 w-7 md:h-4 md:w-4 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100">
                                           <Trash2 className="w-2.5 h-2.5" />
                                         </Button>
                                       )}
@@ -1940,7 +1953,7 @@ export default function ProductChecklistDialog({
                                               </div>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100">
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100">
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
