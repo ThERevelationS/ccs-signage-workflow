@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +15,7 @@ const STAGES = [
   { value: "installation", label: "Installation" },
 ];
 
-export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange }) {
+export default function UserCalendarSettingsPanel({ userEmail, sessionToken, onSettingsChange }) {
   const [settings, setSettings] = useState(null);
   const [settingsRecord, setSettingsRecord] = useState(null);
   const [settingsError, setSettingsError] = useState("");
@@ -32,8 +31,7 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
     setLoading(true);
     try {
       const record = await loadSingleUserCalendarSettings({
-        entity: base44.entities.UserCalendarSettings,
-        userEmail,
+        sessionToken,
         label: "Your calendar settings",
       });
       setSettingsRecord(record);
@@ -64,10 +62,10 @@ export default function UserCalendarSettingsPanel({ userEmail, onSettingsChange 
     setSettingsError("");
     try {
       const savedRecord = await saveUserCalendarSettingsIfUnchanged({
-        entity: base44.entities.UserCalendarSettings,
         loadedRecord: settingsRecord,
         userEmail,
         nextSettings: settings,
+        sessionToken,
         label: "Your calendar settings",
       });
       setSettingsRecord(savedRecord);
