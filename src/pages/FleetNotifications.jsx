@@ -11,6 +11,7 @@ import {
   CalendarClock,
   CalendarDays,
   ClipboardList,
+  DollarSign,
   Droplets,
   Loader2,
   Navigation,
@@ -38,6 +39,7 @@ const groupConfig = {
   assignments: { label: "Assignments", icon: CalendarDays },
   inventory: { label: "Inventory", icon: Package },
   warranties: { label: "Warranties", icon: ShieldCheck },
+  approvals: { label: "Approvals", icon: DollarSign },
   requests: { label: "Requests", icon: ShoppingCart },
   bouncie: { label: "Bouncie", icon: Navigation },
   system: { label: "System", icon: Activity },
@@ -57,7 +59,7 @@ export default function FleetNotifications() {
         const user = await base44.auth.me().catch(() => null);
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
-        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
@@ -66,6 +68,7 @@ export default function FleetNotifications() {
           filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
           base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
           base44.functions.invoke("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
+          admin ? listAllFleetRows(base44.entities.FleetRepairEstimate, "-updated_date", { label: "Fleet repair-estimate approval notifications" }).catch(() => []) : Promise.resolve([]),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warning notifications" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie notifications" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
@@ -79,6 +82,7 @@ export default function FleetNotifications() {
           requests: requests || [],
           reservations: reservationResult?.data?.reservations || [],
           warranties: warrantyResult?.data?.rows || [],
+          repairEstimates: repairEstimates || [],
           bouncieAlerts: [...(bouncieCritical || []), ...(bouncieWarnings || [])],
           bouncieVehicles: bouncieVehiclesResult?.data?.data || [],
         });
@@ -192,6 +196,21 @@ export default function FleetNotifications() {
         to: `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(warranty.equipment_id || "")}&status=${critical ? "expired" : "attention"}`,
         timestamp: warranty.end_date || warranty.updated_date || warranty.created_date || "",
       });
+    }
+
+    if (isAdmin) {
+      for (const estimate of data.repairEstimates || []) {
+        if (estimate.status !== "submitted") continue;
+        rows.push({
+          key: `repair-estimate-${estimate.id}`,
+          group: "approvals",
+          severity: "warning",
+          title: `Repair estimate awaiting approval${estimate.estimated_total != null ? ` · $${Number(estimate.estimated_total).toFixed(2)}` : ""}`,
+          detail: `${names[estimate.equipment_id] || "Fleet equipment"}${estimate.approval_tier ? ` · ${estimate.approval_tier}` : ""}${estimate.mechanic_name ? ` · ${estimate.mechanic_name}` : ""}`,
+          to: `${createPageUrl("FleetWorkOrders")}?status=all&workOrder=${encodeURIComponent(estimate.work_order_id || "")}${estimate.equipment_id ? `&equipment=${encodeURIComponent(estimate.equipment_id)}` : ""}`,
+          timestamp: estimate.submitted_at || estimate.updated_date || estimate.created_date || "",
+        });
+      }
     }
 
     for (const request of data.requests) {
