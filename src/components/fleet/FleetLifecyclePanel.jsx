@@ -21,6 +21,7 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
   const [profile, setProfile] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [flags, setFlags] = useState([]);
+  const [priority, setPriority] = useState(null);
   const [form, setForm] = useState(seed(null));
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
       setProfile(data?.profile || null);
       setMetrics(data?.metrics || null);
       setFlags(data?.flags || []);
+      setPriority(data?.priority || null);
       setForm(seed(data?.profile || null));
     } catch (err) {
       setError(err?.message || "Unable to load lifecycle planning.");
@@ -63,6 +65,7 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
       setProfile(data?.profile || null);
       setMetrics(data?.metrics || null);
       setFlags(data?.flags || []);
+      setPriority(data?.priority || null);
       setForm(seed(data?.profile || null));
       setEditing(false);
     } catch (err) {
@@ -78,15 +81,17 @@ export default function FleetLifecyclePanel({ equipment, isAdmin }) {
 
   return <div className="space-y-5">
     {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
       <Metric icon={CircleDollarSign} label="Recorded maintenance" value={money(metrics?.maintenance_cost)} sub={`${metrics?.completed_work_orders || 0} completed WOs`} />
+      <Metric icon={CircleDollarSign} label="Past 12 months" value={money(metrics?.recent_maintenance_cost)} sub={`${metrics?.recent_completed_work_orders || 0} completed WOs`} />
       <Metric icon={Gauge} label="Current meter" value={meter.available ? `${number(meter.value)} ${meter.unit || ""}` : "Unavailable"} sub={meter.source === "bouncie" ? "Bouncie verified" : "Fleet manual meter"} />
       <Metric icon={CalendarClock} label="Asset age" value={metrics?.age_years != null ? `${metrics.age_years} yr` : metrics?.model_age_years != null ? `~${metrics.model_age_years} yr` : "N/A"} sub={metrics?.age_years != null ? "From acquisition date" : "Model-year approximation"} />
       <Metric icon={TrendingDown} label="Maintenance / acquisition" value={metrics?.maintenance_to_acquisition_ratio != null ? `${(metrics.maintenance_to_acquisition_ratio * 100).toFixed(1)}%` : "N/A"} sub={profile?.acquisition_cost ? `${money(profile.acquisition_cost)} acquisition cost` : "Add acquisition cost"} />
+      <Metric icon={CalendarClock} label="Service-cycle proxy" value={metrics?.average_service_cycle_days != null ? `${metrics.average_service_cycle_days} days` : "N/A"} sub={metrics?.longest_service_cycle_days != null ? `Longest ${metrics.longest_service_cycle_days} days · not true downtime` : "Requires WO start/completion dates"} />
     </div>
 
     <section className={`rounded-xl border p-4 ${statusTone}`}>
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">Replacement planning status</div><div className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1 capitalize">{pretty(profile?.replacement_status || "monitor")}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">Strategic status is admin-managed; date and meter warnings below are calculated from current Fleet data.</div></div>{!editing && <button onClick={() => setEditing(true)} className="min-h-11 px-3 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 text-sm font-semibold inline-flex items-center justify-center gap-2"><Pencil className="w-4 h-4"/>Edit Lifecycle Plan</button>}</div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-slate-400">Replacement planning status</div><div className="flex flex-wrap items-center gap-2 mt-1"><div className="text-xl font-bold text-gray-900 dark:text-slate-100 capitalize">{pretty(profile?.replacement_status || "monitor")}</div>{priority && <span className={`text-xs rounded-full px-2 py-1 font-bold ${priority.label === "High" ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300" : priority.label === "Medium" || priority.label === "Watch" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>Planning priority {priority.score} · {priority.label}</span>}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">Strategic status is admin-managed. Planning priority is a Fleet heuristic built from configured targets, maintenance burden, and current asset state; it is not an automatic replacement decision.</div></div>{!editing && <button onClick={() => setEditing(true)} className="min-h-11 px-3 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 text-sm font-semibold inline-flex items-center justify-center gap-2"><Pencil className="w-4 h-4"/>Edit Lifecycle Plan</button>}</div>
       {flags.length > 0 && <div className="mt-4 space-y-2">{flags.map(flag => <div key={flag.code} className={`rounded-lg border px-3 py-2 text-xs flex gap-2 ${flag.severity === "high" ? "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300" : flag.severity === "medium" ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300" : "border-gray-200 bg-gray-50 text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}><AlertTriangle className="w-4 h-4 shrink-0"/><span>{flag.label}</span></div>)}</div>}
     </section>
 
