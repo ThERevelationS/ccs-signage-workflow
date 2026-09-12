@@ -1370,6 +1370,104 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     </div>
   ) : null;
 
+  const refreshSelectedWorkOrder = async () => {
+    if (!selectedWorkOrder?.id) return;
+    try {
+      const latest = await WorkOrder.get(selectedWorkOrder.id);
+      if (!latest?.id) return;
+      setWorkOrders((current) => current.map((row) => row.id === latest.id ? latest : row));
+      setSelectedWorkOrder(latest);
+    } catch (error) {
+      console.error("Could not refresh selected Sales Pipeline Work Order:", error);
+      await loadWorkOrders(false);
+    }
+  };
+
+  const renderOpportunityDialogs = () => (
+    <>
+      {selectedWorkOrder && !showFullWorkOrderDetails && (
+        <SalesOpportunityDialog
+          workOrder={selectedWorkOrder}
+          users={users}
+          isRegistered={isRegistered}
+          onClose={() => setSelectedWorkOrder(null)}
+          onUpdateFields={updateWorkOrderFields}
+          onRequestStatusChange={requestSalesStatusChange}
+          onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
+        />
+      )}
+      {selectedWorkOrder && showFullWorkOrderDetails && (
+        <WorkOrderDetailsDialog
+          isOpen={true}
+          workOrder={selectedWorkOrder}
+          onClose={() => setShowFullWorkOrderDetails(false)}
+          onUpdate={refreshSelectedWorkOrder}
+          onMove={async (wo, newStage) => {
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({ workOrder: wo, newStage, label: "Sales Pipeline details stage transition" });
+              await refreshSelectedWorkOrder();
+            } catch (error) {
+              console.error("Error moving Sales Pipeline Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+              await refreshSelectedWorkOrder();
+            }
+          }}
+          onSplit={async (wo) => {
+            await createWorkOrderWithRecovery({
+              data: {
+                title: `${wo.title} - Rider`,
+                client_name: wo.client_name,
+                description: wo.description,
+                is_rider: true,
+                parent_work_order_id: wo.id,
+                current_stage: wo.current_stage,
+                rider_stage: wo.current_stage,
+                sales_status: wo.sales_status,
+              },
+              label: "Sales Pipeline rider Work Order",
+            });
+            await loadWorkOrders(false);
+          }}
+          onComplete={async (wo) => {
+            try {
+              await transitionWorkOrderFromLoadedSnapshot({ workOrder: wo, newStage: wo.current_stage, completed: true, label: "Sales Pipeline details completion" });
+              setWorkOrders((current) => current.filter((row) => row.id !== wo.id));
+              setSelectedWorkOrder(null);
+              setShowFullWorkOrderDetails(false);
+            } catch (error) {
+              console.error("Error completing Sales Pipeline Work Order:", error);
+              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+              await loadWorkOrders(false);
+            }
+          }}
+          onDelete={async (wo) => {
+            setDestructiveActionError("");
+            try {
+              await softDeleteWorkOrderFromLoadedSnapshot({
+                workOrder: wo,
+                deletedBy: currentUser?.email || "unknown",
+                label: "Sales Pipeline details Work Order delete",
+              });
+              setWorkOrders((current) => current.filter((row) => row.id !== wo.id));
+              setSelectedWorkOrder(null);
+              setShowFullWorkOrderDetails(false);
+            } catch (error) {
+              console.error("Sales Pipeline details Work Order delete blocked:", error);
+              setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
+              await loadWorkOrders(false);
+              throw error;
+            }
+          }}
+        />
+      )}
+      <SalesStatusTransitionDialog
+        transition={statusTransition}
+        onClose={() => setStatusTransition(null)}
+        onConfirm={confirmSalesStatusTransition}
+      />
+    </>
+  );
+
   // Mobile card view
   if (isMobile && viewMode !== "board") {
     return (
