@@ -2035,6 +2035,7 @@ export default function ProductChecklistDialog({
                         users={users}
                         isRegistered={isRegistered}
                         updateChecklistItem={updateChecklistItem}
+                        applyChecklistStatus={applyChecklistStatus}
                         setShowOtherPopup={setShowOtherPopup}
                       />
                     )}
