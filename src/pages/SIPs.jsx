@@ -280,7 +280,7 @@ export default function SIPs() {
   }
 
   return (
-    <div className="h-full overflow-auto p-6">
+    <div className="h-full overflow-auto p-3 sm:p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-4 sm:p-6 mb-4">
@@ -385,8 +385,60 @@ export default function SIPs() {
           </div>
         )}
 
-        {/* Spreadsheet */}
-        <div className="clay-card p-4 w-full overflow-x-auto">
+        {/* Active queue */}
+        <div className="clay-card p-3 sm:p-4 w-full">
+          <div className="lg:hidden space-y-3">
+            {visibleActiveWorkOrders.map((wo, index) => {
+              const progress = getChecklistProgress(wo);
+              const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
+              const isWip = isWipItem(wo);
+              return (
+                <div key={wo.id} className={`rounded-xl border p-3 bg-white ${focusedRowId === wo.id ? "ring-2 ring-purple-400" : ""}`}>
+                  <div className="flex items-start gap-3">
+                    <button type="button" onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)} className="w-8 h-8 rounded-lg text-white font-bold text-sm shrink-0" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
+                      {index + 1}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                        <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                      </button>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
+                    </div>
+                    <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {isWip && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">WIP</Badge>}
+                    {deadlineStatus?.label && <Badge variant="outline" className={deadlineStatus.className}>{deadlineStatus.label}</Badge>}
+                    {wo.current_task_assigned_to && <Badge variant="outline">{wo.current_task_assigned_to}</Badge>}
+                    {wo.asap && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">ASAP</Badge>}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
+                    <div><span className="text-gray-400 block">Deadline</span><span className="font-medium text-gray-700">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "—"}</span></div>
+                    <div><span className="text-gray-400 block">PM</span><span className="font-medium text-gray-700 truncate block">{wo.project_manager || "—"}</span></div>
+                    <div><span className="text-gray-400 block">Amount</span><span className="font-medium text-gray-700">{wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "—"}</span></div>
+                    <div><span className="text-gray-400 block">Revisit</span><span className="font-medium text-amber-700">{wo.sip_revisit_date ? format(parseLocalDate(wo.sip_revisit_date), "MM/dd/yy") : "—"}</span></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
+                    <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="justify-center">
+                      <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist {progress.completed}/{progress.total}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="justify-center">Open Work Order</Button>
+                  </div>
+                </div>
+              );
+            })}
+            {visibleActiveWorkOrders.length === 0 && (
+              <div className="py-10 px-4 text-center text-sm text-gray-500">
+                {searchQuery || statusFilter !== "all" ? "No active SIPs items match the current search or filter." : "No items assigned to SIPs."}
+              </div>
+            )}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
           <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr className="border-b">
