@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
         warning_count:counts.warning,
         info_count:counts.info,
         finding_groups:findings.length,
-        totals:{equipment:equipment.length,maintenance_tasks:tasks.length,work_orders:workOrders.length,parts:parts.length,fluids:fluids.length,equipment_logs:logs.length,requests:requests.length,bouncie_live_rows:liveState.length},
+        totals:{equipment:equipment.length,maintenance_tasks:tasks.length,work_orders:workOrders.length,parts:parts.length,fluids:fluids.length,equipment_logs:logs.length,requests:requests.length,bouncie_live_rows:liveState.length,meter_rules:meterRules.length,repair_estimates:repairEstimates.length,lifecycle_profiles:lifecycleProfiles.length,fuel_entries:fuelEntries.length,warranties:warranties.length,reservations:reservations.length,dashboard_preferences:dashboardPreferences.length,repair_approval_policies:approvalPolicies.length,part_identifications:partIdentifications.length,inspection_templates:inspectionTemplates.length,inspections:inspections.length},
       },
       findings,
     });
