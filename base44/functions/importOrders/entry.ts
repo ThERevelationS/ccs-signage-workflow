@@ -3,6 +3,7 @@ import * as XLSX from 'npm:xlsx@0.18.5';
 import { format } from 'npm:date-fns@2.30.0';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { createImportedOrderWithRecovery, OrderImportConflictError, replaceImportedOrderFieldsIfUnchanged } from '../../shared/orderImportPersistence.mjs';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -23,34 +24,45 @@ const retryOnRateLimit = async (fn, maxRetries = 3) => {
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me().catch(() => null);
-  if (!user?.email) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const contentType = req.headers.get('content-type') || '';
+  let formData = null;
+  let body = null;
+  let sessionToken = '';
 
-  let canImport = user.role === 'admin';
-  if (!canImport) {
-    const authorized = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
-    const appUser = authorized?.[0];
-    canImport = appUser?.role === 'admin' || appUser?.can_import_export === true;
+  if (contentType.includes('multipart/form-data')) {
+    formData = await req.formData();
+    sessionToken = String(formData.get('session_token') || '').trim();
+  } else {
+    body = await req.json().catch(() => ({}));
+    sessionToken = String(body?.session_token || '').trim();
   }
+
+  let actor;
+  try {
+    actor = await authenticateSignShopSession(base44, sessionToken);
+  } catch (error) {
+    const status = Number(error?.status || 401);
+    const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+    return Response.json({ error: safeStatus === 503 ? 'Session authentication is unavailable' : 'Unauthorized' }, { status: safeStatus });
+  }
+
+  const canImport = actor?.role === 'admin' || actor?.can_import_export === true;
   if (!canImport) {
     return Response.json({ error: 'Order import permission is required.' }, { status: 403 });
   }
 
   let workbook;
   let workOrderFilter = '';
-  const contentType = req.headers.get('content-type') || '';
-  if (contentType.includes('multipart/form-data')) {
-    const formData = await req.formData();
+  if (formData) {
     const file = formData.get('file');
-    workOrderFilter = formData.get('work_order_filter') || '';
+    workOrderFilter = String(formData.get('work_order_filter') || '');
     if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
     workbook = XLSX.read(data, { type: 'array', cellDates: true });
   } else {
-    const body = await req.json();
-    workOrderFilter = body.workOrderFilter || '';
-    if (!body.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
+    workOrderFilter = body?.workOrderFilter || '';
+    if (!body?.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
     const binaryStr = atob(body.fileData);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
