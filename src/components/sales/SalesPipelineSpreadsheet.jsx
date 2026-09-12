@@ -1061,13 +1061,55 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setHeaderContextMenu(null);
   };
 
+  const todayStamp = format(new Date(), "yyyy-MM-dd");
+  const upcomingDate = new Date();
+  upcomingDate.setDate(upcomingDate.getDate() + 7);
+  const upcomingStamp = format(upcomingDate, "yyyy-MM-dd");
+
+  const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
+    const legacyClosed = isLegacyClosedRecord(wo);
+    if (recordScope === "current" && legacyClosed) return false;
+    if (recordScope === "history" && !legacyClosed) return false;
+    return true;
+  }), [workOrders, recordScope]);
+
+  const pipelineSummary = useMemo(() => {
+    const operational = scopedWorkOrders.filter((wo) => isOpenOpportunity(wo) && !isLegacyClosedRecord(wo));
+    return operational.reduce((summary, wo) => {
+      const followUp = wo.follow_up_date || "";
+      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      summary.openCount += 1;
+      summary.openValue += value;
+      if (followUp && followUp < todayStamp) summary.overdueCount += 1;
+      if (followUp === todayStamp) summary.dueTodayCount += 1;
+      if (followUp && followUp <= todayStamp) summary.dueCount += 1;
+      if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
+      if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
+      if (!followUp && (wo.sales_status === "quoted" || wo.sales_status === "follow_up" || wo.quote_date || wo.date_estimate_sent)) summary.quoteNoFollowUpCount += 1;
+      if (typeof wo.probability === "number") summary.ratedProbabilityCount += 1;
+      return summary;
+    }, {
+      openCount: 0,
+      openValue: 0,
+      overdueCount: 0,
+      dueTodayCount: 0,
+      dueCount: 0,
+      upcomingCount: 0,
+      noNextActionCount: 0,
+      quoteNoFollowUpCount: 0,
+      ratedProbabilityCount: 0,
+    });
+  }, [scopedWorkOrders, todayStamp, upcomingStamp]);
+
+  useEffect(() => {
+    onSummaryChange?.(pipelineSummary);
+  }, [pipelineSummary, onSummaryChange]);
+
   // Pre-compute sort values for faster sorting
   const sortedWorkOrders = useMemo(() => {
     // First filter
-    let result = workOrders.filter(wo => {
-      const legacyClosed = isLegacyClosedRecord(wo);
-      if (recordScope === "current" && legacyClosed) return false;
-      if (recordScope === "history" && !legacyClosed) return false;
+    let result = scopedWorkOrders.filter(wo => {
+      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, currentUser)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
@@ -1171,7 +1213,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [workOrders, filterStatus, recordScope, searchTerm, sortConfig, customFilters]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, currentUser, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
 
