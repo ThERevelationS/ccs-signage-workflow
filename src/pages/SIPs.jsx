@@ -734,6 +734,7 @@ export default function SIPs() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Future Revisit Section */}
