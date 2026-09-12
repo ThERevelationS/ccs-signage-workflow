@@ -14,6 +14,7 @@ import {
   Loader2,
   Navigation,
   Package,
+  ShieldCheck,
   ShoppingCart,
   Truck,
   UserRoundX,
@@ -34,6 +35,7 @@ const groupConfig = {
   maintenance: { label: "Maintenance", icon: CalendarClock },
   work_orders: { label: "Work Orders", icon: ClipboardList },
   inventory: { label: "Inventory", icon: Package },
+  warranties: { label: "Warranties", icon: ShieldCheck },
   requests: { label: "Requests", icon: ShoppingCart },
   bouncie: { label: "Bouncie", icon: Navigation },
   system: { label: "System", icon: Activity },
@@ -53,13 +55,14 @@ export default function FleetNotifications() {
         const user = await base44.auth.me().catch(() => null);
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
-        const [equipment, tasks, workOrders, parts, fluids, requests, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, warrantyResult, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
           listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet part stock notifications" }),
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluid stock notifications" }),
           filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
+          base44.functions.invoke("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warning notifications" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie notifications" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
@@ -71,6 +74,7 @@ export default function FleetNotifications() {
           parts: parts || [],
           fluids: fluids || [],
           requests: requests || [],
+          warranties: warrantyResult?.data?.rows || [],
           bouncieAlerts: [...(bouncieCritical || []), ...(bouncieWarnings || [])],
           bouncieVehicles: bouncieVehiclesResult?.data?.data || [],
         });
@@ -152,6 +156,22 @@ export default function FleetNotifications() {
     for (const fluid of data.fluids) {
       if (!isFluidLowStock(fluid)) continue;
       rows.push({ key: `fluid-${fluid.id}`, group: "inventory", severity: Number(fluid.quantity || 0) <= 0 ? "critical" : "warning", title: `Low-stock fluid: ${fluid.fluid_name}`, detail: `${fluid.quantity ?? "—"} ${fluid.unit || ""} on hand · minimum ${fluid.minimum_stock ?? "—"} ${fluid.minimum_stock_unit || fluid.unit || ""}`, to: `${createPageUrl("FleetFluids")}?stock=low&search=${encodeURIComponent(fluid.fluid_name || "")}`, timestamp: fluid.updated_date || "" });
+    }
+
+    for (const warrantyRow of data.warranties || []) {
+      if (!["expired", "orphaned", "expiring_soon"].includes(warrantyRow.effective_status)) continue;
+      const warranty = warrantyRow.warranty || {};
+      const equipmentName = warrantyRow.equipment?.name || names[warranty.equipment_id] || "Unresolved equipment";
+      const critical = ["expired", "orphaned"].includes(warrantyRow.effective_status);
+      rows.push({
+        key: `warranty-${warranty.id}`,
+        group: "warranties",
+        severity: critical ? "critical" : "warning",
+        title: critical ? `Warranty expired: ${warranty.name}` : `Warranty expiring soon: ${warranty.name}`,
+        detail: `${equipmentName}${warrantyRow.reasons?.length ? ` · ${warrantyRow.reasons.join(" · ")}` : ""}`,
+        to: `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(warranty.equipment_id || "")}&status=${critical ? "expired" : "attention"}`,
+        timestamp: warranty.end_date || warranty.updated_date || warranty.created_date || "",
+      });
     }
 
     for (const request of data.requests) {
