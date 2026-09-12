@@ -35,6 +35,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const [notes, setNotes] = useState("");
   const [reviewReason, setReviewReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [retryReview, setRetryReview] = useState(null);
 
   const loadRequests = useCallback(async () => {
     if (!sessionToken) { setRequests([]); return; }
@@ -67,51 +68,86 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
     setLunchMinutes(String(requested.lunch_minutes || 0));
     setNotes(requested.notes || "");
     setReviewReason("");
+    setRetryReview(null);
     setError("");
   };
 
   const review = async (decision) => {
     if (!selected?.id || busy) return;
-    if (reviewReason.trim().length < 3) { setError("Enter a manager review reason before deciding."); return; }
-    const payload = {
-      action: "review_correction_request",
-      session_token: sessionToken,
-      target_email: selected.user_email,
-      request_id: newRequestId(),
-      correction_request_id: selected.id,
-      expected_request_updated_date: selected.updated_date,
-      decision,
-      reason: reviewReason.trim(),
-    };
-    if (decision === "approve_modified") {
-      const parsedIn = new Date(clockIn);
-      const parsedOut = new Date(clockOut);
-      if (!Number.isFinite(parsedIn.getTime()) || !Number.isFinite(parsedOut.getTime()) || parsedOut < parsedIn) {
-        setError("Enter valid corrected clock-in and clock-out times.");
+
+    const retryingThisRequest = retryReview?.correctionRequestId === selected.id;
+    let payload;
+    if (retryingThisRequest) {
+      if (decision !== retryReview.decision) {
+        setError("A manager review is already in recovery. Retry the same decision before choosing a different outcome.");
         return;
       }
-      payload.correction = {
-        clock_in: parsedIn.toISOString(),
-        clock_out: parsedOut.toISOString(),
-        lunch_minutes: Math.max(0, Number(lunchMinutes) || 0),
-        notes,
+      payload = { ...retryReview.payload, session_token: sessionToken };
+    } else {
+      if (reviewReason.trim().length < 3) { setError("Enter a manager review reason before deciding."); return; }
+      payload = {
+        action: "review_correction_request",
+        session_token: sessionToken,
+        target_email: selected.user_email,
+        request_id: newRequestId(),
+        correction_request_id: selected.id,
+        expected_request_updated_date: selected.updated_date,
+        decision,
+        reason: reviewReason.trim(),
       };
+      if (decision === "approve_modified") {
+        const parsedIn = new Date(clockIn);
+        const parsedOut = new Date(clockOut);
+        if (!Number.isFinite(parsedIn.getTime()) || !Number.isFinite(parsedOut.getTime()) || parsedOut < parsedIn) {
+          setError("Enter valid corrected clock-in and clock-out times.");
+          return;
+        }
+        payload.correction = {
+          clock_in: parsedIn.toISOString(),
+          clock_out: parsedOut.toISOString(),
+          lunch_minutes: Math.max(0, Number(lunchMinutes) || 0),
+          notes,
+        };
+      }
     }
+
     setBusy(true);
     setError("");
     try {
       const response = await base44.functions.invoke("timeClockAction", payload);
       const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "The manager decision was not confirmed by the server.");
+      if (!data?.success) {
+        const serverError = new Error(data?.error || "The manager decision was not confirmed by the server.");
+        serverError.retrySameRequest = data?.retry_same_request === true;
+        throw serverError;
+      }
+      setRetryReview(null);
       setSelected(null);
       await Promise.all([loadRequests(), onEntriesChanged?.()]);
     } catch (err) {
-      setError(err?.response?.data?.error || err?.message || "The manager decision could not be completed safely.");
+      const responseData = err?.response?.data || err?.data || {};
+      const retrySameRequest = err?.retrySameRequest === true || responseData?.retry_same_request === true;
+      if (retrySameRequest) {
+        const { session_token, ...frozenPayload } = payload;
+        void session_token;
+        setRetryReview({
+          correctionRequestId: selected.id,
+          decision,
+          requestId: payload.request_id,
+          payload: frozenPayload,
+        });
+        setError(`${responseData?.error || err?.message || "The manager review was interrupted."} Retry the same manager decision to recover safely.`);
+      } else {
+        setRetryReview(null);
+        setError(responseData?.error || err?.message || "The manager decision could not be completed safely.");
+      }
       await loadRequests();
     } finally {
       setBusy(false);
     }
   };
+
+  const retryingSelected = retryReview?.correctionRequestId === selected?.id;
 
   if (!sessionToken) return null;
 
@@ -147,7 +183,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         )}
       </div>
 
-      <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy) setSelected(null); }}>
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy && !retryingSelected) { setSelected(null); setRetryReview(null); } }}>
         <DialogContent className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Review Time Correction</DialogTitle></DialogHeader>
           {selected && (
@@ -174,21 +210,26 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   <div>Lunch: {selected.requested_changes?.lunch_minutes || 0} min</div>
                 </div>
               </div>
+              {retryingSelected && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  This review was interrupted after the server began processing it. Values are locked until you retry the same decision so the original idempotent request can finish safely.
+                </div>
+              )}
               <div className="rounded-lg border p-3 space-y-3">
                 <div className="text-sm font-semibold">Manager-adjusted values</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Clock In</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy} /></div>
-                  <div><Label>Clock Out</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy} /></div>
+                  <div><Label>Clock In</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} /></div>
+                  <div><Label>Clock Out</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} /></div>
                 </div>
-                <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy} /></div>
-                <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy} /></div>
+                <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
+                <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy || retryingSelected} /></div>
               </div>
-              <div><Label>Manager Review Reason <span className="text-red-600">*</span></Label><Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy} /></div>
+              <div><Label>Manager Review Reason <span className="text-red-600">*</span></Label><Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} /></div>
               {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => review("reject")} disabled={busy || reviewReason.trim().length < 3}><XCircle className="w-4 h-4 mr-2" />Reject</Button>
-                <Button variant="outline" onClick={() => review("approve_modified")} disabled={busy || reviewReason.trim().length < 3}><Pencil className="w-4 h-4 mr-2" />Approve Edited</Button>
-                <Button onClick={() => review("approve")} disabled={busy || reviewReason.trim().length < 3}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}Approve Requested</Button>
+                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => review("reject")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "reject")}><XCircle className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "reject" ? "Retry Reject" : "Reject"}</Button>
+                <Button variant="outline" onClick={() => review("approve_modified")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "approve_modified")}><Pencil className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "approve_modified" ? "Retry Edited Approval" : "Approve Edited"}</Button>
+                <Button onClick={() => review("approve")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "approve")}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}{retryingSelected && retryReview.decision === "approve" ? "Retry Approval" : "Approve Requested"}</Button>
               </div>
             </div>
           )}
