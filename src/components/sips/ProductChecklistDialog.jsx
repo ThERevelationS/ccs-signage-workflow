@@ -372,6 +372,14 @@ export default function ProductChecklistDialog({
     });
   };
 
+  const getItemAttentionLabel = (item) => {
+    if (!item?.approved_by) return "Needs approver";
+    if (!item?.custom_dropdown_value) return "Needs status";
+    const selectedCondition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    if (selectedCondition?.is_completed && !areChildrenComplete(item.id)) return "Tasks open";
+    return null;
+  };
+
   const checkIfComplete = () => {
     if (!checklist || checklist.length === 0) {
       return { complete: false, hasChecklist: false };
@@ -1210,6 +1218,12 @@ export default function ProductChecklistDialog({
                               </div>
                             )}
                             
+                            {getItemAttentionLabel(displayItem) && (
+                              <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
+                                {getItemAttentionLabel(displayItem)}
+                              </span>
+                            )}
+
                             {/* Quick add buttons on hover */}
                             {isRegistered && (
                               <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -1474,7 +1488,12 @@ export default function ProductChecklistDialog({
                                         )}
                                       </div>
                                     )}
-                                    
+                                    {getItemAttentionLabel(detail) && (
+                                      <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
+                                        {getItemAttentionLabel(detail)}
+                                      </span>
+                                    )}
+
                                     {/* Quick add task button for detail */}
                                     {isRegistered && (
                                       <button
@@ -1735,7 +1754,12 @@ export default function ProductChecklistDialog({
                                   )}
                                 </div>
                               )}
-                              
+                              {getItemAttentionLabel(stDisplayItem) && (
+                                <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
+                                  {getItemAttentionLabel(stDisplayItem)}
+                                </span>
+                              )}
+
                               {/* Quick add buttons on hover for sub-templates */}
                               {isRegistered && (
                                 <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
