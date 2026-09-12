@@ -363,6 +363,18 @@ Deno.serve(async (req) => {
 
     if (!requestId) return Response.json({ success: false, error: 'A valid request id is required.' }, { status: 400 });
 
+    if (action === 'list_correction_requests') {
+      if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view correction requests.' }, { status: 403 });
+      const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
+      const query = adminScope
+        ? { status: { $in: ['pending', 'reviewing'] } }
+        : { user_email: target.email };
+      const requests = await correctionRequestEntity.filter(query);
+      if (!Array.isArray(requests)) throw new Error('Correction request list did not return records.');
+      requests.sort((a: any, b: any) => new Date(b.requested_at || b.created_date || 0).getTime() - new Date(a.requested_at || a.created_date || 0).getTime());
+      return Response.json({ success: true, requests });
+    }
+
     if (action === 'update_notes') {
       if (actor.role === 'badge') {
         return Response.json({ success: false, error: 'A signed-in employee session is required to edit notes.' }, { status: 403 });
