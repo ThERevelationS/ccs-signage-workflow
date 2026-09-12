@@ -69,7 +69,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   if (attentionFilter === "mine") {
     const names = [currentUser?.full_name, currentUser?.name, currentUser?.email].filter(Boolean).map((value) => String(value).trim().toLowerCase());
     if (!names.length) return false;
-    return [workOrder?.sales_rep, workOrder?.current_task_assigned_to, workOrder?.estimator]
+    return isOperational && [workOrder?.sales_rep, workOrder?.current_task_assigned_to, workOrder?.estimator]
       .filter(Boolean)
       .some((value) => names.includes(String(value).trim().toLowerCase()));
   }
