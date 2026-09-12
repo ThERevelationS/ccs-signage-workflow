@@ -17,6 +17,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
   { value: "lead_source", label: "Source", type: "localStorage", storageKey: "salesLeadSources" },
+  { value: "sales_rep", label: "Salesperson / Owner", type: "user" },
   { value: "current_task_assigned_to", label: "Task Assigned To", type: "user", role: "Task Assigned" },
   { value: "designer", label: "Designer", type: "user", role: "Designer" },
   { value: "project_manager", label: "Project Manager", type: "user", role: "PM" },
@@ -62,6 +63,7 @@ const OPERATORS = [
 const ALL_COLUMNS = [
   { id: "client_name", label: "Customer", visible: true },
   { id: "sales_status", label: "Sales Status", visible: true },
+  { id: "sales_rep", label: "Salesperson / Owner", visible: true },
   { id: "description", label: "Job Description", visible: true },
   { id: "lead_source", label: "Source", visible: true },
   { id: "current_task_deadline", label: "Deadline", visible: true },
@@ -150,6 +152,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const getUsersForRole = (role) => {
+    if (!role) return users.filter((u) => u.full_name);
+    if (role === "PM") return users.filter((u) => u.sales_roles?.includes("PM") || u.sales_roles?.includes("Project Manager"));
     return users.filter(u => u.sales_roles?.includes(role));
   };
 
