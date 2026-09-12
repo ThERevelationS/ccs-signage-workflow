@@ -6,7 +6,7 @@ import { X, Plus, Trash2, Loader2, ImagePlus, Upload } from "lucide-react";
 const TYPE_OPTIONS = ["scheduled", "emergency", "inspection", "repair"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"];
 const STATUS_OPTIONS = ["open", "assigned", "in_progress", "cancelled"];
-const EQUIPMENT_STATUS_OPTIONS = ["operational", "maintenance", "down", "retired"];
+const EQUIPMENT_STATUS_OPTIONS = ["operational", "maintenance", "down"];
 
 const blankOrder = () => ({
   equipment_id: "",
