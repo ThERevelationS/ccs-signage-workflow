@@ -75,7 +75,7 @@ const STATUS_CONFIG = {
 };
 
 export default function FeatureReports() {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -140,9 +140,9 @@ export default function FeatureReports() {
     try {
       if (editingReport) {
         await updateFeatureReportFields({
-          entity: FeatureReport,
           record: editingReport,
           nextFields: formData,
+          sessionToken,
           label: `Feature report “${editingReport.title || formData.title}”`,
         });
       } else {
@@ -152,7 +152,7 @@ export default function FeatureReports() {
           submitted_by_name: currentUser?.full_name || "Unknown",
           submitted_by_email: currentUser?.email || "unknown"
         };
-        await createFeatureReportWithRecovery({ entity: FeatureReport, data: payload, label: `Feature report “${payload.title}”` });
+        await createFeatureReportWithRecovery({ data: payload, sessionToken, label: `Feature report “${payload.title}”` });
 
         // Send email only after the report create is confirmed or uniquely recovered.
         try {
@@ -199,9 +199,9 @@ export default function FeatureReports() {
       const updateData = { status: newStatus };
       if (newStatus === "completed") updateData.completed_date = new Date().toISOString();
       const saved = await updateFeatureReportFields({
-        entity: FeatureReport,
         record: report,
         nextFields: updateData,
+        sessionToken,
         label: `Feature report “${report.title || "Report"}” status`,
       });
       setReports(prev => prev.map(r => r.id === report.id ? saved : r).filter(r => newStatus !== "completed" || r.id !== report.id));
@@ -220,7 +220,7 @@ export default function FeatureReports() {
     actionRef.current.add(lockKey);
     setMutationError("");
     try {
-      await deleteFeatureReportSafely({ entity: FeatureReport, record: report, label: `Feature report “${report.title || "Report"}”` });
+      await deleteFeatureReportSafely({ record: report, sessionToken, label: `Feature report “${report.title || "Report"}”` });
       setDeleteConfirm(null);
       await loadReports();
     } catch (error) {
