@@ -100,8 +100,8 @@ export default function FleetRequestDialog({ open, mode, request, equipment, par
     await performSubmit();
   };
 
-  return <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto"><div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800"><div><div className="font-semibold text-gray-900 dark:text-slate-100">{title}</div><div className="text-xs text-gray-500">Fleet inventory only — never Master Inventory.</div></div><button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"><X className="w-5 h-5"/></button></div>
+  return <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto"><div role="dialog" aria-modal="true" aria-labelledby="fleet-request-dialog-title" className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800"><div><div id="fleet-request-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{title}</div><div className="text-xs text-gray-500">Fleet inventory only — never Master Inventory.</div></div><button type="button" onClick={onClose} aria-label="Close Fleet request dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto"/></button></div>
     <form onSubmit={submit} className="p-4 sm:p-6 space-y-4">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
       {(mode === "create" || mode === "edit") && <>
