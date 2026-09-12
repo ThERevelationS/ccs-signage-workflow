@@ -17,12 +17,24 @@
     "config_name"
   ],
   "rls": {
-    "read": {},
-    "create": {},
-    "update": {},
+    "read": {
+      "user_condition": {
+        "role": "__doc_number_backend_only__"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "__doc_number_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__doc_number_backend_only__"
+      }
+    },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__doc_number_backend_only__"
       }
     }
   }
