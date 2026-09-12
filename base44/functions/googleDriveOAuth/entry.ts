@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { action, code, folderId } = body;
+    const body = await req.json().catch(() => ({}));
+    const { action, code, folderId } = body || {};
 
     const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_DRIVE_CLIENT_SECRET');
@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'exchangeCode') {
+      if (!code || typeof code !== 'string' || code.length > 4096) {
+        return Response.json({ error: 'A valid authorization code is required' }, { status: 400 });
+      }
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,10 +50,11 @@ Deno.serve(async (req) => {
         })
       });
 
-      const tokens = await tokenResponse.json();
+      const tokens = await tokenResponse.json().catch(() => ({}));
       
-      if (tokens.error) {
-        return Response.json({ error: tokens.error }, { status: 400 });
+      if (!tokenResponse.ok || tokens.error || !tokens.access_token) {
+        console.error('googleDriveOAuth token exchange failed:', tokenResponse.status);
+        return Response.json({ error: 'Google Drive authorization code could not be exchanged' }, { status: 502 });
       }
 
       // Store tokens in user entity
@@ -64,6 +68,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'listFiles') {
+      const safeFolderId = String(folderId || '').trim();
+      if (!safeFolderId || !/^[a-zA-Z0-9_-]+$/.test(safeFolderId)) {
+        return Response.json({ error: 'A valid folderId is required' }, { status: 400 });
+      }
       const userData = await base44.asServiceRole.entities.User.get(user.id);
       let accessToken = userData.google_drive_access_token;
       
@@ -80,12 +88,16 @@ Deno.serve(async (req) => {
           })
         });
 
-        const tokens = await refreshResponse.json();
+        const tokens = await refreshResponse.json().catch(() => ({}));
+        if (!refreshResponse.ok || !tokens.access_token) {
+          console.error('googleDriveOAuth token refresh failed:', refreshResponse.status);
+          return Response.json({ error: 'Google Drive authentication must be renewed', needsAuth: true }, { status: 401 });
+        }
         accessToken = tokens.access_token;
 
         await base44.asServiceRole.entities.User.update(user.id, {
           google_drive_access_token: tokens.access_token,
-          google_drive_token_expiry: Date.now() + (tokens.expires_in * 1000)
+          google_drive_token_expiry: Date.now() + (Number(tokens.expires_in || 0) * 1000)
         });
       }
 
@@ -94,7 +106,7 @@ Deno.serve(async (req) => {
       }
 
       // List files in folder
-      let query = `'${folderId}' in parents and trashed=false`;
+      let query = `'${safeFolderId}' in parents and trashed=false`;
       const fileUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)&pageSize=1000`;
       
       const response = await fetch(fileUrl, {
@@ -102,8 +114,9 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        return Response.json({ error: `Google API error: ${error}` }, { status: response.status });
+        await response.text().catch(() => '');
+        console.error('googleDriveOAuth file listing failed:', response.status);
+        return Response.json({ error: 'Google Drive files could not be listed safely' }, { status: response.status >= 500 ? 502 : response.status });
       }
 
       const data = await response.json();
@@ -113,10 +126,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
     
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ 
-      error: 'Server error',
-      message: error.message 
-    }, { status: 500 });
+    console.error('googleDriveOAuth error:', error?.message || error);
+    return Response.json({ error: 'Google Drive request could not be completed safely' }, { status: 500 });
   }
 });
