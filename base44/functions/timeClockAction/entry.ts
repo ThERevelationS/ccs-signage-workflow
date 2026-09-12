@@ -545,8 +545,8 @@ Deno.serve(async (req) => {
         const storedDecision = String(correctionRequest.review_decision || '');
         return Boolean(storedHash) && constantTimeEqual(storedHash, reviewHash) && storedDecision === decision;
       };
-      const releaseReview = async () => correctionRequestEntity.updateMany(
-        { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId },
+      const releaseReview = async (claimRequestId = requestId) => correctionRequestEntity.updateMany(
+        { id: correctionRequest.id, status: 'reviewing', review_request_id: claimRequestId },
         {
           $set: { status: 'pending' },
           $unset: {
@@ -565,7 +565,80 @@ Deno.serve(async (req) => {
       }
 
       const resumingReview = correctionRequest.status === 'reviewing' && String(correctionRequest.review_request_id || '') === requestId;
-      if (correctionRequest.status === 'reviewing' && !resumingReview) return Response.json({ success: false, error: 'Another manager review is already in progress.' }, { status: 409 });
+      if (correctionRequest.status === 'reviewing' && !resumingReview) {
+        const previousRequestId = String(correctionRequest.review_request_id || '');
+        const previousDecision = String(correctionRequest.review_decision || '');
+        const reviewStartedAt = correctionRequest.review_started_at ? new Date(correctionRequest.review_started_at) : null;
+        const reviewAgeMs = reviewStartedAt && Number.isFinite(reviewStartedAt.getTime())
+          ? Date.now() - reviewStartedAt.getTime()
+          : Number.POSITIVE_INFINITY;
+        if (reviewAgeMs <= 5 * 60 * 1000) {
+          return Response.json({ success: false, error: 'Another manager review is already in progress.' }, { status: 409 });
+        }
+
+        const staleEntry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
+        const staleAudits = previousRequestId
+          ? await auditEntity.filter({ action: 'admin_correction', request_id: previousRequestId, time_entry_id: correctionRequest.time_entry_id })
+          : [];
+        if (!Array.isArray(staleAudits)) throw new Error('Stale correction audit recovery lookup did not return a record list.');
+        if (staleAudits.length > 1) return Response.json({ success: false, error: 'The abandoned review has multiple correction audits. Admin investigation is required.' }, { status: 409 });
+        const staleAudit = staleAudits[0] || null;
+        const staleApplied = staleEntry?.id && String(staleEntry.last_correction_request_id || '') === correctionRequest.id;
+
+        if (staleApplied) {
+          if (!['approve', 'approve_modified'].includes(previousDecision) || !staleAudit?.id) {
+            return Response.json({ success: false, error: 'An abandoned review changed the TimeEntry but cannot be recovered unambiguously. Admin investigation is required.' }, { status: 409 });
+          }
+          if (staleAudit.outcome === 'pending') {
+            const recoveredAudit = await auditEntity.updateMany(
+              { id: staleAudit.id, outcome: 'pending', request_id: previousRequestId, time_entry_id: staleEntry.id },
+              { $set: {
+                outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+                details: {
+                  original: correctionRequest.original_snapshot,
+                  corrected: entryAuditSnapshot(staleEntry),
+                  correction_request_id: correctionRequest.id,
+                  recovered_after_abandoned_review: true,
+                },
+              } },
+            );
+            if (!recoveredAudit || recoveredAudit.updated !== 1) {
+              const freshAudit = await auditEntity.get(staleAudit.id).catch(() => null);
+              if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, error: 'The abandoned correction was applied but its audit could not be recovered safely.' }, { status: 409 });
+            }
+          } else if (staleAudit.outcome !== 'confirmed') {
+            return Response.json({ success: false, error: 'The abandoned correction has a non-confirmed audit state. Admin investigation is required.' }, { status: 409 });
+          }
+          const recoveredStatus = previousDecision === 'approve_modified' ? 'approved_modified' : 'approved';
+          const recovered = await correctionRequestEntity.updateMany(
+            { id: correctionRequest.id, status: 'reviewing', review_request_id: previousRequestId },
+            { $set: {
+              status: recoveredStatus, reviewed_at: new Date().toISOString(),
+              applied_audit_id: staleAudit.id,
+            } },
+          );
+          if (!recovered || recovered.updated !== 1) return Response.json({ success: false, error: 'The abandoned correction was applied but its request could not be finalized safely.' }, { status: 409 });
+          await audit(auditEntity, {
+            action: 'correction_review', outcome: 'recovered', user_email: target.email,
+            user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+            request_id: previousRequestId, time_entry_id: correctionRequest.time_entry_id,
+            reason: correctionRequest.reviewer_reason || 'Recovered abandoned manager review',
+            details: { correction_request_id: correctionRequest.id, decision: recoveredStatus, applied_audit_id: staleAudit.id },
+          });
+          return Response.json({ success: false, recovered: true, error: 'A previous interrupted manager approval was recovered. Reload the correction queue before taking another action.' }, { status: 409 });
+        }
+
+        if (staleAudit?.outcome === 'confirmed') {
+          return Response.json({ success: false, error: 'The abandoned review has a confirmed correction audit but no matching TimeEntry marker. Admin investigation is required.' }, { status: 409 });
+        }
+        if (staleAudit?.id && staleAudit.outcome === 'pending') {
+          await auditEntity.updateMany({ id: staleAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+        }
+        const released = await releaseReview(previousRequestId);
+        if (!released || released.updated !== 1) return Response.json({ success: false, error: 'The abandoned manager review could not be released safely.' }, { status: 409 });
+        return Response.json({ success: false, recovered: true, error: 'An abandoned manager review was released safely. Reload the correction queue and review it again.' }, { status: 409 });
+      }
       if (resumingReview && !sameReviewPayload()) {
         return Response.json({ success: false, error: 'Retrying a manager review requires the exact same decision, reason, and edited values.' }, { status: 409 });
       }
