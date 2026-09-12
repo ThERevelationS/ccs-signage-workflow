@@ -299,6 +299,37 @@ export default function ClockOutDialog({
             </div>
           </div>
 
+          {workPauseAllowed && (
+            <div className="clay-card p-4 border-2 border-purple-200 bg-purple-50/70">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Pause className="w-4 h-4 text-purple-700" />
+                    <Label className="font-semibold text-purple-900">Work Pause</Label>
+                  </div>
+                  <p className="text-xs text-purple-800 mt-1 max-w-xl">
+                    Pause counted work time without clocking out. Work Pause is separate from break/lunch and does not change payroll status.
+                  </p>
+                  {trackedWorkPauseMinutes > 0 && (
+                    <p className="text-xs text-purple-700 mt-2">
+                      Paused earlier this shift: <span className="font-semibold">{trackedWorkPauseMinutes} min</span>
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleStartWorkPause}
+                  disabled={workPauseBusy || breakActionBusy || isSubmitting || onBreak}
+                  className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+                >
+                  {workPauseBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Pause className="w-4 h-4 mr-2" />}
+                  {workPauseBusy ? "Pausing..." : "Pause Work"}
+                </Button>
+              </div>
+              {onBreak && <p className="text-xs text-amber-700 mt-2">End the current break before using Work Pause.</p>}
+            </div>
+          )}
+
           {/* Break / Lunch Tracking */}
           <div className={`clay-card p-4 ${onBreak ? 'border-2 border-amber-400 bg-amber-50' : !lunchEntered ? 'border-2 border-red-400' : ''}`}>
             <div className="flex items-center justify-between gap-3 mb-3">
