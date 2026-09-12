@@ -37,6 +37,30 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when an in-progress transition began"
+    },
+    "break_status": {
+      "type": "string",
+      "enum": [
+        "working",
+        "starting_break",
+        "on_break",
+        "ending_break"
+      ],
+      "default": "working",
+      "description": "Authoritative break state while the employee is clocked in"
+    },
+    "active_break_id": {
+      "type": "string",
+      "description": "Current or pending TimeClockBreak id"
+    },
+    "last_break_request_id": {
+      "type": "string",
+      "description": "Client request id of the last confirmed or in-progress break action"
+    },
+    "break_pending_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an in-progress break transition began"
     }
   },
   "required": [
