@@ -105,5 +105,15 @@
     "alert_type",
     "title",
     "description"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__regulation_alert_backend_only__"
+      }
+    },
+    "read": {},
+    "update": {},
+    "delete": {}
+  }
 }
