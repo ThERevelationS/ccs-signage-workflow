@@ -61,6 +61,7 @@ const OPERATORS = [
 
 const ALL_COLUMNS = [
   { id: "client_name", label: "Customer", visible: true },
+  { id: "sales_status", label: "Sales Status", visible: true },
   { id: "description", label: "Job Description", visible: true },
   { id: "lead_source", label: "Source", visible: true },
   { id: "current_task_deadline", label: "Deadline", visible: true },
@@ -96,7 +97,7 @@ const ALL_COLUMNS = [
 ];
 
 const STANDARD_FILTERS = [
-  { name: "All Leads", value: "all", conditions: [] },
+  { name: "All Statuses", value: "all", conditions: [] },
   { name: "Lead", value: "lead", conditions: [{ field: "sales_status", operator: "equals", value: "lead" }] },
   { name: "Quoted", value: "quoted", conditions: [{ field: "sales_status", operator: "equals", value: "quoted" }] },
   { name: "Follow Up", value: "follow_up", conditions: [{ field: "sales_status", operator: "equals", value: "follow_up" }] },
