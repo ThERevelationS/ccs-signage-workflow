@@ -14,7 +14,7 @@ export default function NotificationsTab({ notifications, vehicle, onClearAll, o
   const filtered = notifications
     .filter(n => !vehicle || n.vehicle_vin === vehicle.vin)
     .filter(n => n.category === subTab)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    .sort((a, b) => (Date.parse(b?.timestamp || "") || 0) - (Date.parse(a?.timestamp || "") || 0));
 
   return (
     <div className="flex flex-col h-full">
