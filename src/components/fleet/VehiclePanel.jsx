@@ -79,6 +79,7 @@ export default function VehiclePanel({
   selectedTripId,
   onSelectTrip,
   docked = false,
+  embedded = false,
 }) {
   const [activeTab, setActiveTab] = useState("live");
   const stats = vehicle?.stats || {};
@@ -103,7 +104,9 @@ export default function VehiclePanel({
 
   const shellClass = docked
     ? "h-full w-[410px] xl:w-[440px] shrink-0 flex flex-col bg-white dark:bg-slate-900 overflow-hidden border-l border-gray-200 dark:border-slate-700"
-    : "absolute top-14 inset-x-2 bottom-2 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[440px] sm:max-w-[92vw] z-20 flex flex-col bg-white dark:bg-slate-900 rounded-lg shadow-2xl overflow-hidden border border-gray-200 dark:border-slate-700";
+    : embedded
+      ? "h-full w-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden"
+      : "absolute top-14 inset-x-2 bottom-2 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[440px] sm:max-w-[92vw] z-20 flex flex-col bg-white dark:bg-slate-900 rounded-lg shadow-2xl overflow-hidden border border-gray-200 dark:border-slate-700";
 
   return (
     <aside className={shellClass} aria-label={`${displayName} tracking panel`}>
