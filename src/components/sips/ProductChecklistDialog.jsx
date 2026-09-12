@@ -1012,6 +1012,12 @@ export default function ProductChecklistDialog({
   };
   
   const { active: activeChecklist, completed: completedChecklist } = separateCompletedItems();
+  const countPrimaryItemsInGroup = (group) => (
+    group.mainItems.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length +
+    Object.values(group.subTemplates).reduce((sum, items) => (
+      sum + items.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length
+    ), 0)
+  );
   const primaryChecklistItems = checklist.filter(item => item.type !== 'task' && item.type !== 'subtask');
   const completedPrimaryCount = primaryChecklistItems.filter(item => {
     if (!item.approved_by || !item.custom_dropdown_value) return false;
@@ -1197,6 +1203,9 @@ export default function ProductChecklistDialog({
                             {group.productType}
                           </span>
                         )}
+                        <span className="text-[10px] font-medium bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          {countPrimaryItemsInGroup(group)} open
+                        </span>
                       </h3>
                       {isRegistered && (
                         <button type="button" onClick={() => { setEditingProductName(productName); setEditingProductNameText(productName); }} className="p-1 rounded hover:bg-purple-100 text-purple-600" title="Rename product">
