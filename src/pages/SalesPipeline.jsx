@@ -29,6 +29,7 @@ export default function SalesPipeline() {
   const { isRegistered, currentUser } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [recordScope, setRecordScope] = useState("current");
+  const [viewMode, setViewMode] = useState("table");
   const [attentionFilter, setAttentionFilter] = useState("all");
   const [pipelineSummary, setPipelineSummary] = useState(EMPTY_PIPELINE_SUMMARY);
   const [searchTerm, setSearchTerm] = useState("");
@@ -157,6 +158,7 @@ export default function SalesPipeline() {
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
                 setAttentionFilter("all");
+                if (value === "history") setViewMode("table");
               }}>
                 <SelectTrigger className="w-44 h-9">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
