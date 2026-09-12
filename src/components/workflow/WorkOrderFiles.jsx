@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { UploadFile } from "@/integrations/Core";
 import { useAuth } from "@/components/auth/EmailGate";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const getFileIcon = (type) => {
   if (type?.startsWith('image/')) return FileImage;
@@ -159,6 +160,7 @@ export default function WorkOrderFiles({ workOrder, onUpdate }) {
           {files.map((file) => {
             const FileIcon = getFileIcon(file.type);
             const isImage = file.type?.startsWith('image/');
+            const safeFileUrl = safeExternalHttpUrl(file.url);
             
             return (
               <div
@@ -167,7 +169,7 @@ export default function WorkOrderFiles({ workOrder, onUpdate }) {
               >
                 {isImage ? (
                   <img 
-                    src={file.url} 
+                    src={safeFileUrl || undefined} 
                     alt={file.name}
                     className="w-10 h-10 rounded object-cover flex-shrink-0"
                   />
@@ -190,7 +192,8 @@ export default function WorkOrderFiles({ workOrder, onUpdate }) {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
-                    onClick={() => window.open(file.url, '_blank')}
+                    onClick={() => openExternalHttpUrl(safeFileUrl)}
+                    disabled={!safeFileUrl}
                     title="Open file"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
@@ -200,9 +203,11 @@ export default function WorkOrderFiles({ workOrder, onUpdate }) {
                     size="icon"
                     className="h-7 w-7"
                     onClick={() => {
+                      if (!safeFileUrl) return;
                       const link = document.createElement('a');
-                      link.href = file.url;
+                      link.href = safeFileUrl;
                       link.download = file.name;
+                      link.rel = 'noopener noreferrer';
                       link.click();
                     }}
                     title="Download"
