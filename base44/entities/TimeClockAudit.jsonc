@@ -19,6 +19,8 @@
         "correction_review",
         "break_start",
         "break_end",
+        "work_pause_start",
+        "work_pause_resume",
         "time_approval"
       ]
     },
