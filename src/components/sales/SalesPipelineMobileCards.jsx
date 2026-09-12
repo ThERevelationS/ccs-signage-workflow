@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 
 const SALES_STATUSES = [
@@ -17,12 +17,16 @@ const safeDate = (d) => {
   return new Date(y, m - 1, day);
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, isRegistered }) {
   return (
     <div className="space-y-3 p-3">
       {workOrders.map((wo) => {
         const status = SALES_STATUSES.find(s => s.value === wo.sales_status);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
+        const followUp = wo.follow_up_date ? safeDate(wo.follow_up_date) : null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
         return (
           <div
             key={wo.id}
@@ -36,9 +40,16 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails }) 
                 {wo.title && <p className="text-gray-500 text-sm truncate">{wo.title}</p>}
               </div>
               {status && (
-                <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${status.color}`}>
-                  {status.label}
-                </span>
+                <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                  <Select value={wo.sales_status || "lead"} onValueChange={(value) => onUpdateWorkOrder?.(wo.id, "sales_status", value)} disabled={!isRegistered}>
+                    <SelectTrigger className={`h-8 w-[112px] border-0 text-xs font-medium ${status.color}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_STATUSES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
 
@@ -52,7 +63,12 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails }) 
                 <span>Est: <span className="text-gray-700">${wo.estimate_amount.toLocaleString()}</span></span>
               )}
               {deadline && (
-                <span>Due: <span className="text-gray-700">{format(deadline, 'MMM d, yyyy')}</span></span>
+                <span>Task due: <span className="text-gray-700">{format(deadline, 'MMM d, yyyy')}</span></span>
+              )}
+              {followUp && (
+                <span className={followUpDue ? "font-semibold text-red-700" : ""}>
+                  Follow-up: <span>{format(followUp, 'MMM d, yyyy')}{followUpDue ? " • due" : ""}</span>
+                </span>
               )}
             </div>
           </div>
