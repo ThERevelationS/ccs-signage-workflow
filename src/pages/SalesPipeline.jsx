@@ -172,6 +172,16 @@ export default function SalesPipeline() {
               </Select>
             </div>
 
+            {recordScope !== "history" && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-gray-500 mb-1">View</span>
+                <div className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
+                  <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
+                  <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col">
               <span className="text-xs font-medium text-gray-500 mb-1">Search</span>
               <div className="relative">
@@ -364,6 +374,7 @@ export default function SalesPipeline() {
             filterStatus={filterStatus}
             recordScope={recordScope}
             attentionFilter={attentionFilter}
+            viewMode={viewMode}
             onSummaryChange={setPipelineSummary}
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
