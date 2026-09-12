@@ -5,7 +5,7 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentTimeline from "@/components/fleet/FleetEquipmentTimeline";
 import FleetEquipmentDocuments from "@/components/fleet/FleetEquipmentDocuments";
-import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
 import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
@@ -34,6 +34,7 @@ const TABS = [
   { key: "overview", label: "Overview" },
   { key: "tracking", label: "Tracking" },
   { key: "maintenance", label: "Maintenance" },
+  { key: "parts", label: "Parts" },
   { key: "history", label: "History" },
   { key: "timeline", label: "Timeline" },
   { key: "documents", label: "Documents" },
@@ -61,6 +62,7 @@ export default function FleetEquipmentDetail() {
   const [workOrders, setWorkOrders] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [parts, setParts] = useState([]);
   const [requests, setRequests] = useState([]);
   const [liveStates, setLiveStates] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -89,15 +91,16 @@ export default function FleetEquipmentDetail() {
       setTrips([]);
       setTripIdentityWarning("");
       if (!eq) {
-        setWorkOrders([]); setTasks([]); setLogs([]); setRequests([]); setLiveStates([]); setNotifications([]); setMetadata(null); setMetaForm({});
+        setWorkOrders([]); setTasks([]); setLogs([]); setParts([]); setRequests([]); setLiveStates([]); setNotifications([]); setMetadata(null); setMetaForm({});
         return;
       }
 
       const vin = normalizeVin(eq.vin);
-      const [woRows, taskRows, logRows, requestRows, liveRows, notifRows, metaRows] = await Promise.all([
+      const [woRows, taskRows, logRows, partRows, requestRows, liveRows, notifRows, metaRows] = await Promise.all([
         filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet work-order history` }),
         filterAllFleetRows(base44.entities.FleetMaintenanceTask, { equipment_id: id }, "start_date", { label: `${eq.name} maintenance schedules` }),
         filterAllFleetRows(base44.entities.FleetEquipmentLog, { equipment_id: id }, "-created_date", { label: `${eq.name} equipment usage history` }),
+        listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts for equipment hub" }),
         filterAllFleetRows(base44.entities.FleetPartFluidRequest, { equipment_id: id }, "-created_date", { label: `${eq.name} Fleet requests` }),
         vin ? base44.entities.BouncieVehicleLiveState.filter({ vehicle_vin: vin }, "-last_seen_at", 20) : Promise.resolve([]),
         vin ? base44.entities.BouncieNotification.filter({ vehicle_vin: vin }, "-timestamp", 100) : Promise.resolve([]),
@@ -106,6 +109,7 @@ export default function FleetEquipmentDetail() {
       setWorkOrders(woRows || []);
       setTasks(taskRows || []);
       setLogs(logRows || []);
+      setParts((partRows || []).filter(part => part.compatible_equipment_ids?.includes(id)));
       setRequests(requestRows || []);
       setLiveStates(liveRows || []);
       setNotifications(notifRows || []);
@@ -234,6 +238,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "overview" && <OverviewTab equipment={equipment} metadata={metadata} live={live} liveDriving={liveDriving} activeOrders={activeOrders} tasks={tasks} nextMaintenance={nextMaintenance} logs={logs} activeRequests={activeRequests} trips={trips} tripsLoading={tripsLoading} unreadAlerts={unreadAlerts} health={health} maintenanceUrl={maintenanceUrl} onSelectTab={selectTab} />}
         {activeTab === "tracking" && <TrackingTab equipment={equipment} live={live} liveStates={liveStates} liveDriving={liveDriving} trips={trips} tripsLoading={tripsLoading} tripIdentityWarning={tripIdentityWarning} trackingUrl={trackingUrl} />}
         {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} retired={retired} />}
+        {activeTab === "parts" && <PartsTab equipment={equipment} parts={parts} retired={retired} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
         {activeTab === "documents" && <FleetEquipmentDocuments equipment={equipment} isAdmin={isAdmin} />}
