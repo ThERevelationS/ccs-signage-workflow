@@ -18,7 +18,8 @@
         "correction_request",
         "correction_review",
         "break_start",
-        "break_end"
+        "break_end",
+        "time_approval"
       ]
     },
     "outcome": {
