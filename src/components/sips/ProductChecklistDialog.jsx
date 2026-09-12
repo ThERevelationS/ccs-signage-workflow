@@ -1021,6 +1021,7 @@ export default function ProductChecklistDialog({
     const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
     return Boolean(item.approved_by && condition && !condition.is_completed);
   }).length;
+  const needsInputPrimaryCount = primaryChecklistItems.filter(item => !item.approved_by || !item.custom_dropdown_value).length;
   const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
   const completedTaskCount = taskItems.filter(item => item.approved_by).length;
   const expandableChecklistIds = checklist
@@ -1084,10 +1085,14 @@ export default function ProductChecklistDialog({
 
           {!isLoading && checklist.length > 0 && (
             <div className="rounded-xl border bg-slate-50 p-2 sm:p-3 space-y-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <div>
                 <div className="text-[11px] text-gray-500">Checklist complete</div>
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Needs input</div>
+                <div className={`text-sm font-semibold ${needsInputPrimaryCount > 0 ? "text-red-700" : "text-green-700"}`}>{needsInputPrimaryCount}</div>
               </div>
               <div>
                 <div className="text-[11px] text-gray-500">Continued</div>
