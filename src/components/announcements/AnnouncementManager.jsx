@@ -67,7 +67,7 @@ const defaultForm = {
   priority: "normal",
 };
 
-export default function AnnouncementManager({ isOpen, onClose, currentUserEmail, sessionToken }) {
+export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
   const [savedAnnouncements, setSavedAnnouncements] = useState([]);
   const [form, setForm] = useState(defaultForm);
   const [editingId, setEditingId] = useState(null);
