@@ -91,6 +91,20 @@
       "default": false,
       "description": "Whether this user can view the Resources page"
     },
+    "employment_type": {
+      "type": "string",
+      "enum": [
+        "hourly",
+        "salary"
+      ],
+      "default": "hourly",
+      "description": "Employment classification for Time Clock/reporting context only"
+    },
+    "can_work_pause": {
+      "type": "boolean",
+      "default": false,
+      "description": "Admin-assigned permission to pause counted work time without clocking out"
+    },
     "face_descriptors": {
       "type": "array",
       "description": "Stored face recognition descriptors for this user",
