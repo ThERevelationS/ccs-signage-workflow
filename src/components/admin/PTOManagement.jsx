@@ -87,7 +87,7 @@ const TYPE_ICONS = {
   parental: Baby
 };
 
-export default function PTOManagement() {
+export default function PTOManagement({ adminCapability }) {
   const [policies, setPolicies] = useState([]);
   const [userBalances, setUserBalances] = useState([]);
   const [users, setUsers] = useState([]);
@@ -201,15 +201,15 @@ export default function PTOManagement() {
         const duplicateName = policies.find(policy => policy.id !== editingPolicy.id && String(policy.name || "").trim().toLowerCase() === nextPolicy.name.toLowerCase());
         if (duplicateName) throw new Error(`Another PTO policy named "${nextPolicy.name}" already exists.`);
         await updatePTOPolicyIfUnchanged({
-          entity: PTOPolicy,
           policy: editingPolicy,
           nextFields: nextPolicy,
+          adminCapability,
           label: `PTO policy ${editingPolicy.name || editingPolicy.id}`,
         });
       } else {
         const result = await createPTOPolicyIfAbsent({
-          entity: PTOPolicy,
           data: nextPolicy,
+          adminCapability,
           label: `PTO policy ${nextPolicy.name}`,
         });
         if (result.status === "existing") {
@@ -233,9 +233,8 @@ export default function PTOManagement() {
     setPtoSaving(true);
     try {
       await deletePTOPolicyIfUnused({
-        policyEntity: PTOPolicy,
-        balanceEntity: UserPTOBalance,
         policy: deleteConfirm,
+        adminCapability,
         label: `PTO policy ${deleteConfirm.name || deleteConfirm.id} deletion`,
       });
       setDeleteConfirm(null);
