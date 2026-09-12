@@ -25,7 +25,17 @@ const INHOUSE_TASKS = [
   "Other"
 ];
 
-export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut }) {
+export default function ClockOutDialog({
+  isOpen,
+  onClose,
+  timeEntry,
+  onClockOut,
+  breakStatus = "working",
+  activeBreak = null,
+  breakSummary = { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+  onStartBreak,
+  onEndBreak,
+}) {
   const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,17 +46,27 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
   const [notes, setNotes] = useState("");
   const [displayNow, setDisplayNow] = useState(() => new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [breakActionBusy, setBreakActionBusy] = useState(false);
 
   // Display time is refreshed while the dialog is open. The backend still owns
   // the official clock-out timestamp and recalculates the final duration.
   const clockInTime = timeEntry ? new Date(timeEntry.clock_in) : new Date();
   const clockOutTime = displayNow;
   const totalMinutesWorked = Math.floor((clockOutTime - clockInTime) / (1000 * 60));
-  const lunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
+  const trackedUnpaidMinutes = Math.max(0, Number(breakSummary?.unpaid_minutes || 0));
+  const trackedPaidMinutes = Math.max(0, Number(breakSummary?.paid_minutes || 0));
+  const trackedBreakMinutes = Math.max(0, Number(breakSummary?.total_minutes || 0));
+  const hasTrackedUnpaid = trackedUnpaidMinutes > 0;
+  const manualLunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
+  const lunchMins = hasTrackedUnpaid ? trackedUnpaidMinutes : manualLunchMins;
   const workableMinutes = totalMinutesWorked - lunchMins;
   const workableHours = Math.max(0, workableMinutes / 60);
+  const onBreak = breakStatus === "on_break";
+  const activeBreakMinutes = activeBreak?.started_at
+    ? Math.max(0, Math.floor((displayNow - new Date(activeBreak.started_at)) / (1000 * 60)))
+    : 0;
   
-  const lunchEntered = lunchMinutes !== "" && lunchMinutes !== null;
+  const lunchEntered = hasTrackedUnpaid || (lunchMinutes !== "" && lunchMinutes !== null);
   const jobsEntered = jobAllocations.length > 0 && jobAllocations.every(j => (j.minutes || 0) > 0);
 
   // Calculate total allocated minutes
@@ -129,15 +149,46 @@ export default function ClockOutDialog({ isOpen, onClose, timeEntry, onClockOut 
     setJobAllocations(jobAllocations.filter((_, i) => i !== index));
   };
 
+  const handleStartTrackedBreak = async (breakType, isPaid) => {
+    if (!onStartBreak || breakActionBusy) return;
+    setError("");
+    setBreakActionBusy(true);
+    try {
+      await onStartBreak({ breakType, isPaid });
+    } catch (err) {
+      setError(err?.message || "Break start was not confirmed by the server.");
+    } finally {
+      setBreakActionBusy(false);
+    }
+  };
+
+  const handleEndTrackedBreak = async () => {
+    if (!onEndBreak || breakActionBusy) return;
+    setError("");
+    setBreakActionBusy(true);
+    try {
+      await onEndBreak();
+    } catch (err) {
+      setError(err?.message || "Break end was not confirmed by the server.");
+    } finally {
+      setBreakActionBusy(false);
+    }
+  };
+
   const handleClockOut = async () => {
     setError("");
 
-    if (lunchMinutes === "" || lunchMinutes === null) {
+    if (breakStatus !== "working" || activeBreak?.id) {
+      setError("End the active break before clocking out.");
+      return;
+    }
+
+    if (!hasTrackedUnpaid && (lunchMinutes === "" || lunchMinutes === null)) {
       setError("Please enter your lunch break time");
       return;
     }
 
-    if (lunchMins < 0 || lunchMins > 240) {
+    if (!hasTrackedUnpaid && (lunchMins < 0 || lunchMins > 240)) {
       setError("Lunch break must be between 0 and 240 minutes");
       return;
     }
