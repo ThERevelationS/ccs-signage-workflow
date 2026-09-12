@@ -21,21 +21,32 @@ Deno.serve(async (req) => {
     }
 
     const emailClient = new EmailClient(connectionString);
-    const { to, subject, body, from_email, from_name } = await req.json();
+    const payload = await req.json().catch(() => ({}));
+    const { to, subject, body, from_email, from_name } = payload || {};
 
     if (!to || !subject || !body || !from_email) {
       return Response.json({ error: 'Missing required fields: to, subject, body, from_email' }, { status: 400 });
     }
 
-    // Handle multiple recipients
-    const recipients = Array.isArray(to) ? to : [to];
+    // Handle multiple recipients with bounded caller-controlled payloads.
+    const recipients = (Array.isArray(to) ? to : [to]).map((email) => String(email || '').trim()).filter(Boolean);
+    const safeSubject = String(subject || '').trim();
+    const safeBody = String(body || '');
+    const safeFromEmail = String(from_email || '').trim();
+    const safeFromName = String(from_name || '').trim();
+    if (recipients.length === 0 || recipients.length > 25 || recipients.some((email) => email.length > 320)) {
+      return Response.json({ error: 'Email recipients are invalid or exceed the allowed limit' }, { status: 400 });
+    }
+    if (!safeSubject || safeSubject.length > 500 || safeBody.length > 1_000_000 || safeFromEmail.length > 320 || safeFromName.length > 200) {
+      return Response.json({ error: 'Email content exceeds the allowed limits' }, { status: 400 });
+    }
     const toRecipients = recipients.map(email => ({ address: email }));
 
     const message = {
-      senderAddress: from_email,
+      senderAddress: safeFromEmail,
       content: {
-        subject: subject,
-        html: body.replace(/\n/g, '<br>')
+        subject: safeSubject,
+        html: safeBody.replace(/\n/g, '<br>')
       },
       recipients: {
         to: toRecipients
@@ -47,6 +58,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, id: result.id, status: result.status });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('sendEmail error:', error?.message || error);
+    return Response.json({ error: 'Email could not be sent safely' }, { status: 500 });
   }
 });
