@@ -35,6 +35,7 @@ import {
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 
 const TimeEntry = base44.entities.TimeEntry;
 
@@ -327,6 +328,8 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       )}
+
+      <CorrectionRequestAdminPanel sessionToken={sessionToken} onEntriesChanged={loadData} />
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
