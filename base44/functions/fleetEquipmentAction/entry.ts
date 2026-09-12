@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
     const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
     const Log = base44.asServiceRole.entities.FleetEquipmentLog;
+    const Request = base44.asServiceRole.entities.FleetPartFluidRequest;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
 
     if (action === 'create') {
@@ -195,7 +196,17 @@ Deno.serve(async (req) => {
       if (patch.type && !EQUIPMENT_TYPES.has(patch.type)) return Response.json({ error: 'Invalid equipment type.' }, { status: 400 });
       if (patch.status && !EQUIPMENT_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
       if (patch.status === 'retired' && existing.status !== 'retired') {
-        const equipmentTasks = await loadAllEntityRows({ entity: Task, query: { equipment_id: id }, sort: '-created_date', label: `Fleet maintenance schedules for equipment ${id}` });
+        const [equipmentTasks, equipmentOrders, equipmentRequests] = await Promise.all([
+          loadAllEntityRows({ entity: Task, query: { equipment_id: id }, sort: '-created_date', label: `Fleet maintenance schedules for equipment ${id}` }),
+          loadAllEntityRows({ entity: WorkOrder, query: { equipment_id: id }, sort: '-created_date', label: `Fleet work orders for equipment ${id}` }),
+          loadAllEntityRows({ entity: Request, query: { equipment_id: id }, sort: '-created_date', label: `Fleet requests for equipment ${id}` }),
+        ]);
+        const activeOrder = equipmentOrders.find((row: any) => ['open', 'assigned', 'in_progress'].includes(String(row?.status || '')));
+        if (activeOrder) return Response.json({ error: `Complete or cancel active Fleet work order ${activeOrder.work_order_number || activeOrder.id} before retiring this equipment.` }, { status: 409 });
+        const activeRequest = equipmentRequests.find((row: any) => ['pending', 'ordered'].includes(String(row?.status || '')));
+        if (activeRequest) return Response.json({ error: `Resolve or cancel the active Fleet request for ${activeRequest.item_name || 'this equipment'} before retiring it.` }, { status: 409 });
+        const inProgressSchedule = equipmentTasks.find((row: any) => row?.status === 'in_progress');
+        if (inProgressSchedule) return Response.json({ error: `Reconcile in-progress maintenance schedule ${inProgressSchedule.title || inProgressSchedule.id} before retiring this equipment.` }, { status: 409 });
         for (const task of equipmentTasks) {
           const generationKey = String(task?.generation_key || '').trim();
           if (!generationKey) continue;
