@@ -1,11 +1,9 @@
 
-const STEPS = [
-  { n: 1, key: "details", label: "Estimate Details" },
-  { n: 2, key: "build", label: "Edit Products" },
-  { n: 3, key: "customer", label: "Finalize Estimate" },
+const SECTIONS = [
+  { n: 1, key: "details", label: "Details", description: "Customer & job information" },
+  { n: 2, key: "build", label: "Products & Parts", description: "Build, price & organize products" },
+  { n: 3, key: "customer", label: "Pricing & Finalize", description: "Review, quote, approve & convert" },
 ];
-
-const REVIEW = ["Cost Summary", "Bill of Materials"];
 
 export default function AioStepRail({
   activeStep = 1,
@@ -38,38 +36,28 @@ export default function AioStepRail({
             Estimate{estimateNumber ? ` — ${estimateNumber}` : " — New"}
           </p>
         </div>
-        {STEPS.map((step) => {
-          const active = step.n === activeStep;
+        {SECTIONS.map((section) => {
+          const active = section.n === activeStep;
           return (
             <button
-              key={step.key}
-              onClick={() => onStepClick?.(step.n)}
-              className={`w-full text-left px-3 py-2 border-b border-slate-200 transition-colors ${
+              key={section.key}
+              onClick={() => onStepClick?.(section.n)}
+              className={`w-full text-left px-3 py-2.5 border-b border-slate-200 last:border-b-0 transition-colors ${
                 active
                   ? "bg-lime-100 border-l-4 border-l-lime-600"
                   : "bg-slate-50 hover:bg-slate-100 border-l-4 border-l-transparent"
               }`}
             >
-              <p className="text-[11px] font-bold text-slate-800 flex items-center justify-between">
-                Step {step.n}
-                {done[step.n] && <span className="text-lime-600 text-xs" title="Completed">✔</span>}
-              </p>
-              <p className="text-sm text-slate-700">{step.label}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className={`text-[13px] font-bold ${active ? "text-slate-950" : "text-slate-800"}`}>
+                  {section.label}
+                </p>
+                {done[section.n] && <span className="text-lime-700 text-xs" title="Section complete">✔</span>}
+              </div>
+              <p className="text-[10px] leading-4 text-slate-500 mt-0.5">{section.description}</p>
             </button>
           );
         })}
-        <div className="px-3 pt-1.5 pb-0.5 text-[10px] uppercase tracking-wider text-slate-400 font-bold">
-          Review
-        </div>
-        {REVIEW.map((r) => (
-          <button
-            key={r}
-            onClick={() => onStepClick?.(3)}
-            className="w-full text-left px-3 py-1.5 text-sm border-b border-slate-100 last:border-b-0 text-slate-600 hover:bg-slate-50 border-l-4 border-l-transparent transition-colors"
-          >
-            {r}
-          </button>
-        ))}
       </div>
 
       <div className="bg-white border border-slate-300 rounded-sm overflow-hidden text-xs">
