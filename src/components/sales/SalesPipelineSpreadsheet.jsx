@@ -67,6 +67,12 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "current_task_assigned_to",
 ]);
 const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
+const STALE_ACTIVITY_DAYS = 14;
+
+const getSalesActivityTime = (workOrder) => {
+  const parsed = Date.parse(workOrder?.sales_last_activity_at || "");
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 const isLegacyClosedRecord = (workOrder) => {
   if (workOrder?.in_pipeline === true) return false;
@@ -76,7 +82,7 @@ const isLegacyClosedRecord = (workOrder) => {
 
 const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
 
-const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, currentUser) => {
+const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser) => {
   if (!attentionFilter || attentionFilter === "all") return true;
   const followUp = workOrder?.follow_up_date || "";
   const isOperational = isOpenOpportunity(workOrder) && !isLegacyClosedRecord(workOrder);
@@ -88,6 +94,11 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
   }
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
+  if (attentionFilter === "stale") {
+    const activityTime = getSalesActivityTime(workOrder);
+    return isOperational && activityTime !== null && activityTime <= staleCutoffTime;
+  }
+  if (attentionFilter === "activity_untracked") return isOperational && getSalesActivityTime(workOrder) === null;
   if (attentionFilter === "mine") {
     const names = [currentUser?.full_name, currentUser?.name, currentUser?.email].filter(Boolean).map((value) => String(value).trim().toLowerCase());
     if (!names.length) return false;
@@ -99,7 +110,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
 };
 
 const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
-  const { currentUser, sessionToken, isRegistered } = useAuth();
+  const { currentUser, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -1039,7 +1050,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         reader.onerror = reject;
         reader.readAsBinaryString(file);
       });
-      const res = await importSalesPipeline({ fileData, session_token: sessionToken });
+      const res = await importSalesPipeline({ fileData });
       clearTimeout(processingTimeout);
       const result = res.data;
       finishImport(importId, `${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
@@ -1175,6 +1186,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const upcomingDate = new Date();
   upcomingDate.setDate(upcomingDate.getDate() + 7);
   const upcomingStamp = format(upcomingDate, "yyyy-MM-dd");
+  const staleCutoffDate = new Date();
+  staleCutoffDate.setDate(staleCutoffDate.getDate() - STALE_ACTIVITY_DAYS);
+  const staleCutoffTime = staleCutoffDate.getTime();
 
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
     const legacyClosed = isLegacyClosedRecord(wo);
@@ -1196,6 +1210,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
       if (!followUp && (wo.sales_status === "quoted" || wo.sales_status === "follow_up" || wo.quote_date || wo.date_estimate_sent)) summary.quoteNoFollowUpCount += 1;
+      const activityTime = getSalesActivityTime(wo);
+      if (activityTime === null) {
+        summary.untrackedActivityCount += 1;
+      } else {
+        summary.trackedActivityCount += 1;
+        if (activityTime <= staleCutoffTime) summary.staleCount += 1;
+      }
       if (typeof wo.probability === "number") summary.ratedProbabilityCount += 1;
       return summary;
     }, {
@@ -1207,9 +1228,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       upcomingCount: 0,
       noNextActionCount: 0,
       quoteNoFollowUpCount: 0,
+      staleCount: 0,
+      trackedActivityCount: 0,
+      untrackedActivityCount: 0,
       ratedProbabilityCount: 0,
     });
-  }, [scopedWorkOrders, todayStamp, upcomingStamp]);
+  }, [scopedWorkOrders, todayStamp, upcomingStamp, staleCutoffTime]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
@@ -1219,7 +1243,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const sortedWorkOrders = useMemo(() => {
     // First filter
     let result = scopedWorkOrders.filter(wo => {
-      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, currentUser)) return false;
+      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
@@ -1324,7 +1348,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, currentUser, searchTerm, sortConfig, customFilters]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
 
