@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 
 const norm = (value: unknown) => String(value ?? '').trim();
 const nonNegative = (value: unknown, fallback = 0) => {
@@ -17,56 +18,6 @@ async function requireAdmin(base44:any) {
   const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({email:user.email});
   if (rows?.[0]?.role !== 'admin') return { error: Response.json({error:'Fleet repair estimates and approval policies require a CCS admin.'},{status:403}) };
   return { user };
-}
-
-function normalizedLines(lines:any, fluid=false) {
-  if (!Array.isArray(lines)) return [];
-  return lines.map((line:any)=>({
-    description:norm(line?.description),
-    quantity:nonNegative(line?.quantity,0),
-    ...(fluid ? {unit:norm(line?.unit)} : {}),
-    estimated_cost:nonNegative(line?.estimated_cost,0),
-  })).filter((line:any)=>line.description || line.quantity || line.estimated_cost);
-}
-
-function totals(source:any) {
-  const laborHours = nonNegative(source?.estimated_labor_hours,0);
-  const laborRate = nonNegative(source?.labor_rate,0);
-  const parts = normalizedLines(source?.parts_estimate,false);
-  const fluids = normalizedLines(source?.fluids_estimate,true);
-  const partsTotal = parts.reduce((sum:number,line:any)=>sum + line.quantity * line.estimated_cost,0);
-  const fluidsTotal = fluids.reduce((sum:number,line:any)=>sum + line.quantity * line.estimated_cost,0);
-  const misc = nonNegative(source?.misc_total,0);
-  const total = laborHours * laborRate + partsTotal + fluidsTotal + misc;
-  return {laborHours,laborRate,parts,fluids,partsTotal,fluidsTotal,misc,total};
-}
-
-async function evaluatePolicy(Policy:any,total:number) {
-  const policies = (await loadAllEntityRows({entity:Policy,sort:'sort_order',label:'Fleet repair approval policies'}))
-    .filter((row:any)=>row.enabled !== false)
-    .sort((a:any,b:any)=>Number(b.minimum_amount||0)-Number(a.minimum_amount||0));
-  const match = policies.find((row:any)=>{
-    const min = nonNegative(row.minimum_amount,0);
-    const max = row.maximum_amount == null ? null : Number(row.maximum_amount);
-    return total >= min && (max == null || !Number.isFinite(max) || max <= 0 || total <= max);
-  }) || null;
-  return match ? {approval_required:match.approval_required !== false,approval_tier:norm(match.approval_tier || match.name),policy_id:match.id,policy_name:match.name} : {approval_required:false,approval_tier:'',policy_id:'',policy_name:''};
-}
-
-function estimatePatch(source:any) {
-  const calc = totals(source);
-  return {
-    estimated_labor_hours:calc.laborHours,
-    labor_rate:calc.laborRate,
-    estimated_parts_total:calc.partsTotal,
-    estimated_fluids_total:calc.fluidsTotal,
-    misc_total:calc.misc,
-    estimated_total:calc.total,
-    estimated_completion_date:norm(source?.estimated_completion_date),
-    parts_estimate:calc.parts,
-    fluids_estimate:calc.fluids,
-    notes:norm(source?.notes),
-  };
 }
 
 Deno.serve(async req => {
@@ -136,10 +87,10 @@ Deno.serve(async req => {
     let estimate = rows[0] || null;
 
     if (action === 'save') {
-      const patch = estimatePatch(body?.estimate || body);
-      const policy = await evaluatePolicy(Policy,patch.estimated_total);
+      const patch = repairEstimatePatch(body?.estimate || body);
+      const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
       if (!estimate) {
-        estimate = await Estimate.create({...patch,work_order_id:wo.id,equipment_id:wo.equipment_id||'',status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,creation_key:`repair-estimate:${wo.id}`});
+        estimate = await Estimate.create({...patch,work_order_id:wo.id,equipment_id:wo.equipment_id||'',status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,estimate_source:'ccs_admin',creation_key:`repair-estimate:${wo.id}`});
       } else {
         const expected = norm(body?.expected_updated_date);
         if (!expected) return Response.json({error:'Repair-estimate version is missing. Reload before saving.'},{status:409});
@@ -150,7 +101,7 @@ Deno.serve(async req => {
 
     if (!estimate) return Response.json({error:'Create the Fleet repair estimate before submitting or deciding it.'},{status:404});
     if (action === 'submit') {
-      const policy = await evaluatePolicy(Policy,Number(estimate.estimated_total||0));
+      const policy = await evaluateRepairApprovalPolicy(Policy,Number(estimate.estimated_total||0));
       const expected = norm(body?.expected_updated_date);
       if (!expected) return Response.json({error:'Repair-estimate version is missing. Reload before submitting.'},{status:409});
       const autoApproved = policy.approval_required === false;
