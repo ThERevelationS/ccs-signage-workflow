@@ -223,9 +223,9 @@ export default function FleetEquipmentDetail() {
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
         {tripIdentityWarning && activeTab === "tracking" && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tripIdentityWarning}</div>}
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex min-w-max sm:min-w-0">
-            {TABS.map(tab => <button key={tab.key} onClick={() => selectTab(tab.key)} className={`relative px-4 py-2.5 text-sm font-semibold whitespace-nowrap rounded-lg ${activeTab === tab.key ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>{tab.label}{tab.key === "alerts" && unreadAlerts > 0 && <span className={`ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full px-1 text-[10px] ${activeTab === tab.key ? "bg-white text-indigo-700" : "bg-red-600 text-white"}`}>{unreadAlerts}</span>}</button>)}
+        <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+          <div role="tablist" aria-label={`${equipment.name} Fleet sections`} className="flex min-w-max sm:min-w-0">
+            {TABS.map(tab => <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => selectTab(tab.key)} className={`relative min-h-11 px-4 py-2.5 text-sm font-semibold whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab.key ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>{tab.label}{tab.key === "alerts" && unreadAlerts > 0 && <span className={`ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full px-1 text-[10px] ${activeTab === tab.key ? "bg-white text-indigo-700" : "bg-red-600 text-white"}`}>{unreadAlerts}</span>}</button>)}
           </div>
         </div>
 
