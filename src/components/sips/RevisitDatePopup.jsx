@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarClock, X } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 /**
  * Small popup shown when saving a checklist that lets the user optionally set
