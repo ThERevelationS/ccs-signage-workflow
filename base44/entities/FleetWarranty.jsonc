@@ -1,0 +1,115 @@
+{
+  "name": "FleetWarranty",
+  "type": "object",
+  "description": "Fleet asset/component warranty coverage and expiration tracking.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "vehicle",
+        "engine",
+        "transmission",
+        "battery",
+        "component",
+        "other"
+      ]
+    },
+    "provider": {
+      "type": "string"
+    },
+    "reference_number": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "start_meter": {
+      "type": "number",
+      "minimum": 0
+    },
+    "end_meter": {
+      "type": "number",
+      "minimum": 0
+    },
+    "meter_unit": {
+      "type": "string",
+      "enum": [
+        "miles",
+        "hours"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "claimed",
+        "void"
+      ],
+      "default": "active"
+    },
+    "coverage_description": {
+      "type": "string"
+    },
+    "contact": {
+      "type": "string"
+    },
+    "document_url": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "name",
+    "category",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

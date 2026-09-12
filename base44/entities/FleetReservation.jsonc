@@ -1,0 +1,101 @@
+{
+  "name": "FleetReservation",
+  "type": "object",
+  "description": "Fleet equipment reservation/assignment record for shared vehicles and non-road assets.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "reserved_by_email": {
+      "type": "string"
+    },
+    "reserved_by_name": {
+      "type": "string"
+    },
+    "assignment_label": {
+      "type": "string"
+    },
+    "job_site": {
+      "type": "string"
+    },
+    "start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "reserved",
+        "checked_out",
+        "returned",
+        "cancelled"
+      ],
+      "default": "reserved"
+    },
+    "pickup_meter": {
+      "type": "number",
+      "minimum": 0
+    },
+    "return_meter": {
+      "type": "number",
+      "minimum": 0
+    },
+    "checked_out_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "returned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "reserved_by_email",
+    "start_at",
+    "end_at",
+    "status",
+    "creation_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

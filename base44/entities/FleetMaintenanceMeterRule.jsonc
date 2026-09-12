@@ -1,0 +1,101 @@
+{
+  "name": "FleetMaintenanceMeterRule",
+  "type": "object",
+  "description": "Fleet maintenance trigger rule based on odometer mileage or engine/equipment hours. Supplements FleetMaintenanceTask without replacing date recurrence.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "maintenance_task_id": {
+      "type": "string"
+    },
+    "meter_type": {
+      "type": "string",
+      "enum": [
+        "odometer_miles",
+        "engine_hours",
+        "manual"
+      ]
+    },
+    "interval_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "next_due_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "last_service_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lead_value": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0
+    },
+    "trigger_mode": {
+      "type": "string",
+      "enum": [
+        "meter_only",
+        "date_or_meter"
+      ],
+      "default": "date_or_meter"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "bouncie",
+        "manual"
+      ],
+      "default": "manual"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "maintenance_task_id",
+    "meter_type",
+    "interval_value"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

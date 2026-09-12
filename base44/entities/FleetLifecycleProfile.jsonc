@@ -1,0 +1,83 @@
+{
+  "name": "FleetLifecycleProfile",
+  "type": "object",
+  "description": "Fleet asset lifecycle and replacement planning profile. Fleet-only financial/strategic data.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "acquisition_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "acquisition_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "current_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "target_replacement_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "target_mileage_hours": {
+      "type": "number",
+      "minimum": 0
+    },
+    "expected_residual_value": {
+      "type": "number",
+      "minimum": 0
+    },
+    "replacement_status": {
+      "type": "string",
+      "enum": [
+        "monitor",
+        "plan",
+        "replace_soon",
+        "approved",
+        "replaced"
+      ],
+      "default": "monitor"
+    },
+    "annual_budget": {
+      "type": "number",
+      "minimum": 0
+    },
+    "notes": {
+      "type": "string"
+    },
+    "updated_by_email": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

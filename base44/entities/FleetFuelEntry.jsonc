@@ -1,0 +1,91 @@
+{
+  "name": "FleetFuelEntry",
+  "type": "object",
+  "description": "Fleet-specific fuel purchase/usage entry used for MPG and operating-cost analysis.",
+  "properties": {
+    "equipment_id": {
+      "type": "string"
+    },
+    "fueled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "odometer": {
+      "type": "number",
+      "minimum": 0
+    },
+    "gallons": {
+      "type": "number",
+      "minimum": 0
+    },
+    "total_cost": {
+      "type": "number",
+      "minimum": 0
+    },
+    "price_per_gallon": {
+      "type": "number",
+      "minimum": 0
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "receipt_url": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "recorded_by_email": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "import"
+      ],
+      "default": "manual"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "fueled_at",
+    "gallons",
+    "total_cost",
+    "creation_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}

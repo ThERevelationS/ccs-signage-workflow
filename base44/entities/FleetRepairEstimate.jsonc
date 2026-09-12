@@ -1,0 +1,145 @@
+{
+  "name": "FleetRepairEstimate",
+  "type": "object",
+  "description": "Fleet-only repair estimate and approval record linked to FleetMaintenanceWorkOrder. Financial planning is kept separate from the work-order execution record.",
+  "properties": {
+    "work_order_id": {
+      "type": "string"
+    },
+    "equipment_id": {
+      "type": "string"
+    },
+    "estimated_labor_hours": {
+      "type": "number",
+      "minimum": 0
+    },
+    "labor_rate": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimated_parts_total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimated_fluids_total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "misc_total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimated_total": {
+      "type": "number",
+      "minimum": 0
+    },
+    "estimated_completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "parts_estimate": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "estimated_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "fluids_estimate": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "estimated_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "approved",
+        "rejected",
+        "changes_requested"
+      ],
+      "default": "draft"
+    },
+    "approval_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "approval_tier": {
+      "type": "string"
+    },
+    "submitted_by_email": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision_by_email": {
+      "type": "string"
+    },
+    "decision_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision_notes": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
