@@ -27,6 +27,8 @@ import { useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
+import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
+import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -89,6 +91,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
+  const [statusTransition, setStatusTransition] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const fileInputRef = useRef(null);
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
