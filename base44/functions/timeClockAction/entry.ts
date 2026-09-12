@@ -188,6 +188,7 @@ async function ensureState(stateEntity: any, target: any) {
     user_email: email,
     user_name: target?.full_name || email,
     status: 'clocked_out',
+    break_status: 'working',
   });
   rows = await stateEntity.filter({ user_email: email });
   if (!Array.isArray(rows) || rows.length !== 1) {
@@ -353,6 +354,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         active_entry_id: entry.id,
         last_action_at: entry.clock_in,
         pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -387,6 +389,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
     if (entry?.id && entry.archived_admin && requestId) {
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || new Date().toISOString(), pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -402,6 +405,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
     if (entry?.id && entry.status === 'clocked_out' && String(entry.clock_out_request_id || '') === requestId) {
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -493,14 +497,22 @@ Deno.serve(async (req) => {
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
+        const currentBreakStatus = breakStatusOf(state);
+        if (['starting_break', 'ending_break'].includes(currentBreakStatus)) {
+          return Response.json({ success: false, error: 'A break action is still in progress. Retry status shortly.' }, { status: 409 });
+        }
         const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
-        if (activeBreak?.id && (activeBreak.status !== 'active' || asEmail(activeBreak.user_email) !== target.email || activeBreak.time_entry_id !== entry.id)) {
-          return Response.json({ success: false, error: 'Stored break state does not match the active break record. Admin review is required.' }, { status: 409 });
+        if (currentBreakStatus === 'on_break') {
+          if (!activeBreak?.id || activeBreak.status !== 'active' || asEmail(activeBreak.user_email) !== target.email || activeBreak.time_entry_id !== entry.id) {
+            return Response.json({ success: false, error: 'Stored break state does not match the active break record. Admin review is required.' }, { status: 409 });
+          }
+        } else if (state.active_break_id || activeBreak?.id) {
+          return Response.json({ success: false, error: 'Stored break state contains an unexpected active break. Admin review is required.' }, { status: 409 });
         }
         const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
-          break_status: breakStatusOf(state), active_break: activeBreak || null, break_summary: breakSummary,
+          break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
         });
       }
       if (state.status === 'clocked_out') return Response.json({ success: true, status: 'clocked_out', entry: null, user: publicEmployee(target), break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 } });
@@ -1184,6 +1196,9 @@ Deno.serve(async (req) => {
       if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
         return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the state mismatch before correcting it.' }, { status: 409 });
       }
+      if (entry.status === 'clocked_in' && (breakStatusOf(state) !== 'working' || state.active_break_id)) {
+        return Response.json({ success: false, error: 'End the employee break before correcting an active shift.' }, { status: 409 });
+      }
 
       const intent = await auditEntity.create({
         action: 'admin_correction', outcome: 'pending', user_email: target.email,
@@ -1236,7 +1251,8 @@ Deno.serve(async (req) => {
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
           status: 'clocked_out', active_entry_id: null, last_action_at: savedEntry.clock_out,
-          pending_started_at: null,
+          pending_started_at: null, break_status: 'working', active_break_id: null,
+          last_break_request_id: null, break_pending_started_at: null,
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Correction saved but authoritative state finalization requires review.' } } });
@@ -1266,6 +1282,9 @@ Deno.serve(async (req) => {
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This time entry changed in another session. Reload before archiving it.' }, { status: 409 });
       if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
         return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the mismatch before archiving it.' }, { status: 409 });
+      }
+      if (entry.status === 'clocked_in' && (breakStatusOf(state) !== 'working' || state.active_break_id)) {
+        return Response.json({ success: false, error: 'End the employee break before archiving an active shift.' }, { status: 409 });
       }
 
       const now = new Date().toISOString();
@@ -1307,6 +1326,7 @@ Deno.serve(async (req) => {
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
           status: 'clocked_out', active_entry_id: null, last_action_at: now, pending_started_at: null,
+          break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Entry archived but authoritative state finalization requires review.' } } });
@@ -1344,7 +1364,8 @@ Deno.serve(async (req) => {
         ? state
         : await setState(stateEntity, state, 'clocked_out', null, {
             status: 'clocking_in', active_entry_id: null, last_request_id: requestId,
-            pending_started_at: officialClockIn,
+            pending_started_at: officialClockIn, break_status: 'working', active_break_id: null,
+            last_break_request_id: null, break_pending_started_at: null,
           });
       if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
@@ -1364,7 +1385,8 @@ Deno.serve(async (req) => {
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setState(stateEntity, currentClaim, 'clocking_in', requestId, {
         status: 'clocked_in', active_entry_id: entry.id, last_action_at: entry.clock_in,
-        pending_started_at: null,
+        pending_started_at: null, break_status: 'working', active_break_id: null,
+        last_break_request_id: null, break_pending_started_at: null,
       });
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-in was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
@@ -1397,9 +1419,18 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
       }
 
-      const lunchMinutes = Math.round(Number(body?.lunch_minutes));
-      if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240) {
-        return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240.' }, { status: 400 });
+      if (breakStatusOf(state) !== 'working' || state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break before clocking out.' }, { status: 409 });
+      }
+      const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+      const trackedUnpaidMinutes = breakSummary.unpaid_minutes;
+      const manualLunchMinutes = Math.round(Number(body?.lunch_minutes));
+      let lunchMinutes = trackedUnpaidMinutes;
+      if (trackedUnpaidMinutes <= 0) {
+        if (!Number.isFinite(manualLunchMinutes) || manualLunchMinutes < 0 || manualLunchMinutes > 240) {
+          return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240 when no unpaid break was tracked.' }, { status: 400 });
+        }
+        lunchMinutes = manualLunchMinutes;
       }
       const allocations = Array.isArray(body?.job_allocations) ? body.job_allocations : [];
       if (allocations.length === 0) return Response.json({ success: false, error: 'At least one job allocation is required.' }, { status: 400 });
@@ -1442,6 +1473,10 @@ Deno.serve(async (req) => {
         notes: String(body?.notes || '').trim(),
         status: 'clocked_out',
         clock_source: 'server',
+        break_tracking_used: breakSummary.count > 0,
+        tracked_break_minutes: breakSummary.total_minutes,
+        tracked_paid_break_minutes: breakSummary.paid_minutes,
+        tracked_unpaid_break_minutes: breakSummary.unpaid_minutes,
       };
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_in' },
@@ -1458,7 +1493,8 @@ Deno.serve(async (req) => {
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setState(stateEntity, currentClaim, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: savedEntry.clock_out,
-        pending_started_at: null,
+        pending_started_at: null, break_status: 'working', active_break_id: null,
+        last_break_request_id: null, break_pending_started_at: null,
       });
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-out was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
@@ -1469,7 +1505,7 @@ Deno.serve(async (req) => {
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
         authentication_method: authenticationMethodFor(actor, target),
         server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
-        details: { lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours },
+        details: { lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours, break_summary: breakSummary },
       });
       return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: auditSaved });
     }
