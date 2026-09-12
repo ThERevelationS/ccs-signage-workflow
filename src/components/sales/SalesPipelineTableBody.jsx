@@ -8,6 +8,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Trash2, Link as LinkIcon, Copy } from "lucide-react";
 
+const SALES_STATUSES = [
+  { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
+  { value: "quoted", label: "Quoted", className: "bg-yellow-50 text-yellow-700" },
+  { value: "follow_up", label: "Follow Up", className: "bg-orange-50 text-orange-700" },
+  { value: "won", label: "Won", className: "bg-green-50 text-green-700" },
+  { value: "lost", label: "Lost", className: "bg-red-50 text-red-700" },
+  { value: "on_hold", label: "On Hold", className: "bg-gray-100 text-gray-700" },
+];
+
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
   if (dateString instanceof Date) return isNaN(dateString.getTime()) ? undefined : dateString;
@@ -87,6 +96,18 @@ export default function SalesPipelineTableBody({
                   <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
                     <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="truncate">{wo.client_name || "Unnamed"}</span>
                   </button>
+                </td>
+              )}
+              {isColumnVisible("sales_status") && (
+                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
+                  <Select value={wo.sales_status || "lead"} onValueChange={(val) => updateWorkOrder(wo.id, "sales_status", val)} disabled={!isRegistered}>
+                    <SelectTrigger className={`h-7 text-xs border-0 px-1 ${SALES_STATUSES.find((status) => status.value === (wo.sales_status || "lead"))?.className || "bg-transparent"}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </td>
               )}
               {isColumnVisible("description") && (

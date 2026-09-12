@@ -1,0 +1,196 @@
+{
+  "name": "FleetPartIdentification",
+  "type": "object",
+  "description": "Fleet-only AI/manual part-identification inbox. Stores reviewable lookup evidence and candidate data before anything is promoted into FleetPart inventory.",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "analyzed",
+        "needs_review",
+        "matched_existing",
+        "promoted",
+        "dismissed"
+      ],
+      "default": "draft"
+    },
+    "search_mode": {
+      "type": "string",
+      "enum": [
+        "part_number",
+        "photo",
+        "barcode",
+        "text",
+        "combined"
+      ]
+    },
+    "query_text": {
+      "type": "string"
+    },
+    "uploaded_photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "detected_text": {
+      "type": "string"
+    },
+    "candidate_part_name": {
+      "type": "string"
+    },
+    "candidate_part_number": {
+      "type": "string"
+    },
+    "candidate_alternate_part_numbers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "candidate_barcode_value": {
+      "type": "string"
+    },
+    "candidate_category": {
+      "type": "string"
+    },
+    "candidate_subcategory": {
+      "type": "string"
+    },
+    "candidate_manufacturer": {
+      "type": "string"
+    },
+    "candidate_description": {
+      "type": "string"
+    },
+    "candidate_specification": {
+      "type": "string"
+    },
+    "candidate_source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "candidate_vendor": {
+      "type": "string"
+    },
+    "candidate_vendor_sku": {
+      "type": "string"
+    },
+    "candidate_vendor_url": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "reasoning": {
+      "type": "string"
+    },
+    "verification_notes": {
+      "type": "string"
+    },
+    "duplicate_part_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Potential existing FleetPart matches requiring review."
+    },
+    "suggested_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Review-only compatibility suggestions; never authoritative until a user confirms them."
+    },
+    "confirmed_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compatibility_notes": {
+      "type": "string"
+    },
+    "quantity_found": {
+      "type": "number",
+      "minimum": 0
+    },
+    "storage_zone": {
+      "type": "string"
+    },
+    "storage_cabinet": {
+      "type": "string"
+    },
+    "storage_shelf": {
+      "type": "string"
+    },
+    "storage_bin": {
+      "type": "string"
+    },
+    "promoted_part_id": {
+      "type": "string"
+    },
+    "analyzed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "analyzed_by_email": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewed_by_email": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string",
+      "description": "Stable idempotency key for one identify/organize session."
+    }
+  },
+  "required": [
+    "status",
+    "search_mode",
+    "creation_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
