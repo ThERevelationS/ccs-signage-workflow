@@ -26,7 +26,6 @@ import { createEmailGroupIfAbsent, deleteEmailGroupIfUnused, updateEmailGroupIfU
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const EmailGroup = base44.entities.EmailGroup;
-const AutomationRule = base44.entities.AutomationRule;
 
 export default function EmailGroupsManager({ adminCapability }) {
   const [groups, setGroups] = useState([]);
