@@ -83,6 +83,7 @@ function fuelMetrics(entries:any[]) {
   const pricePerGallon = gallons > 0 ? fuelCost/gallons : null;
   let distance = 0;
   let gallonsForMpg = 0;
+  let measuredFuelCost = 0;
   let odometerSegments = 0;
   let prior:any = null;
   for (const row of sorted) {
@@ -95,6 +96,7 @@ function fuelMetrics(entries:any[]) {
         if (delta > 0) {
           distance += delta;
           gallonsForMpg += Number(row.gallons||0);
+          measuredFuelCost += Number(row.total_cost||0);
           odometerSegments += 1;
         }
       }
@@ -102,8 +104,8 @@ function fuelMetrics(entries:any[]) {
     prior = row;
   }
   const mpg = distance > 0 && gallonsForMpg > 0 ? distance/gallonsForMpg : null;
-  const fuelCostPerMile = distance > 0 ? fuelCost/distance : null;
-  return {entries:sorted.length,gallons,fuel_cost:fuelCost,average_price_per_gallon:pricePerGallon,fill_to_fill_distance_miles:distance,fill_to_fill_gallons:gallonsForMpg,fill_to_fill_mpg:mpg,fuel_cost_per_mile:fuelCostPerMile,odometer_segments:odometerSegments};
+  const fuelCostPerMile = distance > 0 ? measuredFuelCost/distance : null;
+  return {entries:sorted.length,gallons,fuel_cost:fuelCost,average_price_per_gallon:pricePerGallon,fill_to_fill_distance_miles:distance,fill_to_fill_gallons:gallonsForMpg,fill_to_fill_fuel_cost:measuredFuelCost,fill_to_fill_mpg:mpg,fuel_cost_per_mile:fuelCostPerMile,odometer_segments:odometerSegments};
 }
 
 Deno.serve(async req => {
@@ -165,6 +167,15 @@ Deno.serve(async req => {
             continue;
           }
           const created = await Fuel.create({...patch,creation_key:creationKey});
+          await new Promise(resolve=>setTimeout(resolve,50));
+          const contenders = await Fuel.filter({creation_key:creationKey});
+          if (contenders.length > 1) {
+            const winner = contenders.slice().sort((a:any,b:any)=>String(a.id).localeCompare(String(b.id)))[0];
+            for (const candidate of contenders) if (candidate.id !== winner.id) await Fuel.delete(candidate.id).catch(()=>null);
+            if (!sameCreate(winner,patch)) throw new Error('A concurrent import won this create identity with different fuel details.');
+            results.push({index,status:winner.id===created.id?'created':'reused',id:winner.id});
+            continue;
+          }
           results.push({index,status:'created',id:created.id});
         } catch (error:any) {
           results.push({index,status:'error',error:error?.message || String(error)});
@@ -195,11 +206,13 @@ Deno.serve(async req => {
         const eqFuel = fuelMetrics(eqEntries);
         const eqMaintenance = eqWork.reduce((sum:number,row:any)=>sum+serviceCost(row),0);
         const operatingCost = eqFuel.fuel_cost + eqMaintenance;
-        byEquipment.push({equipment_id:equipmentIdValue,equipment_name:equipmentById.get(equipmentIdValue)?.name || 'Unknown Fleet equipment',...eqFuel,maintenance_cost:eqMaintenance,total_operating_cost:operatingCost,maintenance_cost_per_mile:eqFuel.fill_to_fill_distance_miles>0?eqMaintenance/eqFuel.fill_to_fill_distance_miles:null,operating_cost_per_mile:eqFuel.fill_to_fill_distance_miles>0?operatingCost/eqFuel.fill_to_fill_distance_miles:null});
+        const measuredOperatingCost = eqFuel.fill_to_fill_fuel_cost + eqMaintenance;
+        byEquipment.push({equipment_id:equipmentIdValue,equipment_name:equipmentById.get(equipmentIdValue)?.name || 'Unknown Fleet equipment',...eqFuel,maintenance_cost:eqMaintenance,total_operating_cost:operatingCost,maintenance_cost_per_mile:eqFuel.fill_to_fill_distance_miles>0?eqMaintenance/eqFuel.fill_to_fill_distance_miles:null,operating_cost_per_mile:eqFuel.fill_to_fill_distance_miles>0?measuredOperatingCost/eqFuel.fill_to_fill_distance_miles:null});
       }
       byEquipment.sort((a,b)=>b.total_operating_cost-a.total_operating_cost || String(a.equipment_name).localeCompare(String(b.equipment_name)));
       const totalOperating = metrics.fuel_cost + maintenanceCost;
-      return Response.json({success:true,entries,metrics:{...metrics,maintenance_cost:maintenanceCost,total_operating_cost:totalOperating,maintenance_cost_per_mile:metrics.fill_to_fill_distance_miles>0?maintenanceCost/metrics.fill_to_fill_distance_miles:null,operating_cost_per_mile:metrics.fill_to_fill_distance_miles>0?totalOperating/metrics.fill_to_fill_distance_miles:null},by_equipment:byEquipment,methodology:'MPG and per-mile values are fill-to-fill estimates based only on consecutive non-decreasing fuel-entry odometer readings. Operating cost combines recorded fuel spend with completed Fleet work-order cost in the selected period; it is not total cost of ownership.'});
+      const measuredOperatingCost = metrics.fill_to_fill_fuel_cost + maintenanceCost;
+      return Response.json({success:true,entries,metrics:{...metrics,maintenance_cost:maintenanceCost,total_operating_cost:totalOperating,maintenance_cost_per_mile:metrics.fill_to_fill_distance_miles>0?maintenanceCost/metrics.fill_to_fill_distance_miles:null,operating_cost_per_mile:metrics.fill_to_fill_distance_miles>0?measuredOperatingCost/metrics.fill_to_fill_distance_miles:null},by_equipment:byEquipment,methodology:'MPG and per-mile values are fill-to-fill estimates based only on consecutive non-decreasing fuel-entry odometer readings. The first odometer-bearing fill establishes the baseline and its gallons/cost are excluded from measured MPG and fuel-per-mile. Operating cost combines recorded fuel spend with completed Fleet work-order cost in the selected period; it is not total cost of ownership.'});
     }
 
     const id = norm(body?.id);
