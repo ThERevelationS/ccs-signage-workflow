@@ -27,9 +27,21 @@
     "category_name"
   ],
   "rls": {
-    "create": {},
+    "create": {
+      "user_condition": {
+        "role": "__quick_product_category_backend_only__"
+      }
+    },
     "read": {},
-    "update": {},
-    "delete": {}
+    "update": {
+      "user_condition": {
+        "role": "__quick_product_category_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__quick_product_category_backend_only__"
+      }
+    }
   }
 }
