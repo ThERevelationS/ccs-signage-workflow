@@ -93,12 +93,12 @@ function Section({ title, children }) {
   );
 }
 
-function Row({ label, total, avg, value }) {
+function Row({ label, total = "", avg = "", value = undefined, align = "right" }) {
   return (
     <div className="flex items-center px-3 py-2.5 border-t border-gray-100 dark:border-slate-800 text-sm">
       <div className="flex-1 text-gray-700 dark:text-slate-300">{label}</div>
       {value !== undefined ? (
-        <div className="w-48 text-right font-medium text-gray-900 dark:text-slate-100">{value}</div>
+        <div className={`w-48 font-medium text-gray-900 dark:text-slate-100 ${align === "left" ? "text-left" : "text-right"}`}>{value}</div>
       ) : (
         <>
           <div className="w-24 text-right text-gray-900 dark:text-slate-100">{total}</div>
