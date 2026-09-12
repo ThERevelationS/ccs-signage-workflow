@@ -75,6 +75,7 @@ export default function FleetWorkOrders() {
   }, [openCreateDialog]);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(e => [e.id, e.name])), [equipment]);
+  const activeEquipment = useMemo(() => equipment.filter(e => e.status !== "retired"), [equipment]);
   const summary = useMemo(() => {
     const todayText = easternTodayText();
     const activeRows = orders.filter(w => !["completed", "cancelled"].includes(w.status));
@@ -152,6 +153,11 @@ export default function FleetWorkOrders() {
   const createFollowUp = (workOrder) => {
     if (!workOrder?.equipment_id) {
       setActionError("This historical work order has no linked Fleet equipment, so a follow-up cannot be prelinked safely.");
+      return;
+    }
+    const targetEquipment = equipment.find(row => row.id === workOrder.equipment_id);
+    if (targetEquipment?.status === "retired") {
+      setActionError("This equipment is retired. Reactivate it before creating follow-up Fleet work.");
       return;
     }
     setActionError("");
@@ -268,7 +274,7 @@ export default function FleetWorkOrders() {
         open={!!dialog}
         mode={dialog?.mode}
         workOrder={dialog?.workOrder}
-        equipment={equipment}
+        equipment={dialog?.mode === "create" ? activeEquipment : equipment}
         tasks={tasks}
         parts={parts}
         fluids={fluids}
