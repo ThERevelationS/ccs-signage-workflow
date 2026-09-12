@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { createPageUrl } from "@/utils";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { AlertTriangle, Car, CircleDollarSign, Download, FileSpreadsheet, Fuel, Gauge, Loader2, Pencil, Plus, Receipt, RefreshCw, Trash2, Upload, X } from "lucide-react";
@@ -21,12 +22,13 @@ const blankForm = equipmentId => ({equipment_id:equipmentId||"",fueled_at:localD
 export default function FleetFuelPage(){
   const params = useMemo(()=>new URLSearchParams(window.location.search),[]);
   const requestedEquipment = params.get("equipment")||"all";
+  const requestedYear = /^\d{4}$/.test(params.get("year")||"") ? params.get("year") : String(currentYear);
   const requestedNew = params.get("new")==="1";
   const requestedImport = params.get("import")==="1";
   const [equipment,setEquipment]=useState([]);
   const [user,setUser]=useState(null);
   const [equipmentId,setEquipmentId]=useState(requestedEquipment);
-  const [year,setYear]=useState(String(currentYear));
+  const [year,setYear]=useState(requestedYear);
   const [summary,setSummary]=useState(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
@@ -81,9 +83,9 @@ export default function FleetFuelPage(){
 }
 
 function FuelRow({entry,equipmentName,isAdmin,onEdit,onDeleted}){
-  const [deleting,setDeleting]=useState(false);const [error,setError]=useState("");
-  const remove=async()=>{if(!window.confirm(`Delete this fuel entry for ${equipmentName}?`))return;setDeleting(true);setError("");try{const{data}=await base44.functions.invoke("fleetFuelAction",{action:"delete",id:entry.id,expected_updated_date:entry.updated_date||""});if(data?.error)throw new Error(data.error);await onDeleted();}catch(err){setError(err?.message||"Unable to delete fuel entry.");}finally{setDeleting(false);}};
-  return <div className="px-4 py-3"><div className="flex flex-col lg:flex-row lg:items-start gap-3"><div className="min-w-0 lg:w-56"><div className="font-semibold text-gray-900 dark:text-slate-100">{equipmentName}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{entry.fueled_at?new Date(entry.fueled_at).toLocaleString():"—"}{entry.vendor?` · ${entry.vendor}`:""}</div></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1"><Mini label="Gallons" value={number(entry.gallons)}/><Mini label="Total" value={money(entry.total_cost)}/><Mini label="Price / gal" value={money(entry.price_per_gallon)}/><Mini label="Odometer" value={entry.odometer==null?"—":`${Number(entry.odometer).toLocaleString()} mi`}/></div><div className="flex gap-2">{entry.receipt_url&&<a href={entry.receipt_url} target="_blank" rel="noreferrer" className="min-h-10 px-3 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold inline-flex items-center gap-1"><Receipt className="w-3.5 h-3.5"/>Receipt</a>}{isAdmin&&<button onClick={onEdit} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700" aria-label="Edit fuel entry"><Pencil className="w-4 h-4 mx-auto"/></button>}{isAdmin&&<button onClick={remove} disabled={deleting} className="min-h-10 min-w-10 rounded-lg border border-red-200 text-red-600 dark:border-red-900" aria-label="Delete fuel entry">{deleting?<Loader2 className="w-4 h-4 animate-spin mx-auto"/>:<Trash2 className="w-4 h-4 mx-auto"/>}</button>}</div></div>{entry.notes&&<div className="text-xs text-gray-500 dark:text-slate-400 mt-2">{entry.notes}</div>}{error&&<div className="text-xs text-red-600 mt-2">{error}</div>}</div>;
+  const [deleting,setDeleting]=useState(false);const [error,setError]=useState("");const [confirmDelete,setConfirmDelete]=useState(false);
+  const remove=async()=>{setDeleting(true);setError("");try{const{data}=await base44.functions.invoke("fleetFuelAction",{action:"delete",id:entry.id,expected_updated_date:entry.updated_date||""});if(data?.error)throw new Error(data.error);setConfirmDelete(false);await onDeleted();}catch(err){setError(err?.message||"Unable to delete fuel entry.");}finally{setDeleting(false);}};
+  return <div className="px-4 py-3"><div className="flex flex-col lg:flex-row lg:items-start gap-3"><div className="min-w-0 lg:w-56"><div className="font-semibold text-gray-900 dark:text-slate-100">{equipmentName}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{entry.fueled_at?new Date(entry.fueled_at).toLocaleString():"—"}{entry.vendor?` · ${entry.vendor}`:""}</div></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1"><Mini label="Gallons" value={number(entry.gallons)}/><Mini label="Total" value={money(entry.total_cost)}/><Mini label="Price / gal" value={money(entry.price_per_gallon)}/><Mini label="Odometer" value={entry.odometer==null?"—":`${Number(entry.odometer).toLocaleString()} mi`}/></div><div className="flex gap-2">{entry.receipt_url&&<a href={entry.receipt_url} target="_blank" rel="noreferrer" className="min-h-10 px-3 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold inline-flex items-center gap-1"><Receipt className="w-3.5 h-3.5"/>Receipt</a>}{isAdmin&&<button onClick={onEdit} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700" aria-label="Edit fuel entry"><Pencil className="w-4 h-4 mx-auto"/></button>}{isAdmin&&<button onClick={()=>setConfirmDelete(true)} disabled={deleting} className="min-h-10 min-w-10 rounded-lg border border-red-200 text-red-600 dark:border-red-900" aria-label="Delete fuel entry">{deleting?<Loader2 className="w-4 h-4 animate-spin mx-auto"/>:<Trash2 className="w-4 h-4 mx-auto"/>}</button>}</div></div>{entry.notes&&<div className="text-xs text-gray-500 dark:text-slate-400 mt-2">{entry.notes}</div>}{error&&<div className="text-xs text-red-600 mt-2">{error}</div>}<FleetConfirmDialog open={confirmDelete} title={`Delete fuel entry for ${equipmentName}?`} description="This removes this Fleet fuel record and its operating-cost contribution. It does not change equipment, Bouncie tracking, work orders, or maintenance history." confirmLabel="Delete Fuel Entry" tone="warning" busy={deleting} onCancel={()=>!deleting&&setConfirmDelete(false)} onConfirm={remove}/></div>;
 }
 
 function FuelEntryDialog({dialog,equipment,onClose,onSaved}){
