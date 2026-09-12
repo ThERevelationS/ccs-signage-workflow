@@ -506,17 +506,17 @@ export default function AdminSettings() {
         const duplicateName = automations.find(rule => rule.id !== editingRule.id && String(rule.name || "").trim().toLowerCase() === saveData.name.toLowerCase());
         if (duplicateName) throw new Error(`Another automation named "${saveData.name}" already exists.`);
         const saved = await updateAutomationRuleIfUnchanged({
-          entity: AutomationRule,
           record: editingRule,
           nextFields: saveData,
           exactVersion: true,
+          adminCapability,
           label: `Automation Rule ${editingRule.name || editingRule.id}`,
         });
         setAutomations(prev => prev.map(rule => rule.id === saved.id ? saved : rule));
       } else {
         const result = await createAutomationRuleIfAbsent({
-          entity: AutomationRule,
           data: saveData,
+          adminCapability,
           label: `Automation Rule ${saveData.name}`,
         });
         if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
@@ -538,8 +538,8 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     try {
       await deleteAutomationRuleIfUnchanged({
-        entity: AutomationRule,
         record: rule,
+        adminCapability,
         label: `Automation Rule ${rule.name || rule.id} deletion`,
       });
       setDeleteConfirm(null);
@@ -556,10 +556,10 @@ export default function AdminSettings() {
     setAutomationSaveError("");
     try {
       const saved = await updateAutomationRuleIfUnchanged({
-        entity: AutomationRule,
         record: rule,
         nextFields: { enabled: !rule.enabled },
         exactVersion: false,
+        adminCapability,
         label: `Automation Rule ${rule.name || rule.id} enabled state`,
       });
       setAutomations(prev => prev.map(item => item.id === saved.id ? saved : item));
