@@ -68,6 +68,7 @@ const SALES_ACTIVITY_FIELDS = new Set([
 ]);
 const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
 const STALE_ACTIVITY_DAYS = 14;
+const NEAR_CLOSE_DAYS = 14;
 
 const getSalesActivityTime = (workOrder) => {
   const parsed = Date.parse(workOrder?.sales_last_activity_at || "");
@@ -82,7 +83,7 @@ const isLegacyClosedRecord = (workOrder) => {
 
 const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
 
-const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser) => {
+const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser) => {
   if (!attentionFilter || attentionFilter === "all") return true;
   const followUp = workOrder?.follow_up_date || "";
   const isOperational = isOpenOpportunity(workOrder) && !isLegacyClosedRecord(workOrder);
@@ -94,6 +95,8 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
   }
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
+  if (attentionFilter === "near_close") return isOperational && workOrder?.expected_close_date >= todayStamp && workOrder?.expected_close_date <= nearCloseStamp;
+  if (attentionFilter === "close_overdue") return isOperational && workOrder?.expected_close_date && workOrder.expected_close_date < todayStamp;
   if (attentionFilter === "stale") {
     const activityTime = getSalesActivityTime(workOrder);
     return isOperational && activityTime !== null && activityTime <= staleCutoffTime;
@@ -1014,7 +1017,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Permit Submitted": str(wo.permit_submitted_date), "Notes": str(wo.title),
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
-      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Close Date": str(wo.close_date),
+      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
       "Lost Reason": str(wo.lost_reason), "Probability": num(wo.probability), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
@@ -1186,6 +1189,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const upcomingDate = new Date();
   upcomingDate.setDate(upcomingDate.getDate() + 7);
   const upcomingStamp = format(upcomingDate, "yyyy-MM-dd");
+  const nearCloseDate = parseLocalDate(todayStamp);
+  nearCloseDate.setDate(nearCloseDate.getDate() + NEAR_CLOSE_DAYS);
+  const nearCloseStamp = format(nearCloseDate, "yyyy-MM-dd");
   const staleCutoffDate = parseLocalDate(todayStamp);
   staleCutoffDate.setDate(staleCutoffDate.getDate() - STALE_ACTIVITY_DAYS);
   const staleCutoffTime = staleCutoffDate.getTime();
@@ -1210,6 +1216,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
       if (!followUp && (wo.sales_status === "quoted" || wo.sales_status === "follow_up" || wo.quote_date || wo.date_estimate_sent)) summary.quoteNoFollowUpCount += 1;
+      if (wo.expected_close_date >= todayStamp && wo.expected_close_date <= nearCloseStamp) summary.nearCloseCount += 1;
+      if (wo.expected_close_date && wo.expected_close_date < todayStamp) summary.overdueCloseCount += 1;
       const activityTime = getSalesActivityTime(wo);
       if (activityTime === null) {
         summary.untrackedActivityCount += 1;
@@ -1228,12 +1236,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       upcomingCount: 0,
       noNextActionCount: 0,
       quoteNoFollowUpCount: 0,
+      nearCloseCount: 0,
+      overdueCloseCount: 0,
       staleCount: 0,
       trackedActivityCount: 0,
       untrackedActivityCount: 0,
       ratedProbabilityCount: 0,
     });
-  }, [scopedWorkOrders, todayStamp, upcomingStamp, staleCutoffTime]);
+  }, [scopedWorkOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
@@ -1243,7 +1253,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const sortedWorkOrders = useMemo(() => {
     // First filter
     let result = scopedWorkOrders.filter(wo => {
-      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser)) return false;
+      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
@@ -1277,6 +1287,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           wo.county,
           wo.project_type,
           wo.lead_source,
+          wo.expected_close_date,
           wo.lost_reason,
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
@@ -1348,7 +1359,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, staleCutoffTime, currentUser, searchTerm, sortConfig, customFilters]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
 
@@ -1772,6 +1783,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </th>}
               {isColumnVisible("follow_up_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
                 <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
+              </th>}
+              {isColumnVisible("expected_close_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'expected_close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '92px' }} onClick={() => handleSort('expected_close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'expected_close_date', 'Expected Close Date')}>
+                <div className="flex items-center gap-1">Expected Close {getSortIcon('expected_close_date')}</div>
               </th>}
               {isColumnVisible("close_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'close_date', 'Close Date')}>
                 <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
