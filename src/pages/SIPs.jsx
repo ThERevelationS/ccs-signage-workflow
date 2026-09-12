@@ -830,6 +830,7 @@ export default function SIPs() {
                         <Calendar
                           mode="single"
                           selected={parseLocalDate(wo.sip_revisit_date)}
+                          disabled={{ before: addDays(today, 1) }}
                           onSelect={(date) => {
                             updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
                             setOpenDatePopover(null);
@@ -897,6 +898,7 @@ export default function SIPs() {
                             <Calendar
                               mode="single"
                               selected={parseLocalDate(wo.sip_revisit_date)}
+                              disabled={{ before: addDays(today, 1) }}
                               onSelect={(date) => {
                                 updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
                                 setOpenDatePopover(null);
