@@ -387,6 +387,7 @@ export default function TimeClockAdmin() {
       "Clock In": format(parseISO(entry.clock_in), "h:mm a"),
       "Clock Out": entry.clock_out ? format(parseISO(entry.clock_out), "h:mm a") : "Active",
       "Lunch (min)": entry.lunch_minutes || 0,
+      "Work Pause (min)": entry.tracked_work_pause_minutes || 0,
       "Total Hours": entry.total_hours?.toFixed(2) || "0.00",
       "Notes": entry.notes || "",
       "Jobs": entry.job_allocations?.map(j => 
@@ -706,6 +707,7 @@ export default function TimeClockAdmin() {
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Clock In</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Clock Out</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Lunch</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-700">Work Pause</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Total</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Approval</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Notes</th>
@@ -716,7 +718,7 @@ export default function TimeClockAdmin() {
             <tbody className="divide-y">
               {filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
                     No time entries found for this period
                   </td>
                 </tr>
@@ -739,6 +741,13 @@ export default function TimeClockAdmin() {
                       )}
                     </td>
                     <td className="px-4 py-3">{entry.lunch_minutes || 0} min</td>
+                    <td className="px-4 py-3">
+                      {Number(entry.tracked_work_pause_minutes || 0) > 0 ? (
+                        <span className="font-medium text-purple-700">{entry.tracked_work_pause_minutes} min</span>
+                      ) : (
+                        <span className="text-gray-400">0 min</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium text-purple-600">
                       {entry.total_hours?.toFixed(2) || "-"} hrs
                     </td>
