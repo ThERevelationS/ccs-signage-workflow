@@ -1141,13 +1141,33 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               <div className="flex flex-wrap gap-1">
                                 {applicableSTs.map(st => {
                                   const isSelected = product.subTemplates.includes(st.id);
+                                  const isAlreadyApplied = product.isExisting && existingChecklist.some(item =>
+                                    item.product_name === product.customName && item.sub_template_name === st.name
+                                  );
                                   return (
-                                    <div key={st.id} onClick={() => toggleSubTemplateForProduct(product.id, st.id)}
-                                      className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${isSelected ? 'bg-purple-100 border-purple-400 cursor-pointer' : 'bg-white cursor-pointer hover:border-purple-300'}`}>
-                                      <div className={`w-3 h-3 rounded border flex items-center justify-center ${isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'}`}>
-                                        {isSelected && <Check className="w-2 h-2 text-white" />}
+                                    <div
+                                      key={st.id}
+                                      onClick={() => { if (!isAlreadyApplied) toggleSubTemplateForProduct(product.id, st.id); }}
+                                      title={isAlreadyApplied ? "Already applied to this product" : undefined}
+                                      className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${
+                                        isAlreadyApplied
+                                          ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
+                                          : isSelected
+                                            ? 'bg-purple-100 border-purple-400 cursor-pointer'
+                                            : 'bg-white cursor-pointer hover:border-purple-300'
+                                      }`}
+                                    >
+                                      <div className={`w-3 h-3 rounded border flex items-center justify-center ${
+                                        isAlreadyApplied
+                                          ? 'bg-green-500 border-green-500'
+                                          : isSelected
+                                            ? 'bg-purple-500 border-purple-500'
+                                            : 'border-gray-400'
+                                      }`}>
+                                        {(isAlreadyApplied || isSelected) && <Check className="w-2 h-2 text-white" />}
                                       </div>
                                       <span>{st.name}</span>
+                                      {isAlreadyApplied && <span className="font-medium">Applied</span>}
                                     </div>
                                   );
                                 })}
