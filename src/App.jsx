@@ -53,6 +53,7 @@ import FleetInspections from './pages/FleetInspections';
 import FleetWorkOrders from './pages/FleetWorkOrders';
 import FleetParts from './pages/FleetParts';
 import FleetFluids from './pages/FleetFluids';
+import FleetFuel from './pages/FleetFuel';
 import FleetRequests from './pages/FleetRequests';
 import FleetHistory from './pages/FleetHistory';
 import FleetAnalytics from './pages/FleetAnalytics';
@@ -108,6 +109,7 @@ const FLEET_PAGES = {
   FleetWorkOrders,
   FleetParts,
   FleetFluids,
+  FleetFuel,
   FleetRequests,
   FleetHistory,
   FleetAnalytics,
