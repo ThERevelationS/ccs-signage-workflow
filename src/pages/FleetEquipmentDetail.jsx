@@ -7,6 +7,7 @@ import FleetEquipmentTimeline from "@/components/fleet/FleetEquipmentTimeline";
 import FleetEquipmentDocuments from "@/components/fleet/FleetEquipmentDocuments";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
+import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
   Activity,
   ArrowLeft,
@@ -168,6 +169,7 @@ export default function FleetEquipmentDetail() {
   const retired = equipment?.status === "retired";
   const liveDriving = !!live?.is_trip_active && !hasDefinitiveTripEnd(live);
   const unreadAlerts = notifications.filter(note => !note.is_read).length;
+  const health = useMemo(() => fleetHealthScore({ equipment, tasks, workOrders, notifications }), [equipment, tasks, workOrders, notifications]);
 
   const selectTab = (tab) => {
     setActiveTab(tab);
@@ -209,7 +211,7 @@ export default function FleetEquipmentDetail() {
         <div className="flex flex-col xl:flex-row gap-4 xl:items-start xl:justify-between">
           <div className="flex gap-4 min-w-0">
             <div className="w-24 h-24 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">{equipment.photo_url ? <img src={equipment.photo_url} alt={equipment.name} className="w-full h-full object-cover" /> : <Truck className="w-10 h-10 text-gray-300" />}</div>
-            <div className="min-w-0"><Link to={createPageUrl("FleetEquipment")} className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-300"><ArrowLeft className="w-3.5 h-3.5" />Equipment</Link><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 mt-1 truncate">{equipment.name}</h1><p className="text-sm text-gray-500 dark:text-slate-400">{[equipment.year, equipment.make, equipment.model].filter(Boolean).join(" ") || pretty(equipment.type)}</p><div className="flex flex-wrap gap-2 mt-2"><Tag>{pretty(equipment.status)}</Tag><Tag>Bouncie: {pretty(equipment.bouncie_link_status)}</Tag>{equipment.vin && <Tag>VIN {equipment.vin}</Tag>}</div></div>
+            <div className="min-w-0"><Link to={createPageUrl("FleetEquipment")} className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-300"><ArrowLeft className="w-3.5 h-3.5" />Equipment</Link><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 mt-1 truncate">{equipment.name}</h1><p className="text-sm text-gray-500 dark:text-slate-400">{[equipment.year, equipment.make, equipment.model].filter(Boolean).join(" ") || pretty(equipment.type)}</p><div className="flex flex-wrap gap-2 mt-2"><Tag>{pretty(equipment.status)}</Tag><HealthTag health={health} /><Tag>{activeOrders.length} open WO{activeOrders.length === 1 ? "" : "s"}</Tag>{nextMaintenance?.start_date && <Tag>Service {nextMaintenance.start_date}</Tag>}<Tag>Bouncie: {pretty(equipment.bouncie_link_status)}</Tag>{equipment.vin && <Tag>VIN {equipment.vin}</Tag>}</div></div>
           </div>
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <Link to={trackingUrl} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 inline-flex items-center justify-center gap-2 text-sm"><Navigation className="w-4 h-4" />Tracking</Link>
@@ -223,13 +225,13 @@ export default function FleetEquipmentDetail() {
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
         {tripIdentityWarning && activeTab === "tracking" && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tripIdentityWarning}</div>}
 
-        <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+        <div className="sticky top-[60px] z-20 overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white/95 p-1 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
           <div role="tablist" aria-label={`${equipment.name} Fleet sections`} className="flex min-w-max sm:min-w-0">
             {TABS.map(tab => <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => selectTab(tab.key)} className={`relative min-h-11 px-4 py-2.5 text-sm font-semibold whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab.key ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>{tab.label}{tab.key === "alerts" && unreadAlerts > 0 && <span className={`ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full px-1 text-[10px] ${activeTab === tab.key ? "bg-white text-indigo-700" : "bg-red-600 text-white"}`}>{unreadAlerts}</span>}</button>)}
           </div>
         </div>
 
-        {activeTab === "overview" && <OverviewTab equipment={equipment} metadata={metadata} live={live} liveDriving={liveDriving} activeOrders={activeOrders} tasks={tasks} nextMaintenance={nextMaintenance} logs={logs} activeRequests={activeRequests} trips={trips} tripsLoading={tripsLoading} unreadAlerts={unreadAlerts} maintenanceUrl={maintenanceUrl} onSelectTab={selectTab} />}
+        {activeTab === "overview" && <OverviewTab equipment={equipment} metadata={metadata} live={live} liveDriving={liveDriving} activeOrders={activeOrders} tasks={tasks} nextMaintenance={nextMaintenance} logs={logs} activeRequests={activeRequests} trips={trips} tripsLoading={tripsLoading} unreadAlerts={unreadAlerts} health={health} maintenanceUrl={maintenanceUrl} onSelectTab={selectTab} />}
         {activeTab === "tracking" && <TrackingTab equipment={equipment} live={live} liveStates={liveStates} liveDriving={liveDriving} trips={trips} tripsLoading={tripsLoading} tripIdentityWarning={tripIdentityWarning} trackingUrl={trackingUrl} />}
         {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} retired={retired} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
@@ -242,9 +244,10 @@ export default function FleetEquipmentDetail() {
   );
 }
 
-function OverviewTab({ equipment, metadata, live, liveDriving, activeOrders, tasks, nextMaintenance, logs, activeRequests, trips, tripsLoading, unreadAlerts, maintenanceUrl, onSelectTab }) {
+function OverviewTab({ equipment, metadata, live, liveDriving, activeOrders, tasks, nextMaintenance, logs, activeRequests, trips, tripsLoading, unreadAlerts, health, maintenanceUrl, onSelectTab }) {
   return <div className="space-y-5">
-    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+      <Metric label="Fleet health" value={health?.score == null ? "N/A" : `${health.score}%`} attention={health?.score != null && health.score < 75} />
       <Metric label="Open work orders" value={activeOrders.length} attention={activeOrders.some(order => ["high", "critical"].includes(order.priority))} />
       <Metric label="Schedules" value={tasks.length} />
       <Metric label="Active requests" value={activeRequests.length} attention={activeRequests.length > 0} />
@@ -358,6 +361,7 @@ function UsageRow({ log, equipment }) { return <div className="flex items-start 
 function Card({ title, icon: Icon, action = null, children }) { return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm"><div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><Icon className="w-4 h-4 text-indigo-500" />{title}</h2>{action}</div><div className="p-4">{children}</div></section>; }
 function ProfileField({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-1 break-words">{value}</div></div>; }
 function Metric({ label, value, attention = false }) { return <div className={`rounded-xl border p-4 ${attention ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}><div className="text-xs text-gray-400">{label}</div><div className={`text-2xl font-bold mt-1 ${attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div></div>; }
+function HealthTag({ health }) { const style = health?.score == null ? "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300" : health.score >= 90 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : health.score >= 75 ? "bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300" : health.score >= 60 ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300"; return <span title={health?.signals?.join(" · ") || "Fleet health"} className={`text-xs px-2 py-1 rounded-full font-semibold ${style}`}>{health?.score == null ? "Health N/A" : `Health ${health.score} · ${health.label}`}</span>; }
 function Tag({ children }) { return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 capitalize">{children}</span>; }
 function Empty({ children }) { return <div className="text-sm text-gray-400 py-4">{children}</div>; }
 function Info({ label, value, icon: Icon }) { return <div className="flex items-start gap-2"><Icon className="w-4 h-4 text-gray-400 mt-0.5" /><div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-0.5">{value}</div></div></div>; }
