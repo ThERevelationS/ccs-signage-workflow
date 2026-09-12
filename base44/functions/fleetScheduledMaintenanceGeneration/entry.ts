@@ -337,12 +337,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    let meterGeneration:any = null;
+    try {
+      const meterResponse = await base44.asServiceRole.functions.invoke('fleetMeterMaintenanceGeneration', {});
+      meterGeneration = meterResponse?.data || null;
+      if (meterGeneration?.error) {
+        await logRun(base44,'warning','Fleet date maintenance generation completed, but meter generation returned an error.',{error:meterGeneration.error});
+      }
+    } catch (meterError:any) {
+      meterGeneration = { error: meterError?.message || String(meterError) };
+      await logRun(base44,'warning','Fleet date maintenance generation completed, but meter generation invocation failed.',meterGeneration);
+    }
+
     const createdCount = results.filter(r=>r.status==='created').length;
     const recoveredCount = results.filter(r=>r.status==='recovered').length;
     const errorCount = results.filter(r=>r.status==='error').length;
     const skippedCount = results.filter(r=>['skipped','reused','in_progress_elsewhere'].includes(r.status)).length;
-    await logRun(base44, errorCount ? 'warning' : 'info', 'Fleet scheduled maintenance generation run completed.', {date:today,due:due.length,created:createdCount,recovered:recoveredCount,skipped:skippedCount,errors:errorCount});
-    return Response.json({success:true,disabled:false,date:today,due:due.length,created:createdCount,results});
+    await logRun(base44, errorCount || meterGeneration?.error ? 'warning' : 'info', 'Fleet scheduled maintenance generation run completed.', {date:today,due:due.length,created:createdCount,recovered:recoveredCount,skipped:skippedCount,errors:errorCount,meter_created:meterGeneration?.created||0,meter_error:meterGeneration?.error||''});
+    return Response.json({success:true,disabled:false,date:today,due:due.length,created:createdCount,results,meter_generation:meterGeneration});
   } catch (error) {
     console.error('fleetScheduledMaintenanceGeneration error:',error);
     try { await logRun(createClientFromRequest(req),'error','Fleet scheduled maintenance generation failed.',{error:error?.message || String(error)}); } catch {}
