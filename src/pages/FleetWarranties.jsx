@@ -1,0 +1,106 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
+import FleetModuleNav from "@/components/fleet/FleetModuleNav";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
+import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { AlertTriangle, CalendarClock, ExternalLink, FileText, Gauge, Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+
+const CATEGORIES = [["vehicle","Vehicle"],["engine","Engine"],["transmission","Transmission"],["battery","Battery"],["component","Component"],["other","Other"]];
+const STATUSES = [["active","Active"],["expired","Expired"],["claimed","Claimed"],["void","Void"]];
+const pretty = value => String(value || "—").replaceAll("_"," ");
+const blank = equipmentId => ({equipment_id:equipmentId||"",name:"",category:"vehicle",provider:"",reference_number:"",start_date:"",end_date:"",start_meter:"",end_meter:"",meter_unit:"miles",status:"active",coverage_description:"",contact:"",document_url:"",notes:""});
+
+export default function FleetWarranties(){
+  const params = useMemo(()=>new URLSearchParams(window.location.search),[]);
+  const requestedEquipment=params.get("equipment")||"all";
+  const requestedStatus=params.get("status")||"all";
+  const requestedNew=params.get("new")==="1";
+  const [equipment,setEquipment]=useState([]);
+  const [rows,setRows]=useState([]);
+  const [summary,setSummary]=useState({});
+  const [user,setUser]=useState(null);
+  const [equipmentId,setEquipmentId]=useState(requestedEquipment);
+  const [status,setStatus]=useState(["all","attention","active","expired","claimed","void"].includes(requestedStatus)?requestedStatus:"all");
+  const [search,setSearch]=useState("");
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  const [dialog,setDialog]=useState(null);
+  const isAdmin=user?.role==="admin";
+
+  const load=useCallback(async()=>{
+    setLoading(true);setError("");
+    try{
+      const [equipmentRows,currentUser,result]=await Promise.all([
+        listAllFleetRows(base44.entities.FleetEquipment,"name",{label:"Fleet equipment for warranty tracking"}),
+        base44.auth.me().catch(()=>null),
+        base44.functions.invoke("fleetWarrantyAction",{action:"portfolio",equipment_id:equipmentId==="all"?"":equipmentId}),
+      ]);
+      if(result?.data?.error)throw new Error(result.data.error);
+      setEquipment(equipmentRows||[]);setUser(currentUser||null);setRows(result?.data?.rows||[]);setSummary(result?.data?.summary||{});
+    }catch(err){setError(err?.message||"Unable to load Fleet warranties.");}
+    finally{setLoading(false);}
+  },[equipmentId]);
+  useEffect(()=>{load();},[load]);
+  useEffect(()=>{if(requestedNew&&!dialog)setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(requestedEquipment!=="all"?requestedEquipment:"")});},[requestedNew]);
+
+  const activeEquipment=equipment.filter(row=>row.status!=="retired");
+  const filtered=useMemo(()=>{
+    const q=search.trim().toLowerCase();
+    return rows.filter(row=>{
+      const state=row.effective_status;
+      if(status==="attention"&&!['expired','orphaned','expiring_soon'].includes(state))return false;
+      if(status==="expired"&&!['expired','orphaned'].includes(state))return false;
+      if(!['all','attention','expired'].includes(status)&&state!==status)return false;
+      if(!q)return true;
+      const w=row.warranty||{};const eq=row.equipment||{};
+      return [w.name,w.provider,w.reference_number,w.category,w.coverage_description,w.contact,eq.name,eq.vin].some(value=>String(value||"").toLowerCase().includes(q));
+    });
+  },[rows,status,search]);
+
+  const updateQuery=value=>{const url=new URL(window.location.href);value!=="all"?url.searchParams.set("equipment",value):url.searchParams.delete("equipment");url.searchParams.delete("new");window.history.replaceState({},"",`${url.pathname}${url.search}`);};
+  const openCreate=()=>setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(equipmentId!=="all"?equipmentId:"")});
+  const openEdit=row=>setDialog({mode:"edit",row,form:{...blank(row.warranty?.equipment_id),...row.warranty,start_meter:row.warranty?.start_meter??"",end_meter:row.warranty?.end_meter??""}});
+
+  return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav/><div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
+    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><ShieldCheck className="w-6 h-6"/>Warranty Tracking</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Vehicle and component coverage, documents, date limits, and mileage/hour limits in one Fleet-only view.</p></div>{isAdmin&&<button onClick={openCreate} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>Add Warranty</button>}</div>
+    <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">CCS calculates a live coverage state without rewriting the stored warranty history. “Expiring soon” means 60 days or less remain, or the current meter has consumed at least 90% of configured meter coverage.</div>
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3"><Metric label="Total warranties" value={summary.total||0}/><Metric label="Active" value={summary.active||0}/><Metric label="Expiring soon" value={summary.expiring_soon||0} attention={(summary.expiring_soon||0)>0}/><Metric label="Expired / unresolved" value={summary.expired||0} danger={(summary.expired||0)>0}/><Metric label="Claimed" value={summary.claimed||0}/></div>
+    <div className="flex flex-col lg:flex-row gap-2"><select value={equipmentId} onChange={e=>{setEquipmentId(e.target.value);updateQuery(e.target.value);}} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"><option value="all">All Fleet equipment</option>{equipment.map(eq=><option key={eq.id} value={eq.id}>{eq.name}{eq.status==="retired"?" (retired)":""}</option>)}</select><select value={status} onChange={e=>setStatus(e.target.value)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"><option value="all">All coverage states</option><option value="attention">Needs attention</option><option value="active">Active</option><option value="expired">Expired / unresolved</option><option value="claimed">Claimed</option><option value="void">Void</option></select><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search warranty, provider, reference, equipment…" className="min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"/><button onClick={load} disabled={loading} className="min-h-11 min-w-11 rounded-lg border border-gray-300 bg-white dark:border-slate-700 dark:bg-slate-900" aria-label="Refresh warranties"><RefreshCw className={`w-4 h-4 mx-auto ${loading?"animate-spin":""}`}/></button></div>
+    {error&&<div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+    {loading?<div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div>:filtered.length?<div className="grid lg:grid-cols-2 gap-4">{filtered.map(row=><WarrantyCard key={row.warranty.id} row={row} isAdmin={isAdmin} onEdit={()=>openEdit(row)} onChanged={load}/>)}</div>:<div className="rounded-xl border border-dashed border-gray-300 bg-white py-12 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900">No warranties match this view.</div>}
+  </div><WarrantyDialog dialog={dialog} equipment={activeEquipment} onClose={()=>setDialog(null)} onSaved={async()=>{setDialog(null);await load();}}/></div>;
+}
+
+function WarrantyCard({row,isAdmin,onEdit,onChanged}){
+  const warranty=row.warranty||{};const eq=row.equipment||{};const [confirmDelete,setConfirmDelete]=useState(false);const [deleting,setDeleting]=useState(false);const [error,setError]=useState("");
+  const remove=async()=>{setDeleting(true);setError("");try{const{data}=await base44.functions.invoke("fleetWarrantyAction",{action:"delete",id:warranty.id,expected_updated_date:warranty.updated_date||""});if(data?.error)throw new Error(data.error);setConfirmDelete(false);await onChanged();}catch(err){setError(err?.message||"Unable to delete Fleet warranty.");}finally{setDeleting(false);}};
+  const tone=row.effective_status==='expired'||row.effective_status==='orphaned'?"border-red-300 dark:border-red-900":row.effective_status==='expiring_soon'?"border-amber-300 dark:border-amber-900":"border-gray-200 dark:border-slate-800";
+  return <article className={`rounded-xl border bg-white dark:bg-slate-900 shadow-sm overflow-hidden ${tone}`}><div className="p-4 space-y-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap gap-2 items-center"><h2 className="font-bold text-gray-900 dark:text-slate-100">{warranty.name}</h2><Status status={row.effective_status}/><span className="text-[10px] uppercase font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300">Stored: {pretty(warranty.status)}</span></div><div className="text-sm text-gray-500 dark:text-slate-400 mt-1">{eq.name||"Unresolved equipment"} · {pretty(warranty.category)}{warranty.provider?` · ${warranty.provider}`:""}</div></div>{isAdmin&&<div className="flex gap-2 shrink-0"><button onClick={onEdit} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700" aria-label={`Edit ${warranty.name}`}><Pencil className="w-4 h-4 mx-auto"/></button><button onClick={()=>setConfirmDelete(true)} className="min-h-10 min-w-10 rounded-lg border border-red-200 text-red-600 dark:border-red-900" aria-label={`Delete ${warranty.name}`}><Trash2 className="w-4 h-4 mx-auto"/></button></div>}</div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><Info label="End date" value={warranty.end_date||"—"}/><Info label="Days remaining" value={row.date_remaining_days==null?"—":row.date_remaining_days<0?`${Math.abs(row.date_remaining_days)} overdue`:String(row.date_remaining_days)}/><Info label="End meter" value={warranty.end_meter==null?"—":`${Number(warranty.end_meter).toLocaleString()} ${warranty.meter_unit||""}`}/><Info label="Meter remaining" value={row.meter_remaining==null?"—":`${Math.max(0,Number(row.meter_remaining)).toLocaleString()} ${row.current_meter?.unit||warranty.meter_unit||""}`}/></div>
+    {row.reasons?.length>0&&<div className="rounded-lg bg-gray-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-gray-700 dark:text-slate-300">{row.reasons.join(" · ")}</div>}
+    {warranty.coverage_description&&<div className="text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{warranty.coverage_description}</div>}
+    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">{eq.id&&<Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(eq.id)}&tab=warranties`} className="min-h-10 px-3 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold inline-flex items-center gap-1">Open Equipment <ExternalLink className="w-3.5 h-3.5"/></Link>}{warranty.document_url&&<a href={warranty.document_url} target="_blank" rel="noreferrer" className="min-h-10 px-3 rounded-lg border border-indigo-200 text-indigo-700 dark:border-indigo-900 dark:text-indigo-300 text-xs font-semibold inline-flex items-center gap-1"><FileText className="w-3.5 h-3.5"/>Warranty Document</a>}{warranty.reference_number&&<span className="min-h-10 px-3 rounded-lg bg-gray-50 dark:bg-slate-800 text-xs inline-flex items-center">Ref {warranty.reference_number}</span>}</div>{error&&<div className="text-xs text-red-600">{error}</div>}</div><FleetConfirmDialog open={confirmDelete} title={`Delete ${warranty.name}?`} description="This removes the Fleet warranty record. Equipment, work orders, maintenance history, and uploaded warranty file are not modified." confirmLabel="Delete Warranty" tone="warning" busy={deleting} onCancel={()=>!deleting&&setConfirmDelete(false)} onConfirm={remove}/></article>;
+}
+
+function WarrantyDialog({dialog,equipment,onClose,onSaved}){
+  const [form,setForm]=useState(blank(""));const [file,setFile]=useState(null);const [busy,setBusy]=useState(false);const [error,setError]=useState("");
+  useEffect(()=>{if(dialog){setForm(dialog.form||blank(""));setFile(null);setError("");}},[dialog]);
+  if(!dialog)return null;const set=(key,value)=>setForm(v=>({...v,[key]:value}));
+  const submit=async e=>{e.preventDefault();setBusy(true);setError("");try{let documentUrl=form.document_url||"";if(file){const upload=await base44.integrations.Core.UploadFile({file});if(!upload?.file_url)throw new Error("Warranty document upload failed.");documentUrl=upload.file_url;}const warranty={...form,document_url:documentUrl,start_meter:form.start_meter===""?undefined:Number(form.start_meter),end_meter:form.end_meter===""?undefined:Number(form.end_meter)};const payload=dialog.mode==='edit'?{action:'update',id:dialog.row.warranty.id,expected_updated_date:dialog.row.warranty.updated_date||'',warranty}:{action:'create',creation_key:dialog.creationKey,warranty};const{data}=await base44.functions.invoke("fleetWarrantyAction",payload);if(data?.error)throw new Error(data.error);await onSaved();}catch(err){setError(err?.message||"Unable to save Fleet warranty.");}finally{setBusy(false);}};
+  return <div className="fixed inset-0 z-[180] bg-black/60 flex items-center justify-center p-3" onMouseDown={e=>e.target===e.currentTarget&&!busy&&onClose()}><div role="dialog" aria-modal="true" className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"><div className="sticky top-0 z-10 px-4 py-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start justify-between gap-3"><div><h2 className="text-lg font-bold">{dialog.mode==='edit'?"Edit Warranty":"Add Warranty"}</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Track calendar and mileage/hour limits without changing Bouncie-owned vehicle data.</p></div><button onClick={onClose} disabled={busy} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"><X className="w-5 h-5 mx-auto"/></button></div><form onSubmit={submit} className="p-4 space-y-4">{error&&<div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300">{error}</div>}
+    <div className="grid sm:grid-cols-2 gap-3"><Field label="Equipment *"><select required value={form.equipment_id} onChange={e=>set("equipment_id",e.target.value)} className="field"><option value="">Select equipment…</option>{equipment.map(eq=><option key={eq.id} value={eq.id}>{eq.name}</option>)}</select></Field><Field label="Warranty name *"><input required value={form.name} onChange={e=>set("name",e.target.value)} className="field" placeholder="Powertrain warranty"/></Field><Field label="Category"><select value={form.category} onChange={e=>set("category",e.target.value)} className="field">{CATEGORIES.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field><Field label="Stored status"><select value={form.status} onChange={e=>set("status",e.target.value)} className="field">{STATUSES.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></Field><Field label="Provider"><input value={form.provider} onChange={e=>set("provider",e.target.value)} className="field"/></Field><Field label="Reference / contract number"><input value={form.reference_number} onChange={e=>set("reference_number",e.target.value)} className="field"/></Field><Field label="Start date"><input type="date" value={form.start_date} onChange={e=>set("start_date",e.target.value)} className="field"/></Field><Field label="End date"><input type="date" value={form.end_date} onChange={e=>set("end_date",e.target.value)} className="field"/></Field><Field label="Start meter"><input type="number" min="0" step="1" value={form.start_meter} onChange={e=>set("start_meter",e.target.value)} className="field"/></Field><Field label="End meter"><input type="number" min="0" step="1" value={form.end_meter} onChange={e=>set("end_meter",e.target.value)} className="field"/></Field><Field label="Meter unit"><select value={form.meter_unit} onChange={e=>set("meter_unit",e.target.value)} className="field"><option value="miles">Miles</option><option value="hours">Hours</option></select></Field><Field label="Provider contact"><input value={form.contact} onChange={e=>set("contact",e.target.value)} className="field"/></Field></div>
+    <Field label="Coverage description"><textarea rows={3} value={form.coverage_description} onChange={e=>set("coverage_description",e.target.value)} className="field" placeholder="What is covered, exclusions, deductible, claim requirements…"/></Field>
+    <Field label="Warranty document"><label className="min-h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-slate-300"><Upload className="w-4 h-4"/>{file?.name||(form.document_url?"Replace current document":"Upload warranty document or photo")}<input type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={e=>{setFile(e.target.files?.[0]||null);e.target.value="";}}/></label></Field>
+    <Field label="Notes"><textarea rows={3} value={form.notes} onChange={e=>set("notes",e.target.value)} className="field"/></Field>
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">The stored status is your administrative record. CCS separately calculates whether active coverage is currently active, expiring soon, or past its configured date/meter limit.</div>
+    <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="min-h-11 px-4 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button><button type="submit" disabled={busy} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center gap-2">{busy&&<Loader2 className="w-4 h-4 animate-spin"/>}Save Warranty</button></div><style>{fieldCss}</style>
+  </form></div></div>;
+}
+
+function Status({status}){const style=status==='expired'||status==='orphaned'?"bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300":status==='expiring_soon'?"bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300":status==='active'?"bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300":"bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300";return <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${style}`}>{pretty(status)}</span>}
+function Metric({label,value,attention=false,danger=false}){return <div className={`rounded-xl border p-4 ${danger?"border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20":attention?"border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20":"border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}><div className="text-xs text-gray-500 dark:text-slate-400">{label}</div><div className={`text-2xl font-bold mt-1 ${danger?"text-red-700 dark:text-red-300":attention?"text-amber-700 dark:text-amber-300":"text-gray-900 dark:text-slate-100"}`}>{value}</div></div>}
+function Info({label,value}){return <div><div className="text-[10px] uppercase font-semibold text-gray-400">{label}</div><div className="text-sm font-semibold text-gray-900 dark:text-slate-100 mt-0.5">{value}</div></div>}
+function Field({label,children}){return <label className="block"><span className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1.5">{label}</span>{children}</label>}
+const fieldCss=`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.625rem .75rem;background:transparent;color:inherit}.dark .field{border-color:rgb(51 65 85)}`;
