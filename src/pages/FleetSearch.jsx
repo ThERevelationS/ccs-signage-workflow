@@ -5,11 +5,17 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import {
   CalendarClock,
+  CalendarDays,
+  ClipboardCheck,
   ClipboardList,
+  DollarSign,
   Droplets,
+  Fuel,
   Loader2,
   Package,
+  RefreshCw,
   Search,
+  ShieldCheck,
   ShoppingCart,
   Truck,
   X,
@@ -19,9 +25,15 @@ const GROUPS = [
   { key: "equipment", label: "Equipment", icon: Truck },
   { key: "work_orders", label: "Work Orders", icon: ClipboardList },
   { key: "maintenance", label: "Maintenance", icon: CalendarClock },
+  { key: "inspections", label: "Inspections", icon: ClipboardCheck },
   { key: "parts", label: "Parts", icon: Package },
   { key: "fluids", label: "Fluids", icon: Droplets },
+  { key: "fuel", label: "Fuel", icon: Fuel },
+  { key: "warranties", label: "Warranties", icon: ShieldCheck },
+  { key: "assignments", label: "Assignments", icon: CalendarDays },
   { key: "requests", label: "Requests", icon: ShoppingCart },
+  { key: "lifecycle", label: "Lifecycle", icon: RefreshCw },
+  { key: "repair_estimates", label: "Repair Estimates", icon: DollarSign },
 ];
 
 function resultUrl(result) {
@@ -33,6 +45,13 @@ function resultUrl(result) {
   if (result.kind === "part") return `${createPageUrl("FleetParts")}?search=${encodeURIComponent(result.title || "")}`;
   if (result.kind === "fluid") return `${createPageUrl("FleetFluids")}?search=${encodeURIComponent(result.title || "")}`;
   if (result.kind === "request") return `${createPageUrl("FleetRequests")}?status=all&search=${encodeURIComponent(result.title || "")}`;
+  if (result.kind === "inspection") return result.equipment_id ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(result.equipment_id)}&tab=inspections` : createPageUrl("FleetInspections");
+  if (result.kind === "inspection_template") return createPageUrl("FleetInspections");
+  if (result.kind === "warranty") return `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(result.equipment_id || "all")}`;
+  if (result.kind === "assignment") return `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(result.equipment_id || "all")}`;
+  if (result.kind === "fuel") return result.equipment_id ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(result.equipment_id)}&tab=fuel` : createPageUrl("FleetFuel");
+  if (result.kind === "lifecycle") return result.equipment_id ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(result.equipment_id)}&tab=lifecycle` : createPageUrl("FleetAnalytics");
+  if (result.kind === "repair_estimate") return `${createPageUrl("FleetWorkOrders")}?status=all&workOrder=${encodeURIComponent(result.work_order_id || "")}${result.equipment_id ? `&equipment=${encodeURIComponent(result.equipment_id)}` : ""}`;
   return createPageUrl("FleetOverview");
 }
 
@@ -92,7 +111,7 @@ export default function FleetSearch() {
     <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Search CCS Fleet</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Search equipment, VINs, plates, Fleet work orders, maintenance schedules, parts, fluids, and requests without loading the complete Fleet database into your browser.</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Search across CCS Fleet equipment, work orders, maintenance, inspections, inventory, fuel, warranties, assignments, requests, and admin-only planning records without loading the complete Fleet database into your browser.</p>
       </div>
 
       <div className="relative">
@@ -101,7 +120,7 @@ export default function FleetSearch() {
           ref={inputRef}
           value={query}
           onChange={event => setQuery(event.target.value)}
-          placeholder="Search Fleet — VIN, plate, WO number, maintenance, part, fluid, request..."
+          placeholder="Search Fleet — VIN, WO, maintenance, inspection, part, warranty, assignment..."
           className="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-12 pr-12 text-base shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-indigo-950"
           aria-label="Search CCS Fleet"
         />
@@ -110,7 +129,7 @@ export default function FleetSearch() {
 
       {!hasQuery && <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <div className="font-semibold text-gray-900 dark:text-slate-100">Type at least 2 characters.</div>
-        <p className="mt-1">Examples: a truck number, VIN fragment, license plate, <span className="font-mono">WO-2026</span>, “oil change,” a part number, fluid brand, or requested item.</p>
+        <p className="mt-1">Examples: a truck number, VIN fragment, license plate, <span className="font-mono">WO-2026</span>, “oil change,” inspection type, part number, warranty provider, mechanic, job site, fuel station, or requested item.</p>
         <p className="mt-3 text-xs text-gray-400">Tip: from any CCS Fleet page, press <span className="font-semibold">Ctrl+K</span> (or <span className="font-semibold">⌘K</span> on Mac) to open Fleet Search.</p>
       </div>}
 
@@ -121,7 +140,7 @@ export default function FleetSearch() {
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
       </div>}
 
-      {hasQuery && !loading && !error && total === 0 && <div className="rounded-xl border border-gray-200 bg-white py-12 px-5 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900"><Search className="w-8 h-8 mx-auto text-gray-300" /><div className="mt-3 font-semibold text-gray-800 dark:text-slate-200">No Fleet results found</div><p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Try a VIN fragment, plate, work-order number, asset name, maintenance title, part number, fluid name, or request item.</p></div>}
+      {hasQuery && !loading && !error && total === 0 && <div className="rounded-xl border border-gray-200 bg-white py-12 px-5 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900"><Search className="w-8 h-8 mx-auto text-gray-300" /><div className="mt-3 font-semibold text-gray-800 dark:text-slate-200">No Fleet results found</div><p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Try a VIN fragment, plate, work-order number, asset name, maintenance/inspection title, part/fluid name, warranty provider, assignment/job site, fuel station, or request item.</p></div>}
 
       <div className="space-y-5">
         {GROUPS.map(group => {
