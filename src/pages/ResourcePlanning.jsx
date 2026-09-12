@@ -36,7 +36,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [users, setUsers] = useState([]);
   const [userCapacities, setUserCapacities] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -204,13 +204,13 @@ export default function ResourcePlanning() {
     setCapacityError("");
     try {
       const saved = await saveUserCapacityIfUnchanged({
-        entity: UserCapacity,
         loadedRecord: capacityRecord,
         userEmail: editingCapacity.email,
         nextFields: {
           user_name: editingCapacity.full_name || editingCapacity.email,
           ...capacityForm,
         },
+        sessionToken,
         label: `Capacity for ${editingCapacity.full_name || editingCapacity.email}`,
       });
       setCapacityRecord(saved);
