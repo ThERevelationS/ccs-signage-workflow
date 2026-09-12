@@ -281,25 +281,96 @@ export default function ClockOutDialog({
             </div>
           </div>
 
-          {/* Lunch Break */}
-          <div className={`clay-card p-4 ${!lunchEntered ? 'border-2 border-red-400' : ''}`}>
-            <div className="flex items-center gap-2 mb-3">
-              <Coffee className="w-4 h-4 text-amber-600" />
-              <Label className={`font-semibold ${!lunchEntered ? 'text-red-600' : ''}`}>
-                Lunch Break (minutes) <span className="text-red-500">*</span>
-              </Label>
+          {/* Break / Lunch Tracking */}
+          <div className={`clay-card p-4 ${onBreak ? 'border-2 border-amber-400 bg-amber-50' : !lunchEntered ? 'border-2 border-red-400' : ''}`}>
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Coffee className="w-4 h-4 text-amber-600" />
+                <Label className="font-semibold">Break & Lunch</Label>
+              </div>
+              {onBreak && <span className="rounded-full bg-amber-200 px-3 py-1 text-xs font-semibold text-amber-900">On Break</span>}
             </div>
-            <Input
-              type="number"
-              min="0"
-              max="240"
-              value={lunchMinutes}
-              onChange={(e) => setLunchMinutes(e.target.value)}
-              placeholder="Enter minutes..."
-              className={`w-32 ${!lunchEntered ? 'border-red-400 text-red-600 placeholder:text-red-400' : ''}`}
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              Workable hours after lunch: <span className="font-bold text-blue-600">{lunchEntered ? workableHours.toFixed(2) : '--'} hrs</span>
+
+            {onBreak ? (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-amber-200 bg-white/80 p-3">
+                  <p className="font-medium text-amber-900">
+                    {activeBreak?.is_paid ? "Paid Break" : activeBreak?.break_type === "lunch" ? "Unpaid Lunch" : "Unpaid Break"}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+                    {activeBreak?.started_at && <span>Started {formatTime(new Date(activeBreak.started_at))}</span>}
+                    <span>{formatDuration(activeBreakMinutes)} elapsed</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleEndTrackedBreak}
+                  disabled={breakActionBusy || isSubmitting}
+                  className="w-full bg-amber-600 hover:bg-amber-700"
+                >
+                  {breakActionBusy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  End Break
+                </Button>
+                <p className="text-xs text-amber-800">Clock Out is disabled until this break is ended and confirmed by the server.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleStartTrackedBreak("lunch", false)}
+                  disabled={breakActionBusy || isSubmitting}
+                  className="border-amber-300 hover:bg-amber-50"
+                >
+                  {breakActionBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Coffee className="w-4 h-4 mr-2" />}
+                  Start Unpaid Lunch
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleStartTrackedBreak("break", true)}
+                  disabled={breakActionBusy || isSubmitting}
+                  className="border-blue-300 hover:bg-blue-50"
+                >
+                  Start Paid Break
+                </Button>
+              </div>
+            )}
+
+            {trackedBreakMinutes > 0 && (
+              <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg bg-gray-50 p-3 text-center">
+                <div><p className="text-xs text-gray-500">Tracked</p><p className="font-semibold">{trackedBreakMinutes} min</p></div>
+                <div><p className="text-xs text-gray-500">Paid</p><p className="font-semibold text-blue-700">{trackedPaidMinutes} min</p></div>
+                <div><p className="text-xs text-gray-500">Unpaid</p><p className="font-semibold text-amber-700">{trackedUnpaidMinutes} min</p></div>
+              </div>
+            )}
+
+            {hasTrackedUnpaid ? (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="text-sm font-medium text-green-900">Unpaid time is server-tracked: {trackedUnpaidMinutes} minutes</p>
+                <p className="mt-1 text-xs text-green-800">This authoritative value replaces the manual lunch entry for this shift.</p>
+              </div>
+            ) : (
+              <div>
+                <Label className={`font-semibold ${!lunchEntered ? 'text-red-600' : ''}`}>
+                  Manual Unpaid Lunch (minutes) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="240"
+                  value={lunchMinutes}
+                  onChange={(e) => setLunchMinutes(e.target.value)}
+                  placeholder="Enter 0 if none"
+                  disabled={breakActionBusy || onBreak}
+                  className={`mt-2 w-36 ${!lunchEntered ? 'border-red-400 text-red-600 placeholder:text-red-400' : ''}`}
+                />
+                <p className="text-xs text-gray-500 mt-2">Use this fallback only when unpaid lunch was not tracked with Start Unpaid Lunch.</p>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 mt-3">
+              Workable hours after unpaid time: <span className="font-bold text-blue-600">{lunchEntered ? workableHours.toFixed(2) : '--'} hrs</span>. Paid breaks do not reduce worked hours.
             </p>
           </div>
 
