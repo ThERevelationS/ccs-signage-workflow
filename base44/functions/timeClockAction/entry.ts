@@ -813,6 +813,177 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved });
     }
 
+    if (action === 'work_pause_start') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in before pausing work.' }, { status: 409 });
+      }
+      if (target.can_work_pause !== true) {
+        return Response.json({ success: false, error: 'Work Pause is not enabled for this employee.' }, { status: 403 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only pause their own work time.' }, { status: 403 });
+      }
+      if (breakStatusOf(state) !== 'working' || state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break or lunch before pausing work.' }, { status: 409 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+
+      const pauseStatus = workPauseStatusOf(state);
+      if (pauseStatus === 'paused') {
+        const activePause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        if (activePause?.id && activePause.status === 'active' && activePause.time_entry_id === entry.id && asEmail(activePause.user_email) === target.email) {
+          const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'already_paused', work_pause_status: 'paused', work_pause: activePause, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: true });
+        }
+        return Response.json({ success: false, error: 'Work Pause state is active but its record is invalid. Admin review is required.' }, { status: 409 });
+      }
+      const resumingStart = pauseStatus === 'pausing' && String(state.last_work_pause_request_id || '') === requestId;
+      if (pauseStatus !== 'working' && !resumingStart) {
+        return Response.json({ success: false, error: 'Another Work Pause action is still in progress. Retry shortly.' }, { status: 409 });
+      }
+
+      const activePauses = await workPauseEntity.filter({ user_email: target.email, time_entry_id: entry.id, status: 'active' });
+      if (!Array.isArray(activePauses)) throw new Error('Active Work Pause lookup did not return a record list.');
+      if (activePauses.length > 1) return Response.json({ success: false, error: 'Multiple active Work Pause records were found. Admin review is required.' }, { status: 409 });
+      if (activePauses.length === 1 && String(activePauses[0].start_request_id || '') !== requestId) {
+        return Response.json({ success: false, error: 'An active Work Pause already exists. Reload Time Clock status before retrying.' }, { status: 409 });
+      }
+
+      const officialStart = resumingStart && state.work_pause_pending_started_at
+        ? state.work_pause_pending_started_at
+        : new Date().toISOString();
+      const claimed = resumingStart
+        ? state
+        : await setWorkPauseState(stateEntity, state, 'working', null, {
+            work_pause_status: 'pausing', active_work_pause_id: null,
+            last_work_pause_request_id: requestId, work_pause_pending_started_at: officialStart,
+          });
+      if (!claimed) return Response.json({ success: false, error: 'Work Pause start lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      let pauseRow = await uniqueRow(workPauseEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Work Pause start request');
+      if (!pauseRow) {
+        pauseRow = await workPauseEntity.create({
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          time_entry_id: entry.id,
+          started_at: officialStart,
+          status: 'active',
+          start_request_id: requestId,
+          source: 'server',
+        });
+      }
+      if (!pauseRow?.id) throw new Error('Work Pause record could not be created.');
+      if (pauseRow.status !== 'active') return Response.json({ success: false, error: 'This Work Pause request is not in an active state.' }, { status: 409 });
+
+      const currentClaim = await freshState(stateEntity, claimed.id);
+      const finalized = await setWorkPauseState(stateEntity, currentClaim, 'pausing', requestId, {
+        work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
+      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Work Pause was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+
+      const auditSaved = await audit(auditEntity, {
+        action: 'work_pause_start', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: pauseRow.started_at,
+        request_id: requestId, time_entry_id: entry.id, details: { work_pause_id: pauseRow.id },
+      });
+      const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'paused', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: true });
+    }
+
+    if (action === 'work_pause_resume') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to resume work.' }, { status: 409 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only resume their own work time.' }, { status: 403 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+
+      const pauseStatus = workPauseStatusOf(state);
+      if (pauseStatus === 'working') {
+        const prior = await uniqueRow(workPauseEntity, { user_email: target.email, time_entry_id: entry.id, resume_request_id: requestId }, 'Work Pause resume request');
+        if (prior?.id && prior.status === 'completed') {
+          const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: prior, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: target.can_work_pause === true });
+        }
+        return Response.json({ success: false, error: 'Employee is not currently Work Paused.' }, { status: 409 });
+      }
+      const resumingEnd = pauseStatus === 'resuming' && String(state.last_work_pause_request_id || '') === requestId;
+      if (pauseStatus !== 'paused' && !resumingEnd) {
+        return Response.json({ success: false, error: 'Another Work Pause action is still in progress. Retry shortly.' }, { status: 409 });
+      }
+      if (!state.active_work_pause_id) return Response.json({ success: false, error: 'The active Work Pause record is missing. Admin review is required.' }, { status: 409 });
+
+      let pauseRow = await workPauseEntity.get(state.active_work_pause_id).catch(() => null);
+      if (!pauseRow?.id || asEmail(pauseRow.user_email) !== target.email || pauseRow.time_entry_id !== entry.id) {
+        return Response.json({ success: false, error: 'The active Work Pause does not match this employee shift. Admin review is required.' }, { status: 409 });
+      }
+      if (pauseRow.status === 'completed' && String(pauseRow.resume_request_id || '') === requestId) {
+        const currentState = await freshState(stateEntity, state.id);
+        if (workPauseStatusOf(currentState) === 'resuming') {
+          const recovered = await setWorkPauseState(stateEntity, currentState, 'resuming', requestId, {
+            work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
+          });
+          if (!recovered) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work was saved but state finalization is incomplete. Retry this same action.' }, { status: 409 });
+        }
+        const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: target.can_work_pause === true });
+      }
+      if (pauseRow.status !== 'active') return Response.json({ success: false, error: 'The active Work Pause is not resumable.' }, { status: 409 });
+
+      const officialResume = resumingEnd && state.work_pause_pending_started_at
+        ? state.work_pause_pending_started_at
+        : new Date().toISOString();
+      const startedMs = new Date(pauseRow.started_at).getTime();
+      const resumedMs = new Date(officialResume).getTime();
+      if (!Number.isFinite(startedMs) || resumedMs < startedMs) return Response.json({ success: false, error: 'The stored Work Pause start timestamp is invalid.' }, { status: 409 });
+      const durationMinutes = Math.max(0, Math.floor((resumedMs - startedMs) / 60000));
+      const claimed = resumingEnd
+        ? state
+        : await setWorkPauseState(stateEntity, state, 'paused', null, {
+            work_pause_status: 'resuming', last_work_pause_request_id: requestId,
+            work_pause_pending_started_at: officialResume,
+          });
+      if (!claimed) return Response.json({ success: false, error: 'Resume Work lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      const updateResult = await workPauseEntity.updateMany(
+        { id: pauseRow.id, updated_date: pauseRow.updated_date, user_email: target.email, time_entry_id: entry.id, status: 'active' },
+        { $set: { resumed_at: officialResume, duration_minutes: durationMinutes, status: 'completed', resume_request_id: requestId } },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        const freshPause = await workPauseEntity.get(pauseRow.id).catch(() => null);
+        if (!(freshPause?.status === 'completed' && String(freshPause.resume_request_id || '') === requestId)) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Resume Work could not safely update the pause record. Retry the same request after status reload.' }, { status: 409 });
+        }
+        pauseRow = freshPause;
+      } else {
+        pauseRow = await workPauseEntity.get(pauseRow.id);
+      }
+
+      const currentClaim = await freshState(stateEntity, claimed.id);
+      const finalized = await setWorkPauseState(stateEntity, currentClaim, 'resuming', requestId, {
+        work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
+      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+
+      const auditSaved = await audit(auditEntity, {
+        action: 'work_pause_resume', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: pauseRow.resumed_at,
+        request_id: requestId, time_entry_id: entry.id,
+        details: { work_pause_id: pauseRow.id, duration_minutes: pauseRow.duration_minutes },
+      });
+      const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: target.can_work_pause === true });
+    }
+
     if (action === 'list_correction_requests') {
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view correction requests.' }, { status: 403 });
       const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
