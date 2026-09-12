@@ -46,6 +46,14 @@ const emptyCandidate = () => ({
   enable_low_stock_alerts: true,
 });
 
+/** @type {Array<{key:string, label:string, icon:any}>} */
+const LOOKUP_MODES = [
+  { key: "part_number", label: "Part #", icon: Search },
+  { key: "photo", label: "Photo", icon: Camera },
+  { key: "barcode", label: "Barcode", icon: Barcode },
+  { key: "combined", label: "Combine", icon: Sparkles },
+];
+
 const confidenceStyle = {
   high: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
   medium: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
@@ -108,7 +116,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setSearchMode(current => current === "part_number" && !query.trim() ? "photo" : "combined");
     try {
       if (typeof window !== "undefined" && "BarcodeDetector" in window) {
-        const Detector = window.BarcodeDetector;
+        const Detector = /** @type {any} */ (window.BarcodeDetector);
         const detector = new Detector({ formats: ["code_128","code_39","ean_13","ean_8","upc_a","upc_e","qr_code","data_matrix"] });
         const bitmap = await createImageBitmap(selected);
         const found = await detector.detect(bitmap);
@@ -163,12 +171,12 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
         required: ["part_name","part_number","category","manufacturer","description","confidence","reasoning","verification_notes","suggested_equipment_ids"],
       };
       const prompt = `You are the review-only CCS Fleet Part Identifier. Identify the physical fleet-maintenance part from the supplied number, barcode, text and/or photo. Internet research is enabled.\n\nUser text/part number: ${query.trim() || "(none)"}\nBarcode detected/entered: ${barcodeValue.trim() || "(none)"}\n\nCurrent active Fleet equipment (ONLY suggest ids from this exact list, and only when fitment is supported): ${JSON.stringify(equipmentContext)}\n\nExisting Fleet parts for duplicate awareness: ${JSON.stringify(inventoryContext)}\n\nRules:\n- Never invent a part number, OEM fitment, specification, vendor, price, or equipment compatibility.\n- Read visible labels/markings from the photo when possible. Put extracted label text in detected_text.\n- Use internet research to corroborate exact part numbers/manufacturers/cross-references.\n- source_urls should contain useful corroborating pages when available, not generic search pages.\n- suggested_equipment_ids are REVIEW-ONLY. Return [] unless the evidence strongly supports fitment to equipment from the supplied list.\n- If multiple products are plausible, choose the best candidate but use low/medium confidence and explain alternatives in verification_notes.\n- Keep part_name concise and inventory-friendly. category should be practical (filters, belts, electrical, brakes, engine, hydraulic, hardware, lighting, body, drivetrain, ignition, fuel, cooling, other, etc.).\n- This result does NOT create inventory.`;
-      const ai = await base44.integrations.Core.InvokeLLM({
+      const ai = /** @type {any} */ (await base44.integrations.Core.InvokeLLM({
         prompt,
         ...(photoUrl ? { file_urls: [photoUrl] } : {}),
         add_context_from_internet: true,
         response_json_schema: responseSchema,
-      });
+      }));
       if (!ai || typeof ai !== "object") throw new Error("AI returned no usable part candidate.");
       const confirmedEquipment = initialEquipmentId ? [initialEquipmentId] : [];
       const lookupPayload = {
