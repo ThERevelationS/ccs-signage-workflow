@@ -62,6 +62,19 @@ async function sha256Hex(value: string) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function canonicalize(value: any): any {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (!value || typeof value !== 'object') return value;
+  return Object.keys(value).sort().reduce((out: any, key) => {
+    out[key] = canonicalize(value[key]);
+    return out;
+  }, {});
+}
+
+async function payloadHash(value: any) {
+  return sha256Hex(JSON.stringify(canonicalize(value)));
+}
+
 function constantTimeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let diff = 0;
