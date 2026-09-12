@@ -1,4 +1,5 @@
 {
+  "name": "_Noop",
   "type": "object",
   "properties": {
     "x": {
@@ -6,7 +7,6 @@
     }
   },
   "required": [],
-  "name": "_Noop",
   "rls": {
     "create": {
       "user_condition": {
