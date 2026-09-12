@@ -553,8 +553,14 @@ export default function PendingImportsPanel({ onCountChange }) {
       throw new Error(`A Work Order with document number ${item.doc_number} now exists. Refresh Pending Imports and merge into the existing project instead. No new project was created.`);
     }
 
-    // formData comes from WorkOrderForm save
-    const wo = { ...formData };
+    // formData comes from WorkOrderForm save. Approval is a verified sales activity,
+    // so new opportunities receive an explicit activity/stage timestamp here.
+    const activityStamp = new Date().toISOString();
+    const wo = {
+      ...formData,
+      sales_last_activity_at: activityStamp,
+      sales_stage_changed_at: activityStamp,
+    };
     Object.keys(wo).forEach(k => { if (wo[k] === null || wo[k] === undefined || wo[k] === '') delete wo[k]; });
 
     let created;
@@ -632,6 +638,12 @@ export default function PendingImportsPanel({ onCountChange }) {
     if (ed.billing_address && !target.billing_address) updateData.billing_address = ed.billing_address;
     if (ed.install_location && !target.install_location) updateData.install_location = ed.install_location;
     if (item.doc_type === 'invoice') updateData.sales_status = 'won';
+
+    const activityStamp = new Date().toISOString();
+    updateData.sales_last_activity_at = activityStamp;
+    if (updateData.sales_status && updateData.sales_status !== target.sales_status) {
+      updateData.sales_stage_changed_at = activityStamp;
+    }
 
     const expectedFields = Object.keys(updateData).reduce((out, field) => {
       out[field] = target[field];
