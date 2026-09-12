@@ -42,7 +42,8 @@ import {
   Key,
   Send,
   Camera,
-  Scan
+  Scan,
+  Clock
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import UserQRCode from "@/components/timeclock/UserQRCode";
