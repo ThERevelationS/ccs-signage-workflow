@@ -7,6 +7,7 @@ import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   AlertTriangle,
   BarChart3,
+  CalendarClock,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
