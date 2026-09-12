@@ -67,10 +67,10 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onMouseDown={e => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-dialog-title" className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div><h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">{title}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Fleet inventory only. This never writes to CCS Master Inventory or Sign Maintenance inventory.</p></div>
-          <button onClick={onClose} disabled={saving} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50"><X className="w-5 h-5" /></button>
+          <div><h2 id="fleet-inventory-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{title}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Fleet inventory only. This never writes to CCS Master Inventory or Sign Maintenance inventory.</p></div>
+          <button type="button" onClick={onClose} disabled={saving} aria-label="Close Fleet inventory dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-5">
           {itemType === "part" ? <div className="grid md:grid-cols-2 gap-4">
