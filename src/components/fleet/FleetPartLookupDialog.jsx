@@ -60,7 +60,7 @@ const confidenceStyle = {
   low: "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900",
 };
 
-export default function FleetPartLookupDialog({ open, equipment = [], parts = [], isAdmin = false, initialEquipmentId = "", organizeMode = false, onClose, onChanged }) {
+export default function FleetPartLookupDialog({ open, equipment = [], parts = [], isAdmin = false, initialEquipmentId = "", organizeMode = false, resumeIdentification = null, onClose, onChanged }) {
   const [step, setStep] = useState("identify");
   const [sessionKey, setSessionKey] = useState("");
   const [identification, setIdentification] = useState(null);
@@ -79,6 +79,58 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
 
   useEffect(() => {
     if (!open) return;
+    if (resumeIdentification) {
+      const photos = Array.isArray(resumeIdentification.uploaded_photo_urls) ? resumeIdentification.uploaded_photo_urls : [];
+      const confidence = resumeIdentification.confidence || "low";
+      setStep("verify");
+      setSessionKey(resumeIdentification.creation_key || `partlookup-${crypto.randomUUID()}`);
+      setIdentification(resumeIdentification);
+      setSearchMode(resumeIdentification.search_mode || "combined");
+      setQuery(resumeIdentification.query_text || "");
+      setBarcodeValue(resumeIdentification.candidate_barcode_value || "");
+      setFile(null);
+      setPreviewUrl(photos[0] || "");
+      setUploadedUrl(photos[0] || "");
+      setCandidate({
+        ...emptyCandidate(),
+        part_name: resumeIdentification.candidate_part_name || "",
+        part_number: resumeIdentification.candidate_part_number || "",
+        alternate_part_numbers: resumeIdentification.candidate_alternate_part_numbers || [],
+        barcode_value: resumeIdentification.candidate_barcode_value || "",
+        category: resumeIdentification.candidate_category || "other",
+        subcategory: resumeIdentification.candidate_subcategory || "",
+        manufacturer: resumeIdentification.candidate_manufacturer || "",
+        description: resumeIdentification.candidate_description || "",
+        specification: resumeIdentification.candidate_specification || "",
+        preferred_vendor: resumeIdentification.candidate_vendor || "",
+        vendor_sku: resumeIdentification.candidate_vendor_sku || "",
+        vendor_url: resumeIdentification.candidate_vendor_url || "",
+        source_urls: resumeIdentification.candidate_source_urls || [],
+        identification_confidence: confidence,
+        identification_notes: [resumeIdentification.reasoning, resumeIdentification.verification_notes].filter(Boolean).join("\n\n"),
+        compatible_equipment_ids: resumeIdentification.confirmed_equipment_ids?.length ? resumeIdentification.confirmed_equipment_ids : (initialEquipmentId ? [initialEquipmentId] : []),
+        compatibility_notes: resumeIdentification.compatibility_notes || "",
+        quantity_on_hand: resumeIdentification.quantity_found ?? 1,
+        storage_zone: resumeIdentification.storage_zone || "",
+        storage_cabinet: resumeIdentification.storage_cabinet || "",
+        storage_shelf: resumeIdentification.storage_shelf || "",
+        storage_bin: resumeIdentification.storage_bin || "",
+        primary_photo_url: photos[0] || "",
+        photo_urls: photos,
+      });
+      setAiResult({
+        confidence,
+        reasoning: resumeIdentification.reasoning || "",
+        verification_notes: resumeIdentification.verification_notes || "",
+        detected_text: resumeIdentification.detected_text || "",
+        suggested_equipment_ids: resumeIdentification.suggested_equipment_ids || [],
+      });
+      setDuplicateIds(resumeIdentification.duplicate_part_ids || []);
+      setBusy(false);
+      setError("");
+      setSavedMessage("Resumed from the Parts Identification Review Inbox.");
+      return;
+    }
     const key = `partlookup-${crypto.randomUUID()}`;
     setStep("identify");
     setSessionKey(key);
@@ -95,7 +147,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
     setBusy(false);
     setError("");
     setSavedMessage("");
-  }, [open, initialEquipmentId, organizeMode]);
+  }, [open, initialEquipmentId, organizeMode, resumeIdentification]);
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
