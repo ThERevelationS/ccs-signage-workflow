@@ -1122,7 +1122,7 @@ export default function ProductChecklistDialog({
                   {/* Inline add checklist item for this product */}
                   {newItemInput.show && newItemInput.parentId === null && newItemInput.type === 'checklist' && newItemInput.productName === productName && (
                     <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Input
                           value={newItemText}
                           onChange={(e) => setNewItemText(e.target.value)}
@@ -1295,7 +1295,7 @@ export default function ProductChecklistDialog({
                               {/* Tasks under main item */}
                               {displayItem.tasks?.map(task => (
                               <div key={task.id} className="bg-orange-50 p-1 rounded border-l-2 border-orange-300 group">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex flex-wrap items-center gap-1.5">
                                   <Checkbox 
                                     checked={!!task.approved_by}
                                     onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
@@ -1350,7 +1350,20 @@ export default function ProductChecklistDialog({
                                       className="h-2.5 w-2.5"
                                     />
                                     <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
-                                    <span className="flex-1">{subtask.text}</span>
+                                    {editingItemId === subtask.id ? (
+                                      <div className="flex-1 flex gap-1 min-w-0">
+                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex-1 flex items-center gap-1 min-w-0">
+                                        <span className="flex-1 min-w-0">{subtask.text}</span>
+                                        {isRegistered && (
+                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="p-1 rounded hover:bg-yellow-100 text-yellow-700 shrink-0" title="Edit subtask"><Pencil className="w-3 h-3" /></button>
+                                        )}
+                                      </div>
+                                    )}
                                     {isRegistered && (
                                       <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/subtask:opacity-100">
                                         <Trash2 className="w-2 h-2" />
@@ -1401,7 +1414,7 @@ export default function ProductChecklistDialog({
                               {/* Inline add detail input */}
                               {newItemInput.show && newItemInput.parentId === displayItem.id && newItemInput.type === 'detail' && (
                                 <div className="bg-gray-50 p-2 rounded border">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center gap-2">
                                     <Input
                                       value={newItemText}
                                       onChange={(e) => setNewItemText(e.target.value)}
@@ -1424,7 +1437,7 @@ export default function ProductChecklistDialog({
                                 const isDetailCompleted = dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed;
                                 return (
                                 <div key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'}`}>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     {editingItemId === detail.id ? (
                                       <div className="flex-1 flex gap-1">
@@ -1549,7 +1562,7 @@ export default function ProductChecklistDialog({
                                     <div className="ml-4 mt-1 space-y-0.5 border-l border-orange-200 pl-1.5">
                                       {detail.tasks.map(task => (
                                         <div key={task.id} className="bg-orange-50 p-0.5 rounded group/dtask">
-                                          <div className="flex items-center gap-1">
+                                          <div className="flex flex-wrap items-center gap-1">
                                             <Checkbox 
                                               checked={!!task.approved_by}
                                               onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
@@ -1557,7 +1570,20 @@ export default function ProductChecklistDialog({
                                               className="h-2.5 w-2.5"
                                             />
                                             <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
-                                            <span className="text-xs flex-1">{task.text}</span>
+                                            {editingItemId === task.id ? (
+                                              <div className="flex-1 flex gap-1 min-w-0">
+                                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                                <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                              </div>
+                                            ) : (
+                                              <div className="flex-1 flex items-center gap-1 min-w-0">
+                                                <span className="text-xs flex-1 min-w-0">{task.text}</span>
+                                                {isRegistered && (
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                                )}
+                                              </div>
+                                            )}
                                             <MultiUserSelectInline
                                               users={users}
                                               selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
@@ -1590,7 +1616,20 @@ export default function ProductChecklistDialog({
                                                 className="h-2 w-2"
                                               />
                                               <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
-                                              <span className="flex-1">{subtask.text}</span>
+                                              {editingItemId === subtask.id ? (
+                                      <div className="flex-1 flex gap-1 min-w-0">
+                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex-1 flex items-center gap-1 min-w-0">
+                                        <span className="flex-1 min-w-0">{subtask.text}</span>
+                                        {isRegistered && (
+                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="p-1 rounded hover:bg-yellow-100 text-yellow-700 shrink-0" title="Edit subtask"><Pencil className="w-3 h-3" /></button>
+                                        )}
+                                      </div>
+                                    )}
                                               {isRegistered && (
                                                 <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100">
                                                   <Trash2 className="w-2 h-2" />
@@ -1789,7 +1828,20 @@ export default function ProductChecklistDialog({
                                       className="h-3 w-3"
                                     />
                                     <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
-                                    <span className="text-xs flex-1">{task.text}</span>
+                                    {editingItemId === task.id ? (
+                                      <div className="flex-1 flex gap-1 min-w-0">
+                                        <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex-1 flex items-center gap-1 min-w-0">
+                                        <span className="text-xs flex-1 min-w-0">{task.text}</span>
+                                        {isRegistered && (
+                                          <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                        )}
+                                      </div>
+                                    )}
                                     <MultiUserSelectInline
                                       users={users}
                                       selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
@@ -1825,7 +1877,7 @@ export default function ProductChecklistDialog({
                                 
                                 {stDisplayItem.details?.map(detail => (
                                   <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs group/stdetail">
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex flex-wrap items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       <span className="flex-1">{detail.text}</span>
                                       {isRegistered && (
@@ -1873,7 +1925,20 @@ export default function ProductChecklistDialog({
                                               className="h-2.5 w-2.5"
                                             />
                                             <span className="px-0.5 rounded bg-orange-100 text-orange-600">T</span>
-                                            <span className="flex-1">{task.text}</span>
+                                            {editingItemId === task.id ? (
+                                              <div className="flex-1 flex gap-1 min-w-0">
+                                                <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
+                                                <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
+                                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                              </div>
+                                            ) : (
+                                              <div className="flex-1 flex items-center gap-1 min-w-0">
+                                                <span className="flex-1 min-w-0">{task.text}</span>
+                                                {isRegistered && (
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                                )}
+                                              </div>
+                                            )}
                                             {isRegistered && (
                                               <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-3 w-3 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100">
                                                 <Trash2 className="w-2 h-2" />
@@ -1889,7 +1954,7 @@ export default function ProductChecklistDialog({
                                       {/* Inline add detail for sub-template */}
                                 {newItemInput.show && newItemInput.parentId === stDisplayItem.id && newItemInput.type === 'detail' && (
                                   <div className="bg-gray-50 p-1.5 rounded border">
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex flex-wrap items-center gap-1">
                                       <Input
                                         value={newItemText}
                                         onChange={(e) => setNewItemText(e.target.value)}
@@ -1943,7 +2008,7 @@ export default function ProductChecklistDialog({
           {/* Add General Checklist Item */}
           {showAddGeneralChecklist && (
             <div className="p-3 bg-gray-50 rounded-lg border mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Input
                   value={newGeneralChecklistText}
                   onChange={(e) => setNewGeneralChecklistText(e.target.value)}
