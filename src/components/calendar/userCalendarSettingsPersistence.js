@@ -1,7 +1,4 @@
-import {
-  expectedEntityFields,
-  replaceEntityFieldsIfUnchanged,
-} from "@/components/estimator/builder/builderEntityPersistence";
+import { base44 } from "@/api/base44Client";
 
 function normalize(value) {
   if (Array.isArray(value)) return value.map(normalize);
@@ -35,60 +32,52 @@ export function editableUserCalendarSettings(settings = {}, userEmail = "") {
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
 }
 
-export async function loadSingleUserCalendarSettings({ entity, userEmail, label = "User calendar settings" } = {}) {
-  const email = String(userEmail || "").trim();
-  if (!email || typeof entity?.filter !== "function") throw new Error(`${label} could not load without a user email.`);
-  const rows = await entity.filter({ user_email: email });
-  if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
-  if (rows.length > 1) throw new Error(`${label} has ${rows.length} records for ${email}. No value was changed; review the duplicates first.`);
-  return rows[0] || null;
+function requireSessionToken(sessionToken, label) {
+  const token = String(sessionToken || "").trim();
+  if (!token) throw new Error(`${label} requires an active sign-in.`);
+  return token;
 }
 
-export async function saveUserCalendarSettingsIfUnchanged({ entity, loadedRecord, userEmail, nextSettings, label = "User calendar settings" } = {}) {
-  const desired = editableUserCalendarSettings(nextSettings, userEmail);
-  const email = desired.user_email;
-  if (!email || typeof entity?.create !== "function" || typeof entity?.filter !== "function") {
-    throw new Error(`${label} could not initialize its concurrency-safe save.`);
-  }
-
-  if (loadedRecord?.id) {
-    if (String(loadedRecord.user_email || "") !== email) throw new Error(`${label} loaded a different user. Reload before saving.`);
-    return replaceEntityFieldsIfUnchanged({
-      entity,
-      id: loadedRecord.id,
-      expectedUpdatedAt: loadedRecord.updated_date || "",
-      expectedFields: expectedEntityFields(loadedRecord, desired),
-      nextFields: desired,
-      guardFields: { user_email: email },
-      label,
-    });
-  }
-
-  const before = await loadSingleUserCalendarSettings({ entity, userEmail: email, label });
-  if (before?.id) throw new Error(`${label} was created in another session after this page loaded. Reload before saving.`);
-
-  let created = null;
-  let createError = null;
+async function invokeCalendarSettings(payload) {
   try {
-    created = await entity.create(desired);
+    const response = await base44.functions.invoke("manageUserCalendarSettings", payload);
+    return response?.data || response;
   } catch (error) {
-    createError = error;
+    throw new Error(error?.response?.data?.error || error?.message || "Calendar settings could not be handled safely.");
+  }
+}
+
+export async function loadSingleUserCalendarSettings({ sessionToken, label = "User calendar settings" } = {}) {
+  const data = await invokeCalendarSettings({
+    action: "load",
+    session_token: requireSessionToken(sessionToken, label),
+  });
+  return data?.record || null;
+}
+
+export async function saveUserCalendarSettingsIfUnchanged({ loadedRecord, userEmail, nextSettings, sessionToken, label = "User calendar settings" } = {}) {
+  const desired = editableUserCalendarSettings(nextSettings, userEmail);
+  const email = String(userEmail || "").trim();
+  if (!email) throw new Error(`${label} could not initialize without a user email.`);
+  if (loadedRecord?.id && String(loadedRecord.user_email || "").trim().toLowerCase() !== email.toLowerCase()) {
+    throw new Error(`${label} loaded a different user. Reload before saving.`);
   }
 
-  const after = await entity.filter({ user_email: email }).catch(error => {
-    if (createError) throw createError;
-    throw error;
+  const data = await invokeCalendarSettings({
+    action: "save",
+    session_token: requireSessionToken(sessionToken, label),
+    expected_id: loadedRecord?.id || "",
+    expected_updated_date: loadedRecord?.updated_date || "",
+    next_settings: desired,
   });
-  if (!Array.isArray(after)) throw new Error(`${label} final verification did not return a record list.`);
-  if (after.length > 1) throw new Error(`${label} was created concurrently more than once. No duplicate was deleted automatically; reload and review the records.`);
-  if (after.length === 1) {
-    const saved = after[0];
-    if (!Object.entries(desired).every(([field, value]) => sameValue(saved[field], value))) {
-      throw new Error(`${label} was created concurrently with different values. Reload before saving again.`);
-    }
-    return saved;
+  if (!data?.record?.id) throw new Error(`${label} save could not be verified.`);
+
+  const saved = data.record;
+  const compare = editableUserCalendarSettings(saved, email);
+  const expected = editableUserCalendarSettings(desired, email);
+  for (const [field, value] of Object.entries(expected)) {
+    if (field === "user_email") continue;
+    if (!sameValue(compare[field], value)) throw new Error(`${label} save could not be verified.`);
   }
-  if (createError) throw createError;
-  if (created?.id) throw new Error(`${label} returned a create receipt but could not be verified. Do not retry blindly; reload first.`);
-  throw new Error(`${label} could not verify whether the settings were created.`);
+  return saved;
 }
