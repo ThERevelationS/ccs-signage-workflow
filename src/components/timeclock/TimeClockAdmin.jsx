@@ -41,6 +41,7 @@ import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionReques
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
+const TimeClockBreak = base44.entities.TimeClockBreak;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -55,6 +56,7 @@ export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
   const [employeeStates, setEmployeeStates] = useState([]);
+  const [activeBreaks, setActiveBreaks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -79,7 +81,7 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, states] = await Promise.all([
+      const [entries, states, breaks] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -91,9 +93,16 @@ export default function TimeClockAdmin() {
           sort: null,
           label: "Time Clock employee states",
         }),
+        loadAllEntityRows({
+          entity: TimeClockBreak,
+          query: { status: "active" },
+          sort: "-started_at",
+          label: "Time Clock active breaks",
+        }),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
+      setActiveBreaks(breaks);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -149,6 +158,7 @@ export default function TimeClockAdmin() {
   const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working");
   const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status));
   const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
+  const activeBreakById = new Map(activeBreaks.map(breakRow => [breakRow.id, breakRow]));
 
   const statusLabel = (state) => {
     if (state.break_status === "on_break") return "On break";
@@ -399,14 +409,26 @@ export default function TimeClockAdmin() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {[...clockedInStates, ...transitionalStates.filter(state => state.status !== "clocked_in")].map(state => {
               const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
+              const breakRow = state.active_break_id ? activeBreakById.get(state.active_break_id) : null;
               const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
+              const breakStarted = breakRow?.started_at ? parseISO(breakRow.started_at) : null;
               const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
+              const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
               return (
                 <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">{state.user_name || state.user_email}</p>
                     <p className="text-xs text-gray-500 truncate">{state.user_email}</p>
                     {validClockIn && <p className="text-xs text-gray-500 mt-1">Clocked in {format(clockIn, "h:mm a")}</p>}
+                    {state.break_status === "on_break" && breakRow && (
+                      <p className="text-xs text-amber-700 mt-1">
+                        {breakRow.is_paid ? "Paid break" : breakRow.break_type === "lunch" ? "Unpaid lunch" : "Unpaid break"}
+                        {validBreakStarted ? ` since ${format(breakStarted, "h:mm a")}` : ""}
+                      </p>
+                    )}
+                    {state.break_status === "on_break" && !breakRow && (
+                      <p className="text-xs text-red-600 mt-1">Break state is missing its active break record — review required.</p>
+                    )}
                   </div>
                   <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
                     {state.break_status === "on_break" && <Coffee className="w-3 h-3 mr-1" />}
