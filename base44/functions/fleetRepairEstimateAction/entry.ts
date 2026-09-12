@@ -48,7 +48,7 @@ async function evaluatePolicy(Policy:any,total:number) {
   const match = policies.find((row:any)=>{
     const min = nonNegative(row.minimum_amount,0);
     const max = row.maximum_amount == null ? null : Number(row.maximum_amount);
-    return total >= min && (max == null || !Number.isFinite(max) || total <= max);
+    return total >= min && (max == null || !Number.isFinite(max) || max <= 0 || total <= max);
   }) || null;
   return match ? {approval_required:match.approval_required !== false,approval_tier:norm(match.approval_tier || match.name),policy_id:match.id,policy_name:match.name} : {approval_required:false,approval_tier:'',policy_id:'',policy_name:''};
 }
@@ -91,7 +91,7 @@ Deno.serve(async req => {
       const row = body?.policy || {};
       const minimum = nonNegative(row.minimum_amount,0);
       const maximum = row.maximum_amount === '' || row.maximum_amount == null ? null : Number(row.maximum_amount);
-      if (maximum != null && (!Number.isFinite(maximum) || maximum < minimum)) return Response.json({error:'Maximum amount must be blank or greater than/equal to the minimum amount.'},{status:400});
+      if (maximum != null && maximum !== 0 && (!Number.isFinite(maximum) || maximum < minimum)) return Response.json({error:'Maximum amount must be blank/0 for open-ended, or greater than/equal to the minimum amount.'},{status:400});
       const desired = {name:norm(row.name),enabled:row.enabled!==false,minimum_amount:minimum,...(maximum==null?{}:{maximum_amount:maximum}),approval_tier:norm(row.approval_tier||row.name),approval_required:row.approval_required!==false,approver_role:'admin',notes:norm(row.notes),sort_order:Number.isFinite(Number(row.sort_order))?Number(row.sort_order):0,creation_key:creationKey};
       if (!desired.name) return Response.json({error:'Policy name is required.'},{status:400});
       const existing = canonical(await Policy.filter({creation_key:creationKey}));
@@ -108,9 +108,9 @@ Deno.serve(async req => {
       const row = body?.policy || {};
       const minimum = Object.prototype.hasOwnProperty.call(row,'minimum_amount') ? nonNegative(row.minimum_amount,0) : existing.minimum_amount;
       const maximum = Object.prototype.hasOwnProperty.call(row,'maximum_amount') ? (row.maximum_amount === '' || row.maximum_amount == null ? null : Number(row.maximum_amount)) : existing.maximum_amount;
-      if (maximum != null && (!Number.isFinite(maximum) || Number(maximum) < Number(minimum))) return Response.json({error:'Maximum amount must be blank or greater than/equal to the minimum amount.'},{status:400});
+      if (maximum != null && maximum !== 0 && (!Number.isFinite(maximum) || Number(maximum) < Number(minimum))) return Response.json({error:'Maximum amount must be blank/0 for open-ended, or greater than/equal to the minimum amount.'},{status:400});
       const patch:any = {name:norm(row.name ?? existing.name),enabled:row.enabled ?? existing.enabled,minimum_amount:Number(minimum),approval_tier:norm(row.approval_tier ?? existing.approval_tier ?? existing.name),approval_required:row.approval_required ?? existing.approval_required,approver_role:'admin',notes:norm(row.notes ?? existing.notes),sort_order:Number.isFinite(Number(row.sort_order))?Number(row.sort_order):Number(existing.sort_order||0)};
-      if (maximum == null) patch.maximum_amount = null; else patch.maximum_amount = Number(maximum);
+      patch.maximum_amount = maximum == null ? 0 : Number(maximum);
       const updated = await updateFleetRecordIfCurrent({entity:Policy,id,expectedUpdatedAt:expected,patch,label:'Fleet repair approval policy'});
       return Response.json({success:true,policy:updated});
     }
@@ -121,7 +121,7 @@ Deno.serve(async req => {
       return Response.json({success:true,deleted:true});
     }
 
-    const workOrderId = norm(body?.work_order_id || body?.id && action === 'get' ? body.id : body?.estimate?.work_order_id);
+    const workOrderId = norm(body?.work_order_id || (action === 'get' ? body?.id : '') || body?.estimate?.work_order_id);
     if (action === 'get') {
       const rows = workOrderId ? await Estimate.filter({work_order_id:workOrderId}) : [];
       if (rows.length > 1) return Response.json({error:'Multiple Fleet repair estimates exist for this work order. Resolve the duplicate records before continuing.'},{status:409});
