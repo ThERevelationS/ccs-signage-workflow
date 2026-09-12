@@ -7,7 +7,7 @@ import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
 import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink } from "lucide-react";
+import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
 
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
@@ -52,6 +52,7 @@ export default function FleetTracking() {
   const requestedImeiRef = useRef(new URLSearchParams(window.location.search).get("imei") || "");
   const deepLinkResolvedRef = useRef(false);
   const [panelOpen, setPanelOpen] = useState(true);
+  const [mobileSheetState, setMobileSheetState] = useState("peek");
   const [trips, setTrips] = useState([]);
   const [tripsLoading, setTripsLoading] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState(null);
@@ -252,6 +253,12 @@ export default function FleetTracking() {
     }
   };
 
+  const selectTrackingVehicle = (vin) => {
+    setSelectedVin(vin || null);
+    setPanelOpen(!!vin);
+    if (vin) setMobileSheetState("mid");
+  };
+
   const selectedVehicle = vehicles.find(v => normalizeVin(v.vin) === normalizeVin(selectedVin));
   const selectedFleetLink = resolveFleetEquipmentLink(selectedVehicle, fleetEquipment);
   const selectedFleetEquipment = selectedFleetLink.equipment;
@@ -440,7 +447,7 @@ export default function FleetTracking() {
           <FleetSidebar
             vehicles={vehicles}
             selectedVin={selectedVin}
-            onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
+            onSelectVehicle={selectTrackingVehicle}
             onAddVehicle={() => window.open("https://www.bouncie.com/app", "_blank")}
             totalCount={vehicles.length}
           />
@@ -455,7 +462,7 @@ export default function FleetTracking() {
               vehicles={vehicles}
               selectedVin={selectedVin}
               selectedTrip={selectedTrip}
-              onSelectVehicle={(vin) => { setSelectedVin(vin); setPanelOpen(true); }}
+              onSelectVehicle={selectTrackingVehicle}
             />
           )}
 
@@ -464,7 +471,7 @@ export default function FleetTracking() {
               <div className="hidden sm:block min-w-0"><div className="text-white font-bold text-sm sm:text-base tracking-tight">Fleet Tracking</div><div className="hidden xl:block text-[10px] uppercase tracking-wide text-gray-500">Live Bouncie dispatch map</div></div>
               <select
                 value={selectedVin || ""}
-                onChange={(e) => { setSelectedVin(e.target.value || null); setPanelOpen(!!e.target.value); }}
+                onChange={(e) => selectTrackingVehicle(e.target.value || null)}
                 className="md:hidden min-w-0 max-w-[230px] flex-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-xs font-medium text-white"
                 aria-label="Select Bouncie vehicle"
               >
@@ -480,9 +487,11 @@ export default function FleetTracking() {
             </div>
           </div>
 
-          {/* Mobile/tablet selected vehicle panel stays over the map. */}
+          {/* Mobile/tablet selected vehicle details use a map-first bottom sheet. */}
           <div className="lg:hidden">
-            {panelOpen && selectedVehicle && <VehiclePanel {...vehiclePanelProps} />}
+            {panelOpen && selectedVehicle && <MobileVehicleSheet vehicle={selectedVehicle} state={mobileSheetState} setState={setMobileSheetState} onClose={() => setPanelOpen(false)}>
+              <VehiclePanel {...vehiclePanelProps} embedded />
+            </MobileVehicleSheet>}
           </div>
 
           {!selectedVehicle && !vehiclesLoading && vehicles.length > 0 && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 bg-white/95 dark:bg-slate-900/95 rounded-lg shadow-lg px-6 py-4 text-center"><p className="text-gray-600 dark:text-slate-300 text-sm">Select a vehicle to view live tracking, trips, maintenance, alerts, and details.</p></div>}
