@@ -65,12 +65,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   
-  // Preview mode
-  const [showPreview, setShowPreview] = useState(false);
-  
-  // Clipboard
-  const [clipboard, setClipboard] = useState(null);
-  
   // Multi-select dropdown state
   const [openDropdownId, setOpenDropdownId] = useState(null);
   
@@ -981,17 +975,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     </div>
   );};
 
-  // Mark changes when items are modified
-  const markProductTypeChanged = () => {
-    setProductTypeHasChanges(true);
-    setProductTypeSaveStatus('idle');
-  };
-  
-  const markSubTemplateChanged = () => {
-    setSubTemplateHasChanges(true);
-    setSubTemplateSaveStatus('idle');
-  };
-
   // Item editor with drag-drop
   const renderItemEditor = (items, setItems, isProductType = false) => (
     <DragDropContext onDragEnd={(result) => handleDragEnd(result, items, setItems, isProductType)}>
@@ -1009,55 +992,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         )}
       </Droppable>
     </DragDropContext>
-  );
-
-  // Preview renderer
-  const renderPreview = (items, title) => (
-    <div className="bg-white border rounded-lg p-3 max-h-[60vh] overflow-y-auto">
-      <h4 className="font-bold text-sm mb-2 pb-1 border-b">{title}</h4>
-      {items.map((item, idx) => {
-        const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
-        return (
-          <div key={item.id} className="mb-2">
-            <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-              <div className="w-4 h-4 border-2 rounded mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <div className="font-medium text-sm">{item.text}</div>
-                {conditionNames.length > 0 && (
-                  <div className="mt-1"><span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">{conditionNames.join(', ')}</span></div>
-                )}
-              </div>
-            </div>
-            {item.tasks?.map(task => (
-              <div key={task.id} className="ml-6 mt-1 flex items-center gap-2 p-1.5 bg-orange-50 rounded text-sm">
-                <div className="w-3 h-3 border rounded flex-shrink-0" />
-                <span>{task.text}</span>
-              </div>
-            ))}
-            {item.details?.map(detail => {
-              const detailConditions = (detail.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
-              return (
-                <div key={detail.id} className="ml-6 mt-1">
-                  <div className="flex items-start gap-2 p-1.5 bg-purple-50 rounded">
-                    <div className="w-3 h-3 border rounded mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-sm">{detail.text}</span>
-                      {detailConditions.length > 0 && <span className="ml-2 text-xs px-1 py-0.5 bg-purple-100 text-purple-700 rounded">{detailConditions.join(', ')}</span>}
-                    </div>
-                  </div>
-                  {detail.tasks?.map(task => (
-                    <div key={task.id} className="ml-4 mt-1 flex items-center gap-2 p-1 bg-orange-50 rounded text-xs">
-                      <div className="w-2.5 h-2.5 border rounded flex-shrink-0" />
-                      <span>{task.text}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
   );
 
   return (
