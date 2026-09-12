@@ -615,6 +615,7 @@ Deno.serve(async (req) => {
 
       const equipment = await Equipment.get(patch.equipment_id);
       if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+      if (equipment.status === 'retired') return Response.json({ error: 'Retired Fleet equipment is archived and cannot receive a new Fleet work order. Reactivate the equipment first.' }, { status: 409 });
 
       let task: any = null;
       const taskExpectedUpdatedAt = String(body?.maintenance_task_expected_updated_date || '').trim();
@@ -773,6 +774,9 @@ Deno.serve(async (req) => {
       if (nextEquipmentId) {
         const equipment = await Equipment.get(nextEquipmentId);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+        if (nextEquipmentId !== existing.equipment_id && equipment.status === 'retired') {
+          return Response.json({ error: 'An existing Fleet work order cannot be reassigned to retired equipment. Reactivate the equipment first.' }, { status: 409 });
+        }
       }
       if (nextTaskId) {
         const task = await Task.get(nextTaskId);
