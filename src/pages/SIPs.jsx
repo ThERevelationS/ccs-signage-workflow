@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, X } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
@@ -45,6 +46,7 @@ export default function SIPs() {
   const [sortMode, setSortMode] = useState("meeting");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   // Set document title
   useEffect(() => {
@@ -986,23 +988,34 @@ export default function SIPs() {
               });
             } catch (error) {
               console.error("Error moving SIPs Work Order:", error);
-              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
+              setActionError({
+                title: "Could not move Work Order",
+                message: error?.message || "This Work Order changed in another session. Reload and try the transition again."
+              });
             }
             loadWorkOrders();
           }}
           onSplit={async (wo) => {
-            await createWorkOrderWithRecovery({
-              data: {
-                title: `${wo.title} - Rider`,
-                client_name: wo.client_name,
-                description: wo.description,
-                is_rider: true,
-                parent_work_order_id: wo.id,
-                current_stage: wo.current_stage,
-                rider_stage: wo.current_stage
-              },
-              label: "SIPs rider Work Order",
-            });
+            try {
+              await createWorkOrderWithRecovery({
+                data: {
+                  title: `${wo.title} - Rider`,
+                  client_name: wo.client_name,
+                  description: wo.description,
+                  is_rider: true,
+                  parent_work_order_id: wo.id,
+                  current_stage: wo.current_stage,
+                  rider_stage: wo.current_stage
+                },
+                label: "SIPs rider Work Order",
+              });
+            } catch (error) {
+              console.error("Error creating SIPs rider Work Order:", error);
+              setActionError({
+                title: "Could not create rider",
+                message: error?.message || "The rider Work Order could not be created. Reload the latest Work Order and try again."
+              });
+            }
             loadWorkOrders();
           }}
           onComplete={async (wo) => {
@@ -1015,7 +1028,10 @@ export default function SIPs() {
               });
             } catch (error) {
               console.error("Error completing SIPs Work Order:", error);
-              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
+              setActionError({
+                title: "Could not complete Work Order",
+                message: error?.message || "This Work Order changed in another session. Reload and try completion again."
+              });
             }
             loadWorkOrders();
           }}
@@ -1029,12 +1045,32 @@ export default function SIPs() {
               Object.assign(wo, deleted);
             } catch (error) {
               console.error("Error deleting SIPs Work Order:", error);
-              alert(error?.message || "This Work Order changed in another session. Reload before deleting it.");
+              setActionError({
+                title: "Could not delete Work Order",
+                message: error?.message || "This Work Order changed in another session. Reload before deleting it."
+              });
             }
             loadWorkOrders();
           }}
         />
       )}
+
+      <AlertDialog open={!!actionError} onOpenChange={(open) => { if (!open) setActionError(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {actionError?.title || "SIPs action could not be completed"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionError?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setActionError(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Product Checklist Dialog */}
       {checklistDialog.open && checklistDialog.workOrder && (
