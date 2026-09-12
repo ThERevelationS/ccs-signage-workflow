@@ -1743,74 +1743,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </table>
           </div>
 
-      {selectedWorkOrder && (
-        <WorkOrderDetailsDialog
-          isOpen={true}
-          onClose={() => setSelectedWorkOrder(null)}
-          workOrder={selectedWorkOrder}
-          onUpdate={() => loadWorkOrders()}
-          onMove={async (wo, newStage) => {
-            try {
-              await transitionWorkOrderFromLoadedSnapshot({
-                workOrder: wo,
-                newStage,
-                label: "Sales Pipeline details stage transition",
-              });
-            } catch (error) {
-              console.error("Error moving Sales Pipeline Work Order:", error);
-              alert(error?.message || "This Work Order changed in another session. Reload and try the transition again.");
-            }
-            loadWorkOrders();
-          }}
-          onSplit={async (wo) => {
-            await createWorkOrderWithRecovery({
-              data: {
-                title: `${wo.title} - Rider`,
-                client_name: wo.client_name,
-                description: wo.description,
-                is_rider: true,
-                parent_work_order_id: wo.id,
-                current_stage: wo.current_stage,
-                rider_stage: wo.current_stage,
-                sales_status: wo.sales_status
-              },
-              label: "Sales Pipeline rider Work Order",
-            });
-            loadWorkOrders();
-          }}
-          onComplete={async (wo) => {
-            try {
-              await transitionWorkOrderFromLoadedSnapshot({
-                workOrder: wo,
-                newStage: wo.current_stage,
-                completed: true,
-                label: "Sales Pipeline details completion",
-              });
-              setWorkOrders(workOrders.filter(w => w.id !== wo.id));
-            } catch (error) {
-              console.error("Error completing Sales Pipeline Work Order:", error);
-              alert(error?.message || "This Work Order changed in another session. Reload and try completion again.");
-              loadWorkOrders();
-            }
-          }}
-          onDelete={async (wo) => {
-            setDestructiveActionError("");
-            try {
-              await softDeleteWorkOrderFromLoadedSnapshot({
-                workOrder: wo,
-                deletedBy: currentUser?.email || "unknown",
-                label: "Sales Pipeline details Work Order delete",
-              });
-              setWorkOrders((current) => current.filter((workOrder) => workOrder.id !== wo.id));
-            } catch (error) {
-              console.error("Sales Pipeline details Work Order delete blocked:", error);
-              setDestructiveActionError(error?.message || "This Work Order changed after the Sales Pipeline was loaded. Reload before deleting it.");
-              await loadWorkOrders(false);
-              throw error;
-            }
-          }}
-        />
-      )}
+      {renderOpportunityDialogs()}
 
       {showForm && (
         <WorkOrderForm
