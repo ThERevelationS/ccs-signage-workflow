@@ -511,20 +511,74 @@ Deno.serve(async (req) => {
       if (!['approve', 'approve_modified', 'reject'].includes(decision)) return Response.json({ success: false, error: 'A valid correction-review decision is required.' }, { status: 400 });
       if (reviewerReason.length < 3 || reviewerReason.length > 500) return Response.json({ success: false, error: 'A manager review reason between 3 and 500 characters is required.' }, { status: 400 });
 
+      let normalizedModifiedCorrection: any = null;
+      if (decision === 'approve_modified') {
+        const correction = body?.correction || {};
+        const editedClockIn = new Date(String(correction?.clock_in || ''));
+        const editedClockOut = new Date(String(correction?.clock_out || ''));
+        const editedLunchMinutes = Math.round(Number(correction?.lunch_minutes ?? 0));
+        if (!Number.isFinite(editedClockIn.getTime()) || !Number.isFinite(editedClockOut.getTime()) || editedClockOut.getTime() < editedClockIn.getTime()) {
+          return Response.json({ success: false, error: 'Approved punch times are invalid.' }, { status: 400 });
+        }
+        const editedShiftMinutes = Math.floor((editedClockOut.getTime() - editedClockIn.getTime()) / 60000);
+        if (!Number.isFinite(editedLunchMinutes) || editedLunchMinutes < 0 || editedLunchMinutes > 240 || editedLunchMinutes > editedShiftMinutes) {
+          return Response.json({ success: false, error: 'Approved lunch minutes are invalid for this shift.' }, { status: 400 });
+        }
+        normalizedModifiedCorrection = {
+          clock_in: editedClockIn.toISOString(),
+          clock_out: editedClockOut.toISOString(),
+          lunch_minutes: editedLunchMinutes,
+          notes: String(correction?.notes || '').trim().slice(0, 4000),
+        };
+      }
+      const reviewHash = await payloadHash({
+        decision,
+        reason: reviewerReason,
+        correction: decision === 'approve_modified' ? normalizedModifiedCorrection : null,
+      });
+
       let correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
       if (!correctionRequest?.id || asEmail(correctionRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request was not found.' }, { status: 404 });
+
+      const sameReviewPayload = () => {
+        const storedHash = String(correctionRequest.review_payload_hash || '');
+        const storedDecision = String(correctionRequest.review_decision || '');
+        return Boolean(storedHash) && constantTimeEqual(storedHash, reviewHash) && storedDecision === decision;
+      };
+      const releaseReview = async () => correctionRequestEntity.updateMany(
+        { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId },
+        {
+          $set: { status: 'pending' },
+          $unset: {
+            review_started_at: '', reviewer_email: '', reviewer_reason: '', review_request_id: '',
+            review_decision: '', review_payload_hash: '',
+          },
+        },
+      );
+
       if (['approved', 'approved_modified', 'rejected'].includes(correctionRequest.status)) {
-        if (String(correctionRequest.review_request_id || '') === requestId) return Response.json({ success: true, request: correctionRequest, reused: true });
+        if (String(correctionRequest.review_request_id || '') === requestId) {
+          if (!sameReviewPayload()) return Response.json({ success: false, error: 'This review request id is already bound to a different manager decision or payload.' }, { status: 409 });
+          return Response.json({ success: true, request: correctionRequest, reused: true });
+        }
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
       }
+
       const resumingReview = correctionRequest.status === 'reviewing' && String(correctionRequest.review_request_id || '') === requestId;
       if (correctionRequest.status === 'reviewing' && !resumingReview) return Response.json({ success: false, error: 'Another manager review is already in progress.' }, { status: 409 });
+      if (resumingReview && !sameReviewPayload()) {
+        return Response.json({ success: false, error: 'Retrying a manager review requires the exact same decision, reason, and edited values.' }, { status: 409 });
+      }
       if (correctionRequest.status === 'pending') {
         if (String(correctionRequest.updated_date || '') !== expectedRequestUpdatedDate) return Response.json({ success: false, error: 'This correction request changed since it was loaded.' }, { status: 409 });
         const claimTime = new Date().toISOString();
         const claimed = await correctionRequestEntity.updateMany(
           { id: correctionRequest.id, updated_date: expectedRequestUpdatedDate, status: 'pending' },
-          { $set: { status: 'reviewing', review_started_at: claimTime, reviewer_email: actorEmail, reviewer_reason: reviewerReason, review_request_id: requestId } },
+          { $set: {
+            status: 'reviewing', review_started_at: claimTime, reviewer_email: actorEmail,
+            reviewer_reason: reviewerReason, review_request_id: requestId, review_decision: decision,
+            review_payload_hash: reviewHash,
+          } },
         );
         if (!claimed || claimed.updated !== 1) return Response.json({ success: false, error: 'This correction request was claimed by another manager. Reload before reviewing.' }, { status: 409 });
         correctionRequest = await correctionRequestEntity.get(correctionRequest.id);
@@ -532,7 +586,7 @@ Deno.serve(async (req) => {
 
       if (decision === 'reject') {
         const finalized = await correctionRequestEntity.updateMany(
-          { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId },
+          { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId, review_payload_hash: reviewHash },
           { $set: { status: 'rejected', reviewed_at: new Date().toISOString(), reviewer_email: actorEmail, reviewer_reason: reviewerReason } },
         );
         if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The rejection could not be finalized safely. Retry the same review.' }, { status: 409 });
@@ -542,35 +596,78 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target), server_timestamp: savedRequest.reviewed_at,
           request_id: requestId, time_entry_id: correctionRequest.time_entry_id, reason: reviewerReason,
-          details: { correction_request_id: correctionRequest.id, decision: 'rejected' },
+          details: { correction_request_id: correctionRequest.id, decision: 'rejected', review_payload_hash: reviewHash },
         });
         return Response.json({ success: true, request: savedRequest });
       }
 
       let entry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin || entry.status !== 'clocked_out' || !entry.clock_out) {
-        await correctionRequestEntity.updateMany({ id: correctionRequest.id, status: 'reviewing', review_request_id: requestId }, { $set: { status: 'pending' } });
+        await releaseReview();
         return Response.json({ success: false, error: 'The underlying completed TimeEntry is no longer eligible for this correction.' }, { status: 409 });
       }
 
+      const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(auditRows)) throw new Error('Correction audit recovery lookup did not return a record list.');
+      if (auditRows.length > 1) return Response.json({ success: false, error: 'Multiple correction audit records exist for this review request. Admin investigation is required.' }, { status: 409 });
+      let correctionAudit: any = auditRows[0] || null;
       const alreadyApplied = String(entry.last_correction_request_id || '') === correctionRequest.id;
-      let correctionAuditId = String(correctionRequest.applied_audit_id || '');
-      if (!alreadyApplied) {
+      let correctionAuditId = String(correctionRequest.applied_audit_id || correctionAudit?.id || '');
+
+      if (alreadyApplied) {
+        if (!correctionAudit?.id) {
+          return Response.json({ success: false, error: 'The TimeEntry correction is present but its required audit intent is missing. Admin investigation is required.' }, { status: 409 });
+        }
+        if (correctionAudit.outcome === 'pending') {
+          const recoveredAudit = await auditEntity.updateMany(
+            { id: correctionAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: {
+                original: correctionRequest.original_snapshot,
+                corrected: entryAuditSnapshot(entry),
+                correction_request_id: correctionRequest.id,
+                recovered_after_interruption: true,
+              },
+            } },
+          );
+          if (!recoveredAudit || recoveredAudit.updated !== 1) {
+            const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
+            if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied, but its audit could not be finalized. Retry the same review.' }, { status: 409 });
+            correctionAudit = freshAudit;
+          } else {
+            correctionAudit = await auditEntity.get(correctionAudit.id);
+          }
+        }
+        if (correctionAudit.outcome !== 'confirmed') {
+          return Response.json({ success: false, error: 'The applied correction has a non-confirmed audit state. Admin investigation is required.' }, { status: 409 });
+        }
+        correctionAuditId = correctionAudit.id;
+      } else {
         if (String(entry.updated_date || '') !== String(correctionRequest.time_entry_updated_date || '')) {
-          await correctionRequestEntity.updateMany({ id: correctionRequest.id, status: 'reviewing', review_request_id: requestId }, { $set: { status: 'pending' } });
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') {
+            await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          }
+          await releaseReview();
           return Response.json({ success: false, error: 'The TimeEntry changed after this request was submitted. Reload the entry and review the differences before approving.' }, { status: 409 });
         }
-        const requestedCorrection = decision === 'approve_modified' ? (body?.correction || {}) : (correctionRequest.requested_changes || {});
+        if (correctionAudit?.id && correctionAudit.outcome !== 'pending') {
+          return Response.json({ success: false, error: 'This review has an unexpected prior audit state. Admin investigation is required.' }, { status: 409 });
+        }
+
+        const requestedCorrection = decision === 'approve_modified' ? normalizedModifiedCorrection : (correctionRequest.requested_changes || {});
         const clockIn = new Date(String(requestedCorrection?.clock_in || entry.clock_in || ''));
         const clockOut = new Date(String(requestedCorrection?.clock_out || entry.clock_out || ''));
         const lunchMinutes = Math.round(Number(requestedCorrection?.lunch_minutes ?? entry.lunch_minutes ?? 0));
         if (!Number.isFinite(clockIn.getTime()) || !Number.isFinite(clockOut.getTime()) || clockOut.getTime() < clockIn.getTime()) {
-          await correctionRequestEntity.updateMany({ id: correctionRequest.id, status: 'reviewing', review_request_id: requestId }, { $set: { status: 'pending' } });
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
           return Response.json({ success: false, error: 'Approved punch times are invalid.' }, { status: 400 });
         }
         const totalMinutes = Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000);
         if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240 || lunchMinutes > totalMinutes) {
-          await correctionRequestEntity.updateMany({ id: correctionRequest.id, status: 'reviewing', review_request_id: requestId }, { $set: { status: 'pending' } });
+          if (correctionAudit?.id && correctionAudit.outcome === 'pending') await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
           return Response.json({ success: false, error: 'Approved lunch minutes are invalid for this shift.' }, { status: 400 });
         }
         const now = new Date().toISOString();
@@ -586,31 +683,51 @@ Deno.serve(async (req) => {
           last_corrected_at: now, last_corrected_by: actorEmail, last_correction_reason: reviewerReason,
           last_correction_request_id: correctionRequest.id,
         };
-        const intent = await auditEntity.create({
-          action: 'admin_correction', outcome: 'pending', user_email: target.email,
-          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
-          request_id: requestId, time_entry_id: entry.id, reason: reviewerReason,
-          details: { original: entryAuditSnapshot(entry), requested: nextFields, correction_request_id: correctionRequest.id },
-        });
-        if (!intent?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
-        correctionAuditId = intent.id;
+        if (!correctionAudit?.id) {
+          correctionAudit = await auditEntity.create({
+            action: 'admin_correction', outcome: 'pending', user_email: target.email,
+            user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
+            request_id: requestId, time_entry_id: entry.id, reason: reviewerReason,
+            details: {
+              original: entryAuditSnapshot(entry), requested: nextFields,
+              correction_request_id: correctionRequest.id, review_payload_hash: reviewHash,
+            },
+          });
+          if (!correctionAudit?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
+        }
+        correctionAuditId = correctionAudit.id;
         const updated = await entryEntity.updateMany(
           { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_out', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
           { $set: nextFields },
         );
         if (!updated || updated.updated !== 1) {
-          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
-          await correctionRequestEntity.updateMany({ id: correctionRequest.id, status: 'reviewing', review_request_id: requestId }, { $set: { status: 'pending' } });
+          await auditEntity.updateMany({ id: correctionAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+          await releaseReview();
           return Response.json({ success: false, error: 'The TimeEntry changed before the correction could be applied. Reload before reviewing again.' }, { status: 409 });
         }
         entry = await entryEntity.get(entry.id);
-        await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'confirmed', server_timestamp: new Date().toISOString(), details: { original: correctionRequest.original_snapshot, corrected: entryAuditSnapshot(entry), correction_request_id: correctionRequest.id } } });
+        const auditFinalized = await auditEntity.updateMany(
+          { id: correctionAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+          { $set: {
+            outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+            details: {
+              original: correctionRequest.original_snapshot,
+              corrected: entryAuditSnapshot(entry),
+              correction_request_id: correctionRequest.id,
+              review_payload_hash: reviewHash,
+            },
+          } },
+        );
+        if (!auditFinalized || auditFinalized.updated !== 1) {
+          const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
+          if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The TimeEntry correction was applied, but its audit finalization was interrupted. Retry this same review.' }, { status: 409 });
+        }
       }
 
       const finalStatus = decision === 'approve_modified' ? 'approved_modified' : 'approved';
       const finalized = await correctionRequestEntity.updateMany(
-        { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId },
+        { id: correctionRequest.id, status: 'reviewing', review_request_id: requestId, review_payload_hash: reviewHash },
         { $set: { status: finalStatus, reviewed_at: new Date().toISOString(), reviewer_email: actorEmail, reviewer_reason: reviewerReason, applied_audit_id: correctionAuditId } },
       );
       if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The TimeEntry correction was applied, but request finalization was interrupted. Retry this same review to recover safely.' }, { status: 409 });
@@ -620,7 +737,7 @@ Deno.serve(async (req) => {
         user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
         authentication_method: authenticationMethodFor(actor, target), server_timestamp: savedRequest.reviewed_at,
         request_id: requestId, time_entry_id: correctionRequest.time_entry_id, reason: reviewerReason,
-        details: { correction_request_id: correctionRequest.id, decision: finalStatus, applied_audit_id: correctionAuditId },
+        details: { correction_request_id: correctionRequest.id, decision: finalStatus, applied_audit_id: correctionAuditId, review_payload_hash: reviewHash },
       });
       return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId });
     }
