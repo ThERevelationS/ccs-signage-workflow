@@ -860,7 +860,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const str = (val) => (val == null ? "" : String(val));
     const num = (val) => (typeof val === 'number' && !isNaN(val) ? val : (val == null || val === "" ? null : Number(val) || null));
     const exportData = filteredWorkOrders.map(wo => ({
-      "Customer": str(wo.client_name), "Source": str(wo.lead_source),
+      "Customer": str(wo.client_name), "Sales Status": str(wo.sales_status), "Source": str(wo.lead_source),
       "Current Task Deadline": str(wo.current_task_deadline), "Current Task Assigned to": str(wo.current_task_assigned_to),
       "Designer": str(wo.designer), "Project Manager": str(wo.project_manager), "Estimator": str(wo.estimator),
       "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount),
@@ -870,6 +870,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Permit Submitted": str(wo.permit_submitted_date), "Notes": str(wo.title),
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
+      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Close Date": str(wo.close_date),
+      "Probability": num(wo.probability), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
       "Days from Est. Sent to Date Order Created": num(calculateDays(wo.date_estimate_sent, wo.date_order_created)),
