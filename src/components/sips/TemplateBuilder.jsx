@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { 
   Plus, Trash2, Pencil, Save, X, ChevronDown, ChevronRight, CheckSquare, 
-  List, Copy, GripVertical, Check
+  List, Copy, GripVertical, Check, AlertTriangle
 } from "lucide-react";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/permitting/permitGlobalSettingsPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -33,6 +34,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [settingRecords, setSettingRecords] = useState({});
   const [persistenceError, setPersistenceError] = useState("");
   const [isSubTemplateReordering, setIsSubTemplateReordering] = useState(false);
+  const [noticeDialog, setNoticeDialog] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   
   // Template Selector state
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -265,7 +269,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const existingNames = getExistingProductNames();
     const otherSelectedNames = selectedProducts.filter(p => p.id !== productId).map(p => p.customName);
     if (existingNames.has(newName) || otherSelectedNames.includes(newName)) {
-      alert("A product with this name already exists.");
+      setNoticeDialog({
+        title: "Product name already in use",
+        message: "Choose a different product name before applying this template."
+      });
       return false;
     }
     setSelectedProducts(selectedProducts.map(p => p.id === productId ? { ...p, customName: newName } : p));
@@ -283,7 +290,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const handleApplyTemplate = () => {
-    if (selectedProducts.length === 0) { alert("Please select at least one product template."); return; }
+    if (selectedProducts.length === 0) {
+      setNoticeDialog({
+        title: "Select a product template",
+        message: "Choose at least one product template before applying checklist items."
+      });
+      return;
+    }
     
     const combinedItems = [];
     selectedProducts.forEach(product => {
@@ -351,8 +364,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     }
   };
 
-  const deleteSubTemplate = async (subTemplate) => {
-    if (!confirm(`Delete "${subTemplate.name}"?`)) return;
+  const performDeleteSubTemplate = async (subTemplate) => {
     setPersistenceError("");
     try {
       await deleteChecklistSubItemIfUnchanged({
@@ -377,6 +389,53 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       console.error("Error deleting sub-template:", error);
       setPersistenceError(error?.message || "This sub-template changed in another session and was not deleted.");
       await loadData();
+    }
+  };
+
+  const deleteSubTemplate = (subTemplate) => {
+    setConfirmDialog({
+      title: "Delete sub-template?",
+      message: `Delete “${subTemplate.name}” and its checklist configuration? This cannot be undone.`,
+      confirmLabel: "Delete Sub-Template",
+      onConfirm: () => performDeleteSubTemplate(subTemplate),
+    });
+  };
+
+  const requestDeleteProductType = (type, index) => {
+    setConfirmDialog({
+      title: "Delete product type?",
+      message: `Delete “${type}” from the SIPS product types list?`,
+      confirmLabel: "Delete Product Type",
+      onConfirm: async () => {
+        await saveProductTypes(productTypes.filter((_, i) => i !== index));
+        if (selectedProductType === type) {
+          setSelectedProductType(null);
+          setProductTypeItems([]);
+        }
+      },
+    });
+  };
+
+  const requestDeleteCondition = (condition) => {
+    setConfirmDialog({
+      title: "Delete condition?",
+      message: `Delete “${condition.name}”? Existing saved checklist answers are not rewritten, but this condition will no longer be available for new selections.`,
+      confirmLabel: "Delete Condition",
+      onConfirm: () => saveDropdownConditions(dropdownConditions.filter(d => d.id !== condition.id)),
+    });
+  };
+
+  const runConfirmedAction = async () => {
+    if (!confirmDialog?.onConfirm || isConfirming) return;
+    setIsConfirming(true);
+    try {
+      await confirmDialog.onConfirm();
+      setConfirmDialog(null);
+    } catch (error) {
+      console.error("SIPS Template Builder confirmed action failed:", error);
+      setConfirmDialog(null);
+    } finally {
+      setIsConfirming(false);
     }
   };
 
