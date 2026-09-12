@@ -22,6 +22,8 @@ const EMPTY_PIPELINE_SUMMARY = {
   upcomingCount: 0,
   noNextActionCount: 0,
   quoteNoFollowUpCount: 0,
+  nearCloseCount: 0,
+  overdueCloseCount: 0,
   staleCount: 0,
   trackedActivityCount: 0,
   untrackedActivityCount: 0,
@@ -301,7 +303,7 @@ export default function SalesPipeline() {
 
         {!showPendingImports && recordScope !== "history" && (
           <div className="mb-3 space-y-2">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
                 <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
@@ -327,6 +329,11 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-violet-900">{pipelineSummary.noNextActionCount}</div>
                 <div className="mt-1 text-xs text-violet-700/80">No follow-up or task deadline</div>
               </button>
+              <button type="button" onClick={() => applyAttentionFilter("near_close")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "near_close" ? "border-cyan-400 bg-cyan-50" : "border-cyan-200 bg-white hover:border-cyan-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-cyan-700">Closing Next 14 Days</div>
+                <div className="mt-1 text-2xl font-bold text-cyan-900">{pipelineSummary.nearCloseCount}</div>
+                <div className="mt-1 text-xs text-cyan-700/80">Based on expected close date</div>
+              </button>
               <button type="button" onClick={() => applyAttentionFilter("stale")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "stale" ? "border-rose-400 bg-rose-50" : "border-rose-200 bg-white hover:border-rose-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-rose-700">Stale 14+ Days</div>
                 <div className="mt-1 text-2xl font-bold text-rose-900">{pipelineSummary.staleCount}</div>
@@ -340,6 +347,8 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("near_close")} className={attentionChipClass("near_close")}>Closing ≤14 Days {pipelineSummary.nearCloseCount > 0 ? `(${pipelineSummary.nearCloseCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("close_overdue")} className={attentionChipClass("close_overdue")}>Expected Close Overdue {pipelineSummary.overdueCloseCount > 0 ? `(${pipelineSummary.overdueCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities</button>
