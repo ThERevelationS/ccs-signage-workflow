@@ -283,15 +283,95 @@ export default function SIPs() {
     <div className="h-full overflow-auto p-6">
       <div className="w-full">
         {/* Header */}
-        <div className="clay-card p-6 mb-6">
-          <div className="flex items-center justify-between">
+        <div className="clay-card p-4 sm:p-6 mb-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
-              <p className="text-gray-500 mt-1">Production & Installation Planning - {workOrders.length} items</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
+                <Badge variant="outline" className="bg-white">{workOrders.length} total</Badge>
+              </div>
+              <p className="text-gray-500 mt-1">
+                Production & Installation Planning
+                {lastUpdated && <span className="ml-2 text-xs">• refreshed {format(lastUpdated, "h:mm a")}</span>}
+              </p>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              {currentUser?.role === "admin" && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)}>
+                  <Settings2 className="w-4 h-4 mr-2" />Manage Templates
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={() => loadWorkOrders(false)} disabled={isRefreshing}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />Refresh
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mt-4">
+            <div className="rounded-lg border bg-white/70 p-3">
+              <div className="text-xs text-gray-500">Active queue</div>
+              <div className="text-xl font-bold text-gray-800">{activeWorkOrders.length}</div>
+            </div>
+            <button type="button" onClick={() => setStatusFilter("attention")} className="rounded-lg border bg-orange-50/80 p-3 text-left hover:bg-orange-100 transition-colors">
+              <div className="text-xs text-orange-700 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" />Needs attention</div>
+              <div className="text-xl font-bold text-orange-800">{attentionCount}</div>
+            </button>
+            <button type="button" onClick={() => setStatusFilter("overdue")} className="rounded-lg border bg-red-50/80 p-3 text-left hover:bg-red-100 transition-colors">
+              <div className="text-xs text-red-700">Overdue</div>
+              <div className="text-xl font-bold text-red-800">{overdueCount}</div>
+            </button>
+            <button type="button" onClick={() => setStatusFilter("incomplete")} className="rounded-lg border bg-blue-50/80 p-3 text-left hover:bg-blue-100 transition-colors">
+              <div className="text-xs text-blue-700 flex items-center gap-1"><ClipboardList className="w-3.5 h-3.5" />Incomplete checklists</div>
+              <div className="text-xl font-bold text-blue-800">{incompleteChecklistCount}</div>
+            </button>
+            <div className="rounded-lg border bg-green-50/80 p-3">
+              <div className="text-xs text-green-700">Active value</div>
+              <div className="text-lg font-bold text-green-800">${activeValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,1fr)_190px_180px_auto] gap-2 mt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search customer, job, task, employee, estimate or invoice…" className="pl-9 bg-white" />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All active items</SelectItem>
+                <SelectItem value="attention">Needs attention</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="due_soon">Due within 7 days</SelectItem>
+                <SelectItem value="incomplete">Incomplete checklist</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortMode} onValueChange={setSortMode}>
+              <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="meeting">Meeting order</SelectItem>
+                <SelectItem value="deadline">Deadline</SelectItem>
+                <SelectItem value="customer">Customer</SelectItem>
+                <SelectItem value="amount">Amount</SelectItem>
+              </SelectContent>
+            </Select>
+            {(searchQuery || statusFilter !== "all" || sortMode !== "meeting") && (
+              <Button type="button" variant="ghost" onClick={() => { setSearchQuery(""); setStatusFilter("all"); setSortMode("meeting"); }} className="justify-self-start md:justify-self-auto">
+                <X className="w-4 h-4 mr-2" />Clear
+              </Button>
+            )}
           </div>
         </div>
+
+        {boardError && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 flex items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">SIPs refresh issue</div>
+              <div className="mt-1 text-xs">{boardError}</div>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={() => loadWorkOrders(false)} className="shrink-0 border-amber-300 bg-white text-amber-900">Retry</Button>
+          </div>
+        )}
 
         {quickEditError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
@@ -308,7 +388,7 @@ export default function SIPs() {
         {/* Spreadsheet */}
         <div className="clay-card p-4 w-full overflow-x-auto">
           <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr className="border-b">
                 <th 
                   className="px-2 py-3 border-r text-center font-bold text-white" 
@@ -336,37 +416,28 @@ export default function SIPs() {
               </tr>
             </thead>
             <tbody>
-              {activeWorkOrders.map((wo, index) => {
+              {visibleActiveWorkOrders.map((wo, index) => {
                 const progress = getChecklistProgress(wo);
-                const progressPercent = (progress.completed / progress.total) * 100;
-                
                 const isWip = isWipItem(wo);
+                const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
                 
                 return (
                   <React.Fragment key={wo.id}>
-                  {focusedRowIndex === index && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   <tr 
-                    className={`border-b ${focusedRowIndex !== index ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowIndex !== index ? 'bg-blue-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                    className={`border-b ${focusedRowId !== wo.id ? 'hover:bg-gray-50' : ''} ${isWip && focusedRowId !== wo.id ? 'bg-blue-50/30' : ''} ${focusedRowId === wo.id ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
                     style={{ height: '50px' }}
                   >
                     {/* Row Number - Clickable Focus Button */}
                     <td className="px-0 py-0 border-r">
                       <button
-                        onClick={() => {
-                          if (focusedRowIndex === index) {
-                            setFocusedRowId(null);
-                            setFocusedRowIndex(null);
-                          } else {
-                            setFocusedRowId(wo.id);
-                            setFocusedRowIndex(index);
-                          }
-                        }}
+                        onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
                         className={`w-full h-full px-2 py-2 text-center font-bold transition-colors ${
-                          focusedRowIndex === index 
+                          focusedRowId === wo.id 
                             ? 'bg-purple-500 text-white' 
                             : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'
                         }`}
-                        style={focusedRowIndex !== index ? { 
+                        style={focusedRowId !== wo.id ? { 
                           background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                           color: 'white'
                         } : undefined}
@@ -595,7 +666,7 @@ export default function SIPs() {
                       </Popover>
                     </td>
                   </tr>
-                  {focusedRowIndex === index && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
+                  {focusedRowId === wo.id && <tr><td colSpan={14} className="h-3 bg-transparent border-none"></td></tr>}
                   </React.Fragment>
                 );
               })}
