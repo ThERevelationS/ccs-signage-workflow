@@ -131,7 +131,7 @@ function LayoutContent({ children }) {
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showAnnouncementManager, setShowAnnouncementManager] = useState(false);
-  const { currentUser, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
+  const { currentUser, sessionToken, isRegistered, logout, getUserFirstName, showLoginDialog } = useAuth();
   
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
@@ -957,7 +957,7 @@ function LayoutContent({ children }) {
           <AnnouncementManager
             isOpen={showAnnouncementManager}
             onClose={() => setShowAnnouncementManager(false)}
-            currentUserEmail={currentUser?.email}
+            sessionToken={sessionToken}
           />
         )}
 
