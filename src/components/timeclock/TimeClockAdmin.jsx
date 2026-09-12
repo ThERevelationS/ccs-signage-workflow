@@ -470,7 +470,7 @@ export default function TimeClockAdmin() {
           <Button type="button" size="sm" variant="outline" onClick={loadData}>Refresh</Button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
           <div className="rounded-lg bg-green-50 border border-green-200 p-3">
             <p className="text-xs text-green-700">Clocked In</p>
             <p className="text-2xl font-bold text-green-800">{clockedInStates.length}</p>
@@ -482,6 +482,10 @@ export default function TimeClockAdmin() {
           <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
             <p className="text-xs text-amber-700">On Break</p>
             <p className="text-2xl font-bold text-amber-800">{onBreakStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-purple-50 border border-purple-200 p-3">
+            <p className="text-xs text-purple-700">Work Paused</p>
+            <p className="text-2xl font-bold text-purple-800">{workPausedStates.length}</p>
           </div>
           <div className={`rounded-lg border p-3 ${transitionalStates.length ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
             <p className={`text-xs ${transitionalStates.length ? "text-blue-700" : "text-gray-500"}`}>In Transition</p>
@@ -496,10 +500,13 @@ export default function TimeClockAdmin() {
             {[...clockedInStates, ...transitionalStates.filter(state => state.status !== "clocked_in")].map(state => {
               const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
               const breakRow = state.active_break_id ? activeBreakById.get(state.active_break_id) : null;
+              const workPauseRow = state.active_work_pause_id ? activeWorkPauseById.get(state.active_work_pause_id) : null;
               const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
               const breakStarted = breakRow?.started_at ? parseISO(breakRow.started_at) : null;
+              const workPauseStarted = workPauseRow?.started_at ? parseISO(workPauseRow.started_at) : null;
               const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
               const validBreakStarted = breakStarted && !Number.isNaN(breakStarted.getTime());
+              const validWorkPauseStarted = workPauseStarted && !Number.isNaN(workPauseStarted.getTime());
               return (
                 <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -515,9 +522,17 @@ export default function TimeClockAdmin() {
                     {state.break_status === "on_break" && !breakRow && (
                       <p className="text-xs text-red-600 mt-1">Break state is missing its active break record — review required.</p>
                     )}
+                    {state.work_pause_status === "paused" && workPauseRow && (
+                      <p className="text-xs text-purple-700 mt-1">
+                        Work Paused{validWorkPauseStarted ? ` since ${format(workPauseStarted, "h:mm a")}` : ""}
+                      </p>
+                    )}
+                    {state.work_pause_status === "paused" && !workPauseRow && (
+                      <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record — review required.</p>
+                    )}
                   </div>
                   <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
-                    {state.break_status === "on_break" && <Coffee className="w-3 h-3 mr-1" />}
+                    {state.work_pause_status === "paused" ? <Pause className="w-3 h-3 mr-1" /> : state.break_status === "on_break" ? <Coffee className="w-3 h-3 mr-1" /> : null}
                     {statusLabel(state)}
                   </Badge>
                 </div>
@@ -534,6 +549,11 @@ export default function TimeClockAdmin() {
         {orphanActiveBreaks.length > 0 && (
           <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
             {orphanActiveBreaks.length} active break record{orphanActiveBreaks.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Do not correct or close the affected shift until the mismatch is reviewed.
+          </div>
+        )}
+        {orphanActiveWorkPauses.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveWorkPauses.length} active Work Pause record{orphanActiveWorkPauses.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Resume/reconcile the affected pause before correcting or closing the shift.
           </div>
         )}
       </div>
