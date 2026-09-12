@@ -31,6 +31,7 @@ const formatDate = value => {
 };
 
 export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdmin, initialTab = "overview", onBack, onEditSchedule, onNewSchedule }) {
+  const retired = equipment?.status === "retired";
   const [tab, setTab] = useState(initialTab);
   const [workOrders, setWorkOrders] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -86,17 +87,18 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
           </div>
           <div className="flex flex-wrap gap-2">
             <Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(equipment.id)}`} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-sm inline-flex items-center gap-2"><Truck className="w-4 h-4" />Vehicle Hub</Link>
-            <Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(equipment.id)}&new=1`} className="px-3 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 text-sm font-medium inline-flex items-center gap-2"><Plus className="w-4 h-4" />New Work Order</Link>
-            {isAdmin && <button onClick={onNewSchedule} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium inline-flex items-center gap-2"><CalendarClock className="w-4 h-4" />New Schedule</button>}
+            {!retired && <Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(equipment.id)}&new=1`} className="px-3 py-2 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 text-sm font-medium inline-flex items-center gap-2"><Plus className="w-4 h-4" />New Work Order</Link>}
+            {isAdmin && !retired && <button onClick={onNewSchedule} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium inline-flex items-center gap-2"><CalendarClock className="w-4 h-4" />New Schedule</button>}
           </div>
         </div>
         <div className="px-3 sm:px-5 border-t border-gray-100 dark:border-slate-800 overflow-x-auto"><div className="flex min-w-max">{tabs.map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`px-3 sm:px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${tab === key ? "border-indigo-600 text-indigo-700 dark:text-indigo-300" : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200"}`}>{label}</button>)}</div></div>
       </div>
 
+      {retired && <div className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-slate-900 dark:border-slate-700 px-4 py-3 text-sm text-gray-700 dark:text-slate-300"><b>Retired archive:</b> maintenance history and schedules remain available for review, but new schedules and new work orders are disabled until this equipment is reactivated.</div>}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
       {loading ? <div className="py-16 flex justify-center"><Loader2 className="w-7 h-7 animate-spin text-gray-400" /></div> : <>
         {tab === "overview" && <Overview equipment={equipment} tasks={tasks} activeOrders={activeOrders} overdueSchedules={overdueSchedules} nextMaintenance={nextMaintenance} historicalOrders={historicalOrders} onOpenSchedule={() => setTab("schedule")} onOpenActive={() => setTab("active")} />}
-        {tab === "schedule" && <ScheduleTab tasks={tasks} isAdmin={isAdmin} onEditSchedule={onEditSchedule} onNewSchedule={onNewSchedule} />}
+        {tab === "schedule" && <ScheduleTab tasks={tasks} isAdmin={isAdmin} retired={retired} onEditSchedule={onEditSchedule} onNewSchedule={onNewSchedule} />}
         {tab === "active" && <WorkOrdersTab equipment={equipment} rows={activeOrders} active />}
         {tab === "history" && <HistoryTab equipment={equipment} workOrders={historicalOrders} logs={logs} />}
         {tab === "usage" && <UsageTab plannedParts={plannedParts} plannedFluids={plannedFluids} partLogs={partLogs} fluidLogs={fluidLogs} />}
@@ -126,9 +128,9 @@ function Overview({ equipment, tasks, activeOrders, overdueSchedules, nextMainte
   </div>;
 }
 
-function ScheduleTab({ tasks, isAdmin, onEditSchedule, onNewSchedule }) {
-  return <Panel title="Maintenance Schedule" icon={CalendarClock} action={isAdmin ? <button onClick={onNewSchedule} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1"><Plus className="w-4 h-4" />New Schedule</button> : null}>
-    <div className="space-y-3">{tasks.map(task => <div key={task.id} className={`rounded-xl border p-3 sm:p-4 ${isOverdue(task) ? "border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20" : "border-gray-200 dark:border-slate-700"}`}><div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><div className="font-semibold text-gray-900 dark:text-slate-100">{task.title}</div>{isOverdue(task) && <span className="text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 px-2 py-0.5">Overdue</span>}<span className="text-xs rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 capitalize">{pretty(task.status)}</span></div><div className="text-sm text-gray-500 dark:text-slate-400 mt-1">{task.type === "one_off" ? "One-time" : pretty(task.frequency)} · due {formatDate(task.start_date)} · {pretty(task.priority)} priority</div>{task.description && <div className="text-sm text-gray-600 dark:text-slate-300 mt-2 whitespace-pre-wrap">{task.description}</div>}<div className="text-xs text-gray-400 mt-2">{task.parts_needed?.length || 0} planned part item(s) · {task.fluids_needed?.length || 0} planned fluid item(s){task.assigned_to ? ` · assigned ${task.assigned_to}` : ""}</div></div>{isAdmin && <button onClick={() => onEditSchedule(task)} className="shrink-0 text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1"><Pencil className="w-4 h-4" />Edit</button>}</div></div>)}{tasks.length === 0 && <Empty>No maintenance schedules are configured for this equipment.</Empty>}</div>
+function ScheduleTab({ tasks, isAdmin, retired = false, onEditSchedule, onNewSchedule }) {
+  return <Panel title="Maintenance Schedule" icon={CalendarClock} action={isAdmin && !retired ? <button onClick={onNewSchedule} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1"><Plus className="w-4 h-4" />New Schedule</button> : null}>
+    <div className="space-y-3">{tasks.map(task => <div key={task.id} className={`rounded-xl border p-3 sm:p-4 ${isOverdue(task) ? "border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20" : "border-gray-200 dark:border-slate-700"}`}><div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><div className="font-semibold text-gray-900 dark:text-slate-100">{task.title}</div>{isOverdue(task) && <span className="text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300 px-2 py-0.5">Overdue</span>}<span className="text-xs rounded-full bg-gray-100 dark:bg-slate-800 px-2 py-0.5 capitalize">{pretty(task.status)}</span></div><div className="text-sm text-gray-500 dark:text-slate-400 mt-1">{task.type === "one_off" ? "One-time" : pretty(task.frequency)} · due {formatDate(task.start_date)} · {pretty(task.priority)} priority</div>{task.description && <div className="text-sm text-gray-600 dark:text-slate-300 mt-2 whitespace-pre-wrap">{task.description}</div>}<div className="text-xs text-gray-400 mt-2">{task.parts_needed?.length || 0} planned part item(s) · {task.fluids_needed?.length || 0} planned fluid item(s){task.assigned_to ? ` · assigned ${task.assigned_to}` : ""}</div></div>{isAdmin && !retired && <button onClick={() => onEditSchedule(task)} className="shrink-0 text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1"><Pencil className="w-4 h-4" />Edit</button>}</div></div>)}{tasks.length === 0 && <Empty>No maintenance schedules are configured for this equipment.</Empty>}</div>
   </Panel>;
 }
 
