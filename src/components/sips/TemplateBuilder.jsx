@@ -996,8 +996,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-        <div className="w-[95vw] max-w-[1600px] h-[90vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-1 sm:p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full sm:w-[95vw] max-w-[1600px] h-[96vh] sm:h-[90vh] overflow-hidden flex flex-col bg-white rounded-lg sm:rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
             <div><h2 className="text-lg font-bold">Checklist Builder</h2></div>
             <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
@@ -1018,7 +1018,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 py-1.5 border-b bg-white">
-              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-8`}>
+              <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-auto sm:h-8 gap-0.5`}>
                 <TabsTrigger value="selectors" className="text-xs data-[state=active]:bg-white">Select & Apply</TabsTrigger>
                 {isAdmin && (
                   <>
@@ -1032,8 +1032,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
             {/* Select & Apply Tab */}
             <TabsContent value="selectors" className="overflow-y-auto p-3 flex-1" style={{ marginTop: 0 }}>
-              <div className="grid grid-cols-[1fr_2fr_2fr] gap-4 h-full">
-                <div className="flex flex-col h-full">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr_2fr] gap-4 h-auto lg:h-full">
+                <div className="flex flex-col h-auto lg:h-full">
                   {/* Products from Work Order */}
                   {workOrderProducts && workOrderProducts.length > 0 && (
                     <div className="mb-4">
@@ -1093,7 +1093,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </div>
                 </div>
 
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-auto lg:h-full">
                   <h3 className="font-bold text-sm mb-2">Selected ({selectedProducts.length})</h3>
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
@@ -1161,7 +1161,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
 
                 {/* Preview Column */}
-                <div className="border-l pl-3">
+                <div className="border-t pt-3 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-3">
                   <h3 className="font-bold text-sm mb-2">Preview</h3>
                   <div className="bg-gray-50 border rounded-lg p-3 max-h-[60vh] overflow-y-auto">
                     {selectedProducts.length === 0 ? (
@@ -1235,8 +1235,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Sub-Templates Tab */}
-            <TabsContent value="subtemplates" className="overflow-hidden p-3" style={{ marginTop: 0 }}>
-              <div className="grid grid-cols-[200px_1fr_1fr] gap-4 h-full">
+            <TabsContent value="subtemplates" className="overflow-y-auto lg:overflow-hidden p-3" style={{ marginTop: 0 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-4 h-auto lg:h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New sub-template..." className="h-7 text-sm" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
@@ -1416,8 +1416,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </TabsContent>
 
             {/* Product Templates Tab */}
-            <TabsContent value="producttypes" className="overflow-hidden p-3" style={{ marginTop: 0 }}>
-              <div className="grid grid-cols-[200px_1fr_1fr] gap-4 h-full">
+            <TabsContent value="producttypes" className="overflow-y-auto lg:overflow-hidden p-3" style={{ marginTop: 0 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-4 h-auto lg:h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
                   <Input id="newPT" placeholder="New product type..." className="h-7 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
@@ -1612,7 +1612,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {/* Completed Conditions */}
                   <div>
                     <div className="flex items-center gap-2 mb-2 pb-2 border-b border-green-300">
