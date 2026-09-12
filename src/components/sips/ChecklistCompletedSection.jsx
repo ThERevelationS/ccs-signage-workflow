@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
  * Renders the "Completed Items" section at the bottom of ProductChecklistDialog.
  * Extracted to reduce file size.
  */
-export default function ChecklistCompletedSection({ completedChecklist, dropdownConditions, users, isRegistered, updateChecklistItem, setShowOtherPopup }) {
+export default function ChecklistCompletedSection({ completedChecklist, dropdownConditions, users, isRegistered, updateChecklistItem, applyChecklistStatus, setShowOtherPopup }) {
   if (Object.keys(completedChecklist).length === 0) return null;
 
   const totalCount = Object.values(completedChecklist).reduce((sum, g) =>
@@ -38,20 +38,24 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                   const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                   return (
                     <div key={displayItem.id} className="clay-card p-2 bg-green-100/70">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700">Checklist</span>
-                        <span className="font-medium text-sm flex-1 line-through text-gray-500">{displayItem.text}</span>
-                        <Select value={displayItem.approved_by || ""} onValueChange={val => updateChecklistItem(displayItem.id, { approved_by: val })} disabled={!isRegistered}>
-                          <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Answered..." /></SelectTrigger>
-                          <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <Select value={displayItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: displayItem.id }); else if (val !== "select_value") updateChecklistItem(displayItem.id, { custom_dropdown_value: val }); }} disabled={!isRegistered}>
-                          <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Answer...">{displayItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
-                          <SelectContent>
-                            {dropdownConditions.filter(dd => (displayItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
-                            <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
+                          <span className="font-medium text-sm flex-1 line-through text-gray-500 min-w-0">{displayItem.text}</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
+                          <Select value={displayItem.approved_by || ""} onValueChange={val => updateChecklistItem(displayItem.id, { approved_by: val })} disabled={!isRegistered}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-32"><SelectValue placeholder="Answered..." /></SelectTrigger>
+                            <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <Select value={displayItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: displayItem.id }); else if (val !== "select_value") applyChecklistStatus(displayItem.id, val); }} disabled={!isRegistered}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-36"><SelectValue placeholder="Answer...">{displayItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
+                            <SelectContent>
+                              {dropdownConditions.filter(dd => (displayItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
+                              <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   );
@@ -59,7 +63,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
               </div>
             )}
             {Object.entries(group.subTemplates).map(([stName, stItems]) => (
-              <div key={stName} className="ml-4 mt-2 border-l-2 border-green-300 pl-3">
+              <div key={stName} className="ml-0 sm:ml-4 mt-2 border-l-2 border-green-300 pl-2 sm:pl-3">
                 <h4 className="text-sm font-semibold text-green-700 mb-2">🔗 {stName}</h4>
                 <div className="space-y-2">
                   {stItems.map(rawItem => {
@@ -67,20 +71,24 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                     const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                     return (
                       <div key={stItem.id} className="clay-card p-2 bg-green-100/70">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-200 text-green-700">Checklist</span>
-                          <span className="text-sm flex-1 line-through text-gray-500">{stItem.text}</span>
-                          <Select value={stItem.approved_by || ""} onValueChange={val => updateChecklistItem(stItem.id, { approved_by: val })} disabled={!isRegistered}>
-                            <SelectTrigger className="h-6 text-xs w-28"><SelectValue placeholder="Answered..." /></SelectTrigger>
-                            <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <Select value={stItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: stItem.id }); else if (val !== "select_value") updateChecklistItem(stItem.id, { custom_dropdown_value: val }); }} disabled={!isRegistered}>
-                            <SelectTrigger className="h-6 text-xs w-32"><SelectValue placeholder="Answer...">{stItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
-                            <SelectContent>
-                              {dropdownConditions.filter(dd => (stItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
-                              <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
+                            <span className="text-sm flex-1 line-through text-gray-500 min-w-0">{stItem.text}</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
+                            <Select value={stItem.approved_by || ""} onValueChange={val => updateChecklistItem(stItem.id, { approved_by: val })} disabled={!isRegistered}>
+                              <SelectTrigger className="h-8 text-xs w-full sm:w-32"><SelectValue placeholder="Answered..." /></SelectTrigger>
+                              <SelectContent>{users.map(u => <SelectItem key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</SelectItem>)}</SelectContent>
+                            </Select>
+                            <Select value={stItem.custom_dropdown_value || "select_value"} onValueChange={val => { if (val === "other") setShowOtherPopup({ itemId: stItem.id }); else if (val !== "select_value") applyChecklistStatus(stItem.id, val); }} disabled={!isRegistered}>
+                              <SelectTrigger className="h-8 text-xs w-full sm:w-36"><SelectValue placeholder="Answer...">{stItem.custom_dropdown_value || "Answer..."}</SelectValue></SelectTrigger>
+                              <SelectContent>
+                                {dropdownConditions.filter(dd => (stItem.dropdown_ids || []).includes(dd.id)).map(dd => <SelectItem key={dd.id} value={dd.name}>{dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}</SelectItem>)}
+                                <SelectItem value="other" className="text-purple-600 font-medium">+ Other...</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
                     );
