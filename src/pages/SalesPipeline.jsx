@@ -13,11 +13,24 @@ import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
+const EMPTY_PIPELINE_SUMMARY = {
+  openCount: 0,
+  openValue: 0,
+  overdueCount: 0,
+  dueTodayCount: 0,
+  dueCount: 0,
+  upcomingCount: 0,
+  noNextActionCount: 0,
+  quoteNoFollowUpCount: 0,
+  ratedProbabilityCount: 0,
+};
 
 export default function SalesPipeline() {
   const { isRegistered, currentUser } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [recordScope, setRecordScope] = useState("current");
+  const [attentionFilter, setAttentionFilter] = useState("all");
+  const [pipelineSummary, setPipelineSummary] = useState(EMPTY_PIPELINE_SUMMARY);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
   const [showCustomFilterDialog, setShowCustomFilterDialog] = useState(false);
@@ -83,6 +96,17 @@ export default function SalesPipeline() {
     return stored === null ? true : stored === "true";
   };
 
+  const applyAttentionFilter = (value) => {
+    setAttentionFilter(value);
+    setFilterStatus("all");
+  };
+
+  const formatPipelineValue = (value) => new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+
   return (
     <div className="flex flex-col p-4 sm:p-6" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
@@ -124,7 +148,10 @@ export default function SalesPipeline() {
 
             <div className="flex flex-col">
               <span className="text-xs font-medium text-gray-500 mb-1">Workspace</span>
-              <Select value={recordScope} onValueChange={setRecordScope}>
+              <Select value={recordScope} onValueChange={(value) => {
+                setRecordScope(value);
+                setAttentionFilter("all");
+              }}>
                 <SelectTrigger className="w-44 h-9">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
