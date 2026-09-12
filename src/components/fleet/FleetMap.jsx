@@ -299,11 +299,11 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg shadow-md px-3 py-2 border border-gray-200 dark:border-slate-700">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} placeholder="City, neighborhood, ZIP, address" className="flex-1 min-w-0 outline-none text-sm text-gray-700 dark:text-slate-200 bg-transparent" />
-          <button type="button" onClick={() => setLayersOpen(value => !value)} className={`p-1.5 rounded-md transition-colors ${layersOpen ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300" : "text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"}`} title="Map layers and settings" aria-expanded={layersOpen}><Layers className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setLayersOpen(value => !value)} className={`min-h-10 min-w-10 p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${layersOpen ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300" : "text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"}`} title="Map layers and settings" aria-label="Map layers and settings" aria-expanded={layersOpen}><Layers className="w-4 h-4 mx-auto" /></button>
         </div>
       </form>
 
-      <div className="absolute top-[102px] left-3 z-10 flex flex-wrap gap-1.5 max-w-[calc(100%-90px)]">
+      <div className="absolute top-[102px] left-3 z-10 flex flex-wrap gap-1.5 max-w-[calc(100%_-_90px)]">
         <MapAction icon={MapIcon} label="My Fleet" onClick={fitFleet} />
         <MapAction icon={LocateFixed} label="Center Vehicle" onClick={() => centerSelected(16)} disabled={!selectedLocation} />
         <MapAction icon={Navigation} label={prefs.followSelected ? "Following" : "Follow"} active={prefs.followSelected} onClick={() => setBoolPref("followSelected")} disabled={!selectedLocation} />
@@ -330,7 +330,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
 }
 
 function MapAction({ icon: Icon, label, onClick, disabled = false, active = false }) {
-  return <button type="button" onClick={onClick} disabled={disabled} title={label} className={`rounded-lg border px-2.5 py-2 shadow-sm text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed ${active ? "border-indigo-400 bg-indigo-600 text-white" : "border-gray-200 bg-white/95 text-gray-700 hover:bg-white dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200"}`}><Icon className="w-4 h-4" /><span className="hidden xl:inline">{label}</span></button>;
+  return <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label} aria-pressed={active || undefined} className={`min-h-11 rounded-lg border px-2.5 py-2 shadow-sm text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${active ? "border-indigo-400 bg-indigo-600 text-white" : "border-gray-200 bg-white/95 text-gray-700 hover:bg-white dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200"}`}><Icon className="w-4 h-4" /><span className="hidden xl:inline">{label}</span></button>;
 }
 
 function SettingRow({ icon: Icon, label, checked, onChange, disabled = false }) {
