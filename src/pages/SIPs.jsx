@@ -60,6 +60,7 @@ export default function SIPs() {
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     if (!showLoading) setIsRefreshing(true);
+    setBoardError("");
     try {
       const [orders, usersData, taskDescSetting] = await Promise.all([
         loadAllEntityRows({
@@ -105,7 +106,7 @@ export default function SIPs() {
       setLastUpdated(new Date());
     } catch (error) {
       console.error("Error loading work orders:", error);
-      setQuickEditError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
+      setBoardError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -282,121 +283,13 @@ export default function SIPs() {
     <div className="h-full overflow-auto p-6">
       <div className="w-full">
         {/* Header */}
-        <div className="clay-card p-5 sm:p-6 mb-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="clay-card p-6 mb-6">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
-                <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-                  {activeWorkOrders.length} active
-                </Badge>
-              </div>
-              <p className="text-gray-500 mt-1">Production & Installation Planning</p>
-              <p className="text-xs text-gray-400 mt-1">
-                Auto-refreshes every 60 seconds{lastUpdated ? ` • Updated ${format(lastUpdated, "h:mm a")}` : ""}
-              </p>
+              <h1 className="text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
+              <p className="text-gray-500 mt-1">Production & Installation Planning - {workOrders.length} items</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => loadWorkOrders(false)}
-                disabled={isRefreshing}
-                className="gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-              {currentUser?.role === "admin" && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTemplateBuilder(true)}
-                  className="gap-2"
-                >
-                  <Settings2 className="w-4 h-4" />
-                  Checklist Templates
-                </Button>
-              )}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-5">
-            <button type="button" onClick={() => setStatusFilter("all")} className="rounded-xl border bg-white p-3 text-left hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors">
-              <div className="text-xs font-medium text-gray-500">Active Queue</div>
-              <div className="text-2xl font-bold text-gray-900 mt-1">{activeWorkOrders.length}</div>
-            </button>
-            <button type="button" onClick={() => setStatusFilter("attention")} className="rounded-xl border bg-white p-3 text-left hover:border-red-300 hover:bg-red-50/50 transition-colors">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500"><AlertTriangle className="w-3.5 h-3.5 text-red-500" />Needs Attention</div>
-              <div className="text-2xl font-bold text-red-700 mt-1">{attentionCount}</div>
-              <div className="text-[11px] text-gray-400">{overdueCount} overdue</div>
-            </button>
-            <div className="rounded-xl border bg-white p-3">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500"><CalendarClock className="w-3.5 h-3.5 text-amber-500" />Revisit Later</div>
-              <div className="text-2xl font-bold text-amber-700 mt-1">{futureRevisitOrders.length}</div>
-            </div>
-            <button type="button" onClick={() => setStatusFilter("incomplete")} className="rounded-xl border bg-white p-3 text-left hover:border-blue-300 hover:bg-blue-50/50 transition-colors">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />Checklist Open</div>
-              <div className="text-2xl font-bold text-blue-700 mt-1">{incompleteChecklistCount}</div>
-            </button>
-            <div className="rounded-xl border bg-white p-3 col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500"><CircleDollarSign className="w-3.5 h-3.5 text-emerald-600" />Active Value</div>
-              <div className="text-xl font-bold text-emerald-700 mt-1">{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(activeValue)}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="clay-card p-3 sm:p-4 mb-4">
-          <div className="flex flex-col xl:flex-row gap-3 xl:items-center">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search customer, job, task, PM, designer, estimator, estimate/invoice…"
-                className="pl-9 pr-9"
-              />
-              {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700" aria-label="Clear search">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 sm:flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-10 sm:w-[170px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All active</SelectItem>
-                  <SelectItem value="attention">Needs attention</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="due_soon">Due within 7 days</SelectItem>
-                  <SelectItem value="incomplete">Checklist incomplete</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortMode} onValueChange={setSortMode}>
-                <SelectTrigger className="h-10 sm:w-[170px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="meeting">Meeting order</SelectItem>
-                  <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="customer">Customer A-Z</SelectItem>
-                  <SelectItem value="amount">Amount high-low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
-            <span>Showing {visibleActiveWorkOrders.length} of {activeWorkOrders.length} active jobs</span>
-            {(statusFilter !== "all" || searchQuery) && (
-              <button type="button" onClick={() => { setStatusFilter("all"); setSearchQuery(""); }} className="font-medium text-indigo-600 hover:text-indigo-800">
-                Clear filters
-              </button>
-            )}
           </div>
         </div>
 
