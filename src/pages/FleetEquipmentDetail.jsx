@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Gauge,
+  Fuel,
   History,
   Loader2,
   MapPin,
@@ -38,6 +39,7 @@ const TABS = [
   { key: "maintenance", label: "Maintenance" },
   { key: "inspections", label: "Inspections" },
   { key: "parts", label: "Parts" },
+  { key: "fuel", label: "Fuel & Costs" },
   { key: "lifecycle", label: "Lifecycle" },
   { key: "history", label: "History" },
   { key: "timeline", label: "Timeline" },
@@ -247,6 +249,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} retired={retired} />}
         {activeTab === "inspections" && <InspectionsTab equipment={equipment} inspections={inspections} retired={retired} />}
         {activeTab === "parts" && <PartsTab equipment={equipment} parts={parts} retired={retired} />}
+        {activeTab === "fuel" && <FuelTab equipment={equipment} retired={retired} />}
         {activeTab === "lifecycle" && <FleetLifecyclePanel equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
@@ -343,6 +346,37 @@ function PartsTab({ equipment, parts, retired = false }) {
     <Card title={`${equipment.name} Parts`} icon={PackageOpen} action={!retired ? <div className="flex flex-wrap gap-2"><a href={lookupUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Identify part</a><a href={organizeUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Organize parts</a></div> : null}>
       <div className="grid md:grid-cols-2 gap-3">{parts.map(part => { const photo = part.primary_photo_url || part.photo_urls?.[0]; const location = [part.storage_zone, part.storage_cabinet, part.storage_shelf, part.storage_bin].filter(Boolean).join(" · ") || part.location || "Unlocated"; const isLow = part.enable_low_stock_alerts !== false && Number(part.quantity_on_hand ?? 0) <= Number(part.minimum_stock ?? 0); return <Link key={part.id} to={`${createPageUrl("FleetParts")}?search=${encodeURIComponent(part.part_number || part.part_name || "")}`} className={`rounded-xl border p-3 flex gap-3 hover:border-indigo-300 dark:hover:border-indigo-700 ${isLow ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/10" : "border-gray-200 dark:border-slate-700"}`}><div className="w-14 h-14 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">{photo ? <img src={photo} alt={part.part_name} className="w-full h-full object-cover" /> : <PackageOpen className="w-5 h-5 text-gray-300" />}</div><div className="min-w-0 flex-1"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 truncate">{part.part_name}</div><div className="text-xs text-gray-500 mt-1 truncate">{part.manufacturer || "—"}{part.part_number ? ` · ${part.part_number}` : ""}</div><div className={`text-xs mt-1 ${location === "Unlocated" ? "text-amber-700 dark:text-amber-300" : "text-gray-500 dark:text-slate-400"}`}>{location}</div><div className="mt-1 text-xs font-semibold text-gray-700 dark:text-slate-300">Stock {part.quantity_on_hand ?? 0}{isLow ? " · low" : ""}</div></div></Link>; })}{parts.length === 0 && <div className="md:col-span-2"><Empty>No Fleet parts are specifically assigned to this equipment yet.</Empty>{!retired && <a href={lookupUrl} target="_blank" rel="noreferrer" className="inline-flex mt-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">Identify and assign the first part</a>}</div>}</div>
     </Card>
+  </div>;
+}
+
+function FuelTab({ equipment, retired = false }) {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const year = new Date().getFullYear();
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true); setError("");
+    base44.functions.invoke("fleetFuelAction", { action: "summary", equipment_id: equipment.id, start_date: `${year}-01-01`, end_date: `${year}-12-31` })
+      .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setSummary(data || null); })
+      .catch(err => mounted && setError(err?.message || "Unable to load this asset's fuel history."))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [equipment.id, year]);
+  const metrics = summary?.metrics || {};
+  const fuelUrl = `${createPageUrl("FleetFuel")}?equipment=${encodeURIComponent(equipment.id)}&year=${year}`;
+  const recordUrl = `${createPageUrl("FleetFuel")}?equipment=${encodeURIComponent(equipment.id)}&new=1`;
+  const money = value => Number(value || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+  const number = value => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return <div className="space-y-5">
+    {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+    {loading ? <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div> : <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><Metric label={`${year} fuel spend`} value={money(metrics.fuel_cost)} /><Metric label="Gallons" value={number(metrics.gallons)} /><Metric label="Fill-to-fill MPG" value={metrics.fill_to_fill_mpg == null ? "—" : number(metrics.fill_to_fill_mpg)} /><Metric label="Fuel + maintenance" value={money(metrics.total_operating_cost)} /></div>
+      <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">MPG and per-mile figures are fill-to-fill estimates from consecutive fuel-entry odometer readings. Fuel + maintenance is recorded operating cost, not total cost of ownership.</div>
+      <Card title={`${equipment.name} Fuel · ${year}`} icon={Fuel} action={<div className="flex flex-wrap gap-2"><Link to={fuelUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Full fuel history</Link>{!retired && <Link to={recordUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Record fuel</Link>}</div>}>
+        <div className="space-y-2">{(summary?.entries || []).slice().sort((a,b)=>(Date.parse(b.fueled_at || "")||0)-(Date.parse(a.fueled_at || "")||0)).slice(0,8).map(entry => <div key={entry.id} className="rounded-lg border border-gray-200 dark:border-slate-700 p-3"><div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><div className="font-medium text-gray-900 dark:text-slate-100">{entry.fueled_at ? new Date(entry.fueled_at).toLocaleString() : "Fuel entry"}{entry.vendor ? ` · ${entry.vendor}` : ""}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{number(entry.gallons)} gal · {money(entry.total_cost)} · {money(entry.price_per_gallon)}/gal{entry.odometer != null ? ` · ${Number(entry.odometer).toLocaleString()} mi` : ""}</div></div>{entry.receipt_url && <a href={entry.receipt_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Receipt</a>}</div></div>)}{!(summary?.entries || []).length && <Empty>No fuel entries are recorded for this asset in {year}.</Empty>}</div>
+      </Card>
+    </>}
   </div>;
 }
 
