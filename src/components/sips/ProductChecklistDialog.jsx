@@ -46,11 +46,14 @@ export default function ProductChecklistDialog({
   const [pendingRevisitDate, setPendingRevisitDate] = useState(null);
   const [loadedChecklistSnapshot, setLoadedChecklistSnapshot] = useState(undefined);
   const [loadedProductsSnapshot, setLoadedProductsSnapshot] = useState(undefined);
+  const [loadedUiChecklistSnapshot, setLoadedUiChecklistSnapshot] = useState([]);
+  const [loadedUiProductsSnapshot, setLoadedUiProductsSnapshot] = useState([]);
   const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
   const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
   const [saveError, setSaveError] = useState("");
   const [validationDialog, setValidationDialog] = useState(null);
   const [showCompletedItems, setShowCompletedItems] = useState(false);
+  const [discardWarning, setDiscardWarning] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -90,6 +93,7 @@ export default function ProductChecklistDialog({
       // Load products from new structure or migrate old
       if (currentWO.products && Array.isArray(currentWO.products)) {
         setProducts(currentWO.products);
+        setLoadedUiProductsSnapshot(cloneLoadedValue(currentWO.products) || []);
       } else {
         // Migrate old product_1...product_6 to new structure
         const migratedProducts = [];
@@ -104,6 +108,7 @@ export default function ProductChecklistDialog({
           }
         }
         setProducts(migratedProducts);
+        setLoadedUiProductsSnapshot(cloneLoadedValue(migratedProducts) || []);
       }
 
       // Reconstruct hierarchy from IDs if type/parent_id fields are missing
@@ -164,6 +169,7 @@ export default function ProductChecklistDialog({
       );
       
       setChecklist(reconstructedChecklist);
+      setLoadedUiChecklistSnapshot(cloneLoadedValue(reconstructedChecklist) || []);
 
       // Load dropdown conditions
       setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
@@ -525,6 +531,8 @@ export default function ProductChecklistDialog({
       });
       setLoadedChecklistSnapshot(saved.sip_checklist === undefined ? undefined : JSON.parse(JSON.stringify(saved.sip_checklist)));
       setLoadedProductsSnapshot(saved.products === undefined ? undefined : JSON.parse(JSON.stringify(saved.products)));
+      setLoadedUiChecklistSnapshot(JSON.parse(JSON.stringify(savedChecklist)));
+      setLoadedUiProductsSnapshot(JSON.parse(JSON.stringify(savedProducts)));
       setLoadedRevisitDateSnapshot(saved.sip_revisit_date);
       if (markComplete) setLoadedSipCompletedSnapshot(saved.sip_completed);
       setChecklist(savedChecklist);
@@ -961,6 +969,19 @@ export default function ProductChecklistDialog({
   }).length;
   const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
   const completedTaskCount = taskItems.filter(item => item.approved_by).length;
+  const hasUnsavedChanges = !isLoading && (
+    JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
+    JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot)
+  );
+
+  const requestClose = () => {
+    if (isSaving) return;
+    if (hasUnsavedChanges) {
+      setDiscardWarning(true);
+      return;
+    }
+    onClose();
+  };
 
   return (
     <>
@@ -972,6 +993,9 @@ export default function ProductChecklistDialog({
                 {workOrder?.client_name}
                 {workOrder?.description && (
                   <span className="text-base font-normal text-gray-500">— {workOrder.description}</span>
+                )}
+                {hasUnsavedChanges && (
+                  <span className="text-[11px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5">Unsaved changes</span>
                 )}
               </DialogTitle>
               <div className="flex gap-2">
@@ -1959,7 +1983,7 @@ export default function ProductChecklistDialog({
             </div>
           )}
           <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
-            <Button variant="outline" onClick={onClose} disabled={isSaving} className="sm:flex-1 h-10">
+            <Button variant="outline" onClick={requestClose} disabled={isSaving} className="sm:flex-1 h-10">
               Cancel
             </Button>
             {isRegistered && (
@@ -2038,6 +2062,33 @@ export default function ProductChecklistDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>OK</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unsaved changes warning */}
+      <AlertDialog open={discardWarning} onOpenChange={setDiscardWarning}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Discard unsaved SIP changes?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Checklist answers, assignments, items, or product edits made in this window have not been saved yet. Leaving now will discard them.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDiscardWarning(false);
+                onClose();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Discard Changes
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
