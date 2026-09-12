@@ -149,6 +149,33 @@
       "type": "number",
       "default": 0,
       "description": "Completed tracked unpaid break minutes deducted from worked time"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "unreviewed",
+        "approved",
+        "needs_review"
+      ],
+      "default": "unreviewed",
+      "description": "Manager review state for this completed shift; does not itself mean payroll-finalized"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of the latest approval"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Administrator email that approved this completed shift"
+    },
+    "approval_note": {
+      "type": "string",
+      "description": "Optional manager note stored with approval"
+    },
+    "approval_request_id": {
+      "type": "string",
+      "description": "Idempotency key for the latest manager approval action"
     }
   },
   "required": [
