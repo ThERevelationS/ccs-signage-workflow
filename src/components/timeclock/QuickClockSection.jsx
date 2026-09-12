@@ -44,6 +44,9 @@ export default function QuickClockSection({
   const authoritativeSessionUser = employeeSessionUser || shellUser || null;
 
   const [activeEntry, setActiveEntry] = useState(null);
+  const [breakStatus, setBreakStatus] = useState("working");
+  const [activeBreak, setActiveBreak] = useState(null);
+  const [breakSummary, setBreakSummary] = useState({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -64,7 +67,7 @@ export default function QuickClockSection({
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
   const credentialRef = useRef(null);
-  const requestRef = useRef(null);
+  const requestRef = useRef({});
   const notificationTimerRef = useRef(null);
 
   const canUseFace = Boolean(authoritativeSessionToken) && (allUsers || []).some(
@@ -102,15 +105,18 @@ export default function QuickClockSection({
 
   const requestIdFor = (action, email) => {
     const key = `${action}:${String(email || "").trim().toLowerCase()}`;
-    if (requestRef.current?.key === key) return requestRef.current.id;
+    if (requestRef.current?.[key]) return requestRef.current[key];
     const id = newRequestId();
-    requestRef.current = { key, id };
+    requestRef.current = { ...requestRef.current, [key]: id };
     return id;
   };
 
   const clearRequest = (action, email) => {
     const key = `${action}:${String(email || "").trim().toLowerCase()}`;
-    if (requestRef.current?.key === key) requestRef.current = null;
+    if (!requestRef.current?.[key]) return;
+    const next = { ...requestRef.current };
+    delete next[key];
+    requestRef.current = next;
   };
 
   const stopFaceCamera = () => {
@@ -195,9 +201,12 @@ export default function QuickClockSection({
     recognitionLockedRef.current = false;
     await stopAllMedia();
     credentialRef.current = null;
-    requestRef.current = null;
+    requestRef.current = {};
     setSelectedUser(null);
     setActiveEntry(null);
+    setBreakStatus("working");
+    setActiveBreak(null);
+    setBreakSummary({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
     setShowClockOut(false);
     setIsRecognizing(false);
     setRecognitionMethod(null);
@@ -224,6 +233,9 @@ export default function QuickClockSection({
       clearRequest("clock_in", email);
       credentialRef.current = credential;
       setSelectedUser(data.user || user);
+      setBreakStatus(data.break_status || "working");
+      setActiveBreak(data.active_break || null);
+      setBreakSummary(data.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
 
       if (data.status === "already_clocked_in") {
         setActiveEntry(data.entry || null);
@@ -261,6 +273,9 @@ export default function QuickClockSection({
 
       credentialRef.current = credential;
       setSelectedUser(verifiedUser);
+      setBreakStatus(status.break_status || "working");
+      setActiveBreak(status.active_break || null);
+      setBreakSummary(status.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
 
       if (status.status === "clocked_in" && status.entry?.id) {
@@ -441,7 +456,7 @@ export default function QuickClockSection({
     setSelectedUser(null);
     setActiveEntry(null);
     credentialRef.current = null;
-    requestRef.current = null;
+    requestRef.current = {};
     if (canUseFace) await startFaceMode();
     else await startQrMode();
   };
