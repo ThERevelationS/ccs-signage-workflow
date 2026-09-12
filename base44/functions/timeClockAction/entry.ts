@@ -445,6 +445,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         last_action_at: entry.clock_in,
         pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -460,6 +461,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
     if ((!Array.isArray(matches) || matches.length === 0) && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setState(stateEntity, state, 'clocking_in', requestId, {
         status: 'clocked_out', active_entry_id: null, pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
       });
       if (rolledBack) {
         await audit(auditEntity, {
@@ -480,6 +483,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || new Date().toISOString(), pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -496,6 +500,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -511,6 +516,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
     if (entry?.id && entry.status === 'clocked_in' && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
       });
       if (rolledBack) {
         await audit(auditEntity, {
