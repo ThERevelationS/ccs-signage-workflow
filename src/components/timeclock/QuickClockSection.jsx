@@ -495,9 +495,71 @@ export default function QuickClockSection({
     }
   };
 
+  const applyBreakResponse = (data) => {
+    setBreakStatus(data?.break_status || "working");
+    setActiveBreak(data?.break_status === "on_break" ? (data?.break || null) : null);
+    setBreakSummary(data?.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+    if (data?.entry?.id) setActiveEntry(data.entry);
+  };
+
+  const handleStartBreak = async ({ breakType, isPaid }) => {
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
+    }
+    const email = selectedUser.email;
+    const actionKey = `break_start:${breakType}:${isPaid ? "paid" : "unpaid"}`;
+    const requestId = requestIdFor(actionKey, email);
+    setPersistenceError("");
+    try {
+      const result = await invokeTimeClock({
+        action: "break_start",
+        request_id: requestId,
+        break_type: breakType,
+        is_paid: isPaid,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      clearRequest(actionKey, email);
+      applyBreakResponse(result);
+      setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
+      return result;
+    } catch (err) {
+      if (!err.retrySameRequest) clearRequest(actionKey, email);
+      setPersistenceError(err?.message || "Break start was not confirmed by the server.");
+      throw err;
+    }
+  };
+
+  const handleEndBreak = async () => {
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
+    }
+    const email = selectedUser.email;
+    const requestId = requestIdFor("break_end", email);
+    setPersistenceError("");
+    try {
+      const result = await invokeTimeClock({
+        action: "break_end",
+        request_id: requestId,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      clearRequest("break_end", email);
+      applyBreakResponse(result);
+      setRecognitionStatus("Break ended and confirmed by server.");
+      return result;
+    } catch (err) {
+      if (!err.retrySameRequest) clearRequest("break_end", email);
+      setPersistenceError(err?.message || "Break end was not confirmed by the server.");
+      throw err;
+    }
+  };
+
   const handleClockOut = async (data) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock-out identity is no longer verified. Close this dialog and identify again.");
+    }
+
+    if (breakStatus !== "working" || activeBreak?.id) {
+      throw new Error("End the active break before clocking out.");
     }
 
     const email = selectedUser.email;
@@ -691,6 +753,11 @@ export default function QuickClockSection({
           onClose={resetState}
           timeEntry={activeEntry}
           userName={selectedUser.full_name || selectedUser.email}
+          breakStatus={breakStatus}
+          activeBreak={activeBreak}
+          breakSummary={breakSummary}
+          onStartBreak={handleStartBreak}
+          onEndBreak={handleEndBreak}
           onClockOut={handleClockOut}
         />
       )}
