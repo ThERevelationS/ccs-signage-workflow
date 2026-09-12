@@ -114,7 +114,7 @@ export default function VehiclePanel({
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0"><h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 truncate">{displayName}</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">{vehicleDescription}</p></div>
-                {onClose && <button onClick={onClose} className="p-2 -mr-2 -mt-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg" title="Close vehicle panel"><X className="w-4 h-4 text-gray-500 dark:text-slate-400" /></button>}
+                {onClose && <button type="button" onClick={onClose} className="min-h-11 min-w-11 p-2 -mr-2 -mt-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" title="Close vehicle panel" aria-label="Close vehicle panel"><X className="w-4 h-4 text-gray-500 dark:text-slate-400 mx-auto" /></button>}
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-slate-300">
                 <span className={`font-semibold ${driving ? "text-emerald-700 dark:text-emerald-300" : "text-blue-700 dark:text-blue-300"}`}>{driving ? "Driving" : "Parked"}</span>
@@ -138,9 +138,9 @@ export default function VehiclePanel({
           </div>
         </div>
 
-        <div className="flex items-center overflow-x-auto border-t border-gray-100 dark:border-slate-800 px-1 sm:px-2">
+        <div role="tablist" aria-label="Vehicle detail sections" className="flex items-center overflow-x-auto overscroll-x-contain border-t border-gray-100 dark:border-slate-800 px-1 sm:px-2">
           {TABS.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`relative shrink-0 px-2 sm:px-2.5 py-3 text-[10px] font-bold tracking-wide transition-colors ${activeTab === tab.key ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
+            <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className={`relative shrink-0 min-h-11 px-2 sm:px-2.5 py-3 text-[10px] font-bold tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 ${activeTab === tab.key ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>
               {tab.label}
               {tab.key === "alerts" && unreadCount > 0 && <span className="ml-1 inline-flex min-w-[17px] h-[17px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] text-white">{unreadCount}</span>}
               {activeTab === tab.key && <span className="absolute left-2 right-2 bottom-0 h-[3px] rounded-full bg-blue-600" />}
