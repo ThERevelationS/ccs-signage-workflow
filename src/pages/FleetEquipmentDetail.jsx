@@ -26,6 +26,7 @@ import {
   Pencil,
   Plus,
   Save,
+  ShieldCheck,
   ShoppingCart,
   Truck,
   X,
@@ -40,6 +41,7 @@ const TABS = [
   { key: "inspections", label: "Inspections" },
   { key: "parts", label: "Parts" },
   { key: "fuel", label: "Fuel & Costs" },
+  { key: "warranties", label: "Warranties" },
   { key: "lifecycle", label: "Lifecycle" },
   { key: "history", label: "History" },
   { key: "timeline", label: "Timeline" },
@@ -250,6 +252,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "inspections" && <InspectionsTab equipment={equipment} inspections={inspections} retired={retired} />}
         {activeTab === "parts" && <PartsTab equipment={equipment} parts={parts} retired={retired} />}
         {activeTab === "fuel" && <FuelTab equipment={equipment} retired={retired} />}
+        {activeTab === "warranties" && <WarrantyTab equipment={equipment} retired={retired} isAdmin={isAdmin} />}
         {activeTab === "lifecycle" && <FleetLifecyclePanel equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
@@ -375,6 +378,35 @@ function FuelTab({ equipment, retired = false }) {
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">MPG and per-mile figures are fill-to-fill estimates from consecutive fuel-entry odometer readings. Fuel + maintenance is recorded operating cost, not total cost of ownership.</div>
       <Card title={`${equipment.name} Fuel · ${year}`} icon={Fuel} action={<div className="flex flex-wrap gap-2"><Link to={fuelUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Full fuel history</Link>{!retired && <Link to={recordUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Record fuel</Link>}</div>}>
         <div className="space-y-2">{(summary?.entries || []).slice().sort((a,b)=>(Date.parse(b.fueled_at || "")||0)-(Date.parse(a.fueled_at || "")||0)).slice(0,8).map(entry => <div key={entry.id} className="rounded-lg border border-gray-200 dark:border-slate-700 p-3"><div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><div className="font-medium text-gray-900 dark:text-slate-100">{entry.fueled_at ? new Date(entry.fueled_at).toLocaleString() : "Fuel entry"}{entry.vendor ? ` · ${entry.vendor}` : ""}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{number(entry.gallons)} gal · {money(entry.total_cost)} · {money(entry.price_per_gallon)}/gal{entry.odometer != null ? ` · ${Number(entry.odometer).toLocaleString()} mi` : ""}</div></div>{entry.receipt_url && <a href={entry.receipt_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Receipt</a>}</div></div>)}{!(summary?.entries || []).length && <Empty>No fuel entries are recorded for this asset in {year}.</Empty>}</div>
+      </Card>
+    </>}
+  </div>;
+}
+
+function WarrantyTab({ equipment, retired = false, isAdmin = false }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true); setError("");
+    base44.functions.invoke("fleetWarrantyAction", { action: "portfolio", equipment_id: equipment.id })
+      .then(({ data }) => { if (!mounted) return; if (data?.error) throw new Error(data.error); setRows(data?.rows || []); })
+      .catch(err => mounted && setError(err?.message || "Unable to load this asset's warranties."))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [equipment.id]);
+  const attention = rows.filter(row => ["expired","orphaned","expiring_soon"].includes(row.effective_status)).length;
+  const active = rows.filter(row => row.effective_status === "active").length;
+  const claimed = rows.filter(row => row.effective_status === "claimed").length;
+  const listUrl = `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(equipment.id)}`;
+  const addUrl = `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(equipment.id)}&new=1`;
+  return <div className="space-y-5">
+    {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+    {loading ? <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div> : <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><Metric label="Warranties" value={rows.length} /><Metric label="Active" value={active} /><Metric label="Needs attention" value={attention} attention={attention>0} /><Metric label="Claimed" value={claimed} /></div>
+      <Card title={`${equipment.name} Warranties`} icon={ShieldCheck} action={<div className="flex flex-wrap gap-2"><Link to={listUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Warranty center</Link>{isAdmin&&!retired&&<Link to={addUrl} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Add warranty</Link>}</div>}>
+        <div className="space-y-2">{rows.map(row=>{const warranty=row.warranty||{};const danger=['expired','orphaned'].includes(row.effective_status);const warn=row.effective_status==='expiring_soon';return <Link key={warranty.id} to={listUrl} className={`block rounded-xl border p-3 ${danger?"border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/10":warn?"border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10":"border-gray-200 dark:border-slate-700"}`}><div className="flex flex-wrap items-start justify-between gap-2"><div><div className="font-semibold text-gray-900 dark:text-slate-100">{warranty.name}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{pretty(warranty.category)}{warranty.provider?` · ${warranty.provider}`:""}{warranty.end_date?` · ends ${warranty.end_date}`:""}</div></div><Tag>{pretty(row.effective_status)}</Tag></div>{row.reasons?.[0]&&<div className={`text-xs mt-2 ${danger?"text-red-700 dark:text-red-300":warn?"text-amber-700 dark:text-amber-300":"text-gray-500 dark:text-slate-400"}`}>{row.reasons[0]}</div>}</Link>})}{rows.length===0&&<Empty>No warranty coverage is recorded for this asset.</Empty>}</div>
       </Card>
     </>}
   </div>;
