@@ -1,10 +1,11 @@
 import { base44 } from "@/api/base44Client";
 
 let gmapsLoaderPromise = null;
+const googleMaps = () => /** @type {any} */ (window).google?.maps;
 
 export function loadGoogleMaps() {
   if (typeof window === "undefined") return Promise.reject(new Error("No window"));
-  if (window.google?.maps) return Promise.resolve(window.google.maps);
+  if (googleMaps()) return Promise.resolve(googleMaps());
   if (gmapsLoaderPromise) return gmapsLoaderPromise;
 
   gmapsLoaderPromise = (async () => {
@@ -13,8 +14,8 @@ export function loadGoogleMaps() {
     return new Promise((resolve, reject) => {
       const existing = document.getElementById("google-maps-script");
       if (existing) {
-        if (window.google?.maps) return resolve(window.google.maps);
-        existing.addEventListener("load", () => resolve(window.google.maps));
+        if (googleMaps()) return resolve(googleMaps());
+        existing.addEventListener("load", () => resolve(googleMaps()));
         existing.addEventListener("error", reject);
         return;
       }
@@ -23,7 +24,7 @@ export function loadGoogleMaps() {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=weekly`;
       script.async = true;
       script.defer = true;
-      script.onload = () => resolve(window.google.maps);
+      script.onload = () => resolve(googleMaps());
       script.onerror = () => reject(new Error("Failed to load Google Maps"));
       document.head.appendChild(script);
     });
