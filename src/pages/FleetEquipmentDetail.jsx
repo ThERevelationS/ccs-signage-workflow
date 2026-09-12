@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentTimeline from "@/components/fleet/FleetEquipmentTimeline";
 import FleetEquipmentDocuments from "@/components/fleet/FleetEquipmentDocuments";
+import FleetLifecyclePanel from "@/components/fleet/FleetLifecyclePanel";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { buildWeeklyRanges, formatDateTimeShort, formatMiles } from "@/components/fleet/fleetHelpers";
 import { fleetHealthScore } from "@/components/fleet/fleetHealth";
@@ -37,6 +38,7 @@ const TABS = [
   { key: "maintenance", label: "Maintenance" },
   { key: "inspections", label: "Inspections" },
   { key: "parts", label: "Parts" },
+  { key: "lifecycle", label: "Lifecycle" },
   { key: "history", label: "History" },
   { key: "timeline", label: "Timeline" },
   { key: "documents", label: "Documents" },
@@ -236,7 +238,7 @@ export default function FleetEquipmentDetail() {
 
         <div className="sticky top-[60px] z-20 overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white/95 p-1 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
           <div role="tablist" aria-label={`${equipment.name} Fleet sections`} className="flex min-w-max sm:min-w-0">
-            {TABS.map(tab => <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => selectTab(tab.key)} className={`relative min-h-11 px-4 py-2.5 text-sm font-semibold whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab.key ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>{tab.label}{tab.key === "alerts" && unreadAlerts > 0 && <span className={`ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full px-1 text-[10px] ${activeTab === tab.key ? "bg-white text-indigo-700" : "bg-red-600 text-white"}`}>{unreadAlerts}</span>}</button>)}
+            {TABS.filter(tab => tab.key !== "lifecycle" || isAdmin).map(tab => <button key={tab.key} type="button" role="tab" aria-selected={activeTab === tab.key} onClick={() => selectTab(tab.key)} className={`relative min-h-11 px-4 py-2.5 text-sm font-semibold whitespace-nowrap rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab.key ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>{tab.label}{tab.key === "alerts" && unreadAlerts > 0 && <span className={`ml-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full px-1 text-[10px] ${activeTab === tab.key ? "bg-white text-indigo-700" : "bg-red-600 text-white"}`}>{unreadAlerts}</span>}</button>)}
           </div>
         </div>
 
@@ -245,6 +247,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "maintenance" && <MaintenanceTab equipment={equipment} activeOrders={activeOrders} completedOrders={completedOrders} tasks={tasks} maintenanceUrl={maintenanceUrl} retired={retired} />}
         {activeTab === "inspections" && <InspectionsTab equipment={equipment} inspections={inspections} retired={retired} />}
         {activeTab === "parts" && <PartsTab equipment={equipment} parts={parts} retired={retired} />}
+        {activeTab === "lifecycle" && <FleetLifecyclePanel equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
         {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
         {activeTab === "documents" && <FleetEquipmentDocuments equipment={equipment} isAdmin={isAdmin} />}
