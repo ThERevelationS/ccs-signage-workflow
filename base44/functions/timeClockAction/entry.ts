@@ -1300,13 +1300,21 @@ Deno.serve(async (req) => {
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
 
       const now = new Date().toISOString();
-      const intent = await auditEntity.create({
-        action: 'time_approval', outcome: 'pending', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
-        request_id: requestId, time_entry_id: entry.id, reason: note || (decision === 'approve' ? 'Manager reviewed completed shift' : 'Returned shift for manager review'),
-        details: { original: entryAuditSnapshot(entry), decision, note },
-      });
+      const priorApprovalAudits = await auditEntity.filter({ action: 'time_approval', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(priorApprovalAudits)) throw new Error('Approval audit lookup did not return a record list.');
+      if (priorApprovalAudits.length > 1) return Response.json({ success: false, error: 'This approval request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      let intent = priorApprovalAudits[0] || null;
+      if (intent?.outcome === 'confirmed') return Response.json({ success: false, error: 'This approval request was already confirmed but the TimeEntry marker does not match. Admin investigation is required.' }, { status: 409 });
+      if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This approval request was previously blocked. Reload and submit a new approval action.' }, { status: 409 });
+      if (!intent) {
+        intent = await auditEntity.create({
+          action: 'time_approval', outcome: 'pending', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
+          request_id: requestId, time_entry_id: entry.id, reason: note || (decision === 'approve' ? 'Manager reviewed completed shift' : 'Returned shift for manager review'),
+          details: { original: entryAuditSnapshot(entry), decision, note },
+        });
+      }
       if (!intent?.id) throw new Error('Approval audit intent could not be persisted. No TimeEntry was changed.');
 
       const update = decision === 'approve'
