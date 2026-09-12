@@ -30,31 +30,32 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { username, password } = body || {};
 
-    if (!username || !password) {
+    if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || !password) {
       return Response.json({ success: false, error: 'Username and password required' }, { status: 400 });
+    }
+    if (username.length > 128 || password.length > 1024) {
+      return Response.json({ success: false, error: 'Invalid username or password' }, { status: 400 });
     }
 
     const base44 = createClientFromRequest(req);
-    const uname = String(username).toLowerCase().trim();
+    const uname = username.toLowerCase().trim();
 
-    // Look up user directly on AuthorizedEmail (the source of truth for credentials).
-    // Retry on 429 (Cloudflare / rate-limit) with exponential backoff.
-    const filterWithRetry = async (attempts = 4) => {
-      let lastErr;
-      for (let i = 0; i < attempts; i++) {
-        try {
-          return await base44.asServiceRole.entities.AuthorizedEmail.filter({ username: uname });
-        } catch (err) {
-          lastErr = err;
-          const status = err?.status || err?.response?.status;
-          if (status !== 429) throw err;
-          await new Promise((r) => setTimeout(r, 400 * Math.pow(2, i)));
-        }
-      }
-      throw lastErr;
-    };
+    // Look up the user directly on AuthorizedEmail (the credential source of truth).
+    // Respect platform/provider throttling instead of retrying through a 429 signal.
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
-    const users = await filterWithRetry();
+    let users;
+    try {
+      users = await authorized.filter({ username: uname });
+    } catch (lookupError) {
+      const status = lookupError?.status || lookupError?.response?.status;
+      if (status === 429) {
+        return Response.json(
+          { success: false, error: 'Sign in is temporarily rate limited. Try again shortly.' },
+          { status: 429 },
+        );
+      }
+      throw lookupError;
+    }
     if (!Array.isArray(users) || users.length !== 1) {
       if (users?.length > 1) console.error(`verifyLogin duplicate username records for ${uname}`);
       await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH).catch(() => false);
