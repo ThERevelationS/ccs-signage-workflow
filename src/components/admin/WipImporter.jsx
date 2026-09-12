@@ -5,8 +5,10 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, FileSpreadsheet, Calendar, Database, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { importWipSheet } from "@/functions/importWipSheet";
+import { useAuth } from "@/components/auth/EmailGate";
 
 export default function WipImporter() {
+  const { sessionToken } = useAuth();
   const fileInputLatestRef = useRef(null);
   const fileInputAllRef = useRef(null);
   const [status, setStatus] = useState(null); // null | 'uploading' | 'processing' | 'done' | 'error'
@@ -26,7 +28,7 @@ export default function WipImporter() {
       setStatus('processing');
       setMessage("Processing WIP sheets and updating work orders... This may take a minute.");
 
-      const res = await importWipSheet({ fileUrl: file_url, mode });
+      const res = await importWipSheet({ fileUrl: file_url, mode, session_token: sessionToken });
       const data = res.data;
 
       if (data.error) {
