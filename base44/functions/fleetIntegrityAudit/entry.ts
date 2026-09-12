@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (!user || user.role !== 'admin') return Response.json({ error:'Forbidden' }, { status:403 });
 
     const E = base44.asServiceRole.entities;
-    const [equipment,tasks,workOrders,parts,fluids,logs,requests,metadata,liveState,recentBouncieNotifications,receipts,queue] = await Promise.all([
+    const [equipment,tasks,workOrders,parts,fluids,logs,requests,metadata,liveState,recentBouncieNotifications,receipts,queue,meterRules,repairEstimates,lifecycleProfiles,fuelEntries,warranties,reservations,dashboardPreferences,approvalPolicies,partIdentifications,inspectionTemplates,inspections] = await Promise.all([
       loadAllEntityRows({ entity:E.FleetEquipment, sort:'name', label:'Fleet equipment integrity data' }),
       loadAllEntityRows({ entity:E.FleetMaintenanceTask, sort:'-created_date', label:'Fleet maintenance integrity data' }),
       loadAllEntityRows({ entity:E.FleetMaintenanceWorkOrder, sort:'-created_date', label:'Fleet work-order integrity data' }),
@@ -36,12 +36,26 @@ Deno.serve(async (req) => {
       E.BouncieNotification.list('-created_date',500,0).catch(()=>[]),
       loadAllEntityRows({ entity:E.FleetOperationReceipt, sort:'-created_date', label:'Fleet operation-receipt integrity data' }),
       loadAllEntityRows({ entity:E.FleetNotificationQueue, sort:'-created_date', label:'Fleet notification-queue integrity data' }),
+      loadAllEntityRows({ entity:E.FleetMaintenanceMeterRule, sort:'-created_date', label:'Fleet meter-rule integrity data' }),
+      loadAllEntityRows({ entity:E.FleetRepairEstimate, sort:'-created_date', label:'Fleet repair-estimate integrity data' }),
+      loadAllEntityRows({ entity:E.FleetLifecycleProfile, sort:'-created_date', label:'Fleet lifecycle integrity data' }),
+      loadAllEntityRows({ entity:E.FleetFuelEntry, sort:'-fueled_at', label:'Fleet fuel-entry integrity data' }),
+      loadAllEntityRows({ entity:E.FleetWarranty, sort:'-created_date', label:'Fleet warranty integrity data' }),
+      loadAllEntityRows({ entity:E.FleetReservation, sort:'-created_date', label:'Fleet reservation integrity data' }),
+      loadAllEntityRows({ entity:E.FleetDashboardPreference, sort:'-created_date', label:'Fleet dashboard-preference integrity data' }),
+      loadAllEntityRows({ entity:E.FleetRepairApprovalPolicy, sort:'sort_order', label:'Fleet repair-approval integrity data' }),
+      loadAllEntityRows({ entity:E.FleetPartIdentification, sort:'-created_date', label:'Fleet part-identification integrity data' }),
+      loadAllEntityRows({ entity:E.FleetInspectionTemplate, sort:'name', label:'Fleet inspection-template integrity data' }),
+      loadAllEntityRows({ entity:E.FleetInspection, sort:'-started_at', label:'Fleet inspection integrity data' }),
     ]);
 
     const equipmentIds = new Set(equipment.map((r:any)=>r.id));
     const taskById = new Map(tasks.map((r:any)=>[r.id,r]));
+    const workOrderById = new Map(workOrders.map((r:any)=>[r.id,r]));
+    const workOrderIds = new Set(workOrders.map((r:any)=>r.id));
     const partIds = new Set(parts.map((r:any)=>r.id));
     const fluidIds = new Set(fluids.map((r:any)=>r.id));
+    const inspectionTemplateIds = new Set(inspectionTemplates.map((r:any)=>r.id));
     const findings:any[] = [];
     const add = (severity:string, code:string, title:string, items:any[], description:string) => {
       if (!items.length) return;
