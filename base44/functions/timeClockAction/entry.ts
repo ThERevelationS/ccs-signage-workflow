@@ -194,6 +194,7 @@ async function ensureState(stateEntity: any, target: any) {
     user_name: target?.full_name || email,
     status: 'clocked_out',
     break_status: 'working',
+    work_pause_status: 'working',
   });
   rows = await stateEntity.filter({ user_email: email });
   if (!Array.isArray(rows) || rows.length !== 1) {
@@ -338,6 +339,90 @@ async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, s
         });
         return rolledBack;
       }
+    }
+  }
+
+  return freshState(stateEntity, state.id);
+}
+
+function workPauseStatusOf(state: any) {
+  const value = String(state?.work_pause_status || 'working');
+  return ['working', 'pausing', 'paused', 'resuming'].includes(value) ? value : 'working';
+}
+
+async function setWorkPauseState(stateEntity: any, state: any, expectedPauseStatus: string, expectedRequestId: string | null, nextFields: any) {
+  const query: any = {
+    id: state.id,
+    updated_date: state.updated_date,
+    status: 'clocked_in',
+    work_pause_status: expectedPauseStatus,
+  };
+  if (expectedRequestId !== null) query.last_work_pause_request_id = expectedRequestId;
+  const result = await stateEntity.updateMany(query, { $set: nextFields });
+  if (!result || typeof result.updated !== 'number') throw new Error('Time Clock Work Pause state update could not be verified.');
+  if (result.updated !== 1) return null;
+  return freshState(stateEntity, state.id);
+}
+
+async function workPauseSummaryForEntry(workPauseEntity: any, entryId: string, userEmail: string) {
+  const rows = await workPauseEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'completed' });
+  if (!Array.isArray(rows)) throw new Error('Completed Work Pause lookup did not return a record list.');
+  let total = 0;
+  for (const row of rows) total += Math.max(0, Math.round(Number(row?.duration_minutes || 0)));
+  return { count: rows.length, total_minutes: total };
+}
+
+async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor }: any) {
+  if (state?.status !== 'clocked_in') return state;
+  const pauseStatus = workPauseStatusOf(state);
+  if (!['pausing', 'resuming'].includes(pauseStatus)) return state;
+  const requestId = String(state.last_work_pause_request_id || '');
+  const started = state.work_pause_pending_started_at ? new Date(state.work_pause_pending_started_at) : null;
+  const ageMs = started && Number.isFinite(started.getTime()) ? Date.now() - started.getTime() : Number.POSITIVE_INFINITY;
+
+  if (pauseStatus === 'pausing') {
+    const matches = requestId
+      ? await workPauseEntity.filter({ user_email: target.email, time_entry_id: state.active_entry_id, start_request_id: requestId })
+      : [];
+    if (!Array.isArray(matches)) throw new Error('Work Pause start recovery lookup did not return a record list.');
+    if (matches.length > 1) throw new Error('Work Pause start recovery is ambiguous.');
+    if (matches.length === 1 && matches[0]?.status === 'active') {
+      const pauseRow = matches[0];
+      const recovered = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+        work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Recovered interrupted Work Pause start finalization', details: { work_pause_id: pauseRow.id },
+        });
+        return recovered;
+      }
+    }
+    if (matches.length === 0 && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+        work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
+      });
+      if (rolledBack) return rolledBack;
+    }
+  }
+
+  if (pauseStatus === 'resuming') {
+    const pauseRow = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+    if (pauseRow?.id && pauseRow.status === 'completed' && String(pauseRow.resume_request_id || '') === requestId) {
+      const recovered = await setWorkPauseState(stateEntity, state, 'resuming', requestId, {
+        work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
+      });
+      if (recovered) return recovered;
+    }
+    if (pauseRow?.id && pauseRow.status === 'active' && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setWorkPauseState(stateEntity, state, 'resuming', requestId, {
+        work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
+      });
+      if (rolledBack) return rolledBack;
     }
   }
 
