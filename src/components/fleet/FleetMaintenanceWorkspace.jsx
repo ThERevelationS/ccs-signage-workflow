@@ -20,6 +20,7 @@ import {
   Plus,
   Truck,
   Wrench,
+  CircleDot,
 } from "lucide-react";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
@@ -80,6 +81,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
     ["schedule", "Schedule"],
     ["meter", "Mileage / Hours"],
     ["active", "Active Work"],
+    ["timeline", "Timeline"],
     ["history", "History"],
     ["usage", "Parts & Fluids"],
   ];
@@ -109,6 +111,7 @@ export default function FleetMaintenanceWorkspace({ equipment, tasks = [], isAdm
         {tab === "schedule" && <ScheduleTab tasks={tasks} meterRows={meterRows} isAdmin={isAdmin} retired={retired} onEditSchedule={onEditSchedule} onNewSchedule={onNewSchedule} />}
         {tab === "meter" && <MeterTab equipment={equipment} tasks={tasks} rows={meterRows} isAdmin={isAdmin} retired={retired} onAdd={() => setMeterDialog({ rule: null })} onEdit={rule => setMeterDialog({ rule })} />}
         {tab === "active" && <WorkOrdersTab equipment={equipment} rows={activeOrders} active />}
+        {tab === "timeline" && <MaintenanceTimeline equipment={equipment} tasks={tasks} workOrders={workOrders} logs={logs} meterRows={meterRows} />}
         {tab === "history" && <HistoryTab equipment={equipment} workOrders={historicalOrders} logs={logs} />}
         {tab === "usage" && <UsageTab plannedParts={plannedParts} plannedFluids={plannedFluids} partLogs={partLogs} fluidLogs={fluidLogs} />}
       </>}
