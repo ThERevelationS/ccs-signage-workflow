@@ -2,5 +2,27 @@
   "name": "Nope2",
   "type": "object",
   "properties": {},
-  "required": []
+  "required": [],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_accidental_schema__"
+      }
+    }
+  }
 }
