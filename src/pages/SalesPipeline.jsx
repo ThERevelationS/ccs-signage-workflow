@@ -22,6 +22,9 @@ const EMPTY_PIPELINE_SUMMARY = {
   upcomingCount: 0,
   noNextActionCount: 0,
   quoteNoFollowUpCount: 0,
+  staleCount: 0,
+  trackedActivityCount: 0,
+  untrackedActivityCount: 0,
   ratedProbabilityCount: 0,
 };
 
@@ -298,7 +301,7 @@ export default function SalesPipeline() {
 
         {!showPendingImports && recordScope !== "history" && (
           <div className="mb-3 space-y-2">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
                 <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
@@ -324,6 +327,11 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-violet-900">{pipelineSummary.noNextActionCount}</div>
                 <div className="mt-1 text-xs text-violet-700/80">No follow-up or task deadline</div>
               </button>
+              <button type="button" onClick={() => applyAttentionFilter("stale")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "stale" ? "border-rose-400 bg-rose-50" : "border-rose-200 bg-white hover:border-rose-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-rose-700">Stale 14+ Days</div>
+                <div className="mt-1 text-2xl font-bold text-rose-900">{pipelineSummary.staleCount}</div>
+                <div className="mt-1 text-xs text-rose-700/80">Verified sales activity only</div>
+              </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
@@ -332,6 +340,8 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities</button>
               {pipelineSummary.ratedProbabilityCount === 0 && (
                 <span className="ml-auto text-xs text-gray-500">Weighted value is hidden until probability is actually being used.</span>
