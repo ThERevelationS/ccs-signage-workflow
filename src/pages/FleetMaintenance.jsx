@@ -47,7 +47,7 @@ export default function FleetMaintenance() {
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState(requestedEquipment ? "workspace" : requestedStatus ? "all_schedules" : requestedView === "calendar" ? "calendar" : "equipment");
   const [selectedEquipmentId, setSelectedEquipmentId] = useState(requestedEquipment);
-  const [workspaceInitialTab, setWorkspaceInitialTab] = useState(["overview", "schedule", "active", "history", "usage"].includes(requestedTab) ? requestedTab : "overview");
+  const [workspaceInitialTab, setWorkspaceInitialTab] = useState(["overview", "schedule", "meter", "active", "history", "usage"].includes(requestedTab) ? requestedTab : "overview");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(["pending", "in_progress", "completed", "overdue"].includes(requestedStatus) ? requestedStatus : "all");
   const [equipmentFilter, setEquipmentFilter] = useState("all");
