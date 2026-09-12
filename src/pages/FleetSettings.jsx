@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
+import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
@@ -294,6 +295,8 @@ export default function FleetSettings() {
         <button onClick={()=>runCutoverAction("enable_public_reporting")} disabled={!!actionBusy || !gates.maintenance_generation_enabled || !!gates.public_reporting_enabled} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{gates.public_reporting_enabled?"Public reporting ON":actionBusy==="enable_public_reporting"?"Enabling…":"Enable public reporting"}</button>
       </div>}
     </div>
+
+    <FleetRepairApprovalPolicies />
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Automation Health</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Durable Fleet-scoped heartbeats and delivery state. Scheduled jobs now leave a summary even when nothing is due.</p></div><Activity className="w-5 h-5 text-gray-400 shrink-0"/></div>
