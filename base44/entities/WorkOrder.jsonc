@@ -485,6 +485,10 @@
       "type": "string",
       "format": "date"
     },
+    "lost_reason": {
+      "type": "string",
+      "description": "Sales reason captured when an opportunity is marked Lost. Preserved in change history when reopened."
+    },
     "probability": {
       "type": "number"
     },
