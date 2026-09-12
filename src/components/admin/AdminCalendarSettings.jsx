@@ -22,7 +22,7 @@ import {
   updateCalendarEventIfUnchanged,
 } from "@/components/calendar/calendarEventPersistence";
 
-export default function AdminCalendarSettings() {
+export default function AdminCalendarSettings({ adminCapability }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
@@ -99,8 +99,8 @@ export default function AdminCalendarSettings() {
     setEventError("");
     try {
       await deleteCalendarEventIfUnchanged({
-        entity: base44.entities.CalendarEvent,
         event,
+        adminCapability,
         label: `Calendar event ${event.title || event.id} deletion`,
       });
       await loadData();
@@ -330,13 +330,14 @@ export default function AdminCalendarSettings() {
           isOpen={showEventForm}
           onClose={() => setShowEventForm(false)}
           onSaved={loadData}
+          adminCapability={adminCapability}
         />
       )}
     </div>
   );
 }
 
-function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
+function AdminEventFormDialog({ event, isOpen, onClose, onSaved, adminCapability }) {
   const [form, setForm] = useState({
     title: "", description: "", start_datetime: "", end_datetime: "",
     all_day: false, event_type: "company", color: "#7C3AED",
@@ -378,15 +379,15 @@ function AdminEventFormDialog({ event, isOpen, onClose, onSaved }) {
       });
       if (event?.id) {
         await updateCalendarEventIfUnchanged({
-          entity: base44.entities.CalendarEvent,
           event,
           nextFields: data,
+          adminCapability,
           label: `Calendar event ${event.title || event.id}`,
         });
       } else {
         await createCalendarEventWithRecovery({
-          entity: base44.entities.CalendarEvent,
           data,
+          adminCapability,
           label: `Calendar event ${data.title}`,
         });
       }
