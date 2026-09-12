@@ -25,7 +25,8 @@ import {
   LogIn,
   LogOut,
   Lock,
-  Settings
+  Settings,
+  Pause
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
@@ -423,6 +424,13 @@ export default function TimeClock() {
                           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                             <Coffee className="w-3 h-3" />
                             Lunch: {entry.lunch_minutes} min
+                          </div>
+                        )}
+
+                        {Number(entry.tracked_work_pause_minutes || 0) > 0 && (
+                          <div className="flex items-center gap-2 text-sm text-purple-700 mb-2">
+                            <Pause className="w-3 h-3" />
+                            Work Paused: {entry.tracked_work_pause_minutes} min excluded from worked time
                           </div>
                         )}
 
