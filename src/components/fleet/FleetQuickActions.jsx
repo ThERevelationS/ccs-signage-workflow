@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { CalendarClock, ClipboardList, Plus, Search, ShoppingCart, Sparkles, Truck, X } from "lucide-react";
+import { CalendarClock, ClipboardCheck, ClipboardList, Plus, Search, ShoppingCart, Sparkles, Truck, X } from "lucide-react";
 
 const actions = [
   { label: "New work order", page: "FleetWorkOrders", query: "new=1", icon: ClipboardList },
   { label: "Maintenance", page: "FleetMaintenance", icon: CalendarClock },
+  { label: "Start inspection", page: "FleetInspections", icon: ClipboardCheck },
   { label: "Request part / fluid", page: "FleetRequests", query: "new=1", icon: ShoppingCart },
   { label: "Identify / organize part", page: "FleetParts", query: "identify=1", icon: Sparkles },
   { label: "Equipment", page: "FleetEquipment", icon: Truck },
