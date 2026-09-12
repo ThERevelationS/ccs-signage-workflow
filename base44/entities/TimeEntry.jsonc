@@ -129,6 +129,26 @@
     "last_correction_request_id": {
       "type": "string",
       "description": "Correction request record that most recently changed this TimeEntry"
+    },
+    "break_tracking_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this shift used authoritative tracked break records"
+    },
+    "tracked_break_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Total completed tracked break minutes"
+    },
+    "tracked_paid_break_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Completed tracked paid break minutes"
+    },
+    "tracked_unpaid_break_minutes": {
+      "type": "number",
+      "default": 0,
+      "description": "Completed tracked unpaid break minutes deducted from worked time"
     }
   },
   "required": [
