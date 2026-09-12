@@ -48,6 +48,16 @@ export async function withRateLimitRetry(fn) {
  * unreadable page, and de-duplicates by entity id so callers never silently
  * estimate from a partial catalog.
  */
+/**
+ * @param {{
+ *   entity?: any,
+ *   query?: Record<string, any> | null,
+ *   sort?: string | null,
+ *   pageSize?: number,
+ *   maxRows?: number,
+ *   label?: string,
+ * }} [options]
+ */
 export async function loadAllEntityRows({
   entity,
   query = null,
