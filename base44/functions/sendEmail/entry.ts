@@ -1,27 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { EmailClient } from 'npm:@azure/communication-email';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   try {
+    const base44 = createClientFromRequest(req);
+    const payload = await req.json().catch(() => ({}));
+    const actor = await authenticateSignShopSession(base44, payload?.session_token);
+    if (actor?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const connectionString = Deno.env.get("AZURE_EMAIL_CONNECTION_STRING");
     if (!connectionString) {
       return Response.json({ error: 'Azure email not configured' }, { status: 503 });
     }
 
-    const base44 = createClientFromRequest(req);
-    let user = null;
-    try {
-      user = await base44.auth.me();
-    } catch (e) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const emailClient = new EmailClient(connectionString);
-    const payload = await req.json().catch(() => ({}));
     const { to, subject, body, from_email, from_name } = payload || {};
 
     if (!to || !subject || !body || !from_email) {
@@ -58,7 +53,11 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, id: result.id, status: result.status });
   } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
     console.error('sendEmail error:', error?.message || error);
-    return Response.json({ error: 'Email could not be sent safely' }, { status: 500 });
+    return Response.json({
+      error: safeStatus === 500 ? 'Email could not be sent safely' : error.message,
+    }, { status: safeStatus });
   }
 });
