@@ -837,13 +837,30 @@ export default function AdminSettings() {
     }
   };
 
-  const handleFaceRecognized = (recognizedUser) => {
-    const matched = allUsers.find(u => u.id === recognizedUser.id || u.email === recognizedUser.email);
-    if (matched?.role === 'admin') {
-      setIsUnlocked(true);
-      sessionStorage.setItem('adminUnlocked', 'true');
-    } else {
+  const handleFaceRecognized = async (recognizedUser, descriptor) => {
+    const matched = allUsers.find(u => u.id === recognizedUser?.id || u.email === recognizedUser?.email);
+    if (matched?.role !== 'admin') {
       setPasswordError("Face recognized but admin privileges required");
+      return;
+    }
+    if (!Array.isArray(descriptor) || descriptor.length !== 128) {
+      setPasswordError("Admin face verification could not be completed safely. Please use your password.");
+      return;
+    }
+
+    setIsVerifying(true);
+    setPasswordError("");
+    try {
+      const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { face_descriptor: descriptor });
+      const accessData = accessRes?.data || accessRes;
+      if (!accessData?.success || !accessData?.capability || String(accessData?.user?.id || '') !== String(matched.id || '')) {
+        throw new Error(accessData?.error || "Admin face could not be verified by the server.");
+      }
+      applyAdminAccess(accessData);
+    } catch (error) {
+      setPasswordError(error?.response?.data?.error || error?.message || "Admin face verification failed.");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
