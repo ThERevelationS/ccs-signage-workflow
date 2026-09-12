@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -66,10 +67,8 @@ function computeMatchScore(extracted, wo) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const { pending_import_id, extracted_data } = body;
 
     if (!pending_import_id || !extracted_data) {
