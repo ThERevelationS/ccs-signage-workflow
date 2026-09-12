@@ -23,7 +23,7 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, isRegistered }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, isRegistered }) {
   return (
     <div className="space-y-3 p-3">
       {workOrders.map((wo) => {
@@ -47,7 +47,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               </div>
               {status && (
                 <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-                  <Select value={wo.sales_status || "lead"} onValueChange={(value) => onUpdateWorkOrder?.(wo.id, "sales_status", value)} disabled={!isRegistered}>
+                  <Select value={wo.sales_status || "lead"} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered}>
                     <SelectTrigger className={`h-8 w-[112px] border-0 text-xs font-medium ${status.color}`}>
                       <SelectValue />
                     </SelectTrigger>
