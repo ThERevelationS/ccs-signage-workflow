@@ -739,11 +739,78 @@ export default function SIPs() {
 
         {/* Future Revisit Section */}
         {visibleFutureRevisitOrders.length > 0 && (
-          <div className="clay-card p-4 w-full mt-6 overflow-x-auto" style={{ borderLeft: '4px solid #f59e0b' }}>
-            <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+          <div className="clay-card p-3 sm:p-4 w-full mt-6" style={{ borderLeft: '4px solid #f59e0b' }}>
+            <h3 className="text-sm font-semibold text-amber-700 mb-3 flex flex-wrap items-center gap-2">
               <CalendarClock className="w-4 h-4" /> Revisit Later ({visibleFutureRevisitOrders.length})
               <span className="text-xs text-gray-400 font-normal">— future revisit date set, not in active queue</span>
             </h3>
+
+            <div className="lg:hidden space-y-3">
+              {visibleFutureRevisitOrders.map((wo) => {
+                const progress = getChecklistProgress(wo);
+                const revisitDate = parseLocalDate(wo.sip_revisit_date);
+                return (
+                  <div key={wo.id} className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <CalendarClock className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                          <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                          <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                        </button>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
+                      </div>
+                      <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                    </div>
+
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
+                      <div className="text-[11px] uppercase tracking-wide text-amber-600 font-medium">Returns to active SIPs</div>
+                      <div className="text-base font-bold text-amber-800 mt-0.5">{revisitDate && !isNaN(revisitDate) ? format(revisitDate, "MMM d, yyyy") : "Date unavailable"}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
+                      <div><span className="text-gray-400 block">Deadline</span><span className="font-medium text-gray-700">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "—"}</span></div>
+                      <div><span className="text-gray-400 block">PM</span><span className="font-medium text-gray-700 truncate block">{wo.project_manager || "—"}</span></div>
+                      <div><span className="text-gray-400 block">Amount</span><span className="font-medium text-gray-700">{wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "—"}</span></div>
+                      <div><span className="text-gray-400 block">Checklist</span><span className="font-medium text-gray-700">{progress.completed}/{progress.total}</span></div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-amber-100">
+                      <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="justify-center bg-white">
+                        <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="justify-center bg-white">Open Work Order</Button>
+                    </div>
+
+                    <Popover
+                      open={openDatePopover === `revisit-future-mobile-${wo.id}`}
+                      onOpenChange={(open) => setOpenDatePopover(open ? `revisit-future-mobile-${wo.id}` : null)}
+                    >
+                      <PopoverTrigger asChild disabled={!isRegistered}>
+                        <Button variant="ghost" size="sm" className="w-full mt-2 text-amber-700 hover:bg-amber-100">Change Revisit Date</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={parseLocalDate(wo.sip_revisit_date)}
+                          onSelect={(date) => {
+                            updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                            setOpenDatePopover(null);
+                          }}
+                        />
+                        <div className="p-2 border-t">
+                          <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear date & return to active</button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full border-collapse text-sm" style={{ tableLayout: 'auto', minWidth: '900px' }}>
               <thead className="bg-amber-50">
                 <tr className="border-b">
@@ -811,13 +878,48 @@ export default function SIPs() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
         {/* Completed WIP Items Section */}
         {visibleCompletedWipItems.length > 0 && (
-          <div className="clay-card p-4 w-full mt-6">
+          <div className="clay-card p-3 sm:p-4 w-full mt-6">
             <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600" />Completed WIP Items ({visibleCompletedWipItems.length})</h3>
+
+            <div className="lg:hidden space-y-3">
+              {visibleCompletedWipItems.map((wo) => (
+                <div key={wo.id} className="rounded-xl border border-green-200 bg-green-50/40 p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                        <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                        <span className="truncate">{wo.client_name || "Unnamed"}</span>
+                      </button>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.current_task_description || wo.description || "No task description"}</p>
+                    </div>
+                    <Checkbox checked={true} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
+                    <div><span className="text-gray-400 block">Deadline</span><span className="font-medium text-gray-700">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "—"}</span></div>
+                    <div><span className="text-gray-400 block">PM</span><span className="font-medium text-gray-700 truncate block">{wo.project_manager || "—"}</span></div>
+                    <div><span className="text-gray-400 block">Designer</span><span className="font-medium text-gray-700 truncate block">{wo.designer || "—"}</span></div>
+                    <div><span className="text-gray-400 block">Amount</span><span className="font-medium text-gray-700">{wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "—"}</span></div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-green-100">
+                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="w-full justify-center bg-white">Open Work Order</Button>
+                  </div>
+                  {isRegistered && <p className="text-[11px] text-gray-400 text-center mt-2">Uncheck the box to return this WIP item to the active queue.</p>}
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
               <thead className="bg-gray-50">
                 <tr className="border-b">
@@ -863,6 +965,7 @@ export default function SIPs() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
