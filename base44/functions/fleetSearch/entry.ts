@@ -49,8 +49,16 @@ Deno.serve(async (req) => {
     const Part = base44.asServiceRole.entities.FleetPart;
     const Fluid = base44.asServiceRole.entities.FleetFluid;
     const Request = base44.asServiceRole.entities.FleetPartFluidRequest;
+    const Inspection = base44.asServiceRole.entities.FleetInspection;
+    const InspectionTemplate = base44.asServiceRole.entities.FleetInspectionTemplate;
+    const Warranty = base44.asServiceRole.entities.FleetWarranty;
+    const Reservation = base44.asServiceRole.entities.FleetReservation;
+    const FuelEntry = base44.asServiceRole.entities.FleetFuelEntry;
+    const Lifecycle = base44.asServiceRole.entities.FleetLifecycleProfile;
+    const RepairEstimate = base44.asServiceRole.entities.FleetRepairEstimate;
+    const isAdmin = user.role === 'admin';
 
-    const [equipmentRows, metadataRows, workOrderRows, taskRows, partRows, fluidRows, requestRows] = await Promise.all([
+    const [equipmentRows, metadataRows, workOrderRows, taskRows, partRows, fluidRows, requestRows, inspectionRows, inspectionTemplateRows, warrantyRows, reservationRows, fuelRows, lifecycleRows, estimateRows] = await Promise.all([
       Equipment.filter({ $or: [
         { name: regex }, { make: regex }, { model: regex }, { vin: regex },
         { serial_number: regex }, { license_plate: regex }, { location: regex },
@@ -78,6 +86,30 @@ Deno.serve(async (req) => {
         { item_name: regex }, { part_number: regex }, { manufacturer_brand: regex },
         { requested_by_person: regex }, { justification: regex },
       ] }, '-created_date', LIMIT),
+      Inspection.filter({ $or: [
+        { template_name: regex }, { inspection_type: regex }, { inspector_email: regex },
+        { inspector_name: regex }, { status: regex }, { notes: regex },
+      ] }, '-started_at', LIMIT),
+      InspectionTemplate.filter({ $or: [
+        { name: regex }, { description: regex }, { inspection_type: regex },
+      ] }, '-updated_date', LIMIT),
+      Warranty.filter({ $or: [
+        { name: regex }, { category: regex }, { provider: regex }, { reference_number: regex },
+        { status: regex }, { coverage_description: regex }, { contact: regex }, { notes: regex },
+      ] }, '-updated_date', LIMIT),
+      Reservation.filter({ $or: [
+        { reserved_by_email: regex }, { reserved_by_name: regex }, { assignment_label: regex },
+        { job_site: regex }, { status: regex }, { notes: regex },
+      ] }, '-updated_date', LIMIT),
+      FuelEntry.filter({ $or: [
+        { vendor: regex }, { notes: regex }, { source: regex },
+      ] }, '-fueled_at', LIMIT),
+      isAdmin ? Lifecycle.filter({ $or: [
+        { replacement_status: regex }, { notes: regex },
+      ] }, '-updated_date', LIMIT) : Promise.resolve([]),
+      isAdmin ? RepairEstimate.filter({ $or: [
+        { status: regex }, { approval_tier: regex }, { notes: regex }, { mechanic_name: regex }, { estimate_source: regex },
+      ] }, '-updated_date', LIMIT) : Promise.resolve([]),
     ]);
 
     const equipmentById = new Map<string, any>();
@@ -91,6 +123,12 @@ Deno.serve(async (req) => {
     for (const row of workOrderRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
     for (const row of taskRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
     for (const row of requestRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of inspectionRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of warrantyRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of reservationRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of fuelRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of lifecycleRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
+    for (const row of estimateRows || []) if (row.equipment_id) relatedEquipmentIds.add(String(row.equipment_id));
     for (const id of relatedEquipmentIds) {
       if (equipmentById.has(id)) continue;
       const row = await Equipment.get(id).catch(() => null);
