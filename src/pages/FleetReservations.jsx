@@ -15,12 +15,13 @@ const blank=(equipmentId,user)=>({...initialWindow(),equipment_id:equipmentId||"
 export default function FleetReservations(){
   const params=useMemo(()=>new URLSearchParams(window.location.search),[]);
   const requestedEquipment=params.get("equipment")||"all";
+  const requestedView=params.get("view")||"active";
   const requestedNew=params.get("new")==="1";
   const [equipment,setEquipment]=useState([]);
   const [reservations,setReservations]=useState([]);
   const [user,setUser]=useState(null);
   const [equipmentId,setEquipmentId]=useState(requestedEquipment);
-  const [view,setView]=useState("active");
+  const [view,setView]=useState(["active","current","upcoming","attention","history"].includes(requestedView)?requestedView:"active");
   const [search,setSearch]=useState("");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
