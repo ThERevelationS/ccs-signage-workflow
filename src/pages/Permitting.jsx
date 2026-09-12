@@ -219,11 +219,15 @@ export default function Permitting() {
     if (updatedStep?.type === 'checkbox' && updates.checked === false) {
       updatedStep.checked_date = null;
     }
-    if (updatedStep?.type === 'followup_date' && updates.value) {
-      const interval = updatedStep.followup_interval_days || 14;
-      const d = new Date(updates.value);
-      d.setDate(d.getDate() + interval);
-      updatedStep.next_followup_date = d.toISOString().split('T')[0];
+    if (updatedStep?.type === 'followup_date') {
+      if (updates.value) {
+        const interval = updatedStep.followup_interval_days || 14;
+        const d = new Date(`${updates.value}T00:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + interval);
+        updatedStep.next_followup_date = d.toISOString().split('T')[0];
+      } else if (Object.prototype.hasOwnProperty.call(updates, 'value')) {
+        updatedStep.next_followup_date = null;
+      }
     }
 
     let nextFollowup = null;
@@ -231,7 +235,8 @@ export default function Permitting() {
     let permitReceived = null;
     newSteps.forEach(s => {
       if (s.type === 'followup_date' && s.value) {
-        if (!nextFollowup || s.value < nextFollowup) nextFollowup = s.value;
+        const scheduledFollowup = s.next_followup_date || s.value;
+        if (!nextFollowup || scheduledFollowup < nextFollowup) nextFollowup = scheduledFollowup;
       }
       if (s.type === 'submitted_date' && s.value) {
         if (!submittedDate || s.value < submittedDate) submittedDate = s.value;
