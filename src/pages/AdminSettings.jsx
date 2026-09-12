@@ -315,6 +315,18 @@ const TEMPLATE_VARIABLES = [
 ];
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
+const ADMIN_UNLOCKED_KEY = "adminUnlocked";
+const ADMIN_CAPABILITY_KEY = "adminSettingsCapability";
+const ADMIN_CAPABILITY_EXPIRES_KEY = "adminSettingsCapabilityExpires";
+
+function storedAdminCapability() {
+  try {
+    const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
+    const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
+    if (capability && Number.isFinite(expiresAt) && expiresAt > Date.now()) return capability;
+  } catch (_) {}
+  return "";
+}
 
 export default function AdminSettings() {
   const { currentUser } = useAuth();
@@ -324,8 +336,10 @@ export default function AdminSettings() {
   const [emailGroups, setEmailGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Password protection state
-  const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem('adminUnlocked') === 'true');
+  // Password/Face ID protection state. A UI unlock is valid only while the
+  // backend-issued Admin Settings capability is still present and unexpired.
+  const [adminCapability, setAdminCapability] = useState(() => storedAdminCapability());
+  const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true' && !!storedAdminCapability());
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -347,6 +361,19 @@ export default function AdminSettings() {
   
   const [triggers, setTriggers] = useState([{ trigger_type: "", trigger_condition: {}, logic: "or" }]);
   const [actions, setActions] = useState([{ action_type: "", action_config: {} }]);
+
+  const applyAdminAccess = (data) => {
+    const capability = String(data?.capability || "").trim();
+    const expiresAt = String(data?.expires_at || "").trim();
+    if (!capability || !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt) <= Date.now()) {
+      throw new Error("Admin Settings authorization could not be verified.");
+    }
+    sessionStorage.setItem(ADMIN_UNLOCKED_KEY, "true");
+    sessionStorage.setItem(ADMIN_CAPABILITY_KEY, capability);
+    sessionStorage.setItem(ADMIN_CAPABILITY_EXPIRES_KEY, expiresAt);
+    setAdminCapability(capability);
+    setIsUnlocked(true);
+  };
 
   const loadEmailGroups = async () => {
     const groups = await loadAllEntityRows({
