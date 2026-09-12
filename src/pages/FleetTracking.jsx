@@ -513,3 +513,52 @@ export default function FleetTracking() {
     </div>
   );
 }
+
+function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
+  const dragStartRef = useRef(null);
+  const states = ["peek", "mid", "full"];
+  const stateIndex = Math.max(0, states.indexOf(state));
+  const move = direction => setState(states[Math.max(0, Math.min(states.length - 1, stateIndex + direction))]);
+  const stats = vehicle?.stats || {};
+  const speedRaw = typeof stats.speed === "number" ? stats.speed : stats.location?.speed;
+  const speed = Number.isFinite(Number(speedRaw)) ? Math.max(0, Math.round(Number(speedRaw))) : null;
+  const driving = !!stats.isRunning || (speed != null && speed > 0);
+  const name = vehicle?.nickName || vehicle?.model?.name || vehicle?.vin || "Vehicle";
+  const address = stats.location?.address || "Live Bouncie location";
+  const height = state === "peek" ? "112px" : state === "full" ? "calc(100% - 58px)" : "min(56dvh, 560px)";
+
+  const onPointerDown = event => {
+    dragStartRef.current = event.clientY;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const onPointerUp = event => {
+    if (dragStartRef.current == null) return;
+    const delta = event.clientY - dragStartRef.current;
+    dragStartRef.current = null;
+    if (delta <= -45) move(1);
+    else if (delta >= 45) move(-1);
+  };
+
+  return <aside className={`absolute inset-x-0 bottom-0 z-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-[0_-12px_30px_rgba(0,0,0,.24)] transition-[height] duration-200 ease-out overflow-hidden ${state === "full" ? "rounded-none" : "rounded-t-2xl"}`} style={{ height }} aria-label={`${name} mobile vehicle sheet`}>
+    <div className="h-full flex flex-col min-h-0">
+      <div onPointerDown={onPointerDown} onPointerUp={onPointerUp} className="shrink-0 touch-none select-none bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 cursor-grab active:cursor-grabbing">
+        <div className="h-6 flex items-center justify-center"><GripHorizontal className="w-8 h-4 text-gray-300 dark:text-slate-600" /></div>
+        {state === "peek" ? <div className="px-3 pb-3 flex items-center gap-3">
+          <button type="button" onClick={() => setState("mid")} className="min-w-0 flex-1 text-left flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+            <span className={`w-3 h-3 rounded-full shrink-0 ${driving ? "bg-emerald-500" : "bg-blue-500"}`} />
+            <span className="min-w-0 flex-1"><span className="block font-bold text-gray-900 dark:text-slate-100 truncate">{name}</span><span className="block text-[11px] text-gray-500 dark:text-slate-400 truncate">{address}</span></span>
+            <span className="shrink-0 text-right"><span className="block text-sm font-bold text-gray-900 dark:text-slate-100">{speed == null ? "—" : `${speed} mph`}</span><span className="block text-[10px] text-gray-400">{stats.odometer == null ? "Mileage —" : `${Math.round(Number(stats.odometer)).toLocaleString()} mi`}</span></span>
+          </button>
+          <button type="button" onClick={() => setState("mid")} className="min-h-11 min-w-11 rounded-xl border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label="Expand vehicle details"><ChevronUp className="w-5 h-5 mx-auto" /></button>
+        </div> : <div className="px-3 pb-2 flex items-center gap-2">
+          <button type="button" onClick={() => move(-1)} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300" aria-label="Collapse vehicle details"><ChevronDown className="w-4 h-4 mx-auto" /></button>
+          <div className="min-w-0 flex-1"><div className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">{name}</div><div className="text-[10px] text-gray-400">{state === "full" ? "Full details" : "Swipe up for full details · down to peek"}</div></div>
+          <div className="hidden sm:flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-400"><Gauge className="w-3.5 h-3.5" />{speed == null ? "—" : `${speed} mph`}</div>
+          <button type="button" onClick={() => setState(state === "full" ? "mid" : "full")} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label={state === "full" ? "Reduce vehicle sheet" : "Expand vehicle sheet fully"}>{state === "full" ? <Minimize2 className="w-4 h-4 mx-auto" /> : <Maximize2 className="w-4 h-4 mx-auto" />}</button>
+          <button type="button" onClick={onClose} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400" aria-label="Close vehicle sheet"><X className="w-4 h-4 mx-auto" /></button>
+        </div>}
+      </div>
+      <div className={state === "peek" ? "hidden" : "min-h-0 flex-1"}>{children}</div>
+    </div>
+  </aside>;
+}
