@@ -509,6 +509,179 @@ Deno.serve(async (req) => {
 
     if (!requestId) return Response.json({ success: false, error: 'A valid request id is required.' }, { status: 400 });
 
+    if (action === 'break_start') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in before starting a break.' }, { status: 409 });
+      }
+      const breakType = String(body?.break_type || '').trim();
+      if (!['lunch', 'break', 'other'].includes(breakType)) {
+        return Response.json({ success: false, error: 'A valid break type is required.' }, { status: 400 });
+      }
+      if (typeof body?.is_paid !== 'boolean') {
+        return Response.json({ success: false, error: 'Break pay status must be explicitly specified.' }, { status: 400 });
+      }
+      const isPaid = body.is_paid === true;
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+
+      const currentBreakStatus = breakStatusOf(state);
+      if (currentBreakStatus === 'on_break') {
+        const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+        if (activeBreak?.id && activeBreak.status === 'active' && activeBreak.time_entry_id === entry.id && asEmail(activeBreak.user_email) === target.email) {
+          const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'already_on_break', break_status: 'on_break', break: activeBreak, break_summary: summary, entry, user: publicEmployee(target), reused: true });
+        }
+        return Response.json({ success: false, error: 'Break state says the employee is on break, but the active break record is invalid. Admin review is required.' }, { status: 409 });
+      }
+      const resumingStart = currentBreakStatus === 'starting_break' && String(state.last_break_request_id || '') === requestId;
+      if (currentBreakStatus !== 'working' && !resumingStart) {
+        return Response.json({ success: false, error: 'Another break action is still in progress. Retry shortly.' }, { status: 409 });
+      }
+
+      const activeBreaks = await breakEntity.filter({ user_email: target.email, time_entry_id: entry.id, status: 'active' });
+      if (!Array.isArray(activeBreaks)) throw new Error('Active break lookup did not return a record list.');
+      if (activeBreaks.length > 1) return Response.json({ success: false, error: 'Multiple active break records were found. Admin review is required.' }, { status: 409 });
+      if (activeBreaks.length === 1 && String(activeBreaks[0].start_request_id || '') !== requestId) {
+        return Response.json({ success: false, error: 'An active break record already exists. Reload Time Clock status before retrying.' }, { status: 409 });
+      }
+
+      const officialStart = resumingStart && state.break_pending_started_at
+        ? state.break_pending_started_at
+        : new Date().toISOString();
+      const claimed = resumingStart
+        ? state
+        : await setBreakState(stateEntity, state, 'working', null, {
+            break_status: 'starting_break', active_break_id: null,
+            last_break_request_id: requestId, break_pending_started_at: officialStart,
+          });
+      if (!claimed) return Response.json({ success: false, error: 'Break start lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      let breakRow = await uniqueRow(breakEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Break-start request');
+      if (!breakRow) {
+        breakRow = await breakEntity.create({
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          time_entry_id: entry.id,
+          break_type: breakType,
+          is_paid: isPaid,
+          started_at: officialStart,
+          status: 'active',
+          start_request_id: requestId,
+          source: 'server',
+        });
+      }
+      if (!breakRow?.id) throw new Error('Break record could not be created.');
+      if (breakRow.status !== 'active' || breakRow.break_type !== breakType || breakRow.is_paid !== isPaid) {
+        return Response.json({ success: false, error: 'This break-start request is already bound to different break details.' }, { status: 409 });
+      }
+
+      const currentClaim = await freshState(stateEntity, claimed.id);
+      const finalized = await setBreakState(stateEntity, currentClaim, 'starting_break', requestId, {
+        break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
+      });
+      if (!finalized) {
+        return Response.json({ success: false, retry_same_request: true, error: 'Break start was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+      }
+      const auditSaved = await audit(auditEntity, {
+        action: 'break_start', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: breakRow.started_at,
+        request_id: requestId, time_entry_id: entry.id,
+        details: { break_id: breakRow.id, break_type: breakRow.break_type, is_paid: breakRow.is_paid },
+      });
+      const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', break_status: 'on_break', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved });
+    }
+
+    if (action === 'break_end') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to end a break.' }, { status: 409 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+
+      const currentBreakStatus = breakStatusOf(state);
+      if (currentBreakStatus === 'working') {
+        const prior = await uniqueRow(breakEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Break-end request');
+        if (prior?.id && prior.status === 'completed') {
+          const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: prior, break_summary: summary, entry, user: publicEmployee(target), reused: true });
+        }
+        return Response.json({ success: false, error: 'Employee is not currently on break.' }, { status: 409 });
+      }
+      const resumingEnd = currentBreakStatus === 'ending_break' && String(state.last_break_request_id || '') === requestId;
+      if (currentBreakStatus !== 'on_break' && !resumingEnd) {
+        return Response.json({ success: false, error: 'Another break action is still in progress. Retry shortly.' }, { status: 409 });
+      }
+      if (!state.active_break_id) return Response.json({ success: false, error: 'The active break record is missing. Admin review is required.' }, { status: 409 });
+
+      let breakRow = await breakEntity.get(state.active_break_id).catch(() => null);
+      if (!breakRow?.id || asEmail(breakRow.user_email) !== target.email || breakRow.time_entry_id !== entry.id) {
+        return Response.json({ success: false, error: 'The active break does not match this employee shift. Admin review is required.' }, { status: 409 });
+      }
+      if (breakRow.status === 'completed' && String(breakRow.end_request_id || '') === requestId) {
+        const currentState = await freshState(stateEntity, state.id);
+        if (breakStatusOf(currentState) === 'ending_break') {
+          const recovered = await setBreakState(stateEntity, currentState, 'ending_break', requestId, {
+            break_status: 'working', active_break_id: null, break_pending_started_at: null,
+          });
+          if (!recovered) return Response.json({ success: false, retry_same_request: true, error: 'Break end was saved but state finalization is still incomplete. Retry this same action.' }, { status: 409 });
+        }
+        const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), reused: true });
+      }
+      if (breakRow.status !== 'active') return Response.json({ success: false, error: 'The active break is not in an endable state.' }, { status: 409 });
+
+      const officialEnd = resumingEnd && state.break_pending_started_at
+        ? state.break_pending_started_at
+        : new Date().toISOString();
+      const startedMs = new Date(breakRow.started_at).getTime();
+      const endedMs = new Date(officialEnd).getTime();
+      if (!Number.isFinite(startedMs) || endedMs < startedMs) return Response.json({ success: false, error: 'The stored break-start timestamp is invalid.' }, { status: 409 });
+      const durationMinutes = Math.max(0, Math.floor((endedMs - startedMs) / 60000));
+      const claimed = resumingEnd
+        ? state
+        : await setBreakState(stateEntity, state, 'on_break', null, {
+            break_status: 'ending_break', last_break_request_id: requestId,
+            break_pending_started_at: officialEnd,
+          });
+      if (!claimed) return Response.json({ success: false, error: 'Break end lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      const updateResult = await breakEntity.updateMany(
+        { id: breakRow.id, updated_date: breakRow.updated_date, user_email: target.email, time_entry_id: entry.id, status: 'active' },
+        { $set: { ended_at: officialEnd, duration_minutes: durationMinutes, status: 'completed', end_request_id: requestId } },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        const freshBreak = await breakEntity.get(breakRow.id).catch(() => null);
+        if (!(freshBreak?.status === 'completed' && String(freshBreak.end_request_id || '') === requestId)) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Break end could not safely update the break record. Retry the same request after status reload.' }, { status: 409 });
+        }
+        breakRow = freshBreak;
+      } else {
+        breakRow = await breakEntity.get(breakRow.id);
+      }
+
+      const currentClaim = await freshState(stateEntity, claimed.id);
+      const finalized = await setBreakState(stateEntity, currentClaim, 'ending_break', requestId, {
+        break_status: 'working', active_break_id: null, break_pending_started_at: null,
+      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Break end was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+
+      const auditSaved = await audit(auditEntity, {
+        action: 'break_end', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: breakRow.ended_at,
+        request_id: requestId, time_entry_id: entry.id,
+        details: { break_id: breakRow.id, break_type: breakRow.break_type, is_paid: breakRow.is_paid, duration_minutes: breakRow.duration_minutes },
+      });
+      const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved });
+    }
+
     if (action === 'list_correction_requests') {
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view correction requests.' }, { status: 403 });
       const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
