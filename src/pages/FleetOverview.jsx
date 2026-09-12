@@ -24,7 +24,30 @@ import {
   Activity,
   CheckCircle2,
   XCircle,
+  SlidersHorizontal,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  X,
 } from "lucide-react";
+
+const DEFAULT_DASHBOARD_ORDER = ["summary", "today", "system_health", "attention", "operations"];
+const DASHBOARD_WIDGETS = [
+  { id: "summary", label: "Fleet Snapshot", description: "Health, availability, tracking, work, stock and upcoming maintenance." },
+  { id: "today", label: "Today", description: "The immediate operational picture for the day." },
+  { id: "system_health", label: "System Health", description: "Bouncie and Fleet automation health signals." },
+  { id: "attention", label: "Needs Attention", description: "Maintenance, inventory, assignment and system exceptions." },
+  { id: "operations", label: "Operations", description: "Active work orders, upcoming maintenance and workflow shortcuts." },
+];
+const defaultDashboardPreference = () => ({ widget_order: [...DEFAULT_DASHBOARD_ORDER], hidden_widgets: [], density: "comfortable", layout_version: 1 });
+const normalizeDashboardPreference = source => {
+  const supplied = Array.isArray(source?.widget_order) ? source.widget_order.filter(id => DEFAULT_DASHBOARD_ORDER.includes(id)) : [];
+  const order = [...new Set(supplied)];
+  for (const id of DEFAULT_DASHBOARD_ORDER) if (!order.includes(id)) order.push(id);
+  return { widget_order: order, hidden_widgets: [...new Set((Array.isArray(source?.hidden_widgets) ? source.hidden_widgets : []).filter(id => DEFAULT_DASHBOARD_ORDER.includes(id)))], density: source?.density === "compact" ? "compact" : "comfortable", layout_version: 1 };
+};
 
 const normalizeVin = value => String(value || "").trim().toUpperCase();
 const normalizeImei = value => String(value || "").trim();
@@ -53,6 +76,10 @@ export default function FleetOverview() {
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminHealth, setAdminHealth] = useState(null);
+  const [dashboardPreference, setDashboardPreference] = useState(defaultDashboardPreference);
+  const [dashboardPreferenceRecord, setDashboardPreferenceRecord] = useState(null);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [savingDashboard, setSavingDashboard] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -60,7 +87,7 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, dashboardPreferenceResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
@@ -68,12 +95,17 @@ export default function FleetOverview() {
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
           listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
           base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
+          base44.functions.invoke("fleetDashboardPreferenceAction", { action: "get" }).catch(() => null),
           listAllFleetRows(base44.entities.BouncieVehicleLiveState, "-last_seen_at", { label: "Bouncie live vehicle state" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warnings" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie alerts" }),
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
-        if (mounted) setData({ equipment, tasks, workOrders, parts, fluids, requests, reservations: reservationResult?.data?.reservations || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+        if (mounted) {
+          setData({ equipment, tasks, workOrders, parts, fluids, requests, reservations: reservationResult?.data?.reservations || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+          setDashboardPreference(normalizeDashboardPreference(dashboardPreferenceResult?.data?.preference || {}));
+          setDashboardPreferenceRecord(dashboardPreferenceResult?.data?.record || null);
+        }
         if (user?.role === "admin") {
           const [maintenanceLog, reminderLog, workerLog, bouncieLog, bouncieStatusResult, pendingQueue, sendingQueue, failedQueue, startedReceipts, failedReceipts] = await Promise.all([
             base44.entities.FleetSystemLog.filter({ source: "fleetScheduledMaintenanceGeneration" }, "-created_date", 1),
@@ -173,6 +205,33 @@ export default function FleetOverview() {
   }, [data]);
 
   const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.pastDueAssignments.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
+  const widgetVisible = id => !dashboardPreference.hidden_widgets.includes(id);
+  const widgetOrder = id => {
+    const index = dashboardPreference.widget_order.indexOf(id);
+    return index < 0 ? DEFAULT_DASHBOARD_ORDER.indexOf(id) : index;
+  };
+  const saveDashboardPreference = async preference => {
+    setSavingDashboard(true); setError("");
+    try {
+      const { data: result } = await base44.functions.invoke("fleetDashboardPreferenceAction", { action: "save", expected_updated_date: dashboardPreferenceRecord?.updated_date || "", preference });
+      if (result?.error) throw new Error(result.error);
+      setDashboardPreference(normalizeDashboardPreference(result?.preference || preference));
+      setDashboardPreferenceRecord(result?.record || null);
+      setCustomizeOpen(false);
+    } catch (e) { setError(e?.message || "Unable to save Fleet dashboard layout."); }
+    finally { setSavingDashboard(false); }
+  };
+  const resetDashboardPreference = async () => {
+    setSavingDashboard(true); setError("");
+    try {
+      const { data: result } = await base44.functions.invoke("fleetDashboardPreferenceAction", { action: "reset", expected_updated_date: dashboardPreferenceRecord?.updated_date || "" });
+      if (result?.error) throw new Error(result.error);
+      setDashboardPreference(normalizeDashboardPreference(result?.preference || defaultDashboardPreference()));
+      setDashboardPreferenceRecord(result?.record || null);
+      setCustomizeOpen(false);
+    } catch (e) { setError(e?.message || "Unable to reset Fleet dashboard layout."); }
+    finally { setSavingDashboard(false); }
+  };
 
   if (!data && !error) {
     return (
@@ -187,9 +246,9 @@ export default function FleetOverview() {
     <div className="min-h-full bg-gray-50 dark:bg-slate-950">
       <FleetModuleNav />
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Fleet Overview</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Bouncie tracking and CCS maintenance data in one Fleet area.</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Fleet Overview</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Bouncie tracking and CCS maintenance data in one Fleet area.</p></div>
+          <button type="button" onClick={() => setCustomizeOpen(true)} className="min-h-11 px-4 rounded-lg border border-gray-300 bg-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-700"><SlidersHorizontal className="w-4 h-4" />Customize Dashboard</button>
         </div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">{error}</div>}
