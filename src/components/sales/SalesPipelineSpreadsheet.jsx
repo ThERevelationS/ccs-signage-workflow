@@ -99,7 +99,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
 };
 
 const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -1039,7 +1039,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         reader.onerror = reject;
         reader.readAsBinaryString(file);
       });
-      const res = await importSalesPipeline({ fileData });
+      const res = await importSalesPipeline({ fileData, session_token: sessionToken });
       clearTimeout(processingTimeout);
       const result = res.data;
       finishImport(importId, `${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
