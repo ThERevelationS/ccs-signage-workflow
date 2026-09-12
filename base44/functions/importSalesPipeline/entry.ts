@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
       permit_receipt_confirmed_date: normalizeDate(row['Date Permit Receipt Confirmed'] || row['permit_receipt_confirmed_date']),
       permit_number: row['Permit Number'] || row['permit_number'] || '',
       permit_approved_date: normalizeDate(row['Date Permit Approved/Received'] || row['permit_approved_date']),
+      expected_close_date: normalizeDate(row['Expected Close Date'] || row['expected_close_date']),
       sales_status: row['sales_status'] || 'lead',
       in_pipeline: false,
     };
