@@ -404,17 +404,22 @@ export default function AdminSettings() {
 
     try {
       const res = await verifyLogin({ username: usernameInput.trim(), password: passwordInput });
-      if (res?.data?.success && res.data.user) {
-        if (res.data.user.role === 'admin') {
-          setIsUnlocked(true);
-          sessionStorage.setItem('adminUnlocked', 'true');
+      const loginData = res?.data || res;
+      if (loginData?.success && loginData.user) {
+        if (loginData.user.role === 'admin' && loginData.token) {
+          const accessRes = await base44.functions.invoke("issueAdminSettingsAccess", { session_token: loginData.token });
+          const accessData = accessRes?.data || accessRes;
+          if (!accessData?.success || !accessData?.capability) {
+            throw new Error(accessData?.error || "Admin Settings authorization could not be issued.");
+          }
+          applyAdminAccess(accessData);
           setUsernameInput("");
           setPasswordInput("");
         } else {
           setPasswordError("Access denied - admin privileges required");
         }
       } else {
-        setPasswordError(res?.data?.error || "Invalid username or password");
+        setPasswordError(loginData?.error || "Invalid username or password");
       }
     } catch (e) {
       setPasswordError(e?.response?.data?.error || e?.message || "Login failed");
