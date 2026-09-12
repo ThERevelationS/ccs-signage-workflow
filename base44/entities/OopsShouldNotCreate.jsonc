@@ -1,8 +1,8 @@
 {
+  "name": "OopsShouldNotCreate",
   "type": "object",
   "properties": {},
   "required": [],
-  "name": "OopsShouldNotCreate",
   "rls": {
     "create": {
       "user_condition": {
