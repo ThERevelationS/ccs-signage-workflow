@@ -38,6 +38,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 
 const TimeEntry = base44.entities.TimeEntry;
+const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -51,6 +52,7 @@ function functionData(response) {
 export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
+  const [employeeStates, setEmployeeStates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -75,13 +77,21 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const entries = await loadAllEntityRows({
-        entity: TimeEntry,
-        query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-        sort: "-clock_in",
-        label: "Time Clock admin entries",
-      });
+      const [entries, states] = await Promise.all([
+        loadAllEntityRows({
+          entity: TimeEntry,
+          query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+          sort: "-clock_in",
+          label: "Time Clock admin entries",
+        }),
+        loadAllEntityRows({
+          entity: TimeClockEmployeeState,
+          sort: null,
+          label: "Time Clock employee states",
+        }),
+      ]);
       setTimeEntries(entries);
+      setEmployeeStates(states);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -131,6 +141,11 @@ export default function TimeClockAdmin() {
 
   // Calculate totals
   const totalHours = filteredEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
+
+  const clockedInStates = employeeStates.filter(state => state.status === "clocked_in");
+  const onBreakStates = clockedInStates.filter(state => state.break_status === "on_break");
+  const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working");
+  const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status));
 
   const staleActiveEntries = timeEntries.filter(entry => {
     if (entry.status !== "clocked_in" || !entry.clock_in) return false;
