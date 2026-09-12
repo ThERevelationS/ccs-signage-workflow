@@ -47,6 +47,7 @@ import AnnouncementManager from "@/components/announcements/AnnouncementManager"
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -477,6 +478,7 @@ function LayoutContent({ children }) {
       `}</style>
       
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+        <WorkPauseOverlay />
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
