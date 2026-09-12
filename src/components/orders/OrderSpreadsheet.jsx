@@ -111,7 +111,7 @@ const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
 const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true }, ref) => {
-  const { currentUser, isRegistered } = useAuth();
+  const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -623,7 +623,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         reader.onerror = reject;
         reader.readAsBinaryString(file);
       });
-      const res = await importOrdersFn({ fileData, workOrderFilter: workOrderFilter || '' });
+      const res = await importOrdersFn({ fileData, workOrderFilter: workOrderFilter || '', session_token: sessionToken });
       const result = res.data;
       const conflictCount = Number(result.conflicts || 0);
       const errorCount = Number(result.errors || 0);
