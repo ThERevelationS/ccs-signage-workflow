@@ -1,8 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Folder, ExternalLink } from "lucide-react";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 export default function EmbeddedDriveFiles({ folderUrl }) {
+  const safeFolderUrl = safeExternalHttpUrl(folderUrl);
   if (!folderUrl) {
     return (
       <div className="border rounded-lg p-6 text-center bg-gray-50/50">
@@ -18,7 +20,8 @@ export default function EmbeddedDriveFiles({ folderUrl }) {
       <Folder className="w-10 h-10 mx-auto mb-2 text-blue-400" />
       <p className="text-sm text-gray-600 mb-3">Google Drive folder linked</p>
       <Button
-        onClick={() => window.open(folderUrl, '_blank')}
+        onClick={() => openExternalHttpUrl(safeFolderUrl)}
+        disabled={!safeFolderUrl}
         className="gap-2"
       >
         <ExternalLink className="w-4 h-4" />
