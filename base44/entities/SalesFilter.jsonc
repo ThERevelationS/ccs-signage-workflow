@@ -38,6 +38,10 @@
       "type": "string",
       "description": "Name of creator"
     },
+    "owner_email": {
+      "type": "string",
+      "description": "Sign-shop user email that owns newly created custom filters. Legacy rows may be blank."
+    },
     "selected_by": {
       "type": "array",
       "description": "List of user emails who have selected this filter",
@@ -50,5 +54,23 @@
   "required": [
     "name",
     "type"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__sales_filter_backend_only__"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "__sales_filter_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__sales_filter_backend_only__"
+      }
+    }
+  }
 }
