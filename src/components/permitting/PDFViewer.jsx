@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ExternalLink } from "lucide-react";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [showIframe, setShowIframe] = useState(true);
+  const safeFileUrl = safeExternalHttpUrl(fileUrl);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -23,7 +25,8 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
         </div>
         <Button
           size="sm"
-          onClick={() => window.open(fileUrl, '_blank')}
+          onClick={() => openExternalHttpUrl(safeFileUrl)}
+          disabled={!safeFileUrl}
           className="bg-blue-600 hover:bg-blue-700 gap-2"
         >
           <ExternalLink className="w-4 h-4" />
@@ -33,9 +36,9 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
 
       {/* PDF Viewer */}
       <div className="flex-1 overflow-hidden">
-        {showIframe ? (
+        {showIframe && safeFileUrl ? (
           <iframe
-            src={`${fileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+            src={`${safeFileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
             className="w-full h-full border-0"
             onError={() => setShowIframe(false)}
             title={fileName}
@@ -48,7 +51,8 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
                 <p className="text-xs text-gray-400 mb-6">This PDF cannot be previewed in the browser. Click the button below to open it.</p>
               </div>
               <Button
-                onClick={() => window.open(fileUrl, '_blank')}
+                onClick={() => openExternalHttpUrl(safeFileUrl)}
+                disabled={!safeFileUrl}
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700"
               >
