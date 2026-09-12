@@ -9,6 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  calendarEventFieldsFromForm,
+  createCalendarEventWithRecovery,
+  deleteCalendarEventIfUnchanged,
+  updateCalendarEventIfUnchanged,
+} from "@/components/calendar/calendarEventPersistence";
 
 const EVENT_TYPES = [
   { value: "company", label: "Company Event", color: "#7C3AED" },
@@ -33,7 +39,7 @@ const toLocalDatetimeString = (isoStr) => {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export default function CalendarEventForm({ isOpen, onClose, onSaved, event, defaultDate }) {
+export default function CalendarEventForm({ isOpen, onClose, onSaved, event, defaultDate, adminCapability }) {
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -95,29 +101,35 @@ export default function CalendarEventForm({ isOpen, onClose, onSaved, event, def
   const handleSave = async () => {
     if (!form.title || !form.start_datetime) return;
     setIsSaving(true);
-    const data = {
+    const data = calendarEventFieldsFromForm({
       ...form,
       start_datetime: new Date(form.start_datetime).toISOString(),
       end_datetime: form.end_datetime ? new Date(form.end_datetime).toISOString() : new Date(form.start_datetime).toISOString(),
       external_source: "manual"
-    };
-    if (event?.id) {
-      await base44.entities.CalendarEvent.update(event.id, data);
-    } else {
-      await base44.entities.CalendarEvent.create(data);
+    });
+    try {
+      if (event?.id) {
+        await updateCalendarEventIfUnchanged({ event, nextFields: data, adminCapability, label: `Calendar event ${event.title || event.id}` });
+      } else {
+        await createCalendarEventWithRecovery({ data, adminCapability, label: `Calendar event ${data.title}` });
+      }
+      onSaved?.();
+      onClose();
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
-    onSaved?.();
-    onClose();
   };
 
   const handleDelete = async () => {
     if (!event?.id) return;
     setIsDeleting(true);
-    await base44.entities.CalendarEvent.delete(event.id);
-    setIsDeleting(false);
-    onSaved?.();
-    onClose();
+    try {
+      await deleteCalendarEventIfUnchanged({ event, adminCapability, label: `Calendar event ${event.title || event.id} deletion` });
+      onSaved?.();
+      onClose();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const toggleUser = (email) => {
