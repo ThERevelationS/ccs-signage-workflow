@@ -19,7 +19,7 @@ export default function FleetWarranties(){
   const requestedNew=params.get("new")==="1";
   const [equipment,setEquipment]=useState([]);
   const [rows,setRows]=useState([]);
-  const [summary,setSummary]=useState({});
+  const [summary,setSummary]=useState({total:0,active:0,expiring_soon:0,expired:0,claimed:0});
   const [user,setUser]=useState(null);
   const [equipmentId,setEquipmentId]=useState(requestedEquipment);
   const [status,setStatus]=useState(["all","attention","active","expired","claimed","void"].includes(requestedStatus)?requestedStatus:"all");
