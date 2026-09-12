@@ -7,6 +7,15 @@ export function permitLocalityIdentityMatches(record, data) {
     && normalizeIdentity(record?.state) === normalizeIdentity(data?.state);
 }
 
+/**
+ * @param {{
+ *   entity?: any,
+ *   data?: Record<string, any> | null,
+ *   readCurrentLocalities?: (() => Promise<any[]>) | null,
+ *   label?: string,
+ *   settleMs?: number,
+ * }} [options]
+ */
 export async function createPermitLocalityIfAbsent({
   entity,
   data,
