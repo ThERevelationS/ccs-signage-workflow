@@ -194,8 +194,26 @@ export default function ProductChecklistDialog({
     setShowOtherPopup(null);
   };
 
-  // Handle template application from TemplateBuilder - APPENDS to existing checklist
+  // Apply only genuinely new template content. Existing answered product
+  // checklists are never rebuilt or replaced implicitly.
   const handleApplyTemplate = (templateData) => {
+    const skippedSections = [];
+    const sectionsToApply = templateData.filter(section => {
+      if (section.type === 'product_header') {
+        const alreadyExists = checklist.some(item => item.product_name === section.productName);
+        if (alreadyExists) skippedSections.push(section.productName);
+        return !alreadyExists;
+      }
+      if (section.type === 'sub_template') {
+        const alreadyExists = checklist.some(item =>
+          item.product_name === section.parentProduct && item.sub_template_name === section.subTemplateName
+        );
+        if (alreadyExists) skippedSections.push(`${section.parentProduct} — ${section.subTemplateName}`);
+        return !alreadyExists;
+      }
+      return true;
+    });
+
     const newItems = [];
     
     // Helper to flatten hierarchical items
@@ -277,7 +295,7 @@ export default function ProductChecklistDialog({
       });
     };
     
-    templateData.forEach(section => {
+    sectionsToApply.forEach(section => {
       if (section.type === 'product_header') {
         section.items.forEach(item => {
           flattenItem(item, section.productName, section.productType);
@@ -290,14 +308,18 @@ export default function ProductChecklistDialog({
       }
     });
 
-    // Get all product names being re-applied
-    const appliedProductNames = new Set(templateData.map(s => s.productName || s.parentProduct).filter(Boolean));
-    
-    // Remove existing items for those products, then append new ones
-    setChecklist(prev => {
-      const kept = prev.filter(item => !appliedProductNames.has(item.product_name));
-      return [...kept, ...newItems];
-    });
+    if (newItems.length > 0) {
+      setChecklist(prev => [...prev, ...newItems]);
+    }
+
+    if (skippedSections.length > 0) {
+      const examples = skippedSections.slice(0, 3).join(", ");
+      const extraCount = skippedSections.length - Math.min(skippedSections.length, 3);
+      setValidationDialog({
+        title: "Existing checklist preserved",
+        message: `${examples}${extraCount > 0 ? ` and ${extraCount} more` : ""} already exist on this SIP, so those answered checklist sections were left unchanged.`
+      });
+    }
   };
 
   const updateChecklistItem = (itemId, updates) => {
