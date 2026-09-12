@@ -310,8 +310,12 @@ export default function TimeClockAdmin() {
       const retrySameRequest = err?.retrySameRequest === true || data?.retry_same_request === true;
       setApprovalError(data?.error || err?.message || "The approval could not be completed safely.");
       if (!retrySameRequest) {
+        const message = data?.error || err?.message || "The approval could not be completed safely.";
         await loadData();
-        setApprovalRequestId(newRequestId());
+        setApprovalEntry(null);
+        setApprovalNote("");
+        setApprovalRequestId("");
+        setTimeEntryError(message);
       }
     } finally {
       setApprovalBusy(false);
@@ -665,6 +669,7 @@ export default function TimeClockAdmin() {
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Clock Out</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Lunch</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Total</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-700">Approval</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Notes</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-700">Jobs</th>
                 <th className="px-4 py-3 text-center font-medium text-gray-700">Actions</th>
@@ -673,7 +678,7 @@ export default function TimeClockAdmin() {
             <tbody className="divide-y">
               {filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan="10" className="px-4 py-8 text-center text-gray-500">
                     No time entries found for this period
                   </td>
                 </tr>
@@ -698,6 +703,35 @@ export default function TimeClockAdmin() {
                     <td className="px-4 py-3">{entry.lunch_minutes || 0} min</td>
                     <td className="px-4 py-3 font-medium text-purple-600">
                       {entry.total_hours?.toFixed(2) || "-"} hrs
+                    </td>
+                    <td className="px-4 py-3">
+                      {entry.status === "clocked_out" ? (
+                        <div className="flex flex-col items-start gap-1.5">
+                          <Badge
+                            variant="outline"
+                            className={
+                              (entry.approval_status || "unreviewed") === "approved"
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : (entry.approval_status || "unreviewed") === "needs_review"
+                                  ? "bg-amber-100 text-amber-800 border-amber-200"
+                                  : "bg-gray-100 text-gray-700 border-gray-200"
+                            }
+                          >
+                            {(entry.approval_status || "unreviewed") === "approved" ? "Approved" : (entry.approval_status || "unreviewed") === "needs_review" ? "Needs Review" : "Unreviewed"}
+                          </Badge>
+                          {(entry.approval_status || "unreviewed") === "approved" ? (
+                            <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => openApprovalDialog(entry, "reopen")}>
+                              <RotateCcw className="w-3 h-3 mr-1" />Reopen
+                            </Button>
+                          ) : (
+                            <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs text-green-700" onClick={() => openApprovalDialog(entry, "approve")}>
+                              <CheckCircle2 className="w-3 h-3 mr-1" />Approve
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">After clock-out</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 max-w-[200px]">
                       {entry.notes ? (
