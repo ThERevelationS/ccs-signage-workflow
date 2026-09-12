@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { backupToGoogleDrive } from "@/functions/backupToGoogleDrive";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const DATA_TYPES = [
   { id: 'users', label: 'User Data', icon: Users, description: 'Employee accounts and settings' },
@@ -48,6 +49,7 @@ const SCHEDULE_OPTIONS = [
 ];
 
 export default function BackupManager() {
+  const { sessionToken } = useAuth();
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [result, setResult] = useState(null);
@@ -79,7 +81,7 @@ export default function BackupManager() {
   const loadSettings = async () => {
     setIsLoadingSettings(true);
     try {
-      const response = await backupToGoogleDrive({ action: 'getSettings' });
+      const response = await backupToGoogleDrive({ action: 'getSettings', session_token: sessionToken });
       setSettingsRecordId(response.data.record_id || "");
       setSettingsUpdatedDate(response.data.updated_date || "");
       if (response.data.settings) {
@@ -95,7 +97,7 @@ export default function BackupManager() {
   const loadHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const response = await backupToGoogleDrive({ action: 'getHistory' });
+      const response = await backupToGoogleDrive({ action: 'getHistory', session_token: sessionToken });
       if (response.data.logs) {
         setBackupHistory(response.data.logs);
       }
@@ -117,6 +119,7 @@ export default function BackupManager() {
         settings: newSettings,
         expected_record_id: settingsRecordId,
         expected_updated_date: settingsUpdatedDate,
+        session_token: sessionToken,
       });
       setSettings(newSettings);
       setSettingsRecordId(response.data.record_id || settingsRecordId);
@@ -154,7 +157,8 @@ export default function BackupManager() {
 
     try {
       const response = await backupToGoogleDrive({ 
-        dataTypes: selectedTypes
+        dataTypes: selectedTypes,
+        session_token: sessionToken,
       });
       
       if (response.data.error) {
