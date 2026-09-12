@@ -280,6 +280,7 @@ export default function FleetWorkOrders() {
         fluids={fluids}
         onClose={() => setDialog(null)}
         onSubmit={submitDialog}
+        onRefreshInventory={loadData}
       />
       <FleetStartWorkDialog
         open={!!startWorkOrder}
