@@ -967,10 +967,10 @@ export default function ProductChecklistDialog({
   return (
     <>
       <Dialog open={isOpen && !showTemplateBuilder} onOpenChange={() => {}}>
-        <DialogContent className="clay-card border-none max-w-6xl max-h-[90vh] overflow-hidden flex flex-col [&>button]:hidden">
+        <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-6xl max-h-[94vh] sm:max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6 [&>button]:hidden">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap">
                 {workOrder?.client_name}
                 {workOrder?.description && (
                   <span className="text-base font-normal text-gray-500">— {workOrder.description}</span>
@@ -991,9 +991,34 @@ export default function ProductChecklistDialog({
             </div>
           </DialogHeader>
 
+          {!isLoading && checklist.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border bg-slate-50 p-2 sm:p-3">
+              <div>
+                <div className="text-[11px] text-gray-500">Checklist complete</div>
+                <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Continued</div>
+                <div className="text-sm font-semibold text-amber-700">{continuedPrimaryCount}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Tasks done</div>
+                <div className="text-sm font-semibold text-gray-800">{completedTaskCount}/{taskItems.length}</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-gray-500">Revisit date</div>
+                <div className="text-sm font-semibold text-purple-700">{loadedRevisitDateSnapshot || "None"}</div>
+              </div>
+            </div>
+          )}
+
           {/* Checklist Items */}
-          <div className="flex-1 overflow-y-auto space-y-3">
-            {checklist.length === 0 ? (
+          <div className="flex-1 overflow-y-auto space-y-3 pr-0.5">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12 text-gray-500">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading checklist…
+              </div>
+            ) : checklist.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>No checklist items yet</p>
                 <p className="text-sm mt-1">Use Checklist Builder to create and apply checklists</p>
@@ -1018,15 +1043,14 @@ export default function ProductChecklistDialog({
                   onMouseEnter={() => setHoveredProduct(productName)}
                   onMouseLeave={() => setHoveredProduct(null)}
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    {/* Add Checklist button on hover */}
-                    {isRegistered && hoveredProduct === productName && (
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {isRegistered && (
                       <button
                         onClick={(e) => { 
                           e.stopPropagation(); 
                           setNewItemInput({ show: true, parentId: null, type: 'checklist', productName: productName }); 
                         }}
-                        className="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                        className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
                         title="Add Checklist Item"
                       >
                         +Checklist
@@ -1048,18 +1072,23 @@ export default function ProductChecklistDialog({
                         />
                       </div>
                     ) : (
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
                       <h3
-                        className="font-bold text-purple-800 flex items-center gap-2 cursor-pointer hover:bg-purple-100 rounded px-1"
-                        onDoubleClick={() => { if (isRegistered) { setEditingProductName(productName); setEditingProductNameText(productName); }}}
-                        title="Double-click to rename"
+                        className="font-bold text-purple-800 flex items-center gap-2 min-w-0 rounded px-1"
                       >
-                        📦 {productName}
+                        <span className="truncate">📦 {productName}</span>
                         {group.productType && (
                           <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
                             {group.productType}
                           </span>
                         )}
                       </h3>
+                      {isRegistered && (
+                        <button type="button" onClick={() => { setEditingProductName(productName); setEditingProductNameText(productName); }} className="p-1 rounded hover:bg-purple-100 text-purple-600" title="Rename product">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      </div>
                     )}
                   </div>
                   
