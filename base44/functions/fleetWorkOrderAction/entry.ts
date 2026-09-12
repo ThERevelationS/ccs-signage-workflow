@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { setFleetInventoryQuantityIfUnchanged } from '../../shared/fleetInventoryQuantity.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { resolveFleetMeterReading } from '../../shared/fleetMeterReading.ts';
 
 const ACTIVE_STATUSES = new Set(['open', 'assigned', 'in_progress']);
 const STALE_CLAIM_MS = 30 * 60 * 1000;
@@ -433,6 +434,73 @@ async function applySchedule(base44: any, Receipt: any, workOrder: any, completi
     }).catch(() => null);
     throw error;
   }
+}
+
+async function applyMeterRules(base44: any, Receipt: any, workOrder: any, completionKey: string, actor: any) {
+  if (!workOrder.maintenance_task_id || !workOrder.equipment_id) return [];
+  const Rule = base44.asServiceRole.entities.FleetMaintenanceMeterRule;
+  const Equipment = base44.asServiceRole.entities.FleetEquipment;
+  const rules = await Rule.filter({ maintenance_task_id: workOrder.maintenance_task_id, enabled: true });
+  if (!rules?.length) return [];
+  const equipment = await Equipment.get(workOrder.equipment_id).catch(() => null);
+  if (!equipment) throw new Error(`Fleet equipment ${workOrder.equipment_id} was not found while advancing meter maintenance.`);
+  const results: any[] = [];
+
+  for (const rule of rules) {
+    if (rule.equipment_id !== workOrder.equipment_id) throw new Error(`Fleet meter rule ${rule.id} belongs to different equipment.`);
+    const key = `${completionKey}:meter:${rule.id}`;
+    const prior = canonical(await Receipt.filter({ operation_key: key }));
+    const reading = await resolveFleetMeterReading(base44, equipment, rule);
+    const fallbackBase = Math.max(num(rule.next_due_value, 0), num(rule.last_service_value, 0));
+    const serviceValue = reading.available && reading.value != null ? Number(reading.value) : fallbackBase;
+    const interval = num(rule.interval_value, NaN);
+    if (!Number.isFinite(interval) || interval <= 0) throw new Error(`Fleet meter rule ${rule.id} has an invalid interval.`);
+    const initialSummary = prior?.result_summary || {
+      before_updated_date: rule.updated_date || '',
+      before_last_service_value: num(rule.last_service_value, 0),
+      before_next_due_value: num(rule.next_due_value, 0),
+      service_value: serviceValue,
+      reading_available: reading.available,
+      reading_reason: reading.reason || '',
+      reading_source: reading.source,
+      reading_unit: reading.unit,
+      after_last_service_value: serviceValue,
+      after_next_due_value: serviceValue + interval,
+      work_order_id: workOrder.id,
+    };
+    const claim = await claimReceipt(Receipt, {
+      operation_key: key,
+      operation_type: 'meter_reschedule',
+      target_entity: 'FleetMaintenanceMeterRule',
+      target_id: rule.id,
+      actor_email: actor.email || '',
+      actor_user_id: actor.id || '',
+      result_summary: initialSummary,
+    });
+    if (claim.applied) { results.push({ rule_id: rule.id, reused: true, next_due_value: claim.receipt?.result_summary?.after_next_due_value }); continue; }
+    const summary = claim.receipt?.result_summary || initialSummary;
+    const current = await Rule.get(rule.id);
+    if (!current) throw new Error(`Fleet meter rule ${rule.id} was not found during completion.`);
+    const isAfter = sameNumber(current.last_service_value, summary.after_last_service_value) && sameNumber(current.next_due_value, summary.after_next_due_value);
+    const isBefore = sameNumber(current.last_service_value, summary.before_last_service_value)
+      && sameNumber(current.next_due_value, summary.before_next_due_value)
+      && String(current.updated_date || '') === String(summary.before_updated_date || '');
+    if (isAfter) {
+      await Receipt.update(claim.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...summary,meter_applied:true,recovered_from_after_state:!claim.owner}});
+      results.push({rule_id:rule.id,reused:!claim.owner,next_due_value:summary.after_next_due_value});
+      continue;
+    }
+    if (!isBefore) {
+      await Receipt.update(claim.receipt.id,{status:'failed',failed_at:nowIso(),error_message:'Meter maintenance rule changed while work-order completion was running.',result_summary:{...summary,safe_retry:false,meter_conflict:true}}).catch(()=>null);
+      const conflict:any = new Error('A linked meter maintenance rule changed while this work order was being completed. The newer rule was not overwritten.');
+      conflict.code = 'FLEET_RECORD_CONFLICT';
+      throw conflict;
+    }
+    const updated = await updateFleetRecordIfCurrent({entity:Rule,id:rule.id,expectedUpdatedAt:String(summary.before_updated_date||''),patch:{last_service_value:summary.after_last_service_value,next_due_value:summary.after_next_due_value},label:'Fleet meter maintenance completion advance'});
+    await Receipt.update(claim.receipt.id,{status:'applied',applied_at:nowIso(),error_message:'',result_summary:{...summary,meter_applied:true,meter_updated_date:updated.updated_date||''}});
+    results.push({rule_id:rule.id,reused:false,next_due_value:summary.after_next_due_value,reading_available:summary.reading_available});
+  }
+  return results;
 }
 
 async function applyCompletionEquipmentStatus(base44: any, Receipt: any, mainReceipt: any, equipmentId: string, desiredStatus: string) {
@@ -1147,6 +1215,7 @@ Deno.serve(async (req) => {
           await applyInventoryPlan(base44, Receipt, plan, { ...existing, ...completionPatch, id }, user);
         }
         const schedule = await applySchedule(base44, Receipt, { ...existing, ...completionPatch, id }, completionKey, user);
+        const meterRules = await applyMeterRules(base44, Receipt, { ...existing, ...completionPatch, id }, completionKey, user);
         if (!lockedWorkOrderVersion) throw new Error('Fleet completion lock is missing its work-order version. Completion was not finalized.');
         const stamp = nowIso();
         const completed = await updateFleetRecordIfCurrent({
@@ -1175,6 +1244,7 @@ Deno.serve(async (req) => {
             ...(activeMainReceipt.result_summary || {}),
             inventory_operations_applied: inventoryPlans.length,
             schedule_result: schedule || null,
+            meter_rule_results: meterRules,
           },
         });
         await base44.asServiceRole.functions.invoke('fleetNotificationDispatcher', {
