@@ -121,10 +121,11 @@ export default function FleetAnalytics() {
       monthly[month].laborHours += num(row.actual_hours);
     });
 
+    const activeEquipmentIds = new Set(equipment.filter(eq => eq.status !== "retired").map(eq => eq.id));
     const byEquipment = equipment.map(eq => {
       const completedRows = completed.filter(row => row.equipment_id === eq.id);
       const activeRows = active.filter(row => row.equipment_id === eq.id);
-      const eqTasks = tasks.filter(row => row.equipment_id === eq.id && row.status !== "completed");
+      const eqTasks = eq.status === "retired" ? [] : tasks.filter(row => row.equipment_id === eq.id && row.status !== "completed");
       const taskIdsWithActiveWork = new Set(activeRows.map(row => row.maintenance_task_id).filter(Boolean));
       const overdueUncovered = eqTasks.filter(task => isOverdueTask(task, today) && !taskIdsWithActiveWork.has(task.id));
       const compliance = eqTasks.length ? Math.round(((eqTasks.length - overdueUncovered.length) / eqTasks.length) * 100) : null;
@@ -147,7 +148,7 @@ export default function FleetAnalytics() {
       };
     });
 
-    const activeSchedules = tasks.filter(row => row.status !== "completed");
+    const activeSchedules = tasks.filter(row => activeEquipmentIds.has(row.equipment_id) && row.status !== "completed");
     const activeTaskIds = new Set(active.map(row => row.maintenance_task_id).filter(Boolean));
     const uncoveredOverdue = activeSchedules.filter(task => isOverdueTask(task, today) && !activeTaskIds.has(task.id));
     const complianceScore = activeSchedules.length ? Math.round(((activeSchedules.length - uncoveredOverdue.length) / activeSchedules.length) * 100) : null;
@@ -182,7 +183,7 @@ export default function FleetAnalytics() {
 
   const maxMonthCost = Math.max(...analytics.monthly.map(row => row.cost), 1);
   const rankedCost = analytics.byEquipment.slice().sort((a, b) => b.serviceCost - a.serviceCost);
-  const complianceRows = analytics.byEquipment.slice().sort((a, b) => {
+  const complianceRows = analytics.byEquipment.filter(row => row.eq.status !== "retired").slice().sort((a, b) => {
     if (a.compliance === null && b.compliance === null) return String(a.eq.name).localeCompare(String(b.eq.name));
     if (a.compliance === null) return 1;
     if (b.compliance === null) return -1;
@@ -243,7 +244,7 @@ export default function FleetAnalytics() {
 }
 
 function Methodology() {
-  return <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><div className="font-semibold">How these Fleet metrics are calculated</div><div className="mt-1 leading-relaxed">Recorded service cost uses a saved work-order total when one exists; otherwise it sums the already-extended part and fluid line costs stored on completed Fleet work orders. Labor is shown only as recorded hours because Fleet Settings has no authoritative labor rate. “Maintenance cycle” measures the span from a work order's started date to completion (or today for active work); it is a timing proxy and is <b>not</b> labeled as true vehicle downtime. Compliance counts active schedules and treats an overdue schedule as covered when an active Fleet work order links to that exact schedule.</div></div>;
+  return <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><div className="font-semibold">How these Fleet metrics are calculated</div><div className="mt-1 leading-relaxed">Recorded service cost uses a saved work-order total when one exists; otherwise it sums the already-extended part and fluid line costs stored on completed Fleet work orders. Labor is shown only as recorded hours because Fleet Settings has no authoritative labor rate. “Maintenance cycle” measures the span from a work order's started date to completion (or today for active work); it is a timing proxy and is <b>not</b> labeled as true vehicle downtime. Compliance counts active schedules for non-retired equipment and treats an overdue schedule as covered when an active Fleet work order links to that exact schedule.</div></div>;
 }
 
 function Metric({ icon: Icon, label, value, sub, attention = false, danger = false }) {
