@@ -394,6 +394,7 @@ export default function UserSettings() {
               </h2>
               <UserCalendarSettingsPanel
                 userEmail={userData?.email}
+                sessionToken={sessionToken}
               />
             </div>
           </TabsContent>
