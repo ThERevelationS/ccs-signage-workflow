@@ -107,6 +107,12 @@ export default function SalesPipeline() {
     maximumFractionDigits: 0,
   }).format(value || 0);
 
+  const attentionChipClass = (value) => `rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+    attentionFilter === value
+      ? "border-blue-500 bg-blue-50 text-blue-800"
+      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+  }`;
+
   return (
     <div className="flex flex-col p-4 sm:p-6" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
@@ -278,6 +284,50 @@ export default function SalesPipeline() {
           </div>
         </div>
 
+        {!showPendingImports && recordScope !== "history" && (
+          <div className="mb-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+              <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
+                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
+                <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
+                <div className="mt-1 text-xs text-slate-500">Current operational records</div>
+              </button>
+              <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left shadow-sm transition hover:border-emerald-300">
+                <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Open Pipeline Value</div>
+                <div className="mt-1 text-2xl font-bold text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</div>
+                <div className="mt-1 text-xs text-emerald-700/80">Quoted value when available, otherwise estimate</div>
+              </button>
+              <button type="button" onClick={() => applyAttentionFilter("due")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-red-600">Follow-ups Due</div>
+                <div className="mt-1 text-2xl font-bold text-red-800">{pipelineSummary.dueCount}</div>
+                <div className="mt-1 text-xs text-red-600">{pipelineSummary.overdueCount} overdue · {pipelineSummary.dueTodayCount} today</div>
+              </button>
+              <button type="button" onClick={() => applyAttentionFilter("quote_no_followup")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-amber-700">Quotes Need Follow-up</div>
+                <div className="mt-1 text-2xl font-bold text-amber-900">{pipelineSummary.quoteNoFollowUpCount}</div>
+                <div className="mt-1 text-xs text-amber-700/80">Quoted/sent with no follow-up date</div>
+              </button>
+              <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "no_next_action" ? "border-violet-400 bg-violet-50" : "border-violet-200 bg-white hover:border-violet-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-violet-700">No Next Action</div>
+                <div className="mt-1 text-2xl font-bold text-violet-900">{pipelineSummary.noNextActionCount}</div>
+                <div className="mt-1 text-xs text-violet-700/80">No follow-up or task deadline</div>
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+              <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Attention</span>
+              <button type="button" onClick={() => applyAttentionFilter("all")} className={attentionChipClass("all")}>All</button>
+              <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities</button>
+              {pipelineSummary.ratedProbabilityCount === 0 && (
+                <span className="ml-auto text-xs text-gray-500">Weighted value is hidden until probability is actually being used.</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {showPendingImports ? (
           <div className="clay-card p-4 overflow-auto flex flex-col" style={{ flex: 1, minHeight: 0 }}>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
@@ -311,6 +361,8 @@ export default function SalesPipeline() {
             searchTerm={searchTerm} 
             filterStatus={filterStatus}
             recordScope={recordScope}
+            attentionFilter={attentionFilter}
+            onSummaryChange={setPipelineSummary}
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
             customFilters={activeFilters.filter(f => f.type === "filter")}
