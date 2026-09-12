@@ -34,6 +34,13 @@ const localDate = (value) => {
   return new Date(year, month - 1, day);
 };
 
+const futureDateStamp = (days) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return format(date, "yyyy-MM-dd");
+};
+
 export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onOpenDetails, isRegistered }) {
   const [draggedId, setDraggedId] = useState(null);
   const [pendingTransition, setPendingTransition] = useState(null);
@@ -115,9 +122,19 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                         <span className="truncate">{workOrder.sales_rep || "Unassigned"}</span>
                       </div>
 
-                      {followUp && (
+                      {followUp ? (
                         <div className={`mt-2 rounded-md px-2 py-1 text-xs ${followUpDue ? "bg-red-50 font-semibold text-red-700" : "bg-gray-50 text-gray-600"}`}>
                           Follow-up {format(followUp, "MMM d, yyyy")}{followUpDue ? " · due" : ""}
+                        </div>
+                      ) : !["won", "lost"].includes(workOrder.sales_status) ? (
+                        <div className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">No follow-up scheduled</div>
+                      ) : null}
+
+                      {isRegistered && !["won", "lost"].includes(workOrder.sales_status) && (
+                        <div className="mt-2 flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">Tomorrow</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+3d</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(7))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+7d</button>
                         </div>
                       )}
 
