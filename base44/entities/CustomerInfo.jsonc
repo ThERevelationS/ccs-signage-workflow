@@ -327,5 +327,27 @@
   },
   "required": [
     "customer_name"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_legacy_customer_info__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled_legacy_customer_info__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled_legacy_customer_info__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_legacy_customer_info__"
+      }
+    }
+  }
 }
