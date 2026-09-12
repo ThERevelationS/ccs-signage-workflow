@@ -316,6 +316,21 @@ function MaintenanceTab({ equipment, activeOrders, completedOrders, tasks, maint
   </div>;
 }
 
+function InspectionsTab({ equipment, inspections, retired = false }) {
+  const passed = inspections.filter(item => item.status === "passed").length;
+  const failed = inspections.filter(item => item.status === "failed").length;
+  const open = inspections.filter(item => !item.completed_at && ["draft","needs_attention"].includes(item.status)).length;
+  const generated = inspections.reduce((sum, item) => sum + (item.generated_work_order_ids?.length || 0), 0);
+  const startUrl = `${createPageUrl("FleetInspections")}?equipment=${encodeURIComponent(equipment.id)}`;
+  return <div className="space-y-5">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><Metric label="Inspections" value={inspections.length} /><Metric label="Passed" value={passed} /><Metric label="Failed" value={failed} attention={failed > 0} /><Metric label="Generated WOs" value={generated} attention={generated > 0} /></div>
+    <Card title={`${equipment.name} Inspections`} icon={ClipboardCheck} action={!retired ? <Link to={startUrl} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300"><Plus className="w-3.5 h-3.5" />Start inspection</Link> : null}>
+      <div className="space-y-2">{inspections.slice(0,20).map(inspection => <Link key={inspection.id} to={startUrl} className={`block rounded-xl border p-3 hover:border-indigo-300 dark:hover:border-indigo-700 ${inspection.status === "failed" ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/10" : inspection.status === "needs_attention" ? "border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10" : "border-gray-200 dark:border-slate-700"}`}><div className="flex flex-wrap items-center justify-between gap-2"><div className="font-semibold text-gray-900 dark:text-slate-100">{inspection.template_name}</div><Tag>{pretty(inspection.status)}</Tag></div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{inspection.inspector_name || inspection.inspector_email || "Unknown inspector"}{inspection.failed_item_count ? ` · ${inspection.failed_item_count} failed` : ""}{inspection.generated_work_order_ids?.length ? ` · ${inspection.generated_work_order_ids.length} WO` : ""}</div><div className="text-xs text-gray-400 mt-1">{inspection.completed_at ? new Date(inspection.completed_at).toLocaleString() : inspection.started_at ? `Started ${new Date(inspection.started_at).toLocaleString()}` : "—"}</div></Link>)}{inspections.length === 0 && <Empty>No Fleet inspections recorded for this asset yet.</Empty>}</div>
+      {open > 0 && <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">{open} inspection{open === 1 ? "" : "s"} can be resumed from the Fleet Inspections page.</div>}
+    </Card>
+  </div>;
+}
+
 function PartsTab({ equipment, parts, retired = false }) {
   const low = parts.filter(part => part.enable_low_stock_alerts !== false && Number(part.quantity_on_hand ?? 0) <= Number(part.minimum_stock ?? 0));
   const lookupUrl = `${createPageUrl("FleetParts")}?identify=1&equipment=${encodeURIComponent(equipment.id)}`;
