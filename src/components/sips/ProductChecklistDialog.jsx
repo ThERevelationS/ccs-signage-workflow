@@ -39,7 +39,7 @@ export default function ProductChecklistDialog({
   const [dropdownConditions, setDropdownConditions] = useState([]);
   const [incompleteWarning, setIncompleteWarning] = useState(null);
   const [noChecklistWarning, setNoChecklistWarning] = useState(null);
-  const [productTypes, setProductTypes] = useState([]);
+  const [, setProductTypes] = useState([]);
   const [showOtherPopup, setShowOtherPopup] = useState(null);
   const [customDropdownValue, setCustomDropdownValue] = useState("");
   const [showRevisitPopup, setShowRevisitPopup] = useState(false);
@@ -184,7 +184,7 @@ export default function ProductChecklistDialog({
     return dd?.name || null;
   };
 
-  const handleOtherDropdownSelect = (itemId, selectedDropdownId) => {
+  const _handleOtherDropdownSelect = (itemId, selectedDropdownId) => {
     updateChecklistItem(itemId, { dropdown_id: selectedDropdownId, custom_dropdown_value: "" });
     setShowOtherPopup(null);
   };
@@ -318,7 +318,7 @@ export default function ProductChecklistDialog({
     // If item had a product_name, check if any items remain for that product
     if (deletedItem?.product_name) {
       const productName = deletedItem.product_name;
-      const remainingItemsForProduct = newChecklist.filter(item => {
+      const _remainingItemsForProduct = newChecklist.filter(item => {
         // Check if item belongs to this product (direct or via parent chain)
         if (item.product_name === productName) return true;
         // Check parent chain
@@ -680,7 +680,7 @@ export default function ProductChecklistDialog({
   };
   
   // Build hierarchy for items
-  const buildItemHierarchy = (items) => {
+  const _buildItemHierarchy = (items) => {
     // Get main items: either type='checklist', no type (legacy), or items without parent_id that aren't tasks/details/subtasks
     const mainItems = items.filter(i => {
       // If it has no type, it's a legacy main item
@@ -1025,7 +1025,7 @@ export default function ProductChecklistDialog({
               <>
                 {/* Active Items */}
                 {Object.entries(activeChecklist)
-                  .filter(([productName, group]) => {
+                  .filter(([, group]) => {
                     const hasMainChecklistItems = group.mainItems.some(item => 
                       !item.parent_id && (item.type === 'checklist' || !item.type)
                     );
