@@ -26,6 +26,7 @@ import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
+import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -76,7 +77,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   return true;
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -1297,7 +1298,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   ) : null;
 
   // Mobile card view
-  if (isMobile) {
+  if (isMobile && viewMode !== "board") {
     return (
       <>
         {quickEditWarning}
