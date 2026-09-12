@@ -546,6 +546,7 @@ Deno.serve(async (req) => {
     const badgeEntity = base44.asServiceRole.entities.TimeClockBadge;
     const correctionRequestEntity = base44.asServiceRole.entities.TimeClockCorrectionRequest;
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
+    const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
@@ -580,6 +581,7 @@ Deno.serve(async (req) => {
     let state = await ensureState(stateEntity, target);
     state = await recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor });
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
+    state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
 
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
