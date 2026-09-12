@@ -141,9 +141,15 @@ export default function SIPs() {
     return wo.current_task_description && wipTaskDescriptions.includes(wo.current_task_description);
   };
 
-  // Toggle sip_completed flag on work order
+  // Completion must go through the checklist dialog so approvals, statuses,
+  // child tasks, and concurrency-safe completion are validated consistently.
+  // Reopening a completed WIP item is safe to do directly.
   const toggleSipCompleted = async (wo) => {
-    await updateWorkOrder(wo.id, "sip_completed", !wo.sip_completed);
+    if (!wo.sip_completed) {
+      openChecklist(wo);
+      return;
+    }
+    await updateWorkOrder(wo.id, "sip_completed", false);
   };
 
   const today = new Date();
