@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   Coffee,
   Clock3,
+  Pause,
   CheckCircle2,
   RotateCcw
 } from "lucide-react";
@@ -44,6 +45,7 @@ import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionReques
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
 const TimeClockBreak = base44.entities.TimeClockBreak;
+const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -59,6 +61,7 @@ export default function TimeClockAdmin() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [employeeStates, setEmployeeStates] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
+  const [activeWorkPauses, setActiveWorkPauses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -89,7 +92,7 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, states, breaks] = await Promise.all([
+      const [entries, states, breaks, workPauses] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -107,10 +110,17 @@ export default function TimeClockAdmin() {
           sort: "-started_at",
           label: "Time Clock active breaks",
         }),
+        loadAllEntityRows({
+          entity: TimeClockWorkPause,
+          query: { status: "active" },
+          sort: "-started_at",
+          label: "Time Clock active Work Pauses",
+        }),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
+      setActiveWorkPauses(workPauses);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -163,14 +173,21 @@ export default function TimeClockAdmin() {
 
   const clockedInStates = employeeStates.filter(state => state.status === "clocked_in");
   const onBreakStates = clockedInStates.filter(state => state.break_status === "on_break");
-  const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working");
-  const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status));
+  const workPausedStates = clockedInStates.filter(state => state.work_pause_status === "paused");
+  const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working" && (state.work_pause_status || "working") === "working");
+  const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status) || ["pausing", "resuming"].includes(state.work_pause_status));
   const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
   const activeBreakById = new Map(activeBreaks.map(breakRow => [breakRow.id, breakRow]));
+  const activeWorkPauseById = new Map(activeWorkPauses.map(pauseRow => [pauseRow.id, pauseRow]));
   const referencedBreakIds = new Set(employeeStates.map(state => state.active_break_id).filter(Boolean));
+  const referencedWorkPauseIds = new Set(employeeStates.map(state => state.active_work_pause_id).filter(Boolean));
   const orphanActiveBreaks = activeBreaks.filter(breakRow => !referencedBreakIds.has(breakRow.id));
+  const orphanActiveWorkPauses = activeWorkPauses.filter(pauseRow => !referencedWorkPauseIds.has(pauseRow.id));
 
   const statusLabel = (state) => {
+    if (state.work_pause_status === "paused") return "Work Paused";
+    if (state.work_pause_status === "pausing") return "Pausing work";
+    if (state.work_pause_status === "resuming") return "Resuming work";
     if (state.break_status === "on_break") return "On break";
     if (state.break_status === "starting_break") return "Starting break";
     if (state.break_status === "ending_break") return "Ending break";
@@ -180,8 +197,9 @@ export default function TimeClockAdmin() {
   };
 
   const statusClass = (state) => {
+    if (state.work_pause_status === "paused") return "bg-purple-100 text-purple-800 border-purple-200";
     if (state.break_status === "on_break") return "bg-amber-100 text-amber-800 border-amber-200";
-    if (["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status)) return "bg-blue-100 text-blue-800 border-blue-200";
+    if (["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status) || ["pausing", "resuming"].includes(state.work_pause_status)) return "bg-blue-100 text-blue-800 border-blue-200";
     return "bg-green-100 text-green-800 border-green-200";
   };
 
