@@ -30,7 +30,9 @@ import {
   Briefcase,
   Home,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Coffee,
+  Clock3
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -146,6 +148,22 @@ export default function TimeClockAdmin() {
   const onBreakStates = clockedInStates.filter(state => state.break_status === "on_break");
   const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working");
   const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status));
+  const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
+
+  const statusLabel = (state) => {
+    if (state.break_status === "on_break") return "On break";
+    if (state.break_status === "starting_break") return "Starting break";
+    if (state.break_status === "ending_break") return "Ending break";
+    if (state.status === "clocking_in") return "Clocking in";
+    if (state.status === "clocking_out") return "Clocking out";
+    return "Working";
+  };
+
+  const statusClass = (state) => {
+    if (state.break_status === "on_break") return "bg-amber-100 text-amber-800 border-amber-200";
+    if (["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status)) return "bg-blue-100 text-blue-800 border-blue-200";
+    return "bg-green-100 text-green-800 border-green-200";
+  };
 
   const staleActiveEntries = timeEntries.filter(entry => {
     if (entry.status !== "clocked_in" || !entry.clock_in) return false;
@@ -343,6 +361,69 @@ export default function TimeClockAdmin() {
           </div>
         </div>
       )}
+
+      <div className="clay-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <Clock3 className="w-4 h-4 text-purple-600" />
+              Live Employee Status
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">Authoritative server state for employees currently working or transitioning.</p>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={loadData}>Refresh</Button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+            <p className="text-xs text-green-700">Clocked In</p>
+            <p className="text-2xl font-bold text-green-800">{clockedInStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+            <p className="text-xs text-emerald-700">Working</p>
+            <p className="text-2xl font-bold text-emerald-800">{workingStates.length}</p>
+          </div>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-xs text-amber-700">On Break</p>
+            <p className="text-2xl font-bold text-amber-800">{onBreakStates.length}</p>
+          </div>
+          <div className={`rounded-lg border p-3 ${transitionalStates.length ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
+            <p className={`text-xs ${transitionalStates.length ? "text-blue-700" : "text-gray-500"}`}>In Transition</p>
+            <p className={`text-2xl font-bold ${transitionalStates.length ? "text-blue-800" : "text-gray-700"}`}>{transitionalStates.length}</p>
+          </div>
+        </div>
+
+        {clockedInStates.length === 0 && transitionalStates.length === 0 ? (
+          <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No employees are currently clocked in.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {[...clockedInStates, ...transitionalStates.filter(state => state.status !== "clocked_in")].map(state => {
+              const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
+              const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
+              const validClockIn = clockIn && !Number.isNaN(clockIn.getTime());
+              return (
+                <div key={state.id} className="rounded-lg border bg-white p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{state.user_name || state.user_email}</p>
+                    <p className="text-xs text-gray-500 truncate">{state.user_email}</p>
+                    {validClockIn && <p className="text-xs text-gray-500 mt-1">Clocked in {format(clockIn, "h:mm a")}</p>}
+                  </div>
+                  <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
+                    {state.break_status === "on_break" && <Coffee className="w-3 h-3 mr-1" />}
+                    {statusLabel(state)}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {transitionalStates.length > 0 && (
+          <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+            A transition is still being finalized for {transitionalStates.length} employee{transitionalStates.length === 1 ? "" : "s"}. If it persists, reload before making an administrative correction.
+          </div>
+        )}
+      </div>
 
       <CorrectionRequestAdminPanel sessionToken={sessionToken} onEntriesChanged={loadData} />
 
