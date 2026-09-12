@@ -20,7 +20,6 @@ import {
   Plus,
   Truck,
   Wrench,
-  CircleDot,
 } from "lucide-react";
 
 const ACTIVE = new Set(["open", "assigned", "in_progress"]);
