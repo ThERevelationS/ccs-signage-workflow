@@ -326,12 +326,12 @@ export default function FleetTracking() {
       <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
         <FleetModuleNav />
         <div className="flex-1 min-h-0 flex items-center justify-center" style={{ background: "#1b2029" }}>
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md text-center">
+          <div className="bg-white dark:bg-slate-900 dark:border dark:border-slate-700 rounded-xl shadow-2xl p-6 sm:p-8 max-w-md mx-4 text-center">
           <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4" style={{ background: "#a80000" }}>
             <span className="text-white font-bold text-2xl">B</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Bouncie Fleet Tracking</h1>
-          <p className="text-gray-500 mb-6 text-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Bouncie Fleet Tracking</h1>
+          <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">
             Connect your Bouncie account to view your fleet on the map, track trips, monitor vehicle health, and receive real-time notifications.
           </p>
           {isAdmin ? (
@@ -356,7 +356,7 @@ export default function FleetTracking() {
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-500">An admin needs to connect the Bouncie account before fleet tracking is available.</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">An admin needs to connect the Bouncie account before fleet tracking is available.</p>
           )}
           </div>
         </div>
@@ -474,9 +474,9 @@ export default function FleetTracking() {
               {status?.connectedEmail && <span className="text-xs text-gray-400 ml-2 hidden 2xl:inline truncate">Bouncie: {status.connectedEmail}</span>}
             </div>
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-              <button onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === "admin") syncNotifications(); }} className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Refresh Bouncie tracking"><RefreshCw className="w-4 h-4" /></button>
-              {currentUser?.role === "admin" && <button onClick={handleConnect} className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Reconnect Bouncie"><LogOut className="w-4 h-4" /></button>}
-              <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer" className="p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded" title="Open Bouncie App"><ExternalLink className="w-4 h-4" /></a>
+              <button type="button" onClick={() => { loadVehicles(); loadNotifications(); if (currentUser?.role === "admin") syncNotifications(); }} className="min-h-11 min-w-11 p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400" title="Refresh Bouncie tracking" aria-label="Refresh Bouncie tracking"><RefreshCw className="w-4 h-4 mx-auto" /></button>
+              {currentUser?.role === "admin" && <button type="button" onClick={handleConnect} className="min-h-11 min-w-11 p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400" title="Reconnect Bouncie" aria-label="Reconnect Bouncie"><LogOut className="w-4 h-4 mx-auto" /></button>}
+              <a href="https://www.bouncie.com/app" target="_blank" rel="noreferrer" className="min-h-11 min-w-11 p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400" title="Open Bouncie App" aria-label="Open Bouncie App"><ExternalLink className="w-4 h-4" /></a>
             </div>
           </div>
 
