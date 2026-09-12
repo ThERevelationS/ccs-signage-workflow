@@ -188,11 +188,11 @@ export default function FleetMaintenanceDialog({ open, task, initialEquipmentId 
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-2 sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="w-full max-w-5xl max-h-[96vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700">
+      <div role="dialog" aria-modal="true" aria-labelledby="fleet-maintenance-dialog-title" className="w-full max-w-5xl max-h-[96dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700">
         <div className="sticky top-0 z-20 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between px-4 sm:px-5 py-4">
-            <div><h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">{task ? "Edit Maintenance Schedule" : "New Maintenance Schedule"}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Scheduling only. Nothing becomes a work order until the guarded Fleet generator or a separate work-order action runs.</p></div>
-            <button onClick={onClose} disabled={saving} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50"><X className="w-5 h-5" /></button>
+            <div><h2 id="fleet-maintenance-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{task ? "Edit Maintenance Schedule" : "New Maintenance Schedule"}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Scheduling only. Nothing becomes a work order until the guarded Fleet generator or a separate work-order action runs.</p></div>
+            <button type="button" onClick={onClose} disabled={saving} aria-label="Close maintenance schedule dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
           </div>
           <div className="px-3 sm:px-5 pb-3 overflow-x-auto"><div className="flex min-w-max gap-2">{STEPS.map(([number, label]) => <div key={number} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${step === number ? "bg-indigo-600 text-white" : step > number ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400"}`}>{step > number ? <Check className="w-3.5 h-3.5" /> : <span className="w-4 h-4 rounded-full border border-current inline-flex items-center justify-center text-[10px]">{number}</span>}{label}</div>)}</div></div>
         </div>
