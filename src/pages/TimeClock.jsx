@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
+import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -46,6 +48,7 @@ function newRequestId() {
 }
 
 export default function TimeClock() {
+  const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [timeClockSessionToken, setTimeClockSessionToken] = useState("");
@@ -226,8 +229,21 @@ export default function TimeClock() {
     );
   }
 
+  const shellAlreadyGuardsThisEmployee = Boolean(
+    shellSessionToken &&
+    shellUser?.email &&
+    loggedInUser?.email &&
+    shellUser.email.toLowerCase() === loggedInUser.email.toLowerCase()
+  );
+
   return (
-    <PullToRefresh onRefresh={loadData}>
+    <>
+      <WorkPauseOverlay
+        userOverride={loggedInUser}
+        sessionTokenOverride={timeClockSessionToken}
+        disabled={!loggedInUser || !timeClockSessionToken || shellAlreadyGuardsThisEmployee}
+      />
+      <PullToRefresh onRefresh={loadData}>
     <div className="min-h-screen p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -648,5 +664,6 @@ export default function TimeClock() {
       />
     </div>
     </PullToRefresh>
+    </>
   );
 }
