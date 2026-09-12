@@ -49,6 +49,8 @@ export default function ProductChecklistDialog({
   const [loadedRevisitDateSnapshot, setLoadedRevisitDateSnapshot] = useState(undefined);
   const [loadedSipCompletedSnapshot, setLoadedSipCompletedSnapshot] = useState(undefined);
   const [saveError, setSaveError] = useState("");
+  const [validationDialog, setValidationDialog] = useState(null);
+  const [showCompletedItems, setShowCompletedItems] = useState(false);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -171,6 +173,7 @@ export default function ProductChecklistDialog({
       setProductTypes(loadedProductTypes);
     } catch (error) {
       console.error("Error loading data:", error);
+      setSaveError(error?.message || "This SIP checklist could not be loaded. Close and reopen it, or reload the latest Work Order.");
     }
     setIsLoading(false);
   };
@@ -394,24 +397,9 @@ export default function ProductChecklistDialog({
       return;
     }
 
-    // Mark only the completion flag, and fail closed if that flag changed
-    // since this dialog loaded. Unrelated Work Order edits may continue safely.
-    try {
-      setSaveError("");
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
-        workOrderId: workOrder.id,
-        expectedFields: { sip_completed: loadedSipCompletedSnapshot },
-        nextFields: { sip_completed: true },
-        label: "SIP checklist completion",
-      });
-      setLoadedSipCompletedSnapshot(saved.sip_completed);
-      Object.assign(workOrder, { sip_completed: saved.sip_completed, updated_date: saved.updated_date });
-      if (onUpdate) onUpdate();
-      onClose();
-    } catch (error) {
-      console.error("Could not complete SIP checklist safely:", error);
-      setSaveError(error?.message || "SIP completion changed in another session. Reload before checking it off.");
-    }
+    // Save the checklist and completion flag together. This prevents a user from
+    // completing a SIP based on local edits that would otherwise be discarded.
+    await saveChecklist(undefined, { markComplete: true });
   };
 
   const proceedWithCheckOff = async () => {
@@ -448,7 +436,7 @@ export default function ProductChecklistDialog({
     await saveChecklist(dateString);
   };
 
-  const saveChecklist = async (revisitDate) => {
+  const saveChecklist = async (revisitDate, { markComplete = false } = {}) => {
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -514,13 +502,17 @@ export default function ProductChecklistDialog({
         expectedFields.sip_revisit_date = loadedRevisitDateSnapshot;
         nextFields.sip_revisit_date = revisitDate || "";
       }
+      if (markComplete) {
+        expectedFields.sip_completed = loadedSipCompletedSnapshot;
+        nextFields.sip_completed = true;
+      }
 
       setSaveError("");
       const saved = await replaceWorkOrderFieldsIfUnchanged({
         workOrderId: workOrder.id,
         expectedFields,
         nextFields,
-        label: "SIP product checklist",
+        label: markComplete ? "SIP checklist save and completion" : "SIP product checklist",
       });
       const savedChecklist = saved.sip_checklist || [];
       const savedProducts = saved.products || [];
@@ -528,11 +520,13 @@ export default function ProductChecklistDialog({
         sip_checklist: savedChecklist,
         products: savedProducts,
         sip_revisit_date: saved.sip_revisit_date,
+        sip_completed: saved.sip_completed,
         updated_date: saved.updated_date,
       });
       setLoadedChecklistSnapshot(saved.sip_checklist === undefined ? undefined : JSON.parse(JSON.stringify(saved.sip_checklist)));
       setLoadedProductsSnapshot(saved.products === undefined ? undefined : JSON.parse(JSON.stringify(saved.products)));
       setLoadedRevisitDateSnapshot(saved.sip_revisit_date);
+      if (markComplete) setLoadedSipCompletedSnapshot(saved.sip_completed);
       setChecklist(savedChecklist);
       setProducts(savedProducts);
       if (onUpdate) onUpdate();
