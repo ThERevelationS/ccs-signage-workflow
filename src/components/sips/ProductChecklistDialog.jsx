@@ -54,6 +54,7 @@ export default function ProductChecklistDialog({
   const [validationDialog, setValidationDialog] = useState(null);
   const [showCompletedItems, setShowCompletedItems] = useState(false);
   const [discardWarning, setDiscardWarning] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -316,32 +317,38 @@ export default function ProductChecklistDialog({
     ));
   };
 
-  const deleteChecklistItem = (itemId) => {
-    // Get the item being deleted to find its product_name
-    const deletedItem = checklist.find(item => item.id === itemId);
-    const newChecklist = checklist.filter(item => item.id !== itemId);
-    
-    // If item had a product_name, check if any items remain for that product
-    if (deletedItem?.product_name) {
-      const productName = deletedItem.product_name;
-      const _remainingItemsForProduct = newChecklist.filter(item => {
-        // Check if item belongs to this product (direct or via parent chain)
-        if (item.product_name === productName) return true;
-        // Check parent chain
-        let current = item;
-        while (current?.parent_id) {
-          const parent = newChecklist.find(p => p.id === current.parent_id);
-          if (parent?.product_name === productName) return true;
-          current = parent;
+  const getDescendantIds = (itemId) => {
+    const ids = new Set([itemId]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      checklist.forEach(item => {
+        if (item.parent_id && ids.has(item.parent_id) && !ids.has(item.id)) {
+          ids.add(item.id);
+          changed = true;
         }
-        return false;
       });
-      
-      // If no items remain for this product, the product group will naturally disappear
-      // No additional cleanup needed as grouping is dynamic
     }
-    
-    setChecklist(newChecklist);
+    return ids;
+  };
+
+  const deleteChecklistItem = (itemId) => {
+    const item = checklist.find(entry => entry.id === itemId);
+    if (!item) return;
+    const deleteIds = getDescendantIds(itemId);
+    setPendingDelete({
+      itemId,
+      itemText: item.text || "this checklist item",
+      itemType: item.type || "checklist",
+      childCount: Math.max(0, deleteIds.size - 1),
+    });
+  };
+
+  const confirmDeleteChecklistItem = () => {
+    if (!pendingDelete?.itemId) return;
+    const deleteIds = getDescendantIds(pendingDelete.itemId);
+    setChecklist(prev => prev.filter(item => !deleteIds.has(item.id)));
+    setPendingDelete(null);
   };
 
   // Check if an item's children are all complete
