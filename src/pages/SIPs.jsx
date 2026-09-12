@@ -493,8 +493,9 @@ export default function SIPs() {
                         onOpenChange={(open) => setOpenDatePopover(open ? `deadline-${wo.id}` : null)}
                       >
                         <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className="h-8 w-full text-sm text-left px-1 hover:bg-gray-100 rounded font-medium">
-                            {wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
+                          <button className="min-h-8 w-full text-sm text-left px-1 py-1 hover:bg-gray-100 rounded font-medium flex flex-col items-start justify-center gap-0.5">
+                            <span>{wo.current_task_deadline ? (() => { const d = parseLocalDate(wo.current_task_deadline); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}</span>
+                            {deadlineStatus?.label && <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${deadlineStatus.className}`}>{deadlineStatus.label}</Badge>}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -670,10 +671,12 @@ export default function SIPs() {
                   </React.Fragment>
                 );
               })}
-              {activeWorkOrders.length === 0 && (
+              {visibleActiveWorkOrders.length === 0 && (
                 <tr>
                   <td colSpan={14} className="px-3 py-12 text-center text-gray-500 text-base">
-                    No items assigned to SIPs. Assign "SIPs" to the Task Assigned column or check WIP/SIP on a task description to see items here.
+                    {searchQuery || statusFilter !== "all"
+                      ? "No active SIPs items match the current search or filter."
+                      : "No items assigned to SIPs. Assign \"SIPs\" to the Task Assigned column or check WIP/SIP on a task description to see items here."}
                   </td>
                 </tr>
               )}
@@ -682,10 +685,10 @@ export default function SIPs() {
         </div>
 
         {/* Future Revisit Section */}
-        {futureRevisitOrders.length > 0 && (
+        {visibleFutureRevisitOrders.length > 0 && (
           <div className="clay-card p-4 w-full mt-6 overflow-x-auto" style={{ borderLeft: '4px solid #f59e0b' }}>
             <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
-              📅 Revisit Later ({futureRevisitOrders.length})
+              <CalendarClock className="w-4 h-4" /> Revisit Later ({visibleFutureRevisitOrders.length})
               <span className="text-xs text-gray-400 font-normal">— future revisit date set, not in active queue</span>
             </h3>
             <table className="w-full border-collapse text-sm" style={{ tableLayout: 'auto', minWidth: '900px' }}>
@@ -702,7 +705,7 @@ export default function SIPs() {
                 </tr>
               </thead>
               <tbody>
-                {futureRevisitOrders.map((wo) => {
+                {visibleFutureRevisitOrders.map((wo) => {
                   const progress = getChecklistProgress(wo);
                   return (
                     <tr key={wo.id} className="border-b hover:bg-amber-50/50 bg-yellow-50/30">
@@ -759,9 +762,9 @@ export default function SIPs() {
         )}
 
         {/* Completed WIP Items Section */}
-        {completedWipItems.length > 0 && (
+        {visibleCompletedWipItems.length > 0 && (
           <div className="clay-card p-4 w-full mt-6">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">Completed WIP Items ({completedWipItems.length})</h3>
+            <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600" />Completed WIP Items ({visibleCompletedWipItems.length})</h3>
             <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
               <thead className="bg-gray-50">
                 <tr className="border-b">
@@ -775,7 +778,7 @@ export default function SIPs() {
                 </tr>
               </thead>
               <tbody>
-                {completedWipItems.map((wo) => (
+                {visibleCompletedWipItems.map((wo) => (
                   <tr key={wo.id} className="border-b hover:bg-gray-50 bg-green-50/30">
                     <td className="px-2 py-2 border-r text-center">
                       <Checkbox
@@ -894,6 +897,7 @@ export default function SIPs() {
         <TemplateBuilder
           isOpen={showTemplateBuilder}
           onClose={() => setShowTemplateBuilder(false)}
+          isAdmin={currentUser?.role === "admin"}
         />
       )}
     </div>
