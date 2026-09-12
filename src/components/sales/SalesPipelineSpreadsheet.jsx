@@ -484,6 +484,51 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     updateWorkOrderFields(orderId, { [field]: value }, skipHistory);
   };
 
+  const openOpportunityDetails = (workOrder) => {
+    setSelectedWorkOrder(workOrder);
+    setShowFullWorkOrderDetails(false);
+  };
+
+  const requestSalesStatusChange = (workOrder, nextStatus) => {
+    if (!isRegistered || !workOrder?.id || !nextStatus || workOrder.sales_status === nextStatus) return;
+    const currentStatus = workOrder.sales_status || "lead";
+    const terminalChange = ["won", "lost"].includes(nextStatus);
+    const reopening = ["won", "lost"].includes(currentStatus) && !terminalChange;
+    if (terminalChange || reopening) {
+      setStatusTransition({ workOrder, nextStatus });
+      return;
+    }
+    updateWorkOrderFields(workOrder.id, { sales_status: nextStatus });
+  };
+
+  const confirmSalesStatusTransition = ({ lostReason = "" } = {}) => {
+    if (!statusTransition?.workOrder?.id) return;
+    const current = workOrders.find((row) => row.id === statusTransition.workOrder.id) || statusTransition.workOrder;
+    const nextStatus = statusTransition.nextStatus;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const closing = ["won", "lost"].includes(nextStatus);
+    const reopening = ["won", "lost"].includes(current.sales_status) && !closing;
+    let changes = { sales_status: nextStatus };
+
+    if (closing) {
+      changes = {
+        ...changes,
+        close_date: current.close_date || today,
+        follow_up_date: "",
+        lost_reason: nextStatus === "lost" ? lostReason : "",
+      };
+    } else if (reopening) {
+      changes = {
+        ...changes,
+        close_date: "",
+        lost_reason: "",
+      };
+    }
+
+    updateWorkOrderFields(current.id, changes);
+    setStatusTransition(null);
+  };
+
   const discardPendingQuickEdits = async () => {
     Object.values(debounceTimers.current).forEach((timer) => clearTimeout(timer));
     debounceTimers.current = {};
