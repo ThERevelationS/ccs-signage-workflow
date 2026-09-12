@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import { easternTodayText, isFluidLowStock, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
   Truck,
   ClipboardList,
@@ -127,6 +128,18 @@ export default function FleetOverview() {
     const overdueTasks = pendingTasks.filter(t => t.status === "overdue" || String(t.start_date) < todayText);
     const upcomingTasks = pendingTasks.filter(t => String(t.start_date) >= todayText && String(t.start_date) <= horizonText)
       .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+    const dueToday = pendingTasks.filter(t => String(t.start_date) === todayText);
+    const equipmentHealth = activeEquipment.map(equipment => fleetHealthScore({
+      equipment,
+      tasks: data.tasks.filter(task => task.equipment_id === equipment.id),
+      workOrders: data.workOrders.filter(order => order.equipment_id === equipment.id),
+      identityConflict: equipment.bouncie_link_status === "ambiguous" || hasRuntimeBouncieIdentityConflict(equipment, data.bouncieVehicles || []),
+      todayText,
+    }));
+    const scoredHealth = equipmentHealth.filter(item => item.score != null);
+    const averageHealth = scoredHealth.length ? Math.round(scoredHealth.reduce((sum, item) => sum + item.score, 0) / scoredHealth.length) : null;
+    const needsHealthAttention = scoredHealth.filter(item => item.score < 75).length;
+    const availableEquipment = activeEquipment.filter(item => item.status === "operational");
     return {
       activeEquipment,
       retiredEquipment,
@@ -143,6 +156,10 @@ export default function FleetOverview() {
       bouncieIdentityConflicts,
       overdueTasks,
       upcomingTasks,
+      dueToday,
+      averageHealth,
+      needsHealthAttention,
+      availableEquipment,
       bouncieFaults: data.bouncieFaults || [],
     };
   }, [data]);
@@ -171,13 +188,25 @@ export default function FleetOverview() {
 
         {data && metrics && (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-              <MetricCard icon={Truck} label="Active Equipment" value={metrics.activeEquipment.length} sub={`${metrics.retiredEquipment.length} retired · ${metrics.uniqueTracked} tracked VIN${metrics.uniqueTracked === 1 ? "" : "s"}`} />
+            <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
+              <MetricCard icon={Activity} label="Fleet Health" value={metrics.averageHealth == null ? "—" : `${metrics.averageHealth}%`} sub={`${metrics.needsHealthAttention} asset${metrics.needsHealthAttention === 1 ? "" : "s"} below 75`} />
+              <MetricCard icon={Truck} label="Available Now" value={metrics.availableEquipment.length} sub={`${metrics.activeEquipment.length} active · ${metrics.retiredEquipment.length} retired`} />
+              <MetricCard icon={Navigation} label="Tracked" value={metrics.uniqueTracked} sub="Current active VINs" />
               <MetricCard icon={ClipboardList} label="Open Work Orders" value={metrics.activeOrders.length} sub={`${data.workOrders.length} total history`} />
               <MetricCard icon={AlertTriangle} label="High / Critical" value={metrics.highPriorityOrders.length} sub="Active work orders" />
               <MetricCard icon={Package} label="Low Stock" value={metrics.lowStock} sub={`${metrics.lowParts.length} parts · ${metrics.lowFluids.length} fluids`} />
               <MetricCard icon={CalendarClock} label="Due in 14 Days" value={metrics.upcomingTasks.length} sub={`${metrics.overdueTasks.length} overdue schedule${metrics.overdueTasks.length === 1 ? "" : "s"}`} />
             </div>
+
+            <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Today</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">The operational picture to act on first.</p></div>
+              <div className="grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
+                <TodayCell label="Ready / operational" value={`${metrics.availableEquipment.length} of ${metrics.activeEquipment.length}`} detail="Active assets currently marked operational" />
+                <TodayCell label="Maintenance due today" value={metrics.dueToday.length} detail={`${metrics.overdueTasks.length} already overdue`} attention={metrics.dueToday.length > 0 || metrics.overdueTasks.length > 0} />
+                <TodayCell label="Priority repairs" value={metrics.highPriorityOrders.length} detail={`${metrics.unassignedOrders.length} active work order${metrics.unassignedOrders.length === 1 ? "" : "s"} unassigned`} attention={metrics.highPriorityOrders.length > 0} />
+                <TodayCell label="Inventory / requests" value={metrics.lowStock + metrics.pendingRequests.length} detail={`${metrics.lowStock} low-stock · ${metrics.pendingRequests.length} requested`} attention={metrics.lowStock + metrics.pendingRequests.length > 0} />
+              </div>
+            </section>
 
             <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -260,6 +289,10 @@ export default function FleetOverview() {
       </div>
     </div>
   );
+}
+
+function TodayCell({ label, value, detail, attention = false }) {
+  return <div className="p-4"><div className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</div><div className={`mt-1 text-2xl font-bold ${attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div><div className="mt-1 text-xs text-gray-500 dark:text-slate-400">{detail}</div></div>;
 }
 
 function MetricCard({ icon: Icon, label, value, sub }) {
