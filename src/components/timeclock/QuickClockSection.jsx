@@ -518,6 +518,47 @@ export default function QuickClockSection({
     if (data?.entry?.id) setActiveEntry(data.entry);
   };
 
+  const applyWorkPauseResponse = (data) => {
+    setWorkPauseAllowed(data?.work_pause_allowed === true || workPauseAllowed);
+    setWorkPauseStatus(data?.work_pause_status || "working");
+    setActiveWorkPause(data?.work_pause_status === "paused" ? (data?.work_pause || data?.active_work_pause || null) : null);
+    setWorkPauseSummary(data?.work_pause_summary || { count: 0, total_minutes: 0 });
+    if (data?.entry?.id) setActiveEntry(data.entry);
+  };
+
+  const signalWorkPauseChanged = () => {
+    window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
+    try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
+  };
+
+  const handleStartWorkPause = async () => {
+    if (!workPauseAllowed) throw new Error("Work Pause is not enabled for this employee.");
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Work Pause identity is no longer verified. Close this dialog and identify again.");
+    }
+    if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before pausing work.");
+    const email = selectedUser.email;
+    const requestId = requestIdFor("work_pause_start", email);
+    setPersistenceError("");
+    try {
+      const result = await invokeTimeClock({
+        action: "work_pause_start",
+        request_id: requestId,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      clearRequest("work_pause_start", email);
+      applyWorkPauseResponse(result);
+      setShowClockOut(false);
+      setRecognitionStatus("Work Pause confirmed by server.");
+      signalWorkPauseChanged();
+      return result;
+    } catch (err) {
+      if (!err.retrySameRequest) clearRequest("work_pause_start", email);
+      setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
+      throw err;
+    }
+  };
+
   const handleStartBreak = async ({ breakType, isPaid }) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Break identity is no longer verified. Close this dialog and identify again.");
@@ -576,6 +617,9 @@ export default function QuickClockSection({
 
     if (breakStatus !== "working" || activeBreak?.id) {
       throw new Error("End the active break before clocking out.");
+    }
+    if (workPauseStatus !== "working" || activeWorkPause?.id) {
+      throw new Error("Resume Work before clocking out.");
     }
 
     const email = selectedUser.email;
@@ -772,8 +816,11 @@ export default function QuickClockSection({
           breakStatus={breakStatus}
           activeBreak={activeBreak}
           breakSummary={breakSummary}
+          workPauseAllowed={workPauseAllowed}
+          workPauseSummary={workPauseSummary}
           onStartBreak={handleStartBreak}
           onEndBreak={handleEndBreak}
+          onStartWorkPause={handleStartWorkPause}
           onClockOut={handleClockOut}
         />
       )}
