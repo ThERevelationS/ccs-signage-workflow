@@ -927,6 +927,92 @@ export default function TimeClockAdmin() {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={!!approvalEntry}
+        onOpenChange={(open) => {
+          if (approvalBusy) return;
+          if (!open) {
+            setApprovalEntry(null);
+            setApprovalNote("");
+            setApprovalRequestId("");
+            setApprovalError("");
+          }
+        }}
+      >
+        <DialogContent className="clay-card border-none max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {approvalDecision === "approve" ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <RotateCcw className="w-5 h-5 text-amber-600" />}
+              {approvalDecision === "approve" ? "Approve Completed Shift" : "Send Shift Back for Review"}
+            </DialogTitle>
+          </DialogHeader>
+          {approvalEntry && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-gray-50 p-3 text-sm">
+                <p className="font-medium">{approvalEntry.user_name || approvalEntry.user_email}</p>
+                <p className="text-gray-500 mt-1">
+                  {approvalEntry.clock_in ? format(parseISO(approvalEntry.clock_in), "MMM d, yyyy h:mm a") : "Unknown start"}
+                  {approvalEntry.clock_out ? ` – ${format(parseISO(approvalEntry.clock_out), "h:mm a")}` : ""}
+                </p>
+                <p className="text-gray-600 mt-1">{Number(approvalEntry.total_hours || 0).toFixed(2)} hours</p>
+              </div>
+
+              <div className={`rounded-lg border p-3 text-sm ${approvalDecision === "approve" ? "border-green-200 bg-green-50 text-green-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                {approvalDecision === "approve"
+                  ? "This records manager review of the completed shift. It does not finalize or lock a payroll period. Any later time correction automatically returns the shift to Needs Review."
+                  : "This removes the current approval and marks the shift Needs Review. The prior approval remains preserved in the audit history."}
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">
+                  Manager Note {approvalDecision === "reopen" && <span className="text-red-600">*</span>}
+                </Label>
+                <Textarea
+                  value={approvalNote}
+                  onChange={(e) => setApprovalNote(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder={approvalDecision === "approve" ? "Optional review note" : "Explain why this shift needs review again."}
+                  disabled={approvalBusy}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {approvalDecision === "approve" ? "Optional. Approval identity and server timestamp are always audited." : "Required when reopening an approved shift."}
+                </p>
+              </div>
+
+              {approvalError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{approvalError}</div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={approvalBusy}
+                  onClick={() => {
+                    setApprovalEntry(null);
+                    setApprovalNote("");
+                    setApprovalRequestId("");
+                    setApprovalError("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleApproval}
+                  disabled={approvalBusy || (approvalDecision === "reopen" && approvalNote.trim().length < 3)}
+                  className={approvalDecision === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"}
+                >
+                  {approvalBusy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {approvalBusy ? "Saving..." : approvalDecision === "approve" ? "Approve Shift" : "Mark Needs Review"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => { if (!open && !deleteBusy) { setDeleteConfirm(null); setArchiveReason(""); } }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
