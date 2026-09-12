@@ -971,7 +971,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
       "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Close Date": str(wo.close_date),
-      "Probability": num(wo.probability), "Project Type": str(wo.project_type),
+      "Lost Reason": str(wo.lost_reason), "Probability": num(wo.probability), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
       "Days from Est. Sent to Date Order Created": num(calculateDays(wo.date_estimate_sent, wo.date_order_created)),
@@ -1217,6 +1217,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           wo.county,
           wo.project_type,
           wo.lead_source,
+          wo.lost_reason,
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
       }
