@@ -230,7 +230,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           id: `existing_${item.product_name}_${Math.random().toString(36).substr(2, 6)}`,
           productType: item.product_type || '',
           customName: item.product_name,
-          subTemplates: []
+          subTemplates: [],
+          isExisting: true
         });
       }
     });
@@ -255,7 +256,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     
     setSelectedProducts([...selectedProducts, {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      productType, customName, subTemplates: []
+      productType, customName, subTemplates: [], isExisting: false
     }]);
   };
 
@@ -295,7 +296,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const combinedItems = [];
     selectedProducts.forEach(product => {
       const template = productTypeTemplates[product.productType];
-      if (template?.items) {
+      // Existing products are represented here so checklist options can be added
+      // without rebuilding their answered base checklist.
+      if (!product.isExisting && template?.items) {
         combinedItems.push({
           type: 'product_header',
           productName: product.customName,
@@ -328,7 +331,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
     });
     
-    if (onApplyTemplate && combinedItems.length > 0) {
+    if (combinedItems.length === 0) {
+      setNoticeDialog({
+        title: "Nothing new selected",
+        message: "Existing product checklists are preserved. Select a new product checklist or add a checklist option to an existing product before applying."
+      });
+      return;
+    }
+    if (onApplyTemplate) {
       onApplyTemplate(combinedItems);
     }
     setSelectedProducts([]);
@@ -1058,7 +1068,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                                     productType: product.product_type,
                                     customName: customName,
-                                    subTemplates: []
+                                    subTemplates: [],
+                                    isExisting: false
                                   }]);
                                 }
                               }}
@@ -1113,7 +1124,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         <div ref={provided.innerRef} {...provided.draggableProps} className="border rounded p-2 bg-white">
                           <div className="flex items-center gap-2 mb-1">
                             <div {...provided.dragHandleProps}><GripVertical className="w-4 h-4 text-gray-400 cursor-grab" /></div>
-                            <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} className="h-7 text-sm flex-1" />
+                            <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} disabled={product.isExisting} className="h-7 text-sm flex-1" />
+                            {product.isExisting && <span className="text-[10px] font-medium rounded bg-green-100 text-green-700 px-1.5 py-0.5">Existing</span>}
                             <button onClick={() => setSelectedProducts(selectedProducts.filter(p => p.id !== product.id))} className="p-1"><Trash2 className="w-4 h-4 text-red-500" /></button>
                           </div>
                           <div className="text-xs text-gray-500 mb-1">Type: {product.productType}</div>
