@@ -9,12 +9,33 @@
     "part_number": {
       "type": "string"
     },
+    "alternate_part_numbers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cross-reference, superseded, OEM, or alternate numbers used only for Fleet part lookup."
+    },
+    "barcode_value": {
+      "type": "string",
+      "description": "Optional UPC/EAN/barcode text from packaging or label."
+    },
     "category": {
       "type": "string",
       "description": "Canonical or historical Fleet category. Historical values are preserved exactly during migration."
     },
+    "subcategory": {
+      "type": "string"
+    },
     "manufacturer": {
       "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "specification": {
+      "type": "string",
+      "description": "Fitment/specification text such as dimensions, thread, amperage, filter type, belt size, etc."
     },
     "quantity_on_hand": {
       "type": "number",
@@ -31,6 +52,87 @@
     "location": {
       "type": "string"
     },
+    "storage_zone": {
+      "type": "string"
+    },
+    "storage_cabinet": {
+      "type": "string"
+    },
+    "storage_shelf": {
+      "type": "string"
+    },
+    "storage_bin": {
+      "type": "string"
+    },
+    "preferred_vendor": {
+      "type": "string"
+    },
+    "vendor_sku": {
+      "type": "string"
+    },
+    "vendor_url": {
+      "type": "string"
+    },
+    "primary_photo_url": {
+      "type": "string"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Reference/research URLs used to verify Fleet part identity. Never treated as authoritative by themselves."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "identity_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "review_needed",
+        "verified"
+      ],
+      "default": "unverified"
+    },
+    "identification_confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "identification_method": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "part_number",
+        "photo",
+        "barcode",
+        "ai_research",
+        "request_receive"
+      ]
+    },
+    "identification_notes": {
+      "type": "string"
+    },
+    "last_identified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_identified_by": {
+      "type": "string"
+    },
     "notes": {
       "type": "string"
     },
@@ -44,6 +146,14 @@
         "type": "string"
       },
       "description": "Linked FleetEquipment ids."
+    },
+    "compatibility_notes": {
+      "type": "string",
+      "description": "Human-reviewed fitment/compatibility notes. Empty equipment list still means unrestricted unless notes say otherwise."
+    },
+    "created_from_identification_id": {
+      "type": "string",
+      "description": "FleetPartIdentification id that created this part, when applicable."
     },
     "created_from_request_id": {
       "type": "string",
