@@ -47,8 +47,8 @@ Deno.serve(async (req) => {
       
       if (!response.ok) {
         const errText = await response.text();
-        console.error("Drive list folders error:", errText);
-        return Response.json({ error: 'Failed to list folders', details: errText }, { status: 500 });
+        console.error('Drive list folders error:', response.status, errText);
+        return Response.json({ error: 'Failed to list Google Drive folders' }, { status: 502 });
       }
       
       const data = await response.json();
@@ -75,8 +75,8 @@ Deno.serve(async (req) => {
       
       if (!response.ok) {
         const errText = await response.text();
-        console.error("Drive create folder error:", errText);
-        return Response.json({ error: 'Failed to create folder', details: errText }, { status: 500 });
+        console.error('Drive create folder error:', response.status, errText);
+        return Response.json({ error: 'Failed to create Google Drive folder' }, { status: 502 });
       }
       
       const folder = await response.json();
