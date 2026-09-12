@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
@@ -79,6 +81,7 @@ const publicGrant = (row: any) => ({
   expires_at: row?.expires_at || '',
   last_used_at: row?.last_used_at || '',
   notes: row?.notes || '',
+  allow_estimates:Array.isArray(row?.allowed_actions) && row.allowed_actions.includes('estimate_submit'),
 });
 
 async function validateGrant(Access: any, token: unknown) {
@@ -121,6 +124,20 @@ function sanitizeWorkOrder(row: any) {
   };
 }
 
+function sanitizeEstimate(row:any) {
+  return {
+    id:row.id, work_order_id:row.work_order_id || '', updated_date:row.updated_date || '', status:row.status || 'draft',
+    estimated_labor_hours:row.estimated_labor_hours ?? 0, labor_rate:row.labor_rate ?? 0,
+    estimated_parts_total:row.estimated_parts_total ?? 0, estimated_fluids_total:row.estimated_fluids_total ?? 0,
+    misc_total:row.misc_total ?? 0, estimated_total:row.estimated_total ?? 0,
+    estimated_completion_date:row.estimated_completion_date || '',
+    parts_estimate:Array.isArray(row.parts_estimate)?row.parts_estimate.map((line:any)=>({description:clean(line?.description,300),quantity:Number(line?.quantity||0),estimated_cost:Number(line?.estimated_cost||0)})):[],
+    fluids_estimate:Array.isArray(row.fluids_estimate)?row.fluids_estimate.map((line:any)=>({description:clean(line?.description,300),quantity:Number(line?.quantity||0),unit:clean(line?.unit,40),estimated_cost:Number(line?.estimated_cost||0)})):[],
+    notes:clean(row.notes,3000), approval_required:row.approval_required===true, approval_tier:clean(row.approval_tier,80),
+    submitted_at:row.submitted_at || '', decision_at:row.decision_at || '', decision_notes:clean(row.decision_notes,2000),
+  };
+}
+
 function sanitizeTask(row: any) {
   return {
     id:row.id, title:row.title || '', description:row.description || '', type:row.type || '', priority:row.priority || '',
@@ -138,23 +155,36 @@ async function portalPayload(base44: any, grant: any) {
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
   const Equipment = base44.asServiceRole.entities.FleetEquipment;
   const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
-  const [workOrders,equipment,tasks] = await Promise.all([
+  const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
+  const [workOrders,equipment,tasks,estimates] = await Promise.all([
     loadAllEntityRows({entity:WorkOrder,sort:'-updated_date',label:'Mechanic portal Fleet work orders'}),
     loadAllEntityRows({entity:Equipment,sort:'name',label:'Mechanic portal Fleet equipment'}),
     loadAllEntityRows({entity:Task,sort:'start_date',label:'Mechanic portal Fleet maintenance schedules'}),
+    loadAllEntityRows({entity:Estimate,sort:'-updated_date',label:'Mechanic portal repair-estimate state'}),
   ]);
   const active = workOrders.filter((row:any)=>ACTIVE.has(row.status));
   const completed = workOrders.filter((row:any)=>row.status === 'completed').slice(0,30);
   const visible = [...active,...completed];
   const equipmentIds = new Set(visible.map((row:any)=>String(row.equipment_id || '')).filter(Boolean));
   const taskIds = new Set(visible.map((row:any)=>String(row.maintenance_task_id || '')).filter(Boolean));
+  const canEstimate = Array.isArray(grant?.allowed_actions) && grant.allowed_actions.includes('estimate_submit');
+  const repairEstimates:any[] = [];
+  for (const wo of visible) {
+    const matches=(estimates||[]).filter((row:any)=>String(row.work_order_id||'')===String(wo.id));
+    if (!matches.length) continue;
+    if (matches.length>1) { repairEstimates.push({work_order_id:wo.id,visibility:'conflict',status:'conflict'}); continue; }
+    const estimate=matches[0];
+    if (estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(grant.id||'')) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
+    else repairEstimates.push({work_order_id:wo.id,visibility:estimate.estimate_source === 'mechanic_portal' ? 'other_mechanic' : 'ccs_managed',status:'managed'});
+  }
   return {
     success:true,
-    portal:{name:grant?.name || 'External Mechanic'},
+    portal:{name:grant?.name || 'External Mechanic',capabilities:{estimates:canEstimate}},
     active_work_orders:active.map(sanitizeWorkOrder),
     recent_completed:completed.map(sanitizeWorkOrder),
     equipment:equipment.filter((row:any)=>equipmentIds.has(String(row.id))).map(sanitizeEquipment),
     tasks:tasks.filter((row:any)=>taskIds.has(String(row.id))).map(sanitizeTask),
+    repair_estimates:repairEstimates,
   };
 }
 
