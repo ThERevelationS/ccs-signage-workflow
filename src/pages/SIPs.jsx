@@ -186,6 +186,36 @@ export default function SIPs() {
 
   const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const matchesSearch = (wo) => {
+    if (!normalizedSearch) return true;
+    return [
+      wo.client_name,
+      wo.description,
+      wo.current_task_description,
+      wo.current_task_assigned_to,
+      wo.designer,
+      wo.project_manager,
+      wo.estimator,
+      wo.est_inv_at,
+      wo.corbridge_invoice_number,
+    ].some(value => String(value || "").toLowerCase().includes(normalizedSearch));
+  };
+
+  const visibleActiveWorkOrders = activeWorkOrders.filter(matchesSearch);
+  const visibleFutureRevisitOrders = futureRevisitOrders.filter(matchesSearch);
+  const visibleCompletedWipItems = completedWipItems.filter(matchesSearch);
+
+  const getDeadlineStatus = (dateString) => {
+    const deadline = parseLocalDate(dateString);
+    if (!deadline || Number.isNaN(deadline.getTime())) return null;
+    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / 86400000);
+    if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, className: "bg-red-100 text-red-700 border-red-200" };
+    if (diffDays === 0) return { label: "Due today", className: "bg-red-100 text-red-700 border-red-200" };
+    if (diffDays <= 7) return { label: `${diffDays}d left`, className: "bg-amber-100 text-amber-800 border-amber-200" };
+    return null;
+  };
+
   const openChecklist = (wo) => {
     setChecklistDialog({ open: true, workOrder: wo });
   };
