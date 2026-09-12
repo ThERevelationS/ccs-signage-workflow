@@ -1,5 +1,5 @@
+import { base44 } from "@/api/base44Client";
 import {
-  deleteEntityIfUnchanged,
   expectedEntityFields,
   replaceEntityFieldsIfUnchanged,
 } from "@/components/estimator/builder/builderEntityPersistence";
@@ -104,73 +104,51 @@ export async function updatePendingTimeOffRequestIfUnchanged({
   });
 }
 
-export async function createPTOPolicyIfAbsent({ entity, data, label = "PTO policy" } = {}) {
-  const name = String(data?.name || "").trim();
-  if (!name || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
-    throw new Error(`${label} could not initialize its retry-safe create.`);
-  }
-  const desired = { ...data, name };
-  const existing = await verifySingleMatch({ rows: await entity.filter({ name }), label });
-  if (existing?.id) {
-    if (!fieldsMatch(existing, desired, Object.keys(desired))) {
-      throw new Error(`${label} named "${name}" already exists with different settings. Edit the existing policy instead.`);
-    }
-    return { record: existing, status: "existing" };
-  }
+function requireAdminCapability(adminCapability, label) {
+  const capability = String(adminCapability || "").trim();
+  if (!capability) throw new Error(`${label} requires an active Admin Settings authorization.`);
+  return capability;
+}
 
-  let created = null;
-  let createError = null;
+async function invokePTOConfig(payload) {
   try {
-    created = await entity.create(desired);
+    const response = await base44.functions.invoke("managePTOConfig", payload);
+    return response?.data || response;
   } catch (error) {
-    createError = error;
+    throw new Error(error?.response?.data?.error || error?.message || "PTO configuration could not be changed safely.");
   }
-  const afterRows = await entity.filter({ name }).catch(error => {
-    if (createError) throw createError;
-    throw error;
-  });
-  const saved = await verifySingleMatch({ rows: afterRows, label });
-  if (saved?.id) {
-    if (!fieldsMatch(saved, desired, Object.keys(desired))) {
-      throw new Error(`${label} named "${name}" was created concurrently with different settings. Reload before editing it.`);
-    }
-    return { record: saved, status: created?.id === saved.id ? "created" : "verified_existing" };
-  }
-  if (createError) throw createError;
-  throw new Error(`${label} could not verify whether the policy was created.`);
 }
 
-export async function updatePTOPolicyIfUnchanged({ entity, policy, nextFields, label = "PTO policy" } = {}) {
-  return replaceEntityFieldsIfUnchanged({
-    entity,
-    id: policy?.id,
-    expectedUpdatedAt: policy?.updated_date || "",
-    expectedFields: expectedEntityFields(policy, nextFields),
-    nextFields,
-    guardFields: { name: policy?.name },
-    label,
+export async function createPTOPolicyIfAbsent({ data, adminCapability, label = "PTO policy" } = {}) {
+  const result = await invokePTOConfig({
+    action: "create",
+    data,
+    admin_capability: requireAdminCapability(adminCapability, label),
   });
+  if (!result?.record?.id) throw new Error(`${label} create could not be verified.`);
+  return result;
 }
 
-export async function deletePTOPolicyIfUnused({
-  policyEntity,
-  balanceEntity,
-  policy,
-  label = "PTO policy",
-} = {}) {
-  if (!policy?.id || typeof balanceEntity?.filter !== "function") {
-    throw new Error(`${label} could not verify whether it is assigned to employees.`);
-  }
-  const assigned = await balanceEntity.filter({ policy_id: policy.id });
-  if (!Array.isArray(assigned)) throw new Error(`${label} assignment lookup did not return a record list.`);
-  if (assigned.length > 0) {
-    throw new Error(`${label} is assigned to ${assigned.length} employee balance record${assigned.length === 1 ? "" : "s"}. Reassign those employees before deleting the policy.`);
-  }
-  return deleteEntityIfUnchanged({
-    entity: policyEntity,
-    record: policy,
-    guardFields: { name: policy.name },
-    label,
+export async function updatePTOPolicyIfUnchanged({ policy, nextFields, adminCapability, label = "PTO policy" } = {}) {
+  if (!policy?.id || !policy?.updated_date) throw new Error(`${label} is no longer loaded. Reload before saving.`);
+  const result = await invokePTOConfig({
+    action: "update",
+    id: policy.id,
+    expected_updated_date: policy.updated_date,
+    next_fields: nextFields,
+    admin_capability: requireAdminCapability(adminCapability, label),
+  });
+  if (!result?.record?.id) throw new Error(`${label} update could not be verified.`);
+  return result.record;
+}
+
+export async function deletePTOPolicyIfUnused({ policy, adminCapability, label = "PTO policy" } = {}) {
+  if (!policy?.id || !policy?.updated_date) throw new Error(`${label} is no longer loaded. Reload before deleting.`);
+  return invokePTOConfig({
+    action: "delete",
+    id: policy.id,
+    expected_updated_date: policy.updated_date,
+    admin_capability: requireAdminCapability(adminCapability, label),
   });
 }
 
