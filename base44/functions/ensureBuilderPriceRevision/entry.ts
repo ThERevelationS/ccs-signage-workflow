@@ -108,7 +108,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This function only records supported Builder pricing revisions.' }, { status: 400 });
     }
 
-    const RevisionUser = base44.entities.BuilderPriceRevision;
     const RevisionService = base44.asServiceRole.entities.BuilderPriceRevision;
 
     let matches = await RevisionService.filter({
@@ -140,7 +139,7 @@ Deno.serve(async (req) => {
 
     const allRows = await RevisionService.filter({ builder_product_id: builderProductId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
-    const created = await RevisionUser.create({
+    const created = await RevisionService.create({
       ...revision,
       builder_product_id: builderProductId,
       estimate_id: estimateId,
