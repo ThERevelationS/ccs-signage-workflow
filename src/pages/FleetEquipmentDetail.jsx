@@ -310,6 +310,18 @@ function MaintenanceTab({ equipment, activeOrders, completedOrders, tasks, maint
   </div>;
 }
 
+function PartsTab({ equipment, parts, retired = false }) {
+  const low = parts.filter(part => part.enable_low_stock_alerts !== false && Number(part.quantity_on_hand ?? 0) <= Number(part.minimum_stock ?? 0));
+  const lookupUrl = `${createPageUrl("FleetParts")}?identify=1&equipment=${encodeURIComponent(equipment.id)}`;
+  const organizeUrl = `${createPageUrl("FleetParts")}?organize=1&equipment=${encodeURIComponent(equipment.id)}`;
+  return <div className="space-y-5">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><Metric label="Compatible parts" value={parts.length} /><Metric label="Low stock" value={low.length} attention={low.length > 0} /><Metric label="Verified identity" value={parts.filter(part => part.identity_status === "verified").length} /><Metric label="Located" value={parts.filter(part => part.storage_bin || part.storage_shelf || part.location).length} /></div>
+    <Card title={`${equipment.name} Parts`} icon={PackageOpen} action={!retired ? <div className="flex flex-wrap gap-2"><a href={lookupUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Identify part</a><a href={organizeUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Organize parts</a></div> : null}>
+      <div className="grid md:grid-cols-2 gap-3">{parts.map(part => { const photo = part.primary_photo_url || part.photo_urls?.[0]; const location = [part.storage_zone, part.storage_cabinet, part.storage_shelf, part.storage_bin].filter(Boolean).join(" · ") || part.location || "Unlocated"; const isLow = part.enable_low_stock_alerts !== false && Number(part.quantity_on_hand ?? 0) <= Number(part.minimum_stock ?? 0); return <Link key={part.id} to={`${createPageUrl("FleetParts")}?search=${encodeURIComponent(part.part_number || part.part_name || "")}`} className={`rounded-xl border p-3 flex gap-3 hover:border-indigo-300 dark:hover:border-indigo-700 ${isLow ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/10" : "border-gray-200 dark:border-slate-700"}`}><div className="w-14 h-14 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center">{photo ? <img src={photo} alt={part.part_name} className="w-full h-full object-cover" /> : <PackageOpen className="w-5 h-5 text-gray-300" />}</div><div className="min-w-0 flex-1"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 truncate">{part.part_name}</div><div className="text-xs text-gray-500 mt-1 truncate">{part.manufacturer || "—"}{part.part_number ? ` · ${part.part_number}` : ""}</div><div className={`text-xs mt-1 ${location === "Unlocated" ? "text-amber-700 dark:text-amber-300" : "text-gray-500 dark:text-slate-400"}`}>{location}</div><div className="mt-1 text-xs font-semibold text-gray-700 dark:text-slate-300">Stock {part.quantity_on_hand ?? 0}{isLow ? " · low" : ""}</div></div></Link>; })}{parts.length === 0 && <div className="md:col-span-2"><Empty>No Fleet parts are specifically assigned to this equipment yet.</Empty>{!retired && <a href={lookupUrl} target="_blank" rel="noreferrer" className="inline-flex mt-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300">Identify and assign the first part</a>}</div>}</div>
+    </Card>
+  </div>;
+}
+
 function HistoryTab({ equipment, completedOrders, logs, requests }) {
   return <div className="grid xl:grid-cols-2 gap-5">
     <Card title="Maintenance History" icon={History}>
