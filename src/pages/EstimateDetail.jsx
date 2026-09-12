@@ -1112,7 +1112,7 @@ export default function EstimateDetail() {
         />
 
         <div className="flex-1 min-w-0 space-y-3">
-          <StepNav />
+          <WorkspaceNav />
 
           {reconciliationWarnings.length > 0 && (
             <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[10px] text-amber-900">
@@ -1253,7 +1253,7 @@ export default function EstimateDetail() {
             </>
           )}
 
-          <StepNav />
+          <WorkspaceNav compact />
         </div>
       </div>
 
