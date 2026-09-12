@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
 
 const REVISION_TYPES = new Set(['manual_revision', 'status_transition', 'cancel', 'conversion']);
 
@@ -109,7 +110,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid estimate lifecycle revision type.' }, { status: 400 });
     }
 
-    const RevisionUser = base44.entities.EstimateRevision;
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
 
     let matches = await loadRevisionRows(RevisionService, {
@@ -131,28 +131,49 @@ Deno.serve(async (req) => {
     if (!estimate?.id) {
       return Response.json({ error: 'Estimate could not be verified before recording lifecycle history.' }, { status: 404 });
     }
+    const authoritativeWorkOrderId = String(estimate.work_order_id || '').trim();
     if (revisionType === 'conversion') {
-      const workOrderId = String(revision?.work_order_id || '').trim();
-      if (!workOrderId || String(estimate.work_order_id || '') !== workOrderId) {
+      const requestedWorkOrderId = String(revision?.work_order_id || '').trim();
+      if (!requestedWorkOrderId || authoritativeWorkOrderId !== requestedWorkOrderId) {
         return Response.json({ error: 'Conversion lifecycle history does not match the linked Work Order.' }, { status: 409 });
       }
     }
 
+    const before = revision?.estimate_snapshot_before && typeof revision.estimate_snapshot_before === 'object'
+      ? JSON.parse(JSON.stringify(revision.estimate_snapshot_before))
+      : {};
+    const after = estimateAuditSnapshot(estimate);
+    const quoteVersion = Math.max(0, Math.floor(estimateAuditNumber(after.quote_version)));
     const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
 
-    const created = await RevisionUser.create({
-      ...revision,
+    // Persist current Estimate state from the server as the authoritative "after"
+    // side of lifecycle history. Caller-supplied status/totals/snapshots cannot
+    // override the saved Estimate state represented by this immutable row.
+    const created = await RevisionService.create({
       estimate_id: estimateId,
       revision_number: revisionNumber,
+      quote_version: quoteVersion,
+      quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion),
       revision_type: revisionType,
       revision_status: 'completed',
       reason,
+      previous_status: String(before.status || revision?.previous_status || 'draft'),
+      new_status: String(after.status || 'draft'),
+      previous_quote_total: estimateAuditNumber(before.quote_total, estimateAuditNumber(revision?.previous_quote_total)),
+      new_quote_total: estimateAuditNumber(after.quote_total),
+      previous_total_cost: estimateAuditNumber(before.total_cost, estimateAuditNumber(revision?.previous_total_cost)),
+      new_total_cost: estimateAuditNumber(after.total_cost),
+      change_summary: summarizeEstimateAuditChanges(before, after),
+      estimate_snapshot_before: before,
+      estimate_snapshot_after: after,
+      work_order_id: authoritativeWorkOrderId,
+      delivery_evidence: revision?.delivery_evidence && typeof revision.delivery_evidence === 'object' ? revision.delivery_evidence : {},
       idempotency_key: idempotencyKey,
       notes: idempotencyKey,
-      started_at: revision?.started_at || timestamp,
-      completed_at: revision?.completed_at || timestamp,
+      started_at: timestamp,
+      completed_at: timestamp,
     });
 
     // Base44 does not expose a database unique constraint for this entity. Re-read
