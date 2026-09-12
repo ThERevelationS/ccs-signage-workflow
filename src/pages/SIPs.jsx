@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Loader2, Link as LinkIcon, ClipboardList } from "lucide-react";
+import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2 } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import ProductChecklistDialog from "@/components/sips/ProductChecklistDialog";
 import TemplateBuilder from "@/components/sips/TemplateBuilder";
@@ -52,6 +54,9 @@ export default function SIPs() {
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [quickEditError, setQuickEditError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const parentRef = useRef(null);
 
   // Set document title
@@ -67,6 +72,7 @@ export default function SIPs() {
 
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
+    if (!showLoading) setIsRefreshing(true);
     try {
       const [orders, usersData, taskDescSetting] = await Promise.all([
         loadAllEntityRows({
@@ -109,10 +115,14 @@ export default function SIPs() {
       );
       setWorkOrders(sipOrders.sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
       setUsers(usersData);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error("Error loading work orders:", error);
+      setQuickEditError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-    setIsLoading(false);
   };
 
   const updateWorkOrder = async (orderId, field, value) => {
