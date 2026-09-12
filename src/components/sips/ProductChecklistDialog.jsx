@@ -21,6 +21,19 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 const WorkOrder = base44.entities.WorkOrder;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
+const parseDateOnly = (dateString) => {
+  if (!dateString) return null;
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDateOnly = (dateString) => {
+  const date = parseDateOnly(dateString);
+  return date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "None";
+};
+
 export default function ProductChecklistDialog({ 
   isOpen, 
   onClose, 
@@ -1021,6 +1034,10 @@ export default function ProductChecklistDialog({
     });
     setExpandedItems(nextExpanded);
   };
+  const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const revisitIsFuture = Boolean(revisitDate && revisitDate > today);
   const hasUnsavedChanges = !isLoading && (
     JSON.stringify(checklist) !== JSON.stringify(loadedUiChecklistSnapshot) ||
     JSON.stringify(products) !== JSON.stringify(loadedUiProductsSnapshot)
@@ -1081,8 +1098,11 @@ export default function ProductChecklistDialog({
                 <div className="text-sm font-semibold text-gray-800">{completedTaskCount}/{taskItems.length}</div>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Revisit date</div>
-                <div className="text-sm font-semibold text-purple-700">{loadedRevisitDateSnapshot || "None"}</div>
+                <div className="text-[11px] text-gray-500">Revisit</div>
+                <div className="text-sm font-semibold text-purple-700">{formatDateOnly(loadedRevisitDateSnapshot)}</div>
+                <div className={`text-[10px] font-medium ${revisitIsFuture ? "text-amber-700" : "text-gray-500"}`}>
+                  {revisitIsFuture ? "Revisit Later" : "Active queue"}
+                </div>
               </div>
               </div>
               {expandableChecklistIds.length > 0 && (
