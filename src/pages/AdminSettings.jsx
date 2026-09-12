@@ -1064,7 +1064,7 @@ export default function AdminSettings() {
           </TabsContent>
 
           <TabsContent value="calendar">
-            <AdminCalendarSettings />
+            <AdminCalendarSettings adminCapability={adminCapability} />
           </TabsContent>
 
           <TabsContent value="activity">
