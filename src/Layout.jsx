@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, useRef } from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -9,7 +9,6 @@ import {
   Wrench, 
   Truck, 
   BarChart3,
-  CheckCircle2,
   Home,
   Calculator,
   DollarSign,
@@ -243,7 +242,6 @@ function LayoutContent({ children }) {
   };
 
   const isRootRoute = ROOT_ROUTES.includes(location.pathname) || location.pathname === "/";
-  const shouldShowNav = !isCollapsed || isHovered;
   const isSideNav = navLayout === "side" && !isCollapsed && !isMobile;
 
   return (
