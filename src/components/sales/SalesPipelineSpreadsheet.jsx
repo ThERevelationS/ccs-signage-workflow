@@ -57,15 +57,15 @@ const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sa
 const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, currentUser) => {
   if (!attentionFilter || attentionFilter === "all") return true;
   const followUp = workOrder?.follow_up_date || "";
-  const isOpen = isOpenOpportunity(workOrder);
-  if (attentionFilter === "due") return isOpen && followUp && followUp <= todayStamp;
-  if (attentionFilter === "overdue") return isOpen && followUp && followUp < todayStamp;
-  if (attentionFilter === "today") return isOpen && followUp === todayStamp;
-  if (attentionFilter === "upcoming") return isOpen && followUp > todayStamp && followUp <= upcomingStamp;
+  const isOperational = isOpenOpportunity(workOrder) && !isLegacyClosedRecord(workOrder);
+  if (attentionFilter === "due") return isOperational && followUp && followUp <= todayStamp;
+  if (attentionFilter === "overdue") return isOperational && followUp && followUp < todayStamp;
+  if (attentionFilter === "today") return isOperational && followUp === todayStamp;
+  if (attentionFilter === "upcoming") return isOperational && followUp > todayStamp && followUp <= upcomingStamp;
   if (attentionFilter === "quote_no_followup") {
-    return isOpen && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
+    return isOperational && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
   }
-  if (attentionFilter === "no_next_action") return isOpen && !followUp && !workOrder?.current_task_deadline;
+  if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
   if (attentionFilter === "mine") {
     const names = [currentUser?.full_name, currentUser?.name, currentUser?.email].filter(Boolean).map((value) => String(value).trim().toLowerCase());
     if (!names.length) return false;
