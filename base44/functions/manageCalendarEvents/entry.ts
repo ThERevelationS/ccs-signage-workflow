@@ -39,6 +39,7 @@ function cleanEmails(value: unknown) {
 function cleanEvent(value: any) {
   const data = value && typeof value === 'object' ? value : {};
   const title = cleanText(data.title, 500);
+  if (!title) throw Object.assign(new Error('Event title is required.'), { status: 400 });
   const start = cleanDateTime(data.start_datetime, 'Event start', true);
   const end = cleanDateTime(data.end_datetime || start, 'Event end', true);
   const eventType = EVENT_TYPES.has(String(data.event_type || 'company')) ? String(data.event_type || 'company') : 'company';
