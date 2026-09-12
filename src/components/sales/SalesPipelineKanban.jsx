@@ -74,7 +74,9 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
                 {items.map((workOrder) => {
                   const followUp = localDate(workOrder.follow_up_date);
+                  const expectedClose = localDate(workOrder.expected_close_date);
                   const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(workOrder.sales_status);
+                  const expectedCloseOverdue = expectedClose && expectedClose < today && !["won", "lost"].includes(workOrder.sales_status);
                   return (
                     <article
                       key={workOrder.id}
@@ -107,6 +109,12 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       ) : !["won", "lost"].includes(workOrder.sales_status) ? (
                         <div className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">No follow-up scheduled</div>
                       ) : null}
+
+                      {expectedClose && (
+                        <div className={`mt-2 rounded-md px-2 py-1 text-xs ${expectedCloseOverdue ? "bg-red-50 font-semibold text-red-700" : "bg-cyan-50 text-cyan-700"}`}>
+                          Expected close {format(expectedClose, "MMM d, yyyy")}{expectedCloseOverdue ? " · overdue" : ""}
+                        </div>
+                      )}
 
                       {isRegistered && !["won", "lost"].includes(workOrder.sales_status) && (
                         <div className="mt-2 flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
