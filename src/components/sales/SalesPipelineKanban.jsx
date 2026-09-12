@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -41,29 +31,17 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onOpenDetails, isRegistered }) {
+export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onRequestStatusChange, onOpenDetails, isRegistered }) {
   const [draggedId, setDraggedId] = useState(null);
-  const [pendingTransition, setPendingTransition] = useState(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const requestStatusChange = (workOrder, nextStatus) => {
     if (!isRegistered || !workOrder?.id || !nextStatus || workOrder.sales_status === nextStatus) return;
-    if (["won", "lost"].includes(nextStatus)) {
-      setPendingTransition({ workOrder, nextStatus });
-      return;
-    }
-    onUpdateWorkOrder?.(workOrder.id, "sales_status", nextStatus);
-  };
-
-  const confirmTerminalTransition = () => {
-    if (!pendingTransition) return;
-    onUpdateWorkOrder?.(pendingTransition.workOrder.id, "sales_status", pendingTransition.nextStatus);
-    setPendingTransition(null);
+    onRequestStatusChange?.(workOrder, nextStatus);
   };
 
   return (
-    <>
       <div className="flex h-full min-h-0 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-2">
         {STATUS_COLUMNS.map((status) => {
           const items = workOrders.filter((workOrder) => (workOrder.sales_status || "lead") === status.value);
@@ -162,23 +140,5 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
           );
         })}
       </div>
-
-      <AlertDialog open={Boolean(pendingTransition)} onOpenChange={(open) => !open && setPendingTransition(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mark this opportunity {pendingTransition?.nextStatus === "won" ? "Won" : "Lost"}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingTransition?.workOrder?.client_name || "This opportunity"} will move into the {pendingTransition?.nextStatus === "won" ? "Won" : "Lost"} stage. The record is preserved and can still be reopened later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmTerminalTransition}>
-              Mark {pendingTransition?.nextStatus === "won" ? "Won" : "Lost"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
