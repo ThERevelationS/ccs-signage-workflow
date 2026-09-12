@@ -16,6 +16,13 @@ const safeDate = (d) => {
   return new Date(y, m - 1, day);
 };
 
+const futureDateStamp = (days) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return format(date, "yyyy-MM-dd");
+};
+
 export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, isRegistered }) {
   return (
     <div className="space-y-3 p-3">
@@ -70,6 +77,15 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 </span>
               )}
             </div>
+
+            {isRegistered && !["won", "lost"].includes(wo.sales_status) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3" onClick={(event) => event.stopPropagation()}>
+                <span className="text-xs font-medium text-gray-500">Schedule follow-up:</span>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(1))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">Tomorrow</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
+              </div>
+            )}
           </div>
         );
       })}
