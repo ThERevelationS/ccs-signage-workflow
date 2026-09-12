@@ -4,11 +4,12 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetWorkOrderDialog from "@/components/fleet/FleetWorkOrderDialog";
+import FleetRepairEstimateDialog from "@/components/fleet/FleetRepairEstimateDialog";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
-import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List } from "lucide-react";
+import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
 
 const pretty = (v) => String(v || "—").replaceAll("_", " ");
 
@@ -18,6 +19,7 @@ export default function FleetWorkOrders() {
   const [tasks, setTasks] = useState([]);
   const [parts, setParts] = useState([]);
   const [fluids, setFluids] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("active");
   const [priority, setPriority] = useState("all");
@@ -32,22 +34,25 @@ export default function FleetWorkOrders() {
   const [confirmReopen, setConfirmReopen] = useState(null);
   const [startWorkOrder, setStartWorkOrder] = useState(null);
   const [startingId, setStartingId] = useState("");
+  const [estimateWorkOrder, setEstimateWorkOrder] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [w, e, t, p, f] = await Promise.all([
+      const [w, e, t, p, f, u] = await Promise.all([
         listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
         listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
         listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
         listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
         listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
+        base44.auth.me().catch(() => null),
       ]);
       setOrders(w || []);
       setEquipment(e || []);
       setTasks(t || []);
       setParts(p || []);
       setFluids(f || []);
+      setCurrentUser(u || null);
     } finally {
       setLoading(false);
     }
@@ -249,6 +254,7 @@ export default function FleetWorkOrders() {
                 {isOpen && <div className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 text-sm">
                   <div className="flex flex-wrap gap-2">
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
+                    {currentUser?.role === "admin" && <button onClick={() => setEstimateWorkOrder(w)} className="px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><DollarSign className="w-4 h-4" />Estimate / Approval</button>}
                     {["open", "assigned"].includes(w.status) && <button onClick={() => setStartWorkOrder(w)} disabled={startingId === w.id} className="px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 disabled:opacity-50">{startingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}Start Work</button>}
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
                     {w.status === "completed" && <button onClick={() => createFollowUp(w)} className="px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><CornerUpRight className="w-4 h-4" />Follow-up Work Order</button>}
@@ -281,6 +287,15 @@ export default function FleetWorkOrders() {
         onClose={() => setDialog(null)}
         onSubmit={submitDialog}
         onRefreshInventory={loadData}
+      />
+      <FleetRepairEstimateDialog
+        open={!!estimateWorkOrder}
+        workOrder={estimateWorkOrder}
+        equipmentName={equipmentNames[estimateWorkOrder?.equipment_id] || ""}
+        parts={parts}
+        fluids={fluids}
+        onClose={() => setEstimateWorkOrder(null)}
+        onChanged={loadData}
       />
       <FleetStartWorkDialog
         open={!!startWorkOrder}
