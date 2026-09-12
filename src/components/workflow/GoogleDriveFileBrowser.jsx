@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { googleDriveOperations } from "@/functions/googleDriveOperations";
 import { useAuth } from "@/components/auth/EmailGate";
+import { openExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const getFileIcon = (mimeType) => {
   if (!mimeType) return File;
@@ -203,7 +204,7 @@ export default function GoogleDriveFileBrowser({
       if (response.data.error) {
         setError(response.data.error);
       } else if (response.data.type === 'view') {
-        window.open(response.data.url, '_blank', 'noopener,noreferrer');
+        if (!openExternalHttpUrl(response.data.url)) setError('Unsafe or invalid Drive URL');
       } else if (response.data.type === 'download_data' && response.data.base64) {
         const binary = atob(response.data.base64);
         const bytes = new Uint8Array(binary.length);
@@ -253,7 +254,7 @@ export default function GoogleDriveFileBrowser({
 
   const handleViewFile = (file) => {
     if (file.webViewLink) {
-      window.open(file.webViewLink, '_blank');
+      if (!openExternalHttpUrl(file.webViewLink)) setError('Unsafe or invalid Drive URL');
     }
   };
 
