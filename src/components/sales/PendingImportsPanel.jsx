@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import { findPendingImportMatches } from "@/functions/findPendingImportMatches";
+import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   replaceWorkOrderFieldsIfUnchanged,
@@ -228,6 +229,7 @@ function DuplicateCard({ item, onReject, allWorkOrders }) {
 }
 
 function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allWorkOrders }) {
+  const { sessionToken } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [selectedMergeId, setSelectedMergeId] = useState(item.match_candidates?.[0]?.work_order_id || "");
   const [mergeLoading, setMergeLoading] = useState(false);
@@ -247,7 +249,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allW
     setAiRecs(null);
     setAiNoMatchReason(null);
     try {
-      const res = await findPendingImportMatches({ pending_import_id: item.id, extracted_data: ed });
+      const res = await findPendingImportMatches({ pending_import_id: item.id, extracted_data: ed, session_token: sessionToken });
       setAiRecs(res.data?.recommendations || []);
       setAiNoMatchReason(res.data?.no_matches_reason || null);
       setAiConfidence(res.data?.confidence || null);
