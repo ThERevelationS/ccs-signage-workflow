@@ -1230,6 +1230,7 @@ export default function EstimateDetail() {
                 readOnly={readOnly}
                 revisionInProgress={!!openRevision}
                 persistedStatus={persistedStatus}
+                sessionToken={sessionToken}
                 onQuoteDelivered={handleQuoteDelivered}
                 onDeliveryLogged={() => setDeliveryRefreshKey((value) => value + 1)}
                 onDeliveryEvidenceReady={handleDeliveryEvidenceReady}
