@@ -14,6 +14,8 @@ import {
   Search,
   TrafficCone,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { makeColor } from "./fleetHelpers";
 
@@ -135,6 +137,12 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
     mapRef.current.panTo(selectedLocation);
     if (zoom != null) mapRef.current.setZoom(zoom);
   }, [selectedLocation]);
+
+  const zoomBy = useCallback((delta) => {
+    if (!mapRef.current) return;
+    const current = Number(mapRef.current.getZoom?.() ?? 10);
+    mapRef.current.setZoom(Math.max(2, Math.min(21, current + delta)));
+  }, []);
 
   const openStreetView = useCallback(() => {
     if (!mapRef.current || !selectedLocation) return;
@@ -305,6 +313,8 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
 
       <div className="absolute top-[102px] left-3 z-10 flex flex-wrap gap-1.5 max-w-[calc(100%_-_90px)]">
         <MapAction icon={MapIcon} label="My Fleet" onClick={fitFleet} />
+        <MapAction icon={ZoomIn} label="Zoom In" onClick={() => zoomBy(1)} />
+        <MapAction icon={ZoomOut} label="Zoom Out" onClick={() => zoomBy(-1)} />
         <MapAction icon={LocateFixed} label="Center Vehicle" onClick={() => centerSelected(16)} disabled={!selectedLocation} />
         <MapAction icon={Navigation} label={prefs.followSelected ? "Following" : "Follow"} active={prefs.followSelected} onClick={() => setBoolPref("followSelected")} disabled={!selectedLocation} />
         <MapAction icon={Eye} label="Street View" onClick={openStreetView} disabled={!selectedLocation} />
