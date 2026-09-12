@@ -707,7 +707,6 @@ export default function ProductChecklistDialog({
   // All items expanded by default - using a ref to track
   const [expandedItems, setExpandedItems] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [hoveredProduct, setHoveredProduct] = useState(null);
   const [newItemInput, setNewItemInput] = useState({ show: false, parentId: null, type: null, productName: null });
   const [newItemText, setNewItemText] = useState("");
   const [showAddGeneralChecklist, setShowAddGeneralChecklist] = useState(false);
@@ -1040,8 +1039,6 @@ export default function ProductChecklistDialog({
                 <div 
                   key={productName} 
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
-                  onMouseEnter={() => setHoveredProduct(productName)}
-                  onMouseLeave={() => setHoveredProduct(null)}
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     {isRegistered && (
@@ -1160,8 +1157,8 @@ export default function ProductChecklistDialog({
                             )}
                             
                             {/* Quick add buttons on hover */}
-                            {isRegistered && hoveredItem === displayItem.id && (
-                              <div className="flex gap-1">
+                            {isRegistered && (
+                              <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                 <button
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
@@ -1628,8 +1625,8 @@ export default function ProductChecklistDialog({
                               )}
                               
                               {/* Quick add buttons on hover for sub-templates */}
-                              {isRegistered && hoveredItem === stDisplayItem.id && (
-                                <div className="flex gap-1">
+                              {isRegistered && (
+                                <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
@@ -1867,14 +1864,24 @@ export default function ProductChecklistDialog({
                 ))}
                 
                 {/* Completed Items Section */}
-                <ChecklistCompletedSection
-                  completedChecklist={completedChecklist}
-                  dropdownConditions={dropdownConditions}
-                  users={users}
-                  isRegistered={isRegistered}
-                  updateChecklistItem={updateChecklistItem}
-                  setShowOtherPopup={setShowOtherPopup}
-                />
+                {Object.keys(completedChecklist).length > 0 && (
+                  <div className="mt-5 border-t pt-3">
+                    <Button type="button" variant="ghost" className="w-full justify-between h-9 text-green-800 hover:bg-green-50" onClick={() => setShowCompletedItems(prev => !prev)}>
+                      <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" />Completed items ({completedPrimaryCount})</span>
+                      {showCompletedItems ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </Button>
+                    {showCompletedItems && (
+                      <ChecklistCompletedSection
+                        completedChecklist={completedChecklist}
+                        dropdownConditions={dropdownConditions}
+                        users={users}
+                        isRegistered={isRegistered}
+                        updateChecklistItem={updateChecklistItem}
+                        setShowOtherPopup={setShowOtherPopup}
+                      />
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -1956,15 +1963,15 @@ export default function ProductChecklistDialog({
               </div>
             </div>
           )}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1 h-10">
+          <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
+            <Button variant="outline" onClick={onClose} disabled={isSaving} className="sm:flex-1 h-10">
               Cancel
             </Button>
             {isRegistered && (
               <Button
                 variant="outline"
                 onClick={() => setShowAddGeneralChecklist(true)}
-                className="flex-1 h-10"
+                className="sm:flex-1 h-10"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Item
@@ -1973,7 +1980,8 @@ export default function ProductChecklistDialog({
             {isRegistered && !workOrder.sip_completed && (
               <Button
                 onClick={handleCheckOff}
-                className="flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
+                disabled={isSaving}
+                className="sm:flex-1 h-10 bg-green-600 hover:bg-green-700 text-white"
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Complete
@@ -1982,7 +1990,7 @@ export default function ProductChecklistDialog({
             <Button 
               onClick={handleSaveClick}
               disabled={isSaving || !isRegistered}
-              className="flex-1 h-10 bg-blue-600 hover:bg-blue-700"
+              className="sm:flex-1 h-10 bg-blue-600 hover:bg-blue-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Save
