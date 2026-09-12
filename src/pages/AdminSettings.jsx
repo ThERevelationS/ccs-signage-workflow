@@ -1082,7 +1082,7 @@ export default function AdminSettings() {
             <div className="mb-8">
               <GmailConnector />
               <div className="mt-6">
-                <EmailGroupsManager />
+                <EmailGroupsManager adminCapability={adminCapability} />
               </div>
             </div>
 
