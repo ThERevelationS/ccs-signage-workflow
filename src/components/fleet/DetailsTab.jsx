@@ -66,6 +66,6 @@ function Section({ title, children }) {
   return <div className="mb-6"><h3 className="text-xs font-bold uppercase tracking-wide mb-2 text-gray-600 dark:text-slate-300">{title}</h3><div className="border border-gray-200 dark:border-slate-700 rounded p-3">{children}</div></div>;
 }
 
-function Field({ label, value, full }) {
+function Field({ label, value, full = false }) {
   return <div className={`py-2 ${full ? "col-span-2" : ""}`}><div className="text-[10px] font-semibold uppercase text-gray-400 dark:text-slate-500 mb-1">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 break-words">{value}</div></div>;
 }
