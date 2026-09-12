@@ -167,10 +167,10 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
       : prettyMaintenanceFrequency(form.frequency);
 
   return <div className="fixed inset-0 z-[120] bg-black/55 flex items-center justify-center p-2 sm:p-4" onMouseDown={event => event.target === event.currentTarget && !busy && onClose()}>
-    <div className="w-full max-w-6xl max-h-[96vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+    <div role="dialog" aria-modal="true" aria-labelledby="fleet-bulk-maintenance-dialog-title" className="w-full max-w-6xl max-h-[96dvh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-4 sm:px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-        <div><h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Bulk Maintenance Planner</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Preview every asset before commit. Retries use the same deterministic create identities and do not intentionally duplicate schedules.</p></div>
-        <button type="button" onClick={onClose} disabled={!!busy} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
+        <div><h2 id="fleet-bulk-maintenance-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">Bulk Maintenance Planner</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Preview every asset before commit. Retries use the same deterministic create identities and do not intentionally duplicate schedules.</p></div>
+        <button type="button" onClick={onClose} disabled={!!busy} aria-label="Close bulk maintenance planner" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
       </div>
 
       <div className="p-4 sm:p-5 space-y-5">
