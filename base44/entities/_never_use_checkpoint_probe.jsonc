@@ -1,0 +1,29 @@
+{
+  "name": "_never_use_checkpoint_probe",
+  "type": "object",
+  "description": "Inert empty placeholder created accidentally by tooling. Do not use.",
+  "properties": {},
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__disabled_placeholder__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__disabled_placeholder__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__disabled_placeholder__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__disabled_placeholder__"
+      }
+    }
+  },
+  "required": []
+}
