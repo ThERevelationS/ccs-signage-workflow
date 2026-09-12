@@ -110,6 +110,17 @@ export default function SalesPipelineTableBody({
                   </Select>
                 </td>
               )}
+              {isColumnVisible("sales_rep") && (
+                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_rep", "Salesperson / Owner", wo.sales_rep)}>
+                  <Select value={wo.sales_rep || ""} onValueChange={(val) => updateWorkOrder(wo.id, "sales_rep", val)} disabled={!isRegistered}>
+                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="Unassigned">{wo.sales_rep || "Unassigned"}</SelectValue></SelectTrigger>
+                    <SelectContent>
+                      {wo.sales_rep && !users.some((u) => u.full_name === wo.sales_rep) && <SelectItem value={wo.sales_rep}>{wo.sales_rep}</SelectItem>}
+                      {users.filter((u) => u.full_name).map((u) => <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </td>
+              )}
               {isColumnVisible("description") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "description", "Job Description", wo.description)}>
                   <Input value={wo.description || ""} onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="-" disabled={!isRegistered} />
