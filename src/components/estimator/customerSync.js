@@ -191,6 +191,22 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     ...lifecycleDates,
   };
 
+  const salesActivityFields = [
+    "sales_status", "sales_rep", "estimator", "estimate_amount", "quoted_amount",
+    "quote_date", "date_estimate_sent", "date_order_created", "contact_name",
+    "contact_email", "contact_phone", "title", "client_name", "install_location",
+  ];
+  const salesActivityChanged = !existing || salesActivityFields.some((field) =>
+    JSON.stringify(existing?.[field] ?? null) !== JSON.stringify(fields[field] ?? null)
+  );
+  if (salesActivityChanged) {
+    const activityStamp = new Date().toISOString();
+    fields.sales_last_activity_at = activityStamp;
+    if (!existing || existing.sales_status !== fields.sales_status) {
+      fields.sales_stage_changed_at = activityStamp;
+    }
+  }
+
   if (existing) {
     return replaceWorkOrderFieldsIfUnchanged({
       workOrderId: existing.id,
