@@ -34,9 +34,25 @@
     "text"
   ],
   "rls": {
-    "create": {},
-    "read": {},
-    "update": {},
-    "delete": {}
+    "create": {
+      "user_condition": {
+        "role": "__customer_note_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__customer_note_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__customer_note_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__customer_note_backend_only__"
+      }
+    }
   }
 }
