@@ -151,15 +151,13 @@ export default function WorkPauseOverlay() {
   return (
     <>
       <div
-        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6"
+        className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center overflow-y-auto p-4 sm:p-6"
         style={{
           background: "radial-gradient(circle at top, rgba(91,33,182,0.97), rgba(30,27,75,0.99) 55%, rgba(15,23,42,1))",
           paddingTop: "max(1rem, env(safe-area-inset-top))",
           paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
         }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) setShowResumePrompt(true);
-        }}
+        onClick={() => { if (!resumeBusy) setShowResumePrompt(true); }}
         role="presentation"
       >
         <div className="w-full max-w-xl rounded-[28px] border border-white/20 bg-white/95 p-6 shadow-2xl sm:p-9 text-center">
