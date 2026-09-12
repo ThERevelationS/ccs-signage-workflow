@@ -33,6 +33,7 @@ import PTOBalanceView from "@/components/timeclock/PTOBalanceView";
 import QuickClockSection from "@/components/timeclock/QuickClockSection";
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
+import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -52,6 +53,8 @@ export default function TimeClock() {
   
   const [timeEntries, setTimeEntries] = useState([]);
   const [timeOffRequests, setTimeOffRequests] = useState([]);
+  const [correctionRequests, setCorrectionRequests] = useState([]);
+  const [correctionEntry, setCorrectionEntry] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showTimeOffRequest, setShowTimeOffRequest] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -76,7 +79,7 @@ export default function TimeClock() {
     if (loggedInUser?.email) {
       loadData();
     }
-  }, [loggedInUser]);
+  }, [loggedInUser, timeClockSessionToken]);
 
   const loadAllUsers = async () => {
     setIsLoading(true);
@@ -118,6 +121,24 @@ export default function TimeClock() {
       
       setTimeEntries(entries);
       setTimeOffRequests(requests);
+
+      if (timeClockSessionToken) {
+        try {
+          const correctionResponse = await base44.functions.invoke("timeClockAction", {
+            action: "list_correction_requests",
+            session_token: timeClockSessionToken,
+            target_email: loggedInUser.email,
+            request_id: newRequestId(),
+          });
+          const correctionData = correctionResponse?.data || correctionResponse;
+          setCorrectionRequests(correctionData?.success && Array.isArray(correctionData.requests) ? correctionData.requests : []);
+        } catch (correctionError) {
+          console.error("Error loading correction requests:", correctionError);
+          setCorrectionRequests([]);
+        }
+      } else {
+        setCorrectionRequests([]);
+      }
       
       const activeEntries = entries.filter(e => e.status === "clocked_in");
       if (activeEntries.length > 1) {
@@ -140,6 +161,8 @@ export default function TimeClock() {
     setTimeClockSessionToken("");
     setTimeEntries([]);
     setTimeOffRequests([]);
+    setCorrectionRequests([]);
+    setCorrectionEntry(null);
   };
 
   // Calculate weekly hours
@@ -348,6 +371,7 @@ export default function TimeClock() {
                     </div>
                   ) : (
                     weeklyEntries.map((entry, index) => {
+                      const correctionRequest = correctionRequests.find(request => request.time_entry_id === entry.id);
                       // Calculate running total up to this entry to determine OT
                       const entriesUpToThis = weeklyEntries.slice(index);
                       const hoursBeforeThis = entriesUpToThis.slice(1).reduce((sum, e) => sum + (e.total_hours || 0), 0);
@@ -467,6 +491,34 @@ export default function TimeClock() {
                             <p className="text-sm text-gray-400 italic">No notes</p>
                           )}
                         </div>
+
+                        {entry.status === "clocked_out" && (
+                          <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs font-medium text-gray-500">Correction</p>
+                              {correctionRequest ? (
+                                <Badge className={
+                                  correctionRequest.status === "approved" || correctionRequest.status === "approved_modified"
+                                    ? "bg-green-100 text-green-700"
+                                    : correctionRequest.status === "rejected"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-amber-100 text-amber-700"
+                                }>
+                                  {correctionRequest.status === "approved_modified" ? "Approved with changes" : correctionRequest.status.replace("_", " ")}
+                                </Badge>
+                              ) : (
+                                <p className="text-xs text-gray-400">No correction requested</p>
+                              )}
+                            </div>
+                            {!correctionRequest || ["approved", "approved_modified", "rejected", "cancelled"].includes(correctionRequest.status) ? (
+                              <Button variant="outline" size="sm" onClick={() => setCorrectionEntry(entry)}>
+                                Request Correction
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-amber-700">Manager review pending</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );})
                   )}
@@ -585,6 +637,14 @@ export default function TimeClock() {
         onClose={() => setShowLoginDialog(false)}
         onLogin={handleLogin}
         allUsers={allUsers}
+      />
+
+      <CorrectionRequestDialog
+        open={!!correctionEntry}
+        onOpenChange={(open) => { if (!open) setCorrectionEntry(null); }}
+        entry={correctionEntry}
+        sessionToken={timeClockSessionToken}
+        onSubmitted={loadData}
       />
     </div>
     </PullToRefresh>
