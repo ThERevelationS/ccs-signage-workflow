@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { action, workOrderId, fileIds } = body;
+    const body = await req.json().catch(() => ({}));
+    const { action, workOrderId, fileIds } = body || {};
 
     if (action === 'getPickerToken') {
       return Response.json({
@@ -23,12 +23,16 @@ Deno.serve(async (req) => {
       if (!workOrderId || !fileIds || !Array.isArray(fileIds)) {
         return Response.json({ error: 'Missing workOrderId or fileIds' }, { status: 400 });
       }
+      const safeFileIds = fileIds.map((id) => String(id || '').trim()).filter(Boolean);
+      if (safeFileIds.length > 200 || safeFileIds.some((id) => !/^[a-zA-Z0-9_-]+$/.test(id))) {
+        return Response.json({ error: 'One or more Google Drive file ids are invalid' }, { status: 400 });
+      }
 
       const saved = await mergeWorkOrderArrayValues({
         entity: base44.asServiceRole.entities.WorkOrder,
         workOrderId,
         field: 'google_drive_file_ids',
-        values: fileIds,
+        values: safeFileIds,
         label: 'Google Drive file access merge',
       });
 
@@ -36,7 +40,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'listFiles') {
-      if (!workOrderId) {
+      if (!workOrderId || typeof workOrderId !== 'string' || workOrderId.length > 128) {
         return Response.json({ error: 'workOrderId is required' }, { status: 400 });
       }
       
@@ -54,9 +58,10 @@ Deno.serve(async (req) => {
         return Response.json({ files: [] });
       }
 
-      const filePromises = fileIds.map(async (fileId) => {
+      const safeFileIds = fileIds.map((id) => String(id || '').trim()).filter((id) => /^[a-zA-Z0-9_-]+$/.test(id)).slice(0, 200);
+      const filePromises = safeFileIds.map(async (fileId) => {
         try {
-          const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink`;
+          const fileUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink`; 
           const response = await fetch(fileUrl, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
           });
@@ -76,10 +81,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
     
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ 
-      error: 'Server error',
-      message: error.message 
-    }, { status: 500 });
+    console.error('googleDriveAuth error:', error?.message || error);
+    return Response.json({ error: 'Google Drive request could not be completed safely' }, { status: 500 });
   }
 });
