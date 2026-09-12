@@ -2128,6 +2128,28 @@ export default function ProductChecklistDialog({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Checklist item deletion */}
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              Delete {pendingDelete?.itemType === 'task' ? 'task' : pendingDelete?.itemType === 'detail' ? 'detail' : pendingDelete?.itemType === 'subtask' ? 'subtask' : 'checklist item'}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              “{pendingDelete?.itemText}” will be removed from this SIP checklist.
+              {pendingDelete?.childCount > 0 ? ` Its ${pendingDelete.childCount} nested ${pendingDelete.childCount === 1 ? 'item' : 'items'} will also be removed so no orphaned checklist data is left behind.` : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteChecklistItem} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Validation guidance */}
       <AlertDialog open={!!validationDialog} onOpenChange={(open) => { if (!open) setValidationDialog(null); }}>
         <AlertDialogContent className="clay-card border-none">
