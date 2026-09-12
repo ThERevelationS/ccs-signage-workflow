@@ -374,12 +374,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleSaveNew = async (workOrderData) => {
+    const activityStamp = new Date().toISOString();
     const { record: newOrder } = await createWorkOrderWithRecovery({
       data: {
         ...workOrderData,
         current_stage: "sales",
         sales_status: "lead",
         in_pipeline: true,
+        sales_last_activity_at: activityStamp,
+        sales_stage_changed_at: activityStamp,
       },
       label: "Sales Pipeline Work Order",
     });
@@ -1049,12 +1052,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const handleCreateFromForm = async (data) => {
+    const activityStamp = new Date().toISOString();
     const { record: newOrder } = await createWorkOrderWithRecovery({
       data: {
         ...data,
         current_stage: "sales",
         sales_status: "lead",
         in_pipeline: true,
+        sales_last_activity_at: activityStamp,
+        sales_stage_changed_at: activityStamp,
       },
       label: "Sales Pipeline form Work Order",
     });
