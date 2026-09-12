@@ -4,9 +4,11 @@ import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetEquipmentDialog from "@/components/fleet/FleetEquipmentDialog";
+import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import {
   AlertTriangle,
+  Archive,
   ArrowRight,
   CalendarClock,
   CircleOff,
@@ -16,6 +18,7 @@ import {
   MapPin,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   ShoppingCart,
   Truck,
@@ -65,12 +68,14 @@ export default function FleetEquipment() {
   const [bouncieVehicles, setBouncieVehicles] = useState([]);
   const [query, setQuery] = useState("");
   const [viewFilter, setViewFilter] = useState(() => {
-    const requested = new URLSearchParams(window.location.search).get("view") || "all";
-    return ["all", "operational", "maintenance", "down", "retired", "tracking_issues"].includes(requested) ? requested : "all";
+    const requested = new URLSearchParams(window.location.search).get("view") || "active";
+    return ["active", "all", "operational", "maintenance", "down", "retired", "tracking_issues"].includes(requested) ? requested : "active";
   });
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [reactivateTarget, setReactivateTarget] = useState(null);
+  const [reactivating, setReactivating] = useState(false);
   const [error, setError] = useState("");
 
   const loadData = useCallback(async () => {
@@ -105,17 +110,40 @@ export default function FleetEquipment() {
     operational: equipment.filter(item => item.status === "operational").length,
     maintenance: equipment.filter(item => item.status === "maintenance").length,
     down: equipment.filter(item => item.status === "down").length,
-    trackingIssues: equipment.filter(item => item.bouncie_link_status === "ambiguous" || runtimeConflicts.get(item.id)).length,
+    trackingIssues: equipment.filter(item => item.status !== "retired" && (item.bouncie_link_status === "ambiguous" || runtimeConflicts.get(item.id))).length,
+    retired: equipment.filter(item => item.status === "retired").length,
   }), [equipment, runtimeConflicts]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return equipment.filter(item => {
-      if (viewFilter === "tracking_issues" && item.bouncie_link_status !== "ambiguous" && !runtimeConflicts.get(item.id)) return false;
-      if (!["all", "tracking_issues"].includes(viewFilter) && item.status !== viewFilter) return false;
+      if (viewFilter === "active" && item.status === "retired") return false;
+      if (viewFilter === "tracking_issues" && (item.status === "retired" || (item.bouncie_link_status !== "ambiguous" && !runtimeConflicts.get(item.id)))) return false;
+      if (!["active", "all", "tracking_issues"].includes(viewFilter) && item.status !== viewFilter) return false;
       if (!q) return true;
       return [item.name, item.make, item.model, item.serial_number, item.vin, item.license_plate, item.type, item.location].some(value => String(value || "").toLowerCase().includes(q));
     });
   }, [equipment, query, viewFilter, runtimeConflicts]);
+
+  const reactivateEquipment = async () => {
+    if (!reactivateTarget) return;
+    setReactivating(true);
+    setError("");
+    try {
+      const { data } = await base44.functions.invoke("fleetEquipmentAction", {
+        action: "update",
+        id: reactivateTarget.id,
+        expected_updated_date: reactivateTarget.updated_date || "",
+        equipment: { status: "operational" },
+      });
+      if (data?.error) throw new Error(data.error);
+      setReactivateTarget(null);
+      await loadData();
+    } catch (e) {
+      setError(e?.message || "Unable to reactivate Fleet equipment.");
+    } finally {
+      setReactivating(false);
+    }
+  };
 
   const saveEquipment = async ({ equipment: payload, tracking_applicable }) => {
     setSaving(true);
@@ -141,10 +169,10 @@ export default function FleetEquipment() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Equipment</h1><p className="text-sm text-gray-500 dark:text-slate-400">Fleet maintenance identity, current tracking status, maintenance readiness, and quick actions in one place.</p></div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={event => setViewFilter(event.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired</option><option value="tracking_issues">Bouncie link conflicts</option></select>{isAdmin && <button onClick={openCreateDialog} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div className="relative w-full sm:w-72"><Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search equipment..." className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div><select value={viewFilter} onChange={event => setViewFilter(event.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active equipment</option><option value="all">All incl. retired</option><option value="operational">Operational</option><option value="maintenance">Maintenance</option><option value="down">Down</option><option value="retired">Retired archive</option><option value="tracking_issues">Bouncie link conflicts</option></select>{isAdmin && <button onClick={openCreateDialog} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4" />New Equipment</button>}</div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance > 0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down > 0}/><EquipmentMetric icon={Link2} label="Bouncie link conflicts" value={metrics.trackingIssues} attention={metrics.trackingIssues > 0}/></div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3"><EquipmentMetric icon={Truck} label="Operational" value={metrics.operational}/><EquipmentMetric icon={Wrench} label="Maintenance" value={metrics.maintenance} attention={metrics.maintenance > 0}/><EquipmentMetric icon={CircleOff} label="Down" value={metrics.down} danger={metrics.down > 0}/><EquipmentMetric icon={Link2} label="Bouncie link conflicts" value={metrics.trackingIssues} attention={metrics.trackingIssues > 0}/><button type="button" onClick={() => setViewFilter("retired")} className="text-left"><EquipmentMetric icon={Archive} label="Retired archive" value={metrics.retired}/></button></div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 text-sm">{error}</div>}
 
@@ -170,7 +198,7 @@ export default function FleetEquipment() {
               const speed = Number.isFinite(Number(rawSpeed)) ? Math.max(0, Math.round(Number(rawSpeed))) : null;
               const driving = !!stats.isRunning || (speed != null && speed > 0);
               const compliance = overdue.length ? { label: `${overdue.length} overdue`, tone: "danger" } : dueSoon.length ? { label: `${dueSoon.length} due soon`, tone: "attention" } : activeTasks.length ? { label: "On track", tone: "good" } : { label: "No schedule", tone: "neutral" };
-              return <EquipmentCard key={eq.id} eq={eq} activeOrders={activeOrders} activeTasks={activeTasks} nextMaintenance={nextMaintenance} overdue={overdue} identityConflict={identityConflict} trackedVehicle={trackedVehicle} driving={driving} speed={speed} compliance={compliance} isAdmin={isAdmin} onEdit={() => setDialog({ equipment: eq })} />;
+              return <EquipmentCard key={eq.id} eq={eq} activeOrders={activeOrders} activeTasks={activeTasks} nextMaintenance={nextMaintenance} overdue={overdue} identityConflict={identityConflict} trackedVehicle={trackedVehicle} driving={driving} speed={speed} compliance={compliance} isAdmin={isAdmin} onEdit={() => setDialog({ equipment: eq })} onReactivate={() => setReactivateTarget(eq)} />;
             })}
             {filtered.length === 0 && <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 py-12 text-center text-gray-500">No Fleet equipment found.</div>}
           </div>
@@ -178,6 +206,7 @@ export default function FleetEquipment() {
       </div>
 
       <FleetEquipmentDialog open={!!dialog} equipment={dialog?.equipment || null} onClose={() => !saving && setDialog(null)} onSave={saveEquipment} saving={saving} />
+      <FleetConfirmDialog open={!!reactivateTarget} title={`Reactivate ${reactivateTarget?.name || "Fleet equipment"}?`} description="This keeps all existing Fleet history, documents, schedules, logs, and Bouncie linkage metadata intact and returns the asset to operational status. No records are deleted or recreated." confirmLabel="Reactivate Equipment" tone="success" busy={reactivating} onCancel={() => !reactivating && setReactivateTarget(null)} onConfirm={reactivateEquipment} />
     </div>
   );
 }
