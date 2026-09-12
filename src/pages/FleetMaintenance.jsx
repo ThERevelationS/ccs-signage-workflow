@@ -99,9 +99,10 @@ export default function FleetMaintenance() {
     const start = new Date(`${today}T12:00:00`);
     const horizon = new Date(start);
     horizon.setDate(horizon.getDate() + 14);
-    const pending = tasks.filter(t => ["pending", "overdue"].includes(t.status));
-    const inProgress = tasks.filter(t => t.status === "in_progress");
-    const completed = tasks.filter(t => t.status === "completed");
+    const operationalTasks = tasks.filter(t => activeEquipmentIds.has(t.equipment_id));
+    const pending = operationalTasks.filter(t => ["pending", "overdue"].includes(t.status));
+    const inProgress = operationalTasks.filter(t => t.status === "in_progress");
+    const completed = operationalTasks.filter(t => t.status === "completed");
     const overdue = pending.filter(t => isOverdue(t, today));
     const dueSoon = pending.filter(t => {
       if (!t.start_date || isOverdue(t, today)) return false;
@@ -109,7 +110,7 @@ export default function FleetMaintenance() {
       return due >= start && due <= horizon;
     });
     return { pending, inProgress, completed, overdue, dueSoon };
-  }, [tasks]);
+  }, [tasks, activeEquipmentIds]);
 
   const equipmentCards = useMemo(() => {
     const today = todayText();
@@ -117,7 +118,7 @@ export default function FleetMaintenance() {
     const horizon = new Date(start);
     horizon.setDate(horizon.getDate() + 14);
 
-    return equipment.map(eq => {
+    return activeEquipment.map(eq => {
       const eqTasks = tasks.filter(task => task.equipment_id === eq.id);
       const pending = eqTasks.filter(task => ["pending", "overdue"].includes(task.status));
       const overdue = pending.filter(task => isOverdue(task, today));
@@ -138,7 +139,7 @@ export default function FleetMaintenance() {
       if (attentionA !== attentionB) return attentionB - attentionA;
       return String(a.eq.name || "").localeCompare(String(b.eq.name || ""));
     });
-  }, [equipment, tasks, activeWorkOrders]);
+  }, [activeEquipment, tasks, activeWorkOrders]);
 
   const visibleEquipmentCards = useMemo(() => {
     const q = search.trim().toLowerCase();
