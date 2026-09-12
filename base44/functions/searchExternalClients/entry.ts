@@ -12,9 +12,13 @@ Deno.serve(async (req) => {
     }
 
     const { search } = await req.json().catch(() => ({}));
-    if (!search || String(search).trim().length < 2) return Response.json({ results: [] });
+    const normalizedSearch = String(search || '').trim();
+    if (normalizedSearch.length < 2) return Response.json({ results: [] });
+    if (normalizedSearch.length > 200) {
+      return Response.json({ error: 'Search term is too long' }, { status: 400 });
+    }
 
-    const escapedSearch = String(search).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const records = await base44.asServiceRole.entities.WorkOrder.filter(
       { client_name: { $regex: escapedSearch, $options: 'i' } },
       '-created_date',
@@ -46,7 +50,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ results: uniqueResults });
   } catch (error) {
-    console.error('searchExternalClients error:', error);
-    return Response.json({ error: error?.message || 'Search failed' }, { status: 500 });
+    console.error('searchExternalClients error:', error?.message || error);
+    return Response.json({ error: 'Client search could not be completed safely' }, { status: 500 });
   }
 });
