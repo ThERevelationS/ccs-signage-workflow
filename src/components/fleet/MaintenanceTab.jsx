@@ -26,8 +26,9 @@ export default function MaintenanceTab({ equipment, openWorkOrders = [], tasks =
     .filter((row) => row.status !== "completed")
     .slice()
     .sort((a, b) => String(a.start_date || "9999-12-31").localeCompare(String(b.start_date || "9999-12-31")));
-  const recentLogs = logs.slice().sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+  const recentLogs = logs.slice().sort((a, b) => (Date.parse(b?.created_date || "") || 0) - (Date.parse(a?.created_date || "") || 0));
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const retired = equipment.status === "retired";
 
   return (
     <div className="p-3 sm:p-4 space-y-4">
@@ -71,9 +72,10 @@ export default function MaintenanceTab({ equipment, openWorkOrders = [], tasks =
         </>
       )}
 
+      {retired && <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">Retired Fleet archive — maintenance history remains available, but new work is disabled until the equipment is reactivated.</div>}
       <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
         <Link to={detailUrl} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-300"><Wrench className="w-3.5 h-3.5" />Full maintenance record</Link>
-        <Link to={newWorkOrderUrl} className="ml-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold"><Plus className="w-3.5 h-3.5" />New work order</Link>
+        {!retired && <Link to={newWorkOrderUrl} className="ml-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold"><Plus className="w-3.5 h-3.5" />New work order</Link>}
       </div>
     </div>
   );
