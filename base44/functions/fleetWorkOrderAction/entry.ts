@@ -57,6 +57,15 @@ const canonical = (rows: any[] = []) => rows.slice().sort((a, b) => {
   return String(a?.id || '').localeCompare(String(b?.id || ''));
 })[0] || null;
 
+async function blockingRepairEstimate(base44: any, workOrderId: string) {
+  const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
+  const rows = await Estimate.filter({ work_order_id: workOrderId });
+  if ((rows || []).length > 1) throw new Error('Multiple Fleet repair estimates exist for this work order. Resolve the duplicate estimates before changing work status.');
+  const estimate = rows?.[0] || null;
+  if (!estimate || estimate.approval_required !== true || estimate.status === 'approved') return null;
+  return estimate;
+}
+
 async function authorize(base44: any) {
   const user = await base44.auth.me().catch(() => null);
   if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
@@ -830,6 +839,12 @@ Deno.serve(async (req) => {
       if (existing.status === 'completed' && patch.status && patch.status !== 'completed') {
         return Response.json({ error: 'Use the reopen action to reopen a completed Fleet work order.' }, { status: 409 });
       }
+      if (patch.status === 'in_progress' && existing.status !== 'in_progress') {
+        const blockedEstimate = await blockingRepairEstimate(base44, id);
+        if (blockedEstimate) {
+          return Response.json({ error: `This Fleet work order has a ${String(blockedEstimate.status || 'pending').replaceAll('_',' ')} repair estimate requiring approval${blockedEstimate.approval_tier ? ` (${blockedEstimate.approval_tier})` : ''}. Approve it before starting work.` }, { status: 409 });
+        }
+      }
       if (existing.status === 'completed') {
         for (const field of ['parts_used', 'fluids_used', 'equipment_id', 'maintenance_task_id']) {
           if (Object.prototype.hasOwnProperty.call(patch, field)) {
@@ -946,6 +961,10 @@ Deno.serve(async (req) => {
       }
       if (existing.status === 'cancelled') {
         return Response.json({ error: 'A cancelled Fleet work order must be reopened/edited before it can be completed.' }, { status: 409 });
+      }
+      const blockedEstimate = await blockingRepairEstimate(base44, id);
+      if (blockedEstimate) {
+        return Response.json({ error: `This Fleet work order has a ${String(blockedEstimate.status || 'pending').replaceAll('_',' ')} repair estimate requiring approval${blockedEstimate.approval_tier ? ` (${blockedEstimate.approval_tier})` : ''}. Approve it before completing work.` }, { status: 409 });
       }
 
       let completionPatch = safePatch(body?.work_order || body);
