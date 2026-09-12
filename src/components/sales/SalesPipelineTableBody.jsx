@@ -60,7 +60,7 @@ export default function SalesPipelineTableBody({
   virtualItems, filteredWorkOrders, isColumnVisible, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
-  handleContextMenu, setSelectedWorkOrder, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
+  handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
   leadSources, users, taskDescriptions, projectTypes, rowVirtualizer,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
@@ -100,7 +100,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("sales_status") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
-                  <Select value={wo.sales_status || "lead"} onValueChange={(val) => updateWorkOrder(wo.id, "sales_status", val)} disabled={!isRegistered}>
+                  <Select value={wo.sales_status || "lead"} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered}>
                     <SelectTrigger className={`h-7 text-xs border-0 px-1 ${SALES_STATUSES.find((status) => status.value === (wo.sales_status || "lead"))?.className || "bg-transparent"}`}>
                       <SelectValue />
                     </SelectTrigger>
