@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
       if (patch.status && !TASK_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid maintenance status.' }, { status: 400 });
       const equipment = await Equipment.get(patch.equipment_id);
       if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+      if (equipment.status === 'retired') return Response.json({ error: 'Retired Fleet equipment is archived and cannot receive a new maintenance schedule. Reactivate the equipment first.' }, { status: 409 });
       const desired = { ...patch, status: patch.status || 'pending', priority: patch.priority || 'medium' };
       const existingRows = await Task.filter({ creation_key: creationKey });
       if (existingRows.length > 1) return Response.json({ error: 'Multiple Fleet maintenance schedules share this create identity. Review the duplicates before retrying.' }, { status: 409 });
@@ -174,6 +175,7 @@ Deno.serve(async (req) => {
       if (patch.equipment_id && patch.equipment_id !== existing.equipment_id) {
         const equipment = await Equipment.get(patch.equipment_id);
         if (!equipment) return Response.json({ error: 'Selected Fleet equipment was not found.' }, { status: 404 });
+        if (equipment.status === 'retired') return Response.json({ error: 'A maintenance schedule cannot be reassigned to retired Fleet equipment. Reactivate the equipment first.' }, { status: 409 });
         const active = (await loadAllEntityRows({ entity: WorkOrder, query: { maintenance_task_id: id }, sort: '-created_date', label: `Fleet work orders for maintenance task ${id}` })).find((wo: any) => ACTIVE_STATUSES.has(wo.status));
         if (active) return Response.json({ error: 'Equipment cannot be changed while this maintenance schedule has an active Fleet work order.' }, { status: 409 });
       }
