@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { X, Plus, Trash2, Loader2, ImagePlus, Upload } from "lucide-react";
+import { X, Plus, Trash2, Loader2, ImagePlus, Upload, RefreshCw, Sparkles } from "lucide-react";
 
 const TYPE_OPTIONS = ["scheduled", "emergency", "inspection", "repair"];
 const PRIORITY_OPTIONS = ["low", "medium", "high", "critical"];
@@ -39,6 +40,7 @@ export default function FleetWorkOrderDialog({
   fluids,
   onClose,
   onSubmit,
+  onRefreshInventory,
 }) {
   const [form, setForm] = useState(blankOrder());
   const [equipmentStatus, setEquipmentStatus] = useState("operational");
@@ -46,6 +48,7 @@ export default function FleetWorkOrderDialog({
   const [error, setError] = useState("");
   const [pendingPhotos, setPendingPhotos] = useState({ before_photos: [], problem_photos: [], after_photos: [] });
   const [confirmComplete, setConfirmComplete] = useState("");
+  const [refreshingInventory, setRefreshingInventory] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -141,6 +144,15 @@ export default function FleetWorkOrderDialog({
       }
       return { ...line, [field]: value };
     }) }));
+  };
+
+  const refreshInventory = async () => {
+    if (!onRefreshInventory) return;
+    setRefreshingInventory(true);
+    setError("");
+    try { await onRefreshInventory(); }
+    catch (err) { setError(err?.message || "Unable to refresh Fleet parts and fluids."); }
+    finally { setRefreshingInventory(false); }
   };
 
   const updateFluid = (index, field, value) => {
@@ -241,12 +253,12 @@ export default function FleetWorkOrderDialog({
             <div className="text-xs text-gray-400 mt-2">Selected photos upload when you save or complete the Fleet work order.</div>
           </div>
 
-          <UsageEditor title="Parts Used" onAdd={addPart}>
-            {(form.parts_used || []).map((line, index) => <div key={`part-${index}`} className="grid sm:grid-cols-[1fr_120px_44px] gap-2 items-center">
-              <select value={line.part_id || ""} onChange={(e) => updatePart(index, "part_id", e.target.value)} className="fleet-input"><option value="">Select part…</option>{compatibleParts.map((p) => <option key={p.id} value={p.id}>{p.part_name} · stock {p.quantity_on_hand ?? 0}</option>)}</select>
+          <UsageEditor title="Parts Used" onAdd={addPart} extraActions={<>{form.equipment_id && <a href={`${createPageUrl("FleetParts")}?identify=1&equipment=${encodeURIComponent(form.equipment_id)}`} target="_blank" rel="noreferrer" className="min-h-9 px-2.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-300 inline-flex items-center gap-1 text-xs font-semibold"><Sparkles className="w-3.5 h-3.5" />Identify part</a>}{onRefreshInventory && <button type="button" onClick={refreshInventory} disabled={refreshingInventory} className="min-h-9 px-2.5 rounded-lg border border-gray-200 dark:border-slate-700 inline-flex items-center gap-1 text-xs font-semibold disabled:opacity-50">{refreshingInventory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}Refresh</button>}</>}>
+            {(form.parts_used || []).map((line, index) => { const selectedPart = parts.find(p => p.id === line.part_id); return <div key={`part-${index}`} className="rounded-xl border border-gray-200 dark:border-slate-700 p-2.5 space-y-2"><div className="grid sm:grid-cols-[1fr_120px_44px] gap-2 items-center">
+              <select value={line.part_id || ""} onChange={(e) => updatePart(index, "part_id", e.target.value)} className="fleet-input"><option value="">Select part…</option>{compatibleParts.map((p) => <option key={p.id} value={p.id}>{[p.part_name,p.part_number,p.manufacturer,p.storage_bin || p.storage_shelf || p.location,`stock ${p.quantity_on_hand ?? 0}`].filter(Boolean).join(" · ")}</option>)}</select>
               <input type="number" min="0" step="1" value={line.quantity ?? 0} onChange={(e) => updatePart(index, "quantity", e.target.value)} className="fleet-input" />
               <button type="button" onClick={() => setForm((prev) => ({ ...prev, parts_used: prev.parts_used.filter((_, i) => i !== index) }))} className="p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
-            </div>)}
+            </div>{selectedPart && <div className="grid sm:grid-cols-[48px_1fr] gap-2 items-center rounded-lg bg-gray-50 dark:bg-slate-800/50 p-2">{selectedPart.primary_photo_url || selectedPart.photo_urls?.[0] ? <img src={selectedPart.primary_photo_url || selectedPart.photo_urls?.[0]} alt={selectedPart.part_name} className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-white dark:bg-slate-900 flex items-center justify-center text-[10px] text-gray-400">No photo</div>}<div className="min-w-0 text-xs text-gray-500 dark:text-slate-400"><div className="font-semibold text-gray-800 dark:text-slate-200">{selectedPart.part_name}</div><div>{selectedPart.part_number || "No part number"}{selectedPart.manufacturer ? ` · ${selectedPart.manufacturer}` : ""}</div><div>{[selectedPart.storage_zone,selectedPart.storage_cabinet,selectedPart.storage_shelf,selectedPart.storage_bin].filter(Boolean).join(" · ") || selectedPart.location || "Location not set"} · stock {selectedPart.quantity_on_hand ?? 0}</div></div></div>}</div>; })}
           </UsageEditor>
 
           <UsageEditor title="Fluids Used" onAdd={addFluid}>
@@ -294,4 +306,4 @@ function PhotoEditor({ title, field, urls, files, onAdd, onRemoveUrl, onRemoveFi
     {!urls.length && !files.length && <div className="text-xs text-gray-400 border border-dashed border-gray-200 dark:border-slate-800 rounded-lg p-3 text-center">No photos.</div>}
   </div>;
 }
-function UsageEditor({ title, onAdd, children }) { return <div className="space-y-2"><div className="flex items-center justify-between"><div className="font-medium text-gray-900 dark:text-slate-100">{title}</div><button type="button" onClick={onAdd} className="text-sm text-indigo-600 dark:text-indigo-300 flex items-center gap-1"><Plus className="w-4 h-4" />Add</button></div>{children.length ? <div className="space-y-2">{children}</div> : <div className="text-xs text-gray-400 border border-dashed border-gray-200 dark:border-slate-800 rounded-lg p-3">None recorded.</div>}</div>; }
+function UsageEditor({ title, onAdd, extraActions = null, children }) { return <div className="space-y-2"><div className="flex items-start justify-between gap-3"><div className="font-medium text-gray-900 dark:text-slate-100">{title}</div><div className="flex flex-wrap justify-end gap-2">{extraActions}<button type="button" onClick={onAdd} className="min-h-9 px-2.5 rounded-lg text-sm text-indigo-600 dark:text-indigo-300 flex items-center gap-1"><Plus className="w-4 h-4" />Add</button></div></div>{children.length ? <div className="space-y-2">{children}</div> : <div className="text-xs text-gray-400 border border-dashed border-gray-200 dark:border-slate-800 rounded-lg p-3">None recorded.</div>}</div>; }
