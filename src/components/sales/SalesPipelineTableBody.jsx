@@ -272,6 +272,11 @@ export default function SalesPipelineTableBody({
                   <DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
                 </td>
               )}
+              {isColumnVisible("expected_close_date") && (
+                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "expected_close_date", "Expected Close Date", wo.expected_close_date)}>
+                  <DateCell woId={wo.id} field="expected_close_date" value={wo.expected_close_date} popoverKey={`expectedclose-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                </td>
+              )}
               {isColumnVisible("close_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}>
                   <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
