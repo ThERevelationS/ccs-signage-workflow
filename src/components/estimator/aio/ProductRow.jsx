@@ -21,6 +21,26 @@ const Field = ({ label, className = "", ...props }) => (
   </label>
 );
 
+const QuickNumberField = ({ label, value, onChange, onBlur, prefix = "", disabled = false, title = "", step = "1", min = "0" }) => (
+  <label className="block min-w-0">
+    <span className="block text-[8px] leading-none font-extrabold tracking-wider text-gray-400 mb-1">{label}</span>
+    <div className={`h-[28px] flex items-center rounded-sm border ${disabled ? "border-gray-200 bg-gray-100" : "border-gray-300 bg-white focus-within:border-lime-500 focus-within:ring-1 focus-within:ring-lime-200"}`}>
+      {prefix ? <span className="pl-1.5 text-[10px] text-gray-400">{prefix}</span> : null}
+      <input
+        type="number"
+        min={min}
+        step={step}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        disabled={disabled}
+        title={title}
+        className="w-full min-w-0 h-[26px] px-1.5 bg-transparent text-right text-[11px] font-semibold tabular-nums text-gray-800 outline-none disabled:text-gray-500"
+      />
+    </div>
+  </label>
+);
+
 const priceMeta = (line) => {
   const frozen = Number(line.total_snapshot || 0);
   const live = Number(line.live_total_snapshot ?? frozen);
@@ -227,15 +247,44 @@ export default function ProductRow({
           </div>
         </div>
 
-        <div className="text-right w-[122px] flex-shrink-0">
-          <div className="text-[13px] font-bold text-gray-800">{money(amount)}</div>
-          {productQuantity !== 1 && <div className="text-[9px] text-gray-400">{productQuantity} × {money(customerPrice)} each</div>}
-          {meta.differs && (
-            <div className="text-[9px] text-amber-600">live price {money(liveCustomerPrice)}</div>
-          )}
-          {percentOfTotal != null && (
-            <div className="text-[9px] text-gray-400">{percentOfTotal.toFixed(0)}% of total</div>
-          )}
+        <div className="grid grid-cols-[62px_100px_112px] gap-1.5 flex-shrink-0 items-start">
+          <QuickNumberField
+            label="QTY"
+            value={line.customer_quantity ?? 1}
+            min="0.01"
+            step="1"
+            disabled={readOnly || priceAcceptancePending}
+            title="Customer quantity"
+            onChange={(e) => set({ customer_quantity: Math.max(0.01, parseFloat(e.target.value) || 1) })}
+            onBlur={(e) => commit({ customer_quantity: Math.max(0.01, parseFloat(e.target.value) || 1) })}
+          />
+          <div className="min-w-0">
+            <QuickNumberField
+              label="UNIT SELL"
+              value={customerPrice}
+              prefix="$"
+              step="0.01"
+              disabled={readOnly || priceAcceptancePending}
+              title="Accepted customer selling price per unit. Internal cost is not changed."
+              onChange={(e) => set({ customer_price_snapshot: e.target.value })}
+              onBlur={(e) => commit({ customer_price_snapshot: Math.max(0, parseFloat(e.target.value) || 0) })}
+            />
+            {meta.differs && (
+              <div className="text-[8px] leading-3 text-amber-600 text-right truncate mt-0.5" title={`Current Builder customer price ${money(liveCustomerPrice)}`}>
+                live {money(liveCustomerPrice)}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 text-right">
+            <div className="text-[8px] leading-none font-extrabold tracking-wider text-gray-400 mb-1">TOTAL</div>
+            <div className="h-[28px] px-2 rounded-sm border border-gray-200 bg-gray-50 flex items-center justify-end text-[12px] font-bold tabular-nums text-gray-900">
+              {money(amount)}
+            </div>
+            <div className="text-[8px] leading-3 text-gray-400 mt-0.5 whitespace-nowrap">
+              {Number(line.adjustment_percent || 0) !== 0 ? `${Number(line.adjustment_percent || 0) > 0 ? "+" : ""}${Number(line.adjustment_percent || 0)}% adj · ` : ""}
+              {percentOfTotal != null ? `${percentOfTotal.toFixed(0)}% of estimate` : ""}
+            </div>
+          </div>
         </div>
 
         {(meta.differs || priceAcceptancePending) && (line.builder_product_id || ["builder_quick_product_insert", "builder_blank_product_insert", "builder_product_remove"].includes(pendingPriceAcceptance?.kind)) && (
