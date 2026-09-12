@@ -5,7 +5,7 @@ import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { AlertTriangle, CalendarClock, ExternalLink, FileText, Gauge, Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import { ExternalLink, FileText, Loader2, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 
 const CATEGORIES = [["vehicle","Vehicle"],["engine","Engine"],["transmission","Transmission"],["battery","Battery"],["component","Component"],["other","Other"]];
 const STATUSES = [["active","Active"],["expired","Expired"],["claimed","Claimed"],["void","Void"]];
@@ -43,7 +43,7 @@ export default function FleetWarranties(){
     finally{setLoading(false);}
   },[equipmentId]);
   useEffect(()=>{load();},[load]);
-  useEffect(()=>{if(requestedNew&&!dialog)setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(requestedEquipment!=="all"?requestedEquipment:"")});},[requestedNew]);
+  useEffect(()=>{if(requestedNew&&user?.role==="admin"&&!dialog)setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(requestedEquipment!=="all"?requestedEquipment:"")});},[requestedNew,user]);
 
   const activeEquipment=equipment.filter(row=>row.status!=="retired");
   const filtered=useMemo(()=>{
