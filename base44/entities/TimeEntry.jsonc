@@ -128,7 +128,7 @@
     },
     "last_correction_request_id": {
       "type": "string",
-      "description": "Idempotency request id for the latest confirmed correction"
+      "description": "Correction request record that most recently changed this TimeEntry"
     }
   },
   "required": [
