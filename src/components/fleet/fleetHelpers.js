@@ -137,7 +137,7 @@ export function groupTripsByDay(trips) {
     if (!groups[day]) groups[day] = [];
     groups[day].push(t);
   }
-  return Object.keys(groups).sort((a, b) => new Date(b) - new Date(a)).map(day => {
+  return Object.keys(groups).sort((a, b) => (Date.parse(b) || 0) - (Date.parse(a) || 0)).map(day => {
     const dayTrips = groups[day];
     const total = dayTrips.reduce((s, t) => s + (t.distance || 0), 0);
     return { day, trips: dayTrips, totalMiles: total };
@@ -181,7 +181,7 @@ export function computeStats(trips, avgBy) {
 
   const totalDistance = trips.reduce((s, t) => s + (t.distance || 0), 0);
   const totalTravelSeconds = trips.reduce((s, t) => {
-    if (t.startTime && t.endTime) return s + (new Date(t.endTime) - new Date(t.startTime)) / 1000;
+    if (t.startTime && t.endTime) return s + ((Date.parse(t.endTime) || 0) - (Date.parse(t.startTime) || 0)) / 1000;
     return s;
   }, 0);
   const totalIdleSeconds = trips.reduce((s, t) => s + (t.totalIdleDuration || 0), 0);
@@ -201,7 +201,7 @@ export function computeStats(trips, avgBy) {
     const weeks = new Set(trips.map(t => {
       const d = new Date(t.startTime);
       const onejan = new Date(d.getFullYear(), 0, 1);
-      return Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+      return Math.ceil((((d.getTime() - onejan.getTime()) / 86400000) + onejan.getDay() + 1) / 7);
     }));
     divisor = weeks.size || 1;
   }
