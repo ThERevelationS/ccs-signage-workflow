@@ -53,73 +53,17 @@ export async function archiveQuoteAttachment(attachment) {
   return { fileUrl, sha256, sizeBytes: bytes.byteLength };
 }
 
-function quoteDeliveryAuditMatches(row = {}, data = {}) {
-  const sameRecipient = String(row.recipient_email || "").trim().toLowerCase() === String(data.recipient_email || "").trim().toLowerCase();
-  return String(row.estimate_id || "") === String(data.estimate_id || "") &&
-    Number(row.quote_version || 0) === Number(data.quote_version || 0) &&
-    sameRecipient &&
-    String(row.gmail_message_id || "") === String(data.gmail_message_id || "") &&
-    String(row.attachment_sha256 || "") === String(data.attachment_sha256 || "");
-}
-
-export async function ensureQuoteDeliveryAudit(data = {}) {
-  const messageId = String(data.gmail_message_id || "").trim();
-  const idempotencyKey = messageId ? `quote_delivery:gmail:${messageId}` : "";
-  const withKey = idempotencyKey ? { ...data, idempotency_key: idempotencyKey } : data;
-
-  const findExisting = async () => {
-    if (!messageId) return null;
-    let rows = await base44.entities.EstimateQuoteDelivery.filter({ idempotency_key: idempotencyKey });
-    if (!Array.isArray(rows)) {
-      throw new Error("Quote delivery audit lookup did not return a delivery list.");
-    }
-    if (!rows.length) {
-      rows = await base44.entities.EstimateQuoteDelivery.filter({ gmail_message_id: messageId });
-      if (!Array.isArray(rows)) {
-        throw new Error("Quote delivery Gmail-id lookup did not return a delivery list.");
-      }
-    }
-    if (!rows.length) return null;
-
-    const exact = rows.filter((row) => quoteDeliveryAuditMatches(row, withKey));
-    if (exact.length !== rows.length) {
-      throw new Error("A delivery audit with this Gmail message ID already exists but does not match this Estimate/version/PDF fingerprint.");
-    }
-    if (exact.length > 1) {
-      throw new Error("Multiple delivery audit rows exist for this Gmail message ID. No audit row was deleted automatically; review delivery history before retrying.");
-    }
-    return exact[0] || null;
-  };
-
-  const existing = await findExisting();
-  if (existing) return existing;
-
-  let created = null;
-  let createError = null;
-  try {
-    created = await base44.entities.EstimateQuoteDelivery.create(withKey);
-  } catch (error) {
-    createError = error;
+export async function ensureQuoteDeliveryAudit(data = {}, sessionToken = "") {
+  const response = await base44.functions.invoke("recordEstimateQuoteDelivery", {
+    session_token: sessionToken,
+    delivery: data,
+  });
+  const result = response?.data || response;
+  if (result?.error) throw new Error(result.error);
+  if (!result?.delivery?.id) {
+    throw new Error("Quote delivery audit could not be verified after the email was sent.");
   }
-
-  // A Gmail message id is the durable identity for one sent-email event. Use it
-  // to verify create success and safely recover a lost create response.
-  if (messageId) {
-    let verified;
-    try {
-      verified = await findExisting();
-    } catch (verificationError) {
-      throw new Error(`Quote delivery audit create outcome could not be verified. The email is already sent; do not resend it just to repair audit history. ${verificationError?.message || "Reload delivery history first."}`);
-    }
-    if (verified) {
-      if (!created?.id || verified.id === created.id) return verified;
-      throw new Error("Quote delivery audit create returned one row but verification resolved a different row. The email is already sent; do not resend it. Review delivery history.");
-    }
-    throw new Error(`Quote delivery audit was not confirmed after its create attempt. The email is already sent; do not resend it just to repair audit history. ${createError?.message || "Reload delivery history first."}`);
-  }
-
-  if (created?.id) return created;
-  throw createError || new Error("Quote delivery audit could not be saved after the email was sent.");
+  return result.delivery;
 }
 
 export async function deliverEstimateQuote({
@@ -134,6 +78,7 @@ export async function deliverEstimateQuote({
   quoteTotal,
   sourceStatus,
   isResend,
+  sessionToken,
 }) {
   // Archive the exact bytes before sending so every successful email has a
   // retrievable source artifact. If archival fails, Gmail is not called.
@@ -177,7 +122,7 @@ export async function deliverEstimateQuote({
     source_status: sourceStatus || estimate.status || "",
   };
   try {
-    delivery = await ensureQuoteDeliveryAudit(deliveryData);
+    delivery = await ensureQuoteDeliveryAudit(deliveryData, sessionToken);
   } catch (error) {
     deliveryLogWarning = `Email sent, but the delivery audit record could not be saved: ${error?.message || "unknown error"}`;
   }
