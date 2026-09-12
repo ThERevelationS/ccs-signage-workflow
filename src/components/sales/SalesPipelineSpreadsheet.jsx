@@ -328,7 +328,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const { record: newOrder } = await createWorkOrderWithRecovery({
       data: {
         ...workOrderData,
-        sales_status: "lead"
+        current_stage: "sales",
+        sales_status: "lead",
+        in_pipeline: true,
       },
       label: "Sales Pipeline Work Order",
     });
@@ -922,8 +924,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const { record: newOrder } = await createWorkOrderWithRecovery({
       data: {
         ...data,
+        current_stage: "sales",
         sales_status: "lead",
-        in_pipeline: false
+        in_pipeline: true,
       },
       label: "Sales Pipeline form Work Order",
     });
