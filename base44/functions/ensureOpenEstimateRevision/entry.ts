@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { estimateAuditSnapshot, estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
 
 const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const REVISION_PAGE_SIZE = 500;
@@ -103,14 +104,12 @@ Deno.serve(async (req) => {
     const estimateId = String(body?.estimate_id || '').trim();
     const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
     const reason = String(body?.reason || '').trim();
-    const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
 
     if (!estimateId || !reason) {
       return Response.json({ error: 'Estimate and revision reason are required.' }, { status: 400 });
     }
 
     const EstimateUser = base44.entities.AllInOneEstimate;
-    const RevisionUser = base44.entities.EstimateRevision;
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
 
     const estimate = await EstimateUser.get(estimateId).catch(() => null);
@@ -140,16 +139,33 @@ Deno.serve(async (req) => {
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
     const idempotencyKey = `open_revision:${estimateId}:${expectedUpdatedDate || estimate.updated_date || revisionNumber}`;
+    const before = estimateAuditSnapshot(estimate);
+    const quoteVersion = Math.max(0, Math.floor(num(before.quote_version)));
 
-    const created = await RevisionUser.create({
-      ...revision,
+    // Build the immutable pre-revision state from the persisted Estimate instead
+    // of trusting a browser-supplied audit snapshot. The browser still supplies
+    // the human reason; pricing/status/scope evidence comes from server state.
+    const created = await RevisionService.create({
       estimate_id: estimateId,
       revision_number: revisionNumber,
+      quote_version: quoteVersion,
+      quote_issue_key: estimateQuoteIssueKey(estimateId, quoteVersion),
       revision_type: 'manual_revision',
       revision_status: 'open',
       reason,
+      previous_status: before.status || 'draft',
+      new_status: before.status || 'draft',
+      previous_quote_total: num(before.quote_total),
+      new_quote_total: num(before.quote_total),
+      previous_total_cost: num(before.total_cost),
+      new_total_cost: num(before.total_cost),
+      change_summary: ['Revision opened — changes not yet finalized'],
+      estimate_snapshot_before: before,
+      estimate_snapshot_after: {},
+      work_order_id: estimate.work_order_id || '',
+      delivery_evidence: {},
       idempotency_key: idempotencyKey,
-      started_at: revision?.started_at || timestamp,
+      started_at: timestamp,
       completed_at: '',
     });
 
