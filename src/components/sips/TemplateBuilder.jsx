@@ -328,7 +328,6 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
     });
     
-    console.log("Applying template with items:", combinedItems.length);
     if (onApplyTemplate && combinedItems.length > 0) {
       onApplyTemplate(combinedItems);
     }
