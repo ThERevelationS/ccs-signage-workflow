@@ -56,6 +56,8 @@ export default function FleetAnalytics() {
   const [equipment, setEquipment] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [lifecycleRows, setLifecycleRows] = useState([]);
+  const [lifecycleError, setLifecycleError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
@@ -63,6 +65,7 @@ export default function FleetAnalytics() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+    setLifecycleError("");
     try {
       const currentUser = await base44.auth.me().catch(() => null);
       setUser(currentUser);
@@ -75,6 +78,16 @@ export default function FleetAnalytics() {
       setEquipment(equipmentRows || []);
       setWorkOrders(workOrderRows || []);
       setTasks(taskRows || []);
+      const lifecycleResult = await base44.functions.invoke("fleetLifecycleAction", { action: "portfolio" }).catch(() => null);
+      if (lifecycleResult?.data?.error) {
+        setLifecycleRows([]);
+        setLifecycleError(lifecycleResult.data.error);
+      } else if (lifecycleResult?.data?.rows) {
+        setLifecycleRows(lifecycleResult.data.rows);
+      } else {
+        setLifecycleRows([]);
+        setLifecycleError("Lifecycle portfolio metrics are temporarily unavailable.");
+      }
     } catch (e) {
       setError(e?.message || "Unable to load Fleet analytics.");
     } finally {
@@ -216,6 +229,8 @@ export default function FleetAnalytics() {
 
       <Methodology />
 
+      <LifecyclePortfolio rows={lifecycleRows} error={lifecycleError} />
+
       <div className="grid xl:grid-cols-3 gap-5">
         <section className="xl:col-span-2 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Service Cost by Month · {selectedYear}</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Completed Fleet work orders only · {money(analytics.yearServiceCost)} recorded for the year.</p></div><BarChart3 className="w-5 h-5 text-indigo-500" /></div>
@@ -244,7 +259,34 @@ export default function FleetAnalytics() {
 }
 
 function Methodology() {
-  return <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><div className="font-semibold">How these Fleet metrics are calculated</div><div className="mt-1 leading-relaxed">Recorded service cost uses a saved work-order total when one exists; otherwise it sums the already-extended part and fluid line costs stored on completed Fleet work orders. Labor is shown only as recorded hours because Fleet Settings has no authoritative labor rate. “Maintenance cycle” measures the span from a work order's started date to completion (or today for active work); it is a timing proxy and is <b>not</b> labeled as true vehicle downtime. Compliance counts active schedules for non-retired equipment and treats an overdue schedule as covered when an active Fleet work order links to that exact schedule.</div></div>;
+  return <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><div className="font-semibold">How these Fleet metrics are calculated</div><div className="mt-1 leading-relaxed">Recorded service cost uses a saved work-order total when one exists; otherwise it sums the already-extended part and fluid line costs stored on completed Fleet work orders. Labor is shown only as recorded hours because Fleet Settings has no authoritative labor rate. “Maintenance cycle” measures the span from a work order's started date to completion (or today for active work); it is a timing proxy and is <b>not</b> labeled as true vehicle downtime. Compliance counts active schedules for non-retired equipment and treats an overdue schedule as covered when an active Fleet work order links to that exact schedule. Lifecycle priority is a planning heuristic based on admin-set replacement status/targets, recorded maintenance burden, recent service activity, and current asset state; it is not an automatic replace/keep recommendation.</div></div>;
+}
+
+function LifecyclePortfolio({ rows = [], error = "" }) {
+  const active = rows.filter(row => row.equipment?.status !== "retired");
+  const high = active.filter(row => row.priority?.label === "High");
+  const planned = active.filter(row => ["plan", "replace_soon", "approved"].includes(row.profile?.replacement_status));
+  const recentCost = active.reduce((sum, row) => sum + Number(row.metrics?.recent_maintenance_cost || 0), 0);
+  const targetWindow = active.filter(row => row.metrics?.target_replacement_days != null && row.metrics.target_replacement_days <= 365);
+  return <section className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+    <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Lifecycle & Replacement Planning</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Admin planning across active Fleet assets. Priority scores are review aids, not automatic replacement decisions.</p></div><span className="text-xs text-gray-400">{active.length} active assets</span></div>
+    {error ? <div className="p-4"><div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">{error}</div></div> : <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-b border-gray-100 dark:border-slate-800">
+        <Metric icon={AlertTriangle} label="High planning priority" value={high.length} sub="Heuristic score 70+" danger={high.length > 0} />
+        <Metric icon={Truck} label="In replacement plan" value={planned.length} sub="Plan · replace soon · approved" attention={planned.length > 0} />
+        <Metric icon={CircleDollarSign} label="Maintenance · 12 mo" value={money(recentCost)} sub="Recorded completed-WO cost" />
+        <Metric icon={CalendarClock} label="Target within 1 year / overdue" value={targetWindow.length} sub="Configured replacement dates" attention={targetWindow.length > 0} />
+      </div>
+      <div className="divide-y divide-gray-100 dark:divide-slate-800">{active.map(row => {
+        const eq = row.equipment || {};
+        const metrics = row.metrics || {};
+        const profile = row.profile || {};
+        const priority = row.priority || { score: 0, label: "Low", signals: [] };
+        const priorityTone = priority.label === "High" ? "text-red-700 dark:text-red-300" : ["Medium","Watch"].includes(priority.label) ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300";
+        return <Link key={eq.id} to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(eq.id)}&tab=lifecycle`} className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/40"><div className="flex flex-col xl:flex-row xl:items-center gap-3"><div className="min-w-0 xl:w-56"><div className="font-semibold text-gray-900 dark:text-slate-100 truncate">{eq.name}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 capitalize">{String(profile.replacement_status || "monitor").replaceAll("_", " ")} · {eq.status || "unknown"}</div></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-x-5 gap-y-2 flex-1 text-xs"><Info label="Priority" value={`${priority.score} · ${priority.label}`} attentionClass={priorityTone} /><Info label="Maintenance · 12 mo" value={money(metrics.recent_maintenance_cost)} /><Info label="Maintenance / acquisition" value={metrics.maintenance_to_acquisition_ratio == null ? "—" : `${(metrics.maintenance_to_acquisition_ratio * 100).toFixed(1)}%`} /><Info label="Target" value={profile.target_replacement_date || (profile.target_mileage_hours ? `${Number(profile.target_mileage_hours).toLocaleString()} meter` : "—")} /></div></div>{priority.signals?.[0] && <div className="text-[11px] text-gray-500 dark:text-slate-400 mt-2">{priority.signals[0]}</div>}</Link>;
+      })}{active.length === 0 && <div className="px-4 py-8 text-center text-sm text-gray-500">No active Fleet assets are available for lifecycle planning.</div>}</div>
+    </>}
+  </section>;
 }
 
 function Metric({ icon: Icon, label, value, sub, attention = false, danger = false }) {
@@ -253,6 +295,6 @@ function Metric({ icon: Icon, label, value, sub, attention = false, danger = fal
   return <div className={`rounded-xl border p-4 ${style}`}><div className="flex items-start justify-between gap-2"><div className="text-xs text-gray-500 dark:text-slate-400">{label}</div><Icon className="w-4 h-4 text-gray-400 shrink-0" /></div><div className={`text-2xl font-bold mt-1 ${valueStyle}`}>{value}</div><div className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{sub}</div></div>;
 }
 
-function Info({ label, value, attention = false }) {
-  return <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-slate-800"><div className="text-sm text-gray-600 dark:text-slate-300">{label}</div><div className={`text-sm font-semibold text-right ${attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div></div>;
+function Info({ label, value, attention = false, attentionClass = "" }) {
+  return <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-3 last:border-0 last:pb-0 dark:border-slate-800"><div className="text-sm text-gray-600 dark:text-slate-300">{label}</div><div className={`text-sm font-semibold text-right ${attentionClass || (attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100")}`}>{value}</div></div>;
 }
