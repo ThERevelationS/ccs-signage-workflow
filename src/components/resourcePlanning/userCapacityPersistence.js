@@ -1,7 +1,4 @@
-import {
-  expectedEntityFields,
-  replaceEntityFieldsIfUnchanged,
-} from "@/components/estimator/builder/builderEntityPersistence";
+import { base44 } from "@/api/base44Client";
 
 const EDITABLE_FIELDS = [
   "user_name",
@@ -34,41 +31,26 @@ export async function loadSingleUserCapacity({ entity, userEmail, label = "User 
   return matches[0] || null;
 }
 
-export async function saveUserCapacityIfUnchanged({ entity, loadedRecord, userEmail, nextFields, label = "User capacity" } = {}) {
+export async function saveUserCapacityIfUnchanged({ loadedRecord, userEmail, nextFields, sessionToken, label = "User capacity" } = {}) {
   const email = String(userEmail || "").trim();
-  if (!email || typeof entity?.filter !== "function" || typeof entity?.create !== "function") throw new Error(`${label} could not initialize its concurrency-safe save.`);
-  const desired = { user_email: email, ...pickEditableFields(nextFields) };
-
-  if (loadedRecord?.id) {
-    if (normalizeEmail(loadedRecord.user_email) !== normalizeEmail(email)) throw new Error(`${label} loaded a different employee. Reload before saving.`);
-    return replaceEntityFieldsIfUnchanged({
-      entity,
-      id: loadedRecord.id,
-      expectedUpdatedAt: loadedRecord.updated_date || "",
-      expectedFields: expectedEntityFields(loadedRecord, pickEditableFields(desired)),
-      nextFields: pickEditableFields(desired),
-      guardFields: { user_email: loadedRecord.user_email },
-      label,
-    });
+  const token = String(sessionToken || "").trim();
+  if (!email || !token) throw new Error(`${label} requires an active Resource Planning sign-in.`);
+  if (loadedRecord?.id && normalizeEmail(loadedRecord.user_email) !== normalizeEmail(email)) {
+    throw new Error(`${label} loaded a different employee. Reload before saving.`);
   }
 
-  const before = await loadSingleUserCapacity({ entity, userEmail: email, label });
-  if (before?.id) throw new Error(`${label} was created in another session after this page loaded. Reload before saving so the newer capacity is not overwritten.`);
-
-  let created = null;
-  let createError = null;
   try {
-    created = await entity.create(desired);
+    const response = await base44.functions.invoke("manageUserCapacity", {
+      session_token: token,
+      user_email: email,
+      expected_id: loadedRecord?.id || "",
+      expected_updated_date: loadedRecord?.updated_date || "",
+      next_fields: pickEditableFields(nextFields),
+    });
+    const data = response?.data || response;
+    if (!data?.record?.id) throw new Error(`${label} save could not be verified.`);
+    return data.record;
   } catch (error) {
-    createError = error;
+    throw new Error(error?.response?.data?.error || error?.message || `${label} could not be saved safely.`);
   }
-
-  const after = await entity.filter({ user_email: email });
-  if (!Array.isArray(after)) throw new Error(`${label} final verification did not return a capacity list.`);
-  const matches = after.filter((row) => normalizeEmail(row?.user_email) === normalizeEmail(email));
-  if (matches.length > 1) throw new Error(`${label} was created concurrently more than once. No capacity row was deleted automatically; review duplicates before retrying.`);
-  if (matches.length === 1) return matches[0];
-  if (createError) throw createError;
-  if (created?.id) throw new Error(`${label} returned a create receipt but could not be verified. Do not retry blindly; reload first.`);
-  throw new Error(`${label} could not verify whether the capacity was created.`);
 }
