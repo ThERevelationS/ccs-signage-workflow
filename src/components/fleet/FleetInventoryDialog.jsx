@@ -21,6 +21,7 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [localBusy, setLocalBusy] = useState(false);
+  const [localError, setLocalError] = useState("");
   const busy = saving || localBusy;
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
     setForm(item ? { ...empty, ...item } : empty);
     setPhotoFile(null);
     setPhotoPreview("");
+    setLocalError("");
   }, [open, itemType, item]);
 
   if (!open) return null;
@@ -41,6 +43,7 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
     e.preventDefault();
     if (itemType === "part") {
       setLocalBusy(true);
+      setLocalError("");
       try {
         let primaryPhotoUrl = String(form.primary_photo_url || "").trim();
         let photos = Array.isArray(form.photo_urls) ? [...form.photo_urls] : [];
@@ -83,10 +86,11 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
         enable_low_stock_alerts: !!form.enable_low_stock_alerts,
         compatible_equipment_ids: form.compatible_equipment_ids || [],
       });
+      } catch (error) {
+        setLocalError(error?.message || "Unable to save Fleet part.");
       } finally { setLocalBusy(false); }
     } else {
-    } else {
-      onSave({
+      await onSave({
         fluid_name: String(form.fluid_name || "").trim(),
         fluid_type: String(form.fluid_type || "").trim(),
         viscosity: String(form.viscosity || "").trim(),
@@ -107,13 +111,14 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
   const title = itemType === "part" ? (item ? "Edit Fleet Part" : "New Fleet Part") : (item ? "Edit Fleet Fluid" : "New Fleet Fluid");
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onMouseDown={e => e.target === e.currentTarget && !saving && onClose()}>
+    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}> 
       <div role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-dialog-title" className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div><h2 id="fleet-inventory-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{title}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Fleet inventory only. This never writes to CCS Master Inventory or Sign Maintenance inventory.</p></div>
-          <button type="button" onClick={onClose} disabled={saving} aria-label="Close Fleet inventory dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
+          <button type="button" onClick={onClose} disabled={busy} aria-label="Close Fleet inventory dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-5">
+          {localError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{localError}</div>}
           {itemType === "part" ? <div className="grid md:grid-cols-2 gap-4">
             <Field label="Part Name *"><input required value={form.part_name || ""} onChange={e => set("part_name", e.target.value)} className="field" /></Field>
             <Field label="Part Number"><input value={form.part_number || ""} onChange={e => set("part_number", e.target.value)} className="field" /></Field>
