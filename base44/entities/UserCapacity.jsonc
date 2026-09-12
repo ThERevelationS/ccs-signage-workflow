@@ -57,5 +57,23 @@
   },
   "required": [
     "user_email"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__resource_capacity_backend_only__"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "__resource_capacity_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__resource_capacity_backend_only__"
+      }
+    }
+  }
 }
