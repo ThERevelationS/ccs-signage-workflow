@@ -58,6 +58,7 @@ export default function CustomerQuotePanel({
   readOnly = false,
   revisionInProgress = false,
   persistedStatus = "draft",
+  sessionToken = "",
   onQuoteDelivered,
   onDeliveryLogged,
   onDeliveryEvidenceReady,
@@ -156,6 +157,9 @@ export default function CustomerQuotePanel({
     setSendError("");
     let emailWasSent = false;
     try {
+      if (!String(sessionToken || "").trim()) {
+        throw new Error("Your sign-shop session is no longer available. Sign in again before emailing a customer quote.");
+      }
       const issueMetadata = issuingNewQuote
         ? resolveQuoteIssueMetadata({
             previousStatus: persistedStatus,
@@ -197,6 +201,7 @@ export default function CustomerQuotePanel({
         quoteTotal: pricing.quoteTotal,
         sourceStatus: persistedStatus,
         isResend,
+        sessionToken,
       });
       emailWasSent = true;
       if (!deliveryResult.deliveryLogWarning) setCurrentVersionDelivered(true);
