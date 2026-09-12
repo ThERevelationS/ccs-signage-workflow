@@ -62,5 +62,23 @@
   "required": [
     "title",
     "type"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__feature_report_backend_only__"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "__feature_report_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__feature_report_backend_only__"
+      }
+    }
+  }
 }
