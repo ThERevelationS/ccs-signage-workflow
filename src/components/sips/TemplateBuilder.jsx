@@ -1545,7 +1545,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
                                     <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
                                     <button onClick={(e) => { e.stopPropagation(); setEditingProductTypeName(type); setEditingProductTypeValue(type); }} className="p-0.5"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${type}"?`)) { saveProductTypes(productTypes.filter((_, i) => i !== index)); if (selectedProductType === type) { setSelectedProductType(null); setProductTypeItems([]); } } }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); requestDeleteProductType(type, index); }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
                                   </>
                                 )}
                               </div>
@@ -1746,7 +1746,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
                                       </>
                                     )}
-                                    <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button onClick={() => requestDeleteCondition(dd)} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
                                   </div>
                                 )}
                               </Draggable>
@@ -1828,7 +1828,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
                                       </>
                                     )}
-                                    <button onClick={() => { if (confirm(`Delete "${dd.name}"?`)) saveDropdownConditions(dropdownConditions.filter(d => d.id !== dd.id)); }} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button onClick={() => requestDeleteCondition(dd)} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
                                   </div>
                                 )}
                               </Draggable>
@@ -1851,6 +1851,39 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           </div>
         </div>
       </div>
+
+      <AlertDialog open={!!noticeDialog} onOpenChange={(open) => { if (!open) setNoticeDialog(null); }}>
+        <AlertDialogContent className="clay-card border-none z-[120]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {noticeDialog?.title || "SIPS Template Builder"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{noticeDialog?.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNoticeDialog(null)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDialog} onOpenChange={(open) => { if (!open && !isConfirming) setConfirmDialog(null); }}>
+        <AlertDialogContent className="clay-card border-none z-[120]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              {confirmDialog?.title || "Confirm deletion"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog?.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isConfirming}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={runConfirmedAction} disabled={isConfirming} className="bg-red-600 hover:bg-red-700">
+              {isConfirming ? "Deleting…" : (confirmDialog?.confirmLabel || "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Create Condition Dialog */}
       <Dialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
