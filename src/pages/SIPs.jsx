@@ -238,6 +238,53 @@ export default function SIPs() {
     };
   };
 
+  const needsAttention = (wo) => {
+    const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
+    return Boolean(
+      wo.asap ||
+      deadlineStatus?.bucket === "overdue" ||
+      ["at_risk", "delayed", "blocked"].includes(wo.project_health)
+    );
+  };
+
+  const matchesStatusFilter = (wo) => {
+    if (statusFilter === "all") return true;
+    const deadlineStatus = getDeadlineStatus(wo.current_task_deadline);
+    if (statusFilter === "attention") return needsAttention(wo);
+    if (statusFilter === "overdue") return deadlineStatus?.bucket === "overdue";
+    if (statusFilter === "due_soon") return ["today", "soon"].includes(deadlineStatus?.bucket);
+    if (statusFilter === "incomplete") {
+      const progress = getChecklistProgress(wo);
+      return progress.total === 0 || progress.completed < progress.total;
+    }
+    return true;
+  };
+
+  const sortOrders = (orders) => [...orders].sort((a, b) => {
+    if (sortMode === "deadline") {
+      if (!a.current_task_deadline && !b.current_task_deadline) return 0;
+      if (!a.current_task_deadline) return 1;
+      if (!b.current_task_deadline) return -1;
+      return a.current_task_deadline.localeCompare(b.current_task_deadline);
+    }
+    if (sortMode === "customer") return (a.client_name || "").localeCompare(b.client_name || "");
+    if (sortMode === "amount") return Number(b.estimate_amount || 0) - Number(a.estimate_amount || 0);
+    return 0;
+  });
+
+  const visibleActiveWorkOrders = sortOrders(
+    activeWorkOrders.filter(matchesSearch).filter(matchesStatusFilter)
+  );
+  const visibleFutureRevisitOrders = futureRevisitOrders.filter(matchesSearch);
+  const visibleCompletedWipItems = completedWipItems.filter(matchesSearch);
+  const overdueCount = activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length;
+  const attentionCount = activeWorkOrders.filter(needsAttention).length;
+  const incompleteChecklistCount = activeWorkOrders.filter((wo) => {
+    const progress = getChecklistProgress(wo);
+    return progress.total === 0 || progress.completed < progress.total;
+  }).length;
+  const activeValue = activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
