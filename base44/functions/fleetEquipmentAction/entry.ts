@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
     const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
     const Log = base44.asServiceRole.entities.FleetEquipmentLog;
+    const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
 
     if (action === 'create') {
       const creationKey = String(body?.creation_key || '').trim();
@@ -193,6 +194,16 @@ Deno.serve(async (req) => {
       const patch = equipmentPatch(body?.equipment || body);
       if (patch.type && !EQUIPMENT_TYPES.has(patch.type)) return Response.json({ error: 'Invalid equipment type.' }, { status: 400 });
       if (patch.status && !EQUIPMENT_STATUSES.has(patch.status)) return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
+      if (patch.status === 'retired' && existing.status !== 'retired') {
+        const equipmentTasks = await loadAllEntityRows({ entity: Task, query: { equipment_id: id }, sort: '-created_date', label: `Fleet maintenance schedules for equipment ${id}` });
+        for (const task of equipmentTasks) {
+          const generationKey = String(task?.generation_key || '').trim();
+          if (!generationKey) continue;
+          const receipts = await Receipt.filter({ operation_key: generationKey, status: { $in: ['started', 'failed'] } });
+          const activeLock = (receipts || []).find((receipt: any) => receipt.operation_type === 'scheduled_generation' && receipt?.result_summary?.task_lock_acquired === true);
+          if (activeLock) return Response.json({ error: 'This equipment has scheduled maintenance generation in progress. Retry retirement after the generation operation finishes or is reconciled.' }, { status: 409 });
+        }
+      }
       const oldVin = normalizeVin(existing.vin || '');
       const nextVin = Object.prototype.hasOwnProperty.call(patch, 'vin') ? normalizeVin(patch.vin || '') : oldVin;
       const trackingApplicable = Object.prototype.hasOwnProperty.call(body, 'tracking_applicable')
