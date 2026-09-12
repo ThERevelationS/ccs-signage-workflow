@@ -60,10 +60,14 @@ function overlaps(aStart:string,aEnd:string,bStart:string,bEnd:string) {
   return [a1,a2,b1,b2].every(Number.isFinite) && a1 < b2 && b1 < a2;
 }
 
-async function conflictFor(base44:any,equipmentId:string,startAt:string,endAt:string,ignoreId='') {
+async function conflictingRows(base44:any,equipmentId:string,startAt:string,endAt:string,ignoreId='') {
   const Reservation=base44.asServiceRole.entities.FleetReservation;
   const rows=await loadAllEntityRows({entity:Reservation,query:{equipment_id:equipmentId},sort:'start_at',label:`Fleet reservation conflicts for ${equipmentId}`});
-  return rows.find((row:any)=>row.id!==ignoreId && ['reserved','checked_out'].includes(row.status) && (row.status==='checked_out' || overlaps(startAt,endAt,row.start_at,row.end_at))) || null;
+  return rows.filter((row:any)=>row.id!==ignoreId && ['reserved','checked_out'].includes(row.status) && (row.status==='checked_out' || overlaps(startAt,endAt,row.start_at,row.end_at)));
+}
+
+async function conflictFor(base44:any,equipmentId:string,startAt:string,endAt:string,ignoreId='') {
+  return (await conflictingRows(base44,equipmentId,startAt,endAt,ignoreId))[0] || null;
 }
 
 async function currentMeter(base44:any,equipment:any) {
@@ -129,7 +133,16 @@ Deno.serve(async req=>{
         const winner=contenders.slice().sort((a:any,b:any)=>String(a.id).localeCompare(String(b.id)))[0];
         for(const row of contenders)if(row.id!==winner.id)await Reservation.delete(row.id).catch(()=>null);
         if(!sameCreate(winner,patch))return Response.json({error:'A concurrent reservation won this create identity with different details.'},{status:409});
-        return Response.json({success:true,reused:winner.id!==created.id,reservation:winner});
+        if(winner.id!==created.id)return Response.json({success:true,reused:true,reservation:winner});
+      }
+      const overlapAfterCreate=await conflictingRows(base44,patch.equipment_id,patch.start_at,patch.end_at,created.id);
+      if(overlapAfterCreate.length){
+        const candidates=[created,...overlapAfterCreate].sort((a:any,b:any)=>(Date.parse(a.created_date||'')||0)-(Date.parse(b.created_date||'')||0)||String(a.id).localeCompare(String(b.id)));
+        const winner=candidates[0];
+        if(winner.id!==created.id){
+          await Reservation.delete(created.id).catch(()=>null);
+          return Response.json({error:`${equipment.name} was reserved by another user at the same time. Reload to see the winning reservation.`,conflict:winner},{status:409});
+        }
       }
       return Response.json({success:true,reservation:created});
     }
@@ -165,7 +178,7 @@ Deno.serve(async req=>{
       if(existing.status!=='reserved')return Response.json({error:'Only a reserved booking can be checked out.'},{status:409});
       const equipment=await Equipment.get(existing.equipment_id).catch(()=>null);
       if(!equipment)return Response.json({error:'Fleet equipment was not found.'},{status:404});
-      if(equipment.status==='retired'||equipment.status==='down')return Response.json({error:'This Fleet asset is not currently available for checkout.'},{status:409});
+      if(equipment.status!=='operational')return Response.json({error:'Only equipment currently marked operational can be checked out.'},{status:409});
       const conflict=await conflictFor(base44,existing.equipment_id,existing.start_at,existing.end_at,id);
       if(conflict)return Response.json({error:'Another active reservation or checkout now conflicts with this booking.',conflict},{status:409});
       const meter=nonNegativeOrNull(body?.pickup_meter);
