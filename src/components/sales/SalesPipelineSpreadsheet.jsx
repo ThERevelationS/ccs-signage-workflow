@@ -385,6 +385,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (changedFields.length === 0) return;
 
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, ...mergedUpdates } : wo));
+    setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...mergedUpdates } : selected);
 
     const baselines = { ...(pendingBaselinesRef.current[orderId] || {}) };
     changedFields.forEach((changedField) => {
@@ -460,6 +461,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingHistoryFieldsRef.current[orderId];
         }
         setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, updated_date: saved.updated_date } : row));
+        setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, updated_date: saved.updated_date } : selected);
         setQuickEditError("");
       } catch (error) {
         if (!error.message?.includes('not found')) {
