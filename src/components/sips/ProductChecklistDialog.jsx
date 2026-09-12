@@ -1314,24 +1314,7 @@ export default function ProductChecklistDialog({
                                 if (val === "other") {
                                   setShowOtherPopup({ itemId: displayItem.id });
                                 } else if (val !== "select_value") {
-                                  // Require approved_by before allowing any status selection
-                                  if (!displayItem.approved_by) {
-                                    setValidationDialog({
-                                      title: "Approver Required",
-                                      message: "Select who approved this checklist item before setting its status."
-                                    });
-                                    return;
-                                  }
-                                  // Check if children are complete before allowing completion
-                                  const selectedCondition = dropdownConditions.find(dd => dd.name === val);
-                                  if (selectedCondition?.is_completed && !areChildrenComplete(displayItem.id)) {
-                                    setValidationDialog({
-                                      title: "Tasks Still Open",
-                                      message: "Complete the tasks and details under this checklist item before marking it completed."
-                                    });
-                                    return;
-                                  }
-                                  updateChecklistItem(displayItem.id, { custom_dropdown_value: val });
+                                  applyChecklistStatus(displayItem.id, val);
                                 }
                               }}
                               disabled={!isRegistered}
@@ -1566,26 +1549,7 @@ export default function ProductChecklistDialog({
                                         if (val === "other") {
                                           setShowOtherPopup({ itemId: detail.id });
                                         } else if (val !== "select_value") {
-                                          // Require approved_by before allowing any status selection
-                                          if (!detail.approved_by) {
-                                            setValidationDialog({
-                                              title: "Approver Required",
-                                              message: "Select who approved this detail before setting its status."
-                                            });
-                                            return;
-                                          }
-                                          // Check if it's switching TO a continued condition - allow bringing back
-                                          const selectedCondition = dropdownConditions.find(dd => dd.name === val);
-
-                                          // Check if children are complete before allowing completion
-                                          if (selectedCondition?.is_completed && !areChildrenComplete(detail.id)) {
-                                            setValidationDialog({
-                                              title: "Tasks Still Open",
-                                              message: "Complete the tasks under this detail before marking it completed."
-                                            });
-                                            return;
-                                          }
-                                          updateChecklistItem(detail.id, { custom_dropdown_value: val });
+                                          applyChecklistStatus(detail.id, val);
                                         }
                                       }}
                                       disabled={!isRegistered}
@@ -1849,26 +1813,7 @@ export default function ProductChecklistDialog({
                                   if (val === "other") {
                                     setShowOtherPopup({ itemId: stDisplayItem.id });
                                   } else if (val !== "select_value") {
-                                    // Require approved_by before allowing any status selection
-                                    if (!stDisplayItem.approved_by) {
-                                      setValidationDialog({
-                                        title: "Approver Required",
-                                        message: "Select who approved this checklist item before setting its status."
-                                      });
-                                      return;
-                                    }
-                                    // Allow switching TO continued conditions (bringing back from completed)
-                                    const selectedCondition = dropdownConditions.find(dd => dd.name === val);
-                                    
-                                    // Check if children are complete before allowing completion
-                                    if (selectedCondition?.is_completed && !areChildrenComplete(stDisplayItem.id)) {
-                                      setValidationDialog({
-                                        title: "Tasks Still Open",
-                                        message: "Complete the tasks and details under this checklist item before marking it completed."
-                                      });
-                                      return;
-                                    }
-                                    updateChecklistItem(stDisplayItem.id, { custom_dropdown_value: val });
+                                    applyChecklistStatus(stDisplayItem.id, val);
                                   }
                                 }}
                                 disabled={!isRegistered}
@@ -2370,8 +2315,7 @@ export default function ProductChecklistDialog({
                     <div
                       key={dd.id}
                       onClick={() => {
-                        if (showOtherPopup?.itemId) {
-                          updateChecklistItem(showOtherPopup.itemId, { custom_dropdown_value: dd.name });
+                        if (showOtherPopup?.itemId && applyChecklistStatus(showOtherPopup.itemId, dd.name)) {
                           setShowOtherPopup(null);
                         }
                       }}
