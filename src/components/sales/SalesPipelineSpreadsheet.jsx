@@ -1186,7 +1186,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const upcomingDate = new Date();
   upcomingDate.setDate(upcomingDate.getDate() + 7);
   const upcomingStamp = format(upcomingDate, "yyyy-MM-dd");
-  const staleCutoffDate = new Date();
+  const staleCutoffDate = parseLocalDate(todayStamp);
   staleCutoffDate.setDate(staleCutoffDate.getDate() - STALE_ACTIVITY_DAYS);
   const staleCutoffTime = staleCutoffDate.getTime();
 
