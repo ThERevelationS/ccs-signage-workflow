@@ -777,6 +777,9 @@ Deno.serve(async (req) => {
         if (nextEquipmentId !== existing.equipment_id && equipment.status === 'retired') {
           return Response.json({ error: 'An existing Fleet work order cannot be reassigned to retired equipment. Reactivate the equipment first.' }, { status: 409 });
         }
+        if (nextEquipmentId === existing.equipment_id && equipment.status === 'retired' && !ACTIVE_STATUSES.has(existing.status) && patch.status && ACTIVE_STATUSES.has(patch.status)) {
+          return Response.json({ error: 'A closed/cancelled Fleet work order cannot be reactivated while its equipment is retired. Reactivate the equipment first.' }, { status: 409 });
+        }
       }
       if (nextTaskId) {
         const task = await Task.get(nextTaskId);
@@ -796,6 +799,10 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'reopen') {
+      if (existing.equipment_id) {
+        const reopenEquipment = await Equipment.get(existing.equipment_id).catch(() => null);
+        if (reopenEquipment?.status === 'retired') return Response.json({ error: 'This Fleet work order cannot be reopened while its equipment is retired. Reactivate the equipment first.' }, { status: 409 });
+      }
       const expectedUpdatedAt = String(body?.expected_updated_date || '').trim();
       if (expectedUpdatedAt && expectedUpdatedAt !== String(existing.updated_date || '')) {
         return Response.json({ error: 'This Fleet work order changed after the reopen confirmation was opened. Reload it before reopening.' }, { status: 409 });
@@ -936,6 +943,9 @@ Deno.serve(async (req) => {
 
       if (equipmentStatus && !EQUIPMENT_STATUSES.has(equipmentStatus)) {
         return Response.json({ error: 'Invalid equipment status.' }, { status: 400 });
+      }
+      if (!unresolvedMain && equipmentStatus === 'retired' && completionEquipment?.status !== 'retired') {
+        return Response.json({ error: 'Retire equipment from Fleet Equipment after this work order is completed so archive preconditions can be verified.' }, { status: 409 });
       }
 
       const inventoryPlans = await buildInventoryPlans(base44, Receipt, existing, completionPatch, completionKey);
