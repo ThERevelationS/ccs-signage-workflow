@@ -951,6 +951,18 @@ export default function ProductChecklistDialog({
   };
   
   const { active: activeChecklist, completed: completedChecklist } = separateCompletedItems();
+  const primaryChecklistItems = checklist.filter(item => item.type !== 'task' && item.type !== 'subtask');
+  const completedPrimaryCount = primaryChecklistItems.filter(item => {
+    if (!item.approved_by || !item.custom_dropdown_value) return false;
+    const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    return !condition || condition.is_completed;
+  }).length;
+  const continuedPrimaryCount = primaryChecklistItems.filter(item => {
+    const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    return Boolean(item.approved_by && condition && !condition.is_completed);
+  }).length;
+  const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
+  const completedTaskCount = taskItems.filter(item => item.approved_by).length;
 
   return (
     <>
