@@ -28,8 +28,14 @@ function formatDuration(totalMinutes) {
   return `${hours}h ${remainder}m`;
 }
 
-export default function WorkPauseOverlay() {
-  const { currentUser, sessionToken } = useAuth();
+export default function WorkPauseOverlay({
+  userOverride = null,
+  sessionTokenOverride = "",
+  disabled = false,
+} = {}) {
+  const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
+  const currentUser = userOverride || shellUser;
+  const sessionToken = sessionTokenOverride || shellSessionToken;
   const [pauseState, setPauseState] = useState(null);
   const [now, setNow] = useState(() => new Date());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -39,7 +45,7 @@ export default function WorkPauseOverlay() {
   const mountedRef = useRef(true);
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
-    if (!currentUser?.email || !sessionToken) {
+    if (disabled || !currentUser?.email || !sessionToken) {
       if (mountedRef.current) setPauseState(null);
       return null;
     }
@@ -67,7 +73,7 @@ export default function WorkPauseOverlay() {
       if (pauseState) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, sessionToken, pauseState]);
+  }, [currentUser?.email, sessionToken, pauseState, disabled]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -134,7 +140,7 @@ export default function WorkPauseOverlay() {
     }
   };
 
-  if (!pauseState?.active_work_pause?.started_at) return null;
+  if (disabled || !pauseState?.active_work_pause?.started_at) return null;
 
   const pauseStarted = new Date(pauseState.active_work_pause.started_at);
   const pauseElapsedMinutes = Number.isFinite(pauseStarted.getTime())
