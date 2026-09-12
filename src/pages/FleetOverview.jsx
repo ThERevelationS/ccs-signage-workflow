@@ -103,6 +103,10 @@ export default function FleetOverview() {
   const metrics = useMemo(() => {
     if (!data) return null;
     const priorityRank = { critical: 0, high: 1, medium: 2, low: 3 };
+    const activeEquipment = data.equipment.filter(e => e.status !== "retired");
+    const retiredEquipment = data.equipment.filter(e => e.status === "retired");
+    const activeEquipmentIds = new Set(activeEquipment.map(e => e.id));
+    const activeVins = new Set(activeEquipment.map(e => normalizeVin(e.vin)).filter(Boolean));
     const activeOrders = data.workOrders
       .filter(w => !["completed", "cancelled"].includes(w.status))
       .sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9) || String(a.work_order_number || "").localeCompare(String(b.work_order_number || "")));
@@ -114,16 +118,18 @@ export default function FleetOverview() {
     const lowParts = data.parts.filter(p => p.enable_low_stock_alerts !== false && Number(p.quantity_on_hand ?? 0) <= Number(p.minimum_stock ?? 0));
     const lowFluids = data.fluids.filter(isFluidLowStock);
     const pendingRequests = data.requests.filter(r => ["pending", "ordered"].includes(r.status));
-    const uniqueTracked = new Set(data.liveState.map(v => v.vehicle_vin).filter(Boolean)).size;
-    const bouncieIdentityConflicts = data.equipment.filter(e => e.bouncie_link_status === "ambiguous" || hasRuntimeBouncieIdentityConflict(e, data.bouncieVehicles || []));
+    const uniqueTracked = new Set(data.liveState.map(v => normalizeVin(v.vehicle_vin)).filter(vin => vin && activeVins.has(vin))).size;
+    const bouncieIdentityConflicts = activeEquipment.filter(e => e.bouncie_link_status === "ambiguous" || hasRuntimeBouncieIdentityConflict(e, data.bouncieVehicles || []));
     const horizonDate = new Date(`${todayText}T00:00:00Z`);
     horizonDate.setUTCDate(horizonDate.getUTCDate() + 14);
     const horizonText = horizonDate.toISOString().slice(0, 10);
-    const pendingTasks = data.tasks.filter(t => ["pending", "overdue"].includes(t.status) && t.start_date);
+    const pendingTasks = data.tasks.filter(t => activeEquipmentIds.has(t.equipment_id) && ["pending", "overdue"].includes(t.status) && t.start_date);
     const overdueTasks = pendingTasks.filter(t => t.status === "overdue" || String(t.start_date) < todayText);
     const upcomingTasks = pendingTasks.filter(t => String(t.start_date) >= todayText && String(t.start_date) <= horizonText)
       .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
     return {
+      activeEquipment,
+      retiredEquipment,
       activeOrders,
       highPriorityOrders,
       unassignedOrders,
@@ -166,7 +172,7 @@ export default function FleetOverview() {
         {data && metrics && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-              <MetricCard icon={Truck} label="Equipment" value={data.equipment.length} sub={`${metrics.uniqueTracked} tracked VIN${metrics.uniqueTracked === 1 ? "" : "s"}`} />
+              <MetricCard icon={Truck} label="Active Equipment" value={metrics.activeEquipment.length} sub={`${metrics.retiredEquipment.length} retired · ${metrics.uniqueTracked} tracked VIN${metrics.uniqueTracked === 1 ? "" : "s"}`} />
               <MetricCard icon={ClipboardList} label="Open Work Orders" value={metrics.activeOrders.length} sub={`${data.workOrders.length} total history`} />
               <MetricCard icon={AlertTriangle} label="High / Critical" value={metrics.highPriorityOrders.length} sub="Active work orders" />
               <MetricCard icon={Package} label="Low Stock" value={metrics.lowStock} sub={`${metrics.lowParts.length} parts · ${metrics.lowFluids.length} fluids`} />
