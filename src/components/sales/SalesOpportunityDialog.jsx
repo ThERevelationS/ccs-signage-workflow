@@ -31,6 +31,7 @@ const SALES_HISTORY_FIELDS = new Set([
   "quote_date",
   "date_estimate_sent",
   "follow_up_date",
+  "expected_close_date",
   "close_date",
   "lost_reason",
   "current_task_description",
@@ -48,6 +49,7 @@ const FIELD_LABELS = {
   quote_date: "Quote date",
   date_estimate_sent: "Estimate sent",
   follow_up_date: "Follow-up date",
+  expected_close_date: "Expected close",
   close_date: "Close date",
   lost_reason: "Lost reason",
   current_task_description: "Next action",
@@ -185,7 +187,9 @@ export default function SalesOpportunityDialog({
               <div className="flex items-center gap-2 font-semibold text-gray-800"><CalendarClock className="h-4 w-4 text-orange-600" />Next Action</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Expected close</Label><Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className="mt-1 h-9" /></div>
                 <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Task owner</Label><div className="mt-1 h-9 rounded-md border px-3 py-2 text-sm text-gray-700">{workOrder.current_task_assigned_to || "Unassigned"}</div></div>
                 <div className="sm:col-span-2"><Label className="text-xs text-gray-500">Next action / task</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-9" /></div>
               </div>
               {!closeout && !workOrder.follow_up_date && !workOrder.current_task_deadline && <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">This opportunity has no scheduled next action.</div>}
@@ -208,6 +212,7 @@ export default function SalesOpportunityDialog({
               <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.corbridge_invoice_number || workOrder.est_inv_at || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Estimate sent</div><div className="font-medium text-gray-800">{workOrder.date_estimate_sent || workOrder.quote_date || "—"}</div></div>
+                <div><div className="text-xs text-gray-400">Expected close</div><div className="font-medium text-gray-800">{workOrder.expected_close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Close date</div><div className="font-medium text-gray-800">{workOrder.close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Lost reason</div><div className={`font-medium ${workOrder.sales_status === "lost" ? "text-red-700" : "text-gray-800"}`}>{workOrder.lost_reason || "—"}</div></div>
               </div>
