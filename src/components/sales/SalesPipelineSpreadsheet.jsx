@@ -1667,6 +1667,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <SalesOpportunityDialog
           workOrder={selectedWorkOrder}
           users={users}
+          leadSources={leadSources}
           isRegistered={isRegistered}
           onClose={() => setSelectedWorkOrder(null)}
           onUpdateFields={updateWorkOrderFields}
