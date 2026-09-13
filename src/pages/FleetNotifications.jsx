@@ -230,8 +230,8 @@ export default function FleetNotifications() {
           timestamp: profile.updated_date || row.equipment?.updated_date || "",
         });
       }
-+
-+      for (const estimate of data.repairEstimates || []) {
+
+      for (const estimate of data.repairEstimates || []) {
         if (estimate.status !== "submitted") continue;
         rows.push({
           key: `repair-estimate-${estimate.id}`,
