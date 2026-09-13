@@ -312,7 +312,7 @@ export default function FleetSettings() {
     setMechanicError("");
     setGeneratedMechanicLink("");
     try {
-      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates });
+      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_create_link", name: mechanicName.trim() || "External Mechanic", expires_in_days: Number(mechanicExpiryDays || 0), allow_estimates: mechanicAllowEstimates, scope_mode: mechanicScopeMode, allowed_equipment_ids: mechanicScopeMode === "selected_equipment" ? mechanicEquipmentIds : [] });
       if (data?.error || !data?.token) throw new Error(data?.error || "Mechanic access link was not generated.");
       setGeneratedMechanicLink(`${window.location.origin}/FleetMechanic#${data.token}`);
       const listed = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" });
@@ -349,6 +349,22 @@ export default function FleetSettings() {
       setMechanicLinks(current => current.map(row => row.id === link.id ? data.link : row));
     } catch (error) {
       setMechanicError(error?.message || "Mechanic estimate permission could not be changed.");
+    } finally {
+      setMechanicBusy("");
+    }
+  };
+
+  const saveMechanicScope = async () => {
+    if (!mechanicScopeEdit?.id) return;
+    setMechanicBusy(`scope-${mechanicScopeEdit.id}`);
+    setMechanicError("");
+    try {
+      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_update_scope", id: mechanicScopeEdit.id, scope_mode: mechanicScopeEdit.scope_mode, allowed_equipment_ids: mechanicScopeEdit.scope_mode === "selected_equipment" ? mechanicScopeEdit.allowed_equipment_ids : [] });
+      if (data?.error) throw new Error(data.error);
+      setMechanicLinks(current => current.map(row => row.id === mechanicScopeEdit.id ? data.link : row));
+      setMechanicScopeEdit(null);
+    } catch (error) {
+      setMechanicError(error?.message || "Mechanic work scope could not be changed.");
     } finally {
       setMechanicBusy("");
     }
