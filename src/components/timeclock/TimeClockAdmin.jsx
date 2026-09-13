@@ -43,6 +43,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
+import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
@@ -447,6 +448,13 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         employeeStates={employeeStates}
         correctionRequests={correctionRequests}
+      />
+
+      <PayPeriodManager
+        sessionToken={sessionToken}
+        timeEntries={timeEntries}
+        correctionRequests={correctionRequests}
+        onEntriesChanged={loadData}
       />
 
       {staleActiveEntries.length > 0 && (
