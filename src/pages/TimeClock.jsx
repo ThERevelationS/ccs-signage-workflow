@@ -37,6 +37,7 @@ import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import EmployeeTodayCard from "@/components/timeclock/EmployeeTodayCard";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -302,6 +303,16 @@ export default function TimeClock() {
           employeeSessionToken={timeClockSessionToken}
           employeeSessionUser={loggedInUser}
         />
+
+        {loggedInUser && timeClockSessionToken && (
+          <EmployeeTodayCard
+            user={loggedInUser}
+            sessionToken={timeClockSessionToken}
+            timeEntries={timeEntries}
+            correctionRequests={correctionRequests}
+            onRefresh={loadData}
+          />
+        )}
 
         {/* Login Required Section */}
         {!loggedInUser ? (
