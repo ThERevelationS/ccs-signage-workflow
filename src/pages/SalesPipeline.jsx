@@ -469,6 +469,42 @@ export default function SalesPipeline() {
                 <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">Closeout now requires an actual close date, Lost requires a reason, and future close dates are blocked.</div>
               </div>
             </div>
+
+            <div className="grid gap-3 xl:grid-cols-2">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="text-sm font-semibold text-gray-800">Salesperson Outcomes</div>
+                <p className="mt-1 text-xs text-gray-500">Performance appears only from authoritative modern Won/Lost outcomes in the selected period.</p>
+                {pipelineSummary.ownerOutcomePerformance.length === 0 ? (
+                  <div className="mt-3 rounded-lg bg-gray-50 px-3 py-4 text-sm text-gray-500">No tracked salesperson outcomes yet. Current owner workload is available in the Current Pipeline → Insights view.</div>
+                ) : (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead><tr className="border-b text-gray-400"><th className="pb-2 text-left font-medium">Salesperson</th><th className="pb-2 text-right font-medium">Closed</th><th className="pb-2 text-right font-medium">Won</th><th className="pb-2 text-right font-medium">Win rate</th><th className="pb-2 text-right font-medium">Won value</th></tr></thead>
+                      <tbody>{pipelineSummary.ownerOutcomePerformance.map((row) => (
+                        <tr key={row.label} className="border-b border-gray-100 last:border-0"><td className="py-2.5 font-medium text-gray-800">{row.label}</td><td className="py-2.5 text-right text-gray-600">{row.total}</td><td className="py-2.5 text-right text-emerald-700">{row.won}</td><td className="py-2.5 text-right text-gray-700">{row.winRate == null ? "—" : `${row.winRate.toFixed(1)}%`}</td><td className="py-2.5 text-right text-gray-700">{formatPipelineValue(row.wonValue)}</td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="text-sm font-semibold text-gray-800">Lead Source Outcomes</div>
+                <p className="mt-1 text-xs text-gray-500">Unspecified source remains visible rather than being silently excluded from conversion reporting.</p>
+                {pipelineSummary.sourceOutcomePerformance.length === 0 ? (
+                  <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-4 text-sm text-amber-800">No tracked source outcomes yet. Lead source coverage is currently incomplete, so source rankings remain unavailable.</div>
+                ) : (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead><tr className="border-b text-gray-400"><th className="pb-2 text-left font-medium">Source</th><th className="pb-2 text-right font-medium">Closed</th><th className="pb-2 text-right font-medium">Won</th><th className="pb-2 text-right font-medium">Win rate</th><th className="pb-2 text-right font-medium">Closed value</th></tr></thead>
+                      <tbody>{pipelineSummary.sourceOutcomePerformance.map((row) => (
+                        <tr key={row.label} className="border-b border-gray-100 last:border-0"><td className="py-2.5 font-medium text-gray-800">{row.label}</td><td className="py-2.5 text-right text-gray-600">{row.total}</td><td className="py-2.5 text-right text-emerald-700">{row.won}</td><td className="py-2.5 text-right text-gray-700">{row.winRate == null ? "—" : `${row.winRate.toFixed(1)}%`}</td><td className="py-2.5 text-right text-gray-700">{formatPipelineValue(row.closedValue)}</td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
