@@ -1093,7 +1093,8 @@ Deno.serve(async (req) => {
         details: { break_id: breakRow.id, break_type: breakRow.break_type, is_paid: breakRow.is_paid },
       });
       const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', break_status: 'on_break', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved });
+      const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', break_status: 'on_break', break: breakRow, break_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: auditSaved });
     }
 
     if (action === 'break_end') {
@@ -1266,7 +1267,8 @@ Deno.serve(async (req) => {
         request_id: requestId, time_entry_id: entry.id, details: { work_pause_id: pauseRow.id },
       });
       const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'paused', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: true });
+      const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'paused', work_pause: pauseRow, work_pause_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: true });
     }
 
     if (action === 'work_pause_resume') {
