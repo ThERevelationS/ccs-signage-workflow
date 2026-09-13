@@ -19,6 +19,22 @@
         "type": "string"
       }
     },
+    "scope_mode": {
+      "type": "string",
+      "enum": [
+        "all_active",
+        "selected_equipment"
+      ],
+      "default": "all_active",
+      "description": "Limits which active Fleet maintenance work orders this bearer link may view. Missing/legacy values are treated as all_active for backward compatibility."
+    },
+    "allowed_equipment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "FleetEquipment ids allowed when scope_mode is selected_equipment."
+    },
     "expires_at": {
       "type": "string",
       "format": "date-time"
