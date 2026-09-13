@@ -21,7 +21,9 @@
         "break_end",
         "work_pause_start",
         "work_pause_resume",
-        "time_approval"
+        "time_approval",
+        "pay_period_create",
+        "pay_period_status"
       ]
     },
     "outcome": {
