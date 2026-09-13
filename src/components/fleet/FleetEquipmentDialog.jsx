@@ -121,10 +121,10 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
           </label>
 
           <Field label="Notes"><textarea rows={4} value={form.notes} onChange={e => set("notes", e.target.value)} className="field" /></Field>
-          <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving || uploadingPhoto} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{(saving || uploadingPhoto) && <Loader2 className="w-4 h-4 animate-spin" />}{uploadingPhoto ? "Uploading Photo…" : equipment ? "Save Equipment" : "Create Equipment"}</button></div>
+          <div className="flex justify-end gap-2"><button type="button" onClick={onClose} disabled={saving || uploadingPhoto} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50">Cancel</button><button type="submit" disabled={saving || uploadingPhoto} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{(saving || uploadingPhoto) && <Loader2 className="w-4 h-4 animate-spin" />}{uploadingPhoto ? "Uploading Photo…" : equipment ? "Save Equipment" : "Create Equipment"}</button></div>
         </form>
       </div>
-      <style>{`.field{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.5rem .65rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}`}</style>
+      <style>{`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.5rem .65rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}`}</style>
     </div>
   );
 }
