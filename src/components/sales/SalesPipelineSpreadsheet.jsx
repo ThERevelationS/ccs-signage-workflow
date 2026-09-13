@@ -1062,7 +1062,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Permit Submitted": str(wo.permit_submitted_date), "Notes": str(wo.title),
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
-      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
+      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Last Follow Up Completed": str(wo.sales_last_follow_up_completed_at),
+      "Last Follow Up Outcome": str(wo.sales_last_follow_up_outcome), "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
       "Lost Reason": str(wo.lost_reason), "Probability": num(wo.probability), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
@@ -1519,6 +1520,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           wo.project_type,
           wo.lead_source,
           wo.expected_close_date,
+          wo.sales_last_follow_up_outcome,
           wo.lost_reason,
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
@@ -2068,7 +2070,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             </tr>
           </thead>
 
-          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} isColumnVisible={isColumnVisible} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onRequestStatusChange={requestSalesStatusChange} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} />
+          <SalesPipelineTableBody virtualItems={rowVirtualizer.getVirtualItems()} filteredWorkOrders={filteredWorkOrders} isColumnVisible={isColumnVisible} focusedRowId={focusedRowId} setFocusedRowId={setFocusedRowId} setFocusedRowIndex={setFocusedRowIndex} getTaskDescStyle={getTaskDescStyle} getDeadlineCellColor={getDeadlineCellColor} calculateDays={calculateDays} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} isAdmin={isAdmin} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} handleContextMenu={handleContextMenu} setSelectedWorkOrder={openOpportunityDetails} onRequestStatusChange={requestSalesStatusChange} onCompleteFollowUp={requestFollowUpCompletion} openCorbridgeDialog={openCorbridgeDialog} handleDuplicateClient={handleDuplicateClient} deleteWorkOrder={deleteWorkOrder} leadSources={leadSources} users={users} taskDescriptions={taskDescriptions} projectTypes={projectTypes} rowVirtualizer={rowVirtualizer} />
           </table>
           </div>
 
