@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
+import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -85,12 +86,13 @@ Deno.serve(async (req) => {
         }
         updateData.parent_county = data.parent_county || jurisdiction.parent_county;
         updateData.last_updated = new Date().toISOString();
+        const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, updateData);
 
         await replaceJurisdictionFieldsIfUnchanged({
           entity: base44.entities.JurisdictionProfile,
           jurisdiction,
-          nextFields: updateData,
-          guardFields: jurisdictionProtectionGuards(jurisdiction, updateData, {
+          nextFields: finalUpdateData,
+          guardFields: jurisdictionProtectionGuards(jurisdiction, finalUpdateData, {
             respectManualProtection: settings.skipManualData !== false,
           }),
           label: `Jurisdiction batch research ${jurisdiction.name || jurisdictionId}`,
