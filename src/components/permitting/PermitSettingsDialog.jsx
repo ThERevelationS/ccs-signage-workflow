@@ -758,6 +758,33 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
         </Tabs>
       </DialogContent>
 
+      <AlertDialog open={!!pendingConfirm} onOpenChange={(open) => !open && setPendingConfirm(null)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {pendingConfirm?.kind === "discard_changes" ? "Discard Unsaved Changes?" : pendingConfirm?.kind === "delete_locality" ? "Delete Locality?" : "Remove Office?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingConfirm?.kind === "discard_changes"
+                ? "You have unsaved locality changes. Continuing will discard those edits."
+                : pendingConfirm?.kind === "delete_locality"
+                  ? `Delete ${pendingConfirm?.label || "this locality"}? Existing permit lines will not be deleted, but this locality will no longer be available for new selections.`
+                  : `Remove ${pendingConfirm?.label || "this office"} from this locality? This change is not saved until you save the locality.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPendingAction}
+              className={pendingConfirm?.kind === "discard_changes" ? "bg-amber-600 hover:bg-amber-700" : "bg-red-600 hover:bg-red-700"}
+            >
+              {pendingConfirm?.kind === "discard_changes" ? "Discard & Continue" : pendingConfirm?.kind === "delete_locality" ? "Delete Locality" : "Remove Office"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Unsaved-changes confirmation */}
       <AlertDialog open={showUnsavedConfirm} onOpenChange={setShowUnsavedConfirm}>
         <AlertDialogContent className="clay-card border-none">
