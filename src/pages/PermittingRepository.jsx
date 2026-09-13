@@ -7,6 +7,7 @@ import JurisdictionCard from "@/components/permitting/JurisdictionCard";
 import JurisdictionDetailPanel from "@/components/permitting/JurisdictionDetailPanel";
 import JurisdictionFormDialog from "@/components/permitting/JurisdictionFormDialog";
 import {
+  appendJurisdictionActivitySafely,
   createJurisdictionIfAbsent,
   deleteJurisdictionFromLoadedSnapshot,
   jurisdictionIdentityKey,
@@ -151,9 +152,33 @@ export default function PermittingRepository() {
       formData,
       label: `Jurisdiction verification ${jurisdiction.name || jurisdiction.id}`,
     });
-    setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
-    if (selectedJurisdiction?.id === updated.id) setSelectedJurisdiction(updated);
-    return updated;
+
+    const actor = currentUser?.full_name || currentUser?.email || "CCS Staff";
+    let finalRecord = updated;
+    try {
+      finalRecord = await appendJurisdictionActivitySafely({
+        entity: JurisdictionProfile,
+        jurisdictionId: updated.id,
+        entry: {
+          id: `verification_${Date.now()}`,
+          action: "manual_edit",
+          description: `Verification status changed to ${status.replaceAll("_", " ")}.`,
+          user: actor,
+          timestamp: new Date().toISOString(),
+          changes: {
+            verification_status: status,
+            verification_notes: notes.trim(),
+          },
+        },
+        label: `Jurisdiction verification history ${jurisdiction.name || jurisdiction.id}`,
+      });
+    } catch (activityError) {
+      console.error("Jurisdiction verification saved but activity history append failed:", activityError);
+    }
+
+    setJurisdictions(prev => prev.map(j => j.id === finalRecord.id ? finalRecord : j));
+    if (selectedJurisdiction?.id === finalRecord.id) setSelectedJurisdiction(finalRecord);
+    return finalRecord;
   };
 
   const handleDelete = async (id) => {
