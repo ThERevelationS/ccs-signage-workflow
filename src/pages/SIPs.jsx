@@ -272,6 +272,7 @@ export default function SIPs() {
   const visibleFutureRevisitOrders = futureRevisitOrders.filter(matchesSearch);
   const visibleCompletedWipItems = completedWipItems.filter(matchesSearch);
   const overdueCount = activeWorkOrders.filter((wo) => getDeadlineStatus(wo.current_task_deadline)?.bucket === "overdue").length;
+  const dueSoonCount = activeWorkOrders.filter((wo) => ["today", "soon"].includes(getDeadlineStatus(wo.current_task_deadline)?.bucket)).length;
   const attentionCount = activeWorkOrders.filter(needsAttention).length;
   const incompleteChecklistCount = activeWorkOrders.filter((wo) => {
     const progress = getChecklistProgress(wo);
@@ -322,7 +323,7 @@ export default function SIPs() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mt-4">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mt-4">
             <button
               type="button"
               onClick={() => setStatusFilter("all")}
@@ -349,6 +350,15 @@ export default function SIPs() {
             >
               <div className="text-xs text-red-700">Overdue</div>
               <div className="text-xl font-bold text-red-800">{overdueCount}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("due_soon")}
+              aria-pressed={statusFilter === "due_soon"}
+              className={`rounded-lg border bg-amber-50/80 p-3 text-left hover:bg-amber-100 transition-colors ${statusFilter === "due_soon" ? "ring-2 ring-amber-400 border-amber-300" : ""}`}
+            >
+              <div className="text-xs text-amber-700 flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />Due within 7 days</div>
+              <div className="text-xl font-bold text-amber-800">{dueSoonCount}</div>
             </button>
             <button
               type="button"
