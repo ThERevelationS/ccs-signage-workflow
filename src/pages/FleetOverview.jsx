@@ -210,7 +210,7 @@ export default function FleetOverview() {
       pendingRepairApprovals,
       bouncieFaults: data.bouncieFaults || [],
     };
-  }, [data]);
+  }, [data, isAdmin]);
 
   const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.pastDueAssignments.length + metrics.warrantyAttention.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? metrics.pendingRepairApprovals.length + (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
   const widgetVisible = id => !dashboardPreference.hidden_widgets.includes(id);
