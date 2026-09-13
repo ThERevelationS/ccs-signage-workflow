@@ -248,13 +248,13 @@ export default function SalesPipeline() {
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
               <SelectContent>
-                {isStandardFilterEnabled("all") && <SelectItem value="all">All Statuses</SelectItem>}
-                {isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
-                {isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
-                {isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
-                {isStandardFilterEnabled("won") && <SelectItem value="won">Won</SelectItem>}
-                {isStandardFilterEnabled("lost") && <SelectItem value="lost">Lost</SelectItem>}
-                {isStandardFilterEnabled("on_hold") && <SelectItem value="on_hold">On Hold</SelectItem>}
+                {isStandardFilterEnabled("all") && <SelectItem value="all">{recordScope === "outcomes" ? "All Outcomes" : "All Statuses"}</SelectItem>}
+                {recordScope !== "outcomes" && isStandardFilterEnabled("lead") && <SelectItem value="lead">Lead</SelectItem>}
+                {recordScope !== "outcomes" && isStandardFilterEnabled("quoted") && <SelectItem value="quoted">Quoted</SelectItem>}
+                {recordScope !== "outcomes" && isStandardFilterEnabled("follow_up") && <SelectItem value="follow_up">Follow Up</SelectItem>}
+                {recordScope !== "current" && isStandardFilterEnabled("won") && <SelectItem value="won">Won</SelectItem>}
+                {recordScope !== "current" && isStandardFilterEnabled("lost") && <SelectItem value="lost">Lost</SelectItem>}
+                {recordScope !== "outcomes" && isStandardFilterEnabled("on_hold") && <SelectItem value="on_hold">On Hold</SelectItem>}
                 {activeFilters.filter(f => f.type === "filter").map(filter => (
                   <SelectItem key={filter.id} value={`custom_${filter.id}`}>
                     {filter.name}
