@@ -27,6 +27,7 @@ import { useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
+import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
@@ -84,6 +85,12 @@ const isLegacyClosedRecord = (workOrder) => {
 const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
 const isTrustedOutcome = (workOrder) => workOrder?.in_pipeline === true && ["won", "lost"].includes(workOrder?.sales_status);
 const normalizeOwnerIdentity = (value) => String(value || "").trim().toLowerCase();
+const getOpportunityAgeDays = (workOrder, todayStamp) => {
+  const createdAt = Date.parse(workOrder?.created_date || "");
+  const today = parseLocalDate(todayStamp);
+  if (!Number.isFinite(createdAt) || !today) return null;
+  return Math.max(0, differenceInDays(today, new Date(createdAt)));
+};
 
 const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities) => {
   if (!attentionFilter || attentionFilter === "all") return true;
@@ -106,6 +113,11 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   }
   if (attentionFilter === "activity_untracked") return isOperational && getSalesActivityTime(workOrder) === null;
   if (attentionFilter === "owner_unassigned") return isOperational && !normalizeOwnerIdentity(workOrder?.sales_rep);
+  if (attentionFilter === "source_missing") return isOperational && !String(workOrder?.lead_source || "").trim();
+  if (attentionFilter === "age_90_plus") {
+    const ageDays = getOpportunityAgeDays(workOrder, todayStamp);
+    return isOperational && ageDays !== null && ageDays >= 90;
+  }
   if (attentionFilter === "mine") {
     const owner = normalizeOwnerIdentity(workOrder?.sales_rep);
     return isOperational && Boolean(owner) && currentOwnerIdentities.has(owner);
