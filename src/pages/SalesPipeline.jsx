@@ -28,6 +28,8 @@ const EMPTY_PIPELINE_SUMMARY = {
   trackedActivityCount: 0,
   untrackedActivityCount: 0,
   ratedProbabilityCount: 0,
+  unratedProbabilityCount: 0,
+  weightedValue: 0,
 };
 
 export default function SalesPipeline() {
@@ -314,6 +316,11 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</div>
                 <div className="mt-1 text-xs text-emerald-700/80">Quoted value when available, otherwise estimate</div>
               </button>
+              <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-sky-700">Weighted Pipeline</div>
+                <div className="mt-1 text-2xl font-bold text-sky-900">{formatPipelineValue(pipelineSummary.weightedValue)}</div>
+                <div className="mt-1 text-xs text-sky-700/80">{pipelineSummary.ratedProbabilityCount}/{pipelineSummary.openCount} opportunities rated{pipelineSummary.unratedProbabilityCount > 0 ? " · click to complete" : ""}</div>
+              </button>
               <button type="button" onClick={() => applyAttentionFilter("due")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-red-600">Follow-ups Due</div>
                 <div className="mt-1 text-2xl font-bold text-red-800">{pipelineSummary.dueCount}</div>
@@ -347,14 +354,13 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability Missing {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("near_close")} className={attentionChipClass("near_close")}>Closing ≤14 Days {pipelineSummary.nearCloseCount > 0 ? `(${pipelineSummary.nearCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("close_overdue")} className={attentionChipClass("close_overdue")}>Expected Close Overdue {pipelineSummary.overdueCloseCount > 0 ? `(${pipelineSummary.overdueCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities</button>
-              {pipelineSummary.ratedProbabilityCount === 0 && (
-                <span className="ml-auto text-xs text-gray-500">Weighted value is hidden until probability is actually being used.</span>
-              )}
+              <span className="ml-auto text-xs text-gray-500">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
             </div>
           </div>
         )}
