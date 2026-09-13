@@ -101,10 +101,30 @@ export default function FleetAnalytics() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (user?.role !== "admin") return;
+    let mounted = true;
+    setFuelLoading(true);
+    setFuelError("");
+    base44.functions.invoke("fleetFuelAction", { action: "summary", start_date: `${selectedYear}-01-01`, end_date: `${selectedYear}-12-31` })
+      .then(({ data }) => {
+        if (!mounted) return;
+        if (data?.error) throw new Error(data.error);
+        setFuelSummary(data || null);
+      })
+      .catch(error => {
+        if (!mounted) return;
+        setFuelSummary(null);
+        setFuelError(error?.message || "Fuel and operating-cost analytics are temporarily unavailable.");
+      })
+      .finally(() => { if (mounted) setFuelLoading(false); });
+    return () => { mounted = false; };
+  }, [user?.role, selectedYear]);
 
   const equipmentNames = useMemo(() => Object.fromEntries(equipment.map(row => [row.id, row.name])), [equipment]);
   const years = useMemo(() => {
-    const found = new Set([String(new Date().getFullYear())]);
+    const current = new Date().getFullYear();
+    const found = new Set(Array.from({ length: 8 }, (_, index) => String(current - index)));
     workOrders.forEach(row => {
       const year = String(row.completed_date || row.started_date || row.created_date || "").slice(0, 4);
       if (/^\d{4}$/.test(year)) found.add(year);
