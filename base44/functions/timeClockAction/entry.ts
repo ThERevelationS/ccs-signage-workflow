@@ -579,6 +579,7 @@ Deno.serve(async (req) => {
     const correctionRequestEntity = base44.asServiceRole.entities.TimeClockCorrectionRequest;
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
+    const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
