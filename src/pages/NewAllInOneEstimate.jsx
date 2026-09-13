@@ -111,7 +111,7 @@ export default function NewAllInOneEstimate() {
       });
       if (customer) {
         try {
-          await syncEstimateToPipeline(estimate, customer);
+          await syncEstimateToPipeline(estimate, customer, { sessionToken });
         } catch (syncError) {
           const syncMessage = syncError?.message || "Sales Pipeline synchronization failed.";
           let recoveryFlagSaved = false;
