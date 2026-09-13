@@ -42,6 +42,7 @@ import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
+import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
@@ -441,6 +442,12 @@ export default function TimeClockAdmin() {
           <Button type="button" size="sm" variant="outline" className="shrink-0 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setTimeEntryError(""); }}>Reload latest</Button>
         </div>
       )}
+
+      <TimeClockManagementDashboard
+        timeEntries={timeEntries}
+        employeeStates={employeeStates}
+        correctionRequests={correctionRequests}
+      />
 
       {staleActiveEntries.length > 0 && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
