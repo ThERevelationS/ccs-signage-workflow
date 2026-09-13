@@ -254,6 +254,8 @@ export default function FleetAnalytics() {
 
       <Methodology />
 
+      <FuelOperatingAnalytics summary={fuelSummary} loading={fuelLoading} error={fuelError} year={selectedYear} />
+
       <LifecyclePortfolio rows={lifecycleRows} error={lifecycleError} />
 
       <div className="grid xl:grid-cols-3 gap-5">
@@ -285,6 +287,24 @@ export default function FleetAnalytics() {
 
 function Methodology() {
   return <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><div className="font-semibold">How these Fleet metrics are calculated</div><div className="mt-1 leading-relaxed">Recorded service cost uses a saved work-order total when one exists; otherwise it sums the already-extended part and fluid line costs stored on completed Fleet work orders. Labor is shown only as recorded hours because Fleet Settings has no authoritative labor rate. “Maintenance cycle” measures the span from a work order's started date to completion (or today for active work); it is a timing proxy and is <b>not</b> labeled as true vehicle downtime. Compliance counts active schedules for non-retired equipment and treats an overdue schedule as covered when an active Fleet work order links to that exact schedule. Lifecycle priority is a planning heuristic based on admin-set replacement status/targets, recorded maintenance burden, recent service activity, and current asset state; it is not an automatic replace/keep recommendation.</div></div>;
+}
+
+function FuelOperatingAnalytics({ summary, loading = false, error = "", year }) {
+  const metrics = summary?.metrics || {};
+  const rows = (summary?.by_equipment || []).slice().sort((a, b) => Number(b.total_operating_cost || 0) - Number(a.total_operating_cost || 0));
+  return <section className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+    <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fuel & Operating Cost · {year}</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Uses the same Fleet fuel summary and fill-to-fill methodology as the Fuel & Costs page.</p></div><Link to={`${createPageUrl("FleetFuel")}?year=${encodeURIComponent(year)}`} className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">Open Fuel & Costs</Link></div>
+    {loading ? <div className="py-10 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400"/></div> : error ? <div className="p-4"><div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">{error}</div></div> : <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-b border-gray-100 dark:border-slate-800">
+        <Metric icon={Fuel} label="Fuel spend" value={money(metrics.fuel_cost)} sub={`${num(metrics.gallons).toLocaleString(undefined,{maximumFractionDigits:2})} gal · ${metrics.entries || 0} fill-up${metrics.entries === 1 ? "" : "s"}`} />
+        <Metric icon={Truck} label="Fill-to-fill MPG" value={metrics.fill_to_fill_mpg == null ? "—" : Number(metrics.fill_to_fill_mpg).toFixed(1)} sub={`${num(metrics.fill_to_fill_distance_miles).toLocaleString(undefined,{maximumFractionDigits:0})} measured miles`} />
+        <Metric icon={CircleDollarSign} label="Recorded operating cost" value={money(metrics.total_operating_cost)} sub={`${money(metrics.fuel_cost)} fuel · ${money(metrics.maintenance_cost)} maintenance`} />
+        <Metric icon={CircleDollarSign} label="Operating / measured mile" value={metrics.operating_cost_per_mile == null ? "—" : money(metrics.operating_cost_per_mile)} sub="Measured fuel segment + recorded maintenance" />
+      </div>
+      <div className="divide-y divide-gray-100 dark:divide-slate-800">{rows.map((row, index) => <Link key={row.equipment_id} to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(row.equipment_id)}&tab=fuel`} className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/40"><div className="flex flex-col xl:flex-row xl:items-center gap-3"><div className="min-w-0 xl:w-64 flex items-center gap-3"><div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{index + 1}</div><div className="min-w-0"><div className="font-semibold text-gray-900 dark:text-slate-100 truncate">{row.equipment_name || "Fleet equipment"}</div><div className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">{row.entries || 0} fill-up{row.entries === 1 ? "" : "s"}</div></div></div><div className="grid grid-cols-2 sm:grid-cols-5 gap-x-5 gap-y-2 flex-1 text-xs"><Info label="Fuel" value={money(row.fuel_cost)} /><Info label="Maintenance" value={money(row.maintenance_cost)} /><Info label="MPG" value={row.fill_to_fill_mpg == null ? "—" : Number(row.fill_to_fill_mpg).toFixed(1)} /><Info label="Operating / mi" value={row.operating_cost_per_mile == null ? "—" : money(row.operating_cost_per_mile)} /><Info label="Total operating" value={money(row.total_operating_cost)} /></div></div></Link>)}{rows.length === 0 && <div className="px-4 py-8 text-center text-sm text-gray-500">No fuel or operating-cost rows are recorded for {year}.</div>}</div>
+      <div className="px-4 py-3 border-t border-gray-100 bg-blue-50/60 text-[11px] text-blue-900 dark:border-slate-800 dark:bg-blue-950/10 dark:text-blue-200">Fill-to-fill MPG and per-mile values require consecutive non-decreasing odometer readings. The first odometer-bearing fill establishes the baseline and is not counted as a measured MPG segment. Total operating cost is recorded fuel + completed Fleet maintenance cost; it is not total cost of ownership.</div>
+    </>}
+  </section>;
 }
 
 function LifecyclePortfolio({ rows = [], error = "" }) {
