@@ -16,6 +16,9 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const EMPTY_PIPELINE_SUMMARY = {
   openCount: 0,
   openValue: 0,
+  assignedOwnerCount: 0,
+  unassignedOwnerCount: 0,
+  myOpportunityCount: 0,
   overdueCount: 0,
   dueTodayCount: 0,
   dueCount: 0,
@@ -309,7 +312,7 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
                 <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
-                <div className="mt-1 text-xs text-slate-500">Current operational records</div>
+                <div className="mt-1 text-xs text-slate-500">{pipelineSummary.assignedOwnerCount} owned · {pipelineSummary.unassignedOwnerCount} unassigned</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Open Pipeline Value</div>
@@ -359,7 +362,8 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("close_overdue")} className={attentionChipClass("close_overdue")}>Expected Close Overdue {pipelineSummary.overdueCloseCount > 0 ? `(${pipelineSummary.overdueCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities</button>
+              <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities {pipelineSummary.myOpportunityCount > 0 ? `(${pipelineSummary.myOpportunityCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Unassigned Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
               <span className="ml-auto text-xs text-gray-500">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
             </div>
           </div>
