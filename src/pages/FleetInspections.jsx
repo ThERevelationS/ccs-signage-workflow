@@ -129,6 +129,7 @@ export default function FleetInspections() {
   const [templates, setTemplates] = useState([]);
   const [inspections, setInspections] = useState([]);
   const [equipment, setEquipment] = useState([]);
+  const [historyEquipmentId, setHistoryEquipmentId] = useState(initialEquipmentId);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -158,23 +159,22 @@ export default function FleetInspections() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (!loading && user?.role === "admin" && templates.length === 0) setShowPresets(true); }, [loading, user, templates.length]);
   useEffect(() => {
-    if (loading) return;
+    if (loading || !requestedNew) return;
     const validRequestedEquipment = initialEquipmentId && equipment.some(item => item.id === initialEquipmentId && item.status !== "retired");
-    if (requestedNew || validRequestedEquipment) {
-      setStartDialog(current => current || { equipment_id: validRequestedEquipment ? initialEquipmentId : "", template_id: "", creation_key: crypto.randomUUID() });
-    }
+    setStartDialog(current => current || { equipment_id: validRequestedEquipment ? initialEquipmentId : "", template_id: "", creation_key: crypto.randomUUID() });
   }, [loading, requestedNew, initialEquipmentId, equipment]);
 
   const isAdmin = user?.role === "admin";
   const activeEquipment = useMemo(() => equipment.filter(item => item.status !== "retired"), [equipment]);
   const names = useMemo(() => Object.fromEntries(equipment.map(item => [item.id, item.name])), [equipment]);
+  const displayedInspections = useMemo(() => historyEquipmentId ? inspections.filter(item => item.equipment_id === historyEquipmentId) : inspections, [inspections, historyEquipmentId]);
   const metrics = useMemo(() => ({
-    total: inspections.length,
-    passed: inspections.filter(item => item.status === "passed").length,
-    failed: inspections.filter(item => item.status === "failed").length,
-    drafts: inspections.filter(item => !item.completed_at && ["draft","needs_attention"].includes(item.status)).length,
-    generated: inspections.reduce((sum, item) => sum + (item.generated_work_order_ids?.length || 0), 0),
-  }), [inspections]);
+    total: displayedInspections.length,
+    passed: displayedInspections.filter(item => item.status === "passed").length,
+    failed: displayedInspections.filter(item => item.status === "failed").length,
+    drafts: displayedInspections.filter(item => !item.completed_at && ["draft","needs_attention"].includes(item.status)).length,
+    generated: displayedInspections.reduce((sum, item) => sum + (item.generated_work_order_ids?.length || 0), 0),
+  }), [displayedInspections]);
 
   const compatibleTemplates = useMemo(() => {
     const eq = equipment.find(item => item.id === startDialog?.equipment_id);
@@ -226,13 +226,19 @@ export default function FleetInspections() {
   };
 
   const openNewInspection = equipmentId => setStartDialog({ equipment_id: equipmentId || "", template_id: "", creation_key: crypto.randomUUID() });
+  const clearHistoryEquipmentFilter = () => {
+    setHistoryEquipmentId("");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("equipment");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  };
 
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950">
     <FleetModuleNav />
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
         <div><div className="flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-indigo-600"/><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Fleet Inspections</h1></div><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Fast equipment checklists with evidence, meter readings, and guarded Fleet work-order follow-up.</p></div>
-        <div className="flex flex-col sm:flex-row gap-2"><button onClick={() => openNewInspection("")} className="min-h-11 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><ClipboardCheck className="w-4 h-4"/>Start Inspection</button>{isAdmin && <button onClick={() => setShowPresets(value => !value)} className="min-h-11 px-4 py-2 rounded-xl border border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-200 font-semibold">Starter Presets</button>}{isAdmin && <button onClick={() => setTemplateDialog({ existing: null, creationKey: crypto.randomUUID(), seed: null })} className="min-h-11 px-4 py-2 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 font-semibold inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>Blank Template</button>}</div>
+        <div className="flex flex-col sm:flex-row gap-2"><button onClick={() => openNewInspection(historyEquipmentId || "")} className="min-h-11 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><ClipboardCheck className="w-4 h-4"/>Start Inspection</button>{isAdmin && <button onClick={() => setShowPresets(value => !value)} className="min-h-11 px-4 py-2 rounded-xl border border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-200 font-semibold">Starter Presets</button>}{isAdmin && <button onClick={() => setTemplateDialog({ existing: null, creationKey: crypto.randomUUID(), seed: null })} className="min-h-11 px-4 py-2 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 font-semibold inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>Blank Template</button>}</div>
       </div>
 
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/20"><div className="flex items-start gap-3"><ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-300 shrink-0 mt-0.5"/><div><div className="font-semibold text-indigo-950 dark:text-indigo-100">Inspection failures stay inside Fleet.</div><div className="text-xs text-indigo-700 dark:text-indigo-300 mt-1">Items configured for automatic follow-up create <b>FleetMaintenanceWorkOrder</b> records only. Completion is retry-safe; the same failed item cannot intentionally create a second follow-up on retry.</div></div></div></div>
@@ -248,8 +254,8 @@ export default function FleetInspections() {
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-bold text-gray-900 dark:text-slate-100">Inspection History</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Newest first. Drafts can be resumed.</p></div>
-          {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-7 h-7 animate-spin text-gray-400"/></div> : <div className="divide-y divide-gray-100 dark:divide-slate-800">{inspections.slice(0,100).map(inspection => <div key={inspection.id} className="p-4"><div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-gray-900 dark:text-slate-100">{inspection.template_name}</span><Status status={inspection.status}/>{inspection.failed_item_count>0 && <span className="text-xs font-semibold text-red-600 dark:text-red-300">{inspection.failed_item_count} failed</span>}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{names[inspection.equipment_id] || "Unknown equipment"} · {inspection.inspector_name || inspection.inspector_email || "Unknown inspector"}</div><div className="text-xs text-gray-400 mt-1">{inspection.completed_at ? new Date(inspection.completed_at).toLocaleString() : inspection.started_at ? `Started ${new Date(inspection.started_at).toLocaleString()}` : "—"}</div></div><div className="flex flex-wrap gap-2">{!inspection.completed_at && <button onClick={() => resumeInspection(inspection)} className="min-h-9 px-3 rounded-lg bg-indigo-600 text-white text-xs font-semibold">Resume</button>}<Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(inspection.equipment_id)}&tab=inspections`} className="min-h-9 px-3 rounded-lg border border-gray-200 dark:border-slate-700 inline-flex items-center text-xs font-semibold">Equipment</Link>{inspection.generated_work_order_ids?.length>0 && <Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(inspection.equipment_id)}&status=active`} className="min-h-9 px-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 inline-flex items-center gap-1 text-xs font-semibold"><ClipboardList className="w-3.5 h-3.5"/>{inspection.generated_work_order_ids.length} WO</Link>}</div></div></div>)}{!inspections.length && <Empty text="No Fleet inspections recorded yet."/>}</div>}
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2"><div><h2 className="font-bold text-gray-900 dark:text-slate-100">Inspection History</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Newest first. Drafts can be resumed.</p></div>{historyEquipmentId && <div className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"><span className="max-w-[220px] truncate">{names[historyEquipmentId] || "Selected equipment"}</span><button type="button" onClick={clearHistoryEquipmentFilter} className="min-h-7 min-w-7 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900" aria-label="Clear equipment inspection filter"><X className="w-3.5 h-3.5 mx-auto"/></button></div>}</div>
+          {loading ? <div className="py-20 flex justify-center"><Loader2 className="w-7 h-7 animate-spin text-gray-400"/></div> : <div className="divide-y divide-gray-100 dark:divide-slate-800">{displayedInspections.slice(0,100).map(inspection => <div key={inspection.id} className="p-4"><div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-gray-900 dark:text-slate-100">{inspection.template_name}</span><Status status={inspection.status}/>{inspection.failed_item_count>0 && <span className="text-xs font-semibold text-red-600 dark:text-red-300">{inspection.failed_item_count} failed</span>}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{names[inspection.equipment_id] || "Unknown equipment"} · {inspection.inspector_name || inspection.inspector_email || "Unknown inspector"}</div><div className="text-xs text-gray-400 mt-1">{inspection.completed_at ? new Date(inspection.completed_at).toLocaleString() : inspection.started_at ? `Started ${new Date(inspection.started_at).toLocaleString()}` : "—"}</div></div><div className="flex flex-wrap gap-2">{!inspection.completed_at && <button onClick={() => resumeInspection(inspection)} className="min-h-9 px-3 rounded-lg bg-indigo-600 text-white text-xs font-semibold">Resume</button>}<Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(inspection.equipment_id)}&tab=inspections`} className="min-h-9 px-3 rounded-lg border border-gray-200 dark:border-slate-700 inline-flex items-center text-xs font-semibold">Equipment</Link>{inspection.generated_work_order_ids?.length>0 && <Link to={`${createPageUrl("FleetWorkOrders")}?equipment=${encodeURIComponent(inspection.equipment_id)}&status=active`} className="min-h-9 px-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 inline-flex items-center gap-1 text-xs font-semibold"><ClipboardList className="w-3.5 h-3.5"/>{inspection.generated_work_order_ids.length} WO</Link>}</div></div></div>)}{!displayedInspections.length && <Empty text={historyEquipmentId ? "No Fleet inspections are recorded for this equipment yet." : "No Fleet inspections recorded yet."}/>}</div>}
         </section>
       </div>
     </div>
