@@ -744,6 +744,9 @@ Deno.serve(async (req) => {
       if (String(period.last_request_id || '') === requestId && period.status === expectedStatus) {
         return Response.json({ success: true, period, reused: true });
       }
+      if (decision === 'review' && period.status !== 'open') return Response.json({ success: false, error: 'Only an open pay period can move to review.' }, { status: 409 });
+      if (decision === 'finalize' && period.status !== 'review') return Response.json({ success: false, error: 'Only a pay period in Review can be finalized.' }, { status: 409 });
+      if (decision === 'reopen' && period.status !== 'finalized') return Response.json({ success: false, error: 'Only a finalized pay period can be reopened.' }, { status: 409 });
 
       const now = new Date().toISOString();
       let intentRows = await auditEntity.filter({ action: 'pay_period_status', request_id: requestId });
@@ -762,14 +765,12 @@ Deno.serve(async (req) => {
       if (!intent?.id) throw new Error('Pay-period audit intent could not be persisted. No status change was made.');
 
       if (decision === 'review') {
-        if (period.status !== 'open') return Response.json({ success: false, error: 'Only an open pay period can move to review.' }, { status: 409 });
         const updated = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'open' },
           { $set: { status: 'review', review_started_at: now, review_started_by: actorEmail, last_request_id: requestId } },
         );
         if (!updated || updated.updated !== 1) return Response.json({ success: false, error: 'Pay period changed in another session. Reload before continuing.' }, { status: 409 });
       } else if (decision === 'finalize') {
-        if (period.status !== 'review') return Response.json({ success: false, error: 'Only a pay period in Review can be finalized.' }, { status: 409 });
         const startDate = validDateKey(period.start_date);
         const endDate = validDateKey(period.end_date);
         if (!startDate || !endDate) return Response.json({ success: false, error: 'Stored pay-period dates are invalid.' }, { status: 409 });
@@ -820,7 +821,6 @@ Deno.serve(async (req) => {
         );
         if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'Entries were locked but pay-period finalization was interrupted. Retry the same finalization request.' }, { status: 409 });
       } else {
-        if (period.status !== 'finalized') return Response.json({ success: false, error: 'Only a finalized pay period can be reopened.' }, { status: 409 });
         const reopened = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'finalized' },
           { $set: { status: 'review', reopened_at: now, reopened_by: actorEmail, reopen_reason: note, last_request_id: requestId } },
