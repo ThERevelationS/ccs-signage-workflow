@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ensureNewCustomer, newCustomerCreationKey } from "@/components/estimator/customerCreationService";
+import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const FIELDS = [
@@ -23,6 +24,7 @@ const EMPTY = FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: "" }), {});
 const newCustomerState = () => ({ ...EMPTY, pricing_tier: 1 });
 
 export default function NewCustomerDialog({ open, onClose, onCreated }) {
+  const { sessionToken } = useAuth();
   const [data, setData] = useState(newCustomerState);
   const [tiers, setTiers] = useState([]);
   const [tierLoading, setTierLoading] = useState(false);
@@ -92,6 +94,7 @@ export default function NewCustomerDialog({ open, onClose, onCreated }) {
       const created = await ensureNewCustomer({
         creationKey: createAttemptRef.current.key,
         customer: customerData,
+        sessionToken,
       });
       onCreated(created);
       setData(newCustomerState());
