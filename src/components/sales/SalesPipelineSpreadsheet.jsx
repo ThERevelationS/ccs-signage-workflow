@@ -336,16 +336,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const loadWorkOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const [orders, usersData] = await Promise.all([
+      const [activeOrders, modernOutcomes, usersData] = await Promise.all([
         loadAllEntityRows({
           entity: WorkOrder,
           query: { is_rider: false, completed: false, deleted: { $ne: true } },
           sort: "created_date",
-          label: "Sales Pipeline Work Orders",
+          label: "Sales Pipeline active Work Orders",
+        }),
+        loadAllEntityRows({
+          entity: WorkOrder,
+          query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
+          sort: "-close_date",
+          label: "Sales Pipeline modern outcomes",
         }),
         loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" })
       ]);
-      setWorkOrders(orders.map((order) => ({
+      const mergedOrders = [...new Map([...activeOrders, ...modernOutcomes].map((order) => [order.id, order])).values()];
+      setWorkOrders(mergedOrders.map((order) => ({
         ...order,
         ...(pendingChangesRef.current[order.id] || {}),
       })).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
