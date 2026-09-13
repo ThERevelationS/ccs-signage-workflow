@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Settings, Search } from "lucide-react";
+import { Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -13,7 +13,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
+import { isPermitGroupAssignedToUser, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -34,6 +34,7 @@ export default function Permitting() {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [queueFilter, setQueueFilter] = useState("all");
+  const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
   const lineItemBaselinesRef = useRef(new Map());
@@ -563,8 +564,8 @@ export default function Permitting() {
     return Array.from(map.values());
   }, [lineItems, workOrders, permittingWorkOrdersWithoutLines]);
 
-  // Filter by search
-  const filteredGroups = useMemo(() => {
+  // Search first, then optionally narrow to the signed-in employee's assigned work.
+  const searchedGroups = useMemo(() => {
     if (!searchTerm) return allGroups;
     const q = searchTerm.toLowerCase();
     return allGroups.filter(g => {
@@ -580,6 +581,16 @@ export default function Permitting() {
       return false;
     });
   }, [allGroups, searchTerm]);
+
+  const myAssignedCount = useMemo(
+    () => searchedGroups.filter((group) => isPermitGroupAssignedToUser(group, currentUser)).length,
+    [searchedGroups, currentUser]
+  );
+
+  const filteredGroups = useMemo(() => {
+    if (!assignedToMeOnly) return searchedGroups;
+    return searchedGroups.filter((group) => isPermitGroupAssignedToUser(group, currentUser));
+  }, [searchedGroups, assignedToMeOnly, currentUser]);
 
   // Guided queue: every Work Order lands in one plain-English state so staff can
   // immediately see what needs attention without losing the detailed tracker below.
@@ -668,7 +679,7 @@ export default function Permitting() {
                 {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
@@ -678,6 +689,17 @@ export default function Permitting() {
                   className="h-8 text-sm pl-8 w-48"
                 />
               </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setAssignedToMeOnly((value) => !value)}
+                disabled={!currentUser?.full_name && !currentUser?.email}
+                className={`gap-1 ${assignedToMeOnly ? "border-purple-400 bg-purple-50 text-purple-800" : ""}`}
+                title="Show only permitting jobs assigned to you"
+              >
+                <UserRoundCheck className="w-4 h-4" /> My Work ({myAssignedCount})
+              </Button>
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
                   <Settings className="w-4 h-4" /> Settings
