@@ -179,8 +179,10 @@ export default function TimeClock() {
   });
 
   const weeklyHours = weeklyEntries.reduce((sum, entry) => sum + (entry.total_hours || 0), 0);
+  const isSalaryEmployee = loggedInUser?.employment_type === "salary";
 
-  // Calculate overtime (OH law: OT only for hours WORKED over 40, PTO doesn't count)
+  // Preserve the existing hourly display behavior. Salary employees use tracked
+  // operational work time only and are not shown a payroll/overtime breakdown.
   const regularHours = Math.min(weeklyHours, 40);
   const overtimeHours = Math.max(0, weeklyHours - 40);
 
@@ -321,7 +323,10 @@ export default function TimeClock() {
               <div className="flex items-center gap-3">
                 <User className="w-5 h-5 text-purple-600" />
                 <div>
-                  <p className="font-semibold">{loggedInUser.full_name || loggedInUser.email}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold">{loggedInUser.full_name || loggedInUser.email}</p>
+                    {isSalaryEmployee && <Badge className="bg-purple-100 text-purple-700">Salary</Badge>}
+                  </div>
                   <p className="text-sm text-gray-500">@{loggedInUser.username}</p>
                 </div>
               </div>
@@ -364,16 +369,21 @@ export default function TimeClock() {
                   </div>
                   <div className="text-center">
                     <p className="text-3xl font-bold text-purple-600">{weeklyHours.toFixed(2)} hrs</p>
-                    <p className="text-sm text-gray-500">Total this week</p>
-                    {overtimeHours > 0 && (
+                    <p className="text-sm text-gray-500">{isSalaryEmployee ? "Tracked work this week" : "Total this week"}</p>
+                    {!isSalaryEmployee && overtimeHours > 0 && (
                       <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-full">
                         <span className="text-sm font-semibold">🕐 {overtimeHours.toFixed(2)} hrs overtime</span>
                       </div>
                     )}
-                    {weeklyHours > 0 && (
+                    {weeklyHours > 0 && !isSalaryEmployee && (
                       <p className="text-xs text-gray-400 mt-1">
                         Regular: {regularHours.toFixed(2)} hrs
                         {overtimeHours > 0 && ` | OT: ${overtimeHours.toFixed(2)} hrs`}
+                      </p>
+                    )}
+                    {isSalaryEmployee && (
+                      <p className="text-xs text-purple-600 mt-2">
+                        Salary tracking records actual work time for operations and reporting; it does not determine pay or overtime.
                       </p>
                     )}
                   </div>
@@ -412,7 +422,7 @@ export default function TimeClock() {
                             ) : (
                               <div>
                                 <p className="text-lg font-bold text-purple-600">{entryHours.toFixed(2)} hrs</p>
-                                {entryOT > 0 && (
+                                {!isSalaryEmployee && entryOT > 0 && (
                                   <p className="text-xs text-amber-600 font-medium">({entryOT.toFixed(2)} OT)</p>
                                 )}
                               </div>
