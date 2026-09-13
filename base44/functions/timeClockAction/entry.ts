@@ -688,7 +688,16 @@ Deno.serve(async (req) => {
       const prior = await payPeriodEntity.filter({ last_request_id: requestId });
       if (!Array.isArray(prior)) throw new Error('Pay period idempotency lookup did not return a record list.');
       if (prior.length > 1) return Response.json({ success: false, error: 'This pay-period request id is ambiguous. Admin investigation is required.' }, { status: 409 });
-      if (prior.length === 1) return Response.json({ success: true, period: prior[0], reused: true });
+      if (prior.length === 1) {
+        const audits = await auditEntity.filter({ action: 'pay_period_create', request_id: requestId });
+        if (Array.isArray(audits) && audits.length === 1 && audits[0].outcome === 'pending') {
+          await auditEntity.updateMany({ id: audits[0].id, outcome: 'pending' }, { $set: {
+            outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+            details: { label: prior[0].label, start_date: prior[0].start_date, end_date: prior[0].end_date, pay_period_id: prior[0].id, recovered_after_interruption: true },
+          } });
+        }
+        return Response.json({ success: true, period: prior[0], reused: true });
+      }
 
       const existingPeriods = await payPeriodEntity.filter({});
       if (!Array.isArray(existingPeriods)) throw new Error('Pay period lookup did not return a record list.');
@@ -733,15 +742,25 @@ Deno.serve(async (req) => {
       let period = await payPeriodEntity.get(periodId).catch(() => null);
       if (!period?.id) return Response.json({ success: false, error: 'Pay period was not found.' }, { status: 404 });
       const expectedStatus = decision === 'review' ? 'review' : decision === 'finalize' ? 'finalized' : 'review';
+      const finalizeRecoveredAudit = async () => {
+        const audits = await auditEntity.filter({ action: 'pay_period_status', request_id: requestId });
+        if (!Array.isArray(audits) || audits.length !== 1 || audits[0].outcome !== 'pending') return;
+        await auditEntity.updateMany({ id: audits[0].id, outcome: 'pending' }, { $set: {
+          outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+          details: { pay_period_id: period.id, decision, status: period.status, recovered_after_interruption: true },
+        } });
+      };
 
       if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
         const unlock = await entryEntity.updateMany({ pay_period_id: period.id }, { $unset: {
           pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '',
         } });
         if (!unlock || typeof unlock.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but entry unlock verification was interrupted. Retry the same reopen action.' }, { status: 409 });
+        await finalizeRecoveredAudit();
         return Response.json({ success: true, period, reused: true });
       }
       if (String(period.last_request_id || '') === requestId && period.status === expectedStatus) {
+        await finalizeRecoveredAudit();
         return Response.json({ success: true, period, reused: true });
       }
       if (decision === 'review' && period.status !== 'open') return Response.json({ success: false, error: 'Only an open pay period can move to review.' }, { status: 409 });
@@ -811,7 +830,12 @@ Deno.serve(async (req) => {
             { id: { $in: lockableIds }, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
             { $set: { pay_period_id: period.id, pay_period_locked_at: now, pay_period_locked_by: actorEmail } },
           );
-          if (!lockResult || lockResult.updated !== lockableIds.length) return Response.json({ success: false, retry_same_request: true, error: 'Some pay-period entries could not be locked safely. Retry the same finalization after reloading.' }, { status: 409 });
+          if (!lockResult || typeof lockResult.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'Pay-period entry locking could not be verified. Retry the same finalization after reloading.' }, { status: 409 });
+          const lockedRows = await entryEntity.filter({ pay_period_id: period.id });
+          if (!Array.isArray(lockedRows)) throw new Error('Pay-period lock verification did not return a record list.');
+          const lockedIds = new Set(lockedRows.map((entry: any) => entry.id));
+          const missingLocks = lockableIds.filter((id: string) => !lockedIds.has(id));
+          if (missingLocks.length) return Response.json({ success: false, retry_same_request: true, error: 'Some pay-period entries are not locked yet. Retry the same finalization after reloading.' }, { status: 409 });
         }
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const summary = { entry_count: completedEntries.length, employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size, total_hours: totalHours };
