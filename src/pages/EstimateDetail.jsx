@@ -521,6 +521,7 @@ export default function EstimateDetail() {
       } else if (lifecycleReasonRequired) {
         await ensureEstimateLifecycleRevision({
           idempotencyKey: transitionIdempotencyKey,
+        sessionToken,
           estimateBefore: transitionBefore || before,
           estimateAfter: saved,
           reason: lifecycleReason,
@@ -666,6 +667,7 @@ export default function EstimateDetail() {
       const conversionBefore = { ...conversionAfter, work_order_id: "" };
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `work_order_conversion:${workOrder.id}`,
+        sessionToken,
         estimateBefore: conversionBefore,
         estimateAfter: conversionAfter,
         reason: "Converted approved estimate to Work Order",
@@ -740,6 +742,7 @@ export default function EstimateDetail() {
     try {
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `quote_issuance:${deliveryIdentity}`,
+        sessionToken,
         estimateBefore: before,
         estimateAfter: saved,
         reason: `Quote emailed to ${recipientEmail}`,
@@ -889,6 +892,7 @@ export default function EstimateDetail() {
       // Sent → Approved lifecycle revision.
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `customer_acceptance:${acceptance.id}`,
+        sessionToken,
         estimateBefore: transitionBefore,
         estimateAfter: after,
         reason: `${acceptedName} accepted Quote Version ${currentVersion} via ${methodLabel}`,
@@ -983,6 +987,7 @@ export default function EstimateDetail() {
     try {
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `cancel:${estimate.id}:${before.updated_date || "unknown"}`,
+        sessionToken,
         estimateBefore: before,
         estimateAfter: after,
         reason,
@@ -1238,6 +1243,7 @@ export default function EstimateDetail() {
                   disabled={!!openRevision || !!estimate.pipeline_sync_pending}
                   disabledReason={estimate.pipeline_sync_pending ? "Retry Pipeline Sync Before Converting" : "Save Revision First"}
                   persistedStatus={persistedStatus}
+                  sessionToken={sessionToken}
                 />
               </div>
               <CustomerQuotePanel

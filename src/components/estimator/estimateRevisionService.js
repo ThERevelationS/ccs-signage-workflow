@@ -74,7 +74,7 @@ export async function completeEstimateRevision({ revision, estimate }) {
  * immutable acceptance-record id); if that marker is already present on a
  * completed lifecycle revision, the existing audit row is reused.
  */
-export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...payload }) {
+export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", sessionToken = "", ...payload }) {
   const cleanKey = String(idempotencyKey || "").trim();
   const estimateId = payload.estimateAfter?.id || payload.estimateBefore?.id || "";
   if (!estimateId) throw new Error("Estimate is required for revision history.");
@@ -104,6 +104,7 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ...
   const response = await base44.functions.invoke("ensureEstimateLifecycleRevision", {
     idempotency_key: cleanKey,
     revision: revisionPayload,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);

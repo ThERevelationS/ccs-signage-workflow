@@ -21,7 +21,7 @@ import {
 
 // Turns an approved estimate into a job in the main workflow, carrying the
 // shared Customer link, the estimate link and the section list across.
-export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, disabledReason = "", persistedStatus = "draft" }) {
+export default function ConvertToWorkOrder({ estimate, pricing, onConverted, disabled = false, disabledReason = "", persistedStatus = "draft", sessionToken = "" }) {
   const [busy, setBusy] = useState(false);
   const [workOrderId, setWorkOrderId] = useState(estimate.work_order_id || "");
 
@@ -153,6 +153,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
             estimateId: estimate.id,
             created,
             fields: workOrderFields,
+            sessionToken,
             duplicateLabel: "Work Order during simultaneous conversion",
           }),
         });
@@ -182,6 +183,7 @@ export default function ConvertToWorkOrder({ estimate, pricing, onConverted, dis
       });
       await ensureEstimateLifecycleRevision({
         idempotencyKey: `work_order_conversion:${workOrder.id}`,
+        sessionToken,
         estimateBefore,
         estimateAfter,
         reason: "Converted approved estimate to Work Order",

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const REVISION_TYPES = new Set(['manual_revision', 'status_transition', 'cancel', 'conversion']);
 
@@ -93,10 +94,10 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
     const idempotencyKey = String(body?.idempotency_key || '').trim();
     const revision = body?.revision && typeof body.revision === 'object' ? body.revision : {};
     const estimateId = String(revision?.estimate_id || '').trim();
@@ -214,7 +215,11 @@ Deno.serve(async (req) => {
     const settled = await settleCreatedRevisionNumber(RevisionService, estimateId, canonical || created);
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
-    console.error('ensureEstimateLifecycleRevision error:', error);
-    return Response.json({ error: 'Estimate lifecycle revision could not be recorded safely.' }, { status: 500 });
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    console.error('ensureEstimateLifecycleRevision error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Estimate lifecycle revision could not be recorded safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
