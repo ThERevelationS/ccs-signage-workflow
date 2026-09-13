@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3 } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -33,6 +33,16 @@ const EMPTY_PIPELINE_SUMMARY = {
   ratedProbabilityCount: 0,
   unratedProbabilityCount: 0,
   weightedValue: 0,
+  sourceCoverageCount: 0,
+  sourceMissingCount: 0,
+  sourceBreakdown: [],
+  stageAgeCoverageCount: 0,
+  age30PlusCount: 0,
+  age90PlusCount: 0,
+  averageAgeDays: 0,
+  oldestAgeDays: 0,
+  agingBuckets: [],
+  ownerWorkload: [],
   trackedOutcomeCount: 0,
   totalTrackedOutcomeCount: 0,
   wonCount: 0,
@@ -44,6 +54,8 @@ const EMPTY_PIPELINE_SUMMARY = {
   closeDateMissingCount: 0,
   lostReasonMissingCount: 0,
   lostReasonBreakdown: [],
+  ownerOutcomePerformance: [],
+  sourceOutcomePerformance: [],
 };
 
 export default function SalesPipeline() {
@@ -181,7 +193,7 @@ export default function SalesPipeline() {
                 setRecordScope(value);
                 setAttentionFilter("all");
                 setFilterStatus("all");
-                if (value === "history" || value === "outcomes") setViewMode("table");
+                if (value === "history" || value === "outcomes" || (value !== "current" && viewMode === "insights")) setViewMode("table");
               }}>
                 <SelectTrigger className="w-44 h-9">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
@@ -202,6 +214,7 @@ export default function SalesPipeline() {
                 <div className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
                   <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
                   <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
+                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("insights"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "insights" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />Insights</span></button>}
                 </div>
               </div>
             )}
@@ -335,7 +348,7 @@ export default function SalesPipeline() {
           </div>
         </div>
 
-        {!showPendingImports && (recordScope === "current" || recordScope === "all") && (
+        {!showPendingImports && viewMode !== "insights" && (recordScope === "current" || recordScope === "all") && (
           <div className="mb-3 space-y-2">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
@@ -393,6 +406,8 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities {pipelineSummary.myOpportunityCount > 0 ? `(${pipelineSummary.myOpportunityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Unassigned Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source Missing {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("age_90_plus")} className={attentionChipClass("age_90_plus")}>Age 90+ Days {pipelineSummary.age90PlusCount > 0 ? `(${pipelineSummary.age90PlusCount})` : ""}</button>
               <span className="ml-auto text-xs text-gray-500">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
             </div>
           </div>
