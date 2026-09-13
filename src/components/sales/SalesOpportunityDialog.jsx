@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
+import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -144,6 +145,7 @@ export default function SalesOpportunityDialog({
   const suggestedProbability = SUGGESTED_PROBABILITY_BY_STATUS[workOrder?.sales_status || "lead"];
   const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
   const stageAging = getStageAgingState(workOrder);
+  const quoteAging = getQuoteAgingState(workOrder);
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -292,9 +294,18 @@ export default function SalesOpportunityDialog({
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border bg-white p-4">
               <div className="flex items-center gap-2 font-semibold text-gray-800"><FileText className="h-4 w-4 text-indigo-600" />Quote & Closeout</div>
-              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                 <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.corbridge_invoice_number || workOrder.est_inv_at || "—"}</div></div>
-                <div><div className="text-xs text-gray-400">Estimate sent</div><div className="font-medium text-gray-800">{workOrder.date_estimate_sent || workOrder.quote_date || "—"}</div></div>
+                <div>
+                  <div className="text-xs text-gray-400">Quote sent date</div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input type="date" max={format(new Date(), "yyyy-MM-dd")} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-9" />
+                    {!workOrder.date_estimate_sent && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-9 px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Today</Button>}
+                  </div>
+                  {quoteAging.awaitingResponse ? (
+                    quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}{workOrder.date_estimate_sent ? "" : " · using quote issue date"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
+                  ) : null}
+                </div>
                 <div><div className="text-xs text-gray-400">Expected close</div><div className="font-medium text-gray-800">{workOrder.expected_close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Close date</div><div className="font-medium text-gray-800">{workOrder.close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Lost reason</div><div className={`font-medium ${workOrder.sales_status === "lost" ? "text-red-700" : "text-gray-800"}`}>{workOrder.lost_reason || "—"}</div></div>
