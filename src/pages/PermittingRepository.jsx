@@ -13,6 +13,7 @@ import {
   saveJurisdictionFromLoadedSnapshot,
 } from "@/components/permitting/jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
@@ -217,6 +218,12 @@ export default function PermittingRepository() {
     if (String(jurisdiction.name || "").trim()) duplicateMap.set(key, [...(duplicateMap.get(key) || []), jurisdiction]);
   });
   const duplicateJurisdictionGroups = [...duplicateMap.values()].filter((rows) => rows.length > 1);
+  const duplicateCountFor = (jurisdiction) => duplicateMap.get(jurisdictionIdentityKey(jurisdiction))?.length || 1;
+  const trustCounts = jurisdictions.reduce((acc, jurisdiction) => {
+    const trust = assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction));
+    acc[trust.key] = (acc[trust.key] || 0) + 1;
+    return acc;
+  }, {});
 
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
@@ -231,6 +238,12 @@ export default function PermittingRepository() {
                 Permitting Repository
               </h1>
               <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions · {totalDocs} documents</p>
+              <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
+                <span className="text-amber-700">{trustCounts.needs_review || 0} need verification</span>
+                <span className="text-red-700">{trustCounts.blocked || 0} duplicate-blocked</span>
+                <span className="text-blue-700">{trustCounts.manual_protected || 0} manual-protected</span>
+                <span className="text-purple-700">{trustCounts.ai_researched || 0} AI researched</span>
+              </div>
             </div>
             <Button
               onClick={() => { setEditingJurisdiction(null); setShowForm(true); }}
@@ -298,6 +311,7 @@ export default function PermittingRepository() {
                 onRefresh={handleRefresh}
                 onSelect={setSelectedJurisdiction}
                 isRefreshing={refreshingIds.has(j.id)}
+                duplicateCount={duplicateCountFor(j)}
               />
             ))
           )}
@@ -308,6 +322,7 @@ export default function PermittingRepository() {
         <div className="flex-1 border-l overflow-hidden">
           <JurisdictionDetailPanel
             jurisdiction={selectedJurisdiction}
+            duplicateCount={duplicateCountFor(selectedJurisdiction)}
             onClose={() => setSelectedJurisdiction(null)}
             onUpdate={(updated) => {
               setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
