@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
       WorkOrder.filter({ $or: [
         { work_order_number: regex }, { title: regex }, { description: regex },
         { assigned_to: regex }, { corrective_action: regex },
+        { public_reporter_name: regex }, { public_reporter_contact: regex },
       ] }, '-created_date', LIMIT),
       Task.filter({ $or: [
         { title: regex }, { description: regex }, { assigned_to: regex },
@@ -162,9 +163,9 @@ Deno.serve(async (req) => {
 
     const groups = {
       equipment: equipmentMatches,
-      work_orders: sortByRelevance(query, workOrderRows || [], (row: any) => [row.work_order_number, row.title, row.description, row.assigned_to, row.corrective_action]).map((row: any) => ({
+      work_orders: sortByRelevance(query, workOrderRows || [], (row: any) => [row.work_order_number, row.title, row.description, row.assigned_to, row.corrective_action, row.public_reporter_name, row.public_reporter_contact]).map((row: any) => ({
         kind: 'work_order', id: row.id, equipment_id: row.equipment_id || '', title: `${row.work_order_number || 'Fleet WO'} · ${row.title || 'Untitled'}`,
-        subtitle: equipmentName(row.equipment_id) || 'Unresolved equipment', meta: [row.status, row.priority ? `${row.priority} priority` : '', row.assigned_to || ''].filter(Boolean).join(' · '),
+        subtitle: equipmentName(row.equipment_id) || 'Unresolved equipment', meta: [row.public_submission_key ? `public report${row.public_reporter_name ? ` · ${row.public_reporter_name}` : ''}` : '', row.status, row.priority ? `${row.priority} priority` : '', row.assigned_to || ''].filter(Boolean).join(' · '),
       })),
       maintenance: sortByRelevance(query, taskRows || [], (row: any) => [row.title, row.description, row.assigned_to]).map((row: any) => ({
         kind: 'maintenance', id: row.id, equipment_id: row.equipment_id || '', title: row.title || 'Maintenance schedule',
