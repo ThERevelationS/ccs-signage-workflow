@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
@@ -149,6 +149,14 @@ export default function PermitClientGroup({
           {queueState.timingLabel && (
             <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
               <Clock className="w-3 h-3" /> {queueState.timingLabel}
+            </span>
+          )}
+          {wo?._permittingRoutingMismatch && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800"
+              title={wo._permittingRoutingWarning}
+            >
+              <AlertTriangle className="w-3 h-3" /> Stage mismatch
             </span>
           )}
           <span className="font-semibold text-gray-600">Next:</span>
