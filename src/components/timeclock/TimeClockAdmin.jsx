@@ -41,11 +41,13 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, p
 import * as XLSX from "xlsx";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
+import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
 const TimeClockBreak = base44.entities.TimeClockBreak;
 const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
+const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -62,6 +64,7 @@ export default function TimeClockAdmin() {
   const [employeeStates, setEmployeeStates] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
+  const [correctionRequests, setCorrectionRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -92,7 +95,7 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, states, breaks, workPauses] = await Promise.all([
+      const [entries, states, breaks, workPauses, corrections] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -116,11 +119,18 @@ export default function TimeClockAdmin() {
           sort: "-started_at",
           label: "Time Clock active Work Pauses",
         }),
+        loadAllEntityRows({
+          entity: TimeClockCorrectionRequest,
+          query: { status: { $in: ["pending", "reviewing"] } },
+          sort: "-requested_at",
+          label: "Time Clock active correction requests",
+        }),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
       setActiveBreaks(breaks);
       setActiveWorkPauses(workPauses);
+      setCorrectionRequests(corrections);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -562,6 +572,16 @@ export default function TimeClockAdmin() {
           </div>
         )}
       </div>
+
+      <TimeClockExceptionCenter
+        timeEntries={timeEntries}
+        employeeStates={employeeStates}
+        activeBreaks={activeBreaks}
+        activeWorkPauses={activeWorkPauses}
+        correctionRequests={correctionRequests}
+        onReviewEntry={handleEditEntry}
+        onRefresh={loadData}
+      />
 
       <div className="clay-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
