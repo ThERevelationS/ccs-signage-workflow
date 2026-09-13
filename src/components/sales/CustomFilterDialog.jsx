@@ -23,6 +23,7 @@ const FILTER_FIELDS = [
   { value: "project_manager", label: "Project Manager", type: "user", role: "PM" },
   { value: "estimator", label: "Estimator", type: "user", role: "Estimator" },
   { value: "sales_status", label: "Status", type: "select", options: ["lead", "quoted", "follow_up", "won", "lost", "on_hold"] },
+  { value: "sales_stage_changed_at", label: "Stage Changed At", type: "date" },
   { value: "project_type", label: "Project Type", type: "localStorage", storageKey: "salesProjectTypes" },
   { value: "estimate_amount", label: "Estimate Amount", type: "number" },
   { value: "probability", label: "Probability", type: "number" },
@@ -67,6 +68,7 @@ const OPERATORS = [
 const ALL_COLUMNS = [
   { id: "client_name", label: "Customer", visible: true },
   { id: "sales_status", label: "Sales Status", visible: true },
+  { id: "stage_age", label: "Stage Age", visible: true },
   { id: "sales_rep", label: "Salesperson / Owner", visible: true },
   { id: "description", label: "Job Description", visible: true },
   { id: "lead_source", label: "Source", visible: true },
