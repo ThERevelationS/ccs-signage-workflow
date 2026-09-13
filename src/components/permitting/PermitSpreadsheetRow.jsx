@@ -255,6 +255,25 @@ export default function PermitSpreadsheetRow({
           })}
         </div>
       </div>
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this permit line?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the {lineItem.row_name || lineItem.office_type || "permit"} line and its recorded workflow values from this Work Order. Other permit lines and the Work Order will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDeleteLine(lineItem.id)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Permit Line
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
