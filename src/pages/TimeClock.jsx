@@ -26,7 +26,8 @@ import {
   LogOut,
   Lock,
   Settings,
-  Pause
+  Pause,
+  LockKeyhole
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO } from "date-fns";
@@ -421,7 +422,14 @@ export default function TimeClock() {
                       <div key={entry.id} className="clay-card p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <p className="font-semibold">{format(parseISO(entry.clock_in), "EEEE, MMM d")}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold">{format(parseISO(entry.clock_in), "EEEE, MMM d")}</p>
+                              {entry.pay_period_id && (
+                                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 gap-1">
+                                  <LockKeyhole className="w-3 h-3" /> Finalized
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-500">
                               {format(parseISO(entry.clock_in), "h:mm a")} 
                               {entry.clock_out && ` - ${format(parseISO(entry.clock_out), "h:mm a")}`}
@@ -488,7 +496,7 @@ export default function TimeClock() {
                               <FileText className="w-3 h-3" />
                               Notes:
                             </div>
-                            {entry.status === "clocked_out" && editingNotes !== entry.id && (
+                            {entry.status === "clocked_out" && editingNotes !== entry.id && !entry.pay_period_id && (
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -498,6 +506,9 @@ export default function TimeClock() {
                                 <Pencil className="w-3 h-3 mr-1" />
                                 {entry.notes ? "Edit" : "Add"}
                               </Button>
+                            )}
+                            {entry.pay_period_id && (
+                              <span className="text-[11px] text-slate-500 flex items-center gap-1"><LockKeyhole className="w-3 h-3" />Locked</span>
                             )}
                           </div>
                           {editingNotes === entry.id ? (
@@ -555,7 +566,9 @@ export default function TimeClock() {
                                 <p className="text-xs text-gray-400">No correction requested</p>
                               )}
                             </div>
-                            {!correctionRequest || ["approved", "approved_modified", "rejected", "cancelled"].includes(correctionRequest.status) ? (
+                            {entry.pay_period_id ? (
+                              <span className="text-xs text-slate-600 flex items-center gap-1"><LockKeyhole className="w-3 h-3" />Finalized period — contact a manager to reopen before requesting a correction</span>
+                            ) : !correctionRequest || ["approved", "approved_modified", "rejected", "cancelled"].includes(correctionRequest.status) ? (
                               <Button variant="outline" size="sm" onClick={() => setCorrectionEntry(entry)}>
                                 Request Correction
                               </Button>
