@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const ESTIMATE_REFERENCE_ENTITIES = [
   'BuilderPriceRevision',
@@ -82,10 +83,8 @@ async function canDiscardRaceDuplicate(base44: any, row: any) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const creationKey = clean(body?.creation_key);
     const estimateInput = body?.estimate && typeof body.estimate === 'object' ? body.estimate : {};
     // New Estimate creation establishes only a clean Draft shell. Relationships,
@@ -221,8 +220,11 @@ Deno.serve(async (req) => {
 
     return Response.json({ estimate: canonical, reused: false });
   } catch (error) {
-    console.error('ensureNewEstimate error:', error);
-    const status = Number(error?.statusCode || 500);
-    return Response.json({ error: error?.message || 'Estimate could not be created safely.' }, { status });
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    console.error('ensureNewEstimate error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Estimate could not be created safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
