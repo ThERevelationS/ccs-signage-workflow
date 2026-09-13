@@ -40,6 +40,8 @@ const FILTER_FIELDS = [
   { value: "permit_approved_date", label: "Permit Approved Date", type: "date" },
   { value: "quote_date", label: "Quote Date", type: "date" },
   { value: "follow_up_date", label: "Follow Up Date", type: "date" },
+  { value: "sales_last_follow_up_completed_at", label: "Last Follow Up Completed", type: "date" },
+  { value: "sales_last_follow_up_outcome", label: "Last Follow Up Outcome", type: "text" },
   { value: "expected_close_date", label: "Expected Close Date", type: "date" },
   { value: "close_date", label: "Close Date", type: "date" },
   { value: "lost_reason", label: "Lost Reason", type: "text" },
