@@ -78,6 +78,12 @@ export default function QuickClockSection({
   const canUseFace = Boolean(authoritativeSessionToken) && (allUsers || []).some(
     (user) => Array.isArray(user.face_descriptors) && user.face_descriptors.length > 0,
   );
+  const authoritativeSessionGuardsSelected = Boolean(
+    authoritativeSessionToken &&
+    authoritativeSessionUser?.email &&
+    selectedUser?.email &&
+    authoritativeSessionUser.email.toLowerCase() === selectedUser.email.toLowerCase()
+  );
 
   useEffect(() => {
     return () => {
@@ -660,7 +666,7 @@ export default function QuickClockSection({
       <WorkPauseOverlay
         userOverride={selectedUser}
         credentialOverride={credentialRef.current}
-        disabled={workPauseStatus !== "paused" || !activeWorkPause?.id || !selectedUser?.email || !credentialRef.current}
+        disabled={authoritativeSessionGuardsSelected || workPauseStatus !== "paused" || !activeWorkPause?.id || !selectedUser?.email || !credentialRef.current}
         onResumed={(data) => {
           applyWorkPauseResponse(data);
           setRecognitionStatus("Work resumed and confirmed by server.");
