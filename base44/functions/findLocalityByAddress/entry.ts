@@ -2,6 +2,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
+function normalizePlace(value: unknown) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\b(city of|village of|town of)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeState(value: unknown) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function localityIdentityMatches(locality: any, name: unknown, state: unknown) {
+  if (!locality?.id || !normalizePlace(name)) return false;
+  const nameMatches = normalizePlace(locality.name) === normalizePlace(name);
+  const targetState = normalizeState(state);
+  const stateMatches = !targetState || !locality.state || normalizeState(locality.state) === targetState;
+  return nameMatches && stateMatches;
+}
+
 /**
  * AI-powered address lookup.
  * Given an address, returns:
@@ -79,6 +100,20 @@ Deno.serve(async (req) => {
       zip: l.zip || ""
     }));
 
+    // First prefer deterministic geocoder locality components when they uniquely
+    // match a configured tracker locality. AI is only a fallback, never the sole
+    // authority for accepting an arbitrary locality id.
+    const geocodeState = geocode?.address_parts?.administrative_area_level_1 || '';
+    const geocodeCandidates = [
+      geocode?.address_parts?.locality,
+      geocode?.address_parts?.postal_town,
+      geocode?.address_parts?.administrative_area_level_3,
+      geocode?.address_parts?.sublocality,
+    ].filter(Boolean);
+    const directMatches = localities.filter((locality) =>
+      geocodeCandidates.some((candidate) => localityIdentityMatches(locality, candidate, geocodeState))
+    );
+
     // 3) Ask AI for permitting details — zoning district, parcel info, locality match
     const prompt = `You are a zoning/permitting research assistant. Look up the following address and return structured JSON.
 
@@ -129,17 +164,41 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       }
     });
 
-    // Resolve the locality match from the AI's suggested id
+    // Resolve the locality match. A unique Google-geocoder identity match wins.
+    // Otherwise an AI-selected id is accepted only when the AI's returned locality
+    // name/state agrees with that stored record. This prevents a hallucinated id
+    // from silently selecting an unrelated PermitLocality.
     let matchedLocality = null;
-    if (aiResult.suggested_locality_id) {
+    let matchMethod = 'none';
+    let matchConfidence = 'low';
+    let matchReason = 'No configured locality could be verified for this address.';
+
+    if (directMatches.length === 1) {
+      const found = directMatches[0];
+      matchedLocality = {
+        id: found.id,
+        name: found.name,
+        state: found.state || "",
+        zip: found.zip || ""
+      };
+      matchMethod = 'geocode_exact';
+      matchConfidence = 'high';
+      matchReason = 'Google address components uniquely match this configured locality.';
+    } else if (aiResult.suggested_locality_id) {
       const found = localities.find(l => l.id === aiResult.suggested_locality_id);
-      if (found) {
+      const aiIdentityMatches = found && localityIdentityMatches(found, aiResult.ai_locality_name, aiResult.ai_state || geocodeState);
+      if (aiIdentityMatches) {
         matchedLocality = {
           id: found.id,
           name: found.name,
           state: found.state || "",
           zip: found.zip || ""
         };
+        matchMethod = 'ai_identity_validated';
+        matchConfidence = directMatches.some((row) => row.id === found.id) ? 'high' : (aiResult.confidence === 'low' ? 'low' : 'medium');
+        matchReason = 'AI-selected locality id agrees with the returned locality name/state.';
+      } else if (found) {
+        matchReason = 'AI suggested a configured locality id, but its returned locality name/state did not match that record.';
       }
     }
 
@@ -154,7 +213,11 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       zoning: aiResult.zoning || { district_code: "", district_name: "", summary: "" },
       parcel: aiResult.parcel || { owner: "", lot_size_acres: "", parcel_number: "", source_url: "" },
       notes: aiResult.notes || "",
-      confidence: aiResult.confidence || "medium"
+      confidence: aiResult.confidence || "medium",
+      match_confidence: matchConfidence,
+      match_method: matchMethod,
+      match_reason: matchReason,
+      geocode_locality_candidates: geocodeCandidates
     });
   } catch (error) {
     const status = Number(error?.status || 500);
