@@ -23,7 +23,10 @@
         "work_pause_resume",
         "time_approval",
         "pay_period_create",
-        "pay_period_status"
+        "pay_period_status",
+        "labor_start",
+        "labor_change",
+        "labor_stop"
       ]
     },
     "outcome": {
