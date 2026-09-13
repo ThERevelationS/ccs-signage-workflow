@@ -1203,6 +1203,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const staleCutoffDate = parseLocalDate(todayStamp);
   staleCutoffDate.setDate(staleCutoffDate.getDate() - STALE_ACTIVITY_DAYS);
   const staleCutoffTime = staleCutoffDate.getTime();
+  const outcomeCutoffStamp = useMemo(() => {
+    if (outcomePeriod === "all") return "";
+    const days = Number(outcomePeriod);
+    if (!Number.isFinite(days) || days <= 0) return "";
+    const cutoff = parseLocalDate(todayStamp);
+    cutoff.setDate(cutoff.getDate() - days);
+    return format(cutoff, "yyyy-MM-dd");
+  }, [outcomePeriod, todayStamp]);
 
   const currentOwnerIdentities = useMemo(() => {
     const direct = [currentUser?.full_name, currentUser?.name, currentUser?.email]
@@ -1221,14 +1229,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
     const legacyClosed = isLegacyClosedRecord(wo);
-    if (recordScope === "current" && legacyClosed) return false;
-    if (recordScope === "history" && !legacyClosed) return false;
+    const trustedOutcome = isTrustedOutcome(wo);
+    if (recordScope === "current") return !legacyClosed && !trustedOutcome;
+    if (recordScope === "outcomes") {
+      if (!trustedOutcome) return false;
+      if (!outcomeCutoffStamp) return true;
+      return Boolean(wo.close_date) && wo.close_date >= outcomeCutoffStamp && wo.close_date <= todayStamp;
+    }
+    if (recordScope === "history") return legacyClosed;
     return true;
-  }), [workOrders, recordScope]);
+  }), [workOrders, recordScope, outcomeCutoffStamp, todayStamp]);
 
   const pipelineSummary = useMemo(() => {
     const operational = scopedWorkOrders.filter((wo) => isOpenOpportunity(wo) && !isLegacyClosedRecord(wo));
-    return operational.reduce((summary, wo) => {
+    const summary = operational.reduce((summary, wo) => {
       const followUp = wo.follow_up_date || "";
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
       summary.openCount += 1;
@@ -1282,8 +1296,51 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       ratedProbabilityCount: 0,
       unratedProbabilityCount: 0,
       weightedValue: 0,
+      trackedOutcomeCount: 0,
+      totalTrackedOutcomeCount: 0,
+      wonCount: 0,
+      lostCount: 0,
+      wonValue: 0,
+      lostValue: 0,
+      closedValue: 0,
+      trackedWinRate: null,
+      closeDateMissingCount: 0,
+      lostReasonMissingCount: 0,
+      lostReasonBreakdown: [],
     });
-  }, [scopedWorkOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities]);
+
+    const allTrustedOutcomes = workOrders.filter(isTrustedOutcome);
+    const reportingOutcomes = allTrustedOutcomes.filter((wo) => {
+      if (!outcomeCutoffStamp) return true;
+      return Boolean(wo.close_date) && wo.close_date >= outcomeCutoffStamp && wo.close_date <= todayStamp;
+    });
+    summary.totalTrackedOutcomeCount = allTrustedOutcomes.length;
+    summary.trackedOutcomeCount = reportingOutcomes.length;
+    summary.closeDateMissingCount = allTrustedOutcomes.filter((wo) => !wo.close_date).length;
+    summary.lostReasonMissingCount = allTrustedOutcomes.filter((wo) => wo.sales_status === "lost" && !String(wo.lost_reason || "").trim()).length;
+
+    const lostReasons = new Map();
+    reportingOutcomes.forEach((wo) => {
+      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      summary.closedValue += value;
+      if (wo.sales_status === "won") {
+        summary.wonCount += 1;
+        summary.wonValue += value;
+      } else if (wo.sales_status === "lost") {
+        summary.lostCount += 1;
+        summary.lostValue += value;
+        const reason = String(wo.lost_reason || "").trim();
+        if (reason) lostReasons.set(reason, (lostReasons.get(reason) || 0) + 1);
+      }
+    });
+    summary.trackedWinRate = summary.trackedOutcomeCount > 0
+      ? (summary.wonCount / summary.trackedOutcomeCount) * 100
+      : null;
+    summary.lostReasonBreakdown = [...lostReasons.entries()]
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason));
+    return summary;
+  }, [scopedWorkOrders, workOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
