@@ -353,6 +353,10 @@ Deno.serve(async (req) => {
     if (!id) return json({error:'Fleet work-order id is required.'},{status:400});
     const current = await WorkOrder.get(id).catch(()=>null);
     if (!current) return json({error:'Fleet work order was not found.'},{status:404});
+    const grantScope = scopeForGrant(grant);
+    if (grantScope.scope_mode === 'selected_equipment' && !new Set(grantScope.allowed_equipment_ids).has(String(current.equipment_id || ''))) {
+      return json({error:'This Fleet work order is outside this mechanic link\'s allowed equipment scope.'},{status:403});
+    }
     if (!ACTIVE.has(current.status)) return json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
     const expected = String(body?.expected_updated_date || '').trim();
     if (!expected || expected !== String(current.updated_date || '')) return json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
