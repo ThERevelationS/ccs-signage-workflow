@@ -127,7 +127,7 @@ export default function SalesPipelineInsights({ summary }) {
             </div>
             <div className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${outcomeReady && stageReady ? "border-teal-200 bg-teal-50 text-teal-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
               {outcomeReady && stageReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />}
-              <span>{outcomeReady ? `${summary.totalTrackedOutcomeCount} authoritative Won/Lost outcome${summary.totalTrackedOutcomeCount === 1 ? " is" : "s are"} available.` : "No authoritative modern Won/Lost outcomes exist yet."} {!stageReady && " Salesperson win-rate, source conversion, and days-in-stage rankings remain intentionally withheld until the underlying tracking is mature."}</span>
+              <span>{outcomeReady ? `${summary.totalTrackedOutcomeCount} authoritative Won/Lost outcome${summary.totalTrackedOutcomeCount === 1 ? " is" : "s are"} available for outcome reporting.` : "No authoritative modern Won/Lost outcomes exist yet, so salesperson and source conversion rankings are not meaningful yet."} {stageReady ? "Stage-change timing has full current-pipeline coverage." : "Days-in-stage reporting remains intentionally withheld until stage-change timing has meaningful coverage."}</span>
             </div>
           </section>
         </div>
