@@ -234,6 +234,28 @@
     "_manual_documents": {
       "type": "boolean",
       "description": "Flag: documents were manually edited"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "needs_verification",
+        "verified",
+        "historical"
+      ],
+      "description": "Human review status. Verified means staff confirmed the record against official/current sources; historical means retain as reference but re-verify before use."
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When staff last marked this jurisdiction verified against official/current sources."
+    },
+    "verified_by": {
+      "type": "string",
+      "description": "Employee who last verified this jurisdiction."
+    },
+    "verification_notes": {
+      "type": "string",
+      "description": "Optional staff notes describing verification scope, source, or caveats."
     }
   },
   "required": [
