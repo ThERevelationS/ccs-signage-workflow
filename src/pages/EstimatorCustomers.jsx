@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Phone, Mail, RefreshCw } from "lucide-react";
 import { backfillCustomersFromWorkOrders, loadAllCustomers } from "@/components/estimator/customerSync";
@@ -16,6 +17,7 @@ const FILTERS = [
 
 export default function EstimatorCustomers() {
   const location = useLocation();
+  const { sessionToken } = useAuth();
   const status = new URLSearchParams(location.search).get("status") || "";
   const [customers, setCustomers] = useState([]);
   const [tiers, setTiers] = useState([]);
@@ -49,7 +51,7 @@ export default function EstimatorCustomers() {
     setSyncingWorkflowCustomers(true);
     try {
       const current = await loadAllCustomers();
-      const merged = await backfillCustomersFromWorkOrders(current || []);
+      const merged = await backfillCustomersFromWorkOrders(current || [], { sessionToken });
       const createdCount = Math.max(0, merged.length - (current || []).length);
       setCustomers(
         [...merged].sort((a, b) => String(a.company_name || "").localeCompare(String(b.company_name || "")))
