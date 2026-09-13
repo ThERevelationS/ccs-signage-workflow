@@ -6,7 +6,7 @@ import { CalendarClock, CalendarDays, ClipboardCheck, ClipboardList, Fuel, Plus,
 const actions = [
   { label: "New work order", page: "FleetWorkOrders", query: "new=1", icon: ClipboardList },
   { label: "Maintenance", page: "FleetMaintenance", icon: CalendarClock },
-  { label: "Start inspection", page: "FleetInspections", icon: ClipboardCheck },
+  { label: "Start inspection", page: "FleetInspections", query: "new=1", icon: ClipboardCheck },
   { label: "Record fuel", page: "FleetFuel", query: "new=1", icon: Fuel },
   { label: "Reserve equipment", page: "FleetReservations", query: "new=1", icon: CalendarDays },
   { label: "Request part / fluid", page: "FleetRequests", query: "new=1", icon: ShoppingCart },
