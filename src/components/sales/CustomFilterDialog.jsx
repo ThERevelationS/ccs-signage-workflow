@@ -97,6 +97,7 @@ const ALL_COLUMNS = [
   { id: "days_prm_app", label: "Days Prm→App", visible: true },
   { id: "days_ord_ins", label: "Days Ord→Ins", visible: true },
   { id: "quote_date", label: "Quote", visible: true },
+  { id: "quote_age", label: "Quote Age", visible: true },
   { id: "follow_up_date", label: "Follow Up", visible: true },
   { id: "expected_close_date", label: "Expected Close", visible: true },
   { id: "close_date", label: "Close", visible: true },
