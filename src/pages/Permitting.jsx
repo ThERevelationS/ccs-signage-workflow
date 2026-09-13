@@ -11,7 +11,8 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged } from "@/components/workflow/workOrderPersistence";
+import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { isPermitGroupAssignedToUser, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 
@@ -109,6 +110,7 @@ export default function Permitting() {
           ...wo,
           _permittingRoutingMismatch: !!routingWarning,
           _permittingRoutingWarning: routingWarning,
+          _permittingStageFixAvailable: taskRoutesToPermitting && !stageRoutesToPermitting && !wo.parent_work_order_id,
         });
         return rows;
       }, []);
@@ -538,6 +540,45 @@ export default function Permitting() {
     }
   }, [workOrders, selectedWorkOrder]);
 
+  const fixPermittingStage = useCallback(async (workOrderId) => {
+    const wo = workOrders.find((row) => row.id === workOrderId);
+    if (!wo?._permittingStageFixAvailable || wo.current_stage === "permitting") return false;
+
+    setWorkOrderEditError("");
+    const oldStage = wo.current_stage || "not set";
+    try {
+      const saved = await transitionWorkOrderFromLoadedSnapshot({
+        workOrder: wo,
+        newStage: "permitting",
+        label: "Permitting routing repair",
+      });
+
+      setWorkOrders((prev) => prev.map((row) => row.id === workOrderId
+        ? {
+            ...row,
+            ...saved,
+            _permittingRoutingMismatch: false,
+            _permittingRoutingWarning: "",
+            _permittingStageFixAvailable: false,
+          }
+        : row));
+      setSelectedWorkOrder((prev) => prev?.id === workOrderId ? { ...prev, ...saved } : prev);
+
+      try {
+        await ActivityActions.stageChanged(wo, oldStage, "permitting");
+      } catch (activityError) {
+        console.error("Permitting stage was repaired but activity/notification logging failed:", activityError);
+        setWorkOrderEditError("The workflow stage was changed to Permitting, but its activity notification could not be completed. Do not repeat the stage change; reload to verify the saved Work Order.");
+      }
+      return true;
+    } catch (error) {
+      console.error("Could not repair Permitting workflow stage:", error);
+      setWorkOrderEditError(error?.message || "The Work Order changed in another session. Reload before changing its workflow stage.");
+      await loadData(false);
+      return false;
+    }
+  }, [workOrders]);
+
   const openWorkOrder = (workOrderId) => {
     const wo = workOrders.find(w => w.id === workOrderId);
     if (wo) setSelectedWorkOrder(wo);
@@ -671,6 +712,7 @@ export default function Permitting() {
                 onDeleteLine={deleteLineItem}
                 onUpdateWorkOrderField={updateWorkOrderField}
                 onWorkNotesChanged={() => loadData(false)}
+                onFixPermittingStage={fixPermittingStage}
                 currentUser={currentUser}
                 isRegistered={isRegistered}
                 localities={localities}
