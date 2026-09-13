@@ -1168,7 +1168,8 @@ export default function ProductChecklistDialog({
                     {isRegistered && (
                       <button
                         onClick={(e) => { 
-                          e.stopPropagation(); 
+                          e.stopPropagation();
+                          setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
                           setNewItemInput({ show: true, parentId: null, type: 'checklist', productName: productName }); 
                         }}
                         className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
