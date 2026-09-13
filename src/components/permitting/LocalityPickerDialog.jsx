@@ -24,6 +24,7 @@ import {
   hasDuplicateRepositoryIdentity,
   jurisdictionToDraftPermitLocality,
 } from "./jurisdictionPermitBridge";
+import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
 export default function LocalityPickerDialog({
   isOpen,
@@ -294,6 +295,7 @@ export default function LocalityPickerDialog({
 
                     {!repositoryLoading && repositoryMatches.map((jurisdiction) => {
                       const duplicate = hasDuplicateRepositoryIdentity(repositoryJurisdictions, jurisdiction);
+                      const trust = assessJurisdictionTrust(jurisdiction, duplicate ? 2 : 1);
                       const parentCounty = jurisdiction.parent_county?.name;
                       const contact = jurisdiction.contact_info || {};
                       return (
@@ -304,6 +306,9 @@ export default function LocalityPickerDialog({
                               <p className="text-[11px] text-gray-500 capitalize">
                                 {jurisdiction.type || "jurisdiction"}{parentCounty ? ` • Parent: ${parentCounty}` : ""}
                               </p>
+                              <span className={`inline-flex mt-1 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
+                                {trust.label}
+                              </span>
                               {contact.department && contact.department !== "INFORMATION NOT FOUND" && (
                                 <p className="text-xs text-gray-700 mt-1">{contact.department}</p>
                               )}
@@ -319,11 +324,15 @@ export default function LocalityPickerDialog({
                               Create draft & apply
                             </Button>
                           </div>
-                          {duplicate && (
+                          {duplicate ? (
                             <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
                               <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> Duplicate repository profiles must be resolved before this can be used.
                             </p>
-                          )}
+                          ) : trust.issues.length > 0 ? (
+                            <p className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" /> {trust.issues[0]}{trust.issues.length > 1 ? ` +${trust.issues.length - 1} more review item${trust.issues.length - 1 === 1 ? '' : 's'}` : ''}.
+                            </p>
+                          ) : null}
                         </div>
                       );
                     })}
