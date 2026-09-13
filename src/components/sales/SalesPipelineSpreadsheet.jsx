@@ -2019,6 +2019,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("sales_status") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_status' ? 'bg-blue-100' : ''}`} style={{ minWidth: '95px' }} onClick={() => handleSort('sales_status')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_status', 'Sales Status')}>
                 <div className="flex items-center gap-1">Status {getSortIcon('sales_status')}</div>
               </th>}
+              {isColumnVisible("stage_age") && <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since the last verified Sales Pipeline stage change. On Hold is tracked but not flagged as stalled.">Stage Age</th>}
               {isColumnVisible("sales_rep") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_rep' ? 'bg-blue-100' : ''}`} style={{ minWidth: '115px' }} onClick={() => handleSort('sales_rep')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_rep', 'Salesperson / Owner')}>
                 <div className="flex items-center gap-1">Sales Owner {getSortIcon('sales_rep')}</div>
               </th>}
