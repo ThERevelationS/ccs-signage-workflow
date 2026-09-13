@@ -239,7 +239,7 @@ export default function FleetMaintenance() {
             <p className="text-sm text-gray-500 dark:text-slate-400">Manage maintenance by vehicle or equipment first. The full schedule table remains available when you need a global view.</p>
           </div>
           {view !== "workspace" && <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
-            <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder={view === "equipment" ? "Search equipment or maintenance..." : "Search schedules..."} className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
+            <div className="relative w-full sm:w-72"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder={view === "equipment" ? "Search equipment or maintenance..." : "Search schedules..."} className="w-full min-h-11 pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
             {view === "all_schedules" && <>
               <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All statuses</option><option value="pending">Pending</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select>
@@ -288,7 +288,7 @@ export default function FleetMaintenance() {
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">All Maintenance Schedules</h2><p className="text-xs text-gray-500 dark:text-slate-400">Global schedule view for auditing, filtering, and editing across the whole Fleet.</p></div>
-              {equipmentFilter !== "all" && <button onClick={() => setEquipmentFilter("all")} className="text-sm text-indigo-600 dark:text-indigo-300">Clear equipment filter</button>}
+              {equipmentFilter !== "all" && <button onClick={() => setEquipmentFilter("all")} className="min-h-11 px-2 text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center">Clear equipment filter</button>}
             </div>
             <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
