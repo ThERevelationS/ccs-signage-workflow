@@ -67,6 +67,20 @@ Deno.serve(async req => {
     const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
 
+    if (action === 'reading_preview') {
+      const equipmentId = norm(body?.equipment_id);
+      const meterType = norm(body?.meter_type || 'manual');
+      const source = norm(body?.source || 'manual');
+      if (!equipmentId) return Response.json({error:'Fleet equipment id is required for meter preview.'},{status:400});
+      if (!validMeterTypes.has(meterType)) return Response.json({error:'Invalid Fleet meter type.'},{status:400});
+      if (!validSources.has(source)) return Response.json({error:'Invalid Fleet meter source.'},{status:400});
+      if (source === 'bouncie' && meterType !== 'odometer_miles') return Response.json({error:'Bouncie can only preview odometer miles.'},{status:400});
+      const equipment = await Equipment.get(equipmentId).catch(()=>null);
+      if (!equipment) return Response.json({error:'Selected Fleet equipment was not found.'},{status:404});
+      const reading = await resolveFleetMeterReading(base44,equipment,{meter_type:meterType,source});
+      return Response.json({success:true,reading,equipment:{id:equipment.id,name:equipment.name||'',bouncie_link_status:equipment.bouncie_link_status||''}});
+    }
+
     if (action === 'status') {
       const query:any = {};
       if (norm(body?.equipment_id)) query.equipment_id = norm(body.equipment_id);
