@@ -4,6 +4,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
 import { Info, Trash2 } from "lucide-react";
 
@@ -59,6 +69,7 @@ export default function PermitSpreadsheetRow({
   today
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const isCompleted = !!lineItem.permit_received_date;
   const steps = lineItem.steps || [];
@@ -126,7 +137,7 @@ export default function PermitSpreadsheetRow({
 
         {isRegistered && onDeleteLine && (
           <button
-            onClick={() => { if (confirm(`Delete this line?`)) onDeleteLine(lineItem.id); }}
+            onClick={() => setConfirmDeleteOpen(true)}
             className="p-0.5 hover:bg-red-50 rounded opacity-0 group-hover/line:opacity-100 transition-opacity flex-shrink-0"
             title="Delete this line"
           >
