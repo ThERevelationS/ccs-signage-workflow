@@ -1259,6 +1259,27 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
       summary.openCount += 1;
       summary.openValue += value;
+      const source = String(wo.lead_source || "").trim();
+      if (source) summary.sourceCoverageCount += 1;
+      else summary.sourceMissingCount += 1;
+      if (Number.isFinite(Date.parse(wo.sales_stage_changed_at || ""))) summary.stageAgeCoverageCount += 1;
+      const ageDays = getOpportunityAgeDays(wo, todayStamp);
+      if (ageDays !== null) {
+        summary.ageDaysTotal += ageDays;
+        summary.ageDaysCount += 1;
+        summary.oldestAgeDays = Math.max(summary.oldestAgeDays, ageDays);
+        if (ageDays >= 30) summary.age30PlusCount += 1;
+        if (ageDays >= 90) summary.age90PlusCount += 1;
+        const bucket = ageDays >= 90
+          ? summary.agingBuckets[3]
+          : ageDays >= 60
+            ? summary.agingBuckets[2]
+            : ageDays >= 30
+              ? summary.agingBuckets[1]
+              : summary.agingBuckets[0];
+        bucket.count += 1;
+        bucket.value += value;
+      }
       const owner = normalizeOwnerIdentity(wo.sales_rep);
       if (owner) {
         summary.assignedOwnerCount += 1;
@@ -1308,6 +1329,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       ratedProbabilityCount: 0,
       unratedProbabilityCount: 0,
       weightedValue: 0,
+      sourceCoverageCount: 0,
+      sourceMissingCount: 0,
+      sourceBreakdown: [],
+      stageAgeCoverageCount: 0,
+      age30PlusCount: 0,
+      age90PlusCount: 0,
+      ageDaysTotal: 0,
+      ageDaysCount: 0,
+      averageAgeDays: 0,
+      oldestAgeDays: 0,
+      agingBuckets: [
+        { key: "under_30", label: "0–29 days", count: 0, value: 0 },
+        { key: "30_59", label: "30–59 days", count: 0, value: 0 },
+        { key: "60_89", label: "60–89 days", count: 0, value: 0 },
+        { key: "90_plus", label: "90+ days", count: 0, value: 0 },
+      ],
+      ownerWorkload: [],
       trackedOutcomeCount: 0,
       totalTrackedOutcomeCount: 0,
       wonCount: 0,
@@ -1319,7 +1357,41 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       closeDateMissingCount: 0,
       lostReasonMissingCount: 0,
       lostReasonBreakdown: [],
+      ownerOutcomePerformance: [],
+      sourceOutcomePerformance: [],
     });
+
+    summary.averageAgeDays = summary.ageDaysCount > 0 ? Math.round(summary.ageDaysTotal / summary.ageDaysCount) : 0;
+    const ownerWorkload = new Map();
+    const sourceMix = new Map();
+    operational.forEach((wo) => {
+      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      const followUp = wo.follow_up_date || "";
+      const ownerLabel = String(wo.sales_rep || "").trim() || "Unassigned";
+      const ownerKey = normalizeOwnerIdentity(ownerLabel) || "__unassigned__";
+      const ownerRow = ownerWorkload.get(ownerKey) || { owner: ownerLabel, count: 0, value: 0, dueCount: 0, age90Count: 0 };
+      ownerRow.count += 1;
+      ownerRow.value += value;
+      if (followUp && followUp <= todayStamp) ownerRow.dueCount += 1;
+      const ageDays = getOpportunityAgeDays(wo, todayStamp);
+      if (ageDays !== null && ageDays >= 90) ownerRow.age90Count += 1;
+      ownerWorkload.set(ownerKey, ownerRow);
+
+      const source = String(wo.lead_source || "").trim();
+      if (source) {
+        const sourceKey = source.toLowerCase();
+        const sourceRow = sourceMix.get(sourceKey) || { source, count: 0, value: 0 };
+        sourceRow.count += 1;
+        sourceRow.value += value;
+        sourceMix.set(sourceKey, sourceRow);
+      }
+    });
+    summary.ownerWorkload = [...ownerWorkload.values()].sort((a, b) => {
+      if (a.owner === "Unassigned") return 1;
+      if (b.owner === "Unassigned") return -1;
+      return b.value - a.value || b.count - a.count || a.owner.localeCompare(b.owner);
+    });
+    summary.sourceBreakdown = [...sourceMix.values()].sort((a, b) => b.count - a.count || b.value - a.value || a.source.localeCompare(b.source));
 
     const allTrustedOutcomes = workOrders.filter(isTrustedOutcome);
     const reportingOutcomes = allTrustedOutcomes.filter((wo) => {
@@ -1351,6 +1423,31 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     summary.lostReasonBreakdown = [...lostReasons.entries()]
       .map(([reason, count]) => ({ reason, count }))
       .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason));
+
+    const buildOutcomePerformance = (field, fallbackLabel) => {
+      const grouped = new Map();
+      reportingOutcomes.forEach((wo) => {
+        const label = String(wo[field] || "").trim() || fallbackLabel;
+        const key = label.toLowerCase();
+        const row = grouped.get(key) || { label, total: 0, won: 0, lost: 0, closedValue: 0, wonValue: 0, winRate: null };
+        const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+        row.total += 1;
+        row.closedValue += value;
+        if (wo.sales_status === "won") {
+          row.won += 1;
+          row.wonValue += value;
+        } else if (wo.sales_status === "lost") {
+          row.lost += 1;
+        }
+        grouped.set(key, row);
+      });
+      return [...grouped.values()].map((row) => ({
+        ...row,
+        winRate: row.total > 0 ? (row.won / row.total) * 100 : null,
+      })).sort((a, b) => b.total - a.total || b.closedValue - a.closedValue || a.label.localeCompare(b.label));
+    };
+    summary.ownerOutcomePerformance = buildOutcomePerformance("sales_rep", "Unassigned");
+    summary.sourceOutcomePerformance = buildOutcomePerformance("lead_source", "Unspecified");
     return summary;
   }, [scopedWorkOrders, workOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp]);
 
