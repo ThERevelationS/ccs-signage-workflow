@@ -1917,6 +1917,12 @@ Deno.serve(async (req) => {
       }
 
       const savedEntry = await entryEntity.get(entry.id);
+      if (claimedState && savedEntry?.clock_out) {
+        await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+          endReason: 'admin_correction', officialEnd: savedEntry.clock_out,
+        });
+      }
       if (entry.status === 'clocked_in' && !clockOut) {
         const freshActiveState = await freshState(stateEntity, state.id);
         if (freshActiveState.status !== 'clocked_in' || freshActiveState.active_entry_id !== entry.id) {
@@ -2088,6 +2094,10 @@ Deno.serve(async (req) => {
       }
 
       if (claimedState) {
+        await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+          endReason: 'admin_correction', officialEnd: now,
+        });
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
           status: 'clocked_out', active_entry_id: null, last_action_at: now, pending_started_at: null,
