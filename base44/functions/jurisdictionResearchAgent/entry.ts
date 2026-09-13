@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
+import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -24,7 +25,7 @@ JURISDICTION TARGET: ${jurisdictionName} ${jurisdictionType}, ${jurisdictionStat
 === CRITICAL RULES ===
 1. ONLY use official government sources (city/county/state websites)
 2. DO NOT fabricate, guess, or hallucinate URLs or data
-3. If information cannot be verified, explicitly state "INFORMATION NOT FOUND" 
+3. If information cannot be verified, return null for that field instead of placeholder text
 4. Cross-reference information when possible
 5. Prioritize official ordinances and zoning codes over secondary sources
 6. For each URL you provide, verify it exists and is from an official government domain
@@ -136,7 +137,7 @@ Before returning:
 ☐ Contact info is from official sources
 ☐ Data comes from current ordinances (not outdated)
 ☐ Specific numbers/rules can be traced to actual documents
-☐ "INFORMATION NOT FOUND" is used when data cannot be verified
+☐ null is used when data cannot be verified
 ☐ Parent county information is accurate if included`;
 
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -162,7 +163,7 @@ Before returning:
       }
     });
 
-    const data = typeof result === 'string' ? JSON.parse(result) : result;
+    const data = sanitizeJurisdictionResearch(typeof result === 'string' ? JSON.parse(result) : result);
     
     return Response.json({ 
       success: true, 
