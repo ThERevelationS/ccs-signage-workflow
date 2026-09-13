@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2 } from "lucide-react";
+import { getStageAgingState } from "@/components/sales/salesStageAging";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -78,6 +79,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const expectedClose = localDate(workOrder.expected_close_date);
                   const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(workOrder.sales_status);
                   const expectedCloseOverdue = expectedClose && expectedClose < today && !["won", "lost"].includes(workOrder.sales_status);
+                  const stageAging = getStageAgingState(workOrder, today);
                   return (
                     <article
                       key={workOrder.id}
@@ -104,6 +106,11 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       </div>
                       {typeof workOrder.probability === "number" && Number.isFinite(workOrder.probability) && (
                         <div className="mt-1 text-xs text-gray-500">Probability <span className="font-semibold text-gray-700">{workOrder.probability}%</span></div>
+                      )}
+                      {stageAging.tracked ? (
+                        <div className={`mt-1 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>Stage age {stageAging.ageDays}d{workOrder.sales_status === "on_hold" ? " · on hold" : stageAging.aged ? " · aged" : ""}</div>
+                      ) : (
+                        <div className="mt-1 text-xs text-gray-400">Stage age not tracked</div>
                       )}
 
                       {followUp ? (
