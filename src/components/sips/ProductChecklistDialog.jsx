@@ -1042,6 +1042,17 @@ export default function ProductChecklistDialog({
     });
     setExpandedItems(nextExpanded);
   };
+  const activeProductNames = Object.keys(activeChecklist);
+  const allProductsCollapsed = activeProductNames.length > 0 && activeProductNames.every(productName => collapsedProducts[productName] === true);
+  const toggleAllProducts = () => {
+    setCollapsedProducts(prev => {
+      const nextCollapsed = { ...prev };
+      activeProductNames.forEach(productName => {
+        nextCollapsed[productName] = !allProductsCollapsed;
+      });
+      return nextCollapsed;
+    });
+  };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1117,12 +1128,20 @@ export default function ProductChecklistDialog({
                 </div>
               </div>
               </div>
-              {expandableChecklistIds.length > 0 && (
-                <Button type="button" variant="ghost" size="sm" onClick={toggleAllDetails} className="w-full sm:w-auto h-8 text-xs text-gray-600">
-                  {allDetailsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
-                  {allDetailsCollapsed ? "Expand task details" : "Collapse task details"}
-                </Button>
-              )}
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1">
+                {activeProductNames.length > 1 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={toggleAllProducts} className="w-full sm:w-auto h-8 text-xs text-purple-700">
+                    {allProductsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
+                    {allProductsCollapsed ? "Expand all products" : "Collapse all products"}
+                  </Button>
+                )}
+                {expandableChecklistIds.length > 0 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={toggleAllDetails} className="w-full sm:w-auto h-8 text-xs text-gray-600">
+                    {allDetailsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
+                    {allDetailsCollapsed ? "Expand task details" : "Collapse task details"}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
