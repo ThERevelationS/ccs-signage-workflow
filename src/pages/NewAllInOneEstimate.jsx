@@ -91,7 +91,8 @@ export default function NewAllInOneEstimate() {
       if (clientName) {
         customer = await upsertCustomerFromEstimate(
           { ...form, client_name: clientName },
-          customers
+          customers,
+          { sessionToken }
         );
       }
 
