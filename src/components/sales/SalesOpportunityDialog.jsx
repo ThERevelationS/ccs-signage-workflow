@@ -86,6 +86,14 @@ const displayValue = (field, value) => {
   return String(value);
 };
 
+const historyTitle = (entry) => {
+  if (entry.field_name === "sales_last_follow_up_completed_at") return "Follow-up completed";
+  if (entry.field_name === "sales_last_follow_up_outcome") return "Follow-up outcome recorded";
+  if (entry.field_name === "sales_status") return "Sales status changed";
+  if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
+  return `${FIELD_LABELS[entry.field_name] || entry.field_name} changed`;
+};
+
 export default function SalesOpportunityDialog({
   workOrder,
   users = [],
@@ -310,8 +318,12 @@ export default function SalesOpportunityDialog({
                 <div key={entry.id} className="flex gap-3 rounded-lg border border-gray-100 px-3 py-2">
                   <UserRound className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-medium text-gray-800">{FIELD_LABELS[entry.field_name] || entry.field_name} changed</div>
-                    <div className="mt-0.5 text-xs text-gray-500"><span className="line-through">{displayValue(entry.field_name, entry.old_value)}</span> → <span className="font-medium text-gray-700">{displayValue(entry.field_name, entry.new_value)}</span></div>
+                    <div className="text-xs font-medium text-gray-800">{historyTitle(entry)}</div>
+                    {entry.field_name === "sales_last_follow_up_completed_at" || entry.field_name === "sales_last_follow_up_outcome" ? (
+                      <div className="mt-0.5 text-xs font-medium text-gray-700">{displayValue(entry.field_name, entry.new_value)}</div>
+                    ) : (
+                      <div className="mt-0.5 text-xs text-gray-500"><span className="line-through">{displayValue(entry.field_name, entry.old_value)}</span> → <span className="font-medium text-gray-700">{displayValue(entry.field_name, entry.new_value)}</span></div>
+                    )}
                     <div className="mt-1 text-[11px] text-gray-400">{entry.changed_by_name || entry.changed_by_email || "Unknown"}{entry.created_date ? ` · ${format(new Date(entry.created_date), "MMM d, yyyy h:mm a")}` : ""}</div>
                   </div>
                 </div>
