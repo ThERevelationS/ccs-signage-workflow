@@ -581,40 +581,15 @@ export default function Permitting() {
     });
   }, [allGroups, searchTerm]);
 
-  // A group is "completed" only if it has lines AND ALL lines are completed
-  // A group is "active" if it has any line needing attention now OR has no lines (fresh WO awaiting locality)
-  // A group is "waiting" if all lines have future follow-up dates
-  const { activeGroups, waitingGroups, completedGroups } = useMemo(() => {
-    const active = [];
-    const waiting = [];
-    const completed = [];
-
-    filteredGroups.forEach(g => {
-      if (g.lines.length === 0) {
-        // Fresh WO, no lines yet → active (awaiting locality selection)
-        active.push(g);
-        return;
-      }
-
-      const allCompleted = g.lines.every(li => li.status === 'completed');
-      if (allCompleted) {
-        completed.push(g);
-        return;
-      }
-
-      // Has at least one non-completed line
-      const hasActiveNow = g.lines.some(li =>
-        li.status !== 'completed' && (!li.next_followup_date || li.next_followup_date <= today)
-      );
-      if (hasActiveNow) {
-        active.push(g);
-      } else {
-        waiting.push(g);
-      }
-    });
-
-    return { activeGroups: active, waitingGroups: waiting, completedGroups: completed };
-  }, [filteredGroups, today]);
+  // Guided queue: every Work Order lands in one plain-English state so staff can
+  // immediately see what needs attention without losing the detailed tracker below.
+  const queueSummary = useMemo(() => summarizePermitQueue(filteredGroups, today), [filteredGroups, today]);
+  const queueCounts = useMemo(() => Object.fromEntries(
+    PERMIT_QUEUE_ORDER.map((key) => [key, queueSummary[key]?.length || 0])
+  ), [queueSummary]);
+  const visibleQueueKeys = queueFilter === "all"
+    ? PERMIT_QUEUE_ORDER
+    : [queueFilter];
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
 
