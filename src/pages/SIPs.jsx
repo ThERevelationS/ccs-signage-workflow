@@ -317,19 +317,39 @@ export default function SIPs() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mt-4">
-            <div className="rounded-lg border bg-white/70 p-3">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              aria-pressed={statusFilter === "all"}
+              className={`rounded-lg border bg-white/70 p-3 text-left hover:bg-white transition-colors ${statusFilter === "all" ? "ring-2 ring-gray-400 border-gray-300" : ""}`}
+            >
               <div className="text-xs text-gray-500">Active queue</div>
               <div className="text-xl font-bold text-gray-800">{activeWorkOrders.length}</div>
-            </div>
-            <button type="button" onClick={() => setStatusFilter("attention")} className="rounded-lg border bg-orange-50/80 p-3 text-left hover:bg-orange-100 transition-colors">
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("attention")}
+              aria-pressed={statusFilter === "attention"}
+              className={`rounded-lg border bg-orange-50/80 p-3 text-left hover:bg-orange-100 transition-colors ${statusFilter === "attention" ? "ring-2 ring-orange-400 border-orange-300" : ""}`}
+            >
               <div className="text-xs text-orange-700 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" />Needs attention</div>
               <div className="text-xl font-bold text-orange-800">{attentionCount}</div>
             </button>
-            <button type="button" onClick={() => setStatusFilter("overdue")} className="rounded-lg border bg-red-50/80 p-3 text-left hover:bg-red-100 transition-colors">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("overdue")}
+              aria-pressed={statusFilter === "overdue"}
+              className={`rounded-lg border bg-red-50/80 p-3 text-left hover:bg-red-100 transition-colors ${statusFilter === "overdue" ? "ring-2 ring-red-400 border-red-300" : ""}`}
+            >
               <div className="text-xs text-red-700">Overdue</div>
               <div className="text-xl font-bold text-red-800">{overdueCount}</div>
             </button>
-            <button type="button" onClick={() => setStatusFilter("incomplete")} className="rounded-lg border bg-blue-50/80 p-3 text-left hover:bg-blue-100 transition-colors">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("incomplete")}
+              aria-pressed={statusFilter === "incomplete"}
+              className={`rounded-lg border bg-blue-50/80 p-3 text-left hover:bg-blue-100 transition-colors ${statusFilter === "incomplete" ? "ring-2 ring-blue-400 border-blue-300" : ""}`}
+            >
               <div className="text-xs text-blue-700 flex items-center gap-1"><ClipboardList className="w-3.5 h-3.5" />Incomplete checklists</div>
               <div className="text-xl font-bold text-blue-800">{incompleteChecklistCount}</div>
             </button>
