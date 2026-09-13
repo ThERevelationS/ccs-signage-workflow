@@ -39,6 +39,7 @@ const groupConfig = {
   assignments: { label: "Assignments", icon: CalendarDays },
   inventory: { label: "Inventory", icon: Package },
   warranties: { label: "Warranties", icon: ShieldCheck },
+  lifecycle: { label: "Replacement", icon: Truck },
   approvals: { label: "Approvals", icon: DollarSign },
   requests: { label: "Requests", icon: ShoppingCart },
   bouncie: { label: "Bouncie", icon: Navigation },
@@ -62,7 +63,7 @@ export default function FleetNotifications() {
         const user = await base44.auth.me().catch(() => null);
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
-        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
@@ -71,6 +72,7 @@ export default function FleetNotifications() {
           filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
           base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
           base44.functions.invoke("fleetWarrantyAction", { action: "portfolio" }).catch(() => null),
+          admin ? base44.functions.invoke("fleetLifecycleAction", { action: "portfolio" }).catch(() => null) : Promise.resolve(null),
           admin ? listAllFleetRows(base44.entities.FleetRepairEstimate, "-updated_date", { label: "Fleet repair-estimate approval notifications" }).catch(() => []) : Promise.resolve([]),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "warning" }, "-timestamp", { label: "Unread Bouncie warning notifications" }),
           filterAllFleetRows(base44.entities.BouncieNotification, { is_read: false, severity: "critical" }, "-timestamp", { label: "Unread critical Bouncie notifications" }),
@@ -85,6 +87,7 @@ export default function FleetNotifications() {
           requests: requests || [],
           reservations: reservationResult?.data?.reservations || [],
           warranties: warrantyResult?.data?.rows || [],
+          lifecycleRows: lifecycleResult?.data?.rows || [],
           repairEstimates: repairEstimates || [],
           bouncieAlerts: [...(bouncieCritical || []), ...(bouncieWarnings || [])],
           bouncieVehicles: bouncieVehiclesResult?.data?.data || [],
@@ -202,7 +205,33 @@ export default function FleetNotifications() {
     }
 
     if (isAdmin) {
-      for (const estimate of data.repairEstimates || []) {
+      for (const row of data.lifecycleRows || []) {
+        if (row.equipment?.status === "retired") continue;
+        const profile = row.profile || {};
+        const metrics = row.metrics || {};
+        const priority = row.priority || {};
+        const replacementStatus = String(profile.replacement_status || "monitor");
+        const targetWithinYear = metrics.target_replacement_days != null && Number(metrics.target_replacement_days) <= 365;
+        const urgentStatus = ["replace_soon", "approved"].includes(replacementStatus);
+        const highPriority = priority.label === "High";
+        if (!urgentStatus && !highPriority && !targetWithinYear) continue;
+        const reasons = [
+          urgentStatus ? replacementStatus.replaceAll("_", " ") : "",
+          highPriority ? `priority ${priority.score ?? "—"} · High` : "",
+          targetWithinYear ? (Number(metrics.target_replacement_days) < 0 ? `${Math.abs(Number(metrics.target_replacement_days))} days past replacement target` : `${Number(metrics.target_replacement_days)} days to replacement target`) : "",
+        ].filter(Boolean);
+        rows.push({
+          key: `lifecycle-${row.equipment?.id || row.profile?.id}`,
+          group: "lifecycle",
+          severity: urgentStatus || (targetWithinYear && Number(metrics.target_replacement_days) < 0) ? "critical" : "warning",
+          title: `Replacement planning: ${row.equipment?.name || "Fleet asset"}`,
+          detail: reasons.join(" · "),
+          to: row.equipment?.id ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(row.equipment.id)}&tab=lifecycle` : createPageUrl("FleetAnalytics"),
+          timestamp: profile.updated_date || row.equipment?.updated_date || "",
+        });
+      }
++
++      for (const estimate of data.repairEstimates || []) {
         if (estimate.status !== "submitted") continue;
         rows.push({
           key: `repair-estimate-${estimate.id}`,
