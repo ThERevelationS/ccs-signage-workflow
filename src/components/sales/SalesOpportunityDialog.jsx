@@ -21,6 +21,13 @@ const SALES_STATUSES = [
   { value: "lost", label: "Lost" },
 ];
 
+const SUGGESTED_PROBABILITY_BY_STATUS = {
+  lead: 10,
+  quoted: 50,
+  follow_up: 70,
+  on_hold: 25,
+};
+
 const SALES_HISTORY_FIELDS = new Set([
   "sales_status",
   "sales_rep",
@@ -114,6 +121,9 @@ export default function SalesOpportunityDialog({
   const value = Number(workOrder?.quoted_amount ?? workOrder?.estimate_amount ?? 0) || 0;
   const statusLabel = SALES_STATUSES.find((status) => status.value === workOrder?.sales_status)?.label || "Lead";
   const closeout = ["won", "lost"].includes(workOrder?.sales_status);
+  const probabilityIsSet = typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability);
+  const suggestedProbability = SUGGESTED_PROBABILITY_BY_STATUS[workOrder?.sales_status || "lead"];
+  const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -168,6 +178,15 @@ export default function SalesOpportunityDialog({
                 <Input type="number" min="0" max="100" value={workOrder.probability ?? ""} disabled={!isRegistered} onChange={(event) => update({ probability: Math.max(0, Math.min(100, Number(event.target.value) || 0)) })} className="h-9" />
                 <span className="text-sm text-gray-500">%</span>
               </div>
+              {probabilityIsSet ? (
+                <div className="mt-2 text-xs text-gray-500">Weighted contribution: <span className="font-semibold text-gray-700">{money(weightedContribution)}</span></div>
+              ) : suggestedProbability != null && !closeout ? (
+                <button type="button" disabled={!isRegistered} onClick={() => update({ probability: suggestedProbability })} className="mt-2 text-left text-xs font-medium text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400">
+                  Suggested starting point for {statusLabel}: {suggestedProbability}% · Apply
+                </button>
+              ) : (
+                <div className="mt-2 text-xs text-gray-400">No probability set.</div>
+              )}
             </div>
             <div className="rounded-xl border bg-white p-3">
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Owner</Label>
