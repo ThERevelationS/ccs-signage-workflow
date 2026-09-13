@@ -285,6 +285,13 @@ export default function SIPs() {
     setStatusFilter("all");
     setSortMode("meeting");
   };
+  const jumpToRevisitLater = () => {
+    if (futureRevisitOrders.length === 0) return;
+    if (searchQuery) setSearchQuery("");
+    setTimeout(() => {
+      document.getElementById("sips-revisit-later")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
 
   if (isLoading) {
     return (
@@ -323,7 +330,7 @@ export default function SIPs() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-2 mt-4">
             <button
               type="button"
               onClick={() => setStatusFilter("all")}
@@ -368,6 +375,16 @@ export default function SIPs() {
             >
               <div className="text-xs text-blue-700 flex items-center gap-1"><ClipboardList className="w-3.5 h-3.5" />Incomplete checklists</div>
               <div className="text-xl font-bold text-blue-800">{incompleteChecklistCount}</div>
+            </button>
+            <button
+              type="button"
+              onClick={jumpToRevisitLater}
+              disabled={futureRevisitOrders.length === 0}
+              className="rounded-lg border bg-purple-50/80 p-3 text-left hover:bg-purple-100 transition-colors disabled:cursor-default disabled:opacity-60"
+              title={futureRevisitOrders.length > 0 ? "Jump to Revisit Later" : "No items are waiting for a revisit date"}
+            >
+              <div className="text-xs text-purple-700 flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />Revisit Later</div>
+              <div className="text-xl font-bold text-purple-800">{futureRevisitOrders.length}</div>
             </button>
             <div className="rounded-lg border bg-green-50/80 p-3">
               <div className="text-xs text-green-700">Active value</div>
@@ -826,7 +843,7 @@ export default function SIPs() {
 
         {/* Future Revisit Section */}
         {visibleFutureRevisitOrders.length > 0 && (
-          <div className="clay-card p-3 sm:p-4 w-full mt-6" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <div id="sips-revisit-later" className="clay-card p-3 sm:p-4 w-full mt-6 scroll-mt-4" style={{ borderLeft: '4px solid #f59e0b' }}>
             <h3 className="text-sm font-semibold text-amber-700 mb-3 flex flex-wrap items-center gap-2">
               <CalendarClock className="w-4 h-4" /> Revisit Later ({visibleFutureRevisitOrders.length})
               <span className="text-xs text-gray-400 font-normal">— future revisit date set, not in active queue</span>
