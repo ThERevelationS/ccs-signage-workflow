@@ -178,7 +178,7 @@ export default function FleetNotifications() {
         group: "work_orders",
         severity: workOrder.priority === "critical" ? "critical" : "warning",
         title: `${workOrder.work_order_number} · ${workOrder.title}`,
-        detail: `${names[workOrder.equipment_id] || "Unresolved equipment"} · ${issues.join(" · ")}`,
+        detail: `${names[workOrder.equipment_id] || "Unresolved equipment"} · ${workOrder.public_submission_key ? `Public report${workOrder.public_reporter_name ? ` · ${workOrder.public_reporter_name}` : ""} · ` : ""}${issues.join(" · ")}`,
         to: `${createPageUrl("FleetWorkOrders")}?status=all&workOrder=${encodeURIComponent(workOrder.id)}${workOrder.equipment_id ? `&equipment=${encodeURIComponent(workOrder.equipment_id)}` : ""}`,
         timestamp: workOrder.started_date || workOrder.created_date || "",
       });
