@@ -37,6 +37,7 @@ export default function SIPs() {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [checklistDialog, setChecklistDialog] = useState({ open: false, workOrder: null });
   const [wipTaskDescriptions, setWipTaskDescriptions] = useState([]);
+  const [dropdownConditions, setDropdownConditions] = useState([]);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [quickEditError, setQuickEditError] = useState("");
@@ -64,7 +65,7 @@ export default function SIPs() {
     if (!showLoading) setIsRefreshing(true);
     setBoardError("");
     try {
-      const [orders, usersData, taskDescSetting] = await Promise.all([
+      const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
         loadAllEntityRows({
           entity: WorkOrder,
           query: { is_rider: false, completed: false, deleted: { $ne: true } },
@@ -76,6 +77,11 @@ export default function SIPs() {
           entity: base44.entities.GlobalSettings,
           settingKey: "salesTaskDescriptions",
           label: "SIPs sales task descriptions",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: "dropdownConditions",
+          label: "SIPs checklist dropdown conditions",
         })
       ]);
       
@@ -93,6 +99,7 @@ export default function SIPs() {
         });
       }
       setWipTaskDescriptions(wipDescs);
+      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
       
       // Filter for SIPs - items where:
       // 1. current_task_assigned_to is "SIPs", OR
@@ -226,8 +233,14 @@ export default function SIPs() {
     
     if (mainChecklistItems.length === 0) return { completed: 0, total: 0 };
     
-    // Count completed main items (have approved_by AND custom_dropdown_value)
-    const mainCompleted = mainChecklistItems.filter(item => item.approved_by && item.custom_dropdown_value).length;
+    // Match ProductChecklistDialog completion semantics exactly:
+    // an approver + status is required, configured Continued statuses stay open,
+    // and legacy/custom statuses that are no longer configured remain complete.
+    const mainCompleted = mainChecklistItems.filter(item => {
+      if (!item.approved_by || !item.custom_dropdown_value) return false;
+      const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+      return !condition || condition.is_completed;
+    }).length;
     
     return { 
       completed: mainCompleted, 
