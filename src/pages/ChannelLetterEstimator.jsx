@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsContent } from "@/components/ui/tabs";
 import { Plus, ArrowLeft, Wrench, Package, FileText, ListChecks, Boxes, Calculator, MapPin, Copy, DollarSign, Check, HardHat, Type, Camera, Sparkles, TrendingUp, HelpCircle } from "lucide-react";
 import ChannelLetterHelpAssistant from "@/components/channelLetterInstall/ChannelLetterHelpAssistant";
 import { useUnsavedChanges } from "@/components/UnsavedChangesContext";
+import { useAuth } from "@/components/auth/EmailGate";
 import ClientSearchInput from "@/components/ClientSearchInput";
 import InstallSummaryCard from "@/components/channelLetterInstall/InstallSummaryCard";
 import ItemsList from "@/components/channelLetterInstall/ItemsList";
@@ -76,6 +77,7 @@ const blankProject = () => ({
 
 export default function ChannelLetterEstimator({ embedded = false, embeddedProjectId, embeddedEstimateId, onClose, onSaved }) {
   const navigate = useNavigate();
+  const { sessionToken } = useAuth();
   const [searchParams] = useSearchParams();
   // Prop wins when embedded inside the All-In-One estimator.
   const editId = embeddedProjectId || searchParams.get("edit") || searchParams.get("id");
@@ -498,6 +500,7 @@ export default function ChannelLetterEstimator({ embedded = false, embeddedProje
         project_id: savedId,
         project_name: project.project_name,
         estimate_number: project.estimate_number,
+        sessionToken,
       });
 
       if (estimateId && savedId) {
