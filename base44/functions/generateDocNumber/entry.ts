@@ -1,18 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Atomic shared number generator for estimates (EST-) and orders (INV-).
 // Both draw from the SAME sequence so numbers never overlap.
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
+    const actor = await authenticateSignShopSession(base44, body?.session_token);
     const docType = body.doc_type === 'order' ? 'order' : 'estimate';
     const prefix = docType === 'order' ? 'INV-' : 'EST-';
     const requestedCount = Math.min(Math.max(parseInt(body.count || 1, 10) || 1, 1), 50);
-    if (requestedCount > 1 && user.role !== 'admin') {
+    if (requestedCount > 1 && actor?.role !== 'admin') {
       return Response.json({ error: 'Batch document-number allocation requires admin access' }, { status: 403 });
     }
     const count = requestedCount;
@@ -75,7 +74,11 @@ export default async function (req) {
 
     throw new Error('Document number allocation was busy because the shared counter kept changing. Try again.');
   } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
     console.error('generateDocNumber error:', error?.message || error);
-    return Response.json({ error: 'Document number allocation could not be completed safely' }, { status: 500 });
+    return Response.json({
+      error: safeStatus === 500 ? 'Document number allocation could not be completed safely' : error.message,
+    }, { status: safeStatus });
   }
 }
