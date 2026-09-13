@@ -11,6 +11,7 @@ import {
   CalendarClock,
   CalendarDays,
   ClipboardList,
+  ClipboardCheck,
   DollarSign,
   Droplets,
   Loader2,
@@ -35,6 +36,7 @@ function hasRuntimeBouncieIdentityConflict(equipment, bouncieVehicles) {
 
 const groupConfig = {
   maintenance: { label: "Maintenance", icon: CalendarClock },
+  inspections: { label: "Inspections", icon: ClipboardCheck },
   work_orders: { label: "Work Orders", icon: ClipboardList },
   assignments: { label: "Assignments", icon: CalendarDays },
   inventory: { label: "Inventory", icon: Package },
@@ -63,10 +65,11 @@ export default function FleetNotifications() {
         const user = await base44.auth.me().catch(() => null);
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
-        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, inspectionRows, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
+          filterAllFleetRows(base44.entities.FleetInspection, { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention notifications" }).catch(() => []),
           listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet part stock notifications" }),
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluid stock notifications" }),
           filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
@@ -82,6 +85,7 @@ export default function FleetNotifications() {
           equipment: equipment || [],
           tasks: tasks || [],
           workOrders: workOrders || [],
+          inspections: inspectionRows || [],
           parts: parts || [],
           fluids: fluids || [],
           requests: requests || [],
@@ -140,6 +144,22 @@ export default function FleetNotifications() {
         detail: `${names[task.equipment_id] || "Unresolved equipment"}${task.start_date ? ` · due ${task.start_date}` : ""}`,
         to: task.equipment_id ? `${createPageUrl("FleetMaintenance")}?equipment=${encodeURIComponent(task.equipment_id)}&tab=schedule` : `${createPageUrl("FleetMaintenance")}?status=${overdue ? "overdue" : "pending"}`,
         timestamp: task.start_date || "",
+      });
+    }
+
+    const recentFailureCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    for (const inspection of data.inspections || []) {
+      const recentFailed = inspection.status === "failed" && (Date.parse(inspection.completed_at || inspection.updated_date || inspection.created_date || "") || 0) >= recentFailureCutoff;
+      const needsAttention = inspection.status === "needs_attention";
+      if (!recentFailed && !needsAttention) continue;
+      rows.push({
+        key: `inspection-${inspection.id}`,
+        group: "inspections",
+        severity: inspection.status === "failed" ? "critical" : "warning",
+        title: inspection.status === "failed" ? `Recent failed inspection: ${inspection.template_name || "Fleet inspection"}` : `Inspection needs attention: ${inspection.template_name || "Fleet inspection"}`,
+        detail: `${names[inspection.equipment_id] || "Unresolved equipment"}${inspection.failed_item_count ? ` · ${inspection.failed_item_count} failed item${inspection.failed_item_count === 1 ? "" : "s"}` : ""}${inspection.generated_work_order_ids?.length ? ` · ${inspection.generated_work_order_ids.length} Fleet WO${inspection.generated_work_order_ids.length === 1 ? "" : "s"}` : ""}`,
+        to: inspection.equipment_id ? `${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(inspection.equipment_id)}&tab=inspections` : createPageUrl("FleetInspections"),
+        timestamp: inspection.completed_at || inspection.updated_date || inspection.created_date || "",
       });
     }
 
