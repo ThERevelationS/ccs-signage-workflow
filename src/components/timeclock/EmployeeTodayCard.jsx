@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock3, Coffee, History, Loader2, Pause, Play, RefreshCw } from "lucide-react";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 function formatDuration(totalMinutes) {
   const minutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
