@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
+import { getStageAgingState } from "@/components/sales/salesStageAging";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -35,6 +36,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
+        const stageAging = getStageAgingState(wo, today);
         return (
           <div
             key={wo.id}
@@ -72,6 +74,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               )}
               {typeof wo.probability === "number" && Number.isFinite(wo.probability) && (
                 <span>Probability: <span className="text-gray-700">{wo.probability}%</span></span>
+              )}
+              {stageAging.tracked ? (
+                <span className={stageAging.aged ? "font-semibold text-rose-700" : ""}>Stage age: <span>{stageAging.ageDays}d{wo.sales_status === "on_hold" ? " · on hold" : stageAging.aged ? " · aged" : ""}</span></span>
+              ) : (
+                <span className="text-gray-400">Stage age: not tracked</span>
               )}
               {deadline && (
                 <span>Task due: <span className="text-gray-700">{format(deadline, 'MMM d, yyyy')}</span></span>
