@@ -416,6 +416,7 @@ export default function EstimateDetail() {
       reason,
       quoteTotal: currentPricing.quoteTotal,
       internalCost,
+      sessionToken,
     });
     setOpenRevision(revision);
     setRevisionRefreshKey((value) => value + 1);
