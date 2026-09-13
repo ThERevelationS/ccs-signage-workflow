@@ -33,6 +33,7 @@ export default function WorkPauseOverlay({
   sessionTokenOverride = "",
   credentialOverride = null,
   disabled = false,
+  onResumed = null,
 } = {}) {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const currentUser = userOverride || shellUser;
@@ -132,6 +133,7 @@ export default function WorkPauseOverlay({
       resumeRequestRef.current = "";
       setShowResumePrompt(false);
       setPauseState(null);
+      if (typeof onResumed === "function") onResumed(data);
       try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
       window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
       await loadStatus({ preservePausedOnError: true });
