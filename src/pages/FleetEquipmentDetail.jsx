@@ -258,7 +258,7 @@ export default function FleetEquipmentDetail() {
         {activeTab === "assignments" && <AssignmentsTab equipment={equipment} retired={retired} />}
         {activeTab === "lifecycle" && <FleetLifecyclePanel equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "history" && <HistoryTab equipment={equipment} completedOrders={completedOrders} logs={logs} requests={requests} />}
-        {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} />}
+        {activeTab === "timeline" && <FleetEquipmentTimeline equipment={equipment} workOrders={workOrders} logs={logs} notifications={notifications} requests={requests} inspections={inspections} />}
         {activeTab === "documents" && <FleetEquipmentDocuments equipment={equipment} isAdmin={isAdmin} />}
         {activeTab === "alerts" && <AlertsTab notifications={notifications} />}
         {activeTab === "details" && <DetailsTab equipment={equipment} metadata={metadata} isAdmin={isAdmin} editingMeta={editingMeta} setEditingMeta={setEditingMeta} metaForm={metaForm} setMetaForm={setMetaForm} savingMeta={savingMeta} saveMetadata={saveMetadata} />}
