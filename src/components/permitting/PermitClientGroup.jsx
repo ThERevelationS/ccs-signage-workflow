@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
 import InlineEditField from "./InlineEditField";
@@ -19,6 +29,7 @@ export default function PermitClientGroup({
   onDeleteLine,
   onUpdateWorkOrderField,
   onWorkNotesChanged,
+  onFixPermittingStage,
   currentUser,
   isRegistered,
   localities,
@@ -29,6 +40,8 @@ export default function PermitClientGroup({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
+  const [stageFixOpen, setStageFixOpen] = useState(false);
+  const [stageFixSaving, setStageFixSaving] = useState(false);
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
 
@@ -152,12 +165,23 @@ export default function PermitClientGroup({
             </span>
           )}
           {wo?._permittingRoutingMismatch && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800"
-              title={wo._permittingRoutingWarning}
-            >
-              <AlertTriangle className="w-3 h-3" /> Stage mismatch
-            </span>
+            <>
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800"
+                title={wo._permittingRoutingWarning}
+              >
+                <AlertTriangle className="w-3 h-3" /> Stage mismatch
+              </span>
+              {wo._permittingStageFixAvailable && isRegistered && onFixPermittingStage && (
+                <button
+                  type="button"
+                  onClick={() => setStageFixOpen(true)}
+                  className="font-semibold text-amber-800 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
+                >
+                  Fix stage
+                </button>
+              )}
+            </>
           )}
           <span className="font-semibold text-gray-600">Next:</span>
           <span className="text-gray-700">{queueState.nextAction}</span>
@@ -211,6 +235,35 @@ export default function PermitClientGroup({
           )}
         </div>
       )}
+
+      <AlertDialog open={stageFixOpen} onOpenChange={(open) => !stageFixSaving && setStageFixOpen(open)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set this Work Order stage to Permitting?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The current task already routes {wo?.client_name || "this job"} to the Permitting page, but the Work Order stage is still {wo?.current_stage || "not set"}. This will change only the workflow stage to Permitting using the normal CCS stage-transition process. Permit lines, task description, notes, customer/job links, and files will not be changed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={stageFixSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={stageFixSaving}
+              onClick={async (event) => {
+                event.preventDefault();
+                setStageFixSaving(true);
+                try {
+                  const fixed = await onFixPermittingStage?.(wo?.id);
+                  if (fixed) setStageFixOpen(false);
+                } finally {
+                  setStageFixSaving(false);
+                }
+              }}
+            >
+              {stageFixSaving ? "Updating…" : "Set Stage to Permitting"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {showLocalityPicker && (
         <LocalityPickerDialog
