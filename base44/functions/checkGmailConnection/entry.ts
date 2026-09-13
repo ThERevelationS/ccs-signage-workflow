@@ -1,17 +1,23 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
+        const body = await req.json().catch(() => ({}));
+        const actor = await authenticateSignShopSession(base44, body?.session_token);
+        if (actor?.role !== 'admin') {
+            return Response.json({ connected: false, error: 'Forbidden: Admin access required' }, { status: 403 });
+        }
+
         let user = null;
         try {
             user = await base44.auth.me();
         } catch (e) {
             return Response.json({ connected: false, error: 'Not authenticated' }, { status: 401 });
         }
-        
         if (!user || user.role !== 'admin') {
-            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+            return Response.json({ connected: false, error: 'Forbidden: Admin access required' }, { status: 403 });
         }
 
         // Try to get access token from platform's Gmail connector
@@ -36,10 +42,12 @@ Deno.serve(async (req) => {
         return Response.json({ connected: true, email: profile.emailAddress });
 
     } catch (error) {
-        if (error?.message && (error.message.includes('401') || error.message.includes('Authentication required'))) {
-            return Response.json({ connected: false, error: 'Not authenticated' }, { status: 401 });
-        }
+        const status = Number(error?.status || error?.statusCode || 500);
+        const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
         console.error('checkGmailConnection error:', error?.message || error);
-        return Response.json({ connected: false, error: 'Gmail connection could not be checked safely' }, { status: 500 });
+        return Response.json({
+            connected: false,
+            error: safeStatus === 500 ? 'Gmail connection could not be checked safely' : error.message,
+        }, { status: safeStatus });
     }
 });
