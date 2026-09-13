@@ -181,6 +181,13 @@ export default function FleetInspections() {
     return templates.filter(template => template.active !== false && (!eq || !template.applicable_equipment_types?.length || template.applicable_equipment_types.includes(eq.type)));
   }, [templates, equipment, startDialog?.equipment_id]);
 
+  const closeStartDialog = () => {
+    setStartDialog(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  };
+
   const startInspection = async () => {
     if (!startDialog?.equipment_id || !startDialog?.template_id) return setError("Choose equipment and an inspection template.");
     setError("");
@@ -194,7 +201,7 @@ export default function FleetInspections() {
       if (data?.error) throw new Error(data.error);
       const template = data.template || templates.find(item => item.id === startDialog.template_id);
       setRunner({ inspection: data.inspection, template });
-      setStartDialog(null);
+      closeStartDialog();
       await load();
     } catch (err) { setError(err?.message || "Unable to start Fleet inspection."); }
   };
@@ -247,7 +254,7 @@ export default function FleetInspections() {
       </div>
     </div>
 
-    <StartInspectionDialog open={!!startDialog} state={startDialog} setState={setStartDialog} equipment={activeEquipment} templates={compatibleTemplates} onClose={() => setStartDialog(null)} onStart={startInspection}/>
+    <StartInspectionDialog open={!!startDialog} state={startDialog} setState={setStartDialog} equipment={activeEquipment} templates={compatibleTemplates} onClose={closeStartDialog} onStart={startInspection}/>
     <TemplateDialog open={!!templateDialog} existing={templateDialog?.existing || null} seed={templateDialog?.seed || null} creationKey={templateDialog?.creationKey || ""} equipmentTypes={[...new Set(activeEquipment.map(item => item.type).filter(Boolean))].sort()} onClose={() => setTemplateDialog(null)} onSave={saveTemplate}/>
     <InspectionRunner open={!!runner} inspection={runner?.inspection || null} template={runner?.template || null} equipment={equipment.find(item => item.id === runner?.inspection?.equipment_id) || null} onClose={() => setRunner(null)} onSaved={async inspection => { setRunner(current => current ? { ...current, inspection } : current); await load(); }} onCompleted={async () => { setRunner(null); await load(); }}/>
   </div>;
