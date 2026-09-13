@@ -539,7 +539,7 @@ function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
     else if (delta >= 45) move(-1);
   };
 
-  return <aside className={`absolute inset-x-0 bottom-0 z-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-[0_-12px_30px_rgba(0,0,0,.24)] transition-[height] duration-200 ease-out overflow-hidden ${state === "full" ? "rounded-none" : "rounded-t-2xl"}`} style={{ height }} aria-label={`${name} mobile vehicle sheet`}>
+  return <aside className={`absolute inset-x-0 bottom-0 z-40 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-[0_-12px_30px_rgba(0,0,0,.24)] transition-[height] duration-200 ease-out overflow-hidden ${state === "full" ? "rounded-none" : "rounded-t-2xl"}`} style={{ height, paddingBottom: "env(safe-area-inset-bottom, 0px)" }} aria-label={`${name} mobile vehicle sheet`}>
     <div className="h-full flex flex-col min-h-0">
       <div onPointerDown={onPointerDown} onPointerUp={onPointerUp} className="shrink-0 touch-none select-none bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 cursor-grab active:cursor-grabbing">
         <div className="h-6 flex items-center justify-center"><GripHorizontal className="w-8 h-4 text-gray-300 dark:text-slate-600" /></div>
@@ -550,12 +550,13 @@ function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
             <span className="shrink-0 text-right"><span className="block text-sm font-bold text-gray-900 dark:text-slate-100">{speed == null ? "—" : `${speed} mph`}</span><span className="block text-[10px] text-gray-400">{stats.odometer == null ? "Mileage —" : `${Math.round(Number(stats.odometer)).toLocaleString()} mi`}</span></span>
           </button>
           <button type="button" onClick={() => setState("mid")} className="min-h-11 min-w-11 rounded-xl border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label="Expand vehicle details"><ChevronUp className="w-5 h-5 mx-auto" /></button>
+          <button type="button" onClick={onClose} className="min-h-11 min-w-11 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400" aria-label="Close vehicle sheet"><X className="w-4 h-4 mx-auto" /></button>
         </div> : <div className="px-3 pb-2 flex items-center gap-2">
-          <button type="button" onClick={() => move(-1)} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300" aria-label="Collapse vehicle details"><ChevronDown className="w-4 h-4 mx-auto" /></button>
+          <button type="button" onClick={() => move(-1)} className="min-h-11 min-w-11 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300" aria-label="Collapse vehicle details"><ChevronDown className="w-4 h-4 mx-auto" /></button>
           <div className="min-w-0 flex-1"><div className="text-xs font-bold text-gray-900 dark:text-slate-100 truncate">{name}</div><div className="text-[10px] text-gray-400">{state === "full" ? "Full details" : "Swipe up for full details · down to peek"}</div></div>
           <div className="hidden sm:flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-400"><Gauge className="w-3.5 h-3.5" />{speed == null ? "—" : `${speed} mph`}</div>
-          <button type="button" onClick={() => setState(state === "full" ? "mid" : "full")} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label={state === "full" ? "Reduce vehicle sheet" : "Expand vehicle sheet fully"}>{state === "full" ? <Minimize2 className="w-4 h-4 mx-auto" /> : <Maximize2 className="w-4 h-4 mx-auto" />}</button>
-          <button type="button" onClick={onClose} className="min-h-10 min-w-10 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400" aria-label="Close vehicle sheet"><X className="w-4 h-4 mx-auto" /></button>
+          <button type="button" onClick={() => setState(state === "full" ? "mid" : "full")} className="min-h-11 min-w-11 rounded-lg border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label={state === "full" ? "Reduce vehicle sheet" : "Expand vehicle sheet fully"}>{state === "full" ? <Minimize2 className="w-4 h-4 mx-auto" /> : <Maximize2 className="w-4 h-4 mx-auto" />}</button>
+          <button type="button" onClick={onClose} className="min-h-11 min-w-11 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400" aria-label="Close vehicle sheet"><X className="w-4 h-4 mx-auto" /></button>
         </div>}
       </div>
       <div className={state === "peek" ? "hidden" : "min-h-0 flex-1"}>{children}</div>
