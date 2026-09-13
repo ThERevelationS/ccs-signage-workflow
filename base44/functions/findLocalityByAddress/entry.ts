@@ -187,7 +187,7 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
     } else if (aiResult.suggested_locality_id) {
       const found = localities.find(l => l.id === aiResult.suggested_locality_id);
       const aiIdentityMatches = found && localityIdentityMatches(found, aiResult.ai_locality_name, aiResult.ai_state || geocodeState);
-      if (aiIdentityMatches) {
+      if (aiIdentityMatches && aiResult.confidence !== 'low') {
         matchedLocality = {
           id: found.id,
           name: found.name,
@@ -195,8 +195,10 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
           zip: found.zip || ""
         };
         matchMethod = 'ai_identity_validated';
-        matchConfidence = directMatches.some((row) => row.id === found.id) ? 'high' : (aiResult.confidence === 'low' ? 'low' : 'medium');
+        matchConfidence = directMatches.some((row) => row.id === found.id) ? 'high' : 'medium';
         matchReason = 'AI-selected locality id agrees with the returned locality name/state.';
+      } else if (aiIdentityMatches) {
+        matchReason = 'AI identity matched a configured locality, but AI confidence was low, so it was not auto-selected.';
       } else if (found) {
         matchReason = 'AI suggested a configured locality id, but its returned locality name/state did not match that record.';
       }
