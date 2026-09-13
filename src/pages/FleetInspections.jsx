@@ -126,6 +126,7 @@ export default function FleetInspections() {
   const initialParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialEquipmentId = initialParams.get("equipment") || "";
   const requestedNew = initialParams.get("new") === "1";
+  const [launchNew, setLaunchNew] = useState(requestedNew);
   const [templates, setTemplates] = useState([]);
   const [inspections, setInspections] = useState([]);
   const [equipment, setEquipment] = useState([]);
@@ -159,10 +160,11 @@ export default function FleetInspections() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (!loading && user?.role === "admin" && templates.length === 0) setShowPresets(true); }, [loading, user, templates.length]);
   useEffect(() => {
-    if (loading || !requestedNew) return;
+    if (loading || !launchNew) return;
     const validRequestedEquipment = initialEquipmentId && equipment.some(item => item.id === initialEquipmentId && item.status !== "retired");
     setStartDialog(current => current || { equipment_id: validRequestedEquipment ? initialEquipmentId : "", template_id: "", creation_key: crypto.randomUUID() });
-  }, [loading, requestedNew, initialEquipmentId, equipment]);
+    setLaunchNew(false);
+  }, [loading, launchNew, initialEquipmentId, equipment]);
 
   const isAdmin = user?.role === "admin";
   const activeEquipment = useMemo(() => equipment.filter(item => item.status !== "retired"), [equipment]);
@@ -183,6 +185,7 @@ export default function FleetInspections() {
 
   const closeStartDialog = () => {
     setStartDialog(null);
+    setLaunchNew(false);
     const url = new URL(window.location.href);
     url.searchParams.delete("new");
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
