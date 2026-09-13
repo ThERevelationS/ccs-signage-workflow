@@ -607,6 +607,7 @@ export default function PendingImportsPanel({ onCountChange }) {
           await deleteCreatedDuplicateWorkOrderIfUnchanged({
             entity: WorkOrder,
             created,
+            sessionToken,
             label: `Pending Import ${item.doc_number || item.id} approval rollback`,
           });
         } catch (cleanupError) {
