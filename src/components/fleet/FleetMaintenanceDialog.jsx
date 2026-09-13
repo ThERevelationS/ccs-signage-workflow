@@ -259,13 +259,13 @@ export default function FleetMaintenanceDialog({ open, task, initialEquipmentId 
           </div>}
 
           <div className="sticky bottom-0 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 px-4 sm:px-5 py-3 border-t border-gray-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur flex items-center justify-between gap-3">
-            <button type="button" onClick={() => step === 1 ? onClose() : setStep(current => Math.max(1, current - 1))} disabled={saving} className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50 inline-flex items-center gap-2">{step > 1 && <ArrowLeft className="w-4 h-4" />}{step === 1 ? "Cancel" : "Back"}</button>
+            <button type="button" onClick={() => step === 1 ? onClose() : setStep(current => Math.max(1, current - 1))} disabled={saving} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 disabled:opacity-50 inline-flex items-center gap-2">{step > 1 && <ArrowLeft className="w-4 h-4" />}{step === 1 ? "Cancel" : "Back"}</button>
             <div className="text-xs text-gray-400 hidden sm:block">Step {step} of 4</div>
-            {step < 4 ? <button type="button" onClick={nextStep} disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">Continue <ArrowRight className="w-4 h-4" /></button> : <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{task ? "Save Schedule" : "Create Schedule"}</button>}
+            {step < 4 ? <button type="button" onClick={nextStep} disabled={saving} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">Continue <ArrowRight className="w-4 h-4" /></button> : <button type="submit" disabled={saving} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center gap-2 disabled:opacity-50">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{task ? "Save Schedule" : "Create Schedule"}</button>}
           </div>
         </form>
       </div>
-      <style>{`.field{width:100%;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.5rem .65rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}`}</style>
+      <style>{`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.5rem .65rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}`}</style>
     </div>
   );
 }
