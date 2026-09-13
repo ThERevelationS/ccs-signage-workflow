@@ -1557,6 +1557,8 @@ Deno.serve(async (req) => {
           status: 'clocked_out', active_entry_id: null, last_action_at: savedEntry.clock_out,
           pending_started_at: null, break_status: 'working', active_break_id: null,
           last_break_request_id: null, break_pending_started_at: null,
+          work_pause_status: 'working', active_work_pause_id: null,
+          last_work_pause_request_id: null, work_pause_pending_started_at: null,
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Correction saved but authoritative state finalization requires review.' } } });
@@ -1711,6 +1713,8 @@ Deno.serve(async (req) => {
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
           status: 'clocked_out', active_entry_id: null, last_action_at: now, pending_started_at: null,
           break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+          work_pause_status: 'working', active_work_pause_id: null,
+          last_work_pause_request_id: null, work_pause_pending_started_at: null,
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Entry archived but authoritative state finalization requires review.' } } });
