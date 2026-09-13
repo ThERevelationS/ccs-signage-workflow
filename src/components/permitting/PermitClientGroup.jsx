@@ -216,6 +216,7 @@ export default function PermitClientGroup({
                     onShowLocalityInfo={onShowLocalityInfo}
                     onDeleteLine={onDeleteLine}
                     isRegistered={isRegistered}
+                    users={users}
                     today={today}
                   />
                 ))}
