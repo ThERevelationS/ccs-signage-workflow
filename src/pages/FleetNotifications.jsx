@@ -49,7 +49,10 @@ export default function FleetNotifications() {
   const [data, setData] = useState(null);
   const [adminHealth, setAdminHealth] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("group") || "all";
+    return requested === "all" || Object.prototype.hasOwnProperty.call(groupConfig, requested) ? requested : "all";
+  });
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -255,7 +258,7 @@ export default function FleetNotifications() {
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950">
     <FleetModuleNav />
     <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Notification Center</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">One operational attention queue for maintenance, work orders, inventory, requests, Bouncie, and Fleet system health.</p></div><div className="text-sm font-semibold text-gray-700 dark:text-slate-200">{notifications.length} active signal{notifications.length === 1 ? "" : "s"}</div></div>
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Notification Center</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">One operational attention queue for maintenance, work orders, inventory, warranties, assignments, approvals, Bouncie, and Fleet system health.</p></div><div className="text-sm font-semibold text-gray-700 dark:text-slate-200">{notifications.length} active signal{notifications.length === 1 ? "" : "s"}</div></div>
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">This page reads operational state and links to the owning workflow. It does not alter Fleet email queue/retry state. Bouncie alerts can still be marked read from Tracking.</div>
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
