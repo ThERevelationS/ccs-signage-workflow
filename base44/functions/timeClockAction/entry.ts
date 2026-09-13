@@ -461,6 +461,54 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
   return freshState(stateEntity, state.id);
 }
 
+const LABOR_ACTIVITY_TYPES = new Set(['fabrication','cnc','laser','paint','welding','electrical','installation','service','survey','design','permitting','estimating','admin','shop','travel','other']);
+
+async function laborSummaryForEntry(laborEntity: any, entryId: string, userEmail: string) {
+  const rows = await laborEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'completed' });
+  if (!Array.isArray(rows)) throw new Error('Completed labor lookup did not return a record list.');
+  const total = rows.reduce((sum: number, row: any) => sum + Math.max(0, Math.round(Number(row?.duration_minutes || 0))), 0);
+  return { count: rows.length, total_minutes: total };
+}
+
+async function activeLaborForEntry(laborEntity: any, entryId: string, userEmail: string) {
+  const rows = await laborEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'active' });
+  if (!Array.isArray(rows)) throw new Error('Active labor lookup did not return a record list.');
+  if (rows.length > 1) throw new Error('Multiple active labor segments were found. Admin review is required.');
+  return rows[0] || null;
+}
+
+async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target, actor, actorEmail, requestId, endReason, officialEnd }: any) {
+  const prior = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-end request');
+  if (prior?.id && prior.status === 'completed') return prior;
+  let active = await activeLaborForEntry(laborEntity, entry.id, target.email);
+  if (!active?.id) return null;
+  const endAt = officialEnd || new Date().toISOString();
+  const startedMs = new Date(active.started_at).getTime();
+  const endedMs = new Date(endAt).getTime();
+  if (!Number.isFinite(startedMs) || !Number.isFinite(endedMs) || endedMs < startedMs) throw new Error('Stored labor timestamps are invalid.');
+  const durationMinutes = Math.max(0, Math.floor((endedMs - startedMs) / 60000));
+  const updated = await laborEntity.updateMany(
+    { id: active.id, updated_date: active.updated_date, status: 'active', user_email: target.email, time_entry_id: entry.id },
+    { $set: { ended_at: endAt, duration_minutes: durationMinutes, status: 'completed', end_request_id: requestId, end_reason: endReason } },
+  );
+  if (!updated || updated.updated !== 1) {
+    const fresh = await laborEntity.get(active.id).catch(() => null);
+    if (!(fresh?.status === 'completed' && String(fresh.end_request_id || '') === requestId)) throw new Error('Active labor segment changed before it could be ended safely.');
+    active = fresh;
+  } else {
+    active = await laborEntity.get(active.id);
+  }
+  await audit(auditEntity, {
+    action: endReason === 'change_work' ? 'labor_change' : 'labor_stop', outcome: 'confirmed',
+    user_email: target.email, user_name: target.full_name || target.email,
+    actor_email: actorEmail, actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target), server_timestamp: active.ended_at,
+    request_id: requestId, time_entry_id: entry.id, reason: endReason,
+    details: { labor_segment_id: active.id, activity_type: active.activity_type, work_order_id: active.work_order_id || null, duration_minutes: active.duration_minutes },
+  });
+  return active;
+}
+
 async function recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor }: any) {
   if (!['clocking_in', 'clocking_out'].includes(String(state?.status || ''))) return state;
   const requestId = String(state.last_request_id || '');
@@ -587,6 +635,8 @@ Deno.serve(async (req) => {
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
+    const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
+    const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
