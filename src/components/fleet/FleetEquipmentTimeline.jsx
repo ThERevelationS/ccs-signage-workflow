@@ -229,9 +229,32 @@ function buildEvents({ equipment, workOrders, logs, notifications, requests, ins
   return events.sort((a, b) => dateValue(b.timestamp) - dateValue(a.timestamp));
 }
 
-export default function FleetEquipmentTimeline({ equipment, workOrders = [], logs = [], notifications = [], requests = [] }) {
+export default function FleetEquipmentTimeline({ equipment, workOrders = [], logs = [], notifications = [], requests = [], inspections = [] }) {
   const [filter, setFilter] = useState("all");
-  const events = useMemo(() => buildEvents({ equipment, workOrders, logs, notifications, requests }), [equipment, workOrders, logs, notifications, requests]);
+  const [extraActivity, setExtraActivity] = useState({ fuelEntries: [], warranties: [], reservations: [] });
+  const [extraLoading, setExtraLoading] = useState(true);
+  const [extraError, setExtraError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    setExtraLoading(true);
+    setExtraError("");
+    Promise.all([
+      filterAllFleetRows(base44.entities.FleetFuelEntry, { equipment_id: equipment?.id || "" }, "-fueled_at", { label: `${equipment?.name || "Fleet equipment"} fuel timeline` }).catch(() => []),
+      filterAllFleetRows(base44.entities.FleetWarranty, { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} warranty timeline` }).catch(() => []),
+      filterAllFleetRows(base44.entities.FleetReservation, { equipment_id: equipment?.id || "" }, "-created_date", { label: `${equipment?.name || "Fleet equipment"} assignment timeline` }).catch(() => []),
+    ]).then(([fuelEntries, warranties, reservations]) => {
+      if (!mounted) return;
+      setExtraActivity({ fuelEntries: fuelEntries || [], warranties: warranties || [], reservations: reservations || [] });
+    }).catch(error => {
+      if (mounted) setExtraError(error?.message || "Some newer Fleet activity could not be loaded.");
+    }).finally(() => {
+      if (mounted) setExtraLoading(false);
+    });
+    return () => { mounted = false; };
+  }, [equipment?.id, equipment?.name]);
+
+  const events = useMemo(() => buildEvents({ equipment, workOrders, logs, notifications, requests, inspections, ...extraActivity }), [equipment, workOrders, logs, notifications, requests, inspections, extraActivity]);
   const visible = filter === "all" ? events : events.filter(event => event.category === filter);
 
   return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
