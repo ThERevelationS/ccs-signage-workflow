@@ -52,7 +52,7 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
   return result.revision;
 }
 
-export async function completeEstimateRevision({ revision, estimate }) {
+export async function completeEstimateRevision({ revision, estimate, sessionToken = "" }) {
   if (!revision?.id) return null;
   const estimateId = estimate?.id || revision.estimate_id || "";
   if (!estimateId) throw new Error("Estimate is required to complete a revision.");
@@ -61,6 +61,7 @@ export async function completeEstimateRevision({ revision, estimate }) {
     estimate_id: estimateId,
     revision_id: revision.id,
     expected_revision_updated_date: revision.updated_date || "",
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
@@ -112,7 +113,7 @@ export async function ensureEstimateLifecycleRevision({ idempotencyKey = "", ses
   return result.revision;
 }
 
-export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence }) {
+export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId, quoteVersion, evidence, sessionToken = "" }) {
   const version = Math.max(0, Math.floor(num(quoteVersion)));
   if (!estimateId || version <= 0 || !evidence) return { revision: null, warning: "" };
 
@@ -120,6 +121,7 @@ export async function attachQuoteDeliveryEvidenceToIssuanceRevision({ estimateId
     action: "attach_delivery_evidence",
     estimate_id: estimateId,
     quote_version: version,
+    session_token: sessionToken,
     delivery_evidence: {
       delivery_id: evidence.deliveryId || "",
       gmail_message_id: evidence.gmailMessageId || "",
