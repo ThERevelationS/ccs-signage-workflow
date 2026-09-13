@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { estimateAuditSnapshot, estimateQuoteIssueKey } from '../../shared/estimateRevisionAudit.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const num = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const REVISION_PAGE_SIZE = 500;
@@ -97,10 +98,10 @@ async function settleCreatedRevisionNumber(RevisionService: any, estimateId: str
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
     const estimateId = String(body?.estimate_id || '').trim();
     const expectedUpdatedDate = String(body?.expected_estimate_updated_date || '').trim();
     const reason = String(body?.reason || '').trim();
@@ -198,7 +199,11 @@ Deno.serve(async (req) => {
     const settled = await settleCreatedRevisionNumber(RevisionService, estimateId, canonical || created);
     return Response.json({ revision: settled, reused: false });
   } catch (error) {
-    console.error('ensureOpenEstimateRevision error:', error);
-    return Response.json({ error: error?.message || 'Estimate revision could not be started.' }, { status: 500 });
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    console.error('ensureOpenEstimateRevision error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Estimate revision could not be started safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
