@@ -5,6 +5,7 @@ import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportC
 import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
 import { loadGlobalSettingSingleton } from '../../shared/globalSettingSingleton.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Normalize a string for fuzzy comparison
 function normalize(str) {
@@ -88,6 +89,21 @@ Deno.serve(async (req) => {
   } catch (_) {}
   const isScheduledRun = await hasWorkflowInvocationCapability(requestBody, 'processCorebridgeEmails');
   if (!isScheduledRun) {
+    let actor;
+    try {
+      actor = await authenticateSignShopSession(base44, requestBody?.session_token);
+    } catch (error: any) {
+      const status = Number(error?.status || error?.statusCode || 500);
+      const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+      console.error('processCorebridgeEmails manual sign-shop auth error:', error?.message || error);
+      return Response.json({
+        error: safeStatus === 500 ? 'Manual CoreBridge processing could not authenticate safely' : error.message,
+      }, { status: safeStatus });
+    }
+    if (actor?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const user = await base44.auth.me().catch(() => null);
     if (!user) {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
