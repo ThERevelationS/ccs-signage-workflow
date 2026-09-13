@@ -259,7 +259,7 @@ export default function FleetEquipmentTimeline({ equipment, workOrders = [], log
 
   return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
     <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-      <div><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><History className="w-4 h-4 text-indigo-500" />Equipment Activity Timeline</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Built from preserved Fleet and Bouncie records; no historical records are rewritten.</p></div>
+      <div><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><History className="w-4 h-4 text-indigo-500" />Equipment Activity Timeline</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Built from preserved Fleet and Bouncie records; no historical records are rewritten.</p>{extraLoading && <div className="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">Loading fuel, warranty and assignment activity…</div>}{extraError && <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">{extraError}</div>}</div>
       <div className="flex gap-1 overflow-x-auto pb-1 lg:pb-0">{FILTERS.map(option => <button key={option.key} onClick={() => setFilter(option.key)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${filter === option.key ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"}`}>{option.label}</button>)}</div>
     </div>
     <div className="p-4">
@@ -285,7 +285,12 @@ function TimelineEvent({ event }) {
 }
 
 function eventMeta(event) {
-  if (event.kind === "completion") return { icon: CheckCircle2, tone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
+  if (event.kind === "completion" || event.kind === "inspection_complete") return { icon: CheckCircle2, tone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" };
+  if (event.kind === "inspection") return { icon: ClipboardCheck, tone: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" };
+  if (event.kind === "inspection_attention") return { icon: ClipboardCheck, tone: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300" };
+  if (event.kind === "fuel") return { icon: Fuel, tone: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" };
+  if (event.kind === "warranty") return { icon: ShieldCheck, tone: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300" };
+  if (["assignment", "assignment_checkout", "assignment_return"].includes(event.kind)) return { icon: CalendarDays, tone: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" };
   if (event.kind === "part") return { icon: Package, tone: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" };
   if (event.kind === "fluid") return { icon: Droplets, tone: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300" };
   if (event.kind === "request" || event.kind === "request_received") return { icon: ShoppingCart, tone: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300" };
