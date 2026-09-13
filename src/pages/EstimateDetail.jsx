@@ -514,6 +514,7 @@ export default function EstimateDetail() {
         await completeEstimateRevision({
           revision: openRevision,
           estimate: saved,
+          sessionToken,
           quoteTotal: pricing.quoteTotal,
           internalCost,
           workOrderId: saved.work_order_id || "",
@@ -806,6 +807,7 @@ export default function EstimateDetail() {
       const result = await attachQuoteDeliveryEvidenceToIssuanceRevision({
         estimateId: estimate.id,
         quoteVersion,
+        sessionToken,
         evidence: {
           deliveryId,
           gmailMessageId,
