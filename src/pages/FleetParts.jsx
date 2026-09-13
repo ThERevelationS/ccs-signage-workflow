@@ -120,6 +120,7 @@ export default function FleetParts() {
     });
   },[parts,search,queue]);
 
+  const closeLookup=()=>{setLookup(null);const url=new URL(window.location.href);url.searchParams.delete("identify");url.searchParams.delete("organize");window.history.replaceState({},"",`${url.pathname}${url.search}`);};
   const save=async(payload)=>{setSaving(true);setError("");try{const body=dialog?.item?{action:"update",item_type:"part",id:dialog.item.id,expected_updated_date:dialog.item.updated_date||"",item:payload}:{action:"create",item_type:"part",creation_key:dialog?.createKey||"",item:payload};const {data}=await base44.functions.invoke("fleetInventoryAction",body);if(data?.error)throw new Error(data.error);setDialog(null);await load();}catch(e){setError(e?.message||"Unable to save Fleet part.");}finally{setSaving(false);}};
   const recordUsage=async(payload)=>{if(!usageItem)return;setUsageBusy(true);setUsageError("");try{const {data}=await base44.functions.invoke("fleetInventoryAction",{action:"record_usage",item_type:"part",id:usageItem.id,...payload});if(data?.error)throw new Error(data.error);await load();setUsageItem(null);}catch(e){setUsageError(e?.message||"Unable to record Fleet part usage.");}finally{setUsageBusy(false);}};
   const dismissIdentification=async(row)=>{if(!row||!isAdmin)return;setError("");try{const {data}=await base44.functions.invoke("fleetPartLookupAction",{action:"dismiss",id:row.id,expected_updated_date:row.updated_date||""});if(data?.error)throw new Error(data.error);await load();}catch(e){setError(e?.message||"Unable to dismiss the part-identification record.");}};
@@ -162,7 +163,7 @@ export default function FleetParts() {
     <div className="rounded-xl border border-gray-200 bg-white p-4 dark:bg-slate-900 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><div><div className="text-xs uppercase font-semibold text-gray-400">Inventory value</div><div className="text-2xl font-bold text-gray-900 dark:text-slate-100">${metrics.value.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div><div className="text-xs text-gray-500 dark:text-slate-400">Based only on current Fleet quantity × stored unit cost. Missing costs are treated as $0.</div></div>
   </div>
 
-  <FleetPartLookupDialog open={!!lookup} equipment={equipment} parts={parts} isAdmin={isAdmin} organizeMode={lookup?.organizeMode===true} initialEquipmentId={lookup?.equipmentId||""} resumeIdentification={lookup?.resumeIdentification||null} onClose={()=>setLookup(null)} onChanged={load}/>
+  <FleetPartLookupDialog open={!!lookup} equipment={equipment} parts={parts} isAdmin={isAdmin} organizeMode={lookup?.organizeMode===true} initialEquipmentId={lookup?.equipmentId||""} resumeIdentification={lookup?.resumeIdentification||null} onClose={closeLookup} onChanged={load}/>
   <FleetInventoryDialog open={!!dialog} itemType="part" item={dialog?.item||null} equipment={equipment} onClose={()=>!saving&&setDialog(null)} onSave={save} saving={saving}/>
   <FleetInventoryUsageDialog open={!!usageItem} item={usageItem} itemType="part" equipment={equipment} busy={usageBusy} error={usageError} onClose={()=>{if(!usageBusy){setUsageItem(null);setUsageError("");}}} onConfirm={recordUsage}/>
   </div>;
