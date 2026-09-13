@@ -45,7 +45,7 @@ export const canonicalEstimateWorkOrder = (rows = []) => (rows || []).slice().so
   return String(a?.id || "").localeCompare(String(b?.id || ""));
 })[0] || null;
 
-export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fields = {}, duplicateLabel = "Work Order" } = {}) => {
+export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fields = {}, sessionToken = "", duplicateLabel = "Work Order" } = {}) => {
   if (!estimateId || !created?.id) return created || null;
   await new Promise((resolve) => setTimeout(resolve, 50));
   const canonical = canonicalEstimateWorkOrder(
@@ -57,6 +57,7 @@ export const convergeCreatedEstimateWorkOrder = async ({ estimateId, created, fi
       await deleteCreatedDuplicateWorkOrderIfUnchanged({
         entity: base44.entities.WorkOrder,
         created,
+        sessionToken,
         label: `Duplicate ${duplicateLabel}`,
       });
     } catch (error) {
@@ -154,7 +155,7 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
  * Put the estimate's client into the Sales Pipeline as a lead work order,
  * carrying over every piece of contact/project info we have.
  */
-export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "" } = {}) => {
+export const syncEstimateToPipeline = async (estimate, customer, { previousEstimateStatus = "", sessionToken = "" } = {}) => {
   const existingRows = await base44.entities.WorkOrder.filter({ estimate_id: estimate.id });
   const activeExistingRows = (existingRows || []).filter((row) => row?.deleted !== true);
   const existing = canonicalEstimateWorkOrder(activeExistingRows);
@@ -234,6 +235,7 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
       estimateId: estimate.id,
       created,
       fields,
+      sessionToken,
       duplicateLabel: "Sales Pipeline record",
     }),
   });
@@ -248,7 +250,7 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
   const customer = syncCustomer
     ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys, sessionToken })
     : await resolveCustomerForEstimate(estimate, customers || []);
-  await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus });
+  await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus, sessionToken });
   return customer;
 };
 
