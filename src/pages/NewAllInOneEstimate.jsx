@@ -98,6 +98,7 @@ export default function NewAllInOneEstimate() {
       const quoteDefaults = await loadQuoteDefaults();
       const estimate = await ensureNewEstimate({
         creationKey: createAttemptRef.current.key,
+        sessionToken,
         estimate: {
           ...quoteDefaultsPayload(quoteDefaults || {}),
           ...form,
