@@ -46,7 +46,8 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
 
       const customer = await upsertCustomerFromEstimate(
         { client_name: clientName, customer_id: selected?.id || "" },
-        customers
+        customers,
+        { sessionToken }
       );
 
       if (!createAttemptRef.current.estimateNumber) {
