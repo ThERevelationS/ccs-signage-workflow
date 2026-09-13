@@ -1219,6 +1219,7 @@ Deno.serve(async (req) => {
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
+      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before editing notes.' }, { status: 409 });
       const now = new Date().toISOString();
       const intent = await auditEntity.create({
         action: 'notes_update', outcome: 'pending', user_email: target.email,
@@ -1269,6 +1270,7 @@ Deno.serve(async (req) => {
       if (entry.status !== 'clocked_out' || !entry.clock_out) {
         return Response.json({ success: false, error: 'Correction requests can only be submitted for completed shifts.' }, { status: 400 });
       }
+      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Ask a manager to reopen that pay period before requesting a correction.' }, { status: 409 });
       if (String(entry.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ success: false, error: 'This time entry changed since it was loaded. Reload before requesting a correction.' }, { status: 409 });
       }
@@ -1494,6 +1496,10 @@ Deno.serve(async (req) => {
         await releaseReview();
         return Response.json({ success: false, error: 'The underlying completed TimeEntry is no longer eligible for this correction.' }, { status: 409 });
       }
+      if (entryIsPayPeriodLocked(entry)) {
+        await releaseReview();
+        return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before applying a correction.' }, { status: 409 });
+      }
 
       const auditRows = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
       if (!Array.isArray(auditRows)) throw new Error('Correction audit recovery lookup did not return a record list.');
@@ -1645,6 +1651,7 @@ Deno.serve(async (req) => {
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
+      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before correcting it.' }, { status: 409 });
       if (String(entry.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ success: false, error: 'This time entry changed in another session. Reload before correcting it.' }, { status: 409 });
       }
@@ -1789,6 +1796,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
       if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
+      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
       if (String(entry.approval_request_id || '') === requestId) {
         const expectedStatus = decision === 'approve' ? 'approved' : 'needs_review';
         if ((entry.approval_status || 'unreviewed') === expectedStatus) {
@@ -1862,6 +1870,7 @@ Deno.serve(async (req) => {
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is already archived.' }, { status: 404 });
       }
+      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before archiving it.' }, { status: 409 });
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This time entry changed in another session. Reload before archiving it.' }, { status: 409 });
       if (entry.status === 'clocked_in' && !(state.status === 'clocked_in' && state.active_entry_id === entry.id)) {
         return Response.json({ success: false, error: 'The active TimeEntry does not match authoritative employee state. Resolve the mismatch before archiving it.' }, { status: 409 });
