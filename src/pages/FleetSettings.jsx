@@ -6,7 +6,7 @@ import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { filterAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Settings, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCw, Activity, Pencil, Play, Mail, Copy, Download, QrCode, Link2, UserCog, Ban } from "lucide-react";
 
 const LEGACY_FLEET_PUBLIC_REPORT_URL = "https://app--ccsfleet-master-db95ea70.base44.app/PublicReport";
@@ -58,6 +58,10 @@ export default function FleetSettings() {
   const [mechanicName, setMechanicName] = useState("External Mechanic");
   const [mechanicExpiryDays, setMechanicExpiryDays] = useState("0");
   const [mechanicAllowEstimates, setMechanicAllowEstimates] = useState(false);
+  const [mechanicScopeMode, setMechanicScopeMode] = useState("all_active");
+  const [mechanicEquipmentIds, setMechanicEquipmentIds] = useState([]);
+  const [mechanicEquipment, setMechanicEquipment] = useState([]);
+  const [mechanicScopeEdit, setMechanicScopeEdit] = useState(null);
   const [generatedMechanicLink, setGeneratedMechanicLink] = useState("");
   const [mechanicBusy, setMechanicBusy] = useState("");
   const [mechanicError, setMechanicError] = useState("");
