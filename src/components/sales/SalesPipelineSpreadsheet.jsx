@@ -28,6 +28,7 @@ import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
+import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
@@ -116,6 +117,8 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && activityTime !== null && activityTime <= staleCutoffTime;
   }
   if (attentionFilter === "activity_untracked") return isOperational && getSalesActivityTime(workOrder) === null;
+  if (attentionFilter === "stage_aged") return isOperational && isStageAgedOpportunity(workOrder, parseLocalDate(todayStamp));
+  if (attentionFilter === "stage_untracked") return isOperational && getStageAgeDays(workOrder, parseLocalDate(todayStamp)) === null;
   if (attentionFilter === "owner_unassigned") return isOperational && !normalizeOwnerIdentity(workOrder?.sales_rep);
   if (attentionFilter === "source_missing") return isOperational && !String(workOrder?.lead_source || "").trim();
   if (attentionFilter === "age_90_plus") {
@@ -1063,7 +1066,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
       "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Last Follow Up Completed": str(wo.sales_last_follow_up_completed_at),
-      "Last Follow Up Outcome": str(wo.sales_last_follow_up_outcome), "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
+      "Last Follow Up Outcome": str(wo.sales_last_follow_up_outcome), "Stage Changed At": str(wo.sales_stage_changed_at),
+      "Stage Age Days": num(getStageAgeDays(wo, new Date())), "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
       "Lost Reason": str(wo.lost_reason), "Probability": num(wo.probability), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
@@ -1288,7 +1292,25 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const source = String(wo.lead_source || "").trim();
       if (source) summary.sourceCoverageCount += 1;
       else summary.sourceMissingCount += 1;
-      if (Number.isFinite(Date.parse(wo.sales_stage_changed_at || ""))) summary.stageAgeCoverageCount += 1;
+      const stageAgeDays = getStageAgeDays(wo, parseLocalDate(todayStamp));
+      if (stageAgeDays !== null) {
+        summary.stageAgeCoverageCount += 1;
+        summary.stageAgeDaysTotal += stageAgeDays;
+        summary.stageAgeDaysCount += 1;
+        summary.oldestStageAgeDays = Math.max(summary.oldestStageAgeDays, stageAgeDays);
+        if (isStageAgedOpportunity(wo, parseLocalDate(todayStamp))) summary.stageAgedCount += 1;
+        const stageBucket = stageAgeDays >= 30
+          ? summary.stageAgingBuckets[3]
+          : stageAgeDays >= STAGE_AGING_DAYS
+            ? summary.stageAgingBuckets[2]
+            : stageAgeDays >= 7
+              ? summary.stageAgingBuckets[1]
+              : summary.stageAgingBuckets[0];
+        stageBucket.count += 1;
+        stageBucket.value += value;
+      } else {
+        summary.stageAgeMissingCount += 1;
+      }
       const ageDays = getOpportunityAgeDays(wo, todayStamp);
       if (ageDays !== null) {
         summary.ageDaysTotal += ageDays;
@@ -1359,6 +1381,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       sourceMissingCount: 0,
       sourceBreakdown: [],
       stageAgeCoverageCount: 0,
+      stageAgeMissingCount: 0,
+      stageAgedCount: 0,
+      stageAgeDaysTotal: 0,
+      stageAgeDaysCount: 0,
+      averageStageAgeDays: 0,
+      oldestStageAgeDays: 0,
+      stageAgingBuckets: [
+        { key: "stage_under_7", label: "0–6 days", count: 0, value: 0 },
+        { key: "stage_7_13", label: "7–13 days", count: 0, value: 0 },
+        { key: "stage_14_29", label: "14–29 days", count: 0, value: 0 },
+        { key: "stage_30_plus", label: "30+ days", count: 0, value: 0 },
+      ],
+      stageBreakdown: [],
       age30PlusCount: 0,
       age90PlusCount: 0,
       ageDaysTotal: 0,
@@ -1388,8 +1423,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     });
 
     summary.averageAgeDays = summary.ageDaysCount > 0 ? Math.round(summary.ageDaysTotal / summary.ageDaysCount) : 0;
+    summary.averageStageAgeDays = summary.stageAgeDaysCount > 0 ? Math.round(summary.stageAgeDaysTotal / summary.stageAgeDaysCount) : 0;
     const ownerWorkload = new Map();
     const sourceMix = new Map();
+    const stageMix = new Map();
     operational.forEach((wo) => {
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
       const followUp = wo.follow_up_date || "";
@@ -1411,6 +1448,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         sourceRow.value += value;
         sourceMix.set(sourceKey, sourceRow);
       }
+
+      const stageKey = wo.sales_status || "lead";
+      const stageLabel = SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
+      const stageRow = stageMix.get(stageKey) || { stage: stageKey, label: stageLabel, count: 0, value: 0, trackedCount: 0, ageDaysTotal: 0, agedCount: 0 };
+      stageRow.count += 1;
+      stageRow.value += value;
+      const stageAgeDays = getStageAgeDays(wo, parseLocalDate(todayStamp));
+      if (stageAgeDays !== null) {
+        stageRow.trackedCount += 1;
+        stageRow.ageDaysTotal += stageAgeDays;
+        if (isStageAgedOpportunity(wo, parseLocalDate(todayStamp))) stageRow.agedCount += 1;
+      }
+      stageMix.set(stageKey, stageRow);
     });
     summary.ownerWorkload = [...ownerWorkload.values()].sort((a, b) => {
       if (a.owner === "Unassigned") return 1;
@@ -1418,6 +1468,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return b.value - a.value || b.count - a.count || a.owner.localeCompare(b.owner);
     });
     summary.sourceBreakdown = [...sourceMix.values()].sort((a, b) => b.count - a.count || b.value - a.value || a.source.localeCompare(b.source));
+    summary.stageBreakdown = [...stageMix.values()].map((row) => ({
+      ...row,
+      averageDays: row.trackedCount > 0 ? Math.round(row.ageDaysTotal / row.trackedCount) : null,
+    })).sort((a, b) => SALES_STATUSES.findIndex((status) => status.value === a.stage) - SALES_STATUSES.findIndex((status) => status.value === b.stage));
 
     const allTrustedOutcomes = workOrders.filter(isTrustedOutcome);
     const reportingOutcomes = allTrustedOutcomes.filter((wo) => {
