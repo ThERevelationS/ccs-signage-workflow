@@ -35,7 +35,8 @@ import {
   Clock3,
   Pause,
   CheckCircle2,
-  RotateCcw
+  RotateCcw,
+  LockKeyhole
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -44,6 +45,7 @@ import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionReques
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
+import TimeClockAuditTrail from "@/components/timeclock/TimeClockAuditTrail";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
@@ -457,6 +459,8 @@ export default function TimeClockAdmin() {
         onEntriesChanged={loadData}
       />
 
+      <TimeClockAuditTrail />
+
       {staleActiveEntries.length > 0 && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
           <div className="flex items-start gap-3">
@@ -792,7 +796,14 @@ export default function TimeClockAdmin() {
                   <tr key={entry.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium">{entry.user_name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="font-medium">{entry.user_name}</p>
+                          {entry.pay_period_id && (
+                            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 gap-1">
+                              <LockKeyhole className="w-3 h-3" /> Finalized
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500">{entry.user_email}</p>
                       </div>
                     </td>
@@ -831,7 +842,9 @@ export default function TimeClockAdmin() {
                           >
                             {(entry.approval_status || "unreviewed") === "approved" ? "Approved" : (entry.approval_status || "unreviewed") === "needs_review" ? "Needs Review" : "Unreviewed"}
                           </Badge>
-                          {(entry.approval_status || "unreviewed") === "approved" ? (
+                          {entry.pay_period_id ? (
+                            <span className="text-[11px] text-slate-500 flex items-center gap-1"><LockKeyhole className="w-3 h-3" />Locked by finalized period</span>
+                          ) : (entry.approval_status || "unreviewed") === "approved" ? (
                             <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => openApprovalDialog(entry, "reopen")}>
                               <RotateCcw className="w-3 h-3 mr-1" />Reopen
                             </Button>
@@ -880,17 +893,25 @@ export default function TimeClockAdmin() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditEntry(entry)} className="h-7 w-7">
-                          <Pencil className="w-3 h-3" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditEntry(entry)}
+                          className="h-7 w-7"
+                          disabled={Boolean(entry.pay_period_id)}
+                          title={entry.pay_period_id ? "Reopen the finalized pay period before editing this shift" : "Edit time entry"}
+                        >
+                          {entry.pay_period_id ? <LockKeyhole className="w-3 h-3 text-slate-500" /> : <Pencil className="w-3 h-3" />}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => { setArchiveReason(""); setDeleteConfirm(entry); }}
                           className="h-7 w-7"
-                          title="Archive time entry"
+                          disabled={Boolean(entry.pay_period_id)}
+                          title={entry.pay_period_id ? "Reopen the finalized pay period before archiving this shift" : "Archive time entry"}
                         >
-                          <Archive className="w-3 h-3 text-amber-600" />
+                          <Archive className={`w-3 h-3 ${entry.pay_period_id ? "text-slate-400" : "text-amber-600"}`} />
                         </Button>
                       </div>
                     </td>
