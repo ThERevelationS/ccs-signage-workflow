@@ -91,10 +91,27 @@ export default function Permitting() {
       }
       setTaskDescriptions(allTaskDescs);
 
-      // Work orders on the Permitting page
-      const permittingWOs = wos.filter(wo =>
-        wo.current_task_description && permittingTaskDescs.includes(wo.current_task_description)
-      );
+      // Prefer the explicit workflow stage, while preserving legacy/task-routed jobs.
+      // A disagreement is surfaced in the UI instead of silently rewriting live data.
+      const permittingWOs = wos.reduce((rows, wo) => {
+        const taskRoutesToPermitting = !!wo.current_task_description && permittingTaskDescs.includes(wo.current_task_description);
+        const stageRoutesToPermitting = wo.current_stage === "permitting" || wo.rider_stage === "permitting";
+        if (!taskRoutesToPermitting && !stageRoutesToPermitting) return rows;
+
+        let routingWarning = "";
+        if (taskRoutesToPermitting && !stageRoutesToPermitting) {
+          routingWarning = `Task routes this job to Permitting, but its workflow stage is ${wo.current_stage || "not set"}.`;
+        } else if (stageRoutesToPermitting && !taskRoutesToPermitting) {
+          routingWarning = "Workflow stage is Permitting, but the current task is not mapped to the Permitting page.";
+        }
+
+        rows.push({
+          ...wo,
+          _permittingRoutingMismatch: !!routingWarning,
+          _permittingRoutingWarning: routingWarning,
+        });
+        return rows;
+      }, []);
 
       // Only keep line items whose work order is still in permitting
       const permittingWOIds = new Set(permittingWOs.map(wo => wo.id));
@@ -615,6 +632,7 @@ export default function Permitting() {
   const totalLines = lineItems.length;
   const activeLinesCount = lineItems.filter(li => li.status !== 'completed').length;
   const completedLinesCount = lineItems.filter(li => li.status === 'completed').length;
+  const routingMismatchCount = workOrders.filter((wo) => wo._permittingRoutingMismatch).length;
 
   const renderSection = (queueKey) => {
     const groups = queueSummary[queueKey] || [];
@@ -736,6 +754,15 @@ export default function Permitting() {
             );
           })}
         </div>
+
+        {routingMismatchCount > 0 && (
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="font-semibold">Workflow routing needs review</div>
+            <div className="mt-1 text-xs">
+              {routingMismatchCount} permitting job{routingMismatchCount === 1 ? "" : "s"} have a mismatch between the explicit Work Order stage and the task-description routing. They remain visible here, and no Work Order was changed automatically.
+            </div>
+          </div>
+        )}
 
         {permitLineEditError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
