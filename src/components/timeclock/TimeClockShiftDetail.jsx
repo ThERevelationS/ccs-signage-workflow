@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ShieldCheck,
   User,
+  Wrench,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -25,6 +26,7 @@ const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
 const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
 const TimeClockAudit = base44.entities.TimeClockAudit;
 const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
+const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
 
 function safeDate(value) {
   if (!value) return null;
@@ -67,6 +69,7 @@ function correctionClass(status) {
 export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
   const [breaks, setBreaks] = useState([]);
   const [pauses, setPauses] = useState([]);
+  const [laborSegments, setLaborSegments] = useState([]);
   const [corrections, setCorrections] = useState([]);
   const [audits, setAudits] = useState([]);
   const [payPeriod, setPayPeriod] = useState(null);
@@ -78,9 +81,10 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
     setLoading(true);
     setError("");
     try {
-      const [breakRows, pauseRows, correctionRows, auditRows, periodRows] = await Promise.all([
+      const [breakRows, pauseRows, laborRows, correctionRows, auditRows, periodRows] = await Promise.all([
         TimeClockBreak.filter({ time_entry_id: entry.id }),
         TimeClockWorkPause.filter({ time_entry_id: entry.id }),
+        TimeClockLaborSegment.filter({ time_entry_id: entry.id }),
         TimeClockCorrectionRequest.filter({ time_entry_id: entry.id }),
         TimeClockAudit.filter({ time_entry_id: entry.id }),
         entry.pay_period_id ? TimeClockPayPeriod.filter({ id: entry.pay_period_id }) : Promise.resolve([]),
@@ -88,6 +92,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
 
       setBreaks((Array.isArray(breakRows) ? breakRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setPauses((Array.isArray(pauseRows) ? pauseRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
+      setLaborSegments((Array.isArray(laborRows) ? laborRows : []).sort((a, b) => new Date(a.started_at || 0) - new Date(b.started_at || 0)));
       setCorrections((Array.isArray(correctionRows) ? correctionRows : []).sort((a, b) => new Date(a.requested_at || 0) - new Date(b.requested_at || 0)));
       setAudits((Array.isArray(auditRows) ? auditRows : []).sort((a, b) => new Date(a.server_timestamp || 0) - new Date(b.server_timestamp || 0)));
       setPayPeriod(Array.isArray(periodRows) && periodRows.length === 1 ? periodRows[0] : null);
@@ -104,6 +109,7 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
     if (!open) {
       setBreaks([]);
       setPauses([]);
+      setLaborSegments([]);
       setCorrections([]);
       setAudits([]);
       setPayPeriod(null);
@@ -122,11 +128,17 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
       rows.push({ key: `pause-start-${row.id}`, at: row.started_at, type: "Pause", label: "Work Paused", detail: "Excluded from tracked work" });
       if (row.resumed_at) rows.push({ key: `pause-end-${row.id}`, at: row.resumed_at, type: "Pause", label: "Work Resumed", detail: formatMinutes(row.duration_minutes) });
     });
+    laborSegments.forEach(row => {
+      const label = String(row.activity_type || "work").replaceAll("_", " ");
+      const job = row.work_order_id ? `${row.client_name || "WorkOrder"}${row.work_order_title ? ` — ${row.work_order_title}` : ""}` : "No WorkOrder attached";
+      rows.push({ key: `labor-start-${row.id}`, at: row.started_at, type: "Labor", label: `Started ${label}`, detail: job });
+      if (row.ended_at) rows.push({ key: `labor-end-${row.id}`, at: row.ended_at, type: "Labor", label: `Ended ${label}`, detail: `${formatMinutes(row.duration_minutes)} · ${String(row.end_reason || "stopped").replaceAll("_", " ")}` });
+    });
     if (entry?.clock_out) rows.push({ key: "clock-out", at: entry.clock_out, type: "Clock", label: "Clocked out", detail: "" });
     return rows
       .filter(row => safeDate(row.at))
       .sort((a, b) => new Date(a.at) - new Date(b.at));
-  }, [entry, breaks, pauses]);
+  }, [entry, breaks, pauses, laborSegments]);
 
   if (!entry) return null;
 
@@ -195,6 +207,25 @@ export default function TimeClockShiftDetail({ entry, open, onOpenChange }) {
                 {entry.approved_by && <div className="text-[11px] text-gray-400 mt-1">{entry.approved_by}</div>}
               </div>
             </div>
+
+            <section className="rounded-xl border p-4">
+              <h3 className="font-semibold flex items-center gap-2"><Wrench className="w-4 h-4 text-blue-600" />Tracked Current Work</h3>
+              <div className="mt-3 space-y-2">
+                {laborSegments.length === 0 ? <p className="text-sm text-gray-500">No live Current Work segments were recorded for this shift.</p> : laborSegments.map(row => (
+                  <div key={row.id} className="rounded-lg bg-gray-50 p-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium capitalize">{String(row.activity_type || "work").replaceAll("_", " ")}</div>
+                      <div className="text-xs text-gray-500 truncate">{row.work_order_id ? `${row.client_name || "WorkOrder"}${row.work_order_title ? ` — ${row.work_order_title}` : ""}` : "No WorkOrder attached"}</div>
+                      <div className="text-xs text-gray-400 mt-1">{formatDateTime(row.started_at)} → {row.ended_at ? formatDateTime(row.ended_at) : "Active"}</div>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className={row.status === "active" ? "bg-blue-100 text-blue-800 border-blue-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{row.status}</Badge>
+                      {row.status === "completed" && <div className="text-xs font-medium text-gray-700 mt-1">{formatMinutes(row.duration_minutes)}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <section className="rounded-xl border p-4">
