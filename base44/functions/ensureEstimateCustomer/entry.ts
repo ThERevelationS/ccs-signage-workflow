@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const CUSTOMER_FIELDS = new Set([
   'company_phone',
@@ -158,10 +159,8 @@ async function hasAnyCustomerReference(base44: any, customerId: string) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const companyName = String(body?.company_name || '').trim();
     const normalizedName = norm(companyName);
     if (!companyName || !normalizedName) {
@@ -304,8 +303,11 @@ Deno.serve(async (req) => {
 
     return Response.json({ customer: canonical, reused: false });
   } catch (error) {
-    console.error('ensureEstimateCustomer error:', error);
-    const status = Number(error?.statusCode || 500);
-    return Response.json({ error: error?.message || 'Customer could not be created safely.' }, { status });
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    console.error('ensureEstimateCustomer error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Customer could not be created safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
