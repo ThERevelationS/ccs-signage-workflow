@@ -56,6 +56,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
 
       const estimate = await ensureNewEstimate({
         creationKey: createAttemptRef.current.key,
+        sessionToken,
         estimate: {
           project_name: projectName.trim(),
           client_name: clientName,
