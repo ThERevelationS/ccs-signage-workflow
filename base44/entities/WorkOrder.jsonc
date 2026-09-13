@@ -481,6 +481,15 @@
       "type": "string",
       "format": "date"
     },
+    "sales_last_follow_up_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the latest completed Sales Pipeline follow-up. Each change is preserved in CellHistory."
+    },
+    "sales_last_follow_up_outcome": {
+      "type": "string",
+      "description": "Business-readable outcome of the latest completed Sales Pipeline follow-up. Each change is preserved in CellHistory."
+    },
     "close_date": {
       "type": "string",
       "format": "date"
