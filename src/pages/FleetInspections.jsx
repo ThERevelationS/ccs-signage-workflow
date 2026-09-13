@@ -30,6 +30,84 @@ const INSPECTION_RESULTS = [
   { value: "na", label: "N/A", icon: X },
 ];
 const pretty = value => String(value || "—").replaceAll("_", " ");
+const templateItem = (label, instructions, severity = "medium", failCreatesWorkOrder = true, responseType = "pass_fail") => ({ label, instructions, response_type: responseType, required: true, severity, fail_creates_work_order: failCreatesWorkOrder });
+const TEMPLATE_PRESETS = [
+  {
+    key: "road_vehicle_pre_trip",
+    name: "Road Vehicle Pre-Trip",
+    summary: "Fast safety/readiness walk-around before a truck or van leaves.",
+    template: {
+      name: "Road Vehicle Pre-Trip",
+      description: "Pre-trip road-vehicle safety and readiness checklist. Review equipment-type applicability before saving.",
+      inspection_type: "pre_trip",
+      items: [
+        templateItem("Visible damage / body / mirrors", "Walk around the vehicle and note new damage, loose body components, mirror damage, or anything unsafe.", "high"),
+        templateItem("Wheels / visible tire condition", "Check for obvious damage, severe wear, visibly low tire condition, loose/missing lug hardware, or wheel concerns. This is a visual safety check, not a tire-management record.", "critical"),
+        templateItem("Leaks / fluid concerns", "Check beneath and around the vehicle for visible leaks or fluid concerns.", "high"),
+        templateItem("Lights / signals / warning indicators", "Verify required exterior lights and turn signals; note dashboard warning indicators.", "high"),
+        templateItem("Windshield / visibility", "Verify windshield, wipers, mirrors, and driver visibility are serviceable.", "medium"),
+        templateItem("Brakes / steering feel", "Before departure, verify no obvious brake or steering concern is present.", "critical"),
+        templateItem("Safety equipment / cargo readiness", "Confirm required safety equipment is present and cargo/tools appear secured for travel.", "high"),
+      ],
+    },
+  },
+  {
+    key: "lift_forklift_daily",
+    name: "Lift / Forklift Daily",
+    summary: "Daily readiness check for forklifts, lifts, and material-handling equipment.",
+    template: {
+      name: "Lift / Forklift Daily",
+      description: "Daily safety/readiness checklist for powered lift and material-handling equipment. Review equipment-type applicability before saving.",
+      inspection_type: "daily",
+      items: [
+        templateItem("Forks / platform / attachment condition", "Check forks, platform, basket, attachment points, pins, retainers, and visible structure for damage or looseness.", "critical"),
+        templateItem("Hydraulics / hoses / cylinders", "Check hoses, cylinders, fittings, and surrounding areas for leaks, abrasion, damage, or loose connections.", "critical"),
+        templateItem("Controls / steering / braking", "Verify travel, steering, braking, lift controls, and neutral/return behavior operate normally.", "critical"),
+        templateItem("Emergency controls / interlocks", "Verify emergency stop, lowering, interlocks, guards, and required safety devices function or appear ready.", "critical"),
+        templateItem("Horn / alarms / lights", "Verify horn, backup alarm, warning lights, strobes, and other required indicators.", "high"),
+        templateItem("Leaks / visible damage", "Walk around the unit for leaks, collision damage, loose components, or anything unsafe.", "high"),
+      ],
+    },
+  },
+  {
+    key: "generator_power_equipment",
+    name: "Generator / Power Equipment",
+    summary: "Readiness and safety check for generators and engine-driven equipment.",
+    template: {
+      name: "Generator / Power Equipment",
+      description: "Operational-readiness checklist for generators and similar engine-driven equipment. Review equipment-type applicability before saving.",
+      inspection_type: "weekly",
+      items: [
+        templateItem("Fluids / leaks", "Check engine oil/coolant where applicable and inspect for fuel, oil, coolant, or other visible leaks.", "high"),
+        templateItem("Fuel system / cap / lines", "Inspect accessible fuel-system components for leakage, damage, loose fittings, or cap concerns.", "critical"),
+        templateItem("Cables / outlets / connectors", "Inspect power cables, outlets, connectors, terminals, and covers for damage or overheating concerns.", "critical"),
+        templateItem("Guards / covers / mounting", "Verify guards and covers are secure and the unit is stable for safe operation.", "high"),
+        templateItem("Startup / abnormal noise or smoke", "Start the unit when appropriate and note difficult starting, abnormal noise, vibration, smoke, or warning indicators.", "high"),
+        templateItem("Output / operating readiness", "Verify the unit produces expected output/operation for its intended use without obvious fault.", "critical"),
+        templateItem("Hour meter", "Record the hour-meter reading if available.", "low", false, "number"),
+      ],
+    },
+  },
+  {
+    key: "shop_equipment_safety",
+    name: "General Shop Equipment Safety",
+    summary: "Reusable safety check for non-road shop assets and equipment.",
+    template: {
+      name: "General Shop Equipment Safety",
+      description: "General safety/readiness checklist for shop equipment that does not need a more specific template.",
+      inspection_type: "monthly",
+      items: [
+        templateItem("Guards / covers / safety devices", "Verify installed guards, covers, shields, interlocks, and safety devices are present and serviceable.", "critical"),
+        templateItem("Power cord / hose / supply connection", "Inspect accessible electrical cords, plugs, hoses, fittings, or other supply connections for damage.", "high"),
+        templateItem("Controls / emergency stop", "Verify normal controls and emergency-stop or shutoff functions appear serviceable.", "critical"),
+        templateItem("Loose / damaged components", "Inspect for loose fasteners, cracked or damaged components, abnormal wear, or unstable mounting.", "high"),
+        templateItem("Leaks / abnormal residue", "Check for leaks, unusual residue, overheating evidence, or other signs of developing failure.", "high"),
+        templateItem("Work area / access", "Verify the equipment can be safely accessed and the surrounding work area is clear enough for intended operation.", "medium", false),
+      ],
+    },
+  },
+];
+const presetTemplate = preset => ({ ...emptyTemplate(), ...preset.template, applicable_equipment_types: [], active: true, items: preset.template.items.map(item => ({ ...item, key: crypto.randomUUID() })) });
 const emptyTemplate = () => ({
   name: "",
   description: "",
@@ -54,6 +132,7 @@ export default function FleetInspections() {
   const [error, setError] = useState("");
   const [startDialog, setStartDialog] = useState(null);
   const [templateDialog, setTemplateDialog] = useState(null);
+  const [showPresets, setShowPresets] = useState(false);
   const [runner, setRunner] = useState(null);
 
   const load = useCallback(async () => {
@@ -75,6 +154,7 @@ export default function FleetInspections() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (!loading && user?.role === "admin" && templates.length === 0) setShowPresets(true); }, [loading, user, templates.length]);
   useEffect(() => {
     if (!loading && initialEquipmentId && equipment.some(item => item.id === initialEquipmentId && item.status !== "retired")) {
       setStartDialog(current => current || { equipment_id: initialEquipmentId, template_id: "", creation_key: crypto.randomUUID() });
@@ -141,10 +221,11 @@ export default function FleetInspections() {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
         <div><div className="flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-indigo-600"/><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Fleet Inspections</h1></div><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Fast equipment checklists with evidence, meter readings, and guarded Fleet work-order follow-up.</p></div>
-        <div className="flex flex-col sm:flex-row gap-2"><button onClick={() => openNewInspection("")} className="min-h-11 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><ClipboardCheck className="w-4 h-4"/>Start Inspection</button>{isAdmin && <button onClick={() => setTemplateDialog({ existing: null, creationKey: crypto.randomUUID() })} className="min-h-11 px-4 py-2 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 font-semibold inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>New Template</button>}</div>
+        <div className="flex flex-col sm:flex-row gap-2"><button onClick={() => openNewInspection("")} className="min-h-11 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2"><ClipboardCheck className="w-4 h-4"/>Start Inspection</button>{isAdmin && <button onClick={() => setShowPresets(value => !value)} className="min-h-11 px-4 py-2 rounded-xl border border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:border-indigo-800 dark:text-indigo-200 font-semibold">Starter Presets</button>}{isAdmin && <button onClick={() => setTemplateDialog({ existing: null, creationKey: crypto.randomUUID(), seed: null })} className="min-h-11 px-4 py-2 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700 font-semibold inline-flex items-center justify-center gap-2"><Plus className="w-4 h-4"/>Blank Template</button>}</div>
       </div>
 
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/20"><div className="flex items-start gap-3"><ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-300 shrink-0 mt-0.5"/><div><div className="font-semibold text-indigo-950 dark:text-indigo-100">Inspection failures stay inside Fleet.</div><div className="text-xs text-indigo-700 dark:text-indigo-300 mt-1">Items configured for automatic follow-up create <b>FleetMaintenanceWorkOrder</b> records only. Completion is retry-safe; the same failed item cannot intentionally create a second follow-up on retry.</div></div></div></div>
+      {isAdmin && showPresets && <section className="rounded-xl border border-indigo-200 bg-white dark:bg-slate-900 dark:border-indigo-900 shadow-sm overflow-hidden"><div className="px-4 py-3 border-b border-indigo-100 dark:border-indigo-900"><h2 className="font-bold text-gray-900 dark:text-slate-100">Starter Inspection Presets</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">These are editable starting points, not production templates. Choose one to open it in the normal editor, review equipment types/items/severity, then explicitly save.</p></div><div className="p-3 grid md:grid-cols-2 xl:grid-cols-4 gap-3">{TEMPLATE_PRESETS.map(preset => <div key={preset.key} className="rounded-xl border border-gray-200 dark:border-slate-700 p-3 flex flex-col"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{preset.name}</div><p className="text-xs text-gray-500 dark:text-slate-400 mt-1 flex-1">{preset.summary}</p><div className="text-[11px] text-gray-400 mt-2">{preset.template.items.length} starter items · {pretty(preset.template.inspection_type)}</div><button type="button" onClick={() => setTemplateDialog({ existing: null, creationKey: crypto.randomUUID(), seed: presetTemplate(preset) })} className="mt-3 min-h-10 px-3 rounded-lg border border-indigo-300 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 text-xs font-semibold">Review This Preset</button></div>)}</div></section>}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3"><Metric label="Inspections" value={metrics.total}/><Metric label="Passed" value={metrics.passed} good/><Metric label="Failed" value={metrics.failed} attention={metrics.failed>0}/><Metric label="Draft / Resume" value={metrics.drafts} attention={metrics.drafts>0}/><Metric label="Generated WOs" value={metrics.generated}/></div>
@@ -163,7 +244,7 @@ export default function FleetInspections() {
     </div>
 
     <StartInspectionDialog open={!!startDialog} state={startDialog} setState={setStartDialog} equipment={activeEquipment} templates={compatibleTemplates} onClose={() => setStartDialog(null)} onStart={startInspection}/>
-    <TemplateDialog open={!!templateDialog} existing={templateDialog?.existing || null} creationKey={templateDialog?.creationKey || ""} equipmentTypes={[...new Set(activeEquipment.map(item => item.type).filter(Boolean))].sort()} onClose={() => setTemplateDialog(null)} onSave={saveTemplate}/>
+    <TemplateDialog open={!!templateDialog} existing={templateDialog?.existing || null} seed={templateDialog?.seed || null} creationKey={templateDialog?.creationKey || ""} equipmentTypes={[...new Set(activeEquipment.map(item => item.type).filter(Boolean))].sort()} onClose={() => setTemplateDialog(null)} onSave={saveTemplate}/>
     <InspectionRunner open={!!runner} inspection={runner?.inspection || null} template={runner?.template || null} equipment={equipment.find(item => item.id === runner?.inspection?.equipment_id) || null} onClose={() => setRunner(null)} onSaved={async inspection => { setRunner(current => current ? { ...current, inspection } : current); await load(); }} onCompleted={async () => { setRunner(null); await load(); }}/>
   </div>;
 }
@@ -174,11 +255,11 @@ function StartInspectionDialog({open,state,setState,equipment,templates,onClose,
   return <div className="fixed inset-0 z-[100] bg-black/55 p-3 sm:p-6 flex items-center justify-center"><div role="dialog" aria-modal="true" className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl"><div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between"><div><h2 className="font-bold text-lg">Start Fleet Inspection</h2><p className="text-xs text-gray-500 mt-1">Choose an asset and a compatible checklist.</p></div><button onClick={onClose} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"><X className="w-5 h-5 mx-auto"/></button></div><div className="p-4 space-y-4"><Field label="Equipment"><select value={state?.equipment_id || ""} onChange={e => setState(prev => ({...prev,equipment_id:e.target.value,template_id:""}))} className="field"><option value="">Select equipment</option>{equipment.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Inspection template"><select value={state?.template_id || ""} onChange={e => setState(prev => ({...prev,template_id:e.target.value}))} className="field" disabled={!selectedEquipment}><option value="">{selectedEquipment ? "Select template" : "Select equipment first"}</option>{templates.map(item => <option key={item.id} value={item.id}>{item.name} · {pretty(item.inspection_type)}</option>)}</select></Field>{selectedEquipment && templates.length===0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 p-3 text-xs">No active inspection template applies to {selectedEquipment.name}.</div>}<button onClick={onStart} disabled={!state?.equipment_id || !state?.template_id} className="w-full min-h-12 rounded-xl bg-indigo-600 text-white font-semibold disabled:opacity-40 inline-flex items-center justify-center gap-2"><ClipboardCheck className="w-5 h-5"/>Begin Inspection</button></div></div></div>;
 }
 
-function TemplateDialog({open,existing,creationKey,equipmentTypes,onClose,onSave}) {
+function TemplateDialog({open,existing,seed,creationKey,equipmentTypes,onClose,onSave}) {
   const [form,setForm] = useState(emptyTemplate());
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
-  useEffect(() => { if(open){ setForm(existing ? { ...emptyTemplate(), ...existing, items:(existing.items||[]).map(item=>({...item})) } : emptyTemplate()); setError(""); } }, [open,existing]);
+  useEffect(() => { if(open){ const source = existing ? { ...emptyTemplate(), ...existing, items:(existing.items||[]).map(item=>({...item})) } : seed ? { ...emptyTemplate(), ...seed, items:(seed.items||[]).map(item=>({...item})) } : emptyTemplate(); setForm(source); setError(""); } }, [open,existing,seed]);
   if(!open)return null;
   const set=(key,value)=>setForm(prev=>({...prev,[key]:value}));
   const updateItem=(index,key,value)=>setForm(prev=>({...prev,items:prev.items.map((item,i)=>i===index?{...item,[key]:value}:item)}));
