@@ -3,6 +3,7 @@ import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } fr
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -113,7 +114,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       includeParentCounty
     });
 
-    const researchData = agentResult?.data?.data || agentResult?.data || agentResult;
+    const researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
     if (!researchData) return Response.json({ error: 'No research data returned' }, { status: 400 });
 
     // Build update object — replace with new data, keep manual overrides
