@@ -72,6 +72,11 @@ async function requireAdmin(base44: any) {
   return { user };
 }
 
+const scopeForGrant = (row:any) => ({
+  scope_mode:row?.scope_mode === 'selected_equipment' ? 'selected_equipment' : 'all_active',
+  allowed_equipment_ids:[...new Set((Array.isArray(row?.allowed_equipment_ids) ? row.allowed_equipment_ids : []).map((value:any)=>String(value||'').trim()).filter(Boolean))],
+});
+
 const publicGrant = (row: any) => ({
   id: String(row?.id || ''),
   name: String(row?.name || 'External Mechanic'),
@@ -82,6 +87,7 @@ const publicGrant = (row: any) => ({
   last_used_at: row?.last_used_at || '',
   notes: row?.notes || '',
   allow_estimates:Array.isArray(row?.allowed_actions) && row.allowed_actions.includes('estimate_submit'),
+  ...scopeForGrant(row),
 });
 
 async function validateGrant(Access: any, token: unknown) {
@@ -162,8 +168,13 @@ async function portalPayload(base44: any, grant: any) {
     loadAllEntityRows({entity:Task,sort:'start_date',label:'Mechanic portal Fleet maintenance schedules'}),
     loadAllEntityRows({entity:Estimate,sort:'-updated_date',label:'Mechanic portal repair-estimate state'}),
   ]);
-  const active = workOrders.filter((row:any)=>ACTIVE.has(row.status));
-  const completed = workOrders.filter((row:any)=>row.status === 'completed').slice(0,30);
+  const grantScope = scopeForGrant(grant);
+  const allowedEquipmentIds = new Set(grantScope.allowed_equipment_ids);
+  const scopedWorkOrders = grantScope.scope_mode === 'selected_equipment'
+    ? workOrders.filter((row:any)=>allowedEquipmentIds.has(String(row.equipment_id || '')))
+    : workOrders;
+  const active = scopedWorkOrders.filter((row:any)=>ACTIVE.has(row.status));
+  const completed = scopedWorkOrders.filter((row:any)=>row.status === 'completed').slice(0,30);
   const visible = [...active,...completed];
   const equipmentIds = new Set(visible.map((row:any)=>String(row.equipment_id || '')).filter(Boolean));
   const taskIds = new Set(visible.map((row:any)=>String(row.maintenance_task_id || '')).filter(Boolean));
@@ -263,11 +274,22 @@ Deno.serve(async (req) => {
         const rawBytes = crypto.getRandomValues(new Uint8Array(32));
         const token = base64Url(rawBytes);
         const allowEstimates = body?.allow_estimates === true;
+        const scopeMode = body?.scope_mode === 'selected_equipment' ? 'selected_equipment' : 'all_active';
+        const requestedEquipmentIds = [...new Set((Array.isArray(body?.allowed_equipment_ids) ? body.allowed_equipment_ids : []).map((value:any)=>String(value||'').trim()).filter(Boolean))];
+        if (scopeMode === 'selected_equipment') {
+          if (!requestedEquipmentIds.length) return json({error:'Select at least one Fleet equipment item for a selected-equipment mechanic link.'},{status:400});
+          const allEquipment = await loadAllEntityRows({entity:base44.asServiceRole.entities.FleetEquipment,sort:'name',label:'Fleet mechanic access scope validation'});
+          const knownIds = new Set((allEquipment||[]).map((row:any)=>String(row.id||'')));
+          const missing = requestedEquipmentIds.filter(id=>!knownIds.has(id));
+          if (missing.length) return json({error:'One or more selected Fleet equipment records no longer exist. Refresh Fleet Settings and choose the scope again.'},{status:409});
+        }
         const created = await Access.create({
           name,
           token_hash:await sha256(token),
           enabled:true,
           allowed_actions:['bootstrap','start','save',...(allowEstimates?['estimate_save','estimate_submit']:[])],
+          scope_mode:scopeMode,
+          allowed_equipment_ids:scopeMode === 'selected_equipment' ? requestedEquipmentIds : [],
           ...(expiresAt ? {expires_at:expiresAt} : {}),
           notes,
         });
@@ -285,6 +307,24 @@ Deno.serve(async (req) => {
         const allowedActions = [...new Set([...retained,...(allowEstimates?['estimate_save','estimate_submit']:[])])];
         const updated = await Access.update(id,{allowed_actions:allowedActions});
         await Log.create({source:'fleetMechanicPortal',level:'info',message:`Standalone Fleet mechanic estimate permission ${allowEstimates?'enabled':'disabled'}.`,details:{grant_id:id,name:found.name || '',changed_by:auth.user.email || ''}}).catch(()=>null);
+        return json({success:true,link:publicGrant(updated)});
+      }
+
+      if (action === 'admin_update_scope') {
+        const id = String(body?.id || '').trim();
+        const found = await Access.get(id).catch(()=>null);
+        if (!found) return json({error:'Mechanic access link was not found.'},{status:404});
+        const scopeMode = body?.scope_mode === 'selected_equipment' ? 'selected_equipment' : 'all_active';
+        const requestedEquipmentIds = [...new Set((Array.isArray(body?.allowed_equipment_ids) ? body.allowed_equipment_ids : []).map((value:any)=>String(value||'').trim()).filter(Boolean))];
+        if (scopeMode === 'selected_equipment') {
+          if (!requestedEquipmentIds.length) return json({error:'Select at least one Fleet equipment item before saving a selected-equipment mechanic scope.'},{status:400});
+          const allEquipment = await loadAllEntityRows({entity:base44.asServiceRole.entities.FleetEquipment,sort:'name',label:'Fleet mechanic access scope validation'});
+          const knownIds = new Set((allEquipment||[]).map((row:any)=>String(row.id||'')));
+          const missing = requestedEquipmentIds.filter(equipmentId=>!knownIds.has(equipmentId));
+          if (missing.length) return json({error:'One or more selected Fleet equipment records no longer exist. Refresh Fleet Settings and choose the scope again.'},{status:409});
+        }
+        const updated = await Access.update(id,{scope_mode:scopeMode,allowed_equipment_ids:scopeMode === 'selected_equipment' ? requestedEquipmentIds : []});
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic work scope updated.',details:{grant_id:id,name:found.name || '',scope_mode:scopeMode,equipment_count:scopeMode === 'selected_equipment' ? requestedEquipmentIds.length : 0,changed_by:auth.user.email || ''}}).catch(()=>null);
         return json({success:true,link:publicGrant(updated)});
       }
 
