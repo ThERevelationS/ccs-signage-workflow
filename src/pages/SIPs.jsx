@@ -278,6 +278,12 @@ export default function SIPs() {
     return progress.total === 0 || progress.completed < progress.total;
   }).length;
   const activeValue = activeWorkOrders.reduce((sum, wo) => sum + Number(wo.estimate_amount || 0), 0);
+  const hasBoardViewFilters = Boolean(searchQuery || statusFilter !== "all" || sortMode !== "meeting");
+  const resetBoardView = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setSortMode("meeting");
+  };
 
   if (isLoading) {
     return (
@@ -383,8 +389,8 @@ export default function SIPs() {
                 <SelectItem value="amount">Amount</SelectItem>
               </SelectContent>
             </Select>
-            {(searchQuery || statusFilter !== "all" || sortMode !== "meeting") && (
-              <Button type="button" variant="ghost" onClick={() => { setSearchQuery(""); setStatusFilter("all"); setSortMode("meeting"); }} className="justify-self-start md:justify-self-auto">
+            {hasBoardViewFilters && (
+              <Button type="button" variant="ghost" onClick={resetBoardView} className="justify-self-start md:justify-self-auto">
                 <X className="w-4 h-4 mr-2" />Clear
               </Button>
             )}
@@ -488,7 +494,12 @@ export default function SIPs() {
             })}
             {visibleActiveWorkOrders.length === 0 && (
               <div className="py-10 px-4 text-center text-sm text-gray-500">
-                {searchQuery || statusFilter !== "all" ? "No active SIPs items match the current search or filter." : "No items assigned to SIPs."}
+                <div>{searchQuery || statusFilter !== "all" ? "No active SIPs items match the current search or filter." : "No items assigned to SIPs."}</div>
+                {(searchQuery || statusFilter !== "all") && (
+                  <Button type="button" variant="outline" size="sm" onClick={resetBoardView} className="mt-3 bg-white">
+                    <X className="w-4 h-4 mr-2" />Clear search & filters
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -782,9 +793,16 @@ export default function SIPs() {
               {visibleActiveWorkOrders.length === 0 && (
                 <tr>
                   <td colSpan={14} className="px-3 py-12 text-center text-gray-500 text-base">
-                    {searchQuery || statusFilter !== "all"
-                      ? "No active SIPs items match the current search or filter."
-                      : "No items assigned to SIPs. Assign \"SIPs\" to the Task Assigned column or check WIP/SIP on a task description to see items here."}
+                    <div>
+                      {searchQuery || statusFilter !== "all"
+                        ? "No active SIPs items match the current search or filter."
+                        : "No items assigned to SIPs. Assign \"SIPs\" to the Task Assigned column or check WIP/SIP on a task description to see items here."}
+                    </div>
+                    {(searchQuery || statusFilter !== "all") && (
+                      <Button type="button" variant="outline" size="sm" onClick={resetBoardView} className="mt-3 bg-white">
+                        <X className="w-4 h-4 mr-2" />Clear search & filters
+                      </Button>
+                    )}
                   </td>
                 </tr>
               )}
