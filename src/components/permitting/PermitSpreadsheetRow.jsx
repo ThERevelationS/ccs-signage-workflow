@@ -66,6 +66,7 @@ export default function PermitSpreadsheetRow({
   onShowLocalityInfo,
   onDeleteLine,
   isRegistered,
+  users,
   today
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
@@ -92,6 +93,8 @@ export default function PermitSpreadsheetRow({
   const officeTypes = getOfficeTypes(lineItem);
   const followupStyle = getFollowupStyle();
   const localityLabel = lineItem.locality_name || "—";
+  const ownerOptions = [...new Set((users || []).map((user) => user.full_name || user.email).filter(Boolean))].sort();
+  if (lineItem.assigned_to && !ownerOptions.includes(lineItem.assigned_to)) ownerOptions.unshift(lineItem.assigned_to);
 
   return (
     <div
@@ -172,6 +175,24 @@ export default function PermitSpreadsheetRow({
                   <Info className="w-4 h-4 text-blue-600" />
                 </button>
               )}
+            </div>
+            <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+              <span className="flex-shrink-0">Owner:</span>
+              <Select
+                value={lineItem.assigned_to || "__unassigned__"}
+                onValueChange={(value) => onUpdateField(lineItem.id, 'assigned_to', value === "__unassigned__" ? "" : value)}
+                disabled={!isRegistered}
+              >
+                <SelectTrigger className="h-6 min-w-0 w-[140px] border-gray-200 px-2 text-[11px] shadow-none">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                  {ownerOptions.map((owner) => (
+                    <SelectItem key={owner} value={owner}>{owner}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
