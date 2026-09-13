@@ -61,6 +61,12 @@ export default function FleetWorkOrders() {
   const openCreateDialog = useCallback((workOrder = null) => {
     setDialog({ mode: "create", workOrder, createKey: `${easternTodayText()}-${crypto.randomUUID()}` });
   }, []);
+  const clearNewFlag = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  };
+  const closeDialog = () => { setDialog(null); clearNewFlag(); };
 
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => {
@@ -123,7 +129,7 @@ export default function FleetWorkOrders() {
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
-    setDialog(null);
+    closeDialog();
     setActionError("");
   };
 
@@ -284,7 +290,7 @@ export default function FleetWorkOrders() {
         tasks={tasks}
         parts={parts}
         fluids={fluids}
-        onClose={() => setDialog(null)}
+        onClose={closeDialog}
         onSubmit={submitDialog}
         onRefreshInventory={loadData}
       />
