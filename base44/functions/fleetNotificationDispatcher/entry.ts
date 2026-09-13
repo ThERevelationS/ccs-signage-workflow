@@ -47,12 +47,17 @@ Deno.serve(async (req) => {
         '{work_order_number}': esc(wo.work_order_number), '{title}': esc(wo.title), '{equipment_name}': esc(eq?.name || 'N/A'),
         '{equipment_type}': esc(eq?.type || 'N/A'), '{priority}': esc(wo.priority), '{description}': esc(wo.description),
         '{corrective_action}': esc(wo.corrective_action), '{company_name}': esc(settings.company_name || 'CCS'), '{fleet_url}': esc(fleetUrl),
+        '{public_reporter_name}': esc(wo.public_reporter_name || 'Anonymous'), '{public_reporter_contact}': esc(wo.public_reporter_contact || 'Not provided'),
+        '{public_reported_at}': esc(wo.public_reported_at || ''),
       };
       if (eventType === 'work_order_created') {
         recipients = settings.work_order_creation_emails || [];
         subject = replaceVars(settings.email_subject_template || 'New Fleet Work Order: {work_order_number}', vars);
         const raw = replaceVars(settings.email_body_template || 'A new Fleet work order was created: {work_order_number} - {title}', vars);
         bodyHtml = `<div style="font-family:Arial,sans-serif;white-space:pre-wrap">${raw.replace(/\n/g,'<br>')}</div>`;
+        if (wo.public_submission_key) {
+          bodyHtml += `<div style="font-family:Arial,sans-serif;margin-top:16px;padding:12px;border:1px solid #ddd6fe;border-radius:8px;background:#f5f3ff"><b>Public Fleet issue report</b><br><b>Reporter:</b> ${vars['{public_reporter_name}']}<br><b>Contact:</b> ${vars['{public_reporter_contact}']}<br><b>Reported:</b> ${vars['{public_reported_at}'] || 'N/A'}</div>`;
+        }
         eventToken ||= `created:${wo.id}`;
       } else {
         recipients = settings.work_order_completed_emails || [];
