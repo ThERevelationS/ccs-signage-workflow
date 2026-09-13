@@ -22,7 +22,11 @@ import {
 const FILTERS = [
   { key: "all", label: "All" },
   { key: "maintenance", label: "Maintenance" },
+  { key: "inspections", label: "Inspections" },
   { key: "usage", label: "Parts & Fluids" },
+  { key: "fuel", label: "Fuel" },
+  { key: "assignments", label: "Assignments" },
+  { key: "coverage", label: "Warranties" },
   { key: "alerts", label: "Alerts" },
   { key: "requests", label: "Requests" },
   { key: "equipment", label: "Equipment" },
@@ -44,7 +48,7 @@ const shortText = (value, max = 180) => {
   return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
 };
 
-function buildEvents({ equipment, workOrders, logs, notifications, requests }) {
+function buildEvents({ equipment, workOrders, logs, notifications, requests, inspections, fuelEntries, warranties, reservations }) {
   const events = [];
 
   for (const workOrder of workOrders || []) {
