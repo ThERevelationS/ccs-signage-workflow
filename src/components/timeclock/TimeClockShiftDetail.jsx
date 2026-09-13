@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   Briefcase,
-  CheckCircle2,
   Clock3,
   Coffee,
   FileText,
@@ -19,7 +18,7 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 const TimeClockBreak = base44.entities.TimeClockBreak;
 const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
