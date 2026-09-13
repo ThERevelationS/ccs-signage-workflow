@@ -14,6 +14,7 @@ import {
 } from "@/components/permitting/jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
 
@@ -35,6 +36,7 @@ async function pollResearchRequest(id) {
 }
 
 export default function PermittingRepository() {
+  const { currentUser } = useAuth();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,6 +127,33 @@ export default function PermittingRepository() {
   const handleEdit = (jurisdiction) => {
     setEditingJurisdiction(jurisdiction);
     setShowForm(true);
+  };
+
+  const handleVerificationChange = async (jurisdiction, status, notes = "") => {
+    if (!jurisdiction?.id) throw new Error("This jurisdiction is no longer loaded. Reload before changing verification status.");
+    const trust = assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction));
+    if (status === "verified" && trust.verificationBlocked) {
+      throw new Error("Resolve duplicate, placeholder, or unusable-source issues before marking this jurisdiction verified.");
+    }
+
+    const formData = {
+      verification_status: status,
+      verification_notes: notes.trim(),
+    };
+    if (status === "verified") {
+      formData.verified_at = new Date().toISOString();
+      formData.verified_by = currentUser?.full_name || currentUser?.email || "CCS Staff";
+    }
+
+    const updated = await saveJurisdictionFromLoadedSnapshot({
+      entity: JurisdictionProfile,
+      jurisdiction,
+      formData,
+      label: `Jurisdiction verification ${jurisdiction.name || jurisdiction.id}`,
+    });
+    setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
+    if (selectedJurisdiction?.id === updated.id) setSelectedJurisdiction(updated);
+    return updated;
   };
 
   const handleDelete = async (id) => {
