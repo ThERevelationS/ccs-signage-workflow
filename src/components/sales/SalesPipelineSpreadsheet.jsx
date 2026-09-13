@@ -30,6 +30,7 @@ import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
+import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -60,6 +61,8 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "quote_date",
   "date_estimate_sent",
   "follow_up_date",
+  "sales_last_follow_up_completed_at",
+  "sales_last_follow_up_outcome",
   "close_date",
   "expected_close_date",
   "lost_reason",
@@ -140,6 +143,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
   const [statusTransition, setStatusTransition] = useState(null);
+  const [followUpCompletion, setFollowUpCompletion] = useState(null);
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const fileInputRef = useRef(null);
   const [editDialog, setEditDialog] = useState({ open: false, field: "", items: [] });
@@ -567,6 +571,26 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return;
     }
     updateWorkOrderFields(workOrder.id, { sales_status: nextStatus });
+  };
+
+  const requestFollowUpCompletion = (workOrder) => {
+    if (!isRegistered || !workOrder?.id || ["won", "lost"].includes(workOrder.sales_status)) return;
+    setFollowUpCompletion(workOrder);
+  };
+
+  const confirmFollowUpCompletion = ({ outcome = "", nextFollowUpDate = "", nextAction = "" } = {}) => {
+    if (!followUpCompletion?.id || !String(outcome).trim()) return;
+    const current = workOrders.find((row) => row.id === followUpCompletion.id) || followUpCompletion;
+    const changes = {
+      sales_last_follow_up_completed_at: new Date().toISOString(),
+      sales_last_follow_up_outcome: String(outcome).trim(),
+      follow_up_date: nextFollowUpDate || "",
+    };
+    if (nextAction !== String(current.current_task_description || "").trim()) {
+      changes.current_task_description = nextAction;
+    }
+    updateWorkOrderFields(current.id, changes);
+    setFollowUpCompletion(null);
   };
 
   const confirmSalesStatusTransition = ({ lostReason = "", closeDate = "" } = {}) => {
@@ -1673,6 +1697,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onClose={() => setSelectedWorkOrder(null)}
           onUpdateFields={updateWorkOrderFields}
           onRequestStatusChange={requestSalesStatusChange}
+          onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
         />
       )}
@@ -1745,6 +1770,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         onClose={() => setStatusTransition(null)}
         onConfirm={confirmSalesStatusTransition}
       />
+      <SalesFollowUpCompleteDialog
+        workOrder={followUpCompletion}
+        onClose={() => setFollowUpCompletion(null)}
+        onConfirm={confirmFollowUpCompletion}
+      />
     </>
   );
 
@@ -1774,6 +1804,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onOpenDetails={openOpportunityDetails}
           onUpdateWorkOrder={updateWorkOrder}
           onRequestStatusChange={requestSalesStatusChange}
+          onCompleteFollowUp={requestFollowUpCompletion}
           isRegistered={isRegistered}
         />
         {renderOpportunityDialogs()}
@@ -1793,6 +1824,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             workOrders={filteredWorkOrders}
             onUpdateWorkOrder={updateWorkOrder}
             onRequestStatusChange={requestSalesStatusChange}
+            onCompleteFollowUp={requestFollowUpCompletion}
             onOpenDetails={openOpportunityDetails}
             isRegistered={isRegistered}
           />
