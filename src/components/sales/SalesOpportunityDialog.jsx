@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
+import { CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const CellHistory = base44.entities.CellHistory;
@@ -38,6 +38,8 @@ const SALES_HISTORY_FIELDS = new Set([
   "quote_date",
   "date_estimate_sent",
   "follow_up_date",
+  "sales_last_follow_up_completed_at",
+  "sales_last_follow_up_outcome",
   "expected_close_date",
   "close_date",
   "lost_reason",
@@ -56,6 +58,8 @@ const FIELD_LABELS = {
   quote_date: "Quote date",
   date_estimate_sent: "Estimate sent",
   follow_up_date: "Follow-up date",
+  sales_last_follow_up_completed_at: "Follow-up completed",
+  sales_last_follow_up_outcome: "Follow-up outcome",
   expected_close_date: "Expected close",
   close_date: "Close date",
   lost_reason: "Lost reason",
@@ -74,6 +78,10 @@ const displayValue = (field, value) => {
   if (value === undefined || value === null || value === "") return "—";
   if (["estimate_amount", "quoted_amount"].includes(field)) return money(value);
   if (field === "probability") return `${value}%`;
+  if (field === "sales_last_follow_up_completed_at") {
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? String(value) : format(parsed, "MMM d, yyyy h:mm a");
+  }
   if (field === "sales_status") return String(value).replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
   return String(value);
 };
@@ -86,6 +94,7 @@ export default function SalesOpportunityDialog({
   onClose,
   onUpdateFields,
   onRequestStatusChange,
+  onCompleteFollowUp,
   onOpenFullDetails,
 }) {
   const [history, setHistory] = useState([]);
@@ -134,6 +143,15 @@ export default function SalesOpportunityDialog({
   if (!workOrder) return null;
 
   const update = (changes) => onUpdateFields?.(workOrder.id, changes);
+  const futureDateStamp = (days) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + days);
+    return format(date, "yyyy-MM-dd");
+  };
+  const lastFollowUpCompleted = workOrder.sales_last_follow_up_completed_at
+    ? new Date(workOrder.sales_last_follow_up_completed_at)
+    : null;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose?.()}>
@@ -223,6 +241,25 @@ export default function SalesOpportunityDialog({
                 <div><Label className="text-xs text-gray-500">Task owner</Label><div className="mt-1 h-9 rounded-md border px-3 py-2 text-sm text-gray-700">{workOrder.current_task_assigned_to || "Unassigned"}</div></div>
                 <div className="sm:col-span-2"><Label className="text-xs text-gray-500">Next action / task</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-9" /></div>
               </div>
+
+              {!closeout && isRegistered && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+                  <span className="text-xs font-medium text-gray-500">Quick follow-up:</span>
+                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>
+                  <Button type="button" size="sm" className="h-7 px-2 text-xs" onClick={() => onCompleteFollowUp?.(workOrder)}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete / Log</Button>
+                </div>
+              )}
+
+              {workOrder.sales_last_follow_up_outcome && (
+                <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                  <div className="font-semibold">Latest completed follow-up</div>
+                  <div className="mt-0.5">{workOrder.sales_last_follow_up_outcome}</div>
+                  {lastFollowUpCompleted && !isNaN(lastFollowUpCompleted.getTime()) && <div className="mt-1 text-[11px] text-emerald-700">{format(lastFollowUpCompleted, "MMM d, yyyy h:mm a")}</div>}
+                </div>
+              )}
               {!closeout && !workOrder.follow_up_date && !workOrder.current_task_deadline && <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">This opportunity has no scheduled next action.</div>}
             </div>
 
