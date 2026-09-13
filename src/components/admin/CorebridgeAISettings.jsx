@@ -74,7 +74,7 @@ const DEFAULTS = {
   title_format: "description", // "description" or "client_docnum"
 };
 
-export default function CorebridgeAISettings() {
+export default function CorebridgeAISettings({ sessionToken }) {
   const [settings, setSettings] = useState(DEFAULTS);
   const [settingRecord, setSettingRecord] = useState(null);
   const [settingsError, setSettingsError] = useState("");
@@ -158,7 +158,7 @@ export default function CorebridgeAISettings() {
     setIsTesting(true);
     setTestResult(null);
     try {
-      const res = await processCorebridgeEmails({ manual: true });
+      const res = await processCorebridgeEmails({ manual: true, session_token: sessionToken });
       setTestResult({ success: true, data: res.data });
       // Reload logs after run
       setTimeout(() => loadLogs(), 1500);
