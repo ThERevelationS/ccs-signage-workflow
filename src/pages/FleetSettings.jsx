@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import FleetModuleNav from "@/components/fleet/FleetModuleNav";
 import FleetSettingsEditor from "@/components/fleet/FleetSettingsEditor";
 import FleetRepairApprovalPolicies from "@/components/fleet/FleetRepairApprovalPolicies";
@@ -124,6 +126,103 @@ export default function FleetSettings() {
       { label: "Bouncie REST authorization healthy", ok: !!connection?.connected && !connection.needsReconnect, detail: connection?.needsReconnect ? "Administrator OAuth reconnect required" : "No reconnect flag" },
     ];
   }, [settings, connection, audit, serverStatus]);
+
+  const featureSetup = useMemo(() => {
+    const totals = integrity?.summary?.totals || {};
+    const activeMechanicLinks = mechanicLinks.filter(link => link.enabled !== false && (!link.expires_at || Date.parse(link.expires_at) > Date.now()));
+    return [
+      {
+        key: "inspection_templates",
+        label: "Inspection Templates",
+        state: Number(totals.inspection_templates || 0) > 0 ? "configured" : "needs_setup",
+        value: Number(totals.inspection_templates || 0),
+        detail: Number(totals.inspection_templates || 0) > 0 ? `${totals.inspection_templates} template${Number(totals.inspection_templates) === 1 ? "" : "s"} configured.` : "Create at least one checklist before employees can run inspections.",
+        actionLabel: "Open Inspections",
+        to: createPageUrl("FleetInspections"),
+      },
+      {
+        key: "meter_rules",
+        label: "Mileage / Hour Maintenance",
+        state: Number(totals.meter_rules || 0) > 0 ? "configured" : "needs_setup",
+        value: Number(totals.meter_rules || 0),
+        detail: Number(totals.meter_rules || 0) > 0 ? `${totals.meter_rules} meter rule${Number(totals.meter_rules) === 1 ? "" : "s"} configured.` : "Date-based maintenance still works. Add meter rules only to assets that need mileage/hour service intervals.",
+        actionLabel: "Open Maintenance",
+        to: createPageUrl("FleetMaintenance"),
+      },
+      {
+        key: "approval_policies",
+        label: "Repair Approval Thresholds",
+        state: Number(totals.repair_approval_policies || 0) > 0 ? "configured" : "needs_setup",
+        value: Number(totals.repair_approval_policies || 0),
+        detail: Number(totals.repair_approval_policies || 0) > 0 ? `${totals.repair_approval_policies} approval polic${Number(totals.repair_approval_policies) === 1 ? "y" : "ies"} configured.` : "No dollar thresholds are configured yet. Estimates without a required policy follow the existing no-threshold approval behavior.",
+        actionLabel: "Configure Thresholds",
+        href: "#repair-approval-policies",
+      },
+      {
+        key: "lifecycle",
+        label: "Lifecycle / Replacement Planning",
+        state: Number(totals.lifecycle_profiles || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.lifecycle_profiles || 0),
+        detail: Number(totals.lifecycle_profiles || 0) > 0 ? `${totals.lifecycle_profiles} asset plan${Number(totals.lifecycle_profiles) === 1 ? "" : "s"} entered.` : "Ready. Add acquisition cost, replacement targets, and budget only where CCS wants planning data.",
+        actionLabel: "Open Analytics",
+        to: createPageUrl("FleetAnalytics"),
+      },
+      {
+        key: "warranties",
+        label: "Warranty Tracking",
+        state: Number(totals.warranties || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.warranties || 0),
+        detail: Number(totals.warranties || 0) > 0 ? `${totals.warranties} warrant${Number(totals.warranties) === 1 ? "y" : "ies"} tracked.` : "Ready for real vehicle/component coverage. No placeholder warranties are required.",
+        actionLabel: "Open Warranties",
+        to: createPageUrl("FleetWarranties"),
+      },
+      {
+        key: "fuel",
+        label: "Fuel & Operating Cost",
+        state: Number(totals.fuel_entries || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.fuel_entries || 0),
+        detail: Number(totals.fuel_entries || 0) > 0 ? `${totals.fuel_entries} fuel entr${Number(totals.fuel_entries) === 1 ? "y" : "ies"} recorded.` : "Ready for manual entry or reviewed CSV import. No fake fill-ups were seeded.",
+        actionLabel: "Open Fuel",
+        to: createPageUrl("FleetFuel"),
+      },
+      {
+        key: "reservations",
+        label: "Reservations & Assignments",
+        state: Number(totals.reservations || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.reservations || 0),
+        detail: Number(totals.reservations || 0) > 0 ? `${totals.reservations} reservation record${Number(totals.reservations) === 1 ? "" : "s"} preserved.` : "Ready for real bookings. Server overlap protection is already active.",
+        actionLabel: "Open Assignments",
+        to: createPageUrl("FleetReservations"),
+      },
+      {
+        key: "parts_ai",
+        label: "AI Parts Identification",
+        state: Number(totals.part_identifications || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.part_identifications || 0),
+        detail: Number(totals.part_identifications || 0) > 0 ? `${totals.part_identifications} identification session${Number(totals.part_identifications) === 1 ? "" : "s"} recorded.` : "Ready for photo, barcode, part-number, and text lookup from the Fleet Parts room workflow.",
+        actionLabel: "Open Parts",
+        to: createPageUrl("FleetParts"),
+      },
+      {
+        key: "dashboard",
+        label: "Personal Dashboard Layouts",
+        state: Number(totals.dashboard_preferences || 0) > 0 ? "in_use" : "ready",
+        value: Number(totals.dashboard_preferences || 0),
+        detail: Number(totals.dashboard_preferences || 0) > 0 ? `${totals.dashboard_preferences} user layout${Number(totals.dashboard_preferences) === 1 ? "" : "s"} saved.` : "Ready. Everyone starts with the safe default Overview until they customize their own layout.",
+        actionLabel: "Open Overview",
+        to: createPageUrl("FleetOverview"),
+      },
+      {
+        key: "mechanic",
+        label: "Standalone Mechanic Access",
+        state: activeMechanicLinks.length > 0 ? "in_use" : "ready",
+        value: activeMechanicLinks.length,
+        detail: activeMechanicLinks.length > 0 ? `${activeMechanicLinks.length} active private mechanic link${activeMechanicLinks.length === 1 ? "" : "s"}.` : "Ready if CCS needs outside-mechanic access. No CCS account or app-shell access is required.",
+        actionLabel: "Mechanic Access",
+        href: "#mechanic-portal",
+      },
+    ];
+  }, [integrity, mechanicLinks]);
 
   const runServerCheck = async () => {
     setChecking(true);
@@ -299,6 +398,15 @@ export default function FleetSettings() {
     </div>
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+        <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet Feature Setup Readiness</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Shows what needs real CCS configuration versus what is already ready to use. This section never seeds placeholder production data.</p></div>
+        <button type="button" onClick={runIntegrityAudit} disabled={integrityBusy} className="min-h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700">{integrityBusy?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh Setup Status</button>
+      </div>
+      <div className="mt-4 grid md:grid-cols-2 gap-3">{featureSetup.map(item => <FeatureSetupCard key={item.key} item={item} />)}</div>
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200"><b>Needs setup</b> means the feature requires CCS choices before that specific workflow is useful. <b>Ready</b> means the workflow can be used immediately and zero records is a valid production state.</div>
+    </div>
+
+    <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Production Controls</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Admin-only server controls. Production activation is permanent in normal UI use; every action remains validated server-side.</p></div><ShieldCheck className="w-5 h-5 text-gray-400 shrink-0"/></div>
       {actionError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">{actionError}</div>}
       {cutoverComplete ? <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-900 p-3"><div className="flex items-start justify-between gap-3"><div><div className="font-semibold text-emerald-800 dark:text-emerald-200">Production cutover completed</div><div className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">Completed {new Date(gates.cutover_completed_at).toLocaleString()}{gates.cutover_completed_by ? ` by ${gates.cutover_completed_by}` : ""}. FleetMaster remains frozen as the retained source archive.</div></div><CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0"/></div><button onClick={()=>runCutoverAction("probe_bouncie")} disabled={!!actionBusy} className="mt-3 px-3 py-2 rounded-lg border border-emerald-300 bg-white text-sm font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-50 dark:bg-slate-950 dark:border-emerald-800 dark:text-emerald-200">{actionBusy==="probe_bouncie"?"Checking…":"Run live Bouncie probe"}</button></div> : <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -311,7 +419,7 @@ export default function FleetSettings() {
       </div>}
     </div>
 
-    <FleetRepairApprovalPolicies />
+    <div id="repair-approval-policies" className="scroll-mt-24"><FleetRepairApprovalPolicies /></div>
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Automation Health</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Durable Fleet-scoped heartbeats and delivery state. Scheduled jobs now leave a summary even when nothing is due.</p></div><Activity className="w-5 h-5 text-gray-400 shrink-0"/></div>
@@ -337,7 +445,7 @@ export default function FleetSettings() {
       </div>
     </div>
 
-    <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
+    <div id="mechanic-portal" className="scroll-mt-24 rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Standalone Mechanic Portal</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Private Fleet-only bearer links for outside mechanics. No CCS account, app shell, signage workflow, Bouncie admin, inventory administration, requests, or settings access.</p></div>
         <UserCog className="w-5 h-5 text-gray-400 shrink-0"/>
@@ -414,6 +522,25 @@ export default function FleetSettings() {
   </div></div>;
 }
 
+function FeatureSetupCard({item}) {
+  const state = item.state || "ready";
+  const tone = state === "needs_setup"
+    ? "border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/15"
+    : state === "in_use"
+      ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/10"
+      : "border-gray-200 bg-gray-50/70 dark:border-slate-800 dark:bg-slate-950/30";
+  const badge = state === "needs_setup" ? "Needs setup" : state === "in_use" ? "In use" : "Ready";
+  const badgeTone = state === "needs_setup"
+    ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+    : state === "in_use"
+      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+      : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300";
+  const actionClass = "min-h-10 px-3 rounded-lg border border-gray-300 bg-white text-xs font-semibold inline-flex items-center justify-center hover:border-indigo-300 dark:bg-slate-900 dark:border-slate-700 dark:hover:border-indigo-700";
+  return <div className={`rounded-xl border p-3 ${tone}`}>
+    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{item.label}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{item.detail}</div></div><span className={`text-[10px] uppercase font-bold rounded-full px-2 py-1 whitespace-nowrap ${badgeTone}`}>{badge}</span></div>
+    <div className="mt-3 flex items-center justify-between gap-3"><div className="text-[11px] text-gray-400">Current records: <b className="text-gray-600 dark:text-slate-300">{item.value ?? 0}</b></div>{item.to ? <Link to={item.to} className={actionClass}>{item.actionLabel}</Link> : <a href={item.href || "#"} className={actionClass}>{item.actionLabel}</a>}</div>
+  </div>;
+}
 function Card({title,children}){return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm"><h2 className="font-semibold text-gray-900 dark:text-slate-100 mb-3">{title}</h2><div className="space-y-3">{children}</div></div>}
 function Row({label,value}){return <div><div className="text-xs text-gray-400">{label}</div><div className="text-sm text-gray-800 dark:text-slate-200 mt-0.5 whitespace-pre-wrap break-words">{value === 0 ? "0" : value || "—"}</div></div>}
 function Recipient({label,values}){return <Row label={label} value={(values||[]).map(v=>`${v.email}${v.delay_minutes!=null?` (${v.delay_minutes}m)`:""}`).join(", ")||"None"}/>} 
