@@ -77,6 +77,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   // Unsaved-changes tracking
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState(null);
   // Snapshot of the form at the last "clean" point (load or save)
   const cleanSnapshot = useRef(null);
   // Office Catalog and Office Types autosave; these flags mean a serialized save is still in flight.
@@ -123,27 +124,41 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     setIsDirty(false);
   };
 
-  const selectLocality = (loc) => {
-    if (isDirty && !confirm("You have unsaved changes. Discard them?")) return;
-    setSelectedLocality(loc.id);
-    setEditingLocality(loc.id);
-    loadFormFromLocality(loc);
-    setCatalogSearch("");
+  const applyNavigation = (action) => {
+    if (!action) return;
+    if (action.type === "select_locality") {
+      const loc = localities.find((row) => row.id === action.id);
+      if (!loc) return;
+      setSelectedLocality(loc.id);
+      setEditingLocality(loc.id);
+      loadFormFromLocality(loc);
+      setCatalogSearch("");
+      return;
+    }
+    if (action.type === "new_locality") {
+      setSelectedLocality(null);
+      setEditingLocality("new");
+      const blank = { name: "", state: "", zip: "", offices: [] };
+      setForm(blank);
+      cleanSnapshot.current = JSON.stringify(blank);
+      setIsDirty(false);
+      setCatalogSearch("");
+      return;
+    }
+    if (action.type === "tab") setActiveTab(action.value);
   };
 
-  const newLocality = () => {
-    if (isDirty && !confirm("You have unsaved changes. Discard them?")) return;
-    setSelectedLocality(null);
-    setEditingLocality("new");
-    const blank = {
-      name: "", state: "", zip: "",
-      offices: []
-    };
-    setForm(blank);
-    cleanSnapshot.current = JSON.stringify(blank);
-    setIsDirty(false);
-    setCatalogSearch("");
+  const requestNavigation = (action) => {
+    if (isDirty) {
+      setPendingConfirm({ kind: "discard_changes", action });
+      return;
+    }
+    applyNavigation(action);
   };
+
+  const selectLocality = (loc) => requestNavigation({ type: "select_locality", id: loc.id });
+
+  const newLocality = () => requestNavigation({ type: "new_locality" });
 
   const saveLocality = async () => {
     if (!form.name.trim() || localitySaveInFlightRef.current) return false;
