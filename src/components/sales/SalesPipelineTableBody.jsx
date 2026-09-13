@@ -284,7 +284,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("probability") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "probability", "Probability", wo.probability)}>
-                  <Input type="number" value={wo.probability || ""} onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="0" min="0" max="100" disabled={!isRegistered} />
+                  <Input type="number" value={wo.probability ?? ""} onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="0" min="0" max="100" disabled={!isRegistered} />
                 </td>
               )}
               {isColumnVisible("start_date") && (
