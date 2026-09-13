@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle } from "lucide-react";
+import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
+import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
@@ -21,9 +22,10 @@ const DOC_TYPE_COLORS = {
   other: "bg-gray-100 text-gray-700"
 };
 
-export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSelect, isRefreshing }) {
+export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSelect, isRefreshing, duplicateCount = 1 }) {
   const docCount = jurisdiction.documents?.length || 0;
   const hasRequirements = jurisdiction.permit_requirements?.requires_permit !== undefined;
+  const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
 
   return (
     <div
@@ -37,6 +39,14 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               <h3 className="font-semibold text-gray-900 text-sm">{jurisdiction.name}</h3>
               <Badge variant="outline" className="text-xs">{jurisdiction.state}</Badge>
               <Badge className="text-xs bg-gray-100 text-gray-600 capitalize">{jurisdiction.type}</Badge>
+            </div>
+            <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
+                <ShieldAlert className="w-3 h-3" /> {trust.label}
+              </span>
+              {trust.issues.length > 0 && (
+                <span className="text-[10px] text-gray-500">{trust.issues.length} review item{trust.issues.length === 1 ? '' : 's'}</span>
+              )}
             </div>
             {jurisdiction.type !== "county" && jurisdiction.parent_county?.name && (
               <div className="mt-1 text-[11px] text-gray-500">Parent County: {jurisdiction.parent_county.name}</div>
