@@ -1054,6 +1054,11 @@ Deno.serve(async (req) => {
           });
       if (!claimed) return Response.json({ success: false, error: 'Break start lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
+      await closeActiveLaborSegment({
+        laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+        endReason: 'break', officialEnd: officialStart,
+      });
+
       let breakRow = await uniqueRow(breakEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Break-start request');
       if (!breakRow) {
         breakRow = await breakEntity.create({
@@ -1227,6 +1232,11 @@ Deno.serve(async (req) => {
             last_work_pause_request_id: requestId, work_pause_pending_started_at: officialStart,
           });
       if (!claimed) return Response.json({ success: false, error: 'Work Pause start lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      await closeActiveLaborSegment({
+        laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+        endReason: 'work_pause', officialEnd: officialStart,
+      });
 
       let pauseRow = await uniqueRow(workPauseEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Work Pause start request');
       if (!pauseRow) {
@@ -2226,6 +2236,11 @@ Deno.serve(async (req) => {
             status: 'clocking_out', last_request_id: requestId, pending_started_at: officialClockOut,
           });
       if (!claimed) return Response.json({ success: false, error: 'Clock-out lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+      await closeActiveLaborSegment({
+        laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+        endReason: 'clock_out', officialEnd: officialClockOut,
+      });
 
       const nextFields = {
         clock_out: officialClockOut,
