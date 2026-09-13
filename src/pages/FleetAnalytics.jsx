@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock3,
+  Fuel,
   Loader2,
   Package,
   TimerReset,
@@ -59,6 +60,9 @@ export default function FleetAnalytics() {
   const [tasks, setTasks] = useState([]);
   const [lifecycleRows, setLifecycleRows] = useState([]);
   const [lifecycleError, setLifecycleError] = useState("");
+  const [fuelSummary, setFuelSummary] = useState(null);
+  const [fuelError, setFuelError] = useState("");
+  const [fuelLoading, setFuelLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
