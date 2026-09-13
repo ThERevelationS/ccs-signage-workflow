@@ -78,7 +78,7 @@ export default function FleetSettingsEditor({ open, settings, onClose, onSaved }
             <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Edit Fleet Notifications & Reminders</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Only Fleet communication settings are editable here. Cutover gates, source freeze, migration metadata, and estimator settings remain protected.</p>
           </div>
-          <button onClick={onClose} disabled={saving} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"><X className="h-5 w-5"/></button>
+          <button onClick={onClose} disabled={saving} className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"><X className="h-5 w-5"/></button>
         </div>
 
         <div className="max-h-[calc(94vh-140px)] overflow-y-auto px-4 py-5 sm:px-6 space-y-7">
@@ -133,8 +133,8 @@ export default function FleetSettingsEditor({ open, settings, onClose, onSaved }
         <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-200 px-4 py-3 sm:px-6 dark:border-slate-800">
           <div className="text-xs text-gray-500 dark:text-slate-400">Changes apply to future Fleet notifications only; historical queued/sent messages are not rewritten.</div>
           <div className="flex gap-2">
-            <button onClick={onClose} disabled={saving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
-            <button onClick={save} disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">{saving?<Loader2 className="h-4 w-4 animate-spin"/>:<Save className="h-4 w-4"/>}{saving?"Saving…":"Save Fleet settings"}</button>
+            <button onClick={onClose} disabled={saving} className="min-h-11 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
+            <button onClick={save} disabled={saving} className="min-h-11 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">{saving?<Loader2 className="h-4 w-4 animate-spin"/>:<Save className="h-4 w-4"/>}{saving?"Saving…":"Save Fleet settings"}</button>
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function FleetSettingsEditor({ open, settings, onClose, onSaved }
   );
 }
 
-const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-indigo-950";
+const inputClass = "w-full min-h-11 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-indigo-950";
 
 function SectionTitle({ title, note }) { return <div><h3 className="font-semibold text-gray-900 dark:text-slate-100">{title}</h3>{note && <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{note}</p>}</div>; }
 function Field({ label, children }) { return <label className="block"><span className="mb-1 block text-xs font-medium text-gray-600 dark:text-slate-300">{label}</span>{children}</label>; }
