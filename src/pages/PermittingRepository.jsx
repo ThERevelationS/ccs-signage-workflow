@@ -272,8 +272,10 @@ export default function PermittingRepository() {
               </h1>
               <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions · {totalDocs} documents</p>
               <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
+                <span className="text-green-700">{trustCounts.verified || 0} verified</span>
                 <span className="text-amber-700">{trustCounts.needs_review || 0} need verification</span>
                 <span className="text-red-700">{trustCounts.blocked || 0} duplicate-blocked</span>
+                <span className="text-slate-600">{trustCounts.historical || 0} historical</span>
                 <span className="text-blue-700">{trustCounts.manual_protected || 0} manual-protected</span>
                 <span className="text-purple-700">{trustCounts.ai_researched || 0} AI researched</span>
               </div>
@@ -311,8 +313,10 @@ export default function PermittingRepository() {
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
             {[
               ["all", "All", jurisdictions.length, "border-gray-200 bg-white text-gray-700"],
+              ["verified", "Verified", trustCounts.verified || 0, "border-green-300 bg-green-50 text-green-800"],
               ["needs_review", "Needs Verification", trustCounts.needs_review || 0, "border-amber-300 bg-amber-50 text-amber-800"],
               ["blocked", "Duplicates", trustCounts.blocked || 0, "border-red-300 bg-red-50 text-red-700"],
+              ["historical", "Historical", trustCounts.historical || 0, "border-slate-300 bg-slate-100 text-slate-700"],
               ["manual_protected", "Manual Protected", trustCounts.manual_protected || 0, "border-blue-300 bg-blue-50 text-blue-700"],
               ["ai_researched", "AI Researched", trustCounts.ai_researched || 0, "border-purple-300 bg-purple-50 text-purple-700"],
             ].map(([key, label, count, colorClass]) => (
@@ -374,6 +378,7 @@ export default function PermittingRepository() {
           <JurisdictionDetailPanel
             jurisdiction={selectedJurisdiction}
             duplicateCount={duplicateCountFor(selectedJurisdiction)}
+            onSetVerification={handleVerificationChange}
             onClose={() => setSelectedJurisdiction(null)}
             onUpdate={(updated) => {
               setJurisdictions(prev => prev.map(j => j.id === updated.id ? updated : j));
