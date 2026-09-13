@@ -32,7 +32,7 @@ export async function listEstimateRevisions(estimateId, { strict = false } = {})
   }
 }
 
-export async function startEstimateRevision({ estimate, reason, quoteTotal, internalCost }) {
+export async function startEstimateRevision({ estimate, reason, quoteTotal, internalCost, sessionToken = "" }) {
   if (!estimate?.id) throw new Error("Estimate is required to start a revision.");
   const cleanReason = String(reason || "").trim();
   if (!cleanReason) throw new Error("A revision reason is required.");
@@ -44,6 +44,7 @@ export async function startEstimateRevision({ estimate, reason, quoteTotal, inte
     estimate_id: estimate.id,
     expected_estimate_updated_date: estimate.updated_date || "",
     reason: cleanReason,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
