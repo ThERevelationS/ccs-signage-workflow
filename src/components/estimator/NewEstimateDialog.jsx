@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { generateDocNumber } from "@/functions/generateDocNumber";
+import { useAuth } from "@/components/auth/EmailGate";
 import { ensureNewEstimate, newEstimateCreationKey } from "./estimateCreationService";
 import { loadAllCustomers, upsertCustomerFromEstimate } from "./customerSync";
 
 export default function NewEstimateDialog({ open, onClose, onCreated }) {
+  const { sessionToken } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [customerId, setCustomerId] = useState("");
   const [newClientName, setNewClientName] = useState("");
@@ -48,7 +50,7 @@ export default function NewEstimateDialog({ open, onClose, onCreated }) {
       );
 
       if (!createAttemptRef.current.estimateNumber) {
-        const res = await generateDocNumber({ doc_type: "estimate" });
+        const res = await generateDocNumber({ doc_type: "estimate", session_token: sessionToken });
         createAttemptRef.current.estimateNumber = String(res?.data?.number || "").trim();
       }
 
