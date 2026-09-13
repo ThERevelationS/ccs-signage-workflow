@@ -540,6 +540,7 @@ export default function EstimateDetail() {
           previousEstimateStatus: syncPreviousStatus,
           syncCustomer: customerChangedKeys.length > 0,
           customerChangedKeys,
+          sessionToken,
         });
         const cleanup = {};
         if (lifecycleReasonRequired && saved.edit_reason) cleanup.edit_reason = "";
@@ -609,7 +610,7 @@ export default function EstimateDetail() {
         // No historical transition guess is needed here. Versioned quotes recover
         // their first-sent date from quote_issue_date; legacy Quote Version 0 data
         // is intentionally left untouched.
-        await syncEstimateEverywhere(current, { previousEstimateStatus: "", syncCustomer: false });
+        await syncEstimateEverywhere(current, { previousEstimateStatus: "", syncCustomer: false, sessionToken });
       } catch (syncError) {
         const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
         const failed = await saveEstimateFieldsSafely({
@@ -762,7 +763,7 @@ export default function EstimateDetail() {
     }
 
     try {
-      await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus, syncCustomer: false });
+      await syncEstimateEverywhere(saved, { previousEstimateStatus: sourceStatus, syncCustomer: false, sessionToken });
       if (saved.pipeline_sync_pending || saved.pipeline_sync_error) {
         const cleared = await saveEstimateFieldsSafely({
           baseline: saved,
@@ -909,7 +910,7 @@ export default function EstimateDetail() {
 
     let syncWarning = "";
     try {
-      await syncEstimateEverywhere(after, { previousEstimateStatus: "sent", syncCustomer: false });
+      await syncEstimateEverywhere(after, { previousEstimateStatus: "sent", syncCustomer: false, sessionToken });
       if (after.pipeline_sync_pending || after.pipeline_sync_error) {
         const cleared = await saveEstimateFieldsSafely({
           baseline: after,
@@ -1000,7 +1001,7 @@ export default function EstimateDetail() {
     }
 
     try {
-      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "", syncCustomer: false });
+      await syncEstimateEverywhere(after, { previousEstimateStatus: before.status || "", syncCustomer: false, sessionToken });
     } catch (syncError) {
       const message = String(syncError?.message || "Customer/Sales Pipeline synchronization failed.");
       const recovered = await saveEstimateFieldsSafely({
