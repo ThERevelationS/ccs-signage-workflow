@@ -5,12 +5,13 @@ export function newCustomerCreationKey() {
   return `customer-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export async function ensureNewCustomer({ creationKey, customer }) {
+export async function ensureNewCustomer({ creationKey, customer, sessionToken }) {
   const key = String(creationKey || "").trim();
   if (!key) throw new Error("Customer creation key is required.");
   const response = await base44.functions.invoke("ensureNewCustomer", {
     creation_key: key,
     customer,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
