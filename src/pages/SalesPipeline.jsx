@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -33,6 +33,17 @@ const EMPTY_PIPELINE_SUMMARY = {
   ratedProbabilityCount: 0,
   unratedProbabilityCount: 0,
   weightedValue: 0,
+  trackedOutcomeCount: 0,
+  totalTrackedOutcomeCount: 0,
+  wonCount: 0,
+  lostCount: 0,
+  wonValue: 0,
+  lostValue: 0,
+  closedValue: 0,
+  trackedWinRate: null,
+  closeDateMissingCount: 0,
+  lostReasonMissingCount: 0,
+  lostReasonBreakdown: [],
 };
 
 export default function SalesPipeline() {
@@ -41,6 +52,7 @@ export default function SalesPipeline() {
   const [recordScope, setRecordScope] = useState("current");
   const [viewMode, setViewMode] = useState("table");
   const [attentionFilter, setAttentionFilter] = useState("all");
+  const [outcomePeriod, setOutcomePeriod] = useState("all");
   const [pipelineSummary, setPipelineSummary] = useState(EMPTY_PIPELINE_SUMMARY);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewClientForm, setShowNewClientForm] = useState(false);
@@ -168,27 +180,44 @@ export default function SalesPipeline() {
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
                 setAttentionFilter("all");
-                if (value === "history") setViewMode("table");
+                setFilterStatus("all");
+                if (value === "history" || value === "outcomes") setViewMode("table");
               }}>
                 <SelectTrigger className="w-44 h-9">
-                  {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
+                  {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="current">Current Pipeline</SelectItem>
+                  <SelectItem value="outcomes">Won / Lost Outcomes</SelectItem>
                   <SelectItem value="history">Legacy History</SelectItem>
                   <SelectItem value="all">All Records</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {recordScope !== "history" && (
+            {recordScope !== "history" && recordScope !== "outcomes" && (
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-gray-500 mb-1">View</span>
                 <div className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
                   <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
                   <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
                 </div>
+              </div>
+            )}
+
+            {recordScope === "outcomes" && (
+              <div className="flex flex-col">
+                <span className="text-xs font-medium text-gray-500 mb-1">Outcome Period</span>
+                <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
+                  <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tracked</SelectItem>
+                    <SelectItem value="30">Last 30 Days</SelectItem>
+                    <SelectItem value="90">Last 90 Days</SelectItem>
+                    <SelectItem value="365">Last 12 Months</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -306,7 +335,7 @@ export default function SalesPipeline() {
           </div>
         </div>
 
-        {!showPendingImports && recordScope !== "history" && (
+        {!showPendingImports && (recordScope === "current" || recordScope === "all") && (
           <div className="mb-3 space-y-2">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
