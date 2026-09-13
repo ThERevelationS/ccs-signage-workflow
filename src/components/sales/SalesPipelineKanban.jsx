@@ -101,6 +101,9 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                         <span className="font-medium text-gray-700">{money(workOrder.quoted_amount ?? workOrder.estimate_amount)}</span>
                         <span className="truncate">{workOrder.sales_rep || "Unassigned"}</span>
                       </div>
+                      {typeof workOrder.probability === "number" && Number.isFinite(workOrder.probability) && (
+                        <div className="mt-1 text-xs text-gray-500">Probability <span className="font-semibold text-gray-700">{workOrder.probability}%</span></div>
+                      )}
 
                       {followUp ? (
                         <div className={`mt-2 rounded-md px-2 py-1 text-xs ${followUpDue ? "bg-red-50 font-semibold text-red-700" : "bg-gray-50 text-gray-600"}`}>
