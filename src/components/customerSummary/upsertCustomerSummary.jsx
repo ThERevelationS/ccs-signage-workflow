@@ -22,6 +22,7 @@ export async function upsertCustomerSummaryForEstimate({
   project_id,
   project_name,
   estimate_number,
+  sessionToken,
 }) {
   const name = (client_name || "").trim();
   if (!name || !module || !project_id) return null;
@@ -33,6 +34,7 @@ export async function upsertCustomerSummaryForEstimate({
       project_id,
       project_name: project_name || "",
       estimate_number: estimate_number || "",
+      session_token: sessionToken,
     });
     if (response?.data?.error) throw new Error(response.data.error);
     return response?.data?.summary || null;
