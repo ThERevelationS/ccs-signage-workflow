@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { CheckCircle2, Trash2, Link as LinkIcon, Copy } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
+import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -81,6 +82,7 @@ export default function SalesPipelineTableBody({
         const isFocused = focusedRowId === wo.id;
         const taskStyle = getTaskDescStyle(wo.current_task_description);
         const stageAging = getStageAgingState(wo);
+        const quoteAging = getQuoteAgingState(wo);
 
         return (
           <React.Fragment key={wo.id}>
@@ -276,6 +278,17 @@ export default function SalesPipelineTableBody({
               {isColumnVisible("quote_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "quote_date", "Quote Date", wo.quote_date)}>
                   <DateCell woId={wo.id} field="quote_date" value={wo.quote_date} popoverKey={`quote-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                </td>
+              )}
+              {isColumnVisible("quote_age") && (
+                <td className="px-1 py-0.5 border-r text-center">
+                  {quoteAging.awaitingResponse ? (
+                    quoteAging.tracked ? (
+                      <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since explicit quote/estimate sent date (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-amber-600" title="Quoted/Follow Up opportunity has no explicit quote sent date.">Missing</span>
+                    )
+                  ) : <span className="text-[11px] text-gray-300">—</span>}
                 </td>
               )}
               {isColumnVisible("follow_up_date") && (
