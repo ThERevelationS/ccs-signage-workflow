@@ -5,6 +5,7 @@ import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
+import { PERMIT_QUEUE_META } from "./permitQueue";
 
 export default function PermitClientGroup({
   group,
@@ -23,7 +24,8 @@ export default function PermitClientGroup({
   localities,
   users,
   taskDescriptions,
-  today
+  today,
+  queueState
 }) {
   const [expanded, setExpanded] = useState(true);
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
@@ -138,6 +140,16 @@ export default function PermitClientGroup({
           {hasLines ? `${group.lines.length} line${group.lines.length === 1 ? '' : 's'}` : 'No lines'}
         </div>
       </div>
+
+      {queueState && (
+        <div className="px-3 py-2 border-b bg-white flex items-center gap-2 flex-wrap text-xs">
+          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || "border-gray-200 bg-gray-50 text-gray-700"}`}>
+            {PERMIT_QUEUE_META[queueState.key]?.label || "Permit"}
+          </span>
+          <span className="font-semibold text-gray-600">Next:</span>
+          <span className="text-gray-700">{queueState.nextAction}</span>
+        </div>
+      )}
 
       {/* EXPANDED BODY */}
       {expanded && (
