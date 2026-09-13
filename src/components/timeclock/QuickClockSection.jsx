@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
+import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import * as faceapi from "face-api.js";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -656,6 +657,12 @@ export default function QuickClockSection({
 
   return (
     <>
+      <WorkPauseOverlay
+        userOverride={selectedUser}
+        credentialOverride={credentialRef.current}
+        disabled={workPauseStatus !== "paused" || !activeWorkPause?.id || !selectedUser?.email || !credentialRef.current}
+      />
+
       {notification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setNotification(null)}>
           <div className={`px-12 py-10 rounded-3xl shadow-2xl text-center transform animate-in zoom-in-95 ${notification.type === "in" ? "bg-green-500 text-white" : "bg-orange-500 text-white"}`}>
