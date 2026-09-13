@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 function text(value: unknown) {
   return String(value ?? '').trim();
@@ -20,10 +21,11 @@ function canonicalWorkOrder(rows: any[]) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const user = await base44.auth.me().catch(() => null);
     if (!user?.id) return Response.json({ error: 'Authentication required.' }, { status: 401 });
 
-    const body = await req.json().catch(() => ({}));
     const id = text(body?.id);
     const expectedUpdatedAt = text(body?.expected_updated_date);
     const estimateId = text(body?.estimate_id);
@@ -79,7 +81,11 @@ Deno.serve(async (req) => {
     if (!after) return Response.json({ success: true, status: 'confirmed_absent' });
     return Response.json({ error: 'The duplicate Work Order changed while cleanup was being confirmed and was left intact.' }, { status: 409 });
   } catch (error: any) {
-    console.error('deleteCreatedDuplicateWorkOrder error:', error);
-    return Response.json({ error: error?.message || 'Duplicate Work Order cleanup failed.' }, { status: 500 });
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 409, 503].includes(status) ? status : 500;
+    console.error('deleteCreatedDuplicateWorkOrder error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Duplicate Work Order cleanup failed safely.' : error.message,
+    }, { status: safeStatus });
   }
 });
