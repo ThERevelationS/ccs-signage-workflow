@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { getStageAgingState } from "@/components/sales/salesStageAging";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -142,6 +143,7 @@ export default function SalesOpportunityDialog({
   const probabilityIsSet = typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability);
   const suggestedProbability = SUGGESTED_PROBABILITY_BY_STATUS[workOrder?.sales_status || "lead"];
   const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
+  const stageAging = getStageAgingState(workOrder);
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -198,6 +200,11 @@ export default function SalesOpportunityDialog({
                 <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>{SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
               </Select>
+              {stageAging.tracked ? (
+                <div className={`mt-2 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>{stageAging.ageDays} day{stageAging.ageDays === 1 ? "" : "s"} in this stage{workOrder.sales_status === "on_hold" ? " · On Hold is not flagged as stalled" : stageAging.aged ? " · review for stage movement" : ""}</div>
+              ) : (
+                <div className="mt-2 text-xs text-gray-400">Stage age begins tracking after the next verified stage change.</div>
+              )}
             </div>
             <div className="rounded-xl border bg-white p-3">
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Probability</Label>
