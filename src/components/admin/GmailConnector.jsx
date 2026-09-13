@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { checkGmailConnection } from "@/functions/checkGmailConnection";
 import { sendGmail } from "@/functions/sendGmail";
 
-export default function GmailConnector() {
+export default function GmailConnector({ sessionToken }) {
   const [isConnected, setIsConnected] = useState(false);
   const [connectedEmail, setConnectedEmail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,12 +14,12 @@ export default function GmailConnector() {
 
   useEffect(() => {
     checkConnectionStatus();
-  }, []);
+  }, [sessionToken]);
 
   const checkConnectionStatus = async () => {
     setIsLoading(true);
     try {
-      const response = await checkGmailConnection();
+      const response = await checkGmailConnection({ session_token: sessionToken });
       setIsConnected(response.data?.connected === true);
       setConnectedEmail(response.data?.email || null);
     } catch (error) {
