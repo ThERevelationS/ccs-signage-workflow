@@ -2,6 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History, ShieldAlert } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
@@ -25,7 +35,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onClose, onUpdate }) {
+export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onSetVerification, onClose, onUpdate }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
@@ -43,12 +53,19 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [docSearchResults, setDocSearchResults] = useState({});
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [verificationTarget, setVerificationTarget] = useState(null);
+  const [verificationNote, setVerificationNote] = useState("");
+  const [verificationSaving, setVerificationSaving] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
 
   // Close PDF viewer when jurisdiction changes
   useEffect(() => {
     setViewingPDF(null);
+    setVerificationTarget(null);
+    setVerificationNote("");
+    setVerificationError("");
   }, [jurisdiction.id]);
 
   const isPDF = (doc) => {
@@ -406,17 +423,66 @@ Answer the question based on the documents and information available. Be specifi
         </div>
 
         <div className={`rounded-lg border p-3 ${trust.className}`}>
-          <div className="flex items-start gap-2">
-            <ShieldAlert className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold">{trust.label}</div>
-              <div className="text-[11px] mt-0.5 opacity-90">{trust.description}</div>
-              {trust.issues.length > 0 && (
-                <ul className="mt-2 text-[11px] space-y-0.5 list-disc list-inside">
-                  {trust.issues.slice(0, 5).map((issue) => <li key={issue}>{issue}</li>)}
-                </ul>
-              )}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+              <ShieldAlert className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold">{trust.label}</div>
+                <div className="text-[11px] mt-0.5 opacity-90">{trust.description}</div>
+                {jurisdiction.verified_at && (
+                  <div className="text-[10px] mt-1 opacity-80">
+                    Last verified {jurisdiction.verified_at.slice(0, 10)}{jurisdiction.verified_by ? ` by ${jurisdiction.verified_by}` : ""}
+                  </div>
+                )}
+                {jurisdiction.verification_notes && (
+                  <div className="text-[10px] mt-1 opacity-80">Review note: {jurisdiction.verification_notes}</div>
+                )}
+                {trust.issues.length > 0 && (
+                  <ul className="mt-2 text-[11px] space-y-0.5 list-disc list-inside">
+                    {trust.issues.slice(0, 5).map((issue) => <li key={issue}>{issue}</li>)}
+                  </ul>
+                )}
+              </div>
             </div>
+            {onSetVerification && (
+              <div className="flex flex-col gap-1.5 flex-shrink-0">
+                {trust.key !== "verified" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={trust.verificationBlocked}
+                    onClick={() => { setVerificationError(""); setVerificationNote(jurisdiction.verification_notes || ""); setVerificationTarget("verified"); }}
+                    className="h-7 text-[11px] border-green-300 text-green-800 hover:bg-green-50"
+                    title={trust.verificationBlocked ? "Resolve duplicate, placeholder, or unusable-source issues first" : "Confirm staff verification against official/current sources"}
+                  >
+                    Mark Verified
+                  </Button>
+                )}
+                {trust.key !== "historical" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setVerificationError(""); setVerificationNote(jurisdiction.verification_notes || ""); setVerificationTarget("historical"); }}
+                    className="h-7 text-[11px] border-slate-300 text-slate-700 hover:bg-slate-50"
+                  >
+                    Historical
+                  </Button>
+                )}
+                {(trust.key === "verified" || trust.key === "historical") && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { setVerificationError(""); setVerificationNote(jurisdiction.verification_notes || ""); setVerificationTarget("needs_verification"); }}
+                    className="h-7 text-[11px] text-amber-800 hover:bg-amber-50"
+                  >
+                    Needs Re-verification
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         
@@ -440,6 +506,66 @@ Answer the question based on the documents and information available. Be specifi
           )}
         </div>
       </div>
+
+      <AlertDialog
+        open={!!verificationTarget}
+        onOpenChange={(open) => {
+          if (!open && !verificationSaving) {
+            setVerificationTarget(null);
+            setVerificationError("");
+          }
+        }}
+      >
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {verificationTarget === "verified" ? "Mark this jurisdiction verified?" : verificationTarget === "historical" ? "Mark this jurisdiction historical?" : "Require re-verification?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {verificationTarget === "verified"
+                ? "Use Verified only after staff has checked the current permitting information against official jurisdiction sources. This does not freeze the record or guarantee future rules remain unchanged."
+                : verificationTarget === "historical"
+                  ? "Historical keeps this profile available for prior-job reference but clearly warns staff to verify current requirements before using it on new work."
+                  : "This keeps the existing research and prior verification history, but marks the profile as needing a fresh staff review before it should be relied on."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-700">Review note (optional)</label>
+            <Input
+              value={verificationNote}
+              onChange={(event) => setVerificationNote(event.target.value)}
+              placeholder="Official page checked, scope, caveat, or reason for re-verification…"
+              disabled={verificationSaving}
+            />
+          </div>
+          {verificationError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{verificationError}</div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={verificationSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={verificationSaving || !verificationTarget}
+              onClick={async (event) => {
+                event.preventDefault();
+                if (!verificationTarget) return;
+                setVerificationSaving(true);
+                setVerificationError("");
+                try {
+                  await onSetVerification(jurisdiction, verificationTarget, verificationNote);
+                  setVerificationTarget(null);
+                } catch (error) {
+                  console.error("Could not change jurisdiction verification status:", error);
+                  setVerificationError(error?.message || "Verification status could not be changed safely. Reload and try again.");
+                } finally {
+                  setVerificationSaving(false);
+                }
+              }}
+            >
+              {verificationSaving ? "Saving…" : verificationTarget === "verified" ? "Mark Verified" : verificationTarget === "historical" ? "Mark Historical" : "Require Re-verification"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Tab bar */}
       <div className="flex border-b bg-gray-50">
