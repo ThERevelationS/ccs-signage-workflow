@@ -69,6 +69,9 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               {wo.estimate_amount != null && (
                 <span>Est: <span className="text-gray-700">${wo.estimate_amount.toLocaleString()}</span></span>
               )}
+              {typeof wo.probability === "number" && Number.isFinite(wo.probability) && (
+                <span>Probability: <span className="text-gray-700">{wo.probability}%</span></span>
+              )}
               {deadline && (
                 <span>Task due: <span className="text-gray-700">{format(deadline, 'MMM d, yyyy')}</span></span>
               )}
