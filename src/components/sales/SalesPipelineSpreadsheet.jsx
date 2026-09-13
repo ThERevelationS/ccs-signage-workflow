@@ -86,10 +86,11 @@ const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sa
 const isTrustedOutcome = (workOrder) => workOrder?.in_pipeline === true && ["won", "lost"].includes(workOrder?.sales_status);
 const normalizeOwnerIdentity = (value) => String(value || "").trim().toLowerCase();
 const getOpportunityAgeDays = (workOrder, todayStamp) => {
-  const createdAt = Date.parse(workOrder?.created_date || "");
+  const createdStamp = String(workOrder?.created_date || "").slice(0, 10);
+  const created = parseLocalDate(createdStamp);
   const today = parseLocalDate(todayStamp);
-  if (!Number.isFinite(createdAt) || !today) return null;
-  return Math.max(0, differenceInDays(today, new Date(createdAt)));
+  if (!created || !today || isNaN(created.getTime()) || isNaN(today.getTime())) return null;
+  return Math.max(0, differenceInDays(today, created));
 };
 
 const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities) => {
