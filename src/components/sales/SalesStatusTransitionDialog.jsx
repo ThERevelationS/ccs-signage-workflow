@@ -45,7 +45,9 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   const reopening = ["won", "lost"].includes(currentStatus) && !closing;
   const isLost = nextStatus === "lost";
   const finalReason = lostReason === "Other" ? otherReason.trim() : lostReason.trim();
-  const canConfirm = (!closing || Boolean(closeDate)) && (!isLost || Boolean(finalReason));
+  const todayStamp = format(new Date(), "yyyy-MM-dd");
+  const closeDateIsValid = !closing || (Boolean(closeDate) && closeDate <= todayStamp);
+  const canConfirm = closeDateIsValid && (!isLost || Boolean(finalReason));
 
   const title = closing
     ? `Mark this opportunity ${nextStatus === "won" ? "Won" : "Lost"}?`
@@ -70,7 +72,8 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
         {closing && (
           <div className="space-y-1.5 py-1">
             <Label>Close date <span className="text-red-600">*</span></Label>
-            <Input type="date" value={closeDate} onChange={(event) => setCloseDate(event.target.value)} />
+            <Input type="date" value={closeDate} max={todayStamp} onChange={(event) => setCloseDate(event.target.value)} />
+            {closeDate && closeDate > todayStamp && <p className="text-xs text-red-600">Close date cannot be in the future.</p>}
           </div>
         )}
 
