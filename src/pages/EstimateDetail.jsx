@@ -521,7 +521,7 @@ export default function EstimateDetail() {
       } else if (lifecycleReasonRequired) {
         await ensureEstimateLifecycleRevision({
           idempotencyKey: transitionIdempotencyKey,
-        sessionToken,
+          sessionToken,
           estimateBefore: transitionBefore || before,
           estimateAfter: saved,
           reason: lifecycleReason,

@@ -36,7 +36,8 @@ import {
   Pause,
   CheckCircle2,
   RotateCcw,
-  LockKeyhole
+  LockKeyhole,
+  Eye
 } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isWithinInterval, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import * as XLSX from "xlsx";
@@ -46,6 +47,7 @@ import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionC
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
 import TimeClockAuditTrail from "@/components/timeclock/TimeClockAuditTrail";
+import TimeClockShiftDetail from "@/components/timeclock/TimeClockShiftDetail";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
@@ -91,6 +93,7 @@ export default function TimeClockAdmin() {
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
   const [approvalError, setApprovalError] = useState("");
+  const [detailEntry, setDetailEntry] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -908,6 +911,15 @@ export default function TimeClockAdmin() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => setDetailEntry(entry)}
+                          className="h-7 w-7"
+                          title="View full shift details"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleEditEntry(entry)}
                           className="h-7 w-7"
                           disabled={Boolean(entry.pay_period_id)}
@@ -934,6 +946,12 @@ export default function TimeClockAdmin() {
           </table>
         </div>
       </div>
+
+      <TimeClockShiftDetail
+        entry={detailEntry}
+        open={Boolean(detailEntry)}
+        onOpenChange={(open) => { if (!open) setDetailEntry(null); }}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={(open) => { if (saveBusy) return; setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); setCorrectionReason(""); } }}>
