@@ -1054,7 +1054,7 @@ export default function AdminSettings() {
                   </TabsContent>
 
               <TabsContent value="corebridge">
-                <CorebridgeAISettings />
+                <CorebridgeAISettings sessionToken={sessionToken} />
               </TabsContent>
             </>
           )}
