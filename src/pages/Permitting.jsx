@@ -605,46 +605,56 @@ export default function Permitting() {
   const activeLinesCount = lineItems.filter(li => li.status !== 'completed').length;
   const completedLinesCount = lineItems.filter(li => li.status === 'completed').length;
 
-  const renderSection = (groups, sectionTitle, emoji, accentColor) => (
-    <div className="clay-card p-4 w-full mb-5" style={sectionTitle === 'Waiting' ? { borderLeft: '4px solid #f59e0b' } : {}}>
-      <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: accentColor }}>
-        {emoji} {sectionTitle} ({groups.length} client{groups.length === 1 ? '' : 's'})
-        {sectionTitle === 'Active' && <span className="text-xs text-gray-400 font-normal">— needs attention now</span>}
-        {sectionTitle === 'Waiting' && <span className="text-xs text-gray-400 font-normal">— future follow-up dates</span>}
-      </h3>
+  const renderSection = (queueKey) => {
+    const groups = queueSummary[queueKey] || [];
+    const meta = PERMIT_QUEUE_META[queueKey];
+    if (!meta) return null;
+    if (queueFilter === "all" && groups.length === 0) return null;
 
-      {groups.length === 0 && (
-        <div className="px-3 py-6 text-center text-gray-400 text-xs">
-          No {sectionTitle.toLowerCase()} items
+    return (
+      <div className="clay-card p-4 w-full mb-5">
+        <div className="mb-3 flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 ${meta.className}`}>{meta.label}</span>
+              <span>{groups.length} client{groups.length === 1 ? '' : 's'}</span>
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">{meta.description}</p>
+          </div>
         </div>
-      )}
 
-      <div className="space-y-3">
-        {groups.map(group => (
-          <PermitClientGroup
-            key={group.work_order_id}
-            group={group}
-            onUpdateStep={updateStep}
-            onUpdateField={updateField}
-            onUpdateNotes={updateNotesAndSync}
-            onUpdateLocality={updateLocality}
-            onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
-            onOpenWorkOrder={openWorkOrder}
-            onShowLocalityInfo={setLocalityInfoId}
-            onDeleteLine={deleteLineItem}
-            onUpdateWorkOrderField={updateWorkOrderField}
-            onWorkNotesChanged={() => loadData(false)}
-            currentUser={currentUser}
-            isRegistered={isRegistered}
-            localities={localities}
-            users={users}
-            taskDescriptions={taskDescriptions}
-            today={today}
-          />
-        ))}
+        {groups.length === 0 ? (
+          <div className="px-3 py-6 text-center text-gray-400 text-xs">No {meta.label.toLowerCase()} items</div>
+        ) : (
+          <div className="space-y-3">
+            {groups.map(group => (
+              <PermitClientGroup
+                key={group.work_order_id}
+                group={group}
+                queueState={group.queueState}
+                onUpdateStep={updateStep}
+                onUpdateField={updateField}
+                onUpdateNotes={updateNotesAndSync}
+                onUpdateLocality={updateLocality}
+                onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
+                onOpenWorkOrder={openWorkOrder}
+                onShowLocalityInfo={setLocalityInfoId}
+                onDeleteLine={deleteLineItem}
+                onUpdateWorkOrderField={updateWorkOrderField}
+                onWorkNotesChanged={() => loadData(false)}
+                currentUser={currentUser}
+                isRegistered={isRegistered}
+                localities={localities}
+                users={users}
+                taskDescriptions={taskDescriptions}
+                today={today}
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="h-full overflow-auto p-6">
@@ -677,6 +687,34 @@ export default function Permitting() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-2 mb-5">
+          <button
+            type="button"
+            onClick={() => setQueueFilter("all")}
+            className={`rounded-xl border p-3 text-left transition-colors ${queueFilter === "all" ? "border-purple-400 bg-purple-50 ring-2 ring-purple-100" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">All Permits</div>
+            <div className="text-2xl font-bold text-gray-900 mt-0.5">{filteredGroups.length}</div>
+            <div className="text-[11px] text-gray-500 mt-1">Show every permitting job</div>
+          </button>
+
+          {PERMIT_QUEUE_ORDER.map((key) => {
+            const meta = PERMIT_QUEUE_META[key];
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setQueueFilter(key)}
+                className={`rounded-xl border p-3 text-left transition-colors ${queueFilter === key ? `${meta.className} ring-2 ring-black/5` : "border-gray-200 bg-white hover:bg-gray-50"}`}
+              >
+                <div className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{meta.shortLabel}</div>
+                <div className="text-2xl font-bold mt-0.5">{queueCounts[key] || 0}</div>
+                <div className="text-[11px] mt-1 opacity-75 line-clamp-2">{meta.description}</div>
+              </button>
+            );
+          })}
+        </div>
+
         {permitLineEditError && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
             <div>
@@ -703,14 +741,9 @@ export default function Permitting() {
 
         <StageTasksPanel stage="permitting" />
 
-        {/* Active */}
-        {renderSection(activeGroups, "Active", '🟢', '#16a34a')}
-
-        {/* Waiting */}
-        {waitingGroups.length > 0 && renderSection(waitingGroups, "Waiting", '📅', '#d97706')}
-
-        {/* Completed */}
-        {completedGroups.length > 0 && renderSection(completedGroups, "Completed", '✅', '#6b7280')}
+        {visibleQueueKeys.map((key) => (
+          <React.Fragment key={key}>{renderSection(key)}</React.Fragment>
+        ))}
       </div>
 
       <LocalityInfoPopup
