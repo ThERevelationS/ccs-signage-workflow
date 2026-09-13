@@ -434,6 +434,7 @@ export default function Permitting() {
           locality_id: locality.id,
           locality_name: locality.name || "",
           status: "active",
+          assigned_to: wo.current_task_assigned_to || wo.assigned_to || "",
           steps: office.steps,
           priority: 0
         });
