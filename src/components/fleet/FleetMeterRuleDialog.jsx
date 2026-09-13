@@ -43,6 +43,7 @@ export default function FleetMeterRuleDialog({ open, equipment, tasks = [], rule
   useEffect(() => {
     if (!open || !equipment?.id) return;
     let mounted = true;
+    setReadingPreview(null);
     setReadingLoading(true);
     base44.functions.invoke("fleetMeterMaintenanceAction", { action: "reading_preview", equipment_id: equipment.id, meter_type: form.meter_type, source: form.source })
       .then(({ data }) => {
