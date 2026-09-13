@@ -44,6 +44,24 @@ function lineLabel(line) {
   return String(line?.row_name || line?.office_type || line?.locality_name || "permit").trim();
 }
 
+function normalizedAssignment(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+export function isPermitGroupAssignedToUser(group, user) {
+  const identities = [user?.full_name, user?.email]
+    .map(normalizedAssignment)
+    .filter(Boolean);
+  if (identities.length === 0) return false;
+
+  const assignments = [
+    group?.work_order?.current_task_assigned_to,
+    ...(Array.isArray(group?.lines) ? group.lines.map((line) => line?.assigned_to) : []),
+  ].map(normalizedAssignment).filter(Boolean);
+
+  return assignments.some((assignment) => identities.includes(assignment));
+}
+
 export const PERMIT_QUEUE_META = {
   needs_setup: {
     label: "Needs Setup",
