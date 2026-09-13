@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { estimateAuditNumber, estimateAuditSnapshot, estimateQuoteIssueKey, summarizeEstimateAuditChanges } from '../../shared/estimateRevisionAudit.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const text = (value: unknown, max = 2000) => String(value || '').trim().slice(0, max);
 const whole = (value: unknown, fallback = 0) => {
@@ -23,10 +24,10 @@ function safeDeliveryEvidence(input: any = {}) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
     const action = text(body?.action, 80);
     const estimateId = text(body?.estimate_id, 128);
     const RevisionService = base44.asServiceRole.entities.EstimateRevision;
@@ -159,8 +160,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Invalid Estimate revision audit action.' }, { status: 400 });
   } catch (error) {
-    const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 404, 409, 503].includes(status) ? status : 500;
+    const status = Number(error?.status || error?.statusCode || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
     console.error('updateEstimateRevisionAudit error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Estimate revision audit could not be updated safely.' : error.message,
