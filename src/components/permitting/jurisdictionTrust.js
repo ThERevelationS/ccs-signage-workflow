@@ -54,8 +54,14 @@ export function assessJurisdictionTrust(jurisdiction, duplicateCount = 1) {
   if (!jurisdiction?.permitting_url || isJurisdictionPlaceholder(jurisdiction?.permitting_url)) issues.push('No usable permitting page is stored');
   if (!usableDocuments.length) issues.push('No usable source document is stored');
 
+  const explicitStatus = String(jurisdiction?.verification_status || '').trim();
+  const verificationBlocked = duplicateCount > 1 || placeholderPaths.length > 0 || badDocuments.length > 0 || (!jurisdiction?.permitting_url && !usableDocuments.length);
+
   let key = 'ai_researched';
   if (duplicateCount > 1) key = 'blocked';
+  else if (explicitStatus === 'historical') key = 'historical';
+  else if (explicitStatus === 'verified' && !verificationBlocked) key = 'verified';
+  else if (explicitStatus === 'needs_verification') key = 'needs_review';
   else if (placeholderPaths.length || badDocuments.length || !jurisdiction?.permitting_url) key = 'needs_review';
   else if (manualProtectionCount > 0) key = 'manual_protected';
 
@@ -68,7 +74,17 @@ export function assessJurisdictionTrust(jurisdiction, duplicateCount = 1) {
     needs_review: {
       label: 'Needs verification',
       className: 'border-amber-300 bg-amber-50 text-amber-800',
-      description: 'Some repository data is incomplete or low quality. Verify against official sources before use.',
+      description: 'Some repository data is incomplete, low quality, or explicitly awaiting staff review. Verify against official sources before use.',
+    },
+    verified: {
+      label: 'Verified by staff',
+      className: 'border-green-300 bg-green-50 text-green-800',
+      description: 'A staff member marked this profile verified against official/current sources. Re-verify after meaningful jurisdiction changes.',
+    },
+    historical: {
+      label: 'Historical reference',
+      className: 'border-slate-300 bg-slate-100 text-slate-700',
+      description: 'Keep this information for prior-job reference, but verify current requirements before using it on a new permit.',
     },
     manual_protected: {
       label: 'Manual data protected',
@@ -90,5 +106,7 @@ export function assessJurisdictionTrust(jurisdiction, duplicateCount = 1) {
     usableDocuments,
     badDocuments,
     manualProtectionCount,
+    explicitStatus,
+    verificationBlocked,
   };
 }
