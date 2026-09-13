@@ -29,6 +29,7 @@ import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCard
 import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
+import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
@@ -106,7 +107,14 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   if (attentionFilter === "today") return isOperational && followUp === todayStamp;
   if (attentionFilter === "upcoming") return isOperational && followUp > todayStamp && followUp <= upcomingStamp;
   if (attentionFilter === "quote_no_followup") {
-    return isOperational && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
+    return isOperational && !followUp && isQuoteAwaitingResponse(workOrder);
+  }
+  if (attentionFilter === "quote_aged") {
+    const quoteAge = getQuoteAgeDays(workOrder, parseLocalDate(todayStamp));
+    return isOperational && quoteAge !== null && quoteAge >= QUOTE_REVIEW_DAYS;
+  }
+  if (attentionFilter === "quote_timing_missing") {
+    return isOperational && isQuoteAwaitingResponse(workOrder) && getQuoteAgeDays(workOrder, parseLocalDate(todayStamp)) === null;
   }
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
   if (attentionFilter === "probability_missing") return isOperational && !(typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability));
