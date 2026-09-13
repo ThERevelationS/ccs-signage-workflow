@@ -1,0 +1,138 @@
+{
+  "name": "TimeClockLaborSegment",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Employee email that owns this labor segment"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "time_entry_id": {
+      "type": "string",
+      "description": "Authoritative TimeEntry this labor segment belongs to"
+    },
+    "activity_type": {
+      "type": "string",
+      "enum": [
+        "fabrication",
+        "cnc",
+        "laser",
+        "paint",
+        "welding",
+        "electrical",
+        "installation",
+        "service",
+        "survey",
+        "design",
+        "permitting",
+        "estimating",
+        "admin",
+        "shop",
+        "travel",
+        "other"
+      ],
+      "description": "Operational labor/activity category"
+    },
+    "work_order_id": {
+      "type": "string",
+      "description": "Optional referenced WorkOrder id; WorkOrder itself is not modified"
+    },
+    "work_order_title": {
+      "type": "string",
+      "description": "WorkOrder title snapshot"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "WorkOrder client name snapshot"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend labor start timestamp"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend labor end timestamp"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Completed labor duration in whole minutes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "start_request_id": {
+      "type": "string",
+      "description": "Idempotency key for segment start"
+    },
+    "end_request_id": {
+      "type": "string",
+      "description": "Idempotency key for segment end/switch"
+    },
+    "end_reason": {
+      "type": "string",
+      "enum": [
+        "change_work",
+        "break",
+        "work_pause",
+        "clock_out",
+        "manual_stop",
+        "admin_correction"
+      ],
+      "description": "Why this labor segment ended"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "server",
+        "admin_correction"
+      ],
+      "default": "server"
+    }
+  },
+  "required": [
+    "user_email",
+    "time_entry_id",
+    "activity_type",
+    "started_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}
