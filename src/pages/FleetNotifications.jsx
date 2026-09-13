@@ -337,7 +337,7 @@ export default function FleetNotifications() {
 }
 
 function FilterButton({ active, onClick, icon: Icon, label, count }) {
-  return <button type="button" onClick={onClick} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${active ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><Icon className="w-4 h-4" />{label}<span className={`min-w-[20px] h-5 px-1 rounded-full text-[10px] inline-flex items-center justify-center ${active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-200"}`}>{count}</span></button>;
+  return <button type="button" onClick={onClick} className={`min-h-11 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${active ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><Icon className="w-4 h-4" />{label}<span className={`min-w-[20px] h-5 px-1 rounded-full text-[10px] inline-flex items-center justify-center ${active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-200"}`}>{count}</span></button>;
 }
 
 function NotificationCard({ item }) {
