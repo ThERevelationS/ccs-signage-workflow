@@ -75,6 +75,16 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
             <div className="space-y-1.5">
               <Label>Next follow-up</Label>
               <Input type="date" min={todayStamp} value={nextFollowUpDate} onChange={(event) => setNextFollowUpDate(event.target.value)} />
+              <div className="flex flex-wrap gap-1.5">
+                {[1, 3, 7, 14].map((days) => {
+                  const date = new Date();
+                  date.setHours(0, 0, 0, 0);
+                  date.setDate(date.getDate() + days);
+                  const stamp = format(date, "yyyy-MM-dd");
+                  return <button key={days} type="button" onClick={() => setNextFollowUpDate(stamp)} className="rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+{days}d</button>;
+                })}
+                {nextFollowUpDate && <button type="button" onClick={() => setNextFollowUpDate("")} className="rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-500 hover:bg-gray-50">No next date</button>}
+              </div>
               {!nextDateIsValid && <p className="text-xs text-red-600">Next follow-up cannot be in the past.</p>}
             </div>
             <div className="space-y-1.5">
