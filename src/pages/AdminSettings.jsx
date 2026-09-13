@@ -329,7 +329,7 @@ function storedAdminCapability() {
 }
 
 export default function AdminSettings() {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   
   const [automations, setAutomations] = useState([]);
@@ -1080,7 +1080,7 @@ export default function AdminSettings() {
           <TabsContent value="automations">
             {/* Email Groups Section - moved under Automations */}
             <div className="mb-8">
-              <GmailConnector />
+              <GmailConnector sessionToken={sessionToken} />
               <div className="mt-6">
                 <EmailGroupsManager adminCapability={adminCapability} />
               </div>
