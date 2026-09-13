@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History, ShieldAlert } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
 import JurisdictionActivityTab from "./JurisdictionActivityTab";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
+import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
 const DOC_TYPE_LABELS = {
   sign_ordinance: "Sign Ordinance",
@@ -24,7 +25,7 @@ const DOC_TYPE_LABELS = {
   other: "Other"
 };
 
-export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdate }) {
+export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount = 1, onClose, onUpdate }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
@@ -43,6 +44,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, onClose, onUpdat
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
+  const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
 
   // Close PDF viewer when jurisdiction changes
   useEffect(() => {
@@ -400,6 +402,21 @@ Answer the question based on the documents and information available. Be specifi
               )}
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+          </div>
+        </div>
+
+        <div className={`rounded-lg border p-3 ${trust.className}`}>
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold">{trust.label}</div>
+              <div className="text-[11px] mt-0.5 opacity-90">{trust.description}</div>
+              {trust.issues.length > 0 && (
+                <ul className="mt-2 text-[11px] space-y-0.5 list-disc list-inside">
+                  {trust.issues.slice(0, 5).map((issue) => <li key={issue}>{issue}</li>)}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
         
