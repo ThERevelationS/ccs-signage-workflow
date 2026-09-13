@@ -395,6 +395,9 @@ export default function SIPs() {
               </Button>
             )}
           </div>
+          <div className={`mt-2 text-xs ${visibleActiveWorkOrders.length !== activeWorkOrders.length ? "text-blue-700 font-medium" : "text-gray-500"}`} aria-live="polite">
+            Showing {visibleActiveWorkOrders.length} of {activeWorkOrders.length} active item{activeWorkOrders.length === 1 ? "" : "s"}
+          </div>
         </div>
 
         {boardError && (
