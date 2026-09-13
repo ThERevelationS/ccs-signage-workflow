@@ -239,10 +239,18 @@ export default function LocalityPickerDialog({
                   </div>
                   {result.suggested_locality ? (
                     <div>
-                      <p className="text-sm font-medium text-green-900">
-                        {result.suggested_locality.name}
-                        {result.suggested_locality.state && ` (${result.suggested_locality.state})`}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium text-green-900">
+                          {result.suggested_locality.name}
+                          {result.suggested_locality.state && ` (${result.suggested_locality.state})`}
+                        </p>
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${result.match_confidence === 'high' ? 'border-green-300 bg-green-100 text-green-800' : 'border-amber-300 bg-amber-100 text-amber-800'}`}>
+                          {result.match_confidence === 'high' ? 'High confidence' : 'Medium confidence'}
+                        </span>
+                      </div>
+                      {result.match_reason && (
+                        <p className="text-[11px] text-green-800 mt-1">{result.match_reason}</p>
+                      )}
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
@@ -262,6 +270,9 @@ export default function LocalityPickerDialog({
                       <p className="text-[11px] text-amber-700 mt-1 italic">
                         No configured tracker locality matches yet. Check the Jurisdiction Repository match below, or choose an existing locality manually.
                       </p>
+                      {result.match_reason && (
+                        <p className="text-[11px] text-amber-800 mt-1">{result.match_reason}</p>
+                      )}
                     </div>
                   )}
                 </div>
