@@ -1746,6 +1746,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     </>
   );
 
+  if (viewMode === "insights" && recordScope === "current") {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {quickEditWarning}
+        {destructiveActionWarning}
+        {globalSettingsWarning}
+        <div className="min-h-0 flex-1">
+          <SalesPipelineInsights summary={pipelineSummary} />
+        </div>
+        {renderOpportunityDialogs()}
+      </div>
+    );
+  }
+
   // Mobile card view
   if (isMobile && viewMode !== "board") {
     return (
