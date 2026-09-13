@@ -179,6 +179,9 @@ export default function SIPs() {
   const futureRevisitOrders = allActive
     .filter(wo => isRevisitFuture(wo))
     .sort((a, b) => a.sip_revisit_date.localeCompare(b.sip_revisit_date));
+  const nextRevisitDate = futureRevisitOrders[0]?.sip_revisit_date
+    ? parseLocalDate(futureRevisitOrders[0].sip_revisit_date)
+    : null;
 
   const completedWipItems = workOrders.filter(wo => isWipItem(wo) && wo.sip_completed);
 
@@ -385,6 +388,9 @@ export default function SIPs() {
             >
               <div className="text-xs text-purple-700 flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />Revisit Later</div>
               <div className="text-xl font-bold text-purple-800">{futureRevisitOrders.length}</div>
+              <div className="text-[10px] text-purple-600 mt-0.5">
+                {nextRevisitDate && !Number.isNaN(nextRevisitDate.getTime()) ? `Next ${format(nextRevisitDate, "MMM d")}` : "No future revisits"}
+              </div>
             </button>
             <div className="rounded-lg border bg-green-50/80 p-3">
               <div className="text-xs text-green-700">Active value</div>
