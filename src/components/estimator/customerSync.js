@@ -123,7 +123,7 @@ export const resolveCustomerForEstimate = async (form, customers = []) => {
   return findCustomerByName(customers, form?.client_name);
 };
 
-export const upsertCustomerFromEstimate = async (form, customers = [], { changedKeys = null } = {}) => {
+export const upsertCustomerFromEstimate = async (form, customers = [], { changedKeys = null, sessionToken = "" } = {}) => {
   const name = String(form.client_name || "").trim();
   const fields = customerFieldsFromEstimate(form, changedKeys);
   const existing = await resolveCustomerForEstimate(form, customers);
@@ -142,6 +142,7 @@ export const upsertCustomerFromEstimate = async (form, customers = [], { changed
   const response = await base44.functions.invoke("ensureEstimateCustomer", {
     company_name: name,
     fields,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
@@ -242,10 +243,10 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
  * One call used when an estimate is saved: keep the shared Customer record and the
  * Sales Pipeline lead in step with the estimate.
  */
-export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false, customerChangedKeys = null } = {}) => {
+export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus = "", syncCustomer = false, customerChangedKeys = null, sessionToken = "" } = {}) => {
   const customers = await loadAllCustomers();
   const customer = syncCustomer
-    ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys })
+    ? await upsertCustomerFromEstimate(estimate, customers || [], { changedKeys: customerChangedKeys, sessionToken })
     : await resolveCustomerForEstimate(estimate, customers || []);
   await syncEstimateToPipeline(estimate, customer, { previousEstimateStatus });
   return customer;
@@ -256,7 +257,7 @@ export const syncEstimateEverywhere = async (estimate, { previousEstimateStatus 
  * a shared Customer record, seeded with whatever contact info the work order has.
  * Returns the (possibly extended) customer list.
  */
-export const backfillCustomersFromWorkOrders = async (customers) => {
+export const backfillCustomersFromWorkOrders = async (customers, { sessionToken = "" } = {}) => {
   const workOrders = await loadAllEntityRows({
     entity: base44.entities.WorkOrder,
     sort: "-created_date",
@@ -302,6 +303,7 @@ export const backfillCustomersFromWorkOrders = async (customers) => {
       company_name,
       fields,
       update_existing: false,
+      session_token: sessionToken,
     });
     const result = response?.data || response;
     if (result?.error) throw new Error(result.error);
