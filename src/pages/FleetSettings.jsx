@@ -75,7 +75,7 @@ export default function FleetSettings() {
         const u = await base44.auth.me();
         setUser(u);
         if (u?.role === "admin") {
-          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult] = await Promise.all([
+          const [settingsRows, bouncieStatusResult, auditRows, statusResult, integrityResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
             base44.entities.FleetSettings.list("-updated_date", 10),
             base44.functions.invoke("bouncieStatus", {}).catch(() => null),
             base44.entities.FleetMigrationAudit.list("-created_date", 20),
@@ -83,6 +83,7 @@ export default function FleetSettings() {
             base44.functions.invoke("fleetIntegrityAudit", {}).catch(() => null),
             loadAutomationHealthData(),
             base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+            listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
           ]);
           setSettings((settingsRows || [])[0] || null);
           setConnection(bouncieStatusResult?.data || null);
@@ -93,6 +94,7 @@ export default function FleetSettings() {
           setQueueRows(health.notifications || []);
           setReceiptRows(health.receipts || []);
           setMechanicLinks(mechanicResult?.data?.links || []);
+          setMechanicEquipment(mechanicEquipmentRows || []);
         }
       } finally {
         setLoading(false);
@@ -233,11 +235,12 @@ export default function FleetSettings() {
     try {
       const { data } = await base44.functions.invoke("fleetCutoverControl", { action: "status" });
       setServerStatus(data || null);
-      const [settingsRows, bouncieStatusResult, health, mechanicResult] = await Promise.all([
+      const [settingsRows, bouncieStatusResult, health, mechanicResult, mechanicEquipmentRows] = await Promise.all([
         base44.entities.FleetSettings.list("-updated_date", 10),
         base44.functions.invoke("bouncieStatus", {}).catch(() => null),
         loadAutomationHealthData(),
         base44.functions.invoke("fleetMechanicPortal", { action: "admin_list_links" }).catch(() => null),
+        listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet mechanic scope equipment" }).catch(() => []),
       ]);
       setSettings((settingsRows || [])[0] || null);
       setConnection(bouncieStatusResult?.data || null);
@@ -245,6 +248,7 @@ export default function FleetSettings() {
       setQueueRows(health.notifications || []);
       setReceiptRows(health.receipts || []);
       setMechanicLinks(mechanicResult?.data?.links || []);
+      setMechanicEquipment(mechanicEquipmentRows || []);
     } finally {
       setChecking(false);
     }
