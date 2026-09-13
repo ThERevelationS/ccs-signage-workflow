@@ -65,12 +65,13 @@ export default function FleetNotifications() {
         const user = await base44.auth.me().catch(() => null);
         const admin = user?.role === "admin";
         if (mounted) setIsAdmin(admin);
-        const [equipment, tasks, workOrders, inspectionRows, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, inspectionRows, parts, partIdentificationRows, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, bouncieWarnings, bouncieCritical, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet notification equipment" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceTask, { status: { $in: ["pending", "overdue"] } }, "start_date", { label: "Active Fleet maintenance notifications" }),
           filterAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, { status: { $in: ["open", "assigned", "in_progress"] } }, "-created_date", { label: "Active Fleet work-order notifications" }),
           filterAllFleetRows(base44.entities.FleetInspection, { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention notifications" }).catch(() => []),
           listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet part stock notifications" }),
+          filterAllFleetRows(base44.entities.FleetPartIdentification, { status: { $in: ["draft", "analyzed", "needs_review"] } }, "-created_date", { label: "Fleet part identification review inbox" }).catch(() => []),
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluid stock notifications" }),
           filterAllFleetRows(base44.entities.FleetPartFluidRequest, { status: { $in: ["pending", "ordered"] } }, "-created_date", { label: "Active Fleet request notifications" }),
           base44.functions.invoke("fleetReservationAction", { action: "list" }).catch(() => null),
@@ -87,6 +88,7 @@ export default function FleetNotifications() {
           workOrders: workOrders || [],
           inspections: inspectionRows || [],
           parts: parts || [],
+          partIdentificationRows: partIdentificationRows || [],
           fluids: fluids || [],
           requests: requests || [],
           reservations: reservationResult?.data?.reservations || [],
@@ -179,6 +181,19 @@ export default function FleetNotifications() {
         detail: `${names[workOrder.equipment_id] || "Unresolved equipment"} · ${issues.join(" · ")}`,
         to: `${createPageUrl("FleetWorkOrders")}?status=all&workOrder=${encodeURIComponent(workOrder.id)}${workOrder.equipment_id ? `&equipment=${encodeURIComponent(workOrder.equipment_id)}` : ""}`,
         timestamp: workOrder.started_date || workOrder.created_date || "",
+      });
+    }
+
+    if ((data.partIdentificationRows || []).length) {
+      const newest = data.partIdentificationRows[0];
+      rows.push({
+        key: "part-identification-review-inbox",
+        group: "inventory",
+        severity: "warning",
+        title: `${data.partIdentificationRows.length} part identification scan${data.partIdentificationRows.length === 1 ? "" : "s"} need review`,
+        detail: "AI/manual candidates are waiting to be verified, matched to existing Fleet parts, promoted, or dismissed.",
+        to: `${createPageUrl("FleetParts")}?queue=review`,
+        timestamp: newest?.updated_date || newest?.created_date || "",
       });
     }
 
