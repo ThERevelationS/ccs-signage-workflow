@@ -114,7 +114,7 @@ export default function FleetWorkOrders() {
       if (attention === "high_priority" && (!active || !["critical", "high"].includes(w.priority))) return false;
       if (equipmentFilter !== "all" && w.equipment_id !== equipmentFilter) return false;
       if (!q) return true;
-      return [w.work_order_number, w.title, w.description, w.assigned_to, equipmentNames[w.equipment_id], w.corrective_action].some(v => String(v || "").toLowerCase().includes(q));
+      return [w.work_order_number, w.title, w.description, w.assigned_to, equipmentNames[w.equipment_id], w.corrective_action, w.public_reporter_name, w.public_reporter_contact].some(v => String(v || "").toLowerCase().includes(q));
     });
   }, [orders, search, status, priority, attention, equipmentFilter, equipmentNames]);
 
