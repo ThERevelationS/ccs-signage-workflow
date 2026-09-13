@@ -386,6 +386,8 @@ export default function FleetSettings() {
   const queueUnresolved = queueRows.filter(row => ["pending","sending","failed"].includes(row.status));
   const receiptUnresolved = receiptRows.filter(row => ["started","failed"].includes(row.status));
   const blocked = readiness.some((item) => !item.ok);
+  const setupNeedsCount = featureSetup.filter(item => item.state === "needs_setup").length;
+  const setupUsableCount = featureSetup.length - setupNeedsCount;
   const gates = serverStatus?.cutover || settings || {};
   const cutoverComplete = !!gates.cutover_completed_at && !!gates.notifications_enabled && !!gates.scheduled_reminders_enabled && !!gates.maintenance_generation_enabled && !!gates.public_reporting_enabled;
 
@@ -399,7 +401,7 @@ export default function FleetSettings() {
 
     <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
-        <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet Feature Setup Readiness</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Shows what needs real CCS configuration versus what is already ready to use. This section never seeds placeholder production data.</p></div>
+        <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet Feature Setup Readiness</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Shows what needs real CCS configuration versus what is already ready to use. This section never seeds placeholder production data.</p><div className="mt-2 flex flex-wrap gap-2"><span className={`text-[11px] font-bold rounded-full px-2.5 py-1 ${setupNeedsCount ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"}`}>{setupNeedsCount} item{setupNeedsCount===1?"":"s"} need CCS setup</span><span className="text-[11px] font-bold rounded-full px-2.5 py-1 bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">{setupUsableCount} ready / in use</span></div></div>
         <button type="button" onClick={runIntegrityAudit} disabled={integrityBusy} className="min-h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700">{integrityBusy?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh Setup Status</button>
       </div>
       <div className="mt-4 grid md:grid-cols-2 gap-3">{featureSetup.map(item => <FeatureSetupCard key={item.key} item={item} />)}</div>
@@ -524,15 +526,16 @@ export default function FleetSettings() {
 
 function FeatureSetupCard({item}) {
   const state = item.state || "ready";
+  const positive = state === "configured" || state === "in_use";
   const tone = state === "needs_setup"
     ? "border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/15"
-    : state === "in_use"
+    : positive
       ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/10"
       : "border-gray-200 bg-gray-50/70 dark:border-slate-800 dark:bg-slate-950/30";
-  const badge = state === "needs_setup" ? "Needs setup" : state === "in_use" ? "In use" : "Ready";
+  const badge = state === "needs_setup" ? "Needs setup" : state === "configured" ? "Configured" : state === "in_use" ? "In use" : "Ready";
   const badgeTone = state === "needs_setup"
     ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-    : state === "in_use"
+    : positive
       ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
       : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300";
   const actionClass = "min-h-10 px-3 rounded-lg border border-gray-300 bg-white text-xs font-semibold inline-flex items-center justify-center hover:border-indigo-300 dark:bg-slate-900 dark:border-slate-700 dark:hover:border-indigo-700";
