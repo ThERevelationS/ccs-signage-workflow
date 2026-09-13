@@ -404,12 +404,24 @@ export default function TimeClockAdmin() {
       "Date": format(parseISO(entry.clock_in), "yyyy-MM-dd"),
       "Clock In": format(parseISO(entry.clock_in), "h:mm a"),
       "Clock Out": entry.clock_out ? format(parseISO(entry.clock_out), "h:mm a") : "Active",
+      "Clock Source": entry.clock_source || "",
       "Lunch (min)": entry.lunch_minutes || 0,
+      "Tracked Break (min)": entry.tracked_break_minutes || 0,
+      "Paid Break (min)": entry.tracked_paid_break_minutes || 0,
+      "Unpaid Break (min)": entry.tracked_unpaid_break_minutes || 0,
       "Work Pause (min)": entry.tracked_work_pause_minutes || 0,
       "Total Hours": entry.total_hours?.toFixed(2) || "0.00",
+      "Approval Status": entry.approval_status || "unreviewed",
+      "Approved At": entry.approved_at ? format(parseISO(entry.approved_at), "yyyy-MM-dd h:mm a") : "",
+      "Approved By": entry.approved_by || "",
+      "Approval Note": entry.approval_note || "",
+      "Finalized Period": entry.pay_period_id ? "Yes" : "No",
+      "Pay Period ID": entry.pay_period_id || "",
+      "Locked At": entry.pay_period_locked_at ? format(parseISO(entry.pay_period_locked_at), "yyyy-MM-dd h:mm a") : "",
+      "Locked By": entry.pay_period_locked_by || "",
       "Notes": entry.notes || "",
       "Jobs": entry.job_allocations?.map(j => 
-        j.is_inhouse ? `${j.inhouse_task}: ${j.hours}h` : `${j.client_name}: ${j.hours}h`
+        j.is_inhouse ? `${j.inhouse_task}: ${j.hours || (j.minutes ? j.minutes / 60 : 0)}h` : `${j.client_name}: ${j.hours || (j.minutes ? j.minutes / 60 : 0)}h`
       ).join("; ") || ""
     }));
 
