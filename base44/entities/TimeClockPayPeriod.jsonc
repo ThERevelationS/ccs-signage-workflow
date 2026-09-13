@@ -1,0 +1,112 @@
+{
+  "name": "TimeClockPayPeriod",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Manager-defined pay period label"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Inclusive local calendar start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Inclusive local calendar end date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "review",
+        "finalized"
+      ],
+      "default": "open",
+      "description": "Operational review/finalization state; does not itself export payroll"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend creation timestamp"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Administrator that created the period"
+    },
+    "review_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when moved to review"
+    },
+    "review_started_by": {
+      "type": "string",
+      "description": "Administrator that moved the period to review"
+    },
+    "finalized_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when finalized"
+    },
+    "finalized_by": {
+      "type": "string",
+      "description": "Administrator that finalized the period"
+    },
+    "finalization_note": {
+      "type": "string",
+      "description": "Optional finalization note"
+    },
+    "reopened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when a finalized period was reopened"
+    },
+    "reopened_by": {
+      "type": "string",
+      "description": "Administrator that reopened the period"
+    },
+    "reopen_reason": {
+      "type": "string",
+      "description": "Required reason when reopening a finalized period"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Idempotency key for the latest period action"
+    },
+    "finalized_summary": {
+      "type": "object",
+      "description": "Snapshot summary captured when finalized"
+    }
+  },
+  "required": [
+    "label",
+    "start_date",
+    "end_date",
+    "status",
+    "created_at",
+    "created_by"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}

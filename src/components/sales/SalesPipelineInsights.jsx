@@ -32,7 +32,7 @@ export default function SalesPipelineInsights({ summary }) {
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-4">
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Clock3 className="h-4 w-4" />Pipeline Age</div>
             <div className="mt-2 text-3xl font-bold text-slate-900">{summary?.averageAgeDays ?? 0}<span className="ml-1 text-sm font-medium text-slate-500">avg days</span></div>
@@ -47,6 +47,11 @@ export default function SalesPipelineInsights({ summary }) {
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-800"><Tags className="h-4 w-4" />Lead Source Coverage</div>
             <div className="mt-2 text-3xl font-bold text-amber-900">{pct(summary?.sourceCoverageCount || 0, openCount)}%</div>
             <div className="mt-1 text-xs text-amber-700/80">{summary?.sourceCoverageCount || 0} populated · {summary?.sourceMissingCount || 0} missing</div>
+          </div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-rose-800"><Clock3 className="h-4 w-4" />Stage Timing Coverage</div>
+            <div className="mt-2 text-3xl font-bold text-rose-900">{pct(summary?.stageAgeCoverageCount || 0, openCount)}%</div>
+            <div className="mt-1 text-xs text-rose-700/80">{summary?.stageAgedCount || 0} aged 14+ · {summary?.stageAgeMissingCount || 0} timing missing</div>
           </div>
         </div>
 
@@ -97,6 +102,40 @@ export default function SalesPipelineInsights({ summary }) {
             )}
           </section>
         </div>
+
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-800"><Clock3 className="h-4 w-4 text-orange-600" />Current Stage Aging</div>
+              <p className="mt-1 text-xs text-gray-500">Uses only verified stage-change timestamps. Active stages at 14+ days are flagged for review; On Hold is tracked but not treated as stalled.</p>
+            </div>
+            <div className="text-right text-xs text-gray-500">
+              <div><span className="font-semibold text-gray-800">{summary?.stageAgeCoverageCount || 0}/{openCount}</span> tracked</div>
+              {(summary?.stageAgeCoverageCount || 0) > 0 && <div>{summary?.averageStageAgeDays || 0}d avg · {summary?.oldestStageAgeDays || 0}d oldest</div>}
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {(summary?.stageAgingBuckets || []).map((bucket) => (
+              <div key={bucket.key} className={`rounded-lg border p-3 ${bucket.key === "stage_30_plus" && bucket.count > 0 ? "border-rose-200 bg-rose-50" : bucket.key === "stage_14_29" && bucket.count > 0 ? "border-amber-200 bg-amber-50" : "border-gray-100 bg-gray-50"}`}>
+                <div className="text-xs font-medium text-gray-500">{bucket.label}</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900">{bucket.count}</div>
+                <div className="mt-1 text-[11px] text-gray-500">{money(bucket.value)}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead><tr className="border-b text-gray-400"><th className="pb-2 font-medium">Stage</th><th className="pb-2 text-right font-medium">Opps</th><th className="pb-2 text-right font-medium">Tracked</th><th className="pb-2 text-right font-medium">Avg days</th><th className="pb-2 text-right font-medium">Aged 14+</th><th className="pb-2 text-right font-medium">Value</th></tr></thead>
+              <tbody>
+                {(summary?.stageBreakdown || []).map((row) => (
+                  <tr key={row.stage} className="border-b border-gray-100 last:border-0"><td className="py-2.5 font-medium text-gray-800">{row.label}</td><td className="py-2.5 text-right text-gray-600">{row.count}</td><td className="py-2.5 text-right text-gray-600">{row.trackedCount}</td><td className="py-2.5 text-right text-gray-700">{row.averageDays == null ? "—" : `${row.averageDays}d`}</td><td className={`py-2.5 text-right ${row.agedCount > 0 ? "font-semibold text-rose-700" : "text-gray-500"}`}>{row.agedCount}</td><td className="py-2.5 text-right text-gray-700">{money(row.value)}</td></tr>
+                ))}
+                {(summary?.stageBreakdown || []).length === 0 && <tr><td colSpan="6" className="py-6 text-center text-gray-400">No open opportunities.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          {(summary?.stageAgeMissingCount || 0) > 0 && <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{summary.stageAgeMissingCount} current opportunit{summary.stageAgeMissingCount === 1 ? "y has" : "ies have"} no verified stage-change baseline yet. They are excluded from stage-age averages until a real stage transition occurs.</div>}
+        </section>
 
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
