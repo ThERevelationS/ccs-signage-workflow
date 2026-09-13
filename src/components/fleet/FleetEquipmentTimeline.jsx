@@ -98,6 +98,87 @@ function buildEvents({ equipment, workOrders, logs, notifications, requests, ins
     });
   }
 
+  for (const inspection of inspections || []) {
+    const startedAt = inspection.started_at || inspection.created_date;
+    if (startedAt) events.push({
+      id: `inspection-start-${inspection.id}`,
+      category: "inspections",
+      kind: "inspection",
+      timestamp: startedAt,
+      title: `${inspection.template_name || "Fleet inspection"} started`,
+      detail: [inspection.inspector_name || inspection.inspector_email, pretty(inspection.inspection_type), pretty(inspection.status)].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetInspections")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+    if (inspection.completed_at) events.push({
+      id: `inspection-complete-${inspection.id}`,
+      category: "inspections",
+      kind: inspection.status === "failed" || inspection.status === "needs_attention" ? "inspection_attention" : "inspection_complete",
+      timestamp: inspection.completed_at,
+      title: `${inspection.template_name || "Fleet inspection"} · ${pretty(inspection.status)}`,
+      detail: [inspection.failed_item_count ? `${inspection.failed_item_count} failed item${inspection.failed_item_count === 1 ? "" : "s"}` : "No failed items", inspection.generated_work_order_ids?.length ? `${inspection.generated_work_order_ids.length} Fleet WO follow-up${inspection.generated_work_order_ids.length === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetInspections")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+  }
+
+  for (const entry of fuelEntries || []) {
+    const timestamp = entry.fueled_at || entry.created_date;
+    if (!timestamp) continue;
+    events.push({
+      id: `fuel-${entry.id}`,
+      category: "fuel",
+      kind: "fuel",
+      timestamp,
+      title: entry.vendor ? `Fuel · ${entry.vendor}` : "Fuel recorded",
+      detail: [entry.gallons != null ? `${Number(entry.gallons).toLocaleString(undefined, { maximumFractionDigits: 3 })} gal` : "", entry.total_cost != null ? `$${Number(entry.total_cost).toFixed(2)}` : "", entry.odometer != null ? `${Number(entry.odometer).toLocaleString()} mi` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetFuel")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+  }
+
+  for (const warranty of warranties || []) {
+    const timestamp = warranty.created_date || warranty.start_date;
+    if (!timestamp) continue;
+    events.push({
+      id: `warranty-${warranty.id}`,
+      category: "coverage",
+      kind: "warranty",
+      timestamp: dateOnlyValue(timestamp),
+      title: `${warranty.name || "Warranty"} added`,
+      detail: [warranty.provider, pretty(warranty.category), warranty.reference_number ? `Ref ${warranty.reference_number}` : "", warranty.end_date ? `ends ${warranty.end_date}` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetWarranties")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+  }
+
+  for (const reservation of reservations || []) {
+    const createdAt = reservation.created_date;
+    if (createdAt) events.push({
+      id: `reservation-${reservation.id}`,
+      category: "assignments",
+      kind: "assignment",
+      timestamp: createdAt,
+      title: `Reserved for ${reservation.reserved_by_name || reservation.reserved_by_email || "Fleet user"}`,
+      detail: [reservation.assignment_label, reservation.job_site, reservation.start_at ? `starts ${formatWhen(reservation.start_at)}` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+    if (reservation.checked_out_at) events.push({
+      id: `reservation-checkout-${reservation.id}`,
+      category: "assignments",
+      kind: "assignment_checkout",
+      timestamp: reservation.checked_out_at,
+      title: `Checked out to ${reservation.reserved_by_name || reservation.reserved_by_email || "Fleet user"}`,
+      detail: [reservation.assignment_label, reservation.job_site, reservation.pickup_meter != null ? `pickup meter ${Number(reservation.pickup_meter).toLocaleString()}` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+    if (reservation.returned_at) events.push({
+      id: `reservation-return-${reservation.id}`,
+      category: "assignments",
+      kind: "assignment_return",
+      timestamp: reservation.returned_at,
+      title: "Equipment returned",
+      detail: [reservation.reserved_by_name || reservation.reserved_by_email, reservation.return_meter != null ? `return meter ${Number(reservation.return_meter).toLocaleString()}` : ""].filter(Boolean).join(" · "),
+      href: `${createPageUrl("FleetReservations")}?equipment=${encodeURIComponent(equipment?.id || "")}`,
+    });
+  }
+
   for (const request of requests || []) {
     const createdAt = request.created_date || request.migration_source_created_date;
     if (createdAt) events.push({
