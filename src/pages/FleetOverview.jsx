@@ -9,6 +9,7 @@ import { fleetHealthScore } from "@/components/fleet/fleetHealth";
 import {
   Truck,
   ClipboardList,
+  ClipboardCheck,
   CalendarClock,
   CalendarDays,
   Package,
@@ -89,10 +90,11 @@ export default function FleetOverview() {
       try {
         const user = await base44.auth.me().catch(() => null);
         if (mounted) setIsAdmin(user?.role === "admin");
-        const [equipment, tasks, workOrders, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
+        const [equipment, tasks, workOrders, inspectionRows, parts, fluids, requests, reservationResult, warrantyResult, lifecycleResult, repairEstimates, dashboardPreferenceResult, liveState, bouncieWarningRows, bouncieCriticalRows, bouncieVehiclesResult] = await Promise.all([
           listAllFleetRows(base44.entities.FleetEquipment, "name", { label: "Fleet equipment" }),
           listAllFleetRows(base44.entities.FleetMaintenanceTask, "start_date", { label: "Fleet maintenance schedules" }),
           listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
+          filterAllFleetRows(base44.entities.FleetInspection, { status: { $in: ["failed", "needs_attention"] } }, "-created_date", { label: "Fleet inspection attention" }).catch(() => []),
           listAllFleetRows(base44.entities.FleetPart, "part_name", { label: "Fleet parts" }),
           listAllFleetRows(base44.entities.FleetFluid, "fluid_name", { label: "Fleet fluids" }),
           listAllFleetRows(base44.entities.FleetPartFluidRequest, "-created_date", { label: "Fleet requests" }),
@@ -107,7 +109,7 @@ export default function FleetOverview() {
           base44.functions.invoke("bouncieApi", { method: "GET", path: "/v1/vehicles", query: {} }).catch(() => null),
         ]);
         if (mounted) {
-          setData({ equipment, tasks, workOrders, parts, fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
+          setData({ equipment, tasks, workOrders, inspections: inspectionRows || [], parts, fluids, requests, reservations: reservationResult?.data?.reservations || [], warranties: warrantyResult?.data?.rows || [], lifecycleRows: lifecycleResult?.data?.rows || [], repairEstimates: repairEstimates || [], liveState, bouncieFaults: [...(bouncieCriticalRows || []), ...(bouncieWarningRows || [])], bouncieVehicles: bouncieVehiclesResult?.data?.data || [] });
           setDashboardPreference(normalizeDashboardPreference(dashboardPreferenceResult?.data?.preference || {}));
           setDashboardPreferenceRecord(dashboardPreferenceResult?.data?.record || null);
         }
@@ -183,6 +185,8 @@ export default function FleetOverview() {
     const pastDueAssignments = (data.reservations || []).filter(row => row.status === "reserved" && (Date.parse(row.end_at || "") || 0) > 0 && Date.parse(row.end_at || "") < nowMs);
     const currentlyAssignedIds = new Set(currentAssignments.map(row => row.equipment_id));
     const availableEquipment = activeEquipment.filter(item => item.status === "operational" && !currentlyAssignedIds.has(item.id));
+    const inspectionCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const inspectionAttention = (data.inspections || []).filter(row => row.status === "needs_attention" || (row.status === "failed" && (Date.parse(row.completed_at || row.updated_date || row.created_date || "") || 0) >= inspectionCutoff));
     const warrantyAttention = (data.warranties || []).filter(row => ["expired", "orphaned", "expiring_soon"].includes(row.effective_status));
     const lifecycleAttention = isAdmin ? (data.lifecycleRows || []).filter(row => {
       if (row.equipment?.status === "retired") return false;
@@ -213,6 +217,7 @@ export default function FleetOverview() {
       availableEquipment,
       currentAssignments,
       pastDueAssignments,
+      inspectionAttention,
       warrantyAttention,
       lifecycleAttention,
       pendingRepairApprovals,
@@ -220,7 +225,7 @@ export default function FleetOverview() {
     };
   }, [data, isAdmin]);
 
-  const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.lowStock + metrics.pendingRequests.length + metrics.pastDueAssignments.length + metrics.warrantyAttention.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? metrics.lifecycleAttention.length + metrics.pendingRepairApprovals.length + (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
+  const attentionSignals = metrics ? metrics.highPriorityOrders.length + metrics.unassignedOrders.length + metrics.staleOrders.length + metrics.pastProjectedOrders.length + metrics.overdueTasks.length + metrics.upcomingTasks.length + metrics.inspectionAttention.length + metrics.lowStock + metrics.pendingRequests.length + metrics.pastDueAssignments.length + metrics.warrantyAttention.length + metrics.bouncieIdentityConflicts.length + metrics.bouncieFaults.length + (isAdmin ? metrics.lifecycleAttention.length + metrics.pendingRepairApprovals.length + (adminHealth?.unresolved || 0) + (adminHealth && !adminHealth.bouncieHealthy ? 1 : 0) : 0) : 0;
   const widgetVisible = id => !dashboardPreference.hidden_widgets.includes(id);
   const widgetOrder = id => {
     const index = dashboardPreference.widget_order.indexOf(id);
@@ -325,6 +330,7 @@ export default function FleetOverview() {
                 <AttentionRow icon={AlertTriangle} label="Past projected completion" value={metrics.pastProjectedOrders.length} page="FleetWorkOrders" query="attention=past_projected" />
                 <AttentionRow icon={CalendarClock} label="Overdue maintenance schedules" value={metrics.overdueTasks.length} page="FleetMaintenance" query="status=overdue" />
                 <AttentionRow icon={Clock3} label="Maintenance due in 14 days" value={metrics.upcomingTasks.length} page="FleetMaintenance" query="status=pending" />
+                <AttentionRow icon={ClipboardCheck} label="Inspection attention / recent failures" value={metrics.inspectionAttention.length} page="FleetNotifications" query="group=inspections" />
                 <AttentionRow icon={Package} label="Low-stock parts" value={metrics.lowParts.length} page="FleetParts" query="stock=low" />
                 <AttentionRow icon={Droplets} label="Low-stock fluids" value={metrics.lowFluids.length} page="FleetFluids" query="stock=low" />
                 <AttentionRow icon={ShoppingCart} label="Pending / ordered requests" value={metrics.pendingRequests.length} page="FleetRequests" query="status=active" />
