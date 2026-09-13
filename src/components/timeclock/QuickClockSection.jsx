@@ -52,6 +52,8 @@ export default function QuickClockSection({
   const [workPauseStatus, setWorkPauseStatus] = useState("working");
   const [activeWorkPause, setActiveWorkPause] = useState(null);
   const [workPauseSummary, setWorkPauseSummary] = useState({ count: 0, total_minutes: 0 });
+  const [activeLabor, setActiveLabor] = useState(null);
+  const [laborSummary, setLaborSummary] = useState({ count: 0, total_minutes: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [showClockOut, setShowClockOut] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -222,6 +224,8 @@ export default function QuickClockSection({
     setWorkPauseStatus("working");
     setActiveWorkPause(null);
     setWorkPauseSummary({ count: 0, total_minutes: 0 });
+    setActiveLabor(null);
+    setLaborSummary({ count: 0, total_minutes: 0 });
     setShowClockOut(false);
     setIsRecognizing(false);
     setRecognitionMethod(null);
@@ -255,6 +259,8 @@ export default function QuickClockSection({
       setWorkPauseStatus(data.work_pause_status || "working");
       setActiveWorkPause(data.active_work_pause || null);
       setWorkPauseSummary(data.work_pause_summary || { count: 0, total_minutes: 0 });
+      setActiveLabor(data.active_labor || null);
+      setLaborSummary(data.labor_summary || { count: 0, total_minutes: 0 });
 
       if (data.status === "already_clocked_in") {
         setActiveEntry(data.entry || null);
@@ -299,6 +305,8 @@ export default function QuickClockSection({
       setWorkPauseStatus(status.work_pause_status || "working");
       setActiveWorkPause(status.active_work_pause || null);
       setWorkPauseSummary(status.work_pause_summary || { count: 0, total_minutes: 0 });
+      setActiveLabor(status.active_labor || null);
+      setLaborSummary(status.labor_summary || { count: 0, total_minutes: 0 });
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
 
       if (status.status === "clocked_in" && status.entry?.id) {
@@ -522,6 +530,8 @@ export default function QuickClockSection({
     setBreakStatus(data?.break_status || "working");
     setActiveBreak(data?.break_status === "on_break" ? (data?.break || null) : null);
     setBreakSummary(data?.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+    if (Object.prototype.hasOwnProperty.call(data || {}, "active_labor")) setActiveLabor(data.active_labor || null);
+    if (data?.labor_summary) setLaborSummary(data.labor_summary);
     if (data?.entry?.id) setActiveEntry(data.entry);
   };
 
