@@ -190,6 +190,13 @@ function entryIsPayPeriodLocked(entry: any) {
   return Boolean(String(entry?.pay_period_id || '').trim());
 }
 
+function validDateKey(value: unknown) {
+  const key = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return '';
+  const parsed = new Date(`${key}T12:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === key ? key : '';
+}
+
 async function uniqueRow(entity: any, query: any, label: string) {
   const rows = await entity.filter(query);
   if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
