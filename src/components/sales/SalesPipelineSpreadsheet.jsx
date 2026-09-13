@@ -82,6 +82,7 @@ const isLegacyClosedRecord = (workOrder) => {
 };
 
 const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
+const isTrustedOutcome = (workOrder) => workOrder?.in_pipeline === true && ["won", "lost"].includes(workOrder?.sales_status);
 const normalizeOwnerIdentity = (value) => String(value || "").trim().toLowerCase();
 
 const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities) => {
@@ -112,7 +113,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   return true;
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
