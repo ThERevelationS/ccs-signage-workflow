@@ -24,7 +24,18 @@ const EMPTY_PIPELINE_SUMMARY = {
   dueCount: 0,
   upcomingCount: 0,
   noNextActionCount: 0,
+  quoteAwaitingResponseCount: 0,
+  quoteTimingCoverageCount: 0,
+  quoteTimingMissingCount: 0,
   quoteNoFollowUpCount: 0,
+  quoteScheduledFollowUpCount: 0,
+  quoteDueCount: 0,
+  quoteAgedCount: 0,
+  quoteVeryAgedCount: 0,
+  averageQuoteAgeDays: 0,
+  oldestQuoteAgeDays: 0,
+  quoteAgingBuckets: [],
+  quoteOwnerBreakdown: [],
   nearCloseCount: 0,
   overdueCloseCount: 0,
   staleCount: 0,
@@ -380,7 +391,7 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("quote_no_followup")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-amber-700">Quotes Need Follow-up</div>
                 <div className="mt-1 text-2xl font-bold text-amber-900">{pipelineSummary.quoteNoFollowUpCount}</div>
-                <div className="mt-1 text-xs text-amber-700/80">Quoted/sent with no follow-up date</div>
+                <div className="mt-1 text-xs text-amber-700/80">{pipelineSummary.quoteAwaitingResponseCount} awaiting response · {pipelineSummary.quoteTimingMissingCount} timing missing</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "no_next_action" ? "border-violet-400 bg-violet-50" : "border-violet-200 bg-white hover:border-violet-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-violet-700">No Next Action</div>
@@ -406,6 +417,8 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability Missing {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("quote_aged")} className={attentionChipClass("quote_aged")}>Quote Aged 14+ Days {pipelineSummary.quoteAgedCount > 0 ? `(${pipelineSummary.quoteAgedCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing Missing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("near_close")} className={attentionChipClass("near_close")}>Closing ≤14 Days {pipelineSummary.nearCloseCount > 0 ? `(${pipelineSummary.nearCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("close_overdue")} className={attentionChipClass("close_overdue")}>Expected Close Overdue {pipelineSummary.overdueCloseCount > 0 ? `(${pipelineSummary.overdueCloseCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
