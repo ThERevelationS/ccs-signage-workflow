@@ -44,6 +44,7 @@ export default function PermittingRepository() {
   const [refreshingIds, setRefreshingIds] = useState(new Set());
   const [aiDiscoverLoading, setAiDiscoverLoading] = useState(false);
   const [aiDiscoverQuery, setAiDiscoverQuery] = useState("");
+  const [trustFilter, setTrustFilter] = useState("all");
 
   useEffect(() => {
     loadJurisdictions();
@@ -205,12 +206,6 @@ export default function PermittingRepository() {
   };
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
-  const displayList = jurisdictions.filter(j =>
-    !normalizedSearch ||
-    j.name?.toLowerCase().includes(normalizedSearch) ||
-    j.state?.toLowerCase().includes(normalizedSearch) ||
-    j.parent_county?.name?.toLowerCase().includes(normalizedSearch)
-  );
 
   const duplicateMap = new Map();
   jurisdictions.forEach((jurisdiction) => {
@@ -224,6 +219,15 @@ export default function PermittingRepository() {
     acc[trust.key] = (acc[trust.key] || 0) + 1;
     return acc;
   }, {});
+  const displayList = jurisdictions.filter((jurisdiction) => {
+    const matchesSearch = !normalizedSearch ||
+      jurisdiction.name?.toLowerCase().includes(normalizedSearch) ||
+      jurisdiction.state?.toLowerCase().includes(normalizedSearch) ||
+      jurisdiction.parent_county?.name?.toLowerCase().includes(normalizedSearch);
+    if (!matchesSearch) return false;
+    if (trustFilter === "all") return true;
+    return assessJurisdictionTrust(jurisdiction, duplicateCountFor(jurisdiction)).key === trustFilter;
+  });
 
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
@@ -275,6 +279,24 @@ export default function PermittingRepository() {
             placeholder="Search jurisdiction names..."
             className="text-sm h-8"
           />
+          <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+            {[
+              ["all", "All", jurisdictions.length, "border-gray-200 bg-white text-gray-700"],
+              ["needs_review", "Needs Verification", trustCounts.needs_review || 0, "border-amber-300 bg-amber-50 text-amber-800"],
+              ["blocked", "Duplicates", trustCounts.blocked || 0, "border-red-300 bg-red-50 text-red-700"],
+              ["manual_protected", "Manual Protected", trustCounts.manual_protected || 0, "border-blue-300 bg-blue-50 text-blue-700"],
+              ["ai_researched", "AI Researched", trustCounts.ai_researched || 0, "border-purple-300 bg-purple-50 text-purple-700"],
+            ].map(([key, label, count, colorClass]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTrustFilter(key)}
+                className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${colorClass} ${trustFilter === key ? "ring-2 ring-offset-1 ring-purple-300" : "opacity-80 hover:opacity-100"}`}
+              >
+                {label} ({count})
+              </button>
+            ))}
+          </div>
         </div>
 
         {duplicateJurisdictionGroups.length > 0 && (
