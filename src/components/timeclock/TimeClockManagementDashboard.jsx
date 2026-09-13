@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, CheckCircle2, Clock3, Coffee, FileWarning, Pause, Play, Users } from "lucide-react";
+import { Briefcase, CheckCircle2, Clock3, Coffee, FileWarning, Pause, Play, Users, Wrench } from "lucide-react";
 import { isSameDay, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
 
 function hoursLabel(value) {
@@ -11,6 +11,7 @@ export default function TimeClockManagementDashboard({
   timeEntries = [],
   employeeStates = [],
   correctionRequests = [],
+  activeLaborSegments = [],
 }) {
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 0 });
@@ -108,6 +109,29 @@ export default function TimeClockManagementDashboard({
           <div className="flex items-center gap-2 text-xs text-gray-600"><CheckCircle2 className="w-3.5 h-3.5" />Shifts To Review</div>
           <p className="text-xl font-bold text-gray-900">{needsReview}</p>
         </div>
+      </div>
+
+      <div className="mt-4 border-t pt-4">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div>
+            <h4 className="text-sm font-semibold flex items-center gap-2"><Wrench className="w-4 h-4 text-blue-600" />Current Work Now</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Authoritative active labor segments. WorkOrders are referenced only; they are not modified.</p>
+          </div>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{activeLaborSegments.length} active</Badge>
+        </div>
+        {activeLaborSegments.length === 0 ? (
+          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500">No employees are currently tracking a live activity.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {activeLaborSegments.slice(0, 8).map(segment => (
+              <div key={segment.id} className="rounded-lg border bg-white px-3 py-2">
+                <div className="text-sm font-medium truncate">{segment.user_name || segment.user_email}</div>
+                <div className="text-xs text-blue-700 capitalize truncate">{String(segment.activity_type || "work").replaceAll("_", " ")}</div>
+                <div className="text-xs text-gray-500 truncate">{segment.work_order_id ? `${segment.client_name || "WorkOrder"}${segment.work_order_title ? ` — ${segment.work_order_title}` : ""}` : "No WorkOrder attached"}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 border-t pt-4">
