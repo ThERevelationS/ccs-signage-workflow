@@ -14,6 +14,13 @@ const emptyPolicy = () => ({
   sort_order: "0",
 });
 const money = value => Number(value || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+const policyMin = policy => Math.max(0, Number(policy?.minimum_amount || 0));
+const policyMax = policy => {
+  const value = Number(policy?.maximum_amount || 0);
+  return Number.isFinite(value) && value > 0 ? value : Infinity;
+};
+const rangesOverlap = (a, b) => policyMin(a) <= policyMax(b) && policyMin(b) <= policyMax(a);
+const policyRangeText = policy => policyMax(policy) === Infinity ? `${money(policyMin(policy))} and above` : `${money(policyMin(policy))} to ${money(policyMax(policy))}`;
 
 export default function FleetRepairApprovalPolicies() {
   const [policies, setPolicies] = useState([]);
@@ -39,6 +46,32 @@ export default function FleetRepairApprovalPolicies() {
   useEffect(() => { load(); }, []);
 
   const sorted = useMemo(() => policies.slice().sort((a, b) => Number(a.minimum_amount || 0) - Number(b.minimum_amount || 0)), [policies]);
+  const coverage = useMemo(() => {
+    const enabled = policies.filter(policy => policy.enabled !== false).slice().sort((a,b) => policyMin(a) - policyMin(b));
+    const findings = [];
+    if (!enabled.length) return { enabled, findings:[{ tone:"warning", text:"No enabled approval policies exist. Every submitted Fleet repair estimate currently matches no policy and follows the no-threshold auto-approval behavior." }] };
+    if (policyMin(enabled[0]) > 0) findings.push({ tone:"warning", text:`Estimates below ${money(policyMin(enabled[0]))} match no policy and auto-approve.` });
+    for (let index = 0; index < enabled.length - 1; index += 1) {
+      const current = enabled[index];
+      const next = enabled[index + 1];
+      const currentMax = policyMax(current);
+      const nextMin = policyMin(next);
+      if (currentMax === Infinity || nextMin <= currentMax) {
+        findings.push({ tone:"overlap", text:`${current.name} overlaps ${next.name}. In the overlapping amount range, the enabled policy with the higher minimum amount wins.` });
+      } else if (nextMin - currentMax > 0.01) {
+        findings.push({ tone:"warning", text:`There is an uncovered gap above ${money(currentMax)} and below ${money(nextMin)}. Estimates in that gap auto-approve.` });
+      }
+    }
+    const last = enabled[enabled.length - 1];
+    if (policyMax(last) !== Infinity) findings.push({ tone:"warning", text:`Estimates above ${money(policyMax(last))} match no policy and auto-approve.` });
+    return { enabled, findings };
+  }, [policies]);
+  const editorOverlaps = useMemo(() => {
+    if (!editor || editor.enabled === false) return [];
+    const current = { minimum_amount:Number(editor.minimum_amount || 0), maximum_amount:editor.maximum_amount === "" ? 0 : Number(editor.maximum_amount || 0) };
+    if (!Number.isFinite(current.minimum_amount) || !Number.isFinite(Number(current.maximum_amount || 0))) return [];
+    return policies.filter(policy => policy.id !== editor.id && policy.enabled !== false && rangesOverlap(current, policy));
+  }, [editor, policies]);
 
   const save = async () => {
     if (!editor) return;
@@ -120,8 +153,14 @@ export default function FleetRepairApprovalPolicies() {
       <button type="button" onClick={() => setEditor({ ...emptyPolicy() })} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold"><Plus className="w-4 h-4"/>Add Threshold</button>
     </div>
 
-    <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-300 flex gap-2"><ShieldCheck className="w-4 h-4 shrink-0 mt-0.5"/><span>If a submitted estimate lands in a tier requiring approval, Fleet blocks starting and completing that work order until an admin approves it. A tier marked “No approval” auto-approves on submission.</span></div>
+    <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-300 flex gap-2"><ShieldCheck className="w-4 h-4 shrink-0 mt-0.5"/><span>If a submitted estimate lands in a tier requiring approval, Fleet blocks starting and completing that work order until an admin approves it. A tier marked “No approval” auto-approves on submission. If multiple enabled tiers match, the tier with the highest minimum amount wins.</span></div>
     {error && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
+
+    <div className="mt-4 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+      <div className="px-3 py-2.5 bg-gray-50 dark:bg-slate-800/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><div className="text-sm font-semibold text-gray-900 dark:text-slate-100">Effective Policy Coverage</div><div className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">Read-only preview of enabled ranges and uncovered auto-approval areas.</div></div><span className="text-[11px] font-bold text-gray-500 dark:text-slate-300">{coverage.enabled.length} enabled tier{coverage.enabled.length===1?"":"s"}</span></div>
+      {coverage.enabled.length > 0 && <div className="p-3 flex flex-wrap gap-2">{coverage.enabled.map(policy => <span key={policy.id} className={`text-xs rounded-full px-2.5 py-1 font-semibold ${policy.approval_required !== false ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"}`}>{policy.name}: {policyRangeText(policy)} · {policy.approval_required !== false ? "approval" : "auto"}</span>)}</div>}
+      {coverage.findings.length ? <div className="border-t border-gray-100 dark:border-slate-800 divide-y divide-gray-100 dark:divide-slate-800">{coverage.findings.map((finding,index) => <div key={`${finding.text}-${index}`} className={`px-3 py-2 text-xs flex items-start gap-2 ${finding.tone === "overlap" ? "text-indigo-800 bg-indigo-50/60 dark:text-indigo-300 dark:bg-indigo-950/10" : "text-amber-800 bg-amber-50/60 dark:text-amber-300 dark:bg-amber-950/10"}`}><AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5"/>{finding.text}</div>)}</div> : <div className="border-t border-gray-100 dark:border-slate-800 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">Enabled policies cover the full amount range without gaps or overlaps.</div>}
+    </div>
 
     <div className="mt-4 space-y-2">
       {loading ? <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400"/></div> : sorted.length ? sorted.map(policy => {
@@ -148,6 +187,7 @@ export default function FleetRepairApprovalPolicies() {
       <div className="grid sm:grid-cols-2 gap-3"><Field label="Minimum amount"><input type="number" min="0" step="0.01" value={editor.minimum_amount} onChange={e => setEditor(v => ({ ...v, minimum_amount: e.target.value }))} className="field"/></Field><Field label="Maximum amount"><input type="number" min="0" step="0.01" value={editor.maximum_amount} onChange={e => setEditor(v => ({ ...v, maximum_amount: e.target.value }))} className="field" placeholder="Blank = no maximum"/></Field></div>
       <label className="flex items-start gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-3 cursor-pointer"><input type="checkbox" checked={editor.approval_required !== false} onChange={e => setEditor(v => ({ ...v, approval_required: e.target.checked }))} className="mt-1"/><span><span className="font-semibold text-sm text-gray-900 dark:text-slate-100">Require admin approval</span><span className="block text-xs text-gray-500 dark:text-slate-400 mt-1">When off, submitted estimates in this tier are automatically approved.</span></span></label>
       <label className="flex items-start gap-3 rounded-xl border border-gray-200 dark:border-slate-700 p-3 cursor-pointer"><input type="checkbox" checked={editor.enabled !== false} onChange={e => setEditor(v => ({ ...v, enabled: e.target.checked }))} className="mt-1"/><span><span className="font-semibold text-sm text-gray-900 dark:text-slate-100">Policy enabled</span><span className="block text-xs text-gray-500 dark:text-slate-400 mt-1">Disabled thresholds are ignored during estimate submission.</span></span></label>
+      {editor.enabled !== false && <div className={`rounded-lg border px-3 py-2 text-xs ${editorOverlaps.length ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300" : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300"}`}>{editorOverlaps.length ? <>This range overlaps {editorOverlaps.map(policy=>policy.name).join(", ")}. That is allowed, but the enabled matching policy with the highest minimum amount wins for overlapping estimates.</> : <>No overlap with the currently enabled saved thresholds.</>}</div>}
       <Field label="Notes"><textarea rows={3} value={editor.notes} onChange={e => setEditor(v => ({ ...v, notes: e.target.value }))} className="field" placeholder="Optional approval guidance"/></Field>
       <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setEditor(null)} disabled={!!busy} className="min-h-11 px-4 rounded-lg border border-gray-300 dark:border-slate-700 font-semibold">Cancel</button><button type="button" onClick={save} disabled={!!busy} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center gap-2">{busy === "save" && <Loader2 className="w-4 h-4 animate-spin"/>}Save Threshold</button></div>
     </div><style>{`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;background:transparent;padding:.625rem .75rem;font-size:.875rem}.dark .field{border-color:rgb(51 65 85)}`}</style></div></div>}
