@@ -31,11 +31,19 @@ function formatDuration(totalMinutes) {
 export default function WorkPauseOverlay({
   userOverride = null,
   sessionTokenOverride = "",
+  credentialOverride = null,
   disabled = false,
 } = {}) {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const currentUser = userOverride || shellUser;
   const sessionToken = sessionTokenOverride || shellSessionToken;
+  const credentialPayload = credentialOverride?.badgeCode
+    ? { badge_code: credentialOverride.badgeCode }
+    : {
+        session_token: credentialOverride?.sessionToken || sessionToken,
+        target_email: currentUser?.email,
+      };
+  const hasCredential = Boolean(credentialPayload.badge_code || credentialPayload.session_token);
   const [pauseState, setPauseState] = useState(null);
   const [now, setNow] = useState(() => new Date());
   const [showResumePrompt, setShowResumePrompt] = useState(false);
@@ -45,15 +53,14 @@ export default function WorkPauseOverlay({
   const mountedRef = useRef(true);
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
-    if (disabled || !currentUser?.email || !sessionToken) {
+    if (disabled || !currentUser?.email || !hasCredential) {
       if (mountedRef.current) setPauseState(null);
       return null;
     }
     try {
       const response = await base44.functions.invoke("timeClockAction", {
         action: "status",
-        session_token: sessionToken,
-        target_email: currentUser.email,
+        ...credentialPayload,
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
@@ -73,7 +80,7 @@ export default function WorkPauseOverlay({
       if (pauseState) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, sessionToken, pauseState, disabled]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, pauseState, disabled]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -105,7 +112,7 @@ export default function WorkPauseOverlay({
   }, [pauseState]);
 
   const resumeWork = async () => {
-    if (!pauseState?.active_work_pause?.id || !currentUser?.email || !sessionToken || resumeBusy) return;
+    if (!pauseState?.active_work_pause?.id || !currentUser?.email || !hasCredential || resumeBusy) return;
     const requestId = resumeRequestRef.current || newRequestId();
     resumeRequestRef.current = requestId;
     setResumeBusy(true);
@@ -113,9 +120,8 @@ export default function WorkPauseOverlay({
     try {
       const response = await base44.functions.invoke("timeClockAction", {
         action: "work_pause_resume",
-        session_token: sessionToken,
-        target_email: currentUser.email,
         request_id: requestId,
+        ...credentialPayload,
       });
       const data = response?.data || response;
       if (!data?.success) {
