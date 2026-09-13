@@ -161,8 +161,33 @@ function entryAuditSnapshot(entry: any) {
     approved_by: entry?.approved_by || '',
     approval_note: entry?.approval_note || '',
     approval_request_id: entry?.approval_request_id || '',
+    pay_period_id: entry?.pay_period_id || '',
+    pay_period_locked_at: entry?.pay_period_locked_at || null,
+    pay_period_locked_by: entry?.pay_period_locked_by || '',
     updated_date: entry?.updated_date || null,
   };
+}
+
+const COMPANY_TIME_ZONE = 'America/New_York';
+
+function dateKeyInCompanyTime(value: any) {
+  const date = new Date(String(value || ''));
+  if (!Number.isFinite(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: COMPANY_TIME_ZONE,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const get = (type: string) => parts.find(part => part.type === type)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+function entryFallsInPeriod(entry: any, startDate: string, endDate: string) {
+  const key = dateKeyInCompanyTime(entry?.clock_in);
+  return Boolean(key && key >= startDate && key <= endDate);
+}
+
+function entryIsPayPeriodLocked(entry: any) {
+  return Boolean(String(entry?.pay_period_id || '').trim());
 }
 
 async function uniqueRow(entity: any, query: any, label: string) {
