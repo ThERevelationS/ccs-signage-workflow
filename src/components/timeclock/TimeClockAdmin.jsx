@@ -54,6 +54,7 @@ const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
 const TimeClockBreak = base44.entities.TimeClockBreak;
 const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
 const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
+const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -70,6 +71,7 @@ export default function TimeClockAdmin() {
   const [employeeStates, setEmployeeStates] = useState([]);
   const [activeBreaks, setActiveBreaks] = useState([]);
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
+  const [activeLaborSegments, setActiveLaborSegments] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
@@ -102,7 +104,7 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, states, breaks, workPauses, corrections] = await Promise.all([
+      const [entries, states, breaks, workPauses, laborSegments, corrections] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -127,6 +129,12 @@ export default function TimeClockAdmin() {
           label: "Time Clock active Work Pauses",
         }),
         loadAllEntityRows({
+          entity: TimeClockLaborSegment,
+          query: { status: "active" },
+          sort: "-started_at",
+          label: "Time Clock active labor segments",
+        }),
+        loadAllEntityRows({
           entity: TimeClockCorrectionRequest,
           query: { status: { $in: ["pending", "reviewing"] } },
           sort: "-requested_at",
@@ -137,6 +145,7 @@ export default function TimeClockAdmin() {
       setEmployeeStates(states);
       setActiveBreaks(breaks);
       setActiveWorkPauses(workPauses);
+      setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
     } catch (err) {
       console.error("Error loading data:", err);
@@ -200,10 +209,15 @@ export default function TimeClockAdmin() {
   const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
   const activeBreakById = new Map(activeBreaks.map(breakRow => [breakRow.id, breakRow]));
   const activeWorkPauseById = new Map(activeWorkPauses.map(pauseRow => [pauseRow.id, pauseRow]));
+  const activeLaborByEntryId = new Map(activeLaborSegments.map(segment => [segment.time_entry_id, segment]));
   const referencedBreakIds = new Set(employeeStates.map(state => state.active_break_id).filter(Boolean));
   const referencedWorkPauseIds = new Set(employeeStates.map(state => state.active_work_pause_id).filter(Boolean));
   const orphanActiveBreaks = activeBreaks.filter(breakRow => !referencedBreakIds.has(breakRow.id));
   const orphanActiveWorkPauses = activeWorkPauses.filter(pauseRow => !referencedWorkPauseIds.has(pauseRow.id));
+  const orphanActiveLaborSegments = activeLaborSegments.filter(segment => {
+    const entry = activeEntryById.get(segment.time_entry_id);
+    return !entry || entry.user_email !== segment.user_email;
+  });
 
   const statusLabel = (state) => {
     if (state.work_pause_status === "paused") return "Work Paused";
@@ -465,6 +479,7 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         employeeStates={employeeStates}
         correctionRequests={correctionRequests}
+        activeLaborSegments={activeLaborSegments}
       />
 
       <PayPeriodManager
@@ -550,6 +565,7 @@ export default function TimeClockAdmin() {
               const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
               const breakRow = state.active_break_id ? activeBreakById.get(state.active_break_id) : null;
               const workPauseRow = state.active_work_pause_id ? activeWorkPauseById.get(state.active_work_pause_id) : null;
+              const laborRow = entry?.id ? activeLaborByEntryId.get(entry.id) : null;
               const clockIn = entry?.clock_in ? parseISO(entry.clock_in) : null;
               const breakStarted = breakRow?.started_at ? parseISO(breakRow.started_at) : null;
               const workPauseStarted = workPauseRow?.started_at ? parseISO(workPauseRow.started_at) : null;
@@ -579,6 +595,12 @@ export default function TimeClockAdmin() {
                     {state.work_pause_status === "paused" && !workPauseRow && (
                       <p className="text-xs text-red-600 mt-1">Work Pause state is missing its active pause record — review required.</p>
                     )}
+                    {laborRow && state.break_status === "working" && state.work_pause_status === "working" && (
+                      <p className="text-xs text-blue-700 mt-1 capitalize">
+                        Current Work: {String(laborRow.activity_type || "work").replaceAll("_", " ")}
+                        {laborRow.work_order_id ? ` · ${laborRow.client_name || laborRow.work_order_title || "WorkOrder"}` : ""}
+                      </p>
+                    )}
                   </div>
                   <Badge variant="outline" className={`shrink-0 ${statusClass(state)}`}>
                     {state.work_pause_status === "paused" ? <Pause className="w-3 h-3 mr-1" /> : state.break_status === "on_break" ? <Coffee className="w-3 h-3 mr-1" /> : null}
@@ -603,6 +625,11 @@ export default function TimeClockAdmin() {
         {orphanActiveWorkPauses.length > 0 && (
           <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
             {orphanActiveWorkPauses.length} active Work Pause record{orphanActiveWorkPauses.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Resume/reconcile the affected pause before correcting or closing the shift.
+          </div>
+        )}
+        {orphanActiveLaborSegments.length > 0 && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            {orphanActiveLaborSegments.length} active labor segment{orphanActiveLaborSegments.length === 1 ? " is" : "s are"} not linked to a matching active TimeEntry. Review the affected shift before making administrative changes.
           </div>
         )}
       </div>
