@@ -398,6 +398,65 @@ export default function SalesPipeline() {
           </div>
         )}
 
+        {!showPendingImports && recordScope === "outcomes" && (
+          <div className="mb-3 space-y-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("all"); }} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
+                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Tracked Outcomes</div>
+                <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.trackedOutcomeCount}</div>
+                <div className="mt-1 text-xs text-slate-500">{outcomePeriod === "all" ? "All authoritative modern outcomes" : `${pipelineSummary.totalTrackedOutcomeCount} tracked across all dates`}</div>
+              </button>
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("won"); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "won" ? "border-emerald-400 bg-emerald-50" : "border-emerald-200 bg-white hover:border-emerald-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Won</div>
+                <div className="mt-1 text-2xl font-bold text-emerald-900">{pipelineSummary.wonCount}</div>
+                <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(pipelineSummary.wonValue)} won value</div>
+              </button>
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("lost"); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "lost" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
+                <div className="text-xs font-medium uppercase tracking-wide text-red-700">Lost</div>
+                <div className="mt-1 text-2xl font-bold text-red-900">{pipelineSummary.lostCount}</div>
+                <div className="mt-1 text-xs text-red-700/80">{formatPipelineValue(pipelineSummary.lostValue)} lost value</div>
+              </button>
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 shadow-sm">
+                <div className="text-xs font-medium uppercase tracking-wide text-indigo-700">Closed Value</div>
+                <div className="mt-1 text-2xl font-bold text-indigo-900">{formatPipelineValue(pipelineSummary.closedValue)}</div>
+                <div className="mt-1 text-xs text-indigo-700/80">Won + lost tracked value</div>
+              </div>
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 shadow-sm">
+                <div className="text-xs font-medium uppercase tracking-wide text-blue-700">Tracked Win Rate</div>
+                <div className="mt-1 text-2xl font-bold text-blue-900">{pipelineSummary.trackedWinRate == null ? "—" : `${pipelineSummary.trackedWinRate.toFixed(1)}%`}</div>
+                <div className="mt-1 text-xs text-blue-700/80">Won ÷ explicit Won/Lost outcomes</div>
+              </div>
+              <div className={`rounded-xl border p-3 shadow-sm ${(pipelineSummary.closeDateMissingCount + pipelineSummary.lostReasonMissingCount) > 0 ? "border-amber-300 bg-amber-50" : "border-teal-200 bg-teal-50/60"}`}>
+                <div className={`text-xs font-medium uppercase tracking-wide ${(pipelineSummary.closeDateMissingCount + pipelineSummary.lostReasonMissingCount) > 0 ? "text-amber-700" : "text-teal-700"}`}>Closeout QA</div>
+                <div className={`mt-1 text-2xl font-bold ${(pipelineSummary.closeDateMissingCount + pipelineSummary.lostReasonMissingCount) > 0 ? "text-amber-900" : "text-teal-900"}`}>{pipelineSummary.closeDateMissingCount + pipelineSummary.lostReasonMissingCount}</div>
+                <div className="mt-1 text-xs text-gray-600">{pipelineSummary.closeDateMissingCount} missing date · {pipelineSummary.lostReasonMissingCount} lost reason</div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="text-sm font-semibold text-gray-800">Lost Reason Breakdown</div>
+                <p className="mt-1 text-xs text-gray-500">Only explicit modern Lost outcomes in the selected period.</p>
+                <div className="mt-3 space-y-2">
+                  {pipelineSummary.lostReasonBreakdown.length === 0 ? (
+                    <div className="rounded-lg bg-gray-50 px-3 py-4 text-sm text-gray-500">No tracked lost reasons in this period yet.</div>
+                  ) : pipelineSummary.lostReasonBreakdown.slice(0, 8).map((item) => (
+                    <div key={item.reason} className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                      <span className="truncate text-gray-700">{item.reason}</span>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 shadow-sm">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                <div className="text-sm font-semibold text-slate-800">Reporting Integrity</div>
+                <p className="mt-2 text-sm text-slate-600">These metrics intentionally use only WorkOrders explicitly closed as Won or Lost in the modern Sales Pipeline. Legacy rows whose task text says “Completed Sale,” “Lost,” or “Closed” stay in Legacy History and are excluded from win-rate reporting.</p>
+                <div className="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">Closeout now requires an actual close date, Lost requires a reason, and future close dates are blocked.</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showPendingImports ? (
           <div className="clay-card p-4 overflow-auto flex flex-col" style={{ flex: 1, minHeight: 0 }}>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
@@ -432,6 +491,7 @@ export default function SalesPipeline() {
             filterStatus={filterStatus}
             recordScope={recordScope}
             attentionFilter={attentionFilter}
+            outcomePeriod={outcomePeriod}
             viewMode={viewMode}
             onSummaryChange={setPipelineSummary}
             showButtonsInline={false}
