@@ -239,7 +239,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const deleteLocality = async (id) => {
-    if (!confirm("Delete this locality?") || localityDeleteInFlightRef.current.has(id)) return;
+    if (localityDeleteInFlightRef.current.has(id)) return;
     const loaded = localities.find(loc => loc.id === id);
     if (!loaded?.id) {
       setLocalitySaveError("The locality selected for deletion is no longer loaded. Reload settings before deleting it.");
@@ -310,8 +310,25 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
   };
 
   const deleteOffice = (officeId) => {
-    if (!confirm("Delete this office from the locality?")) return;
     setForm(prev => ({ ...prev, offices: prev.offices.filter(o => o.id !== officeId) }));
+  };
+
+  const requestDeleteLocality = (id) => {
+    const locality = localities.find((row) => row.id === id);
+    setPendingConfirm({
+      kind: "delete_locality",
+      id,
+      label: locality?.name || "this locality",
+    });
+  };
+
+  const requestDeleteOffice = (officeId) => {
+    const office = form.offices.find((row) => row.id === officeId);
+    setPendingConfirm({
+      kind: "delete_office",
+      id: officeId,
+      label: office?.name || "this office",
+    });
   };
 
   const queuePermitSettingSave = ({ queueKey, settingKey, nextValue, label, baselineRef, setSaving, restoreFromLatest }) => {
@@ -469,9 +486,22 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     ).slice(0, 10);
   }, [officeCatalog, catalogSearch]);
 
-  const handleTabChange = (val) => {
-    if (isDirty && !confirm("You have unsaved locality changes. Discard them?")) return;
-    setActiveTab(val);
+  const handleTabChange = (val) => requestNavigation({ type: "tab", value: val });
+
+  const confirmPendingAction = async () => {
+    const pending = pendingConfirm;
+    if (!pending) return;
+    setPendingConfirm(null);
+
+    if (pending.kind === "discard_changes") {
+      applyNavigation(pending.action);
+      return;
+    }
+    if (pending.kind === "delete_locality") {
+      await deleteLocality(pending.id);
+      return;
+    }
+    if (pending.kind === "delete_office") deleteOffice(pending.id);
   };
 
   return (
@@ -644,7 +674,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                             office={office}
                             officeTypes={officeTypes}
                             onChange={(updated) => updateOffice(office.id, updated)}
-                            onDelete={() => deleteOffice(office.id)}
+                            onDelete={() => requestDeleteOffice(office.id)}
                           />
                         ))}
                       </div>
@@ -655,7 +685,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                         <Save className="w-4 h-4" /> Save Locality
                       </Button>
                       {editingLocality !== "new" && (
-                        <Button variant="destructive" onClick={() => deleteLocality(editingLocality)}>
+                        <Button variant="destructive" onClick={() => requestDeleteLocality(editingLocality)}>
                           <Trash2 className="w-4 h-4 mr-1" /> Delete
                         </Button>
                       )}
