@@ -540,6 +540,8 @@ export default function QuickClockSection({
     setWorkPauseStatus(data?.work_pause_status || "working");
     setActiveWorkPause(data?.work_pause_status === "paused" ? (data?.work_pause || data?.active_work_pause || null) : null);
     setWorkPauseSummary(data?.work_pause_summary || { count: 0, total_minutes: 0 });
+    if (Object.prototype.hasOwnProperty.call(data || {}, "active_labor")) setActiveLabor(data.active_labor || null);
+    if (data?.labor_summary) setLaborSummary(data.labor_summary);
     if (data?.entry?.id) setActiveEntry(data.entry);
   };
 
@@ -623,6 +625,36 @@ export default function QuickClockSection({
     } catch (err) {
       if (!err.retrySameRequest) clearRequest("break_end", email);
       setPersistenceError(err?.message || "Break end was not confirmed by the server.");
+      throw err;
+    }
+  };
+
+  const handleLaborAction = async (action, { activityType = "", workOrderId = "" } = {}) => {
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Current Work identity is no longer verified. Close this dialog and identify again.");
+    }
+    if (breakStatus !== "working" || activeBreak?.id) throw new Error("End the active break before changing Current Work.");
+    if (workPauseStatus !== "working" || activeWorkPause?.id) throw new Error("Resume Work before changing Current Work.");
+    const email = selectedUser.email;
+    const requestId = requestIdFor(action, email);
+    setPersistenceError("");
+    try {
+      const result = await invokeTimeClock({
+        action,
+        request_id: requestId,
+        activity_type: activityType,
+        work_order_id: workOrderId,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      clearRequest(action, email);
+      setActiveLabor(result.active_labor || null);
+      setLaborSummary(result.labor_summary || { count: 0, total_minutes: 0 });
+      if (result?.entry?.id) setActiveEntry(result.entry);
+      setRecognitionStatus(action === "labor_stop" ? "Current Work stopped and confirmed by server." : action === "labor_change" ? "Current Work changed and confirmed by server." : "Current Work started and confirmed by server.");
+      return result;
+    } catch (err) {
+      if (!err.retrySameRequest) clearRequest(action, email);
+      setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
       throw err;
     }
   };
@@ -849,6 +881,11 @@ export default function QuickClockSection({
           onStartBreak={handleStartBreak}
           onEndBreak={handleEndBreak}
           onStartWorkPause={handleStartWorkPause}
+          activeLabor={activeLabor}
+          laborSummary={laborSummary}
+          onStartLabor={(payload) => handleLaborAction("labor_start", payload)}
+          onChangeLabor={(payload) => handleLaborAction("labor_change", payload)}
+          onStopLabor={() => handleLaborAction("labor_stop")}
           onClockOut={handleClockOut}
         />
       )}
