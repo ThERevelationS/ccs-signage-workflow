@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
-import { DollarSign, Loader2, Pencil, Plus, ShieldCheck, Trash2, X } from "lucide-react";
+import { AlertTriangle, DollarSign, Loader2, Pencil, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 
 const emptyPolicy = () => ({
   name: "",
