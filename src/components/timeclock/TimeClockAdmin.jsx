@@ -170,6 +170,10 @@ export default function TimeClockAdmin() {
 
   // Calculate totals
   const totalHours = filteredEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
+  const completedEntries = filteredEntries.filter(entry => entry.status === "clocked_out" && entry.clock_out);
+  const approvedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "approved");
+  const needsReviewEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "needs_review");
+  const unreviewedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "unreviewed");
 
   const clockedInStates = employeeStates.filter(state => state.status === "clocked_in");
   const onBreakStates = clockedInStates.filter(state => state.break_status === "on_break");
@@ -557,6 +561,32 @@ export default function TimeClockAdmin() {
             {orphanActiveWorkPauses.length} active Work Pause record{orphanActiveWorkPauses.length === 1 ? " is" : "s are"} not linked to authoritative employee state. Resume/reconcile the affected pause before correcting or closing the shift.
           </div>
         )}
+      </div>
+
+      <div className="clay-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              Shift Review
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">Manager review status for completed shifts in the selected period. Approval does not finalize payroll.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <p className="text-xs text-gray-600">Unreviewed</p>
+            <p className="text-2xl font-bold text-gray-800">{unreviewedEntries.length}</p>
+          </div>
+          <div className={`rounded-lg border p-3 ${needsReviewEntries.length ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"}`}>
+            <p className={needsReviewEntries.length ? "text-xs text-amber-700" : "text-xs text-gray-600"}>Needs Review</p>
+            <p className={needsReviewEntries.length ? "text-2xl font-bold text-amber-800" : "text-2xl font-bold text-gray-800"}>{needsReviewEntries.length}</p>
+          </div>
+          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+            <p className="text-xs text-green-700">Approved</p>
+            <p className="text-2xl font-bold text-green-800">{approvedEntries.length}</p>
+          </div>
+        </div>
       </div>
 
       <CorrectionRequestAdminPanel sessionToken={sessionToken} onEntriesChanged={loadData} />
