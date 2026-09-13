@@ -7,6 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { CheckCircle2, Trash2, Link as LinkIcon, Copy } from "lucide-react";
+import { getStageAgingState } from "@/components/sales/salesStageAging";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -79,6 +80,7 @@ export default function SalesPipelineTableBody({
         const daysOrderToInstall = calculateDays(wo.date_order_created, wo.project_install_date);
         const isFocused = focusedRowId === wo.id;
         const taskStyle = getTaskDescStyle(wo.current_task_description);
+        const stageAging = getStageAgingState(wo);
 
         return (
           <React.Fragment key={wo.id}>
@@ -108,6 +110,15 @@ export default function SalesPipelineTableBody({
                       {SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                </td>
+              )}
+              {isColumnVisible("stage_age") && (
+                <td className="px-1 py-0.5 border-r text-center">
+                  {stageAging.tracked ? (
+                    <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${stageAging.aged ? "bg-rose-50 text-rose-700" : wo.sales_status === "on_hold" ? "bg-gray-100 text-gray-600" : "bg-slate-50 text-slate-600"}`} title={wo.sales_status === "on_hold" ? "Stage timing tracked; On Hold is not flagged as stalled." : "Days since the last verified Sales Pipeline stage change."}>{stageAging.ageDays}d</span>
+                  ) : (
+                    <span className="text-[11px] text-gray-400" title="Stage timing begins with a verified stage change.">—</span>
+                  )}
                 </td>
               )}
               {isColumnVisible("sales_rep") && (
