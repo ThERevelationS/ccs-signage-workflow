@@ -9,6 +9,7 @@ import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -38,6 +39,11 @@ export default function ClockOutDialog({
   onStartBreak,
   onEndBreak,
   onStartWorkPause,
+  activeLabor = null,
+  laborSummary = { count: 0, total_minutes: 0 },
+  onStartLabor,
+  onChangeLabor,
+  onStopLabor,
 }) {
   const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
@@ -298,6 +304,16 @@ export default function ClockOutDialog({
               </div>
             </div>
           </div>
+
+          <CurrentWorkCard
+            activeLabor={activeLabor}
+            laborSummary={laborSummary}
+            disabled={onBreak || workPauseBusy || breakActionBusy || isSubmitting}
+            disabledReason={onBreak ? "End the current break before changing Current Work." : workPauseBusy ? "Work Pause is changing. Current Work will be available after the server confirms the new state." : ""}
+            onStart={onStartLabor}
+            onChange={onChangeLabor}
+            onStop={onStopLabor}
+          />
 
           {workPauseAllowed && (
             <div className="clay-card p-4 border-2 border-purple-200 bg-purple-50/70">
