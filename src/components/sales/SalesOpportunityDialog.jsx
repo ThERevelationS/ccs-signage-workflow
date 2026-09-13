@@ -81,6 +81,7 @@ const displayValue = (field, value) => {
 export default function SalesOpportunityDialog({
   workOrder,
   users = [],
+  leadSources = [],
   isRegistered,
   onClose,
   onUpdateFields,
@@ -159,7 +160,7 @@ export default function SalesOpportunityDialog({
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
-          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-xl border bg-white p-3">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><CircleDollarSign className="h-4 w-4" />Opportunity Value</div>
               <div className="mt-2 text-2xl font-bold text-gray-900">{money(value)}</div>
@@ -196,6 +197,17 @@ export default function SalesOpportunityDialog({
                   <SelectItem value="__unassigned__">Unassigned</SelectItem>
                   {workOrder.sales_rep && !users.some((user) => user.full_name === workOrder.sales_rep) && <SelectItem value={workOrder.sales_rep}>{workOrder.sales_rep}</SelectItem>}
                   {users.filter((user) => user.full_name).map((user) => <SelectItem key={user.email} value={user.full_name}>{user.full_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-xl border bg-white p-3">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Lead Source</Label>
+              <Select value={workOrder.lead_source || "__unspecified__"} onValueChange={(value) => update({ lead_source: value === "__unspecified__" ? "" : value })} disabled={!isRegistered}>
+                <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unspecified__">Unspecified</SelectItem>
+                  {workOrder.lead_source && !leadSources.includes(workOrder.lead_source) && <SelectItem value={workOrder.lead_source}>{workOrder.lead_source}</SelectItem>}
+                  {leadSources.filter(Boolean).map((source) => <SelectItem key={source} value={source}>{source}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
