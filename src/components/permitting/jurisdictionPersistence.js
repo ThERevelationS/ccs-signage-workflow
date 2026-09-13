@@ -11,6 +11,7 @@ const EDITABLE_FIELDS = [
   "contact_info", "permit_requirements", "sqft_width_height_rules", "height_allowances",
   "setback_rules", "lighting_allowances", "parent_county", "_manual_website_url",
   "_manual_permitting_url", "_manual_requirements", "_manual_documents",
+  "verification_status", "verified_at", "verified_by", "verification_notes",
 ];
 
 export function jurisdictionFormPayload(data = {}) {
