@@ -82,8 +82,9 @@ const isLegacyClosedRecord = (workOrder) => {
 };
 
 const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
+const normalizeOwnerIdentity = (value) => String(value || "").trim().toLowerCase();
 
-const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser) => {
+const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities) => {
   if (!attentionFilter || attentionFilter === "all") return true;
   const followUp = workOrder?.follow_up_date || "";
   const isOperational = isOpenOpportunity(workOrder) && !isLegacyClosedRecord(workOrder);
@@ -103,12 +104,10 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && activityTime !== null && activityTime <= staleCutoffTime;
   }
   if (attentionFilter === "activity_untracked") return isOperational && getSalesActivityTime(workOrder) === null;
+  if (attentionFilter === "owner_unassigned") return isOperational && !normalizeOwnerIdentity(workOrder?.sales_rep);
   if (attentionFilter === "mine") {
-    const names = [currentUser?.full_name, currentUser?.name, currentUser?.email].filter(Boolean).map((value) => String(value).trim().toLowerCase());
-    if (!names.length) return false;
-    return isOperational && [workOrder?.sales_rep, workOrder?.current_task_assigned_to, workOrder?.estimator]
-      .filter(Boolean)
-      .some((value) => names.includes(String(value).trim().toLowerCase()));
+    const owner = normalizeOwnerIdentity(workOrder?.sales_rep);
+    return isOperational && Boolean(owner) && currentOwnerIdentities.has(owner);
   }
   return true;
 };
@@ -1197,6 +1196,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   staleCutoffDate.setDate(staleCutoffDate.getDate() - STALE_ACTIVITY_DAYS);
   const staleCutoffTime = staleCutoffDate.getTime();
 
+  const currentOwnerIdentities = useMemo(() => {
+    const direct = [currentUser?.full_name, currentUser?.name, currentUser?.email]
+      .map(normalizeOwnerIdentity)
+      .filter(Boolean);
+    const directSet = new Set(direct);
+    const matchedAuthorizedUsers = users.filter((user) => {
+      const identities = [user?.full_name, user?.email].map(normalizeOwnerIdentity).filter(Boolean);
+      return identities.some((identity) => directSet.has(identity));
+    });
+    matchedAuthorizedUsers.forEach((user) => {
+      [user?.full_name, user?.email].map(normalizeOwnerIdentity).filter(Boolean).forEach((identity) => directSet.add(identity));
+    });
+    return directSet;
+  }, [currentUser, users]);
+
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
     const legacyClosed = isLegacyClosedRecord(wo);
     if (recordScope === "current" && legacyClosed) return false;
@@ -1211,6 +1225,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
       summary.openCount += 1;
       summary.openValue += value;
+      const owner = normalizeOwnerIdentity(wo.sales_rep);
+      if (owner) {
+        summary.assignedOwnerCount += 1;
+        if (currentOwnerIdentities.has(owner)) summary.myOpportunityCount += 1;
+      } else {
+        summary.unassignedOwnerCount += 1;
+      }
       if (followUp && followUp < todayStamp) summary.overdueCount += 1;
       if (followUp === todayStamp) summary.dueTodayCount += 1;
       if (followUp && followUp <= todayStamp) summary.dueCount += 1;
@@ -1236,6 +1257,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }, {
       openCount: 0,
       openValue: 0,
+      assignedOwnerCount: 0,
+      unassignedOwnerCount: 0,
+      myOpportunityCount: 0,
       overdueCount: 0,
       dueTodayCount: 0,
       dueCount: 0,
@@ -1251,7 +1275,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       unratedProbabilityCount: 0,
       weightedValue: 0,
     });
-  }, [scopedWorkOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime]);
+  }, [scopedWorkOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
@@ -1261,7 +1285,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const sortedWorkOrders = useMemo(() => {
     // First filter
     let result = scopedWorkOrders.filter(wo => {
-      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser)) return false;
+      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
         if (wo.sales_status !== filterStatus) return false;
@@ -1367,7 +1391,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentUser, searchTerm, sortConfig, customFilters]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
 
