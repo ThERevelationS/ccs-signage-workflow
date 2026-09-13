@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,10 +29,12 @@ export const LOST_REASONS = [
 export default function SalesStatusTransitionDialog({ transition, onClose, onConfirm }) {
   const [lostReason, setLostReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
+  const [closeDate, setCloseDate] = useState("");
 
   useEffect(() => {
     setLostReason(transition?.workOrder?.lost_reason || "");
     setOtherReason("");
+    setCloseDate(transition?.workOrder?.close_date || format(new Date(), "yyyy-MM-dd"));
   }, [transition?.workOrder?.id, transition?.nextStatus]);
 
   if (!transition) return null;
@@ -42,7 +45,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   const reopening = ["won", "lost"].includes(currentStatus) && !closing;
   const isLost = nextStatus === "lost";
   const finalReason = lostReason === "Other" ? otherReason.trim() : lostReason.trim();
-  const canConfirm = !isLost || Boolean(finalReason);
+  const canConfirm = (!closing || Boolean(closeDate)) && (!isLost || Boolean(finalReason));
 
   const title = closing
     ? `Mark this opportunity ${nextStatus === "won" ? "Won" : "Lost"}?`
@@ -57,12 +60,19 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
             {closing
-              ? `${workOrder?.client_name || "This opportunity"} will be closed on today's date. Its sales history remains preserved and it can be reopened later.`
+              ? `${workOrder?.client_name || "This opportunity"} will be closed using the date below. Its sales history remains preserved and it can be reopened later.`
               : reopening
                 ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history.`
                 : `${workOrder?.client_name || "This opportunity"} will move to the selected sales stage.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        {closing && (
+          <div className="space-y-1.5 py-1">
+            <Label>Close date <span className="text-red-600">*</span></Label>
+            <Input type="date" value={closeDate} onChange={(event) => setCloseDate(event.target.value)} />
+          </div>
+        )}
 
         {isLost && (
           <div className="space-y-3 py-1">
@@ -88,7 +98,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogCancel onClick={() => onClose?.()}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={!canConfirm}
-            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "" })}
+            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "", closeDate: closing ? closeDate : "" })}
             className={isLost ? "bg-red-600 hover:bg-red-700" : ""}
           >
             {closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
