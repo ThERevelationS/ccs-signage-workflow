@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { CheckCircle2 } from "lucide-react";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -23,7 +24,7 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, isRegistered }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered }) {
   return (
     <div className="space-y-3 p-3">
       {workOrders.map((wo) => {
@@ -93,6 +94,8 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(1))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">Tomorrow</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(14))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+14 days</button>
+                <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 active:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>
               </div>
             )}
           </div>
