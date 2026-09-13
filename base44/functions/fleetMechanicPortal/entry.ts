@@ -169,19 +169,36 @@ async function portalPayload(base44: any, grant: any) {
   const taskIds = new Set(visible.map((row:any)=>String(row.maintenance_task_id || '')).filter(Boolean));
   const canEstimate = Array.isArray(grant?.allowed_actions) && grant.allowed_actions.includes('estimate_submit');
   const repairEstimates:any[] = [];
+  const approvalBlocks = new Map<string,{blocked:boolean;reason:string}>();
   for (const wo of visible) {
     const matches=(estimates||[]).filter((row:any)=>String(row.work_order_id||'')===String(wo.id));
     if (!matches.length) continue;
-    if (matches.length>1) { repairEstimates.push({work_order_id:wo.id,visibility:'conflict',status:'conflict'}); continue; }
+    if (matches.length>1) {
+      repairEstimates.push({work_order_id:wo.id,visibility:'conflict',status:'conflict'});
+      if (ACTIVE.has(wo.status)) approvalBlocks.set(String(wo.id),{blocked:true,reason:'CCS must resolve conflicting repair estimates before work can start.'});
+      continue;
+    }
     const estimate=matches[0];
-    if (estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(grant.id||'')) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
+    const ownedByGrant = estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(grant.id||'');
+    if (ownedByGrant) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
     else repairEstimates.push({work_order_id:wo.id,visibility:estimate.estimate_source === 'mechanic_portal' ? 'other_mechanic' : 'ccs_managed',status:'managed'});
+    if (ACTIVE.has(wo.status) && estimate.approval_required === true && estimate.status !== 'approved') {
+      let reason = 'This job is waiting on CCS repair-estimate approval before work can start.';
+      if (ownedByGrant) {
+        if (estimate.status === 'draft') reason = 'Save and submit this repair estimate, then wait for CCS approval before starting work.';
+        else if (estimate.status === 'changes_requested') reason = 'CCS requested changes to this repair estimate. Update and resubmit it before starting work.';
+        else if (estimate.status === 'submitted') reason = 'This repair estimate is submitted and waiting for CCS approval before work can start.';
+        else if (estimate.status === 'rejected') reason = 'CCS rejected this repair estimate. Contact CCS before starting work.';
+      }
+      approvalBlocks.set(String(wo.id),{blocked:true,reason});
+    }
   }
+  const publicWorkOrder = (row:any) => ({...sanitizeWorkOrder(row),approval_block:approvalBlocks.get(String(row.id)) || {blocked:false,reason:''}});
   return {
     success:true,
     portal:{name:grant?.name || 'External Mechanic',capabilities:{estimates:canEstimate}},
-    active_work_orders:active.map(sanitizeWorkOrder),
-    recent_completed:completed.map(sanitizeWorkOrder),
+    active_work_orders:active.map(publicWorkOrder),
+    recent_completed:completed.map(publicWorkOrder),
     equipment:equipment.filter((row:any)=>equipmentIds.has(String(row.id))).map(sanitizeEquipment),
     tasks:tasks.filter((row:any)=>taskIds.has(String(row.id))).map(sanitizeTask),
     repair_estimates:repairEstimates,
