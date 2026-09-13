@@ -186,6 +186,19 @@
     "approval_request_id": {
       "type": "string",
       "description": "Idempotency key for the latest manager approval action"
+    },
+    "pay_period_id": {
+      "type": "string",
+      "description": "Finalized TimeClockPayPeriod that locked this TimeEntry"
+    },
+    "pay_period_locked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when this TimeEntry was locked by pay-period finalization"
+    },
+    "pay_period_locked_by": {
+      "type": "string",
+      "description": "Administrator that finalized the pay period containing this TimeEntry"
     }
   },
   "required": [
