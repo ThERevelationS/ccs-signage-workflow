@@ -59,7 +59,7 @@ function buildEvents({ equipment, workOrders, logs, notifications, requests, ins
       kind: "work_order",
       timestamp: createdAt,
       title: `${workOrder.work_order_number} opened`,
-      detail: [workOrder.title, `${pretty(workOrder.priority)} priority`, workOrder.assigned_to || "Unassigned"].filter(Boolean).join(" · "),
+      detail: [workOrder.title, `${pretty(workOrder.priority)} priority`, workOrder.public_submission_key ? `Public report${workOrder.public_reporter_name ? ` · ${workOrder.public_reporter_name}` : ""}` : "", workOrder.assigned_to || "Unassigned"].filter(Boolean).join(" · "),
       href: `${createPageUrl("FleetWorkOrders")}?workOrder=${encodeURIComponent(workOrder.id)}${equipment?.id ? `&equipment=${encodeURIComponent(equipment.id)}` : ""}`,
     });
 
