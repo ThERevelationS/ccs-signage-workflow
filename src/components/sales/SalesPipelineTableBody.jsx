@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Trash2, Link as LinkIcon, Copy } from "lucide-react";
+import { CheckCircle2, Trash2, Link as LinkIcon, Copy } from "lucide-react";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -60,7 +60,7 @@ export default function SalesPipelineTableBody({
   virtualItems, filteredWorkOrders, isColumnVisible, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
-  handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
+  handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, onCompleteFollowUp, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
   leadSources, users, taskDescriptions, projectTypes, rowVirtualizer,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
@@ -269,7 +269,10 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("follow_up_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "follow_up_date", "Follow Up Date", wo.follow_up_date)}>
-                  <DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <div className="flex items-center gap-0.5">
+                    <div className="min-w-0 flex-1"><DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} /></div>
+                    {isRegistered && !["won", "lost"].includes(wo.sales_status) && <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50" title="Complete / log sales follow-up"><CheckCircle2 className="h-3.5 w-3.5" /></button>}
+                  </div>
                 </td>
               )}
               {isColumnVisible("expected_close_date") && (
