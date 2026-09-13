@@ -95,6 +95,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
     return isOperational && !followUp && (workOrder?.sales_status === "quoted" || workOrder?.sales_status === "follow_up" || workOrder?.quote_date || workOrder?.date_estimate_sent);
   }
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
+  if (attentionFilter === "probability_missing") return isOperational && !(typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability));
   if (attentionFilter === "near_close") return isOperational && workOrder?.expected_close_date >= todayStamp && workOrder?.expected_close_date <= nearCloseStamp;
   if (attentionFilter === "close_overdue") return isOperational && workOrder?.expected_close_date && workOrder.expected_close_date < todayStamp;
   if (attentionFilter === "stale") {
@@ -1225,7 +1226,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         summary.trackedActivityCount += 1;
         if (activityTime <= staleCutoffTime) summary.staleCount += 1;
       }
-      if (typeof wo.probability === "number") summary.ratedProbabilityCount += 1;
+      if (typeof wo.probability === "number" && Number.isFinite(wo.probability)) {
+        summary.ratedProbabilityCount += 1;
+        summary.weightedValue += value * (wo.probability / 100);
+      } else {
+        summary.unratedProbabilityCount += 1;
+      }
       return summary;
     }, {
       openCount: 0,
@@ -1242,6 +1248,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       trackedActivityCount: 0,
       untrackedActivityCount: 0,
       ratedProbabilityCount: 0,
+      unratedProbabilityCount: 0,
+      weightedValue: 0,
     });
   }, [scopedWorkOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime]);
 
