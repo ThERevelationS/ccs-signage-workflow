@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { normalizePermittingResearchInput } from '../../shared/permittingResearchInput.ts';
+import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 
 /**
  * Wrapper function that calls the jurisdictionResearch agent
@@ -31,7 +32,7 @@ JURISDICTION: ${jurisdictionName} ${jurisdictionType}, ${jurisdictionState}
 CRITICAL RESEARCH RULES:
 1. ONLY use official government sources (city/county/state websites)
 2. DO NOT fabricate, guess, or hallucinate URLs
-3. If information cannot be verified, explicitly state "INFORMATION NOT FOUND"
+3. If information cannot be verified, return null for that field instead of placeholder text
 4. Cross-reference information when possible
 5. Prioritize official ordinances and zoning codes
 
@@ -83,7 +84,7 @@ Return ONLY valid JSON with these fields (use null for unfound data):
       }
     });
 
-    const researchData = typeof result === 'string' ? JSON.parse(result) : result;
+    const researchData = sanitizeJurisdictionResearch(typeof result === 'string' ? JSON.parse(result) : result);
     
     if (!researchData) {
       return Response.json({ error: 'Failed to parse research results' }, { status: 400 });
