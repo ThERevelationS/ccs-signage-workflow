@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Briefcase, User, Clipboard, MapPin, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
@@ -142,10 +142,15 @@ export default function PermitClientGroup({
       </div>
 
       {queueState && (
-        <div className="px-3 py-2 border-b bg-white flex items-center gap-2 flex-wrap text-xs">
+        <div className="px-3 py-2 border-b bg-white flex items-center gap-x-2 gap-y-1 flex-wrap text-xs">
           <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${PERMIT_QUEUE_META[queueState.key]?.className || "border-gray-200 bg-gray-50 text-gray-700"}`}>
             {PERMIT_QUEUE_META[queueState.key]?.label || "Permit"}
           </span>
+          {queueState.timingLabel && (
+            <span className={`inline-flex items-center gap-1 font-semibold ${queueState.key === "overdue" ? "text-red-700" : queueState.key === "due_today" ? "text-amber-700" : "text-gray-500"}`}>
+              <Clock className="w-3 h-3" /> {queueState.timingLabel}
+            </span>
+          )}
           <span className="font-semibold text-gray-600">Next:</span>
           <span className="text-gray-700">{queueState.nextAction}</span>
         </div>
