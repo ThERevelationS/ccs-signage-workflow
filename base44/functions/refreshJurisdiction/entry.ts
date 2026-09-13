@@ -4,6 +4,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
+import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -226,12 +227,13 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
 
     updateData.last_updated = new Date().toISOString();
+    const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, updateData);
 
     const updated = await replaceJurisdictionFieldsIfUnchanged({
       entity: base44.asServiceRole.entities.JurisdictionProfile,
       jurisdiction,
-      nextFields: updateData,
-      guardFields: jurisdictionProtectionGuards(jurisdiction, updateData, {
+      nextFields: finalUpdateData,
+      guardFields: jurisdictionProtectionGuards(jurisdiction, finalUpdateData, {
         respectManualProtection: batchSettings.skipManualData !== false,
       }),
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
