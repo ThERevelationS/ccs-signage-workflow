@@ -5,12 +5,13 @@ export function newEstimateCreationKey() {
   return `estimate-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export async function ensureNewEstimate({ creationKey, estimate }) {
+export async function ensureNewEstimate({ creationKey, estimate, sessionToken }) {
   const key = String(creationKey || "").trim();
   if (!key) throw new Error("Estimate creation key is required.");
   const response = await base44.functions.invoke("ensureNewEstimate", {
     creation_key: key,
     estimate,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
