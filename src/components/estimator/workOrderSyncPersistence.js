@@ -67,6 +67,7 @@ export async function createEstimateLinkedWorkOrderWithRecovery({
 export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
   entity,
   created,
+  sessionToken = "",
   label = "Created duplicate Work Order",
 } = {}) {
   const id = String(created?.id || "").trim();
@@ -82,6 +83,7 @@ export async function deleteCreatedDuplicateWorkOrderIfUnchanged({
       id,
       expected_updated_date: expectedUpdatedAt,
       estimate_id: estimateId,
+      session_token: sessionToken,
     });
   } catch (error) {
     let afterError;
