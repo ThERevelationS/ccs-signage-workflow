@@ -499,7 +499,7 @@ async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target
     active = await laborEntity.get(active.id);
   }
   await audit(auditEntity, {
-    action: endReason === 'change_work' ? 'labor_change' : 'labor_stop', outcome: 'confirmed',
+    action: 'labor_stop', outcome: 'confirmed',
     user_email: target.email, user_name: target.full_name || target.email,
     actor_email: actorEmail, actor_role: actor.role,
     authentication_method: authenticationMethodFor(actor, target), server_timestamp: active.ended_at,
@@ -705,6 +705,8 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Stored Work Pause state contains an unexpected active pause. Admin review is required.' }, { status: 409 });
         }
         const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+        const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
@@ -713,6 +715,8 @@ Deno.serve(async (req) => {
           work_pause_status: currentWorkPauseStatus,
           active_work_pause: activeWorkPause || null,
           work_pause_summary: workPauseSummary,
+          active_labor: activeLabor || null,
+          labor_summary: laborSummary,
         });
       }
       if (state.status === 'clocked_out') return Response.json({
@@ -721,6 +725,7 @@ Deno.serve(async (req) => {
         work_pause_allowed: target.can_work_pause === true,
         employment_type: target.employment_type || 'hourly',
         work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
+        active_labor: null, labor_summary: { count: 0, total_minutes: 0 },
       });
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
