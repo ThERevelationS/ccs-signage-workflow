@@ -1348,7 +1348,34 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (followUp && followUp <= todayStamp) summary.dueCount += 1;
       if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
-      if (!followUp && (wo.sales_status === "quoted" || wo.sales_status === "follow_up" || wo.quote_date || wo.date_estimate_sent)) summary.quoteNoFollowUpCount += 1;
+      const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));
+      if (quoteAging.awaitingResponse) {
+        summary.quoteAwaitingResponseCount += 1;
+        if (!followUp) summary.quoteNoFollowUpCount += 1;
+        else {
+          summary.quoteScheduledFollowUpCount += 1;
+          if (followUp <= todayStamp) summary.quoteDueCount += 1;
+        }
+        if (quoteAging.tracked) {
+          summary.quoteTimingCoverageCount += 1;
+          summary.quoteAgeDaysTotal += quoteAging.ageDays;
+          summary.quoteAgeDaysCount += 1;
+          summary.oldestQuoteAgeDays = Math.max(summary.oldestQuoteAgeDays, quoteAging.ageDays);
+          if (quoteAging.aged) summary.quoteAgedCount += 1;
+          if (quoteAging.veryAged) summary.quoteVeryAgedCount += 1;
+          const quoteBucket = quoteAging.ageDays >= 30
+            ? summary.quoteAgingBuckets[3]
+            : quoteAging.ageDays >= QUOTE_REVIEW_DAYS
+              ? summary.quoteAgingBuckets[2]
+              : quoteAging.ageDays >= 7
+                ? summary.quoteAgingBuckets[1]
+                : summary.quoteAgingBuckets[0];
+          quoteBucket.count += 1;
+          quoteBucket.value += value;
+        } else {
+          summary.quoteTimingMissingCount += 1;
+        }
+      }
       if (wo.expected_close_date >= todayStamp && wo.expected_close_date <= nearCloseStamp) summary.nearCloseCount += 1;
       if (wo.expected_close_date && wo.expected_close_date < todayStamp) summary.overdueCloseCount += 1;
       const activityTime = getSalesActivityTime(wo);
@@ -1376,7 +1403,25 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       dueCount: 0,
       upcomingCount: 0,
       noNextActionCount: 0,
+      quoteAwaitingResponseCount: 0,
+      quoteTimingCoverageCount: 0,
+      quoteTimingMissingCount: 0,
       quoteNoFollowUpCount: 0,
+      quoteScheduledFollowUpCount: 0,
+      quoteDueCount: 0,
+      quoteAgedCount: 0,
+      quoteVeryAgedCount: 0,
+      quoteAgeDaysTotal: 0,
+      quoteAgeDaysCount: 0,
+      averageQuoteAgeDays: 0,
+      oldestQuoteAgeDays: 0,
+      quoteAgingBuckets: [
+        { key: "quote_under_7", label: "0–6 days", count: 0, value: 0 },
+        { key: "quote_7_13", label: "7–13 days", count: 0, value: 0 },
+        { key: "quote_14_29", label: "14–29 days", count: 0, value: 0 },
+        { key: "quote_30_plus", label: "30+ days", count: 0, value: 0 },
+      ],
+      quoteOwnerBreakdown: [],
       nearCloseCount: 0,
       overdueCloseCount: 0,
       staleCount: 0,
@@ -1432,9 +1477,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     summary.averageAgeDays = summary.ageDaysCount > 0 ? Math.round(summary.ageDaysTotal / summary.ageDaysCount) : 0;
     summary.averageStageAgeDays = summary.stageAgeDaysCount > 0 ? Math.round(summary.stageAgeDaysTotal / summary.stageAgeDaysCount) : 0;
+    summary.averageQuoteAgeDays = summary.quoteAgeDaysCount > 0 ? Math.round(summary.quoteAgeDaysTotal / summary.quoteAgeDaysCount) : 0;
     const ownerWorkload = new Map();
     const sourceMix = new Map();
     const stageMix = new Map();
+    const quoteOwnerMix = new Map();
     operational.forEach((wo) => {
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
       const followUp = wo.follow_up_date || "";
@@ -1457,6 +1504,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         sourceMix.set(sourceKey, sourceRow);
       }
 
+      if (isQuoteAwaitingResponse(wo)) {
+        const quoteOwnerLabel = String(wo.sales_rep || "").trim() || "Unassigned";
+        const quoteOwnerKey = normalizeOwnerIdentity(quoteOwnerLabel) || "__unassigned__";
+        const quoteRow = quoteOwnerMix.get(quoteOwnerKey) || { owner: quoteOwnerLabel, count: 0, value: 0, trackedCount: 0, missingCount: 0, agedCount: 0, veryAgedCount: 0, noFollowUpCount: 0 };
+        quoteRow.count += 1;
+        quoteRow.value += value;
+        if (!followUp) quoteRow.noFollowUpCount += 1;
+        const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));
+        if (quoteAging.tracked) {
+          quoteRow.trackedCount += 1;
+          if (quoteAging.aged) quoteRow.agedCount += 1;
+          if (quoteAging.veryAged) quoteRow.veryAgedCount += 1;
+        } else {
+          quoteRow.missingCount += 1;
+        }
+        quoteOwnerMix.set(quoteOwnerKey, quoteRow);
+      }
+
       const stageKey = wo.sales_status || "lead";
       const stageLabel = SALES_STATUSES.find((status) => status.value === stageKey)?.label || stageKey;
       const stageRow = stageMix.get(stageKey) || { stage: stageKey, label: stageLabel, count: 0, value: 0, trackedCount: 0, ageDaysTotal: 0, agedCount: 0 };
@@ -1476,6 +1541,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return b.value - a.value || b.count - a.count || a.owner.localeCompare(b.owner);
     });
     summary.sourceBreakdown = [...sourceMix.values()].sort((a, b) => b.count - a.count || b.value - a.value || a.source.localeCompare(b.source));
+    summary.quoteOwnerBreakdown = [...quoteOwnerMix.values()].sort((a, b) => b.agedCount - a.agedCount || b.noFollowUpCount - a.noFollowUpCount || b.value - a.value || a.owner.localeCompare(b.owner));
     summary.stageBreakdown = [...stageMix.values()].map((row) => ({
       ...row,
       averageDays: row.trackedCount > 0 ? Math.round(row.ageDaysTotal / row.trackedCount) : null,
