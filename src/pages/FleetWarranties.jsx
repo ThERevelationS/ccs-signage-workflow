@@ -59,6 +59,8 @@ export default function FleetWarranties(){
     });
   },[rows,status,search]);
 
+  const clearNewFlag=()=>{const url=new URL(window.location.href);url.searchParams.delete("new");window.history.replaceState({},"",`${url.pathname}${url.search}`);};
+  const closeDialog=()=>{setDialog(null);clearNewFlag();};
   const updateQuery=value=>{const url=new URL(window.location.href);value!=="all"?url.searchParams.set("equipment",value):url.searchParams.delete("equipment");url.searchParams.delete("new");window.history.replaceState({},"",`${url.pathname}${url.search}`);};
   const openCreate=()=>setDialog({mode:"create",creationKey:`fleet-warranty-${crypto.randomUUID()}`,form:blank(equipmentId!=="all"?equipmentId:"")});
   const openEdit=row=>setDialog({mode:"edit",row,form:{...blank(row.warranty?.equipment_id),...row.warranty,start_meter:row.warranty?.start_meter??"",end_meter:row.warranty?.end_meter??""}});
@@ -70,7 +72,7 @@ export default function FleetWarranties(){
     <div className="flex flex-col lg:flex-row gap-2"><select value={equipmentId} onChange={e=>{setEquipmentId(e.target.value);updateQuery(e.target.value);}} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"><option value="all">All Fleet equipment</option>{equipment.map(eq=><option key={eq.id} value={eq.id}>{eq.name}{eq.status==="retired"?" (retired)":""}</option>)}</select><select value={status} onChange={e=>setStatus(e.target.value)} className="min-h-11 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"><option value="all">All coverage states</option><option value="attention">Needs attention</option><option value="active">Active</option><option value="expired">Expired / unresolved</option><option value="claimed">Claimed</option><option value="void">Void</option></select><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search warranty, provider, reference, equipment…" className="min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-900"/><button onClick={load} disabled={loading} className="min-h-11 min-w-11 rounded-lg border border-gray-300 bg-white dark:border-slate-700 dark:bg-slate-900" aria-label="Refresh warranties"><RefreshCw className={`w-4 h-4 mx-auto ${loading?"animate-spin":""}`}/></button></div>
     {error&&<div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
     {loading?<div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400"/></div>:filtered.length?<div className="grid lg:grid-cols-2 gap-4">{filtered.map(row=><WarrantyCard key={row.warranty.id} row={row} isAdmin={isAdmin} onEdit={()=>openEdit(row)} onChanged={load}/>)}</div>:<div className="rounded-xl border border-dashed border-gray-300 bg-white py-12 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-900">No warranties match this view.</div>}
-  </div><WarrantyDialog dialog={dialog} equipment={activeEquipment} onClose={()=>setDialog(null)} onSaved={async()=>{setDialog(null);await load();}}/></div>;
+  </div><WarrantyDialog dialog={dialog} equipment={activeEquipment} onClose={closeDialog} onSaved={async()=>{closeDialog();await load();}}/></div>;
 }
 
 function WarrantyCard({row,isAdmin,onEdit,onChanged}){
