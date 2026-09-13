@@ -923,6 +923,85 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, period });
     }
 
+    if (['labor_start', 'labor_change', 'labor_stop'].includes(action)) {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to track current work.' }, { status: 409 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only track their own current work.' }, { status: 403 });
+      }
+      if (breakStatusOf(state) !== 'working' || state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break before changing current work.' }, { status: 409 });
+      }
+      if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
+        return Response.json({ success: false, error: 'Resume Work before changing current work.' }, { status: 409 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+
+      if (action === 'labor_stop') {
+        const ended = await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+          endReason: 'manual_stop', officialEnd: new Date().toISOString(),
+        });
+        const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+        return Response.json({ success: true, status: 'clocked_in', entry, active_labor: null, ended_labor: ended, labor_summary: summary, user: publicEmployee(target), reused: Boolean(ended?.end_request_id === requestId) });
+      }
+
+      const activityType = String(body?.activity_type || '').trim();
+      if (!LABOR_ACTIVITY_TYPES.has(activityType)) return Response.json({ success: false, error: 'A valid work activity is required.' }, { status: 400 });
+      const workOrderId = String(body?.work_order_id || '').trim();
+      let workOrder: any = null;
+      if (workOrderId) {
+        workOrder = await workOrderEntity.get(workOrderId).catch(() => null);
+        if (!workOrder?.id || workOrder.deleted === true) return Response.json({ success: false, error: 'Selected WorkOrder was not found or is unavailable.' }, { status: 404 });
+      }
+
+      const priorStart = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Labor-start request');
+      if (priorStart?.id) {
+        const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+        return Response.json({ success: true, status: 'clocked_in', entry, active_labor: priorStart.status === 'active' ? priorStart : null, labor_summary: summary, user: publicEmployee(target), reused: true });
+      }
+
+      let active = await activeLaborForEntry(laborEntity, entry.id, target.email);
+      if (action === 'labor_start' && active?.id) return Response.json({ success: false, error: 'Current Work is already active. Use Change Work instead.' }, { status: 409 });
+      const officialStart = new Date().toISOString();
+      if (action === 'labor_change' && active?.id) {
+        await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+          endReason: 'change_work', officialEnd: officialStart,
+        });
+        active = null;
+      }
+
+      const segment = await laborEntity.create({
+        user_email: target.email,
+        user_name: target.full_name || target.email,
+        time_entry_id: entry.id,
+        activity_type: activityType,
+        work_order_id: workOrder?.id || '',
+        work_order_title: workOrder?.title || '',
+        client_name: workOrder?.client_name || '',
+        started_at: officialStart,
+        status: 'active',
+        start_request_id: requestId,
+        source: 'server',
+      });
+      if (!segment?.id) throw new Error('Current Work labor segment could not be created.');
+      await audit(auditEntity, {
+        action: action === 'labor_change' ? 'labor_change' : 'labor_start', outcome: 'confirmed',
+        user_email: target.email, user_name: target.full_name || target.email,
+        actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target), server_timestamp: segment.started_at,
+        request_id: requestId, time_entry_id: entry.id,
+        details: { labor_segment_id: segment.id, activity_type: segment.activity_type, work_order_id: segment.work_order_id || null, work_order_title: segment.work_order_title || '', client_name: segment.client_name || '' },
+      });
+      const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target) });
+    }
+
     if (action === 'break_start') {
       if (state.status !== 'clocked_in' || !state.active_entry_id) {
         return Response.json({ success: false, error: 'Employee must be clocked in before starting a break.' }, { status: 409 });
