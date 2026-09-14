@@ -12,6 +12,16 @@ import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, Chevro
 const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 const normalizeImei = (value) => String(value || "").trim();
 
+function vehiclePickerLabel(vehicle) {
+  const stats = vehicle?.stats || {};
+  const rawSpeed = typeof stats.speed === "number" ? stats.speed : stats.location?.speed;
+  const speed = Number.isFinite(Number(rawSpeed)) ? Math.max(0, Math.round(Number(rawSpeed))) : null;
+  const driving = !!stats.isRunning || (speed != null && speed > 0);
+  const name = vehicle?.nickName || vehicle?.model?.name || vehicle?.vin || "Vehicle";
+  const state = driving ? (speed != null ? `${speed} mph` : "Driving") : "Parked";
+  return `${name} · ${state}`;
+}
+
 function resolveFleetEquipmentLink(vehicle, equipmentRows = []) {
   if (!vehicle) return { equipment: null, basis: null };
   const vin = normalizeVin(vehicle.vin);
@@ -256,7 +266,7 @@ export default function FleetTracking() {
   const selectTrackingVehicle = (vin) => {
     setSelectedVin(vin || null);
     setPanelOpen(!!vin);
-    if (vin) setMobileSheetState("mid");
+    if (vin) setMobileSheetState("peek");
   };
 
   const selectedVehicle = vehicles.find(v => normalizeVin(v.vin) === normalizeVin(selectedVin));
@@ -447,8 +457,8 @@ export default function FleetTracking() {
     <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
       <FleetModuleNav />
       <div className="flex-1 min-h-0 flex overflow-hidden" style={{ background: "#1b2029" }}>
-        {/* Desktop dispatch vehicle list. Mobile uses the selector over the map. */}
-        <div className="hidden md:block h-full shrink-0">
+        {/* Large-screen dispatch list. Phones/tablets keep the map full-width and use the top selector. */}
+        <div className="hidden lg:block h-full shrink-0">
           <FleetSidebar
             vehicles={vehicles}
             selectedVin={selectedVin}
@@ -477,11 +487,11 @@ export default function FleetTracking() {
               <select
                 value={selectedVin || ""}
                 onChange={(e) => selectTrackingVehicle(e.target.value || null)}
-                className="md:hidden min-w-0 max-w-[230px] flex-1 rounded-md border border-slate-600 bg-slate-800 px-2 py-1.5 text-xs font-medium text-white"
+                className="lg:hidden min-h-11 min-w-0 max-w-[320px] flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 text-xs font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                 aria-label="Select Bouncie vehicle"
               >
                 <option value="">Select vehicle…</option>
-                {vehicles.map((vehicle) => <option key={vehicle.vin} value={vehicle.vin}>{vehicle.nickName || vehicle.model?.name || vehicle.vin}</option>)}
+                {vehicles.map((vehicle) => <option key={vehicle.vin} value={vehicle.vin}>{vehiclePickerLabel(vehicle)}</option>)}
               </select>
               {status?.connectedEmail && <span className="text-xs text-gray-400 ml-2 hidden 2xl:inline truncate">Bouncie: {status.connectedEmail}</span>}
             </div>
