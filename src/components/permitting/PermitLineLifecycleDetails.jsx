@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary } from "./permitQueue";
+import PermitLineHistory from "./PermitLineHistory";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -393,6 +394,8 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           </div>
         </div>
       )}
+
+      <PermitLineHistory lineItemId={lineItem.id} />
     </div>
   );
 }
