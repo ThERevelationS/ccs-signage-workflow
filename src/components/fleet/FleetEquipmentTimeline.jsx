@@ -258,11 +258,12 @@ export default function FleetEquipmentTimeline({ equipment, workOrders = [], log
   const visible = filter === "all" ? events : events.filter(event => event.category === filter);
 
   return <section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
-    <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-      <div><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><History className="w-4 h-4 text-indigo-500" />Equipment Activity Timeline</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Built from preserved Fleet and Bouncie records; no historical records are rewritten.</p>{extraLoading && <div className="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">Loading fuel, warranty and assignment activity…</div>}{extraError && <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">{extraError}</div>}</div>
-      <div className="flex gap-1 overflow-x-auto pb-1 lg:pb-0">{FILTERS.map(option => <button key={option.key} onClick={() => setFilter(option.key)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${filter === option.key ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"}`}>{option.label}</button>)}</div>
+    <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 space-y-3">
+      <div><h2 className="font-semibold text-gray-900 dark:text-slate-100 flex items-center gap-2"><History className="w-4 h-4 text-indigo-500" />Equipment Activity Timeline</h2><p className="text-xs leading-relaxed text-gray-500 dark:text-slate-400 mt-1">Built from preserved Fleet and Bouncie records; no historical records are rewritten.</p><div className="mt-1 text-[11px] text-gray-400">Showing {visible.length} of {events.length} event{events.length === 1 ? "" : "s"}.</div>{extraLoading && <div className="text-[11px] text-indigo-600 dark:text-indigo-300 mt-1">Loading fuel, warranty and assignment activity…</div>}{extraError && <div className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">{extraError}</div>}</div>
+      <label className="flex sm:hidden items-center gap-2"><span className="shrink-0 text-xs font-semibold text-gray-500 dark:text-slate-400">Show</span><select value={filter} onChange={event => setFilter(event.target.value)} aria-label="Filter equipment activity timeline" className="min-h-11 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">{FILTERS.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label>
+      <div className="hidden sm:flex flex-wrap gap-1.5">{FILTERS.map(option => <button type="button" key={option.key} aria-pressed={filter === option.key} onClick={() => setFilter(option.key)} className={`min-h-11 rounded-lg px-3 py-2 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${filter === option.key ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"}`}>{option.label}</button>)}</div>
     </div>
-    <div className="p-4">
+    <div className="p-3 sm:p-4">
       {visible.length === 0 ? <div className="py-10 text-center text-sm text-gray-400">No activity exists for this filter.</div> : <div className="relative">
         <div className="absolute left-[18px] top-4 bottom-4 w-px bg-gray-200 dark:bg-slate-700" />
         <div className="space-y-1">{visible.map(event => <TimelineEvent key={event.id} event={event} />)}</div>
@@ -274,13 +275,13 @@ export default function FleetEquipmentTimeline({ equipment, workOrders = [], log
 function TimelineEvent({ event }) {
   const meta = eventMeta(event);
   const Icon = meta.icon;
-  const content = <div className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800/50 p-3 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors">
-    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1"><div className="font-semibold text-sm text-gray-900 dark:text-slate-100">{event.title}</div><div className="text-[11px] text-gray-400 whitespace-nowrap">{formatWhen(event.timestamp)}</div></div>
-    {event.detail && <div className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 whitespace-pre-wrap">{event.detail}</div>}
+  const content = <div className="min-w-0 min-h-11 flex-1 rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800/50 p-3 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5"><div className="font-semibold text-sm leading-snug text-gray-900 dark:text-slate-100 break-words">{event.title}</div><div className="text-[11px] text-gray-400 sm:whitespace-nowrap">{formatWhen(event.timestamp)}</div></div>
+    {event.detail && <div className="text-xs leading-relaxed text-gray-500 dark:text-slate-400 mt-1.5 whitespace-pre-wrap break-words">{event.detail}</div>}
   </div>;
-  return <div className="relative flex items-start gap-3 py-1.5">
+  return <div className="relative flex items-start gap-2.5 sm:gap-3 py-1.5">
     <div className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 border-white dark:border-slate-900 ${meta.tone}`}><Icon className="w-4 h-4" /></div>
-    {event.href ? <Link to={event.href} className="min-w-0 flex-1">{content}</Link> : content}
+    {event.href ? <Link to={event.href} className="min-w-0 flex-1 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{content}</Link> : content}
   </div>;
 }
 
