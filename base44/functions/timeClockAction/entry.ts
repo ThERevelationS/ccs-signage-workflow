@@ -143,6 +143,19 @@ function minutesFromAllocation(job: any) {
   return 0;
 }
 
+function allocationForStorage(job: any) {
+  const minutes = minutesFromAllocation(job);
+  return {
+    work_order_id: String(job?.work_order_id || '').trim(),
+    work_order_title: String(job?.work_order_title || '').trim(),
+    client_name: String(job?.client_name || '').trim(),
+    hours: minutes / 60,
+    minutes,
+    is_inhouse: job?.is_inhouse === true,
+    inhouse_task: String(job?.inhouse_task || '').trim(),
+  };
+}
+
 function entryAuditSnapshot(entry: any) {
   return {
     id: entry?.id || null,
