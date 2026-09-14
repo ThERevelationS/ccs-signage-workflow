@@ -11,7 +11,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Contact, 
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getSalesAttentionItems } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems, getSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -23,13 +23,6 @@ const SALES_STATUSES = [
   { value: "won", label: "Won" },
   { value: "lost", label: "Lost" },
 ];
-
-const SUGGESTED_PROBABILITY_BY_STATUS = {
-  lead: 10,
-  quoted: 50,
-  follow_up: 70,
-  on_hold: 25,
-};
 
 const SALES_HISTORY_FIELDS = new Set([
   "sales_status",
@@ -109,6 +102,7 @@ export default function SalesOpportunityDialog({
   onRequestStatusChange,
   onCompleteFollowUp,
   onOpenFullDetails,
+  currentSalesOwnerLabel = "",
 }) {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -145,12 +139,13 @@ export default function SalesOpportunityDialog({
   const statusLabel = SALES_STATUSES.find((status) => status.value === workOrder?.sales_status)?.label || "Lead";
   const closeout = ["won", "lost"].includes(workOrder?.sales_status);
   const probabilityIsSet = typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability);
-  const suggestedProbability = SUGGESTED_PROBABILITY_BY_STATUS[workOrder?.sales_status || "lead"];
+  const suggestedProbability = getSuggestedProbabilityForStatus(workOrder?.sales_status || "lead");
   const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
   const stageAging = getStageAgingState(workOrder);
   const quoteAging = getQuoteAgingState(workOrder);
-  const attentionItems = getSalesAttentionItems(workOrder);
-  const attentionKeys = new Set(attentionItems.map((item) => item.key));
+  const allAttentionItems = getSalesAttentionItems(workOrder);
+  const attentionItems = getActionableSalesAttentionItems(workOrder);
+  const attentionKeys = new Set(allAttentionItems.map((item) => item.key));
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -212,8 +207,10 @@ export default function SalesOpportunityDialog({
                   </div>
                 ))}
               </div>
-              {isRegistered && !closeout && (attentionKeys.has("next_action") || attentionKeys.has("quote_timing_missing")) && (
+              {isRegistered && !closeout && attentionItems.length > 0 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-amber-200 pt-3">
+                  {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ sales_rep: currentSalesOwnerLabel })}>Assign to me</Button>}
+                  {attentionKeys.has("probability_missing") && suggestedProbability != null && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ probability: suggestedProbability })}>Set {suggestedProbability}% probability</Button>}
                   {attentionKeys.has("next_action") && <span className="text-xs font-medium text-amber-900">Schedule follow-up:</span>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
