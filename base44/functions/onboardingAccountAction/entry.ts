@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
-import { constantTimeEqual } from '../../shared/constantTime.ts';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
