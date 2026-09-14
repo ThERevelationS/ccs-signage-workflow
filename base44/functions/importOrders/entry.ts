@@ -88,15 +88,21 @@ Deno.serve(async (req) => {
   // Load the complete existing Order set before deduplication. If a later page
   // cannot be verified, fail before processing any import rows rather than
   // creating duplicates from a partial archive.
-  const existingOrders = await loadAllEntityRows({
-    entity: base44.asServiceRole.entities.Order,
-    query: {
-      deleted: { $ne: true },
-      ...(workOrderFilter ? { work_order_id: workOrderFilter } : {})
-    },
-    sort: 'row_number',
-    label: workOrderFilter ? 'Work Order import existing Orders' : 'Order import existing Orders',
-  });
+  let existingOrders = [];
+  try {
+    existingOrders = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.Order,
+      query: {
+        deleted: { $ne: true },
+        ...(workOrderFilter ? { work_order_id: workOrderFilter } : {})
+      },
+      sort: 'row_number',
+      label: workOrderFilter ? 'Work Order import existing Orders' : 'Order import existing Orders',
+    });
+  } catch (error) {
+    console.error('importOrders existing Order verification failed:', error?.message || error);
+    return Response.json({ error: 'Existing Orders could not be verified before import.' }, { status: 500 });
+  }
 
   const existingMap = new Map();
   existingOrders.forEach(o => {
@@ -258,7 +264,9 @@ Deno.serve(async (req) => {
           customer,
           description,
           type: isConflict ? 'conflict' : 'error',
-          message: err?.message || 'Unknown import error',
+          message: isConflict
+            ? 'This row changed while the import was running and was not overwritten.'
+            : 'This row could not be imported safely.',
         });
       }
     }
