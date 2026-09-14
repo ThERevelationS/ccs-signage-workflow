@@ -888,7 +888,29 @@ export default function QuickClockSection({
           </div>
         )}
 
-        {!isRecognizing && !showClockOut && (
+        {authoritativeTransition && !isRecognizing && !showClockOut && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-center">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto mb-3" />
+            <p className="font-semibold text-blue-900">
+              {authoritativeTransition.status === "clocking_out" ? "Finishing Clock Out" : "Finishing Clock In"}
+            </p>
+            <p className="mt-1 text-sm text-blue-800">
+              The server is resolving the prior punch. New punch actions stay blocked until authoritative state is confirmed.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 border-blue-300 bg-white text-blue-800"
+              onClick={() => refreshAuthoritativeSessionState({ quiet: false })}
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Refresh Status
+            </Button>
+          </div>
+        )}
+
+        {!authoritativeTransition && !isRecognizing && !showClockOut && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
