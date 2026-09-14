@@ -197,6 +197,7 @@ export default function ClockOutDialog({
       return; // Already added
     }
     allocationEditedRef.current = true;
+    setAllocationsReviewed(false);
     setJobAllocations([...jobAllocations, {
       work_order_id: workOrder.id,
       work_order_title: workOrder.title,
@@ -212,6 +213,7 @@ export default function ClockOutDialog({
 
   const addInhouseAllocation = () => {
     allocationEditedRef.current = true;
+    setAllocationsReviewed(false);
     setJobAllocations([...jobAllocations, {
       work_order_id: `inhouse_${Date.now()}`,
       work_order_title: "In House Projects",
@@ -225,6 +227,7 @@ export default function ClockOutDialog({
 
   const updateAllocation = (index, field, value) => {
     allocationEditedRef.current = true;
+    setAllocationsReviewed(false);
     const updated = [...jobAllocations];
     updated[index][field] = value;
     setJobAllocations(updated);
@@ -232,6 +235,7 @@ export default function ClockOutDialog({
 
   const removeAllocation = (index) => {
     allocationEditedRef.current = true;
+    setAllocationsReviewed(false);
     setJobAllocations(jobAllocations.filter((_, i) => i !== index));
   };
 
@@ -241,6 +245,7 @@ export default function ClockOutDialog({
     setBreakActionBusy(true);
     try {
       await onStartBreak({ breakType, isPaid });
+      setAllocationsReviewed(false);
     } catch (err) {
       setError(err?.message || "Break start was not confirmed by the server.");
     } finally {
@@ -254,6 +259,7 @@ export default function ClockOutDialog({
     setBreakActionBusy(true);
     try {
       await onEndBreak();
+      setAllocationsReviewed(false);
     } catch (err) {
       setError(err?.message || "Break end was not confirmed by the server.");
     } finally {
