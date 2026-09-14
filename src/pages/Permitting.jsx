@@ -736,7 +736,7 @@ export default function Permitting() {
   };
 
   return (
-    <div className="h-full overflow-auto p-6">
+    <div className="h-full overflow-auto p-3 sm:p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-5 mb-5">
@@ -747,14 +747,14 @@ export default function Permitting() {
                 {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   placeholder="Search..."
-                  className="h-8 text-sm pl-8 w-48"
+                  className="h-8 text-sm pl-8 w-full sm:w-48"
                 />
               </div>
               <Button
