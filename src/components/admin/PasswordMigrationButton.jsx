@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { migrateCredentials } from "@/functions/migrateCredentials";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Loader2, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function PasswordMigrationButton() {
+  const { sessionToken } = useAuth();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -14,7 +16,7 @@ export default function PasswordMigrationButton() {
     setResult(null);
     setError("");
     try {
-      const res = await migrateCredentials({});
+      const res = await migrateCredentials({ session_token: sessionToken });
       if (res?.data?.success) {
         setResult(res.data);
       } else {
