@@ -510,14 +510,14 @@ export default function ClockOutDialog({
 
           {/* Job Allocations */}
           <div className={`clay-card p-4 ${!jobsEntered ? 'border-2 border-red-400' : ''}`}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-purple-600" />
                 <Label className={`font-semibold ${!jobsEntered ? 'text-red-600' : ''}`}>
                   Job Time Allocations <span className="text-red-500">*</span>
                 </Label>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
@@ -537,6 +537,36 @@ export default function ClockOutDialog({
                 </Button>
               </div>
             </div>
+
+            {onLoadLaborAllocationPreview && (
+              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Tracked Current Work suggestions</p>
+                    {laborPreview?.tracked_minutes > 0 ? (
+                      <p className="text-xs text-blue-800 mt-1">
+                        Server snapshot covers {formatDuration(laborPreview.tracked_minutes)} across {laborPreview.segment_count || 0} tracked segment{laborPreview.segment_count === 1 ? "" : "s"}. Review and reconcile any untracked time before Clock Out.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-blue-800 mt-1">No completed Current Work time is available to suggest yet. Manual allocations remain available.</p>
+                    )}
+                    {laborPreview?.generated_at && (
+                      <p className="text-[11px] text-blue-600 mt-1">Snapshot {format(new Date(laborPreview.generated_at), "h:mm:ss a")}. Active work continues after this snapshot until stopped, changed, paused, broken, or clocked out.</p>
+                    )}
+                    {laborPreviewError && <p className="text-xs text-red-700 mt-1">{laborPreviewError}</p>}
+                  </div>
+                  <div className="flex gap-2 flex-wrap shrink-0">
+                    <Button type="button" size="sm" variant="outline" onClick={() => loadLaborPreview()} disabled={laborPreviewBusy || isSubmitting}>
+                      {laborPreviewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+                      Refresh
+                    </Button>
+                    <Button type="button" size="sm" onClick={applyLaborPreview} disabled={laborPreviewBusy || isSubmitting || !laborPreview?.suggested_allocations?.length} className="bg-blue-600 hover:bg-blue-700">
+                      Apply Tracked Suggestions
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Search Panel */}
             {showSearch && (
@@ -606,6 +636,9 @@ export default function ClockOutDialog({
                         {!job.is_inhouse && (
                           <p className="text-xs text-gray-500">{job.work_order_title}</p>
                         )}
+                        {job.suggested_from_current_work && (
+                          <p className="text-[11px] text-blue-600 mt-1">Suggested from authoritative Current Work tracking — editable before Clock Out</p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
@@ -643,6 +676,7 @@ export default function ClockOutDialog({
                           min="0"
                           value={job.minutes ? Math.floor(job.minutes / 60) : ""}
                           onChange={(e) => {
+                            allocationEditedRef.current = true;
                             const hrs = parseInt(e.target.value) || 0;
                             const currentMins = job.minutes ? job.minutes % 60 : 0;
                             let totalMins = hrs * 60 + currentMins;
@@ -667,7 +701,8 @@ export default function ClockOutDialog({
                           step="5"
                           value={job.minutes ? job.minutes % 60 : ""}
                           onChange={(e) => {
-                            const mins = Math.min(59, parseInt(e.target.value) || 0);
+                            allocationEditedRef.current = true;
+                            const mins = Math.min(59, parseInt(e.target.value) || 0;
                             const currentHrs = job.minutes ? Math.floor(job.minutes / 60) : 0;
                             let totalMins = currentHrs * 60 + mins;
                             const otherAllocations = jobAllocations.reduce((sum, j, i) => i !== index ? sum + (parseInt(j.minutes) || 0) : sum, 0);
@@ -694,7 +729,7 @@ export default function ClockOutDialog({
             {jobAllocations.length > 0 && (
               <div className="mt-4 pt-3 border-t">
                 <div className="flex justify-between text-sm">
-                  <span>Workable Time (after lunch):</span>
+                  <span>Allocatable Work Time (after unpaid time & Work Pause):</span>
                   <span className="font-bold">{formatDuration(workableMinutes)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
