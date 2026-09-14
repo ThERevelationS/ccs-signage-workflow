@@ -1768,9 +1768,11 @@ export default function ProductChecklistDialog({
                                     {/* Quick add task button for detail */}
                                     {isRegistered && (
                                       <button
+                                        type="button"
                                         onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: displayItem.product_name || productName }); }}
-                                        className="px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100"
+                                        className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                         title="Add Task"
+                                        aria-label={`Add task under ${detail.text || "detail"}`}
                                       >
                                         +Task
                                       </button>
