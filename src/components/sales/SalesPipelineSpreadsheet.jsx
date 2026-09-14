@@ -30,6 +30,7 @@ import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
+import { getSalesAttentionItems, hasSalesAttention } from "@/components/sales/salesAttention";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
@@ -116,6 +117,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   if (attentionFilter === "quote_timing_missing") {
     return isOperational && isQuoteAwaitingResponse(workOrder) && getQuoteAgeDays(workOrder, parseLocalDate(todayStamp)) === null;
   }
+  if (attentionFilter === "needs_attention") return isOperational && hasSalesAttention(workOrder, parseLocalDate(todayStamp));
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
   if (attentionFilter === "probability_missing") return isOperational && !(typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability));
   if (attentionFilter === "near_close") return isOperational && workOrder?.expected_close_date >= todayStamp && workOrder?.expected_close_date <= nearCloseStamp;
@@ -1349,6 +1351,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (followUp && followUp <= todayStamp) summary.dueCount += 1;
       if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
+      else summary.nextActionCoverageCount += 1;
+      if (getSalesAttentionItems(wo, parseLocalDate(todayStamp)).length > 0) summary.needsAttentionCount += 1;
       const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));
       if (quoteAging.awaitingResponse) {
         summary.quoteAwaitingResponseCount += 1;
@@ -1404,6 +1408,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       dueCount: 0,
       upcomingCount: 0,
       noNextActionCount: 0,
+      nextActionCoverageCount: 0,
+      needsAttentionCount: 0,
       quoteAwaitingResponseCount: 0,
       quoteTimingCoverageCount: 0,
       quoteTimingMissingCount: 0,
