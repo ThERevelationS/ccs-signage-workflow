@@ -443,8 +443,8 @@ export default function SalesPipeline() {
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
-                      <div className="mt-0.5 text-xs text-rose-700">{pipelineSummary.placeholderCount} of {pipelineSummary.openCount} current opportunities are exact-name test placeholders (Test/asdf), representing {formatPipelineValue(pipelineSummary.placeholderValue)} of the raw {formatPipelineValue(pipelineSummary.openValue)} pipeline value. Raw totals continue to include them until a user explicitly removes them from Current Pipeline.</div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
+                      <div className="text-[10px] leading-tight text-rose-700">{pipelineSummary.placeholderCount}/{pipelineSummary.openCount} exact-name test placeholders (Test/asdf) · {formatPipelineValue(pipelineSummary.placeholderValue)} of {formatPipelineValue(pipelineSummary.openValue)} raw pipeline</div>
                     </div>
                   </div>
                   <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review likely test records ({pipelineSummary.placeholderCount})</button>
