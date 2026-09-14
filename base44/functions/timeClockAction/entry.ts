@@ -2221,6 +2221,8 @@ Deno.serve(async (req) => {
           const freshClaim = await freshState(stateEntity, claimedState.id);
           await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
             status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
           });
         }
         await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'TimeEntry changed before correction update.' } } });
@@ -2253,6 +2255,8 @@ Deno.serve(async (req) => {
           last_break_request_id: null, break_pending_started_at: null,
           work_pause_status: 'working', active_work_pause_id: null,
           last_work_pause_request_id: null, work_pause_pending_started_at: null,
+          labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+          labor_pending_activity_type: '', labor_pending_work_order_id: '',
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Correction saved but authoritative state finalization requires review.' } } });
@@ -2401,6 +2405,8 @@ Deno.serve(async (req) => {
           const freshClaim = await freshState(stateEntity, claimedState.id);
           await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
             status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
           });
         }
         await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
@@ -2418,6 +2424,8 @@ Deno.serve(async (req) => {
           break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
           work_pause_status: 'working', active_work_pause_id: null,
           last_work_pause_request_id: null, work_pause_pending_started_at: null,
+          labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+          labor_pending_activity_type: '', labor_pending_work_order_id: '',
         });
         if (!finalized) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Entry archived but authoritative state finalization requires review.' } } });
@@ -2459,6 +2467,8 @@ Deno.serve(async (req) => {
             last_break_request_id: null, break_pending_started_at: null,
             work_pause_status: 'working', active_work_pause_id: null,
             last_work_pause_request_id: null, work_pause_pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
           });
       if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
@@ -2482,6 +2492,8 @@ Deno.serve(async (req) => {
         last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null,
         last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-in was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
@@ -2607,6 +2619,8 @@ Deno.serve(async (req) => {
         last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null,
         last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (!finalized) {
         return Response.json({ success: false, retry_same_request: true, error: 'Clock-out was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
