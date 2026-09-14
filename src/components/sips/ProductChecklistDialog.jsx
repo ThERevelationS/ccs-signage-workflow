@@ -34,6 +34,14 @@ const formatDateOnly = (dateString) => {
   return date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "None";
 };
 
+const isFutureRevisitDate = (dateString) => {
+  const date = parseDateOnly(dateString);
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date > today;
+};
+
 export default function ProductChecklistDialog({ 
   isOpen, 
   onClose, 
@@ -567,6 +575,14 @@ export default function ProductChecklistDialog({
       if (markComplete) {
         expectedFields.sip_completed = loadedSipCompletedSnapshot;
         nextFields.sip_completed = true;
+
+        // A completed SIP should not keep a future queue-return date. Clear only
+        // future revisit dates, atomically with completion, so reopening later
+        // cannot unexpectedly drop the item back into Revisit Later.
+        if (revisitDate === undefined && isFutureRevisitDate(loadedRevisitDateSnapshot)) {
+          expectedFields.sip_revisit_date = loadedRevisitDateSnapshot;
+          nextFields.sip_revisit_date = "";
+        }
       }
 
       setSaveError("");
