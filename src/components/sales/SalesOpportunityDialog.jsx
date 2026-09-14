@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
+import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -43,6 +45,7 @@ const SALES_HISTORY_FIELDS = new Set([
   "current_task_description",
   "current_task_deadline",
   "current_task_assigned_to",
+  "in_pipeline",
 ]);
 
 const FIELD_LABELS = {
@@ -63,6 +66,7 @@ const FIELD_LABELS = {
   current_task_description: "Next action",
   current_task_deadline: "Task deadline",
   current_task_assigned_to: "Task owner",
+  in_pipeline: "Current Pipeline membership",
 };
 
 const money = (value) => new Intl.NumberFormat("en-US", {
@@ -75,6 +79,7 @@ const displayValue = (field, value) => {
   if (value === undefined || value === null || value === "") return "—";
   if (["estimate_amount", "quoted_amount"].includes(field)) return money(value);
   if (field === "probability") return `${value}%`;
+  if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
   if (field === "sales_last_follow_up_completed_at") {
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? String(value) : format(parsed, "MMM d, yyyy h:mm a");
@@ -90,6 +95,7 @@ const historyTitle = (entry) => {
   if (entry.field_name === "date_estimate_sent") return "Quote sent date changed";
   if (entry.field_name === "quote_date") return "Quote issue date changed";
   if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
+  if (entry.field_name === "in_pipeline") return "Current Pipeline membership changed";
   return `${FIELD_LABELS[entry.field_name] || entry.field_name} changed`;
 };
 
