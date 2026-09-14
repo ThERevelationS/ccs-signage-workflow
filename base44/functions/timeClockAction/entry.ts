@@ -1300,6 +1300,9 @@ Deno.serve(async (req) => {
       if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
         return Response.json({ success: false, error: 'Resume Work before starting a break or lunch.' }, { status: 409 });
       }
+      if (laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is still changing. Retry the break after that server action finishes.' }, { status: 409 });
+      }
       const breakType = String(body?.break_type || '').trim();
       if (!['lunch', 'break', 'other'].includes(breakType)) {
         return Response.json({ success: false, error: 'A valid break type is required.' }, { status: 400 });
@@ -1487,6 +1490,9 @@ Deno.serve(async (req) => {
       }
       if (breakStatusOf(state) !== 'working' || state.active_break_id) {
         return Response.json({ success: false, error: 'End the active break or lunch before pausing work.' }, { status: 409 });
+      }
+      if (laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is still changing. Retry Work Pause after that server action finishes.' }, { status: 409 });
       }
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
