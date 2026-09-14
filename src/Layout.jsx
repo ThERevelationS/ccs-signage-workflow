@@ -47,6 +47,7 @@ import { AnnouncementProvider } from "@/components/announcements/AnnouncementCon
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
+import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -549,6 +550,8 @@ function LayoutContent({ children }) {
                   </button>
                 )}
 
+                {currentUser && <GlobalWorkPauseControl fullWidth />}
+
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
                   <button
@@ -815,6 +818,8 @@ function LayoutContent({ children }) {
                         <span className="font-bold text-sm text-gray-800">Logout</span>
                       </button>
                     )}
+
+                    {currentUser && <GlobalWorkPauseControl />}
 
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
@@ -1110,6 +1115,11 @@ function LayoutContent({ children }) {
                       <X className="w-5 h-5" style={{ color: darkMode ? '#e2e8f0' : '#6B7280' }} />
                     </button>
                   </div>
+                  {currentUser && (
+                    <div className="mb-3">
+                      <GlobalWorkPauseControl fullWidth />
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-2">
                     {[...navigationItems, ...meetingsDropdownItems].map((item) => {
                       const isActive = location.pathname === item.url;
