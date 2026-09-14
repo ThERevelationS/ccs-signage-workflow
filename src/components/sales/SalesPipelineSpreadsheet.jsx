@@ -1444,7 +1444,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
       else summary.nextActionCoverageCount += 1;
       if (hasSalesAttention(wo, parseLocalDate(todayStamp))) summary.needsAttentionCount += 1;
-      if (isLikelySalesPlaceholder(wo)) summary.placeholderCount += 1;
+      if (isLikelySalesPlaceholder(wo)) {
+        summary.placeholderCount += 1;
+        summary.placeholderValue += value;
+      }
       const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));
       if (quoteAging.awaitingResponse) {
         summary.quoteAwaitingResponseCount += 1;
@@ -1503,6 +1506,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       nextActionCoverageCount: 0,
       needsAttentionCount: 0,
       placeholderCount: 0,
+      placeholderValue: 0,
       quoteAwaitingResponseCount: 0,
       quoteTimingCoverageCount: 0,
       quoteTimingMissingCount: 0,
