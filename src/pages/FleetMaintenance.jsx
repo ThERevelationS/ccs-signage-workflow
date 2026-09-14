@@ -290,7 +290,11 @@ export default function FleetMaintenance() {
               <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">All Maintenance Schedules</h2><p className="text-xs text-gray-500 dark:text-slate-400">Global schedule view for auditing, filtering, and editing across the whole Fleet.</p></div>
               {equipmentFilter !== "all" && <button onClick={() => setEquipmentFilter("all")} className="min-h-11 px-2 text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center">Clear equipment filter</button>}
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="md:hidden space-y-3">
+              {rows.map(t => <ScheduleMobileCard key={t.id} task={t} equipmentName={names[t.equipment_id] || "Unresolved"} archived={!activeEquipmentIds.has(t.equipment_id)} isAdmin={isAdmin} onOpen={() => openEquipmentMaintenance(t.equipment_id, "schedule")} onEdit={() => setDialog({ task: t })} />)}
+              {rows.length === 0 && <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 dark:border-slate-800 dark:bg-slate-900">No maintenance schedules found.</div>}
+            </div>
+            <div className="hidden md:block rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="text-left bg-gray-50 dark:bg-slate-800/70"><th className="px-4 py-3">Task</th><th className="px-4 py-3">Equipment</th><th className="px-4 py-3">Frequency</th><th className="px-4 py-3">Start</th><th className="px-4 py-3">Priority</th><th className="px-4 py-3">Assigned</th><th className="px-4 py-3">Status</th>{isAdmin && <th className="px-4 py-3 text-right">Actions</th>}</tr></thead>
@@ -349,6 +353,33 @@ function MaintenanceEquipmentCard({ card, isAdmin, onOpen, onNew }) {
         <Link to={`${createPageUrl("FleetEquipmentDetail")}?id=${encodeURIComponent(eq.id)}`} aria-label={`Open ${eq.name} equipment detail`} className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-gray-500 dark:text-slate-400"><ArrowRight className="w-4 h-4" /></Link>
       </div>
     </div>
+  );
+}
+
+function ScheduleMobileCard({ task, equipmentName, archived, isAdmin, onOpen, onEdit }) {
+  const overdue = isOverdue(task);
+  return (
+    <article className={`rounded-xl border bg-white p-4 shadow-sm dark:bg-slate-900 ${overdue ? "border-red-200 dark:border-red-900" : "border-gray-200 dark:border-slate-800"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" /><h3 className="font-semibold text-gray-900 dark:text-slate-100">{task.title}</h3></div>
+          <div className="mt-1 text-sm font-medium text-gray-600 dark:text-slate-300">{equipmentName}</div>
+        </div>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${overdue ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300" : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300"}`}>{overdue ? "Overdue" : pretty(task.status)}</span>
+      </div>
+      {task.description && <p className="mt-3 text-sm text-gray-600 dark:text-slate-300 line-clamp-3">{task.description}</p>}
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-800/60"><div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Due</div><div className={`mt-1 font-semibold ${overdue ? "text-red-700 dark:text-red-300" : "text-gray-800 dark:text-slate-200"}`}>{humanDate(task.start_date)}</div></div>
+        <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-800/60"><div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Frequency</div><div className="mt-1 font-semibold capitalize text-gray-800 dark:text-slate-200">{task.type === "one_off" ? "One-time" : pretty(task.frequency)}</div></div>
+        <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-800/60"><div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Priority</div><div className="mt-1 font-semibold capitalize text-gray-800 dark:text-slate-200">{pretty(task.priority)}</div></div>
+        <div className="rounded-lg bg-gray-50 p-2 dark:bg-slate-800/60"><div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Assigned</div><div className="mt-1 truncate font-semibold text-gray-800 dark:text-slate-200">{task.assigned_to || "Unassigned"}</div></div>
+      </div>
+      {(task.parts_needed?.length || task.fluids_needed?.length) ? <div className="mt-3 text-xs text-gray-500 dark:text-slate-400">{task.parts_needed?.length || 0} planned part item(s) · {task.fluids_needed?.length || 0} planned fluid item(s)</div> : null}
+      <div className="mt-4 flex gap-2">
+        <button type="button" onClick={onOpen} className="min-h-11 flex-1 rounded-lg border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 dark:border-indigo-800 dark:text-indigo-300">Open Schedule</button>
+        {isAdmin && !archived ? <button type="button" onClick={onEdit} className="min-h-11 min-w-11 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white inline-flex items-center justify-center gap-1.5"><Pencil className="h-4 w-4" />Edit</button> : archived ? <span className="min-h-11 inline-flex items-center rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500 dark:bg-slate-800 dark:text-slate-400">Archived</span> : null}
+      </div>
+    </article>
   );
 }
 
