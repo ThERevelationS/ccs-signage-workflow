@@ -76,10 +76,10 @@ const money = (value) => new Intl.NumberFormat("en-US", {
 }).format(Number(value) || 0);
 
 const displayValue = (field, value) => {
+  if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
   if (value === undefined || value === null || value === "") return "—";
   if (["estimate_amount", "quoted_amount"].includes(field)) return money(value);
   if (field === "probability") return `${value}%`;
-  if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
   if (field === "sales_last_follow_up_completed_at") {
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? String(value) : format(parsed, "MMM d, yyyy h:mm a");
