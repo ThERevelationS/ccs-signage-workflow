@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
+import { AlertTriangle, Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -14,7 +14,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { isPermitGroupAssignedToUser, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
+import { getPermitGroupReadiness, isPermitGroupAssignedToUser, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -36,6 +36,7 @@ export default function Permitting() {
   const [searchTerm, setSearchTerm] = useState("");
   const [queueFilter, setQueueFilter] = useState("all");
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
+  const [issuesOnly, setIssuesOnly] = useState(false);
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
   const lineItemBaselinesRef = useRef(new Map());
@@ -646,10 +647,16 @@ export default function Permitting() {
     [searchedGroups, currentUser]
   );
 
-  const filteredGroups = useMemo(() => {
-    if (!assignedToMeOnly) return searchedGroups;
-    return searchedGroups.filter((group) => isPermitGroupAssignedToUser(group, currentUser));
-  }, [searchedGroups, assignedToMeOnly, currentUser]);
+  const issueCount = useMemo(
+    () => searchedGroups.filter((group) => getPermitGroupReadiness(group).hasIssues).length,
+    [searchedGroups]
+  );
+
+  const filteredGroups = useMemo(() => searchedGroups.filter((group) => {
+    if (assignedToMeOnly && !isPermitGroupAssignedToUser(group, currentUser)) return false;
+    if (issuesOnly && !getPermitGroupReadiness(group).hasIssues) return false;
+    return true;
+  }), [searchedGroups, assignedToMeOnly, issuesOnly, currentUser]);
 
   // Guided queue: every Work Order lands in one plain-English state so staff can
   // immediately see what needs attention without losing the detailed tracker below.
@@ -760,6 +767,16 @@ export default function Permitting() {
                 title="Show only permitting jobs assigned to you"
               >
                 <UserRoundCheck className="w-4 h-4" /> My Work ({myAssignedCount})
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setIssuesOnly((value) => !value)}
+                className={`gap-1 ${issuesOnly ? "border-amber-400 bg-amber-50 text-amber-900" : ""}`}
+                title="Show only permitting jobs with proven setup, ownership, follow-up, or routing issues"
+              >
+                <AlertTriangle className="w-4 h-4" /> Needs Review ({issueCount})
               </Button>
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
