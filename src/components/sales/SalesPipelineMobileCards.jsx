@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
+import { getSalesAttentionItems } from "@/components/sales/salesAttention";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -39,6 +40,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
         const stageAging = getStageAgingState(wo, today);
         const quoteAging = getQuoteAgingState(wo, today);
+        const attentionItems = getSalesAttentionItems(wo, today);
         return (
           <div
             key={wo.id}
@@ -67,6 +69,13 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
 
             {wo.current_task_description && (
               <p className="text-sm text-gray-600 mb-2 line-clamp-2">{wo.current_task_description}</p>
+            )}
+
+            {attentionItems.length > 0 && (
+              <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
+                <span className="font-semibold">Needs attention:</span>{" "}
+                {attentionItems.slice(0, 2).map((item) => item.shortLabel).join(" · ")}{attentionItems.length > 2 ? ` · +${attentionItems.length - 2}` : ""}
+              </div>
             )}
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
