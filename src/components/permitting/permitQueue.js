@@ -58,6 +58,9 @@ export function getPermitLineLifecycleReviews(line, today) {
   const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
   const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
   const feeAmount = line?.jurisdiction_fee_amount;
+  const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
+  const correctionsReceivedDate = asDateKey(line?.corrections_received_date);
+  const resubmittedDate = asDateKey(line?.resubmitted_date);
 
   if (approvalDate && receivedDate && receivedDate < approvalDate) {
     reviews.push(`${label} has a permit received date before its approval date.`);
@@ -90,6 +93,13 @@ export function getPermitLineLifecycleReviews(line, today) {
   if (feePaidDate && feeStatus !== "paid") {
     const statusLabel = feeStatus || "not recorded";
     reviews.push(`${label} has a fee paid date but payment status is ${statusLabel}.`);
+  }
+
+  if ((correctionStatus === "corrections_received" || correctionStatus === "working_corrections") && !correctionsReceivedDate) {
+    reviews.push(`${label} is in corrections but has no corrections received date.`);
+  }
+  if (correctionStatus === "resubmitted" && !resubmittedDate) {
+    reviews.push(`${label} is marked resubmitted but has no resubmitted date.`);
   }
 
   return reviews;
@@ -250,14 +260,28 @@ export function getPermitGroupQueueState(group, today) {
     };
   }
 
+  const correctionLine = openLines.find((line) => ["corrections_received", "working_corrections"].includes(String(line?.correction_status || "").trim().toLowerCase()));
+  if (correctionLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Address corrections for ${lineLabel(correctionLine)} and prepare the resubmission.`,
+      followupDate: "",
+      timingLabel: "Corrections need action",
+      urgencyDays: null,
+    };
+  }
+
   const lineWithoutFutureFollowup = openLines.find((line) => !asDateKey(line?.next_followup_date));
   if (lineWithoutFutureFollowup) {
+    const correctionStatus = String(lineWithoutFutureFollowup?.correction_status || "").trim().toLowerCase();
     const nextStep = firstIncompleteStep(lineWithoutFutureFollowup);
     return {
       key: "needs_action",
-      nextAction: nextStep?.name
-        ? `${nextStep.name} — ${lineLabel(lineWithoutFutureFollowup)}`
-        : `Continue the ${lineLabel(lineWithoutFutureFollowup)} workflow.`,
+      nextAction: correctionStatus === "resubmitted"
+        ? `Schedule or complete the next follow-up for the resubmitted ${lineLabel(lineWithoutFutureFollowup)} permit.`
+        : nextStep?.name
+          ? `${nextStep.name} — ${lineLabel(lineWithoutFutureFollowup)}`
+          : `Continue the ${lineLabel(lineWithoutFutureFollowup)} workflow.`,
       followupDate: "",
       timingLabel: "Needs next action",
       urgencyDays: null,
