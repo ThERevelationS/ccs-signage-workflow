@@ -385,7 +385,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} not flagged · {formatPipelineValue(pipelineSummary.placeholderValue)} flagged test</div>
                 <div className="mt-0.5 text-[11px] text-emerald-600/70">Quoted value when available, otherwise estimate</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-sky-700">Weighted Pipeline</div>
                 <div className="mt-1 text-2xl font-bold text-sky-900">{formatPipelineValue(pipelineSummary.weightedValue)}</div>
                 <div className="mt-1 text-xs text-sky-700/80">{pipelineSummary.ratedProbabilityCount}/{pipelineSummary.openCount} opportunities rated{pipelineSummary.unratedProbabilityCount > 0 ? " · click to complete" : ""}</div>
