@@ -779,6 +779,7 @@ export default function ProductChecklistDialog({
   const [editingItemText, setEditingItemText] = useState("");
   const [editingProductName, setEditingProductName] = useState(null);
   const [editingProductNameText, setEditingProductNameText] = useState("");
+  const [focusedNeedsInputId, setFocusedNeedsInputId] = useState(null);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1028,7 +1029,8 @@ export default function ProductChecklistDialog({
     const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
     return Boolean(item.approved_by && condition && !condition.is_completed);
   }).length;
-  const needsInputPrimaryCount = primaryChecklistItems.filter(item => !item.approved_by || !item.custom_dropdown_value).length;
+  const needsInputPrimaryItems = primaryChecklistItems.filter(item => !item.approved_by || !item.custom_dropdown_value);
+  const needsInputPrimaryCount = needsInputPrimaryItems.length;
   const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
   const completedTaskCount = taskItems.filter(item => item.approved_by).length;
   const expandableChecklistIds = checklist
@@ -1052,6 +1054,61 @@ export default function ProductChecklistDialog({
       });
       return nextCollapsed;
     });
+  };
+  const findItemProductName = (groups, itemId) => {
+    for (const [productName, group] of Object.entries(groups)) {
+      if (group.mainItems.some(item => item.id === itemId)) return productName;
+      if (Object.values(group.subTemplates).some(items => items.some(item => item.id === itemId))) return productName;
+    }
+    return null;
+  };
+  const getTopLevelChecklistId = (item) => {
+    let current = item;
+    const visited = new Set();
+    while (current?.parent_id && !visited.has(current.id)) {
+      visited.add(current.id);
+      const parent = checklist.find(candidate => candidate.id === current.parent_id);
+      if (!parent) break;
+      current = parent;
+    }
+    return current?.id || item?.id;
+  };
+  const focusFirstNeedsInput = () => {
+    if (needsInputPrimaryItems.length === 0) return;
+
+    const activeIds = new Set();
+    Object.values(activeChecklist).forEach(group => {
+      group.mainItems.forEach(item => activeIds.add(item.id));
+      Object.values(group.subTemplates).forEach(items => items.forEach(item => activeIds.add(item.id)));
+    });
+
+    const completedIds = new Set();
+    Object.values(completedChecklist).forEach(group => {
+      group.mainItems.forEach(item => completedIds.add(item.id));
+      Object.values(group.subTemplates).forEach(items => items.forEach(item => completedIds.add(item.id)));
+    });
+
+    const target = needsInputPrimaryItems.find(item => activeIds.has(item.id)) || needsInputPrimaryItems[0];
+    const topLevelId = getTopLevelChecklistId(target);
+    const isActiveTarget = activeIds.has(target.id);
+    const scrollTargetId = isActiveTarget ? target.id : topLevelId;
+
+    if (isActiveTarget) {
+      const productName = findItemProductName(activeChecklist, target.id);
+      if (productName) {
+        setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
+      }
+      setExpandedItems(prev => ({ ...prev, [topLevelId]: true }));
+    } else if (completedIds.has(target.id) || completedIds.has(topLevelId)) {
+      setShowCompletedItems(true);
+    }
+
+    setFocusedNeedsInputId(scrollTargetId);
+    window.setTimeout(() => {
+      const targetElement = Array.from(document.querySelectorAll("[data-sips-checklist-item-id]"))
+        .find(element => element.dataset.sipsChecklistItemId === String(scrollTargetId));
+      targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
   };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
@@ -1108,10 +1165,17 @@ export default function ProductChecklistDialog({
                 <div className="text-[11px] text-gray-500">Checklist complete</div>
                 <div className="text-sm font-semibold text-gray-800">{completedPrimaryCount}/{primaryChecklistItems.length}</div>
               </div>
-              <div>
+              <button
+                type="button"
+                onClick={focusFirstNeedsInput}
+                disabled={needsInputPrimaryCount === 0}
+                className={`rounded-lg px-2 py-1 text-left transition-colors ${needsInputPrimaryCount > 0 ? "hover:bg-red-50 cursor-pointer" : "cursor-default"}`}
+                title={needsInputPrimaryCount > 0 ? "Go to the first checklist item that still needs an approver or status" : "No checklist items need input"}
+              >
                 <div className="text-[11px] text-gray-500">Needs input</div>
                 <div className={`text-sm font-semibold ${needsInputPrimaryCount > 0 ? "text-red-700" : "text-green-700"}`}>{needsInputPrimaryCount}</div>
-              </div>
+                {needsInputPrimaryCount > 0 && <div className="text-[10px] text-red-600">Go to first</div>}
+              </button>
               <div>
                 <div className="text-[11px] text-gray-500">Continued</div>
                 <div className="text-sm font-semibold text-amber-700">{continuedPrimaryCount}</div>
@@ -1278,7 +1342,7 @@ export default function ProductChecklistDialog({
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                         const isItemCompleted = dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed;
                         return (
-                        <div key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
+                        <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                           {/* Main checklist item */}
                           <div 
                             className="flex flex-wrap items-center gap-2 group"
@@ -1543,7 +1607,7 @@ export default function ProductChecklistDialog({
                               {displayItem.details?.map(detail => {
                                 const isDetailCompleted = dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed;
                                 return (
-                                <div key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'}`}>
+                                <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     {editingItemId === detail.id ? (
@@ -1780,7 +1844,7 @@ export default function ProductChecklistDialog({
                           const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
                           const isStItemCompleted = dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed;
                           return (
-                          <div key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'}`}>
+                          <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                             <div 
                               className="flex flex-wrap items-center gap-2 group"
                             >
@@ -1955,7 +2019,7 @@ export default function ProductChecklistDialog({
                                 )}
                                 
                                 {stDisplayItem.details?.map(detail => (
-                                  <div key={detail.id} className="bg-gray-50 p-1.5 rounded text-xs group/stdetail">
+                                  <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`bg-gray-50 p-1.5 rounded text-xs group/stdetail ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}>
                                     <div className="flex flex-wrap items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       {editingItemId === detail.id ? (
@@ -2091,6 +2155,7 @@ export default function ProductChecklistDialog({
                         updateChecklistItem={updateChecklistItem}
                         applyChecklistStatus={applyChecklistStatus}
                         setShowOtherPopup={setShowOtherPopup}
+                        focusedNeedsInputId={focusedNeedsInputId}
                       />
                     )}
                   </div>
