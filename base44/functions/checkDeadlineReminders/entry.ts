@@ -218,7 +218,8 @@ async function executeRuleActions(base44, rule, work_order, trigger_type) {
           results.push({ type: action.action_type, skipped: true });
       }
     } catch (err) {
-      results.push({ type: action.action_type, error: err.message });
+      console.error(`Deadline automation action failed (${rule?.name || 'unnamed rule'} / ${action?.action_type || 'unknown action'} / WorkOrder ${work_order?.id || 'unknown'}):`, err);
+      results.push({ type: action.action_type, error: 'Deadline automation action could not be completed safely' });
     }
   }
   
