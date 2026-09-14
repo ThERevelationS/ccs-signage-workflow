@@ -1,80 +1,8 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { issueOAuthState } from '../../shared/oauthState.ts';
-
-Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
-  try {
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const url = new URL(req.url);
-    const action = url.searchParams.get('action');
-
-    if (action === 'initiate') {
-      const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID');
-      const redirectUri = `${url.origin}/functions/googleDriveCustomCallback`;
-      const state = await issueOAuthState(user, 'google_drive_custom');
-      
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.readonly email')}&` +
-        `access_type=offline&` +
-        `state=${encodeURIComponent(state)}`;
-
-      return Response.json({ authUrl });
-    }
-
-    if (action === 'listFiles') {
-      const body = await req.json();
-      const { folderId } = body;
-
-      // Read only the exact authenticated user's server-side token record.
-      const userRecords = await base44.asServiceRole.entities.User.filter({ email: user.email });
-      if (!Array.isArray(userRecords) || userRecords.length !== 1 || String(userRecords[0]?.id || '') !== String(user.id || '')) {
-        return Response.json({ error: 'Authenticated user identity could not be verified uniquely' }, { status: userRecords?.length > 1 ? 409 : 401 });
-      }
-      const currentUser = userRecords[0];
-      const accessToken = currentUser?.google_drive_token;
-
-      if (!accessToken) {
-        return Response.json({ 
-          error: 'Not authenticated',
-          needsAuth: true 
-        }, { status: 401 });
-      }
-
-      // List files in folder
-      const listUrl = folderId 
-        ? `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)`
-        : `https://www.googleapis.com/drive/v3/files?fields=files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink)`;
-
-      const response = await fetch(listUrl, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          return Response.json({ 
-            error: 'Token expired',
-            needsAuth: true 
-          }, { status: 401 });
-        }
-        throw new Error(`Failed to list files: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return Response.json({ files: data.files || [] });
-    }
-
-    return Response.json({ error: 'Invalid action' }, { status: 400 });
-    
-  } catch (error) {
-    console.error('googleDriveCustomAuth error:', error?.message || error);
-    return Response.json({ error: 'Google Drive request could not be completed safely' }, { status: 500 });
-  }
-});
+// Legacy custom per-user Google Drive OAuth/listing endpoint.
+//
+// The live app uses the managed Google Drive connector through
+// googleDriveOperations. Keep this duplicate auth path fail-closed so an old
+// client cannot restart the retired per-user token flow.
+Deno.serve(() => Response.json({
+  error: 'This legacy Google Drive endpoint is no longer available. Use the current Google Drive workflow.',
+}, { status: 410 }));
