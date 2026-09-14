@@ -176,9 +176,9 @@ export default function SalesPipeline() {
           <div className="clay-card p-2 flex-shrink-0">
             <DollarSign className="w-5 h-5 text-green-600" />
           </div>
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl font-bold text-gray-800">Sales Pipeline</h1>
-            <p className="text-gray-600 text-sm hidden sm:block">Manage leads and opportunities</p>
+          <div className="flex-shrink-0 leading-tight">
+            <h1 className="text-xl font-bold text-gray-800">Sales Pipeline</h1>
+            <p className="hidden text-[10px] text-gray-500 xl:block">Manage leads and opportunities</p>
           </div>
           {/* Pending Imports tab */}
           <button
