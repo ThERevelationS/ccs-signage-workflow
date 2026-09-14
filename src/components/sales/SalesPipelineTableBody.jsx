@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { CheckCircle2, Trash2, Link as LinkIcon, Copy } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getSalesAttentionItems } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -87,7 +87,7 @@ export default function SalesPipelineTableBody({
         const taskStyle = getTaskDescStyle(wo.current_task_description);
         const stageAging = getStageAgingState(wo);
         const quoteAging = getQuoteAgingState(wo);
-        const attentionItems = getSalesAttentionItems(wo);
+        const attentionItems = getActionableSalesAttentionItems(wo);
 
         return (
           <React.Fragment key={wo.id}>
