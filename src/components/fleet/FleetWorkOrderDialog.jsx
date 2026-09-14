@@ -315,6 +315,13 @@ export default function FleetWorkOrderDialog({
   );
 }
 
+function SectionJump({ href, children }) {
+  const targetId = href.replace(/^#/, "");
+  return <a href={href} onClick={(event) => { event.preventDefault(); document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="min-h-11 shrink-0 inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-700 dark:hover:text-indigo-300">{children}</a>;
+}
+function DialogSection({ id, title, description, children }) {
+  return <section id={id} className="scroll-mt-24 rounded-xl border border-gray-200 bg-gray-50/50 dark:border-slate-800 dark:bg-slate-950/30 overflow-hidden"><div className="border-b border-gray-200 dark:border-slate-800 px-4 py-3"><h3 className="font-semibold text-gray-900 dark:text-slate-100">{title}</h3>{description && <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{description}</p>}</div><div className="p-4">{children}</div></section>;
+}
 function Field({ label, children }) { return <label className="block space-y-1.5"><span className="text-xs font-medium text-gray-600 dark:text-slate-300">{label}</span>{children}</label>; }
 function PhotoEditor({ title, field, urls, files, onAdd, onRemoveUrl, onRemoveFile }) {
   return <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-3 space-y-2">
