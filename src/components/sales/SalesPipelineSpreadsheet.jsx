@@ -38,7 +38,7 @@ import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpComplet
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 
@@ -77,6 +77,14 @@ const SALES_ACTIVITY_FIELDS = new Set([
 const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
 const STALE_ACTIVITY_DAYS = 14;
 const NEAR_CLOSE_DAYS = 14;
+const ARCHIVE_PAGE_SIZE = 250;
+const LEGACY_CLOSED_QUERY = {
+  is_rider: false,
+  in_pipeline: { $ne: true },
+  current_task_description: { $regex: "^(lost\\b|completed sale\\b|closed\\b)", $options: "i" },
+  deleted: { $ne: true },
+};
+const ALL_RECORDS_ACTIVE_QUERY = { is_rider: false, completed: false, deleted: { $ne: true } };
 
 const getSalesActivityTime = (workOrder) => {
   const parsed = Date.parse(workOrder?.sales_last_activity_at || "");
