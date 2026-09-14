@@ -56,10 +56,50 @@ export function isPermitGroupAssignedToUser(group, user) {
 
   const assignments = [
     group?.work_order?.current_task_assigned_to,
+    group?.work_order?.assigned_to,
     ...(Array.isArray(group?.lines) ? group.lines.map((line) => line?.assigned_to) : []),
   ].map(normalizedAssignment).filter(Boolean);
 
   return assignments.some((assignment) => identities.includes(assignment));
+}
+
+export function getPermitGroupReadiness(group) {
+  const wo = group?.work_order || {};
+  const lines = Array.isArray(group?.lines) ? group.lines : [];
+  const openLines = lines.filter((line) => line?.status !== "completed");
+  const blockers = [];
+  const reviews = [];
+
+  if (lines.length === 0) blockers.push("Permit workflow has not been configured yet.");
+
+  openLines.forEach((line) => {
+    const label = lineLabel(line);
+    if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} is missing its locality.`);
+    if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no workflow steps configured.`);
+    if (line?.submitted_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
+    if (line?.permit_received_date && line?.status !== "completed") reviews.push(`${label} has a permit received date but is not marked complete.`);
+  });
+
+  const hasOwner = [
+    wo?.current_task_assigned_to,
+    wo?.assigned_to,
+    ...openLines.map((line) => line?.assigned_to),
+  ].some((value) => normalizedAssignment(value));
+  if (openLines.length > 0 && !hasOwner) reviews.push("No responsible person is assigned to this permitting job.");
+
+  if (wo?._permittingRoutingMismatch) {
+    reviews.push(wo._permittingRoutingWarning || "Work Order stage and Permitting task routing do not agree.");
+  }
+
+  const uniqueBlockers = [...new Set(blockers)];
+  const uniqueReviews = [...new Set(reviews)];
+  return {
+    blockers: uniqueBlockers,
+    reviews: uniqueReviews,
+    issueCount: uniqueBlockers.length + uniqueReviews.length,
+    hasBlockers: uniqueBlockers.length > 0,
+    hasIssues: uniqueBlockers.length > 0 || uniqueReviews.length > 0,
+  };
 }
 
 export const PERMIT_QUEUE_META = {
