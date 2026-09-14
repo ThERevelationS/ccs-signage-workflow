@@ -28,6 +28,9 @@ const parseLocalDate = (dateString) => {
 };
 
 function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered }) {
+  const preventsFutureDate = field === "quote_date" || field === "date_estimate_sent";
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
   const displayDate = () => {
     if (!value) return "-";
     const parsed = parseLocalDate(value);
@@ -51,8 +54,8 @@ function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDate
             </Button>
           </div>
         )}
-        <Calendar mode="single" selected={parseLocalDate(value)}
-          onSelect={(date) => { updateWorkOrder(woId, field, date ? format(date, "yyyy-MM-dd") : ""); setOpenDatePopover(null); }} />
+        <Calendar mode="single" selected={parseLocalDate(value)} disabled={preventsFutureDate ? { after: today } : undefined}
+          onSelect={(date) => { if (date && preventsFutureDate && date > today) return; updateWorkOrder(woId, field, date ? format(date, "yyyy-MM-dd") : ""); setOpenDatePopover(null); }} />
       </PopoverContent>
     </Popover>
   );
