@@ -5,6 +5,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
@@ -287,6 +297,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
 export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) {
   const [search, setSearch] = useState("");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [officeToDelete, setOfficeToDelete] = useState(null);
 
   const addBlank = () => {
     const newOffice = {
@@ -307,9 +318,14 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
     onChange(catalog.map(o => o.id === officeId ? updated : o));
   };
 
-  const deleteOffice = (officeId) => {
-    if (!confirm("Delete this office from the catalog?")) return;
-    onChange(catalog.filter(o => o.id !== officeId));
+  const deleteOffice = (office) => {
+    setOfficeToDelete(office || null);
+  };
+
+  const confirmDeleteOffice = () => {
+    if (!officeToDelete?.id) return;
+    onChange(catalog.filter(o => o.id !== officeToDelete.id));
+    setOfficeToDelete(null);
   };
 
   const filtered = useMemo(() => {
@@ -364,10 +380,27 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
             office={office}
             officeTypes={officeTypes}
             onChange={(updated) => updateOffice(office.id, updated)}
-            onDelete={() => deleteOffice(office.id)}
+            onDelete={() => deleteOffice(office)}
           />
         ))}
       </div>
+
+      <AlertDialog open={!!officeToDelete} onOpenChange={(open) => !open && setOfficeToDelete(null)}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this office from the catalog?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes {officeToDelete?.name || "this office"} from the reusable office catalog after you save these settings. Existing Permit lines already created on Work Orders are not deleted by this action.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteOffice} className="bg-red-600 hover:bg-red-700">
+              Remove Office
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
