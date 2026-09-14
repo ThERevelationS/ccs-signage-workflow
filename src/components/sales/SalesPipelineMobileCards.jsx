@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
+import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -37,6 +38,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         today.setHours(0, 0, 0, 0);
         const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
         const stageAging = getStageAgingState(wo, today);
+        const quoteAging = getQuoteAgingState(wo, today);
         return (
           <div
             key={wo.id}
@@ -80,6 +82,13 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               ) : (
                 <span className="text-gray-400">Stage age: not tracked</span>
               )}
+              {quoteAging.awaitingResponse ? (
+                quoteAging.tracked ? (
+                  <span className={quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : ""}>Quote age: <span>{quoteAging.ageDays}d</span></span>
+                ) : (
+                  <span className="font-medium text-amber-700">Quote age: sent date missing</span>
+                )
+              ) : null}
               {deadline && (
                 <span>Task due: <span className="text-gray-700">{format(deadline, 'MMM d, yyyy')}</span></span>
               )}
@@ -102,6 +111,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(14))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+14 days</button>
+                {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 active:bg-amber-100">Mark quote sent today</button>}
                 <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 active:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>
               </div>
             )}
