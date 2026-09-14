@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
-import { constantTimeEqual } from '../../shared/constantTime.ts';
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {
   claimPasswordResetToken,
   replaceAuthorizedEmailCredentialFieldsIfUnchanged,
