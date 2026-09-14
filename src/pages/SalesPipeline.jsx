@@ -442,7 +442,7 @@ export default function SalesPipeline() {
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
-                    <div>
+                    <div className="min-w-0 lg:flex lg:items-center lg:gap-1.5">
                       <div className="text-[10px] font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
                       <div className="text-[10px] leading-tight text-rose-700">{pipelineSummary.placeholderCount}/{pipelineSummary.openCount} exact-name test placeholders (Test/asdf) · {formatPipelineValue(pipelineSummary.placeholderValue)} of {formatPipelineValue(pipelineSummary.openValue)} raw pipeline</div>
                     </div>
