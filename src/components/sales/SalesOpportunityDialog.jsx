@@ -92,6 +92,8 @@ const historyTitle = (entry) => {
   if (entry.field_name === "sales_last_follow_up_completed_at") return "Follow-up completed";
   if (entry.field_name === "sales_last_follow_up_outcome") return "Follow-up outcome recorded";
   if (entry.field_name === "sales_status") return "Sales status changed";
+  if (entry.field_name === "date_estimate_sent") return "Quote sent date changed";
+  if (entry.field_name === "quote_date") return "Quote issue date changed";
   if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
   return `${FIELD_LABELS[entry.field_name] || entry.field_name} changed`;
 };
@@ -300,7 +302,7 @@ export default function SalesOpportunityDialog({
                   <div className="text-xs text-gray-400">Quote sent date</div>
                   <div className="mt-1 flex items-center gap-2">
                     <Input type="date" max={format(new Date(), "yyyy-MM-dd")} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-9" />
-                    {!workOrder.date_estimate_sent && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-9 px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Today</Button>}
+                    {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-9 px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (
                     quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}{workOrder.date_estimate_sent ? "" : " · using quote issue date"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
