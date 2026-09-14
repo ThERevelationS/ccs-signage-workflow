@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { addDays, format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, X } from "lucide-react";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
@@ -26,6 +27,37 @@ const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
+};
+
+const CondensedDescription = ({ value, label = "Job description" }) => {
+  const text = typeof value === "string" && value.trim() ? value.trim() : "-";
+  const hasDescription = text !== "-";
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            tabIndex={hasDescription ? 0 : -1}
+            className="block w-full min-w-0 truncate rounded-sm text-sm text-gray-700 outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
+            aria-label={`${label}: ${text}`}
+          >
+            {text}
+          </span>
+        </TooltipTrigger>
+        {hasDescription && (
+          <TooltipContent
+            side="top"
+            align="start"
+            sideOffset={6}
+            className="max-w-[min(36rem,calc(100vw-2rem))] whitespace-normal break-words p-3 text-sm leading-relaxed"
+          >
+            {text}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
 };
 
 export default function SIPs() {
@@ -357,7 +389,7 @@ export default function SIPs() {
   }
 
   return (
-    <div className="h-full overflow-auto p-3 sm:p-6">
+    <div className="h-full overflow-y-auto overflow-x-hidden p-3 sm:p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-4 sm:p-6 mb-4">
@@ -609,33 +641,48 @@ export default function SIPs() {
             )}
           </div>
 
-          <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full border-collapse" style={{ fontSize: '14px', minWidth: '1200px', tableLayout: 'auto' }}>
+          <div className="hidden lg:block overflow-x-hidden">
+          <table className="w-full table-fixed border-collapse" style={{ fontSize: '14px' }}>
+            <colgroup>
+              <col style={{ width: '3%' }} />
+              <col style={{ width: '3%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '5%' }} />
+              <col style={{ width: '7%' }} />
+            </colgroup>
             <thead className="bg-gray-100 sticky top-0 z-20 shadow-sm">
               <tr className="border-b">
                 <th 
                   className="px-2 py-3 border-r text-center font-bold text-white" 
                   style={{ 
-                    minWidth: '50px',
                     background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                     fontSize: '14px'
                   }}
                 >
                   #
                 </th>
-                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '50px' }}>✓</th>
-                <th className="px-2 py-3 border-r text-center font-bold text-gray-700" style={{ minWidth: '80px' }}>Checklist</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '160px' }}>Customer</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '180px' }}>Job Description</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Deadline</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '130px' }}>Task Assigned</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Designer</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>PM</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '120px' }}>Estimator</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Est/Inv #</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Amount</th>
-                <th className="px-2 py-3 border-r text-left font-bold text-gray-700" style={{ minWidth: '100px' }}>Survey</th>
-                <th className="px-2 py-3 text-left font-bold text-gray-700" style={{ minWidth: '110px', background: '#fef3c7' }}>📅 Revisit</th>
+                <th className="px-1 py-3 border-r text-center font-bold text-gray-700">✓</th>
+                <th className="px-1 py-3 border-r text-center font-bold text-gray-700">Checklist</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700">Customer</th>
+                <th className="px-2 py-3 border-r text-left font-bold text-gray-700">Job Description</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Deadline</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Task Assigned</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Designer</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">PM</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Estimator</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Est/Inv #</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Amount</th>
+                <th className="px-1 py-3 border-r text-left font-bold text-gray-700">Survey</th>
+                <th className="px-1 py-3 text-left font-bold text-gray-700" style={{ background: '#fef3c7' }}>📅 Revisit</th>
               </tr>
             </thead>
             <tbody>
@@ -705,8 +752,8 @@ export default function SIPs() {
                      </td>
 
                      {/* Job Description */}
-                     <td className="px-2 py-2 border-r">
-                       <span className="text-sm text-gray-700 truncate block">{wo.description || "-"}</span>
+                     <td className="px-2 py-2 border-r min-w-0">
+                       <CondensedDescription value={wo.description} />
                      </td>
 
                      {/* Deadline */}
@@ -1000,18 +1047,28 @@ export default function SIPs() {
               })}
             </div>
 
-            <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full border-collapse text-sm" style={{ tableLayout: 'auto', minWidth: '900px' }}>
+            <div className="hidden lg:block overflow-x-hidden">
+            <table className="w-full table-fixed border-collapse text-sm">
+              <colgroup>
+                <col style={{ width: '6%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '8%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
               <thead className="bg-amber-50">
                 <tr className="border-b">
-                  <th className="px-2 py-2 border-r text-center font-medium text-amber-700" style={{ minWidth: '50px' }}>✓</th>
-                  <th className="px-2 py-2 border-r text-center font-medium text-amber-700" style={{ minWidth: '80px' }}>Checklist</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '160px' }}>Customer</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '180px' }}>Job Description</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '100px' }}>Deadline</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '120px' }}>PM</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700" style={{ minWidth: '100px' }}>Amount</th>
-                  <th className="px-2 py-2 text-left font-bold text-amber-700" style={{ minWidth: '110px', background: '#fef3c7' }}>📅 Revisit</th>
+                  <th className="px-1 py-2 border-r text-center font-medium text-amber-700">✓</th>
+                  <th className="px-1 py-2 border-r text-center font-medium text-amber-700">Checklist</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700">Customer</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-amber-700">Job Description</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-amber-700">Deadline</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-amber-700">PM</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-amber-700">Amount</th>
+                  <th className="px-1 py-2 text-left font-bold text-amber-700" style={{ background: '#fef3c7' }}>📅 Revisit</th>
                 </tr>
               </thead>
               <tbody>
@@ -1034,7 +1091,7 @@ export default function SIPs() {
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
                       </td>
-                      <td className="px-2 py-2 border-r"><span className="text-sm text-gray-700 truncate block">{wo.description || "-"}</span></td>
+                      <td className="px-2 py-2 border-r min-w-0"><CondensedDescription value={wo.description} /></td>
                       <td className="px-2 py-2 border-r text-sm">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "-"}</td>
                       <td className="px-2 py-2 border-r text-sm truncate">{wo.project_manager || "-"}</td>
                       <td className="px-2 py-2 border-r text-sm">{wo.estimate_amount ? `$${wo.estimate_amount.toLocaleString()}` : "-"}</td>
@@ -1120,17 +1177,26 @@ export default function SIPs() {
               ))}
             </div>
 
-            <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full border-collapse text-xs" style={{ tableLayout: 'fixed' }}>
+            <div className="hidden lg:block overflow-x-hidden">
+            <table className="w-full table-fixed border-collapse text-xs">
+              <colgroup>
+                <col style={{ width: '7%' }} />
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '30%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '7%' }} />
+              </colgroup>
               <thead className="bg-gray-50">
                 <tr className="border-b">
-                  <th className="px-2 py-2 border-r text-center font-medium text-gray-600" style={{ width: '50px' }}>Completed</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '20%' }}>Customer</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '20%' }}>Task Description</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '80px' }}>Deadline</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '15%' }}>Designer</th>
-                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600" style={{ width: '15%' }}>PM</th>
-                  <th className="px-2 py-2 text-left font-medium text-gray-600" style={{ width: '80px' }}>Amount</th>
+                  <th className="px-1 py-2 border-r text-center font-medium text-gray-600">Completed</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600">Customer</th>
+                  <th className="px-2 py-2 border-r text-left font-medium text-gray-600">Task Description</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-gray-600">Deadline</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-gray-600">Designer</th>
+                  <th className="px-1 py-2 border-r text-left font-medium text-gray-600">PM</th>
+                  <th className="px-1 py-2 text-left font-medium text-gray-600">Amount</th>
                 </tr>
               </thead>
               <tbody>
