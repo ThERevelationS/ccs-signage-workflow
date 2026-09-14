@@ -249,7 +249,8 @@ export function summarizePermitQueue(groups, today) {
   const summary = Object.fromEntries(PERMIT_QUEUE_ORDER.map((key) => [key, []]));
   (Array.isArray(groups) ? groups : []).forEach((group) => {
     const state = getPermitGroupQueueState(group, today);
-    summary[state.key].push({ ...group, queueState: state });
+    const readiness = getPermitGroupReadiness(group);
+    summary[state.key].push({ ...group, queueState: state, readiness });
   });
   PERMIT_QUEUE_ORDER.forEach((key) => summary[key].sort(queueSort));
   return summary;
