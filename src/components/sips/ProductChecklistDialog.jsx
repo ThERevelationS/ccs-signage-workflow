@@ -635,14 +635,11 @@ export default function ProductChecklistDialog({
     }
   };
 
-  // Group checklist items by product_name extracted from item ID or product_name field
-  const getGroupedChecklist = () => {
+  // Group checklist items only when checklist data changes. Search/navigation,
+  // expansion, and inline editor state should not rebuild the entire product hierarchy.
+  const groupedChecklist = useMemo(() => {
     const groups = {};
     const itemOrder = new Map();
-    
-    // Build item map for parent lookups
-    const itemMap = new Map();
-    checklist.forEach(item => itemMap.set(item.id, item));
     
     // Extract product name from item ID (e.g., "Channel Letters_123_abc" -> "Channel Letters")
     const extractProductNameFromId = (id) => {
@@ -707,7 +704,7 @@ export default function ProductChecklistDialog({
       
       // 3. Try parent chain
       if (item.parent_id) {
-        const parent = itemMap.get(item.parent_id);
+        const parent = checklistItemById.get(item.parent_id);
         if (parent) return resolveProductName(parent, visited);
       }
       
@@ -728,7 +725,7 @@ export default function ProductChecklistDialog({
       
       // 3. Parent chain
       if (item.parent_id) {
-        const parent = itemMap.get(item.parent_id);
+        const parent = checklistItemById.get(item.parent_id);
         if (parent) return resolveSubTemplateName(parent, visited);
       }
       
@@ -773,32 +770,7 @@ export default function ProductChecklistDialog({
     });
     
     return groups;
-  };
-  
-  // Build hierarchy for items
-  const _buildItemHierarchy = (items) => {
-    // Get main items: either type='checklist', no type (legacy), or items without parent_id that aren't tasks/details/subtasks
-    const mainItems = items.filter(i => {
-      // If it has no type, it's a legacy main item
-      if (!i.type) return !i.parent_id;
-      // Otherwise, it's a checklist item without a parent
-      return i.type === 'checklist' && !i.parent_id;
-    });
-    
-    return mainItems.map(main => {
-      const details = items.filter(i => i.type === 'detail' && i.parent_id === main.id);
-      const mainTasks = items.filter(i => i.type === 'task' && i.parent_id === main.id);
-      
-      return {
-        ...main,
-        tasks: mainTasks,
-        details: details.map(detail => ({
-          ...detail,
-          tasks: items.filter(i => i.type === 'task' && i.parent_id === detail.id)
-        }))
-      };
-    });
-  };
+  }, [checklist, checklistItemById]);
   
   // Checklist rows and product groups are expanded by default.
   const [expandedItems, setExpandedItems] = useState({});
@@ -971,8 +943,6 @@ export default function ProductChecklistDialog({
     );
   }
 
-  const groupedChecklist = getGroupedChecklist();
-  
   // Separate active and completed checklists
   const separateCompletedItems = () => {
     const active = {};
