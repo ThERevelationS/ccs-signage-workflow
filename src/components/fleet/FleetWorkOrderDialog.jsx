@@ -223,63 +223,80 @@ export default function FleetWorkOrderDialog({
           <div><div id="fleet-work-order-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{mode === "create" ? "New Fleet Work Order" : mode === "complete" ? `Complete ${workOrder?.work_order_number || "Work Order"}` : `Edit ${workOrder?.work_order_number || "Work Order"}`}</div><div className="text-xs text-gray-500">Fleet maintenance only — never enters signage production.</div></div>
           <button type="button" onClick={onClose} aria-label="Close Fleet work order dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
-        <form onSubmit={submit} className="p-4 sm:p-6 space-y-6">
+        <form onSubmit={submit} className="p-4 sm:p-6 space-y-5">
           {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
           {workOrder?.public_submission_key && <div className="rounded-xl border border-violet-200 bg-violet-50/70 px-3 py-3 text-sm text-violet-950 dark:border-violet-900 dark:bg-violet-950/20 dark:text-violet-100"><div className="font-semibold">Submitted from the public Fleet issue form</div><div className="mt-1 grid sm:grid-cols-3 gap-x-4 gap-y-1 text-xs"><div><span className="text-violet-600 dark:text-violet-300">Reporter:</span> {workOrder.public_reporter_name || "Anonymous"}</div><div><span className="text-violet-600 dark:text-violet-300">Contact:</span> {workOrder.public_reporter_contact || "Not provided"}</div><div><span className="text-violet-600 dark:text-violet-300">Reported:</span> {workOrder.public_reported_at ? new Date(workOrder.public_reported_at).toLocaleString() : "—"}</div></div><div className="mt-1 text-[11px] text-violet-600 dark:text-violet-300">Reporter identity fields are read-only provenance and are not changed when this work order is edited.</div></div>}
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Equipment"><select value={form.equipment_id || ""} onChange={(e) => { set("equipment_id", e.target.value); set("maintenance_task_id", ""); }} className="fleet-input" disabled={completing && !form.equipment_id}><option value="">No equipment / unresolved</option>{equipment.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
-            <Field label="Maintenance Schedule"><select value={form.maintenance_task_id || ""} onChange={(e) => set("maintenance_task_id", e.target.value)} className="fleet-input"><option value="">None</option>{filteredTasks.map((t) => <option key={t.id} value={t.id}>{t.title} · {t.start_date || "no date"}</option>)}</select></Field>
-            <Field label="Title"><input value={form.title || ""} onChange={(e) => set("title", e.target.value)} className="fleet-input" /></Field>
-            <Field label="Assigned To"><input value={form.assigned_to || ""} onChange={(e) => set("assigned_to", e.target.value)} className="fleet-input" placeholder="Technician / vendor" /></Field>
-            <Field label="Type"><select value={form.type || "scheduled"} onChange={(e) => set("type", e.target.value)} className="fleet-input">{TYPE_OPTIONS.map((v) => <option key={v} value={v}>{v.replaceAll("_", " ")}</option>)}</select></Field>
-            <Field label="Priority"><select value={form.priority || "medium"} onChange={(e) => set("priority", e.target.value)} className="fleet-input">{PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>
-            {!completing && <Field label="Status"><select value={form.status || "open"} onChange={(e) => set("status", e.target.value)} className="fleet-input">{STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v.replaceAll("_", " ")}</option>)}</select></Field>}
-            <Field label="Actual Hours"><input type="number" min="0" step="0.25" value={form.actual_hours ?? ""} onChange={(e) => set("actual_hours", e.target.value)} className="fleet-input" /></Field>
-            <Field label="Started"><input type="date" value={form.started_date || ""} onChange={(e) => set("started_date", e.target.value)} className="fleet-input" /></Field>
-            <Field label="Projected Completion"><input type="date" value={form.projected_completion_date || ""} onChange={(e) => set("projected_completion_date", e.target.value)} className="fleet-input" /></Field>
-          </div>
+          <nav aria-label="Work order form sections" className="flex gap-2 overflow-x-auto pb-1 overscroll-x-contain">
+            <SectionJump href="#fleet-wo-details">Details</SectionJump>
+            <SectionJump href="#fleet-wo-work">Work</SectionJump>
+            <SectionJump href="#fleet-wo-photos">Photos</SectionJump>
+            <SectionJump href="#fleet-wo-inventory">Parts & Fluids</SectionJump>
+            {completing && <SectionJump href="#fleet-wo-completion">Completion</SectionJump>}
+          </nav>
 
-          <Field label="Description"><textarea value={form.description || ""} onChange={(e) => set("description", e.target.value)} rows={4} className="fleet-input" /></Field>
-          <Field label={completing ? "Corrective Action *" : "Corrective Action"}><textarea value={form.corrective_action || ""} onChange={(e) => set("corrective_action", e.target.value)} rows={4} className="fleet-input" /></Field>
-          <Field label="Notes"><textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} rows={3} className="fleet-input" /></Field>
+          <DialogSection id="fleet-wo-details" title="Work Order Details" description="Choose the Fleet asset, schedule link, responsibility, priority, and timing.">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="Equipment"><select value={form.equipment_id || ""} onChange={(e) => { set("equipment_id", e.target.value); set("maintenance_task_id", ""); }} className="fleet-input" disabled={completing && !form.equipment_id}><option value="">No equipment / unresolved</option>{equipment.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
+              <Field label="Maintenance Schedule"><select value={form.maintenance_task_id || ""} onChange={(e) => set("maintenance_task_id", e.target.value)} className="fleet-input"><option value="">None</option>{filteredTasks.map((t) => <option key={t.id} value={t.id}>{t.title} · {t.start_date || "no date"}</option>)}</select></Field>
+              <Field label="Title"><input value={form.title || ""} onChange={(e) => set("title", e.target.value)} className="fleet-input" /></Field>
+              <Field label="Assigned To"><input value={form.assigned_to || ""} onChange={(e) => set("assigned_to", e.target.value)} className="fleet-input" placeholder="Technician / vendor" /></Field>
+              <Field label="Type"><select value={form.type || "scheduled"} onChange={(e) => set("type", e.target.value)} className="fleet-input">{TYPE_OPTIONS.map((v) => <option key={v} value={v}>{v.replaceAll("_", " ")}</option>)}</select></Field>
+              <Field label="Priority"><select value={form.priority || "medium"} onChange={(e) => set("priority", e.target.value)} className="fleet-input">{PRIORITY_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>
+              {!completing && <Field label="Status"><select value={form.status || "open"} onChange={(e) => set("status", e.target.value)} className="fleet-input">{STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v.replaceAll("_", " ")}</option>)}</select></Field>}
+              <Field label="Actual Hours"><input type="number" min="0" step="0.25" value={form.actual_hours ?? ""} onChange={(e) => set("actual_hours", e.target.value)} className="fleet-input" /></Field>
+              <Field label="Started"><input type="date" value={form.started_date || ""} onChange={(e) => set("started_date", e.target.value)} className="fleet-input" /></Field>
+              <Field label="Projected Completion"><input type="date" value={form.projected_completion_date || ""} onChange={(e) => set("projected_completion_date", e.target.value)} className="fleet-input" /></Field>
+            </div>
+          </DialogSection>
 
-          <div>
-            <div className="flex items-center gap-2 mb-2"><ImagePlus className="w-4 h-4 text-indigo-500" /><div className="font-medium text-gray-900 dark:text-slate-100">Work Order Photos</div></div>
+          <DialogSection id="fleet-wo-work" title="Work Details" description={completing ? "Document the problem, required corrective action, and any final notes before completion." : "Document the problem, planned or completed corrective action, and technician notes."}>
+            <div className="space-y-4">
+              <Field label="Description"><textarea value={form.description || ""} onChange={(e) => set("description", e.target.value)} rows={4} className="fleet-input" /></Field>
+              <Field label={completing ? "Corrective Action *" : "Corrective Action"}><textarea value={form.corrective_action || ""} onChange={(e) => set("corrective_action", e.target.value)} rows={4} className="fleet-input" /></Field>
+              <Field label="Notes"><textarea value={form.notes || ""} onChange={(e) => set("notes", e.target.value)} rows={3} className="fleet-input" /></Field>
+            </div>
+          </DialogSection>
+
+          <DialogSection id="fleet-wo-photos" title="Work Order Photos" description="Keep problem, before, and after photos with the Fleet maintenance record.">
+            <div className="flex items-center gap-2 mb-3"><ImagePlus className="w-4 h-4 text-indigo-500" /><div className="text-xs text-gray-500 dark:text-slate-400">Selected photos upload only when you save or complete the work order.</div></div>
             <div className="grid md:grid-cols-3 gap-3">
               <PhotoEditor title="Problem Photos" field="problem_photos" urls={form.problem_photos || []} files={pendingPhotos.problem_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
               <PhotoEditor title="Before Photos" field="before_photos" urls={form.before_photos || []} files={pendingPhotos.before_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
               <PhotoEditor title="After Photos" field="after_photos" urls={form.after_photos || []} files={pendingPhotos.after_photos || []} onAdd={addPhotos} onRemoveUrl={removeSavedPhoto} onRemoveFile={removePendingPhoto} />
             </div>
-            <div className="text-xs text-gray-400 mt-2">Selected photos upload when you save or complete the Fleet work order.</div>
-          </div>
+          </DialogSection>
 
-          <UsageEditor title="Parts Used" onAdd={addPart} extraActions={<>{form.equipment_id && <a href={`${createPageUrl("FleetParts")}?identify=1&equipment=${encodeURIComponent(form.equipment_id)}`} target="_blank" rel="noreferrer" className="min-h-11 px-2.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-300 inline-flex items-center gap-1 text-xs font-semibold"><Sparkles className="w-3.5 h-3.5" />Identify part</a>}{onRefreshInventory && <button type="button" onClick={refreshInventory} disabled={refreshingInventory} className="min-h-11 px-2.5 rounded-lg border border-gray-200 dark:border-slate-700 inline-flex items-center gap-1 text-xs font-semibold disabled:opacity-50">{refreshingInventory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}Refresh</button>}</>}>
-            {(form.parts_used || []).map((line, index) => { const selectedPart = parts.find(p => p.id === line.part_id); return <div key={`part-${index}`} className="rounded-xl border border-gray-200 dark:border-slate-700 p-2.5 space-y-2"><div className="grid sm:grid-cols-[1fr_120px_44px] gap-2 items-center">
-              <select value={line.part_id || ""} onChange={(e) => updatePart(index, "part_id", e.target.value)} className="fleet-input"><option value="">Select part…</option>{compatibleParts.map((p) => <option key={p.id} value={p.id}>{[p.part_name,p.part_number,p.manufacturer,p.storage_bin || p.storage_shelf || p.location,`stock ${p.quantity_on_hand ?? 0}`].filter(Boolean).join(" · ")}</option>)}</select>
-              <input type="number" min="0" step="1" value={line.quantity ?? 0} onChange={(e) => updatePart(index, "quantity", e.target.value)} className="fleet-input" />
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, parts_used: prev.parts_used.filter((_, i) => i !== index) }))} className="min-h-11 min-w-11 p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
-            </div>{selectedPart && <div className="grid sm:grid-cols-[48px_1fr] gap-2 items-center rounded-lg bg-gray-50 dark:bg-slate-800/50 p-2">{selectedPart.primary_photo_url || selectedPart.photo_urls?.[0] ? <img src={selectedPart.primary_photo_url || selectedPart.photo_urls?.[0]} alt={selectedPart.part_name} className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-white dark:bg-slate-900 flex items-center justify-center text-[10px] text-gray-400">No photo</div>}<div className="min-w-0 text-xs text-gray-500 dark:text-slate-400"><div className="font-semibold text-gray-800 dark:text-slate-200">{selectedPart.part_name}</div><div>{selectedPart.part_number || "No part number"}{selectedPart.manufacturer ? ` · ${selectedPart.manufacturer}` : ""}</div><div>{[selectedPart.storage_zone,selectedPart.storage_cabinet,selectedPart.storage_shelf,selectedPart.storage_bin].filter(Boolean).join(" · ") || selectedPart.location || "Location not set"} · stock {selectedPart.quantity_on_hand ?? 0}</div></div></div>}</div>; })}
-          </UsageEditor>
+          <DialogSection id="fleet-wo-inventory" title="Parts & Fluids" description="Record Fleet-only inventory usage. Completion validates compatibility and available stock before applying usage.">
+            <div className="space-y-6">
+              <UsageEditor title="Parts Used" onAdd={addPart} extraActions={<>{form.equipment_id && <a href={`${createPageUrl("FleetParts")}?identify=1&equipment=${encodeURIComponent(form.equipment_id)}`} target="_blank" rel="noreferrer" className="min-h-11 px-2.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/30 dark:text-violet-300 inline-flex items-center gap-1 text-xs font-semibold"><Sparkles className="w-3.5 h-3.5" />Identify part</a>}{onRefreshInventory && <button type="button" onClick={refreshInventory} disabled={refreshingInventory} className="min-h-11 px-2.5 rounded-lg border border-gray-200 dark:border-slate-700 inline-flex items-center gap-1 text-xs font-semibold disabled:opacity-50">{refreshingInventory ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}Refresh</button>}</>}>
+                {(form.parts_used || []).map((line, index) => { const selectedPart = parts.find(p => p.id === line.part_id); return <div key={`part-${index}`} className="rounded-xl border border-gray-200 dark:border-slate-700 p-2.5 space-y-2"><div className="grid sm:grid-cols-[1fr_120px_44px] gap-2 items-center">
+                  <select value={line.part_id || ""} onChange={(e) => updatePart(index, "part_id", e.target.value)} className="fleet-input"><option value="">Select part…</option>{compatibleParts.map((p) => <option key={p.id} value={p.id}>{[p.part_name,p.part_number,p.manufacturer,p.storage_bin || p.storage_shelf || p.location,`stock ${p.quantity_on_hand ?? 0}`].filter(Boolean).join(" · ")}</option>)}</select>
+                  <input type="number" min="0" step="1" value={line.quantity ?? 0} onChange={(e) => updatePart(index, "quantity", e.target.value)} className="fleet-input" />
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, parts_used: prev.parts_used.filter((_, i) => i !== index) }))} className="min-h-11 min-w-11 p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
+                </div>{selectedPart && <div className="grid sm:grid-cols-[48px_1fr] gap-2 items-center rounded-lg bg-gray-50 dark:bg-slate-800/50 p-2">{selectedPart.primary_photo_url || selectedPart.photo_urls?.[0] ? <img src={selectedPart.primary_photo_url || selectedPart.photo_urls?.[0]} alt={selectedPart.part_name} className="w-12 h-12 object-cover rounded-md" /> : <div className="w-12 h-12 rounded-md bg-white dark:bg-slate-900 flex items-center justify-center text-[10px] text-gray-400">No photo</div>}<div className="min-w-0 text-xs text-gray-500 dark:text-slate-400"><div className="font-semibold text-gray-800 dark:text-slate-200">{selectedPart.part_name}</div><div>{selectedPart.part_number || "No part number"}{selectedPart.manufacturer ? ` · ${selectedPart.manufacturer}` : ""}</div><div>{[selectedPart.storage_zone,selectedPart.storage_cabinet,selectedPart.storage_shelf,selectedPart.storage_bin].filter(Boolean).join(" · ") || selectedPart.location || "Location not set"} · stock {selectedPart.quantity_on_hand ?? 0}</div></div></div>}</div>; })}
+              </UsageEditor>
 
-          <UsageEditor title="Fluids Used" onAdd={addFluid}>
-            {(form.fluids_used || []).map((line, index) => <div key={`fluid-${index}`} className="grid sm:grid-cols-[1fr_120px_100px_44px] gap-2 items-center">
-              <select value={line.fluid_id || ""} onChange={(e) => updateFluid(index, "fluid_id", e.target.value)} className="fleet-input"><option value="">Select fluid…</option>{compatibleFluids.map((f) => <option key={f.id} value={f.id}>{f.fluid_name} · stock {f.quantity ?? "—"} {f.unit || ""}</option>)}</select>
-              <input type="number" min="0" step="0.01" value={line.quantity ?? line.quantity_quarts ?? 0} onChange={(e) => updateFluid(index, "quantity", e.target.value)} className="fleet-input" />
-              <div className="text-xs text-gray-500 px-2">{line.unit || fluids.find((f) => f.id === line.fluid_id)?.unit || ""}</div>
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, fluids_used: prev.fluids_used.filter((_, i) => i !== index) }))} className="min-h-11 min-w-11 p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
-            </div>)}
-          </UsageEditor>
+              <UsageEditor title="Fluids Used" onAdd={addFluid}>
+                {(form.fluids_used || []).map((line, index) => <div key={`fluid-${index}`} className="grid sm:grid-cols-[1fr_120px_100px_44px] gap-2 items-center">
+                  <select value={line.fluid_id || ""} onChange={(e) => updateFluid(index, "fluid_id", e.target.value)} className="fleet-input"><option value="">Select fluid…</option>{compatibleFluids.map((f) => <option key={f.id} value={f.id}>{f.fluid_name} · stock {f.quantity ?? "—"} {f.unit || ""}</option>)}</select>
+                  <input type="number" min="0" step="0.01" value={line.quantity ?? line.quantity_quarts ?? 0} onChange={(e) => updateFluid(index, "quantity", e.target.value)} className="fleet-input" />
+                  <div className="text-xs text-gray-500 px-2">{line.unit || fluids.find((f) => f.id === line.fluid_id)?.unit || ""}</div>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, fluids_used: prev.fluids_used.filter((_, i) => i !== index) }))} className="min-h-11 min-w-11 p-2 rounded-lg border border-gray-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700"><Trash2 className="w-4 h-4" /></button>
+                </div>)}
+              </UsageEditor>
 
-          {usageIssues.length > 0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-200 px-3 py-2 text-xs"><div className="font-semibold">Inventory usage needs attention</div><ul className="mt-1 list-disc pl-4 space-y-0.5">{usageIssues.map(issue => <li key={issue}>{issue}</li>)}</ul>{!completing && <div className="mt-1">You can save the work order, but these issues must be resolved before completion.</div>}</div>}
+              {usageIssues.length > 0 && <div className="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-200 px-3 py-2 text-xs"><div className="font-semibold">Inventory usage needs attention</div><ul className="mt-1 list-disc pl-4 space-y-0.5">{usageIssues.map(issue => <li key={issue}>{issue}</li>)}</ul>{!completing && <div className="mt-1">You can save the work order, but these issues must be resolved before completion.</div>}</div>}
+            </div>
+          </DialogSection>
 
-          {completing && <Field label="Equipment Status After Completion"><select value={equipmentStatus} onChange={(e) => setEquipmentStatus(e.target.value)} className="fleet-input">{EQUIPMENT_STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field>}
+          {completing && <DialogSection id="fleet-wo-completion" title="Completion" description="Confirm the equipment state after this work order is completed."><Field label="Equipment Status After Completion"><select value={equipmentStatus} onChange={(e) => setEquipmentStatus(e.target.value)} className="fleet-input">{EQUIPMENT_STATUS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}</select></Field></DialogSection>}
 
           <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet notifications are live. Completion updates Fleet inventory/history, advances linked recurring maintenance, and queues completion/low-stock notifications only after the server-side idempotency checks pass.</div>
 
-          <div className="flex justify-end gap-2">
+          <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <button type="button" onClick={onClose} disabled={saving} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button>
-            <button type="submit" disabled={saving} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium disabled:opacity-50 flex items-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{completing ? "Complete Work Order" : mode === "create" ? "Create Work Order" : "Save Changes"}</button>
+            <button type="submit" disabled={saving} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{completing ? "Complete Work Order" : mode === "create" ? "Create Work Order" : "Save Changes"}</button>
           </div>
         </form>
       </div>
