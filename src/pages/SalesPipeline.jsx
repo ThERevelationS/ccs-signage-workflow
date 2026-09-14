@@ -27,6 +27,7 @@ const EMPTY_PIPELINE_SUMMARY = {
   nextActionCoverageCount: 0,
   needsAttentionCount: 0,
   placeholderCount: 0,
+  placeholderValue: 0,
   quoteAwaitingResponseCount: 0,
   quoteTimingCoverageCount: 0,
   quoteTimingMissingCount: 0,
@@ -374,12 +375,12 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
                 <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
-                <div className="mt-1 text-xs text-slate-500">{pipelineSummary.assignedOwnerCount} owned · {pipelineSummary.unassignedOwnerCount} unassigned</div>
+                <div className="mt-1 text-xs text-slate-500">{Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} not flagged as test · {pipelineSummary.placeholderCount} flagged test</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Open Pipeline Value</div>
                 <div className="mt-1 text-2xl font-bold text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</div>
-                <div className="mt-1 text-xs text-emerald-700/80">Quoted value when available, otherwise estimate</div>
+                <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} not flagged · {formatPipelineValue(pipelineSummary.placeholderValue)} flagged test</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-sky-700">Weighted Pipeline</div>
@@ -440,7 +441,7 @@ export default function SalesPipeline() {
                     <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
-                      <div className="mt-0.5 text-xs text-rose-700">{pipelineSummary.placeholderCount} current opportunit{pipelineSummary.placeholderCount === 1 ? "y has" : "ies have"} an exact placeholder customer name (Test/asdf). They remain in metrics until a user explicitly removes them from Current Pipeline.</div>
+                      <div className="mt-0.5 text-xs text-rose-700">{pipelineSummary.placeholderCount} of {pipelineSummary.openCount} current opportunities are exact-name test placeholders (Test/asdf), representing {formatPipelineValue(pipelineSummary.placeholderValue)} of the raw {formatPipelineValue(pipelineSummary.openValue)} pipeline value. Raw totals continue to include them until a user explicitly removes them from Current Pipeline.</div>
                     </div>
                   </div>
                   <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review likely test records ({pipelineSummary.placeholderCount})</button>
