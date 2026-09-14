@@ -48,6 +48,7 @@ export default function PermittingRepository() {
   const [aiDiscoverLoading, setAiDiscoverLoading] = useState(false);
   const [aiDiscoverQuery, setAiDiscoverQuery] = useState("");
   const [trustFilter, setTrustFilter] = useState("all");
+  const [repositoryNotice, setRepositoryNotice] = useState(null);
 
   useEffect(() => {
     loadJurisdictions();
@@ -115,8 +116,13 @@ export default function PermittingRepository() {
         label: `Jurisdiction ${formData.name || "create"}`,
       });
       const created = result.record;
-      if (result.status === "existing") {
-        alert(`${created.name}, ${created.state || ""} was created in another session while this form was open. The existing profile was loaded instead of creating a duplicate.`);
+      if (result.status === "existing" || result.status === "concurrent_duplicate_discarded") {
+        setRepositoryNotice({
+          tone: "warning",
+          text: `${created.name}, ${created.state || ""} already exists. The existing profile was loaded instead of creating a duplicate.`,
+        });
+      } else {
+        setRepositoryNotice({ tone: "success", text: `${created.name}, ${created.state || ""} was added to the Jurisdiction Repository.` });
       }
       setJurisdictions(prev => prev.some(j => j.id === created.id) ? prev.map(j => j.id === created.id ? created : j) : [created, ...prev]);
       setSelectedJurisdiction(created);
@@ -184,8 +190,7 @@ export default function PermittingRepository() {
   const handleDelete = async (id) => {
     const loaded = jurisdictions.find(j => j.id === id);
     if (!loaded?.id) {
-      alert("This jurisdiction is no longer loaded. Reload the repository before deleting it.");
-      return false;
+      throw new Error("This jurisdiction is no longer loaded. Reload the repository before deleting it.");
     }
     try {
       await deleteJurisdictionFromLoadedSnapshot({
@@ -198,9 +203,8 @@ export default function PermittingRepository() {
       return true;
     } catch (error) {
       console.error("Jurisdiction deletion blocked:", error);
-      alert(error?.message || "This jurisdiction changed in another session. Reload before deleting it.");
       await loadJurisdictions();
-      return false;
+      throw new Error(error?.message || "This jurisdiction changed in another session. Reload before deleting it.");
     }
   };
 
@@ -356,6 +360,15 @@ export default function PermittingRepository() {
             ))}
           </div>
         </div>
+
+        {repositoryNotice && (
+          <div className={`mx-3 mt-3 rounded-md border p-3 text-xs ${repositoryNotice.tone === "success" ? "border-green-300 bg-green-50 text-green-800" : "border-amber-300 bg-amber-50 text-amber-900"}`}>
+            <div className="flex items-start justify-between gap-3">
+              <span>{repositoryNotice.text}</span>
+              <button type="button" onClick={() => setRepositoryNotice(null)} className="font-semibold underline underline-offset-2">Dismiss</button>
+            </div>
+          </div>
+        )}
 
         {duplicateJurisdictionGroups.length > 0 && (
           <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
