@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
  * Renders the "Completed Items" section at the bottom of ProductChecklistDialog.
  * Extracted to reduce file size.
  */
-export default function ChecklistCompletedSection({ completedChecklist, dropdownConditions, users, isRegistered, updateChecklistItem, applyChecklistStatus, setShowOtherPopup }) {
+export default function ChecklistCompletedSection({ completedChecklist, dropdownConditions, users, isRegistered, updateChecklistItem, applyChecklistStatus, setShowOtherPopup, focusedNeedsInputId }) {
   if (Object.keys(completedChecklist).length === 0) return null;
 
   const totalCount = Object.values(completedChecklist).reduce((sum, g) =>
@@ -37,7 +37,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                   const itemDetails = group.mainItems.filter(i => i.type === 'detail' && i.parent_id === item.id).map(d => ({ ...d, tasks: group.mainItems.filter(i => i.type === 'task' && i.parent_id === d.id) }));
                   const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                   return (
-                    <div key={displayItem.id} className="clay-card p-2 bg-green-100/70">
+                    <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="text-xs px-2 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
@@ -70,7 +70,7 @@ export default function ChecklistCompletedSection({ completedChecklist, dropdown
                     if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                     const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                     return (
-                      <div key={stItem.id} className="clay-card p-2 bg-green-100/70">
+                      <div data-sips-checklist-item-id={String(stItem.id)} key={stItem.id} className={`clay-card p-2 bg-green-100/70 ${focusedNeedsInputId === stItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <span className="text-xs px-1.5 py-0.5 rounded bg-green-200 text-green-700 shrink-0">Checklist</span>
