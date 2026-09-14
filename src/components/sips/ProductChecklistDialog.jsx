@@ -2132,6 +2132,8 @@ export default function ProductChecklistDialog({
                                       selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                       onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                       disabled={!isRegistered}
+                                      className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                      ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                     />
                                     {isRegistered && (
                                       <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
