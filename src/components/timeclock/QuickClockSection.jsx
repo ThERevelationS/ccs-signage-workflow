@@ -330,6 +330,8 @@ export default function QuickClockSection({
       if (restored === "clocked_in") {
         setPersistenceError("");
         setRecognitionStatus(`Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
+      } else if (restored === "transition") {
+        setPersistenceError("");
       } else if (restored === "clocked_out") {
         setPersistenceError("");
         setRecognitionStatus("");
@@ -920,7 +922,7 @@ export default function QuickClockSection({
               {transitionLabel(authoritativeTransition.transition)}
             </p>
             <p className="mt-1 text-sm text-blue-800">
-              The server is resolving the prior punch. New punch actions stay blocked until authoritative state is confirmed.
+              The server is resolving the prior Time Clock action. Conflicting actions stay blocked until authoritative state is confirmed.
             </p>
             <Button
               type="button"
