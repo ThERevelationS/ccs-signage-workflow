@@ -35,6 +35,7 @@ export default function PermittingRepositoryAdmin() {
   const [bulkAddText, setBulkAddText] = useState('');
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const [bulkAddError, setBulkAddError] = useState('');
+  const [batchActionError, setBatchActionError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ processed: 0, total: 0, currentJurisdiction: '' });
@@ -149,10 +150,11 @@ export default function PermittingRepositoryAdmin() {
   const handleBatchUpdate = async () => {
     const idsToUpdate = Array.from(selectedIds);
     if (idsToUpdate.length === 0) {
-      alert("Please select at least one jurisdiction");
+      setBatchActionError("Select at least one jurisdiction before starting AI research.");
       return;
     }
 
+    setBatchActionError("");
     proceedWithUpdate();
   };
 
@@ -418,6 +420,13 @@ export default function PermittingRepositoryAdmin() {
             />
           </div>
         </div>
+
+        {batchActionError && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{batchActionError}</span>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <Button 
