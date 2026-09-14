@@ -33,6 +33,10 @@
       "type": "string",
       "description": "Client request id of the last confirmed or in-progress clock action"
     },
+    "last_request_payload_hash": {
+      "type": "string",
+      "description": "Canonical payload hash bound to the current or last clock action request id when that action carries employee-entered data"
+    },
     "pending_started_at": {
       "type": "string",
       "format": "date-time",
