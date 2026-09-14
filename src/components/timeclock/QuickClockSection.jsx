@@ -459,7 +459,7 @@ export default function QuickClockSection({
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
         return;
       }
-      if (["clocking_in", "clocking_out"].includes(resolvedStatus)) return;
+      if (resolvedStatus === "transition") return;
 
       setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
       await performClockIn(verifiedUser, credential);
@@ -917,7 +917,7 @@ export default function QuickClockSection({
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-center">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto mb-3" />
             <p className="font-semibold text-blue-900">
-              {authoritativeTransition.status === "clocking_out" ? "Finishing Clock Out" : "Finishing Clock In"}
+              {transitionLabel(authoritativeTransition.transition)}
             </p>
             <p className="mt-1 text-sm text-blue-800">
               The server is resolving the prior punch. New punch actions stay blocked until authoritative state is confirmed.
