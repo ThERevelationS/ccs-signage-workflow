@@ -51,6 +51,7 @@ export default function PermitClientGroup({
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
+  const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
@@ -234,14 +235,49 @@ export default function PermitClientGroup({
         <div className={`border-b px-3 py-2 text-xs ${readiness.hasBlockers ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
           <div className="flex items-start gap-2">
             <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${readiness.hasBlockers ? "text-red-600" : "text-amber-600"}`} />
-            <div className="min-w-0">
-              <div className={`font-semibold ${readiness.hasBlockers ? "text-red-800" : "text-amber-800"}`}>
-                {readiness.hasBlockers ? "Blocked / missing setup" : "Needs review"} · {readiness.issueCount} item{readiness.issueCount === 1 ? "" : "s"}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <div className={`font-semibold ${readiness.hasBlockers ? "text-red-800" : "text-amber-800"}`}>
+                  {readiness.hasBlockers ? "Blocked / missing setup" : "Needs review"} · {readiness.issueCount} item{readiness.issueCount === 1 ? "" : "s"}
+                </div>
+                {readiness.issueCount > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllReadinessIssues((value) => !value)}
+                    className={`inline-flex min-h-7 items-center gap-1 rounded-md px-2 text-[10px] font-semibold underline-offset-2 hover:underline ${readiness.hasBlockers ? "text-red-800 hover:bg-red-100" : "text-amber-900 hover:bg-amber-100"}`}
+                    aria-expanded={showAllReadinessIssues}
+                  >
+                    {showAllReadinessIssues ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {showAllReadinessIssues ? "Show less" : `Review all ${readiness.issueCount}`}
+                  </button>
+                )}
               </div>
-              <div className={`mt-0.5 ${readiness.hasBlockers ? "text-red-700" : "text-amber-700"}`}>
-                {[...readiness.blockers, ...readiness.reviews].slice(0, 2).join(" • ")}
-                {readiness.issueCount > 2 ? ` • +${readiness.issueCount - 2} more` : ""}
-              </div>
+
+              {!showAllReadinessIssues || readiness.issueCount <= 2 ? (
+                <div className={`mt-0.5 ${readiness.hasBlockers ? "text-red-700" : "text-amber-700"}`}>
+                  {[...readiness.blockers, ...readiness.reviews].slice(0, 2).join(" • ")}
+                  {readiness.issueCount > 2 ? ` • +${readiness.issueCount - 2} more` : ""}
+                </div>
+              ) : (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {readiness.blockers.length > 0 && (
+                    <div className="rounded-md border border-red-200 bg-white/70 p-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-red-800">Blocking / missing setup</div>
+                      <div className="mt-1 space-y-1 text-[11px] leading-snug text-red-700">
+                        {readiness.blockers.map((item) => <div key={`blocker-${item}`}>• {item}</div>)}
+                      </div>
+                    </div>
+                  )}
+                  {readiness.reviews.length > 0 && (
+                    <div className="rounded-md border border-amber-200 bg-white/70 p-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-amber-900">Review items</div>
+                      <div className="mt-1 space-y-1 text-[11px] leading-snug text-amber-800">
+                        {readiness.reviews.map((item) => <div key={`review-${item}`}>• {item}</div>)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
