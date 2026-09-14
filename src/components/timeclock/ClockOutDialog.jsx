@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2, Pause } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,7 +76,7 @@ export default function ClockOutDialog({
   const [laborPreview, setLaborPreview] = useState(null);
   const [laborPreviewBusy, setLaborPreviewBusy] = useState(false);
   const [laborPreviewError, setLaborPreviewError] = useState("");
-  const [allocationsReviewed, setAllocationsReviewed] = useState(false);
+  const [, setAllocationsReviewed] = useState(false);
   const allocationEditedRef = useRef(false);
   const previewAppliedRef = useRef(false);
 
