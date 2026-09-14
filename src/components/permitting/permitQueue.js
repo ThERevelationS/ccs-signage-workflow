@@ -48,6 +48,22 @@ function normalizedAssignment(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+const OUTSTANDING_CLOSEOUT_STATUSES = new Set([
+  "inspection_required",
+  "inspection_scheduled",
+  "inspection_failed",
+  "inspection_passed",
+]);
+
+function normalizedCloseoutStatus(line) {
+  return String(line?.closeout_status || "").trim().toLowerCase();
+}
+
+export function isPermitLineEffectivelyComplete(line) {
+  if (OUTSTANDING_CLOSEOUT_STATUSES.has(normalizedCloseoutStatus(line))) return false;
+  return line?.status === "completed";
+}
+
 export function getPermitLineLifecycleReviews(line, today) {
   const reviews = [];
   const label = lineLabel(line);
@@ -61,6 +77,9 @@ export function getPermitLineLifecycleReviews(line, today) {
   const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
   const correctionsReceivedDate = asDateKey(line?.corrections_received_date);
   const resubmittedDate = asDateKey(line?.resubmitted_date);
+  const closeoutStatus = normalizedCloseoutStatus(line);
+  const inspectionDate = asDateKey(line?.inspection_date);
+  const closeoutDate = asDateKey(line?.closeout_date);
 
   if (approvalDate && receivedDate && receivedDate < approvalDate) {
     reviews.push(`${label} has a permit received date before its approval date.`);
@@ -102,6 +121,17 @@ export function getPermitLineLifecycleReviews(line, today) {
     reviews.push(`${label} is marked resubmitted but has no resubmitted date.`);
   }
 
+  if (["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(closeoutStatus) && !inspectionDate) {
+    reviews.push(`${label} has an inspection state but no inspection date.`);
+  }
+  if (closeoutStatus === "closed_out" && !closeoutDate) {
+    reviews.push(`${label} is marked closed out but has no closeout date.`);
+  }
+  if (closeoutDate && closeoutStatus !== "closed_out") {
+    const statusLabel = closeoutStatus || "not recorded";
+    reviews.push(`${label} has a closeout date but closeout status is ${statusLabel}.`);
+  }
+
   return reviews;
 }
 
@@ -123,7 +153,7 @@ export function isPermitGroupAssignedToUser(group, user) {
 export function getPermitGroupReadiness(group, today = "") {
   const wo = group?.work_order || {};
   const lines = Array.isArray(group?.lines) ? group.lines : [];
-  const openLines = lines.filter((line) => line?.status !== "completed");
+  const openLines = lines.filter((line) => !isPermitLineEffectivelyComplete(line));
   const blockers = [];
   const reviews = lines.flatMap((line) => getPermitLineLifecycleReviews(line, today));
 
@@ -133,7 +163,7 @@ export function getPermitGroupReadiness(group, today = "") {
     const label = lineLabel(line);
     if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} is missing its locality.`);
     if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no workflow steps configured.`);
-    if (line?.submitted_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
+    if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
     if (line?.permit_received_date && line?.status !== "completed") reviews.push(`${label} has a permit received date but is not marked complete.`);
   });
 
@@ -221,13 +251,89 @@ export function getPermitGroupQueueState(group, today) {
     };
   }
 
-  const openLines = lines.filter((line) => line?.status !== "completed");
+  const openLines = lines.filter((line) => !isPermitLineEffectivelyComplete(line));
   if (openLines.length === 0) {
     return {
       key: "completed",
       nextAction: "Permit workflow complete.",
       followupDate: "",
       timingLabel: "Complete",
+      urgencyDays: null,
+    };
+  }
+
+  const failedInspectionLine = openLines.find((line) => normalizedCloseoutStatus(line) === "inspection_failed");
+  if (failedInspectionLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Resolve the failed inspection items for ${lineLabel(failedInspectionLine)} and prepare for reinspection.`,
+      followupDate: "",
+      timingLabel: "Inspection failed",
+      urgencyDays: null,
+    };
+  }
+
+  const inspectionRequiredLine = openLines.find((line) => normalizedCloseoutStatus(line) === "inspection_required");
+  if (inspectionRequiredLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Schedule the required inspection for ${lineLabel(inspectionRequiredLine)}.`,
+      followupDate: "",
+      timingLabel: "Inspection needed",
+      urgencyDays: null,
+    };
+  }
+
+  const inspectionScheduledLine = openLines.find((line) => normalizedCloseoutStatus(line) === "inspection_scheduled");
+  if (inspectionScheduledLine) {
+    const inspectionDate = asDateKey(inspectionScheduledLine?.inspection_date);
+    if (!inspectionDate) {
+      return {
+        key: "needs_action",
+        nextAction: `Record the scheduled inspection date for ${lineLabel(inspectionScheduledLine)}.`,
+        followupDate: "",
+        timingLabel: "Inspection date needed",
+        urgencyDays: null,
+      };
+    }
+    const daysUntilInspection = todayKey ? daysBetween(todayKey, inspectionDate) : null;
+    if (todayKey && inspectionDate < todayKey) {
+      const daysPast = Math.abs(daysUntilInspection || 0);
+      return {
+        key: "overdue",
+        nextAction: `Confirm the inspection outcome for ${lineLabel(inspectionScheduledLine)}.`,
+        followupDate: inspectionDate,
+        timingLabel: `${pluralDays(daysPast)} past inspection date · ${formatDateKey(inspectionDate)}`,
+        urgencyDays: -daysPast,
+      };
+    }
+    if (todayKey && inspectionDate === todayKey) {
+      return {
+        key: "due_today",
+        nextAction: `Inspection is scheduled today for ${lineLabel(inspectionScheduledLine)}.`,
+        followupDate: inspectionDate,
+        timingLabel: `Inspection today · ${formatDateKey(inspectionDate)}`,
+        urgencyDays: 0,
+      };
+    }
+    return {
+      key: "waiting",
+      nextAction: `Inspection is scheduled for ${formatDateKey(inspectionDate)} for ${lineLabel(inspectionScheduledLine)}.`,
+      followupDate: inspectionDate,
+      timingLabel: daysUntilInspection !== null
+        ? `Inspection in ${pluralDays(daysUntilInspection)} · ${formatDateKey(inspectionDate)}`
+        : `Inspection scheduled · ${formatDateKey(inspectionDate)}`,
+      urgencyDays: daysUntilInspection,
+    };
+  }
+
+  const inspectionPassedLine = openLines.find((line) => normalizedCloseoutStatus(line) === "inspection_passed");
+  if (inspectionPassedLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Complete permit closeout for ${lineLabel(inspectionPassedLine)}.`,
+      followupDate: "",
+      timingLabel: "Inspection passed",
       urgencyDays: null,
     };
   }
