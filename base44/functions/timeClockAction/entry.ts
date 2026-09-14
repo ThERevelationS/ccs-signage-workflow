@@ -1824,21 +1824,15 @@ Deno.serve(async (req) => {
       if (!pauseRow?.id) throw new Error('Work Pause record could not be created.');
       if (pauseRow.status !== 'active') return Response.json({ success: false, error: 'This Work Pause request is not in an active state.' }, { status: 409 });
 
+      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setWorkPauseState(stateEntity, currentClaim, 'pausing', requestId, {
         work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
       });
-      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Work Pause was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
-
-      const auditSaved = await audit(auditEntity, {
-        action: 'work_pause_start', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: pauseRow.started_at,
-        request_id: requestId, time_entry_id: entry.id, details: { work_pause_id: pauseRow.id },
-      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Work Pause and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
       const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'paused', work_pause: pauseRow, work_pause_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: true });
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'paused', work_pause: pauseRow, work_pause_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: true });
     }
 
     if (action === 'work_pause_resume') {
@@ -1857,6 +1851,7 @@ Deno.serve(async (req) => {
       if (pauseStatus === 'working') {
         const prior = await uniqueRow(workPauseEntity, { user_email: target.email, time_entry_id: entry.id, resume_request_id: requestId }, 'Work Pause resume request');
         if (prior?.id && prior.status === 'completed') {
+          await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow: prior, target, actor, requestId, entryId: entry.id });
           const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
           return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: prior, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: target.can_work_pause === true });
         }
@@ -1873,6 +1868,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'The active Work Pause does not match this employee shift. Admin review is required.' }, { status: 409 });
       }
       if (pauseRow.status === 'completed' && String(pauseRow.resume_request_id || '') === requestId) {
+        await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId, entryId: entry.id });
         const currentState = await freshState(stateEntity, state.id);
         const currentPauseStatus = workPauseStatusOf(currentState);
         if (currentPauseStatus === 'resuming') {
@@ -1926,21 +1922,14 @@ Deno.serve(async (req) => {
         pauseRow = await workPauseEntity.get(pauseRow.id);
       }
 
+      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setWorkPauseState(stateEntity, currentClaim, 'resuming', requestId, {
         work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
       });
-      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
-
-      const auditSaved = await audit(auditEntity, {
-        action: 'work_pause_resume', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: pauseRow.resumed_at,
-        request_id: requestId, time_entry_id: entry.id,
-        details: { work_pause_id: pauseRow.id, duration_minutes: pauseRow.duration_minutes },
-      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved, work_pause_allowed: target.can_work_pause === true });
+      return Response.json({ success: true, status: 'clocked_in', work_pause_status: 'working', work_pause: pauseRow, work_pause_summary: summary, entry, user: publicEmployee(target), audit_saved: true, work_pause_allowed: target.can_work_pause === true });
     }
 
     if (action === 'list_correction_requests') {
