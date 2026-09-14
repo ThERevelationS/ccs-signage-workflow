@@ -1282,13 +1282,27 @@ export default function ProductChecklistDialog({
               </div>
               <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1">
                 {activeProductNames.length > 1 && (
-                  <Button type="button" variant="ghost" size="sm" onClick={toggleAllProducts} className="w-full sm:w-auto h-8 text-xs text-purple-700">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllProducts}
+                    className="w-full sm:w-auto h-11 sm:h-8 text-xs text-purple-700"
+                    aria-expanded={!allProductsCollapsed}
+                  >
                     {allProductsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
                     {allProductsCollapsed ? "Expand all products" : "Collapse all products"}
                   </Button>
                 )}
                 {expandableChecklistIds.length > 0 && (
-                  <Button type="button" variant="ghost" size="sm" onClick={toggleAllDetails} className="w-full sm:w-auto h-8 text-xs text-gray-600">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleAllDetails}
+                    className="w-full sm:w-auto h-11 sm:h-8 text-xs text-gray-600"
+                    aria-expanded={!allDetailsCollapsed}
+                  >
                     {allDetailsCollapsed ? <ChevronRight className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
                     {allDetailsCollapsed ? "Expand task details" : "Collapse task details"}
                   </Button>
@@ -1311,22 +1325,48 @@ export default function ProductChecklistDialog({
                       }
                     }}
                     placeholder="Find product, checklist item, detail, task, status, or assignee…"
-                    className="h-8 pl-8 pr-8 text-xs bg-white"
+                    className="h-11 sm:h-8 pl-8 pr-12 sm:pr-8 text-sm sm:text-xs bg-white"
+                    aria-label="Search active SIP checklist items"
                   />
                   {checklistSearchQuery && (
-                    <button type="button" onClick={clearChecklistSearch} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-700" aria-label="Clear checklist search">
-                      <X className="w-3.5 h-3.5" />
+                    <button
+                      type="button"
+                      onClick={clearChecklistSearch}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded text-gray-400 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-inset"
+                      aria-label="Clear checklist search"
+                    >
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-1 sm:shrink-0">
-                  <span className={`text-[11px] min-w-[72px] text-center ${normalizedChecklistSearch && checklistSearchResults.length === 0 ? "text-red-600" : "text-gray-500"}`} aria-live="polite">
-                    {normalizedChecklistSearch ? `${checklistSearchResults.length} match${checklistSearchResults.length === 1 ? "" : "es"}` : "Find items"}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 sm:shrink-0">
+                  <span className={`w-full sm:w-auto text-[11px] min-w-[72px] text-center ${normalizedChecklistSearch && checklistSearchResults.length === 0 ? "text-red-600" : "text-gray-500"}`} aria-live="polite">
+                    {normalizedChecklistSearch
+                      ? checklistSearchResults.length > 0 && checklistSearchIndex >= 0
+                        ? `${checklistSearchIndex + 1} of ${checklistSearchResults.length}`
+                        : `${checklistSearchResults.length} match${checklistSearchResults.length === 1 ? "" : "es"}`
+                      : "Find items"}
                   </span>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs" disabled={checklistSearchResults.length === 0} onClick={() => navigateChecklistSearch(-1)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-11 sm:h-8 px-3 sm:px-2 text-xs flex-1 sm:flex-none"
+                    disabled={checklistSearchResults.length === 0}
+                    onClick={() => navigateChecklistSearch(-1)}
+                    aria-label="Go to previous checklist search match"
+                  >
                     Previous
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs" disabled={checklistSearchResults.length === 0} onClick={() => navigateChecklistSearch(1)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-11 sm:h-8 px-3 sm:px-2 text-xs flex-1 sm:flex-none"
+                    disabled={checklistSearchResults.length === 0}
+                    onClick={() => navigateChecklistSearch(1)}
+                    aria-label="Go to next checklist search match"
+                  >
                     Next
                   </Button>
                 </div>
