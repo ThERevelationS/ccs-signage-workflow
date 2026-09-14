@@ -141,7 +141,7 @@ export default function PermitSpreadsheetRow({
         {isRegistered && onDeleteLine && (
           <button
             onClick={() => setConfirmDeleteOpen(true)}
-            className="p-0.5 hover:bg-red-50 rounded opacity-0 group-hover/line:opacity-100 transition-opacity flex-shrink-0"
+            className="p-1.5 sm:p-0.5 hover:bg-red-50 rounded opacity-100 sm:opacity-0 sm:group-hover/line:opacity-100 transition-opacity flex-shrink-0"
             title="Delete this line"
           >
             <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
