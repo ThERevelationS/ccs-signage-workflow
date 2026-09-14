@@ -121,7 +121,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
           <button
             type="button"
             onClick={() => onCommit(today)}
-            className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-900"
+            className="inline-flex min-h-7 items-center rounded px-2 text-[10px] font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-900"
             title={`Set ${label.toLowerCase()} to today (${formatDate(today)})`}
           >
             Today
