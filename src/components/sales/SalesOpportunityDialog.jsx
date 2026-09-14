@@ -115,6 +115,7 @@ export default function SalesOpportunityDialog({
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -155,6 +156,8 @@ export default function SalesOpportunityDialog({
   const attentionItems = getActionableSalesAttentionItems(workOrder);
   const attentionKeys = new Set(allAttentionItems.map((item) => item.key));
   const recordClassification = getSalesRecordClassification(workOrder);
+  const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
+  const placeholderReason = getSalesPlaceholderReason(workOrder);
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -175,6 +178,7 @@ export default function SalesOpportunityDialog({
     : null;
 
   return (
+    <>
     <Dialog open onOpenChange={(open) => !open && onClose?.()}>
       <DialogContent className="max-h-[94vh] w-[96vw] max-w-5xl overflow-y-auto p-0">
         <DialogHeader className="border-b bg-slate-50 px-5 py-4 sm:px-6">
