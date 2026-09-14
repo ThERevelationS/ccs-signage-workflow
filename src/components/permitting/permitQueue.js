@@ -426,6 +426,23 @@ export function getPermitGroupQueueState(group, today) {
     };
   }
 
+  const setupLine = openLines.find((line) => !String(line?.locality_id || line?.locality_name || "").trim() || !Array.isArray(line?.steps) || line.steps.length === 0);
+  if (setupLine) {
+    const missingLocality = !String(setupLine?.locality_id || setupLine?.locality_name || "").trim();
+    const missingWorkflow = !Array.isArray(setupLine?.steps) || setupLine.steps.length === 0;
+    return {
+      key: "needs_setup",
+      nextAction: missingLocality && missingWorkflow
+        ? `Select the locality and workflow for ${lineLabel(setupLine)}.`
+        : missingLocality
+          ? `Select the locality for ${lineLabel(setupLine)}.`
+          : `Configure the permit workflow steps for ${lineLabel(setupLine)}.`,
+      followupDate: "",
+      timingLabel: "Setup needed",
+      urgencyDays: null,
+    };
+  }
+
   const feeDueLine = openLines.find((line) => String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due");
   if (feeDueLine) {
     return {
@@ -513,6 +530,17 @@ export function getPermitGroupQueueState(group, today) {
     };
   }
 
+  const receivedButOpenLine = openLines.find((line) => asDateKey(line?.permit_received_date));
+  if (receivedButOpenLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Review the issued permit for ${lineLabel(receivedButOpenLine)} and mark the workflow line complete when its recorded obligations are finished.`,
+      followupDate: "",
+      timingLabel: "Permit received",
+      urgencyDays: null,
+    };
+  }
+
   const followups = openLines
     .map((line) => ({ line, date: asDateKey(line?.next_followup_date) }))
     .filter((row) => row.date)
@@ -556,13 +584,19 @@ export function getPermitGroupQueueState(group, today) {
   if (lineWithoutFutureFollowup) {
     const correctionStatus = String(lineWithoutFutureFollowup?.correction_status || "").trim().toLowerCase();
     const nextStep = firstIncompleteStep(lineWithoutFutureFollowup);
+    const hasApproval = !!asDateKey(lineWithoutFutureFollowup?.approval_date);
+    const hasSubmission = !!asDateKey(lineWithoutFutureFollowup?.submitted_date);
     return {
       key: "needs_action",
       nextAction: correctionStatus === "resubmitted"
         ? `Schedule or complete the next follow-up for the resubmitted ${lineLabel(lineWithoutFutureFollowup)} permit.`
-        : nextStep?.name
-          ? `${nextStep.name} — ${lineLabel(lineWithoutFutureFollowup)}`
-          : `Continue the ${lineLabel(lineWithoutFutureFollowup)} workflow.`,
+        : hasApproval
+          ? `Record the issued permit when received, or schedule the next follow-up for ${lineLabel(lineWithoutFutureFollowup)}.`
+          : hasSubmission
+            ? `Schedule the next follow-up for the submitted ${lineLabel(lineWithoutFutureFollowup)} permit.`
+            : nextStep?.name
+              ? `${nextStep.name} — ${lineLabel(lineWithoutFutureFollowup)}`
+              : `Continue the ${lineLabel(lineWithoutFutureFollowup)} workflow.`,
       followupDate: "",
       timingLabel: "Needs next action",
       urgencyDays: null,
