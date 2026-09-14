@@ -1838,6 +1838,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters]);
 
   const filteredWorkOrders = sortedWorkOrders;
+  const filteredWorkOrdersRef = useRef(filteredWorkOrders);
+
+  useEffect(() => {
+    filteredWorkOrdersRef.current = filteredWorkOrders;
+  }, [filteredWorkOrders]);
 
   useEffect(() => {
     if (!selectedWorkOrder?.id) {
@@ -1879,6 +1884,70 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     selectedQueueIndexRef.current = targetIndex;
     setSelectedWorkOrder(filteredWorkOrders[targetIndex]);
     setShowFullWorkOrderDetails(false);
+  };
+
+  const waitForPendingSalesSave = async (orderId) => {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      if (!pendingChangesRef.current[orderId] && !debounceTimers.current[orderId]) return;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error("This opportunity still has a Sales quick edit waiting to save. Resolve the save warning or reload latest before removing it from Current Pipeline.");
+  };
+
+  const removeFromCurrentPipeline = async (workOrder, { advance = false } = {}) => {
+    if (!isRegistered || !workOrder?.id || workOrder.in_pipeline !== true) {
+      return { ok: false, message: "This opportunity is not eligible for Current Pipeline removal." };
+    }
+    setQuickEditError("");
+    try {
+      await waitForPendingSalesSave(workOrder.id);
+      const latest = await WorkOrder.get(workOrder.id);
+      if (!latest?.id) throw new Error("The WorkOrder could not be reloaded before cleanup.");
+      if (latest.in_pipeline !== true) {
+        setWorkOrders((current) => current.map((row) => row.id === latest.id ? { ...row, ...latest } : row));
+        setSelectedWorkOrder((selected) => selected?.id === latest.id ? { ...selected, ...latest } : selected);
+        return { ok: true, alreadyRemoved: true };
+      }
+
+      const queueBeforeRemoval = filteredWorkOrdersRef.current;
+      const queueIndex = queueBeforeRemoval.findIndex((row) => row.id === workOrder.id);
+      const nextOpportunity = advance && queueIndex >= 0 ? queueBeforeRemoval[queueIndex + 1] || null : null;
+      const activityStamp = new Date().toISOString();
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: latest.id,
+        expectedFields: {
+          in_pipeline: latest.in_pipeline,
+          sales_last_activity_at: latest.sales_last_activity_at,
+        },
+        nextFields: {
+          in_pipeline: false,
+          sales_last_activity_at: activityStamp,
+        },
+        label: "Sales Pipeline membership removal",
+      });
+
+      await trackChange(latest.id, "in_pipeline", latest.in_pipeline, saved.in_pipeline);
+      setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
+      if (advance) {
+        if (nextOpportunity) {
+          selectedQueueIndexRef.current = queueIndex;
+          setSelectedWorkOrder(nextOpportunity);
+          setShowFullWorkOrderDetails(false);
+        } else {
+          selectedQueueIndexRef.current = null;
+          setSelectedWorkOrder(null);
+          setShowFullWorkOrderDetails(false);
+        }
+      } else {
+        setSelectedWorkOrder((selected) => selected?.id === saved.id ? { ...selected, ...saved } : selected);
+      }
+      return { ok: true };
+    } catch (error) {
+      console.error("Could not remove Sales Pipeline membership safely:", error);
+      const message = error?.message || "This opportunity could not be removed from Current Pipeline safely.";
+      setQuickEditError(message);
+      return { ok: false, message };
+    }
   };
 
   // Virtual scrolling setup
@@ -1996,6 +2065,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           isRegistered={isRegistered}
           onClose={() => setSelectedWorkOrder(null)}
           onUpdateFields={updateWorkOrderFields}
+          onRemoveFromCurrentPipeline={removeFromCurrentPipeline}
           onRequestStatusChange={requestSalesStatusChange}
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
