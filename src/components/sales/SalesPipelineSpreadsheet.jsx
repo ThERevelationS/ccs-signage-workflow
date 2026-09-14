@@ -257,9 +257,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setShowFullWorkOrderDetails(false);
     archiveSkipRef.current = 0;
     setArchiveHasMore(false);
+    setArchiveLoadingMore(false);
     loadWorkOrders(true, recordScope);
-    const interval = setInterval(() => loadWorkOrders(false, recordScope), 60000);
-    return () => clearInterval(interval);
+    const interval = ["current", "outcomes"].includes(recordScope)
+      ? setInterval(() => loadWorkOrders(false, recordScope), 60000)
+      : null;
+    return () => interval && clearInterval(interval);
   }, [recordScope]);
 
   const loadTaskAssignmentRules = async () => {
@@ -451,18 +454,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const loadMoreArchive = async () => {
     if (archiveLoadingMore || !archiveHasMore || !["history", "all"].includes(recordScope)) return;
     const scopeAtStart = recordScope;
+    const requestId = loadRequestRef.current;
     setArchiveLoadingMore(true);
     try {
       const query = scopeAtStart === "history" ? LEGACY_CLOSED_QUERY : ALL_RECORDS_ACTIVE_QUERY;
       const page = await readArchivePage(query, archiveSkipRef.current);
-      if (recordScope !== scopeAtStart) return;
+      if (requestId !== loadRequestRef.current) return;
       archiveSkipRef.current += page.length;
       setArchiveHasMore(page.length === ARCHIVE_PAGE_SIZE);
       setWorkOrders((current) => mergeLoadedRows([...current, ...page]));
     } catch (error) {
-      console.error("Error loading older Sales Pipeline archive rows:", error);
+      if (requestId === loadRequestRef.current) console.error("Error loading older Sales Pipeline archive rows:", error);
     } finally {
-      if (recordScope === scopeAtStart) setArchiveLoadingMore(false);
+      if (requestId === loadRequestRef.current) setArchiveLoadingMore(false);
     }
   };
 
