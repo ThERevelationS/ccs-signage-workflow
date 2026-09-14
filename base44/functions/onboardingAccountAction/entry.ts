@@ -61,9 +61,20 @@ Deno.serve(async (req) => {
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
 
     if (action === 'issue_invite') {
-      const secret = Deno.env.get('SESSION_SIGNING_SECRET') || '';
-      const actor = await verifySignedSession(String(body?.session_token || ''), secret, authorized);
-      if (!actor?.id || actor.role !== 'admin') {
+      let actor;
+      try {
+        actor = await authenticateSignShopSession(base44, body?.session_token);
+      } catch (authError) {
+        const status = Number(authError?.status || 401);
+        const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+        const error = safeStatus === 503
+          ? 'Session authentication is unavailable'
+          : safeStatus === 409
+            ? 'Admin authentication could not be verified'
+            : 'Admin authentication required';
+        return Response.json({ success: false, error }, { status: safeStatus });
+      }
+      if (actor?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin authentication required' }, { status: 403 });
       }
       const targetEmail = String(body?.target_email || '').trim().toLowerCase();
