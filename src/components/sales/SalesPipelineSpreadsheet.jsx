@@ -1947,6 +1947,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     </div>
   ) : null;
 
+  const archivePagingNotice = archiveHasMore && ["history", "all"].includes(recordScope) ? (
+    <div className="mx-2 mb-2 flex flex-col gap-2 rounded-md border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-700 sm:flex-row sm:items-center sm:justify-between">
+      <span>
+        {recordScope === "history"
+          ? `Showing the newest ${archiveSkipRef.current.toLocaleString()} legacy Sales history records. Older history is available on demand.`
+          : `Showing the newest ${archiveSkipRef.current.toLocaleString()} active inspection records plus authoritative modern outcomes. Older active records are available on demand.`}
+      </span>
+      <Button type="button" size="sm" variant="outline" className="h-8 shrink-0 bg-white" onClick={loadMoreArchive} disabled={archiveLoadingMore}>
+        {archiveLoadingMore ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Loading older…</> : "Load older records"}
+      </Button>
+    </div>
+  ) : null;
+
   const refreshSelectedWorkOrder = async () => {
     if (!selectedWorkOrder?.id) return;
     try {
