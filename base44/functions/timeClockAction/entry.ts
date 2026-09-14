@@ -938,6 +938,8 @@ Deno.serve(async (req) => {
         const currentLaborStatus = laborStatusOf(state);
         const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
         const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        const safeActiveBreak = activeBreak?.id && asEmail(activeBreak.user_email) === target.email && activeBreak.time_entry_id === entry.id ? activeBreak : null;
+        const safeActiveWorkPause = activeWorkPause?.id && asEmail(activeWorkPause.user_email) === target.email && activeWorkPause.time_entry_id === entry.id ? activeWorkPause : null;
         const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
         const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
         const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
@@ -963,11 +965,11 @@ Deno.serve(async (req) => {
           return Response.json({
             success: true, status: 'clocked_in', entry, user: publicEmployee(target),
             ...shiftSubtransition,
-            break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
+            break_status: currentBreakStatus, active_break: safeActiveBreak, break_summary: breakSummary,
             work_pause_allowed: target.can_work_pause === true,
             employment_type: target.employment_type || 'hourly',
             work_pause_status: currentWorkPauseStatus,
-            active_work_pause: activeWorkPause || null,
+            active_work_pause: safeActiveWorkPause,
             work_pause_summary: workPauseSummary,
             labor_status: currentLaborStatus,
             active_labor: null,
