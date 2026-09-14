@@ -842,10 +842,10 @@ async function ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEm
   }, 'Current Work stop audit');
 }
 
-async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target, actor, actorEmail, requestId, endReason, officialEnd }: any) {
+async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target, actor, actorEmail, requestId, endReason, officialEnd, deferAudit = false }: any) {
   const prior = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-end request');
   if (prior?.id && prior.status === 'completed') {
-    await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason: endReason || prior.end_reason, segment: prior });
+    if (!deferAudit) await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason: endReason || prior.end_reason, segment: prior });
     return prior;
   }
   let active = await activeLaborForEntry(laborEntity, entry.id, target.email);
@@ -866,7 +866,7 @@ async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target
   } else {
     active = await laborEntity.get(active.id);
   }
-  await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason, segment: active });
+  if (!deferAudit) await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason, segment: active });
   return active;
 }
 
