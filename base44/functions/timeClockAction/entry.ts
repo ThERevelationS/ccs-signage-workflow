@@ -780,10 +780,42 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
       }
     }
     if (entry?.id && entry.status === 'clocked_out' && String(entry.clock_out_request_id || '') === requestId) {
-      const clockOutAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+      let clockOutAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+      const statePayloadHash = String(state.last_request_payload_hash || '');
+
+      if (!clockOutAudit && statePayloadHash) {
+        const reconstructedSubmission = clockOutSubmissionForHash({
+          lunch_minutes: entry.lunch_minutes,
+          job_allocations: entry.job_allocations,
+          notes: entry.notes,
+        });
+        const reconstructedHash = await payloadHash(reconstructedSubmission);
+        if (!constantTimeEqual(statePayloadHash, reconstructedHash)) {
+          throw new Error('Stored clock-out data does not match the payload bound to the interrupted request.');
+        }
+        const recoveryAuditSaved = await audit(auditEntity, {
+          action: 'clock_out', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target),
+          server_timestamp: entry.clock_out, request_id: requestId, time_entry_id: entry.id,
+          reason: 'Recovered missing Clock Out audit from the saved authoritative TimeEntry during status recovery',
+          details: {
+            payload_hash: reconstructedHash,
+            submitted_lunch_minutes: reconstructedSubmission.lunch_minutes,
+            lunch_minutes: Number(entry.lunch_minutes || 0),
+            total_hours: Number(entry.total_hours || 0),
+            tracked_break_minutes: Number(entry.tracked_break_minutes || 0),
+            tracked_unpaid_break_minutes: Number(entry.tracked_unpaid_break_minutes || 0),
+            tracked_work_pause_minutes: Number(entry.tracked_work_pause_minutes || 0),
+            recovered_after_entry_save: true,
+            recovered_via_status: true,
+          },
+        });
+        if (recoveryAuditSaved) clockOutAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+      }
+
       const auditReady = clockOutAudit && ['confirmed', 'recovered', 'reused'].includes(String(clockOutAudit.outcome || ''));
       if (!auditReady) return state;
-      const statePayloadHash = String(state.last_request_payload_hash || '');
       const auditPayloadHash = String(clockOutAudit?.details?.payload_hash || '');
       if (statePayloadHash && auditPayloadHash && !constantTimeEqual(statePayloadHash, auditPayloadHash)) {
         throw new Error('Clock-out state and audit payload hashes do not match.');
