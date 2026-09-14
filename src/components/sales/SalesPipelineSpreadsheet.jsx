@@ -30,7 +30,7 @@ import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
-import { getSalesAttentionItems, hasSalesAttention } from "@/components/sales/salesAttention";
+import { getSalesAttentionScore, hasSalesAttention } from "@/components/sales/salesAttention";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
@@ -1280,6 +1280,17 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return directSet;
   }, [currentUser, users]);
 
+  const currentSalesOwnerLabel = useMemo(() => {
+    const currentEmail = normalizeOwnerIdentity(currentUser?.email);
+    const currentNames = [currentUser?.full_name, currentUser?.name].map(normalizeOwnerIdentity).filter(Boolean);
+    const match = users.find((user) => {
+      const userEmail = normalizeOwnerIdentity(user?.email);
+      const userName = normalizeOwnerIdentity(user?.full_name);
+      return (currentEmail && userEmail === currentEmail) || (userName && currentNames.includes(userName));
+    });
+    return String(match?.full_name || currentUser?.full_name || currentUser?.name || "").trim();
+  }, [currentUser, users]);
+
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
     const legacyClosed = isLegacyClosedRecord(wo);
     const trustedOutcome = isTrustedOutcome(wo);
@@ -1352,7 +1363,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (followUp > todayStamp && followUp <= upcomingStamp) summary.upcomingCount += 1;
       if (!followUp && !wo.current_task_deadline) summary.noNextActionCount += 1;
       else summary.nextActionCoverageCount += 1;
-      if (getSalesAttentionItems(wo, parseLocalDate(todayStamp)).length > 0) summary.needsAttentionCount += 1;
+      if (hasSalesAttention(wo, parseLocalDate(todayStamp))) summary.needsAttentionCount += 1;
       const quoteAging = getQuoteAgingState(wo, parseLocalDate(todayStamp));
       if (quoteAging.awaitingResponse) {
         summary.quoteAwaitingResponseCount += 1;
@@ -1700,7 +1711,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     }
 
-    if (!sortConfig.key) return result;
+    if (!sortConfig.key) {
+      if (attentionFilter === "needs_attention") {
+        return [...result].sort((a, b) => {
+          const scoreDiff = getSalesAttentionScore(b, parseLocalDate(todayStamp)) - getSalesAttentionScore(a, parseLocalDate(todayStamp));
+          if (scoreDiff !== 0) return scoreDiff;
+          const aValue = Number(a.quoted_amount ?? a.estimate_amount ?? 0) || 0;
+          const bValue = Number(b.quoted_amount ?? b.estimate_amount ?? 0) || 0;
+          return bValue - aValue;
+        });
+      }
+      return result;
+    }
     
     // Pre-compute sort keys for performance
     const key = sortConfig.key;
@@ -1836,6 +1858,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onRequestStatusChange={requestSalesStatusChange}
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
+          currentSalesOwnerLabel={currentSalesOwnerLabel}
         />
       )}
       {selectedWorkOrder && showFullWorkOrderDetails && (
@@ -1943,6 +1966,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onRequestStatusChange={requestSalesStatusChange}
           onCompleteFollowUp={requestFollowUpCompletion}
           isRegistered={isRegistered}
+          currentSalesOwnerLabel={currentSalesOwnerLabel}
+          leadSources={leadSources}
         />
         {renderOpportunityDialogs()}
       </>
@@ -1964,6 +1989,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             onCompleteFollowUp={requestFollowUpCompletion}
             onOpenDetails={openOpportunityDetails}
             isRegistered={isRegistered}
+            currentSalesOwnerLabel={currentSalesOwnerLabel}
+            leadSources={leadSources}
           />
         </div>
         {renderOpportunityDialogs()}
