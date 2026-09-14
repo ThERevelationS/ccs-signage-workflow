@@ -85,7 +85,7 @@ export default function FleetEquipmentDialog({ open, equipment, onClose, onSave,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-3 sm:p-4" onMouseDown={e => e.target === e.currentTarget && !saving && !uploadingPhoto && onClose()}> 
+    <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-3 sm:p-4" onMouseDown={e => e.target === e.currentTarget && !saving && !uploadingPhoto && onClose()}>
       <div role="dialog" aria-modal="true" aria-labelledby="fleet-equipment-dialog-title" className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
         <div className="sticky top-0 z-20 flex items-start justify-between gap-3 px-4 sm:px-5 py-4 border-b border-gray-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur">
           <div className="min-w-0"><h2 id="fleet-equipment-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{equipment ? "Edit Fleet Equipment" : "New Fleet Equipment"}</h2><p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-slate-400">Maintenance identity only. Bouncie is read-only and linked by exact VIN/IMEI evidence.</p></div>
