@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,54 @@ const FIELD_LABELS = {
   closeout_date: "Closeout date",
 };
 
-function displayValue(value) {
+const DATE_FIELDS = new Set([
+  "submitted_date",
+  "next_followup_date",
+  "permit_received_date",
+  "approval_date",
+  "expiration_date",
+  "jurisdiction_fee_paid_date",
+  "corrections_received_date",
+  "resubmitted_date",
+  "inspection_date",
+  "closeout_date",
+]);
+
+const STATUS_FIELDS = new Set([
+  "status",
+  "jurisdiction_fee_status",
+  "correction_status",
+  "closeout_status",
+]);
+
+function titleCaseStatus(value) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function displayValue(value, fieldName) {
   const text = String(value ?? "").trim();
   if (!text) return "—";
-  return text.replace(/_/g, " ");
+
+  if (fieldName === "jurisdiction_fee_amount") {
+    const amount = Number(text);
+    if (Number.isFinite(amount)) {
+      return amount.toLocaleString(undefined, { style: "currency", currency: "USD" });
+    }
+  }
+
+  if (DATE_FIELDS.has(fieldName)) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
+    if (match) {
+      const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+      if (!Number.isNaN(date.getTime())) return format(date, "MMM d, yyyy");
+    }
+  }
+
+  if (STATUS_FIELDS.has(fieldName)) return titleCaseStatus(text);
+  if (fieldName === "office_types") return text.split(",").map((item) => item.trim()).filter(Boolean).join(", ");
+  return text;
 }
 
 function displayTimestamp(value) {
@@ -45,14 +89,15 @@ function displayTimestamp(value) {
   return format(date, "MMM d, yyyy h:mm a");
 }
 
-export default function PermitLineHistory({ lineItemId }) {
+export default function PermitLineHistory({ lineItemId, lineUpdatedDate = "" }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const lastLoadedLineVersionRef = useRef("");
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     if (!lineItemId || loading) return;
     setLoading(true);
     setError("");
@@ -70,9 +115,17 @@ export default function PermitLineHistory({ lineItemId }) {
       setLoaded(true);
       setError(loadError?.message || "Recent permit changes could not be loaded.");
     } finally {
+      lastLoadedLineVersionRef.current = String(lineUpdatedDate || "");
       setLoading(false);
     }
-  };
+  }, [lineItemId, lineUpdatedDate, loading]);
+
+  useEffect(() => {
+    const currentVersion = String(lineUpdatedDate || "");
+    if (!open || !loaded || loading || !currentVersion) return;
+    if (currentVersion === lastLoadedLineVersionRef.current) return;
+    loadHistory();
+  }, [open, loaded, loading, lineUpdatedDate, loadHistory]);
 
   const toggle = async () => {
     const nextOpen = !open;
@@ -108,7 +161,8 @@ export default function PermitLineHistory({ lineItemId }) {
           ) : rows.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-400">No tracked permit-line changes yet. New lifecycle edits will appear here.</div>
           ) : (
-            <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+            <div>
+              <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
               {rows.map((entry) => (
                 <div key={entry.id} className="rounded-md border border-slate-100 bg-slate-50/70 px-2.5 py-2 text-[11px]">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
@@ -116,13 +170,17 @@ export default function PermitLineHistory({ lineItemId }) {
                     <span className="text-[10px] text-slate-400">{displayTimestamp(entry.created_date)}</span>
                   </div>
                   <div className="mt-0.5 break-words text-slate-600">
-                    <span className="text-slate-400 line-through">{displayValue(entry.old_value)}</span>
+                    <span className="text-slate-400 line-through">{displayValue(entry.old_value, entry.field_name)}</span>
                     <span className="mx-1.5 text-slate-400">→</span>
-                    <span className="font-medium text-slate-700">{displayValue(entry.new_value)}</span>
+                    <span className="font-medium text-slate-700">{displayValue(entry.new_value, entry.field_name)}</span>
                   </div>
                   <div className="mt-0.5 text-[10px] text-slate-400">{entry.changed_by_name || entry.changed_by_email || "Unknown user"}</div>
                 </div>
               ))}
+              </div>
+              {rows.length >= 25 && (
+                <div className="pt-2 text-center text-[10px] text-slate-400">Showing the 25 most recent tracked changes.</div>
+              )}
             </div>
           )}
         </div>
