@@ -633,6 +633,7 @@ export default function Permitting() {
       if (wo?.client_name?.toLowerCase().includes(q)) return true;
       if (wo?.description?.toLowerCase().includes(q)) return true;
       if (wo?.title?.toLowerCase().includes(q)) return true;
+      if ((wo?.files || []).some((file) => file?.name?.toLowerCase().includes(q))) return true;
       if (g.lines.some(li =>
         li.locality_name?.toLowerCase().includes(q) ||
         li.row_name?.toLowerCase().includes(q) ||
