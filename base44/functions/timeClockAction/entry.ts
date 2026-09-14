@@ -984,6 +984,21 @@ Deno.serve(async (req) => {
         work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
         active_labor: null, labor_summary: { count: 0, total_minutes: 0 },
       });
+      if (['clocking_in', 'clocking_out'].includes(state.status)) {
+        return Response.json({
+          success: true,
+          status: state.status,
+          transition: state.status === 'clocking_out' ? 'clock_out' : 'clock_in',
+          transition_started_at: state.pending_started_at || null,
+          user: publicEmployee(target),
+          entry: null,
+          break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+          work_pause_allowed: target.can_work_pause === true,
+          employment_type: target.employment_type || 'hourly',
+          work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
+          active_labor: null, labor_summary: { count: 0, total_minutes: 0 },
+        });
+      }
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
 
