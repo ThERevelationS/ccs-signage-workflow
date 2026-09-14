@@ -647,6 +647,22 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (!Array.isArray(startedRows)) throw new Error('Current Work start recovery lookup did not return a record list.');
     if (startedRows.length > 1) throw new Error('Current Work start recovery is ambiguous.');
     if (startedRows.length === 1) {
+      if (laborStatus === 'changing') {
+        const endedRows = await laborEntity.filter({ ...base, end_request_id: requestId });
+        if (!Array.isArray(endedRows)) throw new Error('Current Work change recovery lookup did not return a record list.');
+        if (endedRows.length > 1) throw new Error('Current Work change recovery is ambiguous.');
+        if (endedRows.length === 1) {
+          await ensureLaborStopAudit({
+            auditEntity, entry: { id: state.active_entry_id }, target, actor, actorEmail: asEmail(actor.email),
+            requestId, endReason: endedRows[0].end_reason || 'change_work', segment: endedRows[0],
+          });
+        }
+      }
+      await ensureLaborStartAudit({
+        auditEntity,
+        action: laborStatus === 'changing' ? 'labor_change' : 'labor_start',
+        segment: startedRows[0], target, actor, requestId, entryId: state.active_entry_id,
+      });
       const recovered = await setLaborState(stateEntity, state, laborStatus, requestId, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
@@ -671,6 +687,17 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     }
 
     if (startedRows.length === 0 && ageMs > 5 * 60 * 1000) {
+      if (laborStatus === 'changing' && requestId) {
+        const endedRows = await laborEntity.filter({ ...base, end_request_id: requestId });
+        if (!Array.isArray(endedRows)) throw new Error('Current Work abandoned-change audit lookup did not return a record list.');
+        if (endedRows.length > 1) throw new Error('Current Work abandoned-change recovery is ambiguous.');
+        if (endedRows.length === 1) {
+          await ensureLaborStopAudit({
+            auditEntity, entry: { id: state.active_entry_id }, target, actor, actorEmail: asEmail(actor.email),
+            requestId, endReason: endedRows[0].end_reason || 'change_work', segment: endedRows[0],
+          });
+        }
+      }
       const rolledBack = await setLaborState(stateEntity, state, laborStatus, requestId || null, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
@@ -694,6 +721,10 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (!Array.isArray(endedRows)) throw new Error('Current Work stop recovery lookup did not return a record list.');
     if (endedRows.length > 1) throw new Error('Current Work stop recovery is ambiguous.');
     if (endedRows.length === 1 && endedRows[0]?.status === 'completed') {
+      await ensureLaborStopAudit({
+        auditEntity, entry: { id: state.active_entry_id }, target, actor, actorEmail: asEmail(actor.email),
+        requestId, endReason: endedRows[0].end_reason || 'manual_stop', segment: endedRows[0],
+      });
       const recovered = await setLaborState(stateEntity, state, 'stopping', requestId, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
