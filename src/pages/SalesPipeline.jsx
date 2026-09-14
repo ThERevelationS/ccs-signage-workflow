@@ -447,7 +447,7 @@ export default function SalesPipeline() {
                       <div className="text-[10px] leading-tight text-rose-700">{pipelineSummary.placeholderCount}/{pipelineSummary.openCount} exact-name test placeholders (Test/asdf) · {formatPipelineValue(pipelineSummary.placeholderValue)} of {formatPipelineValue(pipelineSummary.openValue)} raw pipeline</div>
                     </div>
                   </div>
-                  <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review likely test records ({pipelineSummary.placeholderCount})</button>
+                  <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-semibold leading-none transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review test records ({pipelineSummary.placeholderCount})</button>
                 </div>
               </div>
             )}
