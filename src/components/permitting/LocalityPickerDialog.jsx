@@ -170,7 +170,7 @@ export default function LocalityPickerDialog({
 
         {/* Address search bar */}
         <div className="flex gap-2 items-end flex-wrap">
-          <div className="flex-1 min-w-[280px]">
+          <div className="flex-1 min-w-0 w-full sm:min-w-[280px]">
             <Label className="text-xs">Address (AI will identify the locality, zoning, and parcel info)</Label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
