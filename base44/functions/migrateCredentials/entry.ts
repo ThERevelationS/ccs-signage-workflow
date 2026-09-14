@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   try {
