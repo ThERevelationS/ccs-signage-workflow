@@ -237,6 +237,35 @@ async function audit(auditEntity: any, data: any) {
   }
 }
 
+async function ensureActionAudit(auditEntity: any, data: any, label = 'Time Clock action audit') {
+  const action = String(data?.action || '').trim();
+  const requestId = String(data?.request_id || '').trim();
+  const entryId = String(data?.time_entry_id || '').trim();
+  if (!action || !requestId || !entryId) throw new Error(`${label} is missing its action, request id, or TimeEntry id.`);
+
+  const query = { action, request_id: requestId, time_entry_id: entryId };
+  let existing = await uniqueRow(auditEntity, query, label);
+  if (existing?.id) {
+    if (asEmail(existing.user_email) !== asEmail(data.user_email)) {
+      throw new Error(`${label} belongs to a different employee.`);
+    }
+    return { audit: existing, reused: true };
+  }
+
+  try {
+    const created = await auditEntity.create(data);
+    if (created?.id) return { audit: created, reused: false };
+  } catch (error) {
+    console.error(`${label} write failed; checking for a concurrent confirmed audit:`, error?.message || error);
+  }
+
+  existing = await uniqueRow(auditEntity, query, label);
+  if (existing?.id && asEmail(existing.user_email) === asEmail(data.user_email)) {
+    return { audit: existing, reused: true };
+  }
+  throw new Error(`${label} could not be persisted. The action remains in a recoverable transition state.`);
+}
+
 async function clockOutAuditForRequest(auditEntity: any, requestId: string, entryId: string) {
   return uniqueRow(auditEntity, { action: 'clock_out', request_id: requestId, time_entry_id: entryId }, 'Clock-out audit request');
 }
