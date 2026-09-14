@@ -28,6 +28,7 @@ import { applyRules } from "@/components/admin/TaskAssignmentRules";
 import SalesPipelineMobileCards from "@/components/sales/SalesPipelineMobileCards";
 import SalesPipelineKanban from "@/components/sales/SalesPipelineKanban";
 import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
+import SalesDailyQueue from "@/components/sales/SalesDailyQueue";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
 import { getSalesAttentionScore, hasSalesAttention } from "@/components/sales/salesAttention";
@@ -2180,6 +2181,27 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {archivePagingNotice}
         <div className="min-h-0 flex-1">
           <SalesPipelineInsights summary={pipelineSummary} />
+        </div>
+        {renderOpportunityDialogs()}
+      </div>
+    );
+  }
+
+  if (viewMode === "daily" && recordScope === "current") {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {quickEditWarning}
+        {destructiveActionWarning}
+        {globalSettingsWarning}
+        <div className="min-h-0 flex-1">
+          <SalesDailyQueue
+            workOrders={filteredWorkOrders}
+            onOpenDetails={openOpportunityDetails}
+            onUpdateWorkOrder={updateWorkOrder}
+            onCompleteFollowUp={requestFollowUpCompletion}
+            isRegistered={isRegistered}
+            currentSalesOwnerLabel={currentSalesOwnerLabel}
+          />
         </div>
         {renderOpportunityDialogs()}
       </div>
