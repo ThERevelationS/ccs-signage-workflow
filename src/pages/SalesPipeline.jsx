@@ -376,11 +376,13 @@ export default function SalesPipeline() {
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
                 <div className="mt-1 text-2xl font-bold text-slate-900">{pipelineSummary.openCount}</div>
                 <div className="mt-1 text-xs text-slate-500">{Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} not flagged as test · {pipelineSummary.placeholderCount} flagged test</div>
+                <div className="mt-0.5 text-[11px] text-slate-400">{pipelineSummary.assignedOwnerCount} owned · {pipelineSummary.unassignedOwnerCount} unassigned</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Open Pipeline Value</div>
                 <div className="mt-1 text-2xl font-bold text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</div>
                 <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} not flagged · {formatPipelineValue(pipelineSummary.placeholderValue)} flagged test</div>
+                <div className="mt-0.5 text-[11px] text-emerald-600/70">Quoted value when available, otherwise estimate</div>
               </button>
               <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-sky-700">Weighted Pipeline</div>
