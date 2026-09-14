@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Trash2, Clock, Coffee, Briefcase, Home, FileText, Loader2, Pause } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,6 +77,7 @@ export default function ClockOutDialog({
   const [laborPreview, setLaborPreview] = useState(null);
   const [laborPreviewBusy, setLaborPreviewBusy] = useState(false);
   const [laborPreviewError, setLaborPreviewError] = useState("");
+  const [allocationsReviewed, setAllocationsReviewed] = useState(false);
   const allocationEditedRef = useRef(false);
   const previewAppliedRef = useRef(false);
 
@@ -84,14 +86,16 @@ export default function ClockOutDialog({
   const clockInTime = timeEntry ? new Date(timeEntry.clock_in) : new Date();
   const clockOutTime = displayNow;
   const totalMinutesWorked = Math.floor((clockOutTime - clockInTime) / (1000 * 60));
-  const trackedUnpaidMinutes = Math.max(0, Number(breakSummary?.unpaid_minutes || 0));
+  const hasServerReconciliation = Boolean(laborPreview) && Number.isFinite(Number(laborPreview?.elapsed_minutes));
+  const trackedUnpaidMinutes = Math.max(0, Number(hasServerReconciliation ? laborPreview?.tracked_unpaid_minutes : breakSummary?.unpaid_minutes) || 0);
   const trackedPaidMinutes = Math.max(0, Number(breakSummary?.paid_minutes || 0));
   const trackedBreakMinutes = Math.max(0, Number(breakSummary?.total_minutes || 0));
   const hasTrackedUnpaid = trackedUnpaidMinutes > 0;
   const manualLunchMins = lunchMinutes === "" ? 0 : parseInt(lunchMinutes) || 0;
   const lunchMins = hasTrackedUnpaid ? trackedUnpaidMinutes : manualLunchMins;
-  const trackedWorkPauseMinutes = Math.max(0, Number(workPauseSummary?.total_minutes || 0));
-  const workableMinutes = totalMinutesWorked - lunchMins - trackedWorkPauseMinutes;
+  const trackedWorkPauseMinutes = Math.max(0, Number(hasServerReconciliation ? laborPreview?.work_pause_minutes : workPauseSummary?.total_minutes) || 0);
+  const reconciliationElapsedMinutes = hasServerReconciliation ? Math.max(0, Number(laborPreview.elapsed_minutes)) : totalMinutesWorked;
+  const workableMinutes = reconciliationElapsedMinutes - lunchMins - trackedWorkPauseMinutes;
   const workableHours = Math.max(0, workableMinutes / 60);
   const onBreak = breakStatus === "on_break";
   const activeBreakMinutes = activeBreak?.started_at
