@@ -85,6 +85,26 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when an in-progress work-pause transition began"
+    },
+    "labor_status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "starting",
+        "changing",
+        "stopping"
+      ],
+      "default": "idle",
+      "description": "Authoritative Current Work transition lock used to serialize labor changes with punches, breaks, and Work Pause"
+    },
+    "last_labor_request_id": {
+      "type": "string",
+      "description": "Client request id of the last confirmed or in-progress Current Work action"
+    },
+    "labor_pending_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp captured when an in-progress Current Work transition began"
     }
   },
   "required": [
