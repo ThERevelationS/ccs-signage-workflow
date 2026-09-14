@@ -100,6 +100,17 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         )}
       </div>
 
+      {(lineItem.submitted_date || lineItem.permit_received_date) && (
+        <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-600">
+          {lineItem.submitted_date && (
+            <span><span className="font-semibold">Submitted:</span> {formatDate(lineItem.submitted_date)}</span>
+          )}
+          {lineItem.permit_received_date && (
+            <span><span className="font-semibold">Issued / received:</span> {formatDate(lineItem.permit_received_date)}</span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <CommitTextField
           label="Application / Reference #"
