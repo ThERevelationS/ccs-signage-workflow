@@ -592,7 +592,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
         processed++;
       } catch (emailError) {
         console.error(`Error processing email ${msg.id}:`, emailError);
-        results.push({ action: 'error', messageId: msg.id, error: emailError.message });
+        results.push({ action: 'error', messageId: msg.id, error: 'CoreBridge email could not be processed safely' });
         // Mark the failing email as read so it doesn't block future runs.
         // Without this, a single bad email (e.g. AI timeout) gets retried every
         // 10 minutes and eventually causes the whole isolate to time out → 502.
@@ -620,7 +620,7 @@ ${aiPromptExtra ? `\nAdditional instructions:\n${aiPromptExtra}` : ''}`;
   } catch (error) {
     console.error('processCorebridgeEmails error:', error?.message || error);
     logData.status = 'error';
-    logData.error_message = error?.message || 'Unknown processing error';
+    logData.error_message = 'CoreBridge email processing could not be completed safely';
     await writeRunLogBestEffort(logData);
     return Response.json({ error: 'CoreBridge email processing could not be completed safely' }, { status: 500 });
   }
