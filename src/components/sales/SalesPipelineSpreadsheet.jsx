@@ -154,6 +154,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [workOrders, setWorkOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [archiveHasMore, setArchiveHasMore] = useState(false);
+  const [archiveLoadingMore, setArchiveLoadingMore] = useState(false);
+  const archiveSkipRef = useRef(0);
+  const loadRequestRef = useRef(0);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const selectedQueueIndexRef = useRef(null);
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
@@ -245,11 +249,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   useEffect(() => {
     loadGlobalSettings();
-    loadWorkOrders();
     loadTaskAssignmentRules();
-    const interval = setInterval(() => loadWorkOrders(false), 60000); // Reduced frequency
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setSelectedWorkOrder(null);
+    setShowFullWorkOrderDetails(false);
+    archiveSkipRef.current = 0;
+    setArchiveHasMore(false);
+    loadWorkOrders(true, recordScope);
+    const interval = setInterval(() => loadWorkOrders(false, recordScope), 60000);
+    return () => clearInterval(interval);
+  }, [recordScope]);
 
   const loadTaskAssignmentRules = async () => {
     try {
