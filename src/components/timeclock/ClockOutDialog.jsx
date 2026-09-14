@@ -323,7 +323,7 @@ export default function ClockOutDialog({
     try {
       await onClockOut({
         lunchMinutes: lunchMins,
-        jobAllocations,
+        jobAllocations: jobAllocations.map(({ suggested_from_current_work: _suggested, ...allocation }) => allocation),
         totalHours: Math.max(0, finalWorkableMinutes / 60),
         clockOutTime: finalClockOutTime.toISOString(),
         notes: notes.trim(),
