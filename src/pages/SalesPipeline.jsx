@@ -405,7 +405,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-violet-900">{pipelineSummary.nextActionCoverageCount}/{pipelineSummary.openCount}</div>
                 <div className="mt-1 text-xs text-violet-700/80">{pipelineSummary.noNextActionCount} missing follow-up or task deadline{pipelineSummary.noNextActionCount > 0 ? " · click to review" : ""}</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter("near_close")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "near_close" ? "border-cyan-400 bg-cyan-50" : "border-cyan-200 bg-white hover:border-cyan-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter("near_close")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "near_close" ? "border-cyan-400 bg-cyan-50" : "border-cyan-200 bg-white hover:border-cyan-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-cyan-700">Closing Next 14 Days</div>
                 <div className="mt-1 text-2xl font-bold text-cyan-900">{pipelineSummary.nearCloseCount}</div>
                 <div className="mt-1 text-xs text-cyan-700/80">Based on expected close date</div>
