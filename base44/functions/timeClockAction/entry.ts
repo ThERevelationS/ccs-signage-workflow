@@ -934,10 +934,47 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Stored clock state does not match the active TimeEntry. Admin review is required.' }, { status: 409 });
         }
         const currentBreakStatus = breakStatusOf(state);
-        if (['starting_break', 'ending_break'].includes(currentBreakStatus)) {
-          return Response.json({ success: false, error: 'A break action is still in progress. Retry status shortly.' }, { status: 409 });
-        }
+        const currentWorkPauseStatus = workPauseStatusOf(state);
+        const currentLaborStatus = laborStatusOf(state);
         const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
+        const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
+        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+        const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+
+        const shiftSubtransition = ['starting_break', 'ending_break'].includes(currentBreakStatus)
+          ? {
+              transition: currentBreakStatus === 'starting_break' ? 'break_start' : 'break_end',
+              transition_started_at: state.break_pending_started_at || null,
+            }
+          : ['pausing', 'resuming'].includes(currentWorkPauseStatus)
+            ? {
+                transition: currentWorkPauseStatus === 'pausing' ? 'work_pause_start' : 'work_pause_resume',
+                transition_started_at: state.work_pause_pending_started_at || null,
+              }
+            : currentLaborStatus !== 'idle'
+              ? {
+                  transition: currentLaborStatus === 'starting' ? 'labor_start' : currentLaborStatus === 'changing' ? 'labor_change' : 'labor_stop',
+                  transition_started_at: state.labor_pending_started_at || null,
+                }
+              : null;
+
+        if (shiftSubtransition) {
+          return Response.json({
+            success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+            ...shiftSubtransition,
+            break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
+            work_pause_allowed: target.can_work_pause === true,
+            employment_type: target.employment_type || 'hourly',
+            work_pause_status: currentWorkPauseStatus,
+            active_work_pause: activeWorkPause || null,
+            work_pause_summary: workPauseSummary,
+            labor_status: currentLaborStatus,
+            active_labor: null,
+            labor_summary: laborSummary,
+          });
+        }
+
         if (currentBreakStatus === 'on_break') {
           if (!activeBreak?.id || activeBreak.status !== 'active' || asEmail(activeBreak.user_email) !== target.email || activeBreak.time_entry_id !== entry.id) {
             return Response.json({ success: false, error: 'Stored break state does not match the active break record. Admin review is required.' }, { status: 409 });
@@ -945,12 +982,6 @@ Deno.serve(async (req) => {
         } else if (state.active_break_id || activeBreak?.id) {
           return Response.json({ success: false, error: 'Stored break state contains an unexpected active break. Admin review is required.' }, { status: 409 });
         }
-        const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
-        const currentWorkPauseStatus = workPauseStatusOf(state);
-        if (['pausing', 'resuming'].includes(currentWorkPauseStatus)) {
-          return Response.json({ success: false, error: 'A Work Pause action is still in progress. Retry status shortly.' }, { status: 409 });
-        }
-        const activeWorkPause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
         if (currentWorkPauseStatus === 'paused') {
           if (!activeWorkPause?.id || activeWorkPause.status !== 'active' || asEmail(activeWorkPause.user_email) !== target.email || activeWorkPause.time_entry_id !== entry.id) {
             return Response.json({ success: false, error: 'Stored Work Pause state does not match the active pause record. Admin review is required.' }, { status: 409 });
@@ -958,12 +989,7 @@ Deno.serve(async (req) => {
         } else if (state.active_work_pause_id || activeWorkPause?.id) {
           return Response.json({ success: false, error: 'Stored Work Pause state contains an unexpected active pause. Admin review is required.' }, { status: 409 });
         }
-        const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
-        if (laborStatusOf(state) !== 'idle') {
-          return Response.json({ success: false, error: 'A Current Work action is still in progress. Retry status shortly.' }, { status: 409 });
-        }
         const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
-        const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
