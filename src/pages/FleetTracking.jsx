@@ -413,6 +413,11 @@ export default function FleetTracking() {
   // Connected — dispatch-style tracking dashboard. Bouncie continues to own
   // tracking/telemetry; FleetEquipment linkage remains fail-closed above.
   const selectedNotifications = notifications.filter(note => selectedNotificationVins.includes(normalizeVin(note.vehicle_vin)));
+  const handleSelectTrip = (trip) => {
+    const deselecting = selectedTrip?.transactionId === trip.transactionId;
+    setSelectedTrip(deselecting ? null : trip);
+    if (!deselecting && window.matchMedia?.("(max-width: 1023px)")?.matches) setMobileSheetState("peek");
+  };
   const vehiclePanelProps = {
     vehicle: selectedVehicle,
     fleetEquipment: selectedFleetEquipment,
@@ -424,7 +429,7 @@ export default function FleetTracking() {
     trips,
     tripsLoading,
     selectedTripId: selectedTrip?.transactionId,
-    onSelectTrip: (trip) => setSelectedTrip(prev => prev?.transactionId === trip.transactionId ? null : trip),
+    onSelectTrip: handleSelectTrip,
     notifications: selectedNotifications,
     onClearNotifications: handleClearNotifications,
     onMarkNotificationRead: handleMarkRead,
@@ -489,7 +494,7 @@ export default function FleetTracking() {
 
           {/* Mobile/tablet selected vehicle details use a map-first bottom sheet. */}
           <div className="lg:hidden">
-            {panelOpen && selectedVehicle && <MobileVehicleSheet vehicle={selectedVehicle} state={mobileSheetState} setState={setMobileSheetState} onClose={() => setPanelOpen(false)}>
+            {panelOpen && selectedVehicle && <MobileVehicleSheet vehicle={selectedVehicle} selectedTrip={selectedTrip} state={mobileSheetState} setState={setMobileSheetState} onClose={() => setPanelOpen(false)}>
               <VehiclePanel {...vehiclePanelProps} embedded />
             </MobileVehicleSheet>}
           </div>
@@ -514,7 +519,7 @@ export default function FleetTracking() {
   );
 }
 
-function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
+function MobileVehicleSheet({ vehicle, selectedTrip, state, setState, onClose, children }) {
   const dragStartRef = useRef(null);
   const states = ["peek", "mid", "full"];
   const stateIndex = Math.max(0, states.indexOf(state));
@@ -525,6 +530,7 @@ function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
   const driving = !!stats.isRunning || (speed != null && speed > 0);
   const name = vehicle?.nickName || vehicle?.model?.name || vehicle?.vin || "Vehicle";
   const address = stats.location?.address || "Live Bouncie location";
+  const peekDetail = selectedTrip ? "Trip route shown on map · tap to reopen details" : address;
   const height = state === "peek" ? "112px" : state === "full" ? "calc(100% - 58px)" : "min(56dvh, 560px)";
 
   const onPointerDown = event => {
@@ -546,7 +552,7 @@ function MobileVehicleSheet({ vehicle, state, setState, onClose, children }) {
         {state === "peek" ? <div className="px-3 pb-3 flex items-center gap-3">
           <button type="button" onClick={() => setState("mid")} className="min-w-0 flex-1 text-left flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
             <span className={`w-3 h-3 rounded-full shrink-0 ${driving ? "bg-emerald-500" : "bg-blue-500"}`} />
-            <span className="min-w-0 flex-1"><span className="block font-bold text-gray-900 dark:text-slate-100 truncate">{name}</span><span className="block text-[11px] text-gray-500 dark:text-slate-400 truncate">{address}</span></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold text-gray-900 dark:text-slate-100 truncate">{name}</span><span className={`block text-[11px] truncate ${selectedTrip ? "font-medium text-indigo-600 dark:text-indigo-300" : "text-gray-500 dark:text-slate-400"}`}>{peekDetail}</span></span>
             <span className="shrink-0 text-right"><span className="block text-sm font-bold text-gray-900 dark:text-slate-100">{speed == null ? "—" : `${speed} mph`}</span><span className="block text-[10px] text-gray-400">{stats.odometer == null ? "Mileage —" : `${Math.round(Number(stats.odometer)).toLocaleString()} mi`}</span></span>
           </button>
           <button type="button" onClick={() => setState("mid")} className="min-h-11 min-w-11 rounded-xl border border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300" aria-label="Expand vehicle details"><ChevronUp className="w-5 h-5 mx-auto" /></button>
