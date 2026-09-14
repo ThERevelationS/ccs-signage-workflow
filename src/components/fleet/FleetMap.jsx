@@ -32,6 +32,7 @@ const DEFAULT_PREFS = {
 };
 
 const googleMaps = () => /** @type {any} */ (window).google?.maps;
+const normalizeVin = (value) => String(value || "").trim().toUpperCase();
 
 function loadPreferences() {
   try {
@@ -109,7 +110,10 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
     try { window.localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch {}
   }, [prefs]);
 
-  const selectedVehicle = useMemo(() => vehicles.find(v => v.vin === selectedVin) || null, [vehicles, selectedVin]);
+  const selectedVehicle = useMemo(() => {
+    const targetVin = normalizeVin(selectedVin);
+    return vehicles.find(v => normalizeVin(v.vin) === targetVin) || null;
+  }, [vehicles, selectedVin]);
   const selectedLocation = useMemo(() => vehicleLocation(selectedVehicle), [selectedVehicle]);
 
   const fitFleet = useCallback(() => {
@@ -241,7 +245,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
     vehicles.forEach((vehicle) => {
       const pos = vehicleLocation(vehicle);
       if (!pos) return;
-      const selected = vehicle.vin === selectedVin;
+      const selected = normalizeVin(vehicle.vin) === normalizeVin(selectedVin);
       const marker = new maps.Marker({
         position: pos,
         map: mapRef.current,
@@ -307,11 +311,12 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-lg shadow-md px-3 py-2 border border-gray-200 dark:border-slate-700">
           <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <input type="text" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} placeholder="City, neighborhood, ZIP, address" className="flex-1 min-w-0 outline-none text-sm text-gray-700 dark:text-slate-200 bg-transparent" />
-          <button type="button" onClick={() => setLayersOpen(value => !value)} className={`min-h-10 min-w-10 p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${layersOpen ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300" : "text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"}`} title="Map layers and settings" aria-label="Map layers and settings" aria-expanded={layersOpen}><Layers className="w-4 h-4 mx-auto" /></button>
+          <button type="submit" className="min-h-11 px-2.5 rounded-md text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" aria-label="Search map">Go</button>
+          <button type="button" onClick={() => setLayersOpen(value => !value)} className={`min-h-11 min-w-11 p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${layersOpen ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300" : "text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"}`} title="Map layers and settings" aria-label="Map layers and settings" aria-expanded={layersOpen}><Layers className="w-4 h-4 mx-auto" /></button>
         </div>
       </form>
 
-      <div className="absolute top-[102px] left-3 z-10 flex flex-wrap gap-1.5 max-w-[calc(100%_-_90px)]">
+      <div className="absolute top-[102px] left-3 right-3 z-10 flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-1 md:right-auto md:flex-wrap md:overflow-visible md:max-w-[calc(100%_-_90px)]">
         <MapAction icon={MapIcon} label="My Fleet" onClick={fitFleet} />
         <MapAction icon={ZoomIn} label="Zoom In" onClick={() => zoomBy(1)} />
         <MapAction icon={ZoomOut} label="Zoom Out" onClick={() => zoomBy(-1)} />
@@ -322,14 +327,14 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
       </div>
 
       {layersOpen && <div className="absolute top-[142px] left-3 z-20 w-[min(360px,calc(100vw-24px))] rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between"><div><div className="font-semibold text-gray-900 dark:text-slate-100">Map Layers & Settings</div><div className="text-xs text-gray-500 dark:text-slate-400">Preferences are saved on this device.</div></div><button onClick={() => setLayersOpen(false)} className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800" aria-label="Close map settings"><X className="w-4 h-4" /></button></div>
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><div><div className="font-semibold text-gray-900 dark:text-slate-100">Map Layers & Settings</div><div className="text-xs text-gray-500 dark:text-slate-400">Preferences are saved on this device.</div></div><button type="button" onClick={() => setLayersOpen(false)} className="min-h-11 min-w-11 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 inline-flex items-center justify-center" aria-label="Close map settings"><X className="w-4 h-4" /></button></div>
         <div className="p-4 space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto">
           <div><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Map type</div><div className="grid grid-cols-2 gap-2">{[
             ["roadmap", "Roadmap"], ["satellite", "Satellite"], ["hybrid", "Hybrid"], ["terrain", "Terrain"],
-          ].map(([id, label]) => <button key={id} onClick={() => setPrefs(prev => ({ ...prev, mapTypeId: id }))} className={`rounded-lg border px-3 py-2 text-sm text-left ${prefs.mapTypeId === id ? "border-indigo-400 bg-indigo-50 text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-200" : "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300"}`}>{label}</button>)}</div></div>
+          ].map(([id, label]) => <button type="button" key={id} onClick={() => setPrefs(prev => ({ ...prev, mapTypeId: id }))} className={`min-h-11 rounded-lg border px-3 py-2 text-sm text-left ${prefs.mapTypeId === id ? "border-indigo-400 bg-indigo-50 text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-200" : "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300"}`}>{label}</button>)}</div></div>
           <div><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Layers</div><div className="space-y-1"><SettingRow icon={TrafficCone} label="Traffic" checked={prefs.traffic} onChange={() => setBoolPref("traffic")} /><SettingRow icon={BusFront} label="Transit" checked={prefs.transit} onChange={() => setBoolPref("transit")} /><SettingRow icon={Bike} label="Bicycle routes" checked={prefs.bicycling} onChange={() => setBoolPref("bicycling")} /></div></div>
           <div><div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Fleet behavior</div><div className="space-y-1"><SettingRow icon={Crosshair} label="Auto-fit fleet" checked={prefs.autoFit} onChange={() => setBoolPref("autoFit")} /><SettingRow icon={Navigation} label="Follow selected vehicle" checked={prefs.followSelected} disabled={!selectedLocation} onChange={() => setBoolPref("followSelected")} /><SettingRow icon={MapIcon} label="Vehicle labels" checked={prefs.vehicleLabels} onChange={() => setBoolPref("vehicleLabels")} /><SettingRow icon={Layers} label="Remember map preferences" checked={prefs.remember} onChange={() => setBoolPref("remember")} /></div></div>
-          <div className="grid grid-cols-2 gap-2"><button onClick={openStreetView} disabled={!selectedLocation} className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center justify-center gap-2"><Eye className="w-4 h-4" />Street View</button><button onClick={toggleFullscreen} className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm inline-flex items-center justify-center gap-2"><Maximize2 className="w-4 h-4" />Fullscreen</button></div>
+          <div className="grid grid-cols-2 gap-2"><button type="button" onClick={openStreetView} disabled={!selectedLocation} className="min-h-11 rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm disabled:opacity-40 inline-flex items-center justify-center gap-2"><Eye className="w-4 h-4" />Street View</button><button type="button" onClick={toggleFullscreen} className="min-h-11 rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-2 text-sm inline-flex items-center justify-center gap-2"><Maximize2 className="w-4 h-4" />Fullscreen</button></div>
         </div>
       </div>}
 
@@ -344,5 +349,5 @@ function MapAction({ icon: Icon, label, onClick, disabled = false, active = fals
 }
 
 function SettingRow({ icon: Icon, label, checked, onChange, disabled = false }) {
-  return <label className={`flex items-center gap-3 rounded-lg px-2 py-2 ${disabled ? "opacity-45" : "hover:bg-gray-50 dark:hover:bg-slate-800/60 cursor-pointer"}`}><Icon className="w-4 h-4 text-gray-400" /><span className="flex-1 text-sm text-gray-700 dark:text-slate-300">{label}</span><input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} className="w-4 h-4 rounded border-gray-300 text-indigo-600" /></label>;
+  return <label className={`min-h-11 flex items-center gap-3 rounded-lg px-2 py-2 ${disabled ? "opacity-45" : "hover:bg-gray-50 dark:hover:bg-slate-800/60 cursor-pointer"}`}><Icon className="w-4 h-4 text-gray-400" /><span className="flex-1 text-sm text-gray-700 dark:text-slate-300">{label}</span><input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} className="w-5 h-5 rounded border-gray-300 text-indigo-600" /></label>;
 }
