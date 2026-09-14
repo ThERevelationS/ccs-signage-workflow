@@ -334,6 +334,31 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           />
         </div>
       </div>
+
+      {handoffReadiness.applicable && (
+        <div className={`mt-3 rounded-md border px-3 py-2 ${handoffReadiness.hasBlockers ? "border-red-200 bg-red-50/80" : handoffReadiness.hasIssues ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/70"}`}>
+          <div className="flex items-start gap-2">
+            {handoffReadiness.hasIssues ? (
+              <AlertTriangle className={`mt-0.5 h-4 w-4 flex-shrink-0 ${handoffReadiness.hasBlockers ? "text-red-600" : "text-amber-600"}`} />
+            ) : (
+              <BadgeCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className={`text-[11px] font-semibold ${handoffReadiness.hasBlockers ? "text-red-800" : handoffReadiness.hasIssues ? "text-amber-800" : "text-emerald-800"}`}>
+                {handoffReadiness.hasBlockers ? "Not ready to hand off" : handoffReadiness.hasIssues ? "Handoff needs review" : "Handoff record complete"}
+              </div>
+              {handoffReadiness.hasIssues ? (
+                <div className={`mt-1 space-y-0.5 text-[10px] ${handoffReadiness.hasBlockers ? "text-red-700" : "text-amber-700"}`}>
+                  {[...handoffReadiness.blockers, ...handoffReadiness.reviews].slice(0, 3).map((item) => <div key={item}>• {item}</div>)}
+                  {handoffReadiness.issueCount > 3 && <div>• +{handoffReadiness.issueCount - 3} more item{handoffReadiness.issueCount - 3 === 1 ? "" : "s"}</div>}
+                </div>
+              ) : (
+                <div className="mt-0.5 text-[10px] text-emerald-700">No recorded fee, identifier, correction, or closeout issues remain for this permit line.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
