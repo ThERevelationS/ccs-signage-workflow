@@ -156,6 +156,8 @@ export function getPermitGroupProgress(group) {
   let completedCount = 0;
   let handoffApplicableCount = 0;
   let handoffReadyCount = 0;
+  let handoffIssueCount = 0;
+  let handoffBlockedCount = 0;
 
   lines.forEach((line) => {
     if (isPermitLineEffectivelyComplete(line)) completedCount += 1;
@@ -169,6 +171,8 @@ export function getPermitGroupProgress(group) {
     if (handoff.applicable) {
       handoffApplicableCount += 1;
       if (handoff.isReady) handoffReadyCount += 1;
+      if (handoff.hasIssues) handoffIssueCount += 1;
+      if (handoff.hasBlockers) handoffBlockedCount += 1;
     }
   });
 
@@ -183,6 +187,8 @@ export function getPermitGroupProgress(group) {
     lifecycleStages,
     handoffApplicableCount,
     handoffReadyCount,
+    handoffIssueCount,
+    handoffBlockedCount,
   };
 }
 
