@@ -1599,7 +1599,8 @@ export default function ProductChecklistDialog({
                                     checked={!!task.approved_by}
                                     onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                     disabled={!isRegistered}
-                                    className="h-3 w-3"
+                                    className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                    aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
                                   />
                                   <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-600 font-medium">T</span>
                                   {editingItemId === task.id ? (
@@ -1647,7 +1648,8 @@ export default function ProductChecklistDialog({
                                       checked={!!subtask.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
                                       disabled={!isRegistered}
-                                      className="h-2.5 w-2.5"
+                                      className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
+                                      aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
                                     />
                                     <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                     {editingItemId === subtask.id ? (
@@ -1853,7 +1855,8 @@ export default function ProductChecklistDialog({
                                               checked={!!task.approved_by}
                                               onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                               disabled={!isRegistered}
-                                              className="h-2.5 w-2.5"
+                                              className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                              aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
                                             />
                                             <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
@@ -1901,7 +1904,8 @@ export default function ProductChecklistDialog({
                                                 checked={!!subtask.approved_by}
                                                 onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
                                                 disabled={!isRegistered}
-                                                className="h-2 w-2"
+                                                className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
+                                                aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
                                               />
                                               <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                               {editingItemId === subtask.id ? (
@@ -2214,7 +2218,8 @@ export default function ProductChecklistDialog({
                                               checked={!!task.approved_by}
                                               onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                               disabled={!isRegistered}
-                                              className="h-2.5 w-2.5"
+                                              className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                              aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
                                             />
                                             <span className="px-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
