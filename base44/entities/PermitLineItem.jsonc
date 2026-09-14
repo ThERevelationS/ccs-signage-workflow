@@ -49,7 +49,7 @@
     },
     "priority": {
       "type": "number",
-      "default": 0,
+      "default": 0.0,
       "description": "Sort order"
     },
     "steps": {
@@ -83,7 +83,7 @@
           },
           "followup_interval_days": {
             "type": "number",
-            "default": 14
+            "default": 14.0
           },
           "next_followup_date": {
             "type": "string",
@@ -165,6 +165,27 @@
       "type": "string",
       "format": "date",
       "description": "Date the latest corrected package was resubmitted for this permit line."
+    },
+    "closeout_status": {
+      "type": "string",
+      "enum": [
+        "inspection_required",
+        "inspection_scheduled",
+        "inspection_failed",
+        "inspection_passed",
+        "closed_out"
+      ],
+      "description": "Optional staff-recorded post-issuance inspection/closeout state for this individual permit line. Blank preserves legacy completion behavior and does not imply an inspection is required."
+    },
+    "inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled or most recent inspection date for this individual permit line, as recorded by staff."
+    },
+    "closeout_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date staff confirmed the permit line's required inspection/closeout work was completed."
     },
     "last_submitted_trigger_date": {
       "type": "string",
