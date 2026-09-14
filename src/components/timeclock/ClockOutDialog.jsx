@@ -701,6 +701,7 @@ export default function ClockOutDialog({
                           value={job.minutes ? Math.floor(job.minutes / 60) : ""}
                           onChange={(e) => {
                             allocationEditedRef.current = true;
+                            setAllocationsReviewed(false);
                             const hrs = parseInt(e.target.value) || 0;
                             const currentMins = job.minutes ? job.minutes % 60 : 0;
                             let totalMins = hrs * 60 + currentMins;
@@ -726,6 +727,7 @@ export default function ClockOutDialog({
                           value={job.minutes ? job.minutes % 60 : ""}
                           onChange={(e) => {
                             allocationEditedRef.current = true;
+                            setAllocationsReviewed(false);
                             const mins = Math.min(59, parseInt(e.target.value) || 0);
                             const currentHrs = job.minutes ? Math.floor(job.minutes / 60) : 0;
                             let totalMins = currentHrs * 60 + mins;
