@@ -12,6 +12,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
+import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -147,6 +148,7 @@ export default function SalesOpportunityDialog({
   const allAttentionItems = getSalesAttentionItems(workOrder);
   const attentionItems = getActionableSalesAttentionItems(workOrder);
   const attentionKeys = new Set(allAttentionItems.map((item) => item.key));
+  const recordClassification = getSalesRecordClassification(workOrder);
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -175,7 +177,10 @@ export default function SalesOpportunityDialog({
               <div className="flex flex-wrap items-center gap-2">
                 <DialogTitle className="truncate text-xl">{workOrder.client_name || "Unnamed opportunity"}</DialogTitle>
                 <Badge variant="outline">{statusLabel}</Badge>
-                {workOrder.in_pipeline === true && <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Current Pipeline</Badge>}
+                {recordClassification === "current" && <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Current Pipeline</Badge>}
+                {recordClassification === "outcome" && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Tracked Outcome</Badge>}
+                {recordClassification === "legacy_history" && <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Legacy History</Badge>}
+                {recordClassification === "other" && <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600">Not Current Pipeline</Badge>}
               </div>
               <p className="mt-1 text-sm text-gray-500">{workOrder.description || workOrder.title || "No job description yet"}</p>
             </div>
