@@ -736,7 +736,10 @@ async function ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEm
 
 async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target, actor, actorEmail, requestId, endReason, officialEnd }: any) {
   const prior = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-end request');
-  if (prior?.id && prior.status === 'completed') return prior;
+  if (prior?.id && prior.status === 'completed') {
+    await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason: endReason || prior.end_reason, segment: prior });
+    return prior;
+  }
   let active = await activeLaborForEntry(laborEntity, entry.id, target.email);
   if (!active?.id) return null;
   const endAt = officialEnd || new Date().toISOString();
@@ -755,14 +758,7 @@ async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target
   } else {
     active = await laborEntity.get(active.id);
   }
-  await audit(auditEntity, {
-    action: 'labor_stop', outcome: 'confirmed',
-    user_email: target.email, user_name: target.full_name || target.email,
-    actor_email: actorEmail, actor_role: actor.role,
-    authentication_method: authenticationMethodFor(actor, target), server_timestamp: active.ended_at,
-    request_id: requestId, time_entry_id: entry.id, reason: endReason,
-    details: { labor_segment_id: active.id, activity_type: active.activity_type, work_order_id: active.work_order_id || null, duration_minutes: active.duration_minutes },
-  });
+  await ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason, segment: active });
   return active;
 }
 
