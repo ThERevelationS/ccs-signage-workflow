@@ -1485,8 +1485,8 @@ export default function ProductChecklistDialog({
                             {editingItemId === displayItem.id ? (
                               <div className="flex-1 flex gap-1">
                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-6 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') { setEditingItemId(null); } }} />
-                                <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
-                                <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                               </div>
                             ) : (
                               <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1606,8 +1606,8 @@ export default function ProductChecklistDialog({
                                   {editingItemId === task.id ? (
                                     <div className="flex-1 flex gap-1">
                                       <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-4 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                      <Button size="sm" className="h-4 px-1 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
-                                      <Button size="sm" variant="ghost" className="h-4 px-0.5 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                      <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                     </div>
                                   ) : (
                                     <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1655,8 +1655,8 @@ export default function ProductChecklistDialog({
                                     {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1744,8 +1744,8 @@ export default function ProductChecklistDialog({
                                     {editingItemId === detail.id ? (
                                       <div className="flex-1 flex gap-1">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-6 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
-                                        <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1862,8 +1862,8 @@ export default function ProductChecklistDialog({
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
                                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                                <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
                                             ) : (
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1911,8 +1911,8 @@ export default function ProductChecklistDialog({
                                               {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -1996,8 +1996,8 @@ export default function ProductChecklistDialog({
                               {editingItemId === stDisplayItem.id ? (
                                 <div className="flex-1 flex gap-1">
                                   <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-6 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                  <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem}>✓</Button>
-                                  <Button size="sm" variant="ghost" className="h-6 px-1 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                  <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                  <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                 </div>
                               ) : (
                                 <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -2113,8 +2113,8 @@ export default function ProductChecklistDialog({
                                     {editingItemId === task.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -2164,8 +2164,8 @@ export default function ProductChecklistDialog({
                                       {editingItemId === detail.id ? (
                                         <div className="flex-1 flex gap-1 min-w-0">
                                           <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                          <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                          <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                          <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                         </div>
                                       ) : (
                                         <div className="flex-1 flex items-center gap-1 min-w-0">
@@ -2226,8 +2226,8 @@ export default function ProductChecklistDialog({
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
                                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                                <Button size="sm" className="h-7 px-2 text-xs" onClick={saveEditItem}>✓</Button>
-                                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingItemId(null)}>✕</Button>
+                                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
                                             ) : (
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
