@@ -111,18 +111,32 @@ function CommitMoneyField({ label, value, disabled, onCommit }) {
   );
 }
 
-function DateField({ label, value, disabled, onCommit }) {
+function DateField({ label, value, disabled, onCommit, today = "", showTodayShortcut = false }) {
+  const canUseToday = showTodayShortcut && !disabled && !value && !!parseLocalDate(today);
   return (
-    <label className="min-w-0">
-      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+    <div className="min-w-0">
+      <div className="mb-1 flex min-h-5 items-center justify-between gap-2">
+        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+        {canUseToday && (
+          <button
+            type="button"
+            onClick={() => onCommit(today)}
+            className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-900"
+            title={`Set ${label.toLowerCase()} to today (${formatDate(today)})`}
+          >
+            Today
+          </button>
+        )}
+      </div>
       <Input
         type="date"
+        aria-label={label}
         value={value || ""}
         onChange={(event) => onCommit(event.target.value || null)}
         disabled={disabled}
         className="h-8 text-xs bg-white"
       />
-    </label>
+    </div>
   );
 }
 
@@ -278,12 +292,16 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             value={lineItem.corrections_received_date}
             disabled={!isRegistered}
             onCommit={(value) => update("corrections_received_date", value)}
+            today={today}
+            showTodayShortcut={["corrections_received", "working_corrections", "resubmitted"].includes(String(lineItem.correction_status || "").toLowerCase())}
           />
           <DateField
             label="Last resubmitted"
             value={lineItem.resubmitted_date}
             disabled={!isRegistered}
             onCommit={(value) => update("resubmitted_date", value)}
+            today={today}
+            showTodayShortcut={String(lineItem.correction_status || "").toLowerCase() === "resubmitted"}
           />
         </div>
       </div>
@@ -319,12 +337,16 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             value={lineItem.inspection_date}
             disabled={!isRegistered}
             onCommit={(value) => update("inspection_date", value)}
+            today={today}
+            showTodayShortcut={["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(String(lineItem.closeout_status || "").toLowerCase())}
           />
           <DateField
             label="Closeout date"
             value={lineItem.closeout_date}
             disabled={!isRegistered}
             onCommit={(value) => update("closeout_date", value)}
+            today={today}
+            showTodayShortcut={String(lineItem.closeout_status || "").toLowerCase() === "closed_out"}
           />
         </div>
       </div>
@@ -364,6 +386,8 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
             value={lineItem.jurisdiction_fee_paid_date}
             disabled={!isRegistered}
             onCommit={(value) => update("jurisdiction_fee_paid_date", value)}
+            today={today}
+            showTodayShortcut={String(lineItem.jurisdiction_fee_status || "").toLowerCase() === "paid"}
           />
         </div>
       </div>
