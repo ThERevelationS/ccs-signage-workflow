@@ -312,23 +312,6 @@ export default function ClockOutDialog({
       return;
     }
 
-    const finalClockOutTime = new Date();
-    setDisplayNow(finalClockOutTime);
-    const finalTotalMinutes = Math.floor((finalClockOutTime - clockInTime) / (1000 * 60));
-    const finalWorkableMinutes = finalTotalMinutes - lunchMins - trackedWorkPauseMinutes;
-    const finalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
-    const finalRemainingMinutes = finalWorkableMinutes - finalAllocatedMinutes;
-
-    if (finalWorkableMinutes < 0) {
-      setError("Lunch time cannot exceed the shift duration");
-      return;
-    }
-
-    if (Math.abs(finalRemainingMinutes) > 5) {
-      setError(`All time must be allocated using the current shift duration. ${formatDuration(Math.abs(finalRemainingMinutes))}${finalRemainingMinutes < 0 ? " is over-allocated" : " remains"}.`);
-      return;
-    }
-
     for (const job of jobAllocations) {
       if (job.is_inhouse && !job.inhouse_task) {
         setError("Please select a task for all In House Projects");
@@ -342,11 +325,39 @@ export default function ClockOutDialog({
 
     setIsSubmitting(true);
     try {
+      if (!onLoadLaborAllocationPreview) {
+        throw new Error("Authoritative Clock Out reconciliation is unavailable. Close this dialog and identify again.");
+      }
+
+      // Refresh immediately before submit so final reconciliation uses the
+      // backend clock, including any still-active Current Work segment. The
+      // employee device clock remains display-only and is never authoritative.
+      const previewResult = await onLoadLaborAllocationPreview();
+      const freshPreview = previewResult?.preview || null;
+      const authoritativeElapsedMinutes = Number(freshPreview?.elapsed_minutes);
+      if (!freshPreview || !Number.isFinite(authoritativeElapsedMinutes)) {
+        throw new Error("Authoritative Clock Out time could not be refreshed. Nothing was submitted.");
+      }
+      setLaborPreview(freshPreview);
+      setLaborPreviewError("");
+
+      const authoritativeTrackedUnpaidMinutes = Math.max(0, Number(freshPreview.tracked_unpaid_minutes) || 0);
+      const authoritativeWorkPauseMinutes = Math.max(0, Number(freshPreview.work_pause_minutes) || 0);
+      const authoritativeLunchMinutes = authoritativeTrackedUnpaidMinutes > 0 ? authoritativeTrackedUnpaidMinutes : manualLunchMins;
+      const authoritativeWorkableMinutes = authoritativeElapsedMinutes - authoritativeLunchMinutes - authoritativeWorkPauseMinutes;
+      const finalAllocatedMinutes = jobAllocations.reduce((sum, job) => sum + (parseInt(job.minutes) || 0), 0);
+      const finalRemainingMinutes = authoritativeWorkableMinutes - finalAllocatedMinutes;
+
+      if (authoritativeWorkableMinutes < 0) {
+        throw new Error("Lunch and Work Pause time cannot exceed the authoritative shift duration.");
+      }
+      if (Math.abs(finalRemainingMinutes) > 5) {
+        throw new Error(`All time must be allocated using the refreshed server duration. ${formatDuration(Math.abs(finalRemainingMinutes))}${finalRemainingMinutes < 0 ? " is over-allocated" : " remains"}. Review or refresh tracked suggestions before Clock Out.`);
+      }
+
       await onClockOut({
-        lunchMinutes: lunchMins,
+        lunchMinutes: authoritativeLunchMinutes,
         jobAllocations: jobAllocations.map(({ suggested_from_current_work: _suggested, ...allocation }) => allocation),
-        totalHours: Math.max(0, finalWorkableMinutes / 60),
-        clockOutTime: finalClockOutTime.toISOString(),
         notes: notes.trim(),
       });
     } catch (err) {
