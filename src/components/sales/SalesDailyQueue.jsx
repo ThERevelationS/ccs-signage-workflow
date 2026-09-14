@@ -29,6 +29,7 @@ export default function SalesDailyQueue({
   currentSalesOwnerLabel = "",
 }) {
   const [ownerScope, setOwnerScope] = useState("all");
+  const [quoteDateErrors, setQuoteDateErrors] = useState({});
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStamp = format(today, "yyyy-MM-dd");
@@ -88,6 +89,22 @@ export default function SalesDailyQueue({
     onUpdateWorkOrder?.(workOrder.id, "follow_up_date", format(addDays(today, days), "yyyy-MM-dd"));
   };
 
+  const setQuoteSentDate = (workOrder, value) => {
+    if (!isRegistered || !workOrder?.id) return;
+    const nextDate = String(value || "").slice(0, 10);
+    if (nextDate && nextDate > todayStamp) {
+      setQuoteDateErrors((current) => ({ ...current, [workOrder.id]: "Quote sent date cannot be in the future." }));
+      return;
+    }
+    setQuoteDateErrors((current) => {
+      if (!current[workOrder.id]) return current;
+      const next = { ...current };
+      delete next[workOrder.id];
+      return next;
+    });
+    onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", nextDate);
+  };
+
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-4">
       <div className="mx-auto max-w-6xl space-y-4">
@@ -128,6 +145,7 @@ export default function SalesDailyQueue({
                 {rows.map((workOrder) => {
                   const value = Number(workOrder.quoted_amount ?? workOrder.estimate_amount ?? 0) || 0;
                   const quoteAging = getQuoteAgingState(workOrder, today);
+                  const quoteTimingMissing = quoteAging.awaitingResponse && !quoteAging.tracked;
                   const placeholder = isLikelySalesPlaceholder(workOrder);
                   return (
                     <article key={workOrder.id} className="rounded-lg border border-white/80 bg-white p-3 shadow-sm">
@@ -147,8 +165,30 @@ export default function SalesDailyQueue({
                         <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3" />{workOrder.sales_rep || "Unassigned"}</span>
                         {workOrder.follow_up_date && <span>Follow-up {dateLabel(workOrder.follow_up_date)}</span>}
                         {workOrder.expected_close_date && <span>Close {dateLabel(workOrder.expected_close_date)}</span>}
-                        {quoteAging.awaitingResponse && (quoteAging.tracked ? <span>Quote {quoteAging.ageDays}d</span> : <span className="font-medium text-amber-700">Quote timing missing</span>)}
+                        {quoteAging.awaitingResponse && (quoteAging.tracked ? <span>Quote {quoteAging.ageDays}d</span> : <span className="font-medium text-amber-700">Quote Timing Missing</span>)}
                       </div>
+
+                      {isRegistered && quoteTimingMissing && (
+                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <label className="min-w-0 flex-1">
+                              <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
+                              <input
+                                type="date"
+                                max={todayStamp}
+                                value={workOrder.date_estimate_sent || ""}
+                                onChange={(event) => setQuoteSentDate(workOrder, event.target.value)}
+                                aria-label={`Actual quote sent date for ${workOrder.client_name || "opportunity"}`}
+                                className="mt-1 h-9 w-full rounded-md border border-amber-200 bg-white px-2 text-sm text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                              />
+                            </label>
+                            <button type="button" onClick={() => setQuoteSentDate(workOrder, todayStamp)} className="h-9 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-800 hover:bg-amber-100">Today</button>
+                          </div>
+                          <p className={`mt-1.5 text-[11px] ${quoteDateErrors[workOrder.id] ? "font-medium text-red-600" : "text-amber-700"}`}>
+                            {quoteDateErrors[workOrder.id] || "Enter the real sent date only. Sales Pipeline will not infer it from record activity."}
+                          </p>
+                        </div>
+                      )}
 
                       {isRegistered && (
                         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-gray-100 pt-2.5">
