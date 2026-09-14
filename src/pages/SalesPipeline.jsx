@@ -452,7 +452,7 @@ export default function SalesPipeline() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5">
               <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Operational Attention</span>
               <button type="button" onClick={() => applyAttentionFilter("all")} className={attentionChipClass("all")}>All</button>
               <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
