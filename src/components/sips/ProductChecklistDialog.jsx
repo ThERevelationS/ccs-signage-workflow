@@ -1442,7 +1442,7 @@ export default function ProductChecklistDialog({
                           }}
                         />
                         <Button size="sm" className="h-9 md:h-7 px-3 text-xs" onClick={() => addNewItem('checklist', null, productName)}>Add</Button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }}>Cancel</Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }}>Cancel</Button>
                       </div>
                     </div>
                   )}
@@ -1688,7 +1688,7 @@ export default function ProductChecklistDialog({
                                       }}
                                     />
                                     <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('subtask', task.id, displayItem.product_name || productName)}>Add</Button>
-                                    <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                   </div>
                                 )}
                               </div>
@@ -1841,7 +1841,7 @@ export default function ProductChecklistDialog({
                                         }}
                                       />
                                       <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', detail.id, displayItem.product_name || productName)}>Add</Button>
-                                      <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                     </div>
                                   )}
 
@@ -1944,7 +1944,7 @@ export default function ProductChecklistDialog({
                                                 }}
                                               />
                                               <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('subtask', task.id, displayItem.product_name || productName)}>Add</Button>
-                                              <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                              <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                             </div>
                                           )}
                                         </div>
@@ -2153,7 +2153,7 @@ export default function ProductChecklistDialog({
                                       }}
                                     />
                                     <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                    <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                   </div>
                                 )}
                                 
@@ -2207,7 +2207,7 @@ export default function ProductChecklistDialog({
                                           }}
                                         />
                                         <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', detail.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                        <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                       </div>
                                     )}
                                     {/* Tasks under detail */}
@@ -2265,7 +2265,7 @@ export default function ProductChecklistDialog({
                                         }}
                                       />
                                       <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('detail', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                      <Button size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>×</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
                                     </div>
                                   </div>
                                 )}
