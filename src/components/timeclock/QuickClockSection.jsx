@@ -64,6 +64,22 @@ function shouldRetainRequest(err) {
   return err?.retrySameRequest === true || err?.ambiguousOutcome === true;
 }
 
+const TRANSITION_LABELS = {
+  clock_in: "Finishing Clock In",
+  clock_out: "Finishing Clock Out",
+  break_start: "Starting Break",
+  break_end: "Ending Break",
+  work_pause_start: "Pausing Work",
+  work_pause_resume: "Resuming Work",
+  labor_start: "Starting Current Work",
+  labor_change: "Changing Current Work",
+  labor_stop: "Stopping Current Work",
+};
+
+function transitionLabel(transition) {
+  return TRANSITION_LABELS[transition] || "Finishing Time Clock Action";
+}
+
 export default function QuickClockSection({
   allUsers,
   employeeSessionToken = "",
