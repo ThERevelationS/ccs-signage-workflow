@@ -647,6 +647,9 @@ export default function Permitting() {
         String(li.jurisdiction_fee_amount ?? "").toLowerCase().includes(q) ||
         li.jurisdiction_fee_status?.toLowerCase().includes(q) ||
         li.jurisdiction_fee_paid_date?.toLowerCase().includes(q) ||
+        li.correction_status?.toLowerCase().includes(q) ||
+        li.corrections_received_date?.toLowerCase().includes(q) ||
+        li.resubmitted_date?.toLowerCase().includes(q) ||
         li.notes?.toLowerCase().includes(q)
       )) return true;
       return false;
