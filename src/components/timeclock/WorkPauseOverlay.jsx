@@ -91,7 +91,30 @@ export default function WorkPauseOverlay({
     const interval = setInterval(() => loadStatus(), 15000);
     const onFocus = () => loadStatus();
     const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
-    const onPauseChanged = () => loadStatus();
+    const onPauseChanged = (event) => {
+      const confirmed = event?.detail;
+      if (confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
+        setPauseState(null);
+        setShowResumePrompt(false);
+        setError("");
+        resumeRequestRef.current = "";
+        pauseIdRef.current = "";
+        dismissedAtRef.current = 0;
+      } else if (confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "paused") {
+        const activePause = confirmed.active_work_pause || confirmed.work_pause || null;
+        if (activePause?.id) {
+          const normalized = { ...confirmed, active_work_pause: activePause };
+          setPauseState(normalized);
+          if (pauseIdRef.current !== String(activePause.id)) {
+            pauseIdRef.current = String(activePause.id);
+            dismissedAtRef.current = 0;
+            lastActivityAtRef.current = Date.now();
+            setShowResumePrompt(true);
+          }
+        }
+      }
+      void loadStatus();
+    };
     const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
     window.addEventListener("focus", onFocus);
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
@@ -134,13 +157,20 @@ export default function WorkPauseOverlay({
       }
     }, 5000);
 
+    const recordPointerMovement = () => {
+      const nowMs = Date.now();
+      if (nowMs - lastActivityAtRef.current >= 5000) recordActivity();
+    };
+
     window.addEventListener("pointerdown", recordActivity);
+    window.addEventListener("pointermove", recordPointerMovement);
     window.addEventListener("keydown", recordActivity);
     window.addEventListener("touchstart", recordActivity, { passive: true });
     window.addEventListener("wheel", recordActivity, { passive: true });
     return () => {
       clearInterval(reminderCheck);
       window.removeEventListener("pointerdown", recordActivity);
+      window.removeEventListener("pointermove", recordPointerMovement);
       window.removeEventListener("keydown", recordActivity);
       window.removeEventListener("touchstart", recordActivity);
       window.removeEventListener("wheel", recordActivity);
@@ -214,12 +244,15 @@ export default function WorkPauseOverlay({
         paddingTop: "max(1rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
       }}
-      onMouseDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) dismissReminder();
       }}
       role="presentation"
     >
-      <div className="relative w-full max-w-xl rounded-[28px] border border-purple-200 bg-white p-6 text-center shadow-2xl sm:p-9">
+      <div
+        className="relative w-full max-w-xl rounded-[28px] border border-purple-200 bg-white p-6 text-center shadow-2xl sm:p-9"
+        onClick={(event) => event.stopPropagation()}
+      >
         <button
           type="button"
           onClick={dismissReminder}
