@@ -1,0 +1,13 @@
+{
+  "name": "__do_not_create__",
+  "type": "object",
+  "description": "Inert accidental empty schema retained only because no exact schema-delete action is exposed by the current Base44 connector. Do not use.",
+  "properties": {},
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}
