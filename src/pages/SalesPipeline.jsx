@@ -422,8 +422,8 @@ export default function SalesPipeline() {
                 <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
                   <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-700" />
                   <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
-                    <span className="block text-xs text-amber-700">{pipelineSummary.needsAttentionCount} of {pipelineSummary.openCount} open opportunities have actionable gaps · combined queue prioritizes quote timing and next-action gaps</span>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
+                    <span className="block text-[10px] leading-tight text-amber-700">{pipelineSummary.needsAttentionCount}/{pipelineSummary.openCount} open opportunities have actionable gaps</span>
                   </span>
                 </button>
                 <div className="flex flex-wrap gap-1.5 lg:ml-auto">
