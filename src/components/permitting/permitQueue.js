@@ -70,6 +70,11 @@ export function getPermitLineLifecycleReviews(line, today) {
       reviews.push(`${label} expired on ${formatDateKey(expirationDate)}.`);
     } else if (expirationDate === todayKey) {
       reviews.push(`${label} expires today (${formatDateKey(expirationDate)}).`);
+    } else {
+      const daysUntilExpiration = daysBetween(todayKey, expirationDate);
+      if (daysUntilExpiration !== null && daysUntilExpiration <= 30) {
+        reviews.push(`${label} expires in ${pluralDays(daysUntilExpiration)} (${formatDateKey(expirationDate)}).`);
+      }
     }
   }
 
