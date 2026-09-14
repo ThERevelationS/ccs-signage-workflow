@@ -14,7 +14,7 @@ import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersi
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
-import { getPermitGroupReadiness, isPermitGroupAssignedToUser, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
+import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -650,6 +650,9 @@ export default function Permitting() {
         li.correction_status?.toLowerCase().includes(q) ||
         li.corrections_received_date?.toLowerCase().includes(q) ||
         li.resubmitted_date?.toLowerCase().includes(q) ||
+        li.closeout_status?.toLowerCase().includes(q) ||
+        li.inspection_date?.toLowerCase().includes(q) ||
+        li.closeout_date?.toLowerCase().includes(q) ||
         li.notes?.toLowerCase().includes(q)
       )) return true;
       return false;
@@ -693,8 +696,8 @@ export default function Permitting() {
   }
 
   const totalLines = lineItems.length;
-  const activeLinesCount = lineItems.filter(li => li.status !== 'completed').length;
-  const completedLinesCount = lineItems.filter(li => li.status === 'completed').length;
+  const activeLinesCount = lineItems.filter(li => !isPermitLineEffectivelyComplete(li)).length;
+  const completedLinesCount = lineItems.filter(li => isPermitLineEffectivelyComplete(li)).length;
   const routingMismatchCount = workOrders.filter((wo) => wo._permittingRoutingMismatch).length;
 
   const renderSection = (queueKey) => {
