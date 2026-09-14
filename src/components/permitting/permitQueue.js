@@ -451,6 +451,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Fee due",
       urgencyDays: null,
+      actionPriority: 10,
     };
   }
 
@@ -462,6 +463,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Inspection failed",
       urgencyDays: null,
+      actionPriority: 20,
     };
   }
 
@@ -473,6 +475,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Inspection needed",
       urgencyDays: null,
+      actionPriority: 30,
     };
   }
 
@@ -486,6 +489,7 @@ export function getPermitGroupQueueState(group, today) {
         followupDate: "",
         timingLabel: "Inspection date needed",
         urgencyDays: null,
+        actionPriority: 40,
       };
     }
     const daysUntilInspection = todayKey ? daysBetween(todayKey, inspectionDate) : null;
@@ -527,6 +531,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Inspection passed",
       urgencyDays: null,
+      actionPriority: 50,
     };
   }
 
@@ -538,6 +543,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Permit received",
       urgencyDays: null,
+      actionPriority: 60,
     };
   }
 
@@ -577,6 +583,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Corrections need action",
       urgencyDays: null,
+      actionPriority: 70,
     };
   }
 
@@ -600,6 +607,7 @@ export function getPermitGroupQueueState(group, today) {
       followupDate: "",
       timingLabel: "Needs next action",
       urgencyDays: null,
+      actionPriority: correctionStatus === "resubmitted" ? 80 : hasApproval ? 90 : hasSubmission ? 100 : 110,
     };
   }
 
@@ -621,6 +629,9 @@ export function getPermitGroupQueueState(group, today) {
 function queueSort(a, b) {
   const aState = a?.queueState || {};
   const bState = b?.queueState || {};
+  const aPriority = Number.isFinite(aState.actionPriority) ? aState.actionPriority : Number.POSITIVE_INFINITY;
+  const bPriority = Number.isFinite(bState.actionPriority) ? bState.actionPriority : Number.POSITIVE_INFINITY;
+  if (aPriority !== bPriority) return aPriority - bPriority;
   if (aState.followupDate && bState.followupDate && aState.followupDate !== bState.followupDate) {
     return aState.followupDate.localeCompare(bState.followupDate);
   }
