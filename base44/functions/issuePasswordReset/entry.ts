@@ -3,59 +3,6 @@ import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/
 import { hashBearerToken } from '../../shared/bearerTokenHash.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
-function b64urlEncode(str: string) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function b64urlDecode(str: string) {
-  let value = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
-  while (value.length % 4) value += '=';
-  return atob(value);
-}
-
-async function hmacSign(message: string, secret: string) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
-}
-
-async function verifySessionToken(token: string, secret: string, authorized: any) {
-  if (!token || !secret) return null;
-  const parts = String(token).split('.');
-  if (parts.length !== 2) return null;
-  const [payloadStr, providedSig] = parts;
-  const expectedSig = await hmacSign(payloadStr, secret);
-  if (!constantTimeEqual(expectedSig, providedSig)) return null;
-
-  let payload: any;
-  try {
-    payload = JSON.parse(b64urlDecode(payloadStr));
-  } catch {
-    return null;
-  }
-  const issuedAt = Number(payload?.iat);
-  const expiresAt = Number(payload?.exp);
-  if (
-    !payload?.email ||
-    !Number.isFinite(issuedAt) || issuedAt <= 0 ||
-    !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
-  ) return null;
-
-  const rows = await authorized.filter({ email: String(payload.email).toLowerCase().trim() });
-  if (!Array.isArray(rows) || rows.length !== 1) return null;
-  const user = rows[0];
-  const notBefore = Date.parse(String(user?.session_not_before || ''));
-  if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) return null;
-  return user;
-}
-
 function secureToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
