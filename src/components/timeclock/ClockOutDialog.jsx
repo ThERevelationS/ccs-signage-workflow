@@ -113,6 +113,50 @@ export default function ClockOutDialog({
     return () => clearInterval(timer);
   }, [isOpen]);
 
+  const loadLaborPreview = async ({ allowAutoApply = false } = {}) => {
+    if (!onLoadLaborAllocationPreview || !timeEntry?.id || laborPreviewBusy) return null;
+    setLaborPreviewBusy(true);
+    setLaborPreviewError("");
+    try {
+      const data = await onLoadLaborAllocationPreview();
+      const preview = data?.preview || null;
+      setLaborPreview(preview);
+      if (allowAutoApply && preview?.suggested_allocations?.length) {
+        setJobAllocations((current) => {
+          if (current.length > 0 || allocationEditedRef.current || previewAppliedRef.current) return current;
+          previewAppliedRef.current = true;
+          return preview.suggested_allocations.map((allocation) => ({ ...allocation }));
+        });
+      }
+      return preview;
+    } catch (err) {
+      setLaborPreviewError(err?.message || "Tracked Current Work suggestions could not be loaded.");
+      return null;
+    } finally {
+      setLaborPreviewBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen || !timeEntry?.id || !onLoadLaborAllocationPreview) return;
+    allocationEditedRef.current = false;
+    previewAppliedRef.current = false;
+    setLaborPreview(null);
+    setLaborPreviewError("");
+    loadLaborPreview({ allowAutoApply: true });
+    // The dialog is recreated for each verified active shift; only entry/open changes should trigger the automatic suggestion load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, timeEntry?.id]);
+
+  const applyLaborPreview = () => {
+    const suggestions = laborPreview?.suggested_allocations || [];
+    if (!suggestions.length) return;
+    allocationEditedRef.current = true;
+    previewAppliedRef.current = true;
+    setJobAllocations(suggestions.map((allocation) => ({ ...allocation })));
+    setError("");
+  };
+
   useEffect(() => {
     if (searchTerm.length >= 2) {
       searchWorkOrders();
@@ -146,6 +190,7 @@ export default function ClockOutDialog({
     if (jobAllocations.find(j => j.work_order_id === workOrder.id)) {
       return; // Already added
     }
+    allocationEditedRef.current = true;
     setJobAllocations([...jobAllocations, {
       work_order_id: workOrder.id,
       work_order_title: workOrder.title,
@@ -160,6 +205,7 @@ export default function ClockOutDialog({
   };
 
   const addInhouseAllocation = () => {
+    allocationEditedRef.current = true;
     setJobAllocations([...jobAllocations, {
       work_order_id: `inhouse_${Date.now()}`,
       work_order_title: "In House Projects",
@@ -172,12 +218,14 @@ export default function ClockOutDialog({
   };
 
   const updateAllocation = (index, field, value) => {
+    allocationEditedRef.current = true;
     const updated = [...jobAllocations];
     updated[index][field] = value;
     setJobAllocations(updated);
   };
 
   const removeAllocation = (index) => {
+    allocationEditedRef.current = true;
     setJobAllocations(jobAllocations.filter((_, i) => i !== index));
   };
 
