@@ -191,6 +191,7 @@ export default function SalesOpportunityDialog({
                 {recordClassification === "outcome" && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Tracked Outcome</Badge>}
                 {recordClassification === "legacy_history" && <Badge variant="outline" className="border-slate-300 bg-slate-100 text-slate-700">Legacy History</Badge>}
                 {recordClassification === "other" && <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-600">Not Current Pipeline</Badge>}
+                {likelyPlaceholder && <Badge variant="outline" className="border-rose-300 bg-rose-50 text-rose-700">Likely test / placeholder</Badge>}
               </div>
               <p className="mt-1 text-sm text-gray-500">{workOrder.description || workOrder.title || "No job description yet"}</p>
             </div>
@@ -228,6 +229,18 @@ export default function SalesOpportunityDialog({
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
+          {likelyPlaceholder && recordClassification === "current" && (
+            <section className="rounded-xl border border-rose-200 bg-rose-50/70 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 font-semibold text-rose-900"><AlertTriangle className="h-4 w-4" />Pipeline Hygiene</div>
+                  <p className="mt-1 text-xs text-rose-800">{placeholderReason} Review it before cleanup. Removing it from Current Pipeline does not delete the WorkOrder and does not create a Won/Lost outcome.</p>
+                </div>
+                {isRegistered && <Button type="button" variant="outline" size="sm" className="shrink-0 border-rose-300 bg-white text-rose-800 hover:bg-rose-100 hover:text-rose-900" onClick={() => setRemoveFromPipelineOpen(true)}>Remove from Current Pipeline</Button>}
+              </div>
+            </section>
+          )}
+
           {attentionItems.length > 0 && (
             <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
               <div className="flex items-start gap-2">
@@ -423,5 +436,21 @@ export default function SalesOpportunityDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={removeFromPipelineOpen} onOpenChange={setRemoveFromPipelineOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove this record from Current Pipeline?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction className="bg-rose-600 hover:bg-rose-700" onClick={() => { update({ in_pipeline: false }); setRemoveFromPipelineOpen(false); }}>Remove from Current Pipeline</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
