@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
       label: 'Sales Pipeline import Work Orders',
     });
   } catch (error) {
-    return Response.json({ error: error?.message || 'Existing Work Orders could not be verified before import.' }, { status: 500 });
+    console.error('importSalesPipeline existing WorkOrder verification failed:', error?.message || error);
+    return Response.json({ error: 'Existing Work Orders could not be verified before import.' }, { status: 500 });
   }
 
   const byEstInv = new Map();
