@@ -11,6 +11,7 @@ import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
@@ -21,8 +22,35 @@ const PermitLineItem = base44.entities.PermitLineItem;
 const PermitLocality = base44.entities.PermitLocality;
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
+const PERMIT_HISTORY_FIELDS = new Set([
+  "row_name",
+  "locality_id",
+  "locality_name",
+  "office_type",
+  "office_types",
+  "assigned_to",
+  "status",
+  "submitted_date",
+  "next_followup_date",
+  "permit_received_date",
+  "application_reference_number",
+  "permit_number",
+  "approval_date",
+  "expiration_date",
+  "jurisdiction_fee_amount",
+  "jurisdiction_fee_status",
+  "jurisdiction_fee_paid_date",
+  "correction_status",
+  "corrections_received_date",
+  "resubmitted_date",
+  "closeout_status",
+  "inspection_date",
+  "closeout_date",
+]);
+
 export default function Permitting() {
   const { currentUser, sessionToken, isRegistered } = useAuth();
+  const { trackChange: trackPermitLineChange } = useCellHistoryTracker("PermitLineItem", currentUser);
   const [lineItems, setLineItems] = useState([]);
   const [localities, setLocalities] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -153,6 +181,13 @@ export default function Permitting() {
           nextFields,
           label,
         });
+
+        // Audit only after the conflict-safe PermitLineItem save is durable.
+        // CellHistory is best-effort and must never roll back or repeat the business save.
+        await Promise.all(Object.keys(nextFields)
+          .filter((field) => PERMIT_HISTORY_FIELDS.has(field))
+          .map((field) => trackPermitLineChange(id, field, baseline[field], saved[field])));
+
         lineItemBaselinesRef.current.set(id, saved);
         setLineItems(prev => prev.map(li => li.id === id ? { ...li, ...nextFields, updated_date: saved.updated_date } : li));
         setPermitLineEditError("");
