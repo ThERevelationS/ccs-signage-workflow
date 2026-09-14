@@ -31,6 +31,7 @@ import SalesPipelineInsights from "@/components/sales/SalesPipelineInsights";
 import { getStageAgeDays, isStageAgedOpportunity, STAGE_AGING_DAYS } from "@/components/sales/salesStageAging";
 import { getQuoteAgeDays, getQuoteAgingState, isQuoteAwaitingResponse, QUOTE_REVIEW_DAYS } from "@/components/sales/salesQuoteAging";
 import { getSalesAttentionScore, hasSalesAttention } from "@/components/sales/salesAttention";
+import { isCurrentPipelineOpportunity, isLegacyClosedSalesRecord, isTrustedSalesOutcome } from "@/components/sales/salesRecordScopes";
 import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
@@ -82,14 +83,6 @@ const getSalesActivityTime = (workOrder) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const isLegacyClosedRecord = (workOrder) => {
-  if (workOrder?.in_pipeline === true) return false;
-  const legacyTask = String(workOrder?.current_task_description || "").trim();
-  return /^(lost\b|completed sale\b|closed\b)/i.test(legacyTask);
-};
-
-const isOpenOpportunity = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
-const isTrustedOutcome = (workOrder) => workOrder?.in_pipeline === true && ["won", "lost"].includes(workOrder?.sales_status);
 const normalizeOwnerIdentity = (value) => String(value || "").trim().toLowerCase();
 const getOpportunityAgeDays = (workOrder, todayStamp) => {
   const createdStamp = String(workOrder?.created_date || "").slice(0, 10);
@@ -102,7 +95,7 @@ const getOpportunityAgeDays = (workOrder, todayStamp) => {
 const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities) => {
   if (!attentionFilter || attentionFilter === "all") return true;
   const followUp = workOrder?.follow_up_date || "";
-  const isOperational = isOpenOpportunity(workOrder) && !isLegacyClosedRecord(workOrder);
+  const isOperational = isCurrentPipelineOpportunity(workOrder);
   if (attentionFilter === "due") return isOperational && followUp && followUp <= todayStamp;
   if (attentionFilter === "overdue") return isOperational && followUp && followUp < todayStamp;
   if (attentionFilter === "today") return isOperational && followUp === todayStamp;
@@ -1293,9 +1286,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [currentUser, users]);
 
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
-    const legacyClosed = isLegacyClosedRecord(wo);
-    const trustedOutcome = isTrustedOutcome(wo);
-    if (recordScope === "current") return !legacyClosed && !trustedOutcome;
+    const legacyClosed = isLegacyClosedSalesRecord(wo);
+    const trustedOutcome = isTrustedSalesOutcome(wo);
+    if (recordScope === "current") return isCurrentPipelineOpportunity(wo);
     if (recordScope === "outcomes") {
       if (!trustedOutcome) return false;
       if (!outcomeCutoffStamp) return true;
@@ -1306,7 +1299,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }), [workOrders, recordScope, outcomeCutoffStamp, todayStamp]);
 
   const pipelineSummary = useMemo(() => {
-    const operational = scopedWorkOrders.filter((wo) => isOpenOpportunity(wo) && !isLegacyClosedRecord(wo));
+    const operational = scopedWorkOrders.filter(isCurrentPipelineOpportunity);
     const summary = operational.reduce((summary, wo) => {
       const followUp = wo.follow_up_date || "";
       const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
@@ -1566,7 +1559,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       averageDays: row.trackedCount > 0 ? Math.round(row.ageDaysTotal / row.trackedCount) : null,
     })).sort((a, b) => SALES_STATUSES.findIndex((status) => status.value === a.stage) - SALES_STATUSES.findIndex((status) => status.value === b.stage));
 
-    const allTrustedOutcomes = workOrders.filter(isTrustedOutcome);
+    const allTrustedOutcomes = workOrders.filter(isTrustedSalesOutcome);
     const reportingOutcomes = allTrustedOutcomes.filter((wo) => {
       if (!outcomeCutoffStamp) return true;
       return Boolean(wo.close_date) && wo.close_date >= outcomeCutoffStamp && wo.close_date <= todayStamp;
