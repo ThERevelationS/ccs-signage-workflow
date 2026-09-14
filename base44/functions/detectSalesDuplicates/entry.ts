@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { ensureConvergentPendingImportCreate } from '../../shared/pendingImportCreatePersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 // Simple string similarity (Jaro-Winkler-ish via character overlap)
 function similarity(a, b) {
@@ -28,6 +29,21 @@ Deno.serve(async (req) => {
   const isScheduled = await hasWorkflowInvocationCapability(body, 'detectSalesDuplicates');
 
   if (!isScheduled) {
+    let actor;
+    try {
+      actor = await authenticateSignShopSession(base44, body?.session_token);
+    } catch (error: any) {
+      const status = Number(error?.status || error?.statusCode || 500);
+      const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+      console.error('detectSalesDuplicates sign-shop auth error:', error?.message || error);
+      return Response.json({
+        error: safeStatus === 500 ? 'Sales duplicate detection could not authenticate safely' : error.message,
+      }, { status: safeStatus });
+    }
+    if (actor?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const user = await base44.auth.me().catch(() => null);
     if (!user) {
       return Response.json({ error: 'Authentication required' }, { status: 401 });
