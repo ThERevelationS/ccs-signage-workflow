@@ -330,6 +330,24 @@ async function setBreakState(stateEntity: any, state: any, expectedBreakStatus: 
   return freshState(stateEntity, state.id);
 }
 
+async function ensureBreakAudit({ auditEntity, action, breakRow, target, actor, requestId, entryId }: any) {
+  if (!breakRow?.id || !['break_start', 'break_end'].includes(action)) throw new Error('A valid break record is required before its audit can be confirmed.');
+  const isEnd = action === 'break_end';
+  return ensureActionAudit(auditEntity, {
+    action, outcome: 'confirmed', user_email: target.email,
+    user_name: target.full_name || target.email, actor_email: asEmail(actor.email), actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target),
+    server_timestamp: isEnd ? breakRow.ended_at : breakRow.started_at,
+    request_id: requestId, time_entry_id: entryId,
+    details: {
+      break_id: breakRow.id,
+      break_type: breakRow.break_type,
+      is_paid: breakRow.is_paid,
+      ...(isEnd ? { duration_minutes: breakRow.duration_minutes } : {}),
+    },
+  }, isEnd ? 'Break end audit' : 'Break start audit');
+}
+
 async function breakSummaryForEntry(breakEntity: any, entryId: string, userEmail: string) {
   const rows = await breakEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'completed' });
   if (!Array.isArray(rows)) throw new Error('Completed break lookup did not return a record list.');
@@ -453,6 +471,22 @@ async function setWorkPauseState(stateEntity: any, state: any, expectedPauseStat
   return freshState(stateEntity, state.id);
 }
 
+async function ensureWorkPauseAudit({ auditEntity, action, pauseRow, target, actor, requestId, entryId }: any) {
+  if (!pauseRow?.id || !['work_pause_start', 'work_pause_resume'].includes(action)) throw new Error('A valid Work Pause record is required before its audit can be confirmed.');
+  const isResume = action === 'work_pause_resume';
+  return ensureActionAudit(auditEntity, {
+    action, outcome: 'confirmed', user_email: target.email,
+    user_name: target.full_name || target.email, actor_email: asEmail(actor.email), actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target),
+    server_timestamp: isResume ? pauseRow.resumed_at : pauseRow.started_at,
+    request_id: requestId, time_entry_id: entryId,
+    details: {
+      work_pause_id: pauseRow.id,
+      ...(isResume ? { duration_minutes: pauseRow.duration_minutes } : {}),
+    },
+  }, isResume ? 'Work Pause resume audit' : 'Work Pause start audit');
+}
+
 async function workPauseSummaryForEntry(workPauseEntity: any, entryId: string, userEmail: string) {
   const rows = await workPauseEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'completed' });
   if (!Array.isArray(rows)) throw new Error('Completed Work Pause lookup did not return a record list.');
@@ -535,6 +569,23 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
   }
 
   return freshState(stateEntity, state.id);
+}
+
+async function ensureLaborStartAudit({ auditEntity, action, segment, target, actor, requestId, entryId }: any) {
+  if (!segment?.id || !['labor_start', 'labor_change'].includes(action)) throw new Error('A valid Current Work segment is required before its start/change audit can be confirmed.');
+  return ensureActionAudit(auditEntity, {
+    action, outcome: 'confirmed', user_email: target.email,
+    user_name: target.full_name || target.email, actor_email: asEmail(actor.email), actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target), server_timestamp: segment.started_at,
+    request_id: requestId, time_entry_id: entryId,
+    details: {
+      labor_segment_id: segment.id,
+      activity_type: segment.activity_type,
+      work_order_id: segment.work_order_id || null,
+      work_order_title: segment.work_order_title || '',
+      client_name: segment.client_name || '',
+    },
+  }, action === 'labor_change' ? 'Current Work change audit' : 'Current Work start audit');
 }
 
 function laborStatusOf(state: any) {
