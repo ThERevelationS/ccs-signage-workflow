@@ -8,6 +8,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
+  try {
   const contentType = req.headers.get('content-type') || '';
   let formData = null;
   let body = null;
@@ -255,4 +256,12 @@ Deno.serve(async (req) => {
   }
 
   return Response.json({ created, updated, failed, conflicts, total: validRows.length });
+  } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    console.error('importSalesPipeline error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Sales Pipeline import could not be completed safely' : error.message,
+    }, { status: safeStatus });
+  }
 });
