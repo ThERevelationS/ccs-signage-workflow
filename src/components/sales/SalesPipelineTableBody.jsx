@@ -10,6 +10,7 @@ import { CheckCircle2, Trash2, Link as LinkIcon, Copy } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
+import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -88,6 +89,7 @@ export default function SalesPipelineTableBody({
         const stageAging = getStageAgingState(wo);
         const quoteAging = getQuoteAgingState(wo);
         const attentionItems = getActionableSalesAttentionItems(wo);
+        const likelyPlaceholder = isLikelySalesPlaceholder(wo);
 
         return (
           <React.Fragment key={wo.id}>
@@ -104,6 +106,7 @@ export default function SalesPipelineTableBody({
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}>
                   <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
                     <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{wo.client_name || "Unnamed"}</span>
+                    {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800" title="Exact placeholder customer name detected. Review before removing from Current Pipeline.">TEST</span>}
                     {attentionItems.length > 0 && <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title={`Needs attention: ${attentionItems.map((item) => item.label).join(", ")}`}>!{attentionItems.length}</span>}
                   </button>
                 </td>
