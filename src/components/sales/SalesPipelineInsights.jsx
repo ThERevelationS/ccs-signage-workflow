@@ -137,6 +137,46 @@ export default function SalesPipelineInsights({ summary }) {
           {(summary?.stageAgeMissingCount || 0) > 0 && <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{summary.stageAgeMissingCount} current opportunit{summary.stageAgeMissingCount === 1 ? "y has" : "ies have"} no verified stage-change baseline yet. They are excluded from stage-age averages until a real stage transition occurs.</div>}
         </section>
 
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-800"><Clock3 className="h-4 w-4 text-amber-600" />Quote Follow-up Health</div>
+              <p className="mt-1 text-xs text-gray-500">Only Quoted / Follow Up opportunities. Quote age uses the explicit estimate-sent date first, then quote issue date when available.</p>
+            </div>
+            <div className="text-right text-xs text-gray-500">
+              <div><span className="font-semibold text-gray-800">{summary?.quoteAwaitingResponseCount || 0}</span> awaiting response</div>
+              <div>{summary?.quoteNoFollowUpCount || 0} without follow-up · {summary?.quoteDueCount || 0} due now</div>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {(summary?.quoteAgingBuckets || []).map((bucket) => (
+              <div key={bucket.key} className={`rounded-lg border p-3 ${bucket.key === "quote_30_plus" && bucket.count > 0 ? "border-rose-200 bg-rose-50" : bucket.key === "quote_14_29" && bucket.count > 0 ? "border-amber-200 bg-amber-50" : "border-gray-100 bg-gray-50"}`}>
+                <div className="text-xs font-medium text-gray-500">{bucket.label}</div>
+                <div className="mt-1 text-2xl font-bold text-gray-900">{bucket.count}</div>
+                <div className="mt-1 text-[11px] text-gray-500">{money(bucket.value)}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead><tr className="border-b text-gray-400"><th className="pb-2 font-medium">Owner</th><th className="pb-2 text-right font-medium">Quotes</th><th className="pb-2 text-right font-medium">Tracked</th><th className="pb-2 text-right font-medium">Timing missing</th><th className="pb-2 text-right font-medium">14d+</th><th className="pb-2 text-right font-medium">No follow-up</th><th className="pb-2 text-right font-medium">Value</th></tr></thead>
+              <tbody>
+                {(summary?.quoteOwnerBreakdown || []).map((row) => (
+                  <tr key={row.owner} className="border-b border-gray-100 last:border-0"><td className={`py-2.5 font-medium ${row.owner === "Unassigned" ? "text-amber-700" : "text-gray-800"}`}>{row.owner}</td><td className="py-2.5 text-right text-gray-600">{row.count}</td><td className="py-2.5 text-right text-gray-600">{row.trackedCount}</td><td className={`py-2.5 text-right ${row.missingCount > 0 ? "font-semibold text-amber-700" : "text-gray-500"}`}>{row.missingCount}</td><td className={`py-2.5 text-right ${row.agedCount > 0 ? "font-semibold text-rose-700" : "text-gray-500"}`}>{row.agedCount}</td><td className={`py-2.5 text-right ${row.noFollowUpCount > 0 ? "font-semibold text-red-700" : "text-gray-500"}`}>{row.noFollowUpCount}</td><td className="py-2.5 text-right text-gray-700">{money(row.value)}</td></tr>
+                ))}
+                {(summary?.quoteOwnerBreakdown || []).length === 0 && <tr><td colSpan="7" className="py-6 text-center text-gray-400">No quotes are currently awaiting response.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          {(summary?.quoteAwaitingResponseCount || 0) > 0 && (
+            <div className={`mt-3 rounded-lg border px-3 py-2 text-xs ${(summary?.quoteTimingMissingCount || 0) > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-teal-200 bg-teal-50 text-teal-800"}`}>
+              {(summary?.quoteTimingMissingCount || 0) > 0
+                ? `${summary.quoteTimingMissingCount} quote${summary.quoteTimingMissingCount === 1 ? " is" : "s are"} missing a trustworthy sent date and are excluded from quote-age averages.`
+                : `Quote timing is complete for all ${summary.quoteAwaitingResponseCount} quotes awaiting response. Average age ${summary.averageQuoteAgeDays || 0}d · oldest ${summary.oldestQuoteAgeDays || 0}d.`}
+            </div>
+          )}
+        </section>
+
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-800"><Tags className="h-4 w-4 text-violet-600" />Lead Source Mix</div>
@@ -163,6 +203,7 @@ export default function SalesPipelineInsights({ summary }) {
               <CoverageRow label="Probability" covered={summary?.ratedProbabilityCount || 0} total={openCount} note="Needed for complete weighted pipeline forecasting." />
               <CoverageRow label="Verified sales activity" covered={summary?.trackedActivityCount || 0} total={openCount} note="Needed for trustworthy stale-opportunity reporting." />
               <CoverageRow label="Stage-change timing" covered={summary?.stageAgeCoverageCount || 0} total={openCount} note="Days-in-stage is withheld until this tracking has meaningful coverage." />
+              <CoverageRow label="Quote sent timing" covered={summary?.quoteTimingCoverageCount || 0} total={summary?.quoteAwaitingResponseCount || 0} note="Needed for trustworthy quote-age and quote-response follow-up reporting." />
             </div>
             <div className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${outcomeReady && stageReady ? "border-teal-200 bg-teal-50 text-teal-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
               {outcomeReady && stageReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />}
