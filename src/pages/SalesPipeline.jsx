@@ -173,8 +173,8 @@ export default function SalesPipeline() {
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
         <div className="flex flex-wrap items-center gap-1.5 mb-2">
-          <div className="clay-card p-3 flex-shrink-0">
-            <DollarSign className="w-6 h-6 text-green-600" />
+          <div className="clay-card p-2 flex-shrink-0">
+            <DollarSign className="w-5 h-5 text-green-600" />
           </div>
           <div className="flex-shrink-0">
             <h1 className="text-2xl font-bold text-gray-800">Sales Pipeline</h1>
