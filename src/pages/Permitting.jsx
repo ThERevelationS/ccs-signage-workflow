@@ -640,6 +640,8 @@ export default function Permitting() {
         (li.office_types || []).some((type) => String(type || "").toLowerCase().includes(q)) ||
         li.application_reference_number?.toLowerCase().includes(q) ||
         li.permit_number?.toLowerCase().includes(q) ||
+        li.submitted_date?.toLowerCase().includes(q) ||
+        li.permit_received_date?.toLowerCase().includes(q) ||
         li.approval_date?.toLowerCase().includes(q) ||
         li.expiration_date?.toLowerCase().includes(q) ||
         li.notes?.toLowerCase().includes(q)
