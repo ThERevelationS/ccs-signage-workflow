@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
+import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -80,6 +81,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(workOrder.sales_status);
                   const expectedCloseOverdue = expectedClose && expectedClose < today && !["won", "lost"].includes(workOrder.sales_status);
                   const stageAging = getStageAgingState(workOrder, today);
+                  const quoteAging = getQuoteAgingState(workOrder, today);
                   return (
                     <article
                       key={workOrder.id}
@@ -112,6 +114,13 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       ) : (
                         <div className="mt-1 text-xs text-gray-400">Stage age not tracked</div>
                       )}
+                      {quoteAging.awaitingResponse ? (
+                        quoteAging.tracked ? (
+                          <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age {quoteAging.ageDays}d</div>
+                        ) : (
+                          <div className="mt-1 text-xs font-medium text-amber-700">Quote sent date missing</div>
+                        )
+                      ) : null}
 
                       {followUp ? (
                         <div className={`mt-2 rounded-md px-2 py-1 text-xs ${followUpDue ? "bg-red-50 font-semibold text-red-700" : "bg-gray-50 text-gray-600"}`}>
@@ -133,6 +142,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+3d</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(7))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+7d</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(14))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+14d</button>
+                          {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100">Sent today</button>}
                           <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"><CheckCircle2 className="mr-1 h-3 w-3" />Done</button>
                         </div>
                       )}
