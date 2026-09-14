@@ -42,6 +42,7 @@ export default function WorkPauseOverlay({
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
   const mountedRef = useRef(true);
+  const pauseStateRef = useRef(null);
   const pauseIdRef = useRef("");
   const dismissedAtRef = useRef(0);
   const lastActivityAtRef = useRef(Date.now());
@@ -61,6 +62,7 @@ export default function WorkPauseOverlay({
       if (!mountedRef.current) return data;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
         const pauseId = String(data.active_work_pause.id);
+        pauseStateRef.current = data;
         setPauseState(data);
         if (pauseIdRef.current !== pauseId) {
           pauseIdRef.current = pauseId;
@@ -68,7 +70,12 @@ export default function WorkPauseOverlay({
           lastActivityAtRef.current = Date.now();
           setShowResumePrompt(true);
         }
+      } else if (data.status === "clocked_in" && data.work_pause_status === "resuming" && pauseStateRef.current) {
+        setPauseState(pauseStateRef.current);
+        setShowResumePrompt(true);
+        setError("Resume Work is still being finalized by the server. Your timer remains treated as paused until working state is confirmed.");
       } else {
+        pauseStateRef.current = null;
         setPauseState(null);
         setShowResumePrompt(false);
         setError("");
@@ -79,11 +86,14 @@ export default function WorkPauseOverlay({
       return data;
     } catch (err) {
       if (!mountedRef.current) return null;
-      if (!preservePausedOnError) setPauseState(null);
-      if (pauseState) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
+      if (!preservePausedOnError) {
+        pauseStateRef.current = null;
+        setPauseState(null);
+      }
+      if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, pauseState, disabled]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badgeCode, credentialPayload.session_token, disabled]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -94,6 +104,7 @@ export default function WorkPauseOverlay({
     const onPauseChanged = (event) => {
       const confirmed = event?.detail;
       if (confirmed?.status === "clocked_in" && confirmed?.work_pause_status === "working") {
+        pauseStateRef.current = null;
         setPauseState(null);
         setShowResumePrompt(false);
         setError("");
@@ -104,6 +115,7 @@ export default function WorkPauseOverlay({
         const activePause = confirmed.active_work_pause || confirmed.work_pause || null;
         if (activePause?.id) {
           const normalized = { ...confirmed, active_work_pause: activePause };
+          pauseStateRef.current = normalized;
           setPauseState(normalized);
           if (pauseIdRef.current !== String(activePause.id)) {
             pauseIdRef.current = String(activePause.id);
@@ -205,13 +217,14 @@ export default function WorkPauseOverlay({
       }
       resumeRequestRef.current = "";
       setShowResumePrompt(false);
+      pauseStateRef.current = null;
       setPauseState(null);
       pauseIdRef.current = "";
       dismissedAtRef.current = 0;
       if (typeof onResumed === "function") onResumed(data);
       try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
-      window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
-      await loadStatus({ preservePausedOnError: true });
+      window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: data }));
+      void loadStatus({ preservePausedOnError: true });
     } catch (err) {
       const data = err?.response?.data || {};
       const retrySame = err?.retrySameRequest === true || data?.retry_same_request === true;
