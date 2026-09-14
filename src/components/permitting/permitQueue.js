@@ -55,6 +55,9 @@ export function getPermitLineLifecycleReviews(line, today) {
   const approvalDate = asDateKey(line?.approval_date);
   const receivedDate = asDateKey(line?.permit_received_date);
   const expirationDate = asDateKey(line?.expiration_date);
+  const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
+  const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
+  const feeAmount = line?.jurisdiction_fee_amount;
 
   if (approvalDate && receivedDate && receivedDate < approvalDate) {
     reviews.push(`${label} has a permit received date before its approval date.`);
@@ -76,6 +79,17 @@ export function getPermitLineLifecycleReviews(line, today) {
         reviews.push(`${label} expires in ${pluralDays(daysUntilExpiration)} (${formatDateKey(expirationDate)}).`);
       }
     }
+  }
+
+  if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount < 0) {
+    reviews.push(`${label} has a negative jurisdiction fee amount.`);
+  }
+  if (feeStatus === "paid" && !feePaidDate) {
+    reviews.push(`${label} is marked fee paid but has no paid date.`);
+  }
+  if (feePaidDate && feeStatus !== "paid") {
+    const statusLabel = feeStatus || "not recorded";
+    reviews.push(`${label} has a fee paid date but payment status is ${statusLabel}.`);
   }
 
   return reviews;
