@@ -154,6 +154,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
+  const selectedQueueIndexRef = useRef(null);
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
   const [statusTransition, setStatusTransition] = useState(null);
   const [followUpCompletion, setFollowUpCompletion] = useState(null);
@@ -1753,6 +1754,48 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const filteredWorkOrders = sortedWorkOrders;
 
+  useEffect(() => {
+    if (!selectedWorkOrder?.id) {
+      selectedQueueIndexRef.current = null;
+      return;
+    }
+    const currentIndex = filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id);
+    if (currentIndex >= 0) selectedQueueIndexRef.current = currentIndex;
+  }, [selectedWorkOrder?.id, filteredWorkOrders]);
+
+  const selectedQueueIndex = selectedWorkOrder?.id
+    ? filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id)
+    : -1;
+  const selectedQueueAnchor = selectedQueueIndex >= 0
+    ? selectedQueueIndex
+    : Number.isInteger(selectedQueueIndexRef.current)
+      ? selectedQueueIndexRef.current
+      : 0;
+  const canNavigatePrevious = Boolean(selectedWorkOrder) && filteredWorkOrders.length > 0 && (
+    selectedQueueIndex >= 0 ? selectedQueueIndex > 0 : selectedQueueAnchor > 0
+  );
+  const canNavigateNext = Boolean(selectedWorkOrder) && filteredWorkOrders.length > 0 && (
+    selectedQueueIndex >= 0 ? selectedQueueIndex < filteredWorkOrders.length - 1 : selectedQueueAnchor < filteredWorkOrders.length
+  );
+  const navigateSelectedOpportunity = (direction) => {
+    if (!selectedWorkOrder || filteredWorkOrders.length === 0) return;
+    const currentIndex = filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id);
+    const anchor = currentIndex >= 0
+      ? currentIndex
+      : Number.isInteger(selectedQueueIndexRef.current)
+        ? selectedQueueIndexRef.current
+        : 0;
+    const targetIndex = currentIndex >= 0
+      ? currentIndex + direction
+      : direction > 0
+        ? anchor
+        : anchor - 1;
+    if (targetIndex < 0 || targetIndex >= filteredWorkOrders.length) return;
+    selectedQueueIndexRef.current = targetIndex;
+    setSelectedWorkOrder(filteredWorkOrders[targetIndex]);
+    setShowFullWorkOrderDetails(false);
+  };
+
   // Virtual scrolling setup
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
@@ -1859,6 +1902,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           onCompleteFollowUp={requestFollowUpCompletion}
           onOpenFullDetails={() => setShowFullWorkOrderDetails(true)}
           currentSalesOwnerLabel={currentSalesOwnerLabel}
+          queueNavigation={{
+            total: filteredWorkOrders.length,
+            index: selectedQueueIndex,
+            canPrevious: canNavigatePrevious,
+            canNext: canNavigateNext,
+            onPrevious: () => navigateSelectedOpportunity(-1),
+            onNext: () => navigateSelectedOpportunity(1),
+          }}
         />
       )}
       {selectedWorkOrder && showFullWorkOrderDetails && (
