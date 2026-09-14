@@ -306,7 +306,7 @@ export default function QuickClockSection({
       setTimeout(() => resetState(), 5000);
       return data;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest("clock_in", email);
+      if (!shouldRetainRequest(err)) clearRequest("clock_in", email);
       setPersistenceError(err.message || "Clock-in was not confirmed by the server.");
       setRecognitionStatus(err.retrySameRequest
         ? "Clock-in may have been saved. Retry the same action to recover safely."
@@ -604,7 +604,7 @@ export default function QuickClockSection({
       signalWorkPauseChanged();
       return result;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest("work_pause_start", email);
+      if (!shouldRetainRequest(err)) clearRequest("work_pause_start", email);
       setPersistenceError(err?.message || "Work Pause was not confirmed by the server.");
       throw err;
     }
@@ -631,7 +631,7 @@ export default function QuickClockSection({
       setRecognitionStatus(isPaid ? "Paid break started and confirmed by server." : "Unpaid lunch started and confirmed by server.");
       return result;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest(actionKey, email);
+      if (!shouldRetainRequest(err)) clearRequest(actionKey, email);
       setPersistenceError(err?.message || "Break start was not confirmed by the server.");
       throw err;
     }
@@ -655,7 +655,7 @@ export default function QuickClockSection({
       setRecognitionStatus("Break ended and confirmed by server.");
       return result;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest("break_end", email);
+      if (!shouldRetainRequest(err)) clearRequest("break_end", email);
       setPersistenceError(err?.message || "Break end was not confirmed by the server.");
       throw err;
     }
@@ -685,7 +685,7 @@ export default function QuickClockSection({
       setRecognitionStatus(action === "labor_stop" ? "Current Work stopped and confirmed by server." : action === "labor_change" ? "Current Work changed and confirmed by server." : "Current Work started and confirmed by server.");
       return result;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest(action, email);
+      if (!shouldRetainRequest(err)) clearRequest(action, email);
       setPersistenceError(err?.message || "Current Work was not confirmed by the server.");
       throw err;
     }
@@ -738,7 +738,7 @@ export default function QuickClockSection({
       setTimeout(() => resetState(), 2500);
       return result;
     } catch (err) {
-      if (!err.retrySameRequest) clearRequest("clock_out", email);
+      if (!shouldRetainRequest(err)) clearRequest("clock_out", email);
       const message = err?.message || "Clock-out was not confirmed by the server.";
       setPersistenceError(message);
       setRecognitionStatus(err?.retrySameRequest
