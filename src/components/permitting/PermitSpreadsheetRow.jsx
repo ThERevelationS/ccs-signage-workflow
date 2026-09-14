@@ -17,6 +17,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { Info, Trash2 } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
+import { isPermitLineEffectivelyComplete } from "./permitQueue";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -73,7 +74,7 @@ export default function PermitSpreadsheetRow({
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  const isCompleted = !!lineItem.permit_received_date;
+  const isCompleted = isPermitLineEffectivelyComplete(lineItem);
   const steps = lineItem.steps || [];
 
   // Follow-up highlighting
