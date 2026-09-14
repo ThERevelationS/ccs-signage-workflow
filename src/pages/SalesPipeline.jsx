@@ -183,7 +183,7 @@ export default function SalesPipeline() {
           {/* Pending Imports tab */}
           <button
             onClick={() => setShowPendingImports(!showPendingImports)}
-            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
+            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
           >
             <Inbox className="w-4 h-4" />
             {showPendingImports ? '← Return' : 'Pending Imports / Duplicates'}
