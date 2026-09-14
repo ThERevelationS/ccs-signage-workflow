@@ -105,6 +105,14 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp captured when an in-progress Current Work transition began"
+    },
+    "labor_pending_activity_type": {
+      "type": "string",
+      "description": "Activity bound to an in-progress Current Work start/change request"
+    },
+    "labor_pending_work_order_id": {
+      "type": "string",
+      "description": "WorkOrder id bound to an in-progress Current Work start/change request"
     }
   },
   "required": [
