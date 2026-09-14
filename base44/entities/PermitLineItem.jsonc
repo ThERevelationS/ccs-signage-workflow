@@ -129,6 +129,24 @@
       "format": "date",
       "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
     },
+    "jurisdiction_fee_amount": {
+      "type": "number",
+      "description": "Actual known jurisdiction/permit-office fee for this individual line, entered or reconciled by staff. Never auto-filled from repository fee guidance or estimator permit_fee."
+    },
+    "jurisdiction_fee_status": {
+      "type": "string",
+      "enum": [
+        "due",
+        "paid",
+        "waived"
+      ],
+      "description": "Staff-recorded payment state for the actual jurisdiction fee. Blank means not recorded; no status is inferred from repository data."
+    },
+    "jurisdiction_fee_paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the actual jurisdiction fee for this permit line was paid, when known."
+    },
     "last_submitted_trigger_date": {
       "type": "string",
       "format": "date",
