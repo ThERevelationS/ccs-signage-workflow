@@ -212,7 +212,7 @@ export default function Permitting() {
     });
     lineItemMutationQueuesRef.current.set(id, tracked);
     return tracked;
-  }, []);
+  }, [trackPermitLineChange]);
 
   const deletePermitLineItemSafely = useCallback(async (lineItemId) => {
     const id = String(lineItemId || "").trim();
