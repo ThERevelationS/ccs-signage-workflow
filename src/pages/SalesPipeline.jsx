@@ -371,7 +371,7 @@ export default function SalesPipeline() {
         </div>
 
         {!showPendingImports && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
-          <div className="mb-3 space-y-2">
+          <div className="mb-2 space-y-1.5">
             <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 xl:grid-cols-8">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-lg border border-slate-200 bg-white p-2 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Open Opportunities</div>
