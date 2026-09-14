@@ -1895,8 +1895,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   };
 
   const removeFromCurrentPipeline = async (workOrder, { advance = false } = {}) => {
-    if (!isRegistered || !workOrder?.id || workOrder.in_pipeline !== true) {
-      return { ok: false, message: "This opportunity is not eligible for Current Pipeline removal." };
+    if (!isRegistered || !workOrder?.id || workOrder.in_pipeline !== true || !isLikelySalesPlaceholder(workOrder)) {
+      return { ok: false, message: "Only explicitly flagged test/placeholder opportunities can use this cleanup action." };
     }
     setQuickEditError("");
     try {
@@ -1906,6 +1906,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const nextOpportunity = advance && queueIndex >= 0 ? queueBeforeRemoval[queueIndex + 1] || null : null;
       const latest = await WorkOrder.get(workOrder.id);
       if (!latest?.id) throw new Error("The WorkOrder could not be reloaded before cleanup.");
+      if (!isLikelySalesPlaceholder(latest)) {
+        throw new Error("This WorkOrder no longer matches the explicit test/placeholder rule. Cleanup was blocked rather than removing a potentially valid opportunity.");
+      }
       if (latest.in_pipeline !== true) {
         setWorkOrders((current) => current.map((row) => row.id === latest.id ? { ...row, ...latest } : row));
         if (advance) {
