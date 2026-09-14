@@ -72,7 +72,17 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
     const interval = setInterval(loadStatus, 15000);
     const onFocus = () => loadStatus();
     const onVisibility = () => { if (document.visibilityState === "visible") loadStatus(); };
-    const onPauseChanged = () => loadStatus();
+    const onPauseChanged = (event) => {
+      const confirmed = event?.detail;
+      if (confirmed?.success && mountedRef.current) {
+        const normalized = confirmed?.work_pause_status === "paused" && confirmed?.work_pause?.id
+          ? { ...confirmed, active_work_pause: confirmed.work_pause }
+          : confirmed;
+        setStatus(normalized);
+        setError("");
+      }
+      void loadStatus();
+    };
     const onStorage = (event) => { if (event.key === "ccs_work_pause_signal") loadStatus(); };
     window.addEventListener("focus", onFocus);
     window.addEventListener("ccs-timeclock-work-pause-changed", onPauseChanged);
