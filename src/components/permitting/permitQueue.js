@@ -140,6 +140,7 @@ export function getPermitLineLifecycleReviews(line, today) {
   const reviews = [];
   const label = lineLabel(line);
   const todayKey = asDateKey(today);
+  const submittedDate = asDateKey(line?.submitted_date);
   const approvalDate = asDateKey(line?.approval_date);
   const receivedDate = asDateKey(line?.permit_received_date);
   const expirationDate = asDateKey(line?.expiration_date);
@@ -153,6 +154,15 @@ export function getPermitLineLifecycleReviews(line, today) {
   const inspectionDate = asDateKey(line?.inspection_date);
   const closeoutDate = asDateKey(line?.closeout_date);
 
+  if (line?.status === "completed" && !receivedDate) {
+    reviews.push(`${label} is marked complete but has no permit received date.`);
+  }
+  if (submittedDate && approvalDate && approvalDate < submittedDate) {
+    reviews.push(`${label} has an approval date before its submitted date.`);
+  }
+  if (submittedDate && receivedDate && receivedDate < submittedDate) {
+    reviews.push(`${label} has a permit received date before its submitted date.`);
+  }
   if (approvalDate && receivedDate && receivedDate < approvalDate) {
     reviews.push(`${label} has a permit received date before its approval date.`);
   }
@@ -192,9 +202,24 @@ export function getPermitLineLifecycleReviews(line, today) {
   if (correctionStatus === "resubmitted" && !resubmittedDate) {
     reviews.push(`${label} is marked resubmitted but has no resubmitted date.`);
   }
+  if (correctionStatus === "resubmitted" && !correctionsReceivedDate) {
+    reviews.push(`${label} is marked resubmitted but has no corrections received date.`);
+  }
+  if (submittedDate && correctionsReceivedDate && correctionsReceivedDate < submittedDate) {
+    reviews.push(`${label} has a corrections received date before its submitted date.`);
+  }
+  if (correctionsReceivedDate && resubmittedDate && resubmittedDate < correctionsReceivedDate) {
+    reviews.push(`${label} has a resubmitted date before its corrections received date.`);
+  }
 
+  if (closeoutStatus && !receivedDate) {
+    reviews.push(`${label} has inspection/closeout tracking but no permit received date.`);
+  }
   if (["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(closeoutStatus) && !inspectionDate) {
     reviews.push(`${label} has an inspection state but no inspection date.`);
+  }
+  if (receivedDate && inspectionDate && inspectionDate < receivedDate) {
+    reviews.push(`${label} has an inspection date before its permit received date.`);
   }
   if (closeoutStatus === "closed_out" && !closeoutDate) {
     reviews.push(`${label} is marked closed out but has no closeout date.`);
@@ -202,6 +227,12 @@ export function getPermitLineLifecycleReviews(line, today) {
   if (closeoutDate && closeoutStatus !== "closed_out") {
     const statusLabel = closeoutStatus || "not recorded";
     reviews.push(`${label} has a closeout date but closeout status is ${statusLabel}.`);
+  }
+  if (inspectionDate && closeoutDate && closeoutDate < inspectionDate) {
+    reviews.push(`${label} has a closeout date before its inspection date.`);
+  }
+  if (receivedDate && closeoutDate && closeoutDate < receivedDate) {
+    reviews.push(`${label} has a closeout date before its permit received date.`);
   }
 
   return reviews;
