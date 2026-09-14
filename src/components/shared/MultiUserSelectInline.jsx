@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, X, Check, Users } from "lucide-react";
+import { X, Check, Users } from "lucide-react";
 
 export default function MultiUserSelectInline({ 
   users = [], 
