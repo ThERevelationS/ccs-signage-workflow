@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
@@ -103,6 +103,7 @@ export default function SalesOpportunityDialog({
   onCompleteFollowUp,
   onOpenFullDetails,
   currentSalesOwnerLabel = "",
+  queueNavigation = null,
 }) {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -187,6 +188,28 @@ export default function SalesOpportunityDialog({
               <Button variant="outline" size="sm" onClick={() => onOpenFullDetails?.(workOrder)}><Wrench className="mr-1.5 h-4 w-4" />Full Work Order</Button>
             </div>
           </div>
+          {queueNavigation && (
+            <div className="mt-3 flex flex-col gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-xs text-slate-500">
+                <span className="font-semibold text-slate-700">Current filtered queue</span>
+                <span className="ml-1.5">
+                  {queueNavigation.index >= 0
+                    ? `${queueNavigation.index + 1} of ${queueNavigation.total}`
+                    : queueNavigation.total > 0
+                      ? `This opportunity is resolved/removed from the queue · ${queueNavigation.total} remaining`
+                      : "Queue complete"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <Button type="button" variant="outline" size="sm" className="h-9 justify-center px-3" onClick={queueNavigation.onPrevious} disabled={!queueNavigation.canPrevious}>
+                  <ChevronLeft className="mr-1 h-4 w-4" />Previous
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="h-9 justify-center px-3" onClick={queueNavigation.onNext} disabled={!queueNavigation.canNext}>
+                  Next<ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
