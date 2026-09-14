@@ -1363,64 +1363,76 @@ export default function ProductChecklistDialog({
                   key={productName} 
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
                 >
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <button
-                      type="button"
-                      onClick={() => setCollapsedProducts(prev => ({ ...prev, [productName]: !prev[productName] }))}
-                      className="p-1 rounded hover:bg-purple-100 text-purple-700 shrink-0"
-                      title={collapsedProducts[productName] ? "Expand product checklist" : "Collapse product checklist"}
-                      aria-label={collapsedProducts[productName] ? `Expand ${productName}` : `Collapse ${productName}`}
-                    >
-                      {collapsedProducts[productName] ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                    {isRegistered && (
+                  <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-start">
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
                       <button
-                        onClick={(e) => { 
-                          e.stopPropagation();
-                          setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
-                          setNewItemInput({ show: true, parentId: null, type: 'checklist', productName: productName }); 
-                        }}
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                        title="Add Checklist Item"
+                        type="button"
+                        onClick={() => setCollapsedProducts(prev => ({ ...prev, [productName]: !prev[productName] }))}
+                        className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center rounded-md hover:bg-purple-100 text-purple-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1"
+                        title={collapsedProducts[productName] ? "Expand product checklist" : "Collapse product checklist"}
+                        aria-label={collapsedProducts[productName] ? `Expand ${productName}` : `Collapse ${productName}`}
+                        aria-expanded={!collapsedProducts[productName]}
                       >
-                        +Checklist
+                        {collapsedProducts[productName] ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </button>
-                    )}
-                    {editingProductName === productName ? (
-                      <div className="flex items-center gap-1 flex-1">
-                        <span className="text-lg">📦</span>
-                        <Input
-                          value={editingProductNameText}
-                          onChange={(e) => setEditingProductNameText(e.target.value)}
-                          className="h-7 text-sm font-bold flex-1 max-w-xs"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveProductName(productName, editingProductNameText);
-                            if (e.key === 'Escape') setEditingProductName(null);
-                          }}
-                          onBlur={() => saveProductName(productName, editingProductNameText)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                      <h3
-                        className="font-bold text-purple-800 flex items-center gap-2 min-w-0 rounded px-1"
-                      >
-                        <span className="truncate">📦 {productName}</span>
-                        {group.productType && (
-                          <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
-                            {group.productType}
+                      {editingProductName === productName ? (
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                          <span className="text-lg shrink-0" aria-hidden="true">📦</span>
+                          <Input
+                            value={editingProductNameText}
+                            onChange={(e) => setEditingProductNameText(e.target.value)}
+                            className="h-11 sm:h-9 text-base sm:text-sm font-bold flex-1 min-w-0 max-w-none sm:max-w-xs"
+                            aria-label={`Product name for ${productName}`}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveProductName(productName, editingProductNameText);
+                              if (e.key === 'Escape') setEditingProductName(null);
+                            }}
+                            onBlur={() => saveProductName(productName, editingProductNameText)}
+                          />
+                        </div>
+                      ) : (
+                        <h3 className="font-bold text-purple-800 flex flex-wrap items-center gap-2 min-w-0 rounded px-1">
+                          <span className="truncate min-w-0 max-w-full">📦 {productName}</span>
+                          {group.productType && (
+                            <span className="text-xs font-normal bg-purple-200 px-2 py-0.5 rounded">
+                              {group.productType}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-medium bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            {countPrimaryItemsInGroup(group)} open
                           </span>
-                        )}
-                        <span className="text-[10px] font-medium bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                          {countPrimaryItemsInGroup(group)} open
-                        </span>
-                      </h3>
-                      {isRegistered && (
-                        <button type="button" onClick={() => { setEditingProductName(productName); setEditingProductNameText(productName); }} className="p-1 rounded hover:bg-purple-100 text-purple-600" title="Rename product">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
+                        </h3>
                       )}
+                    </div>
+                    {isRegistered && (
+                      <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
+                            setNewItemInput({ show: true, parentId: null, type: 'checklist', productName: productName });
+                          }}
+                          className="inline-flex min-h-11 sm:min-h-9 flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 text-xs font-medium bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                          title={`Add checklist item to ${productName}`}
+                          aria-label={`Add checklist item to ${productName}`}
+                        >
+                          <Plus className="w-4 h-4" aria-hidden="true" />
+                          Add checklist
+                        </button>
+                        {editingProductName !== productName && (
+                          <button
+                            type="button"
+                            onClick={() => { setEditingProductName(productName); setEditingProductNameText(productName); }}
+                            className="inline-flex min-h-11 sm:min-h-9 flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 text-xs font-medium rounded-md hover:bg-purple-100 text-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1"
+                            title={`Rename ${productName}`}
+                            aria-label={`Rename ${productName}`}
+                          >
+                            <Pencil className="w-4 h-4" aria-hidden="true" />
+                            Rename
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
