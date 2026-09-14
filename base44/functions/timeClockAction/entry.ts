@@ -780,6 +780,14 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
       }
     }
     if (entry?.id && entry.status === 'clocked_out' && String(entry.clock_out_request_id || '') === requestId) {
+      const clockOutAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+      const auditReady = clockOutAudit && ['confirmed', 'recovered', 'reused'].includes(String(clockOutAudit.outcome || ''));
+      if (!auditReady) return state;
+      const statePayloadHash = String(state.last_request_payload_hash || '');
+      const auditPayloadHash = String(clockOutAudit?.details?.payload_hash || '');
+      if (statePayloadHash && auditPayloadHash && !constantTimeEqual(statePayloadHash, auditPayloadHash)) {
+        throw new Error('Clock-out state and audit payload hashes do not match.');
+      }
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
@@ -793,7 +801,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
-          reason: 'Recovered interrupted clock-out finalization',
+          reason: 'Recovered interrupted clock-out finalization after confirmed clock-out audit',
         });
         return recovered;
       }
