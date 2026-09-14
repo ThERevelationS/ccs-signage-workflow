@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Trash2, List, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Save, Plus, Pencil, AlertCircle, CheckCircle2, Trash2, List, ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import MultiUserSelectInline from "@/components/shared/MultiUserSelectInline";
 import { Dialog as OtherDialog, DialogContent as OtherDialogContent, DialogHeader as OtherDialogHeader, DialogTitle as OtherDialogTitle, DialogFooter as OtherDialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -780,6 +780,9 @@ export default function ProductChecklistDialog({
   const [editingProductName, setEditingProductName] = useState(null);
   const [editingProductNameText, setEditingProductNameText] = useState("");
   const [focusedNeedsInputId, setFocusedNeedsInputId] = useState(null);
+  const [checklistSearchQuery, setChecklistSearchQuery] = useState("");
+  const [checklistSearchIndex, setChecklistSearchIndex] = useState(-1);
+  const [focusedSearchId, setFocusedSearchId] = useState(null);
 
   const startEditItem = (item, e) => {
     e.stopPropagation();
@@ -1075,6 +1078,7 @@ export default function ProductChecklistDialog({
   };
   const focusFirstNeedsInput = () => {
     if (needsInputPrimaryItems.length === 0) return;
+    setFocusedSearchId(null);
 
     const activeIds = new Set();
     Object.values(activeChecklist).forEach(group => {
@@ -1109,6 +1113,64 @@ export default function ProductChecklistDialog({
         .find(element => element.dataset.sipsChecklistItemId === String(scrollTargetId));
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
+  };
+  const normalizedChecklistSearch = checklistSearchQuery.trim().toLowerCase();
+  const checklistSearchResults = normalizedChecklistSearch
+    ? (() => {
+        const results = [];
+        const seenIds = new Set();
+        Object.entries(activeChecklist).forEach(([productName, group]) => {
+          const collections = [
+            { items: group.mainItems, subTemplateName: "" },
+            ...Object.entries(group.subTemplates).map(([subTemplateName, items]) => ({ items, subTemplateName }))
+          ];
+          collections.forEach(({ items, subTemplateName }) => {
+            items.forEach(item => {
+              if (seenIds.has(item.id)) return;
+              const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
+              const searchableText = [
+                productName,
+                subTemplateName,
+                item.text,
+                item.approved_by,
+                item.custom_dropdown_value,
+                assignedTo
+              ].filter(Boolean).join(" ").toLowerCase();
+              if (searchableText.includes(normalizedChecklistSearch)) {
+                seenIds.add(item.id);
+                results.push({ item, productName });
+              }
+            });
+          });
+        });
+        return results;
+      })()
+    : [];
+  const navigateChecklistSearch = (direction = 1) => {
+    if (checklistSearchResults.length === 0) return;
+    const nextIndex = checklistSearchIndex < 0
+      ? (direction < 0 ? checklistSearchResults.length - 1 : 0)
+      : (checklistSearchIndex + direction + checklistSearchResults.length) % checklistSearchResults.length;
+    const { item, productName } = checklistSearchResults[nextIndex];
+    const topLevelId = getTopLevelChecklistId(item);
+
+    setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
+    setExpandedItems(prev => ({ ...prev, [topLevelId]: true }));
+    setFocusedNeedsInputId(null);
+    setFocusedSearchId(item.id);
+    setChecklistSearchIndex(nextIndex);
+
+    window.setTimeout(() => {
+      const candidateIds = [item.id, item.parent_id, topLevelId].filter(Boolean).map(String);
+      const targetElement = Array.from(document.querySelectorAll("[data-sips-checklist-item-id]"))
+        .find(element => candidateIds.includes(element.dataset.sipsChecklistItemId));
+      targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
+  };
+  const clearChecklistSearch = () => {
+    setChecklistSearchQuery("");
+    setChecklistSearchIndex(-1);
+    setFocusedSearchId(null);
   };
   const revisitDate = parseDateOnly(loadedRevisitDateSnapshot);
   const today = new Date();
@@ -1205,6 +1267,43 @@ export default function ProductChecklistDialog({
                     {allDetailsCollapsed ? "Expand task details" : "Collapse task details"}
                   </Button>
                 )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                  <Input
+                    value={checklistSearchQuery}
+                    onChange={(e) => {
+                      setChecklistSearchQuery(e.target.value);
+                      setChecklistSearchIndex(-1);
+                      setFocusedSearchId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        navigateChecklistSearch(e.shiftKey ? -1 : 1);
+                      }
+                    }}
+                    placeholder="Find product, checklist item, detail, task, status, or assignee…"
+                    className="h-8 pl-8 pr-8 text-xs bg-white"
+                  />
+                  {checklistSearchQuery && (
+                    <button type="button" onClick={clearChecklistSearch} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-700" aria-label="Clear checklist search">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 sm:shrink-0">
+                  <span className={`text-[11px] min-w-[72px] text-center ${normalizedChecklistSearch && checklistSearchResults.length === 0 ? "text-red-600" : "text-gray-500"}`} aria-live="polite">
+                    {normalizedChecklistSearch ? `${checklistSearchResults.length} match${checklistSearchResults.length === 1 ? "" : "es"}` : "Find items"}
+                  </span>
+                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs" disabled={checklistSearchResults.length === 0} onClick={() => navigateChecklistSearch(-1)}>
+                    Previous
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs" disabled={checklistSearchResults.length === 0} onClick={() => navigateChecklistSearch(1)}>
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1342,7 +1441,7 @@ export default function ProductChecklistDialog({
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
                         const isItemCompleted = dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed;
                         return (
-                        <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
+                        <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === displayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                           {/* Main checklist item */}
                           <div 
                             className="flex flex-wrap items-center gap-2 group"
@@ -1465,7 +1564,7 @@ export default function ProductChecklistDialog({
                             <div className="ml-2 sm:ml-8 mt-2 space-y-2 border-l-2 border-gray-200 pl-2 sm:pl-3">
                               {/* Tasks under main item */}
                               {displayItem.tasks?.map(task => (
-                              <div key={task.id} className="bg-orange-50 p-1 rounded border-l-2 border-orange-300 group">
+                              <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-1 rounded border-l-2 border-orange-300 group ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                 <div className="flex flex-wrap items-center gap-1.5">
                                   <Checkbox 
                                     checked={!!task.approved_by}
@@ -1513,7 +1612,7 @@ export default function ProductChecklistDialog({
                                 </div>
                                 {/* Subtasks */}
                                 {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
-                                  <div key={subtask.id} className="ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask">
+                                  <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <Checkbox 
                                       checked={!!subtask.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
@@ -1607,7 +1706,7 @@ export default function ProductChecklistDialog({
                               {displayItem.details?.map(detail => {
                                 const isDetailCompleted = dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed;
                                 return (
-                                <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}>
+                                <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                     {editingItemId === detail.id ? (
@@ -1718,7 +1817,7 @@ export default function ProductChecklistDialog({
                                   {detail.tasks?.length > 0 && (
                                     <div className="ml-4 mt-1 space-y-0.5 border-l border-orange-200 pl-1.5">
                                       {detail.tasks.map(task => (
-                                        <div key={task.id} className="bg-orange-50 p-0.5 rounded group/dtask">
+                                        <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-0.5 rounded group/dtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                           <div className="flex flex-wrap items-center gap-1">
                                             <Checkbox 
                                               checked={!!task.approved_by}
@@ -1765,7 +1864,7 @@ export default function ProductChecklistDialog({
                                           </div>
                                           {/* Subtasks under detail task */}
                                           {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
-                                            <div key={subtask.id} className="ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub">
+                                            <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                               <Checkbox 
                                                 checked={!!subtask.approved_by}
                                                 onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
@@ -1844,7 +1943,7 @@ export default function ProductChecklistDialog({
                           const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
                           const isStItemCompleted = dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed;
                           return (
-                          <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : ''}`}>
+                          <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === stDisplayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                             <div 
                               className="flex flex-wrap items-center gap-2 group"
                             >
@@ -1963,7 +2062,7 @@ export default function ProductChecklistDialog({
                             {(expandedItems[stDisplayItem.id] !== false) && (
                               <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
                                 {stDisplayItem.tasks?.map(task => (
-                                  <div key={task.id} className="flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask">
+                                  <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <Checkbox 
                                       checked={!!task.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
@@ -2019,7 +2118,7 @@ export default function ProductChecklistDialog({
                                 )}
                                 
                                 {stDisplayItem.details?.map(detail => (
-                                  <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`bg-gray-50 p-1.5 rounded text-xs group/stdetail ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : ''}`}>
+                                  <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`bg-gray-50 p-1.5 rounded text-xs group/stdetail ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <div className="flex flex-wrap items-center gap-1">
                                       <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">Detail</span>
                                       {editingItemId === detail.id ? (
@@ -2073,7 +2172,7 @@ export default function ProductChecklistDialog({
                                     {detail.tasks?.length > 0 && (
                                       <div className="ml-4 mt-1 space-y-0.5">
                                         {detail.tasks.map(task => (
-                                          <div key={task.id} className="flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask">
+                                          <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                             <Checkbox 
                                               checked={!!task.approved_by}
                                               onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
