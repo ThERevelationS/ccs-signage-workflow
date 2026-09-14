@@ -168,7 +168,7 @@ export default function VehiclePanel({
         {activeTab === "live" && <LiveTab stats={stats} fleetEquipment={fleetEquipment} fleetOpenWorkOrders={fleetOpenWorkOrders} fleetMaintenanceTasks={fleetMaintenanceTasks} maintenanceUrl={maintenanceUrl} trips={trips} tripsLoading={tripsLoading} daysBack={daysBack} onDaysBackChange={onDaysBackChange} avgBy={avgBy} onAvgByChange={onAvgByChange} />}
         {activeTab === "trips" && <TripsTab vehicle={vehicle} trips={trips} loading={tripsLoading} selectedTripId={selectedTripId} onSelectTrip={onSelectTrip} daysBack={daysBack} onDaysBackChange={onDaysBackChange} onRefresh={onTripsRefresh} />}
         {activeTab === "maintenance" && <MaintenanceTab equipment={fleetEquipment} openWorkOrders={fleetOpenWorkOrders} tasks={fleetMaintenanceTasks} logs={fleetEquipmentLogs} loading={fleetMaintenanceLoading} />}
-        {activeTab === "alerts" && <NotificationsTab notifications={notifications} vehicle={vehicle} onClearAll={onClearNotifications} onMarkRead={onMarkNotificationRead} onOpenSettings={onOpenAlertSettings} canManageAlerts={canManageAlerts} />}
+        {activeTab === "alerts" && <NotificationsTab notifications={notifications} onClearAll={onClearNotifications} onMarkRead={onMarkNotificationRead} onOpenSettings={onOpenAlertSettings} canManageAlerts={canManageAlerts} />}
         {activeTab === "details" && <DetailsTab vehicle={vehicle} fleetEquipment={fleetEquipment} />}
       </div>
 
