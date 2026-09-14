@@ -429,26 +429,14 @@ export default function QuickClockSection({
       const verifiedUser = status.user || user;
       if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
 
-      credentialRef.current = credential;
-      setSelectedUser(verifiedUser);
-      setBreakStatus(status.break_status || "working");
-      setActiveBreak(status.active_break || null);
-      setBreakSummary(status.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
-      setWorkPauseAllowed(status.work_pause_allowed === true);
-      setWorkPauseStatus(status.work_pause_status || "working");
-      setActiveWorkPause(status.active_work_pause || null);
-      setWorkPauseSummary(status.work_pause_summary || { count: 0, total_minutes: 0 });
-      setActiveLabor(status.active_labor || null);
-      setLaborSummary(status.labor_summary || { count: 0, total_minutes: 0 });
-      setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
-
-      if (status.status === "clocked_in" && status.entry?.id) {
-        setActiveEntry(status.entry);
-        setShowClockOut(true);
-        setIsRecognizing(false);
+      const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
+      if (resolvedStatus === "clocked_in") {
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
         return;
       }
+      if (["clocking_in", "clocking_out"].includes(resolvedStatus)) return;
 
+      setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}!`);
       await performClockIn(verifiedUser, credential);
     } catch (err) {
       setPersistenceError(err.message || "Employee identity could not be verified for Time Clock.");
