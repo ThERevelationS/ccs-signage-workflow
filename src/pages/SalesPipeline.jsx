@@ -379,7 +379,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-xs text-slate-500">{Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} not flagged as test · {pipelineSummary.placeholderCount} flagged test</div>
                 <div className="mt-0.5 text-[11px] text-slate-400">{pipelineSummary.assignedOwnerCount} owned · {pipelineSummary.unassignedOwnerCount} unassigned</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-left shadow-sm transition hover:border-emerald-300">
+              <button type="button" onClick={() => applyAttentionFilter("all")} className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-2 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">Open Pipeline Value</div>
                 <div className="mt-1 text-2xl font-bold text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</div>
                 <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} not flagged · {formatPipelineValue(pipelineSummary.placeholderValue)} flagged test</div>
