@@ -96,9 +96,10 @@ export default function SalesDailyQueue({
             <div>
               <div className="flex items-center gap-2 text-base font-semibold text-slate-900"><CalendarClock className="h-5 w-5 text-blue-600" />Daily Sales Queue</div>
               <p className="mt-1 text-xs text-slate-500">One operational view over existing Sales fields. Completing or rescheduling here uses the same WorkOrder workflow and history as the rest of Sales Pipeline.</p>
+              <div className="mt-1 text-[11px] font-medium text-slate-400">{total} item{total === 1 ? "" : "s"} need attention in this owner view.</div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <button type="button" onClick={() => setOwnerScope("all")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "all" ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>All ({total})</button>
+              <button type="button" onClick={() => setOwnerScope("all")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "all" ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>All</button>
               {currentSalesOwnerLabel && <button type="button" onClick={() => setOwnerScope("mine")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "mine" ? "border-blue-600 bg-blue-600 text-white" : "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"}`}>Mine</button>}
               <button type="button" onClick={() => setOwnerScope("unassigned")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "unassigned" ? "border-amber-600 bg-amber-600 text-white" : "border-amber-200 bg-white text-amber-700 hover:bg-amber-50"}`}>Unassigned</button>
             </div>
