@@ -395,7 +395,7 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         </div>
       )}
 
-      <PermitLineHistory lineItemId={lineItem.id} />
+      <PermitLineHistory lineItemId={lineItem.id} lineUpdatedDate={lineItem.updated_date} />
     </div>
   );
 }
