@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
+import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -85,6 +86,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const quoteAging = getQuoteAgingState(workOrder, today);
                   const attentionItems = getActionableSalesAttentionItems(workOrder, today);
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
+                  const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
                   const suggestedProbability = getSuggestedProbabilityForStatus(workOrder.sales_status || "lead");
                   return (
                     <article
@@ -100,7 +102,10 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       className={`rounded-lg border bg-white p-3 shadow-sm transition ${draggedId === workOrder.id ? "opacity-60" : "hover:border-gray-300 hover:shadow"}`}
                     >
                       <button type="button" onClick={() => onOpenDetails?.(workOrder)} className="block w-full text-left">
-                        <div className="truncate text-sm font-semibold text-blue-700">{workOrder.client_name || "Unnamed opportunity"}</div>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <div className="min-w-0 flex-1 truncate text-sm font-semibold text-blue-700">{workOrder.client_name || "Unnamed opportunity"}</div>
+                          {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-semibold text-rose-800">TEST</span>}
+                        </div>
                         {(workOrder.description || workOrder.title) && (
                           <div className="mt-1 line-clamp-2 text-xs text-gray-600">{workOrder.description || workOrder.title}</div>
                         )}
