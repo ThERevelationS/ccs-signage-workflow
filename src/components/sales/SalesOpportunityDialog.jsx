@@ -264,8 +264,10 @@ export default function SalesOpportunityDialog({
               </Select>
               {stageAging.tracked ? (
                 <div className={`mt-2 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>{stageAging.ageDays} day{stageAging.ageDays === 1 ? "" : "s"} in this stage{workOrder.sales_status === "on_hold" ? " · On Hold is not flagged as stalled" : stageAging.aged ? " · review for stage movement" : ""}</div>
-              ) : (
+              ) : recordClassification === "current" ? (
                 <div className="mt-2 text-xs text-gray-400">Stage age begins tracking after the next verified stage change.</div>
+              ) : (
+                <div className="mt-2 text-xs text-gray-400">Stage timing is not treated as authoritative for this non-current record.</div>
               )}
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("probability_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
