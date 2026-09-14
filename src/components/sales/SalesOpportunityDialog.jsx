@@ -474,9 +474,10 @@ export default function SalesOpportunityDialog({
           <Button type="button" variant="outline" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(false)} className="border-rose-300 text-rose-800 hover:bg-rose-50 hover:text-rose-900">
             {removeFromPipelineAction === "only" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove only
           </Button>
-          {queueNavigation?.canNext && (
+          {queueNavigation && (
             <Button type="button" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(true)} className="bg-rose-600 text-white hover:bg-rose-700">
-              {removeFromPipelineAction === "next" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove & Next<ChevronRight className="ml-1 h-4 w-4" />
+              {removeFromPipelineAction === "next" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
+              {queueNavigation.canNext ? <>Remove & Next<ChevronRight className="ml-1 h-4 w-4" /></> : "Remove & Finish"}
             </Button>
           )}
         </AlertDialogFooter>
