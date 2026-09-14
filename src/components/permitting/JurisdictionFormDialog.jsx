@@ -26,6 +26,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [formError, setFormError] = useState("");
   const [manualProtectionEdits, setManualProtectionEdits] = useState({
     website: false,
     permitting: false,
@@ -37,6 +38,8 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     if (jurisdiction) setForm(current => ({ ...current, ...jurisdiction }));
     else setForm({ name: "", state: "", type: "county", parent_county: null, website_url: "", permitting_url: "", notes: "", documents: [], contact_info: { department: "", phone: "", email: "", address: "" }, auto_refresh: true });
     setManualProtectionEdits({ website: false, permitting: false, requirements: false, documents: false });
+    setFormError("");
+    setConfirmDelete(false);
   }, [jurisdiction, open]);
 
   const markManualProtection = (group) => {
@@ -79,11 +82,12 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
     const supportedTypes = ['pdf', 'xlsx', 'xls', 'docx', 'doc', 'txt', 'csv'];
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!supportedTypes.includes(ext)) {
-      alert(`Unsupported file type. Supported: ${supportedTypes.join(', ')}`);
+      setFormError(`Unsupported file type. Supported: ${supportedTypes.join(', ')}`);
       e.target.value = '';
       return;
     }
 
+    setFormError("");
     setUploadingPDF(true);
     try {
       const uploadRes = await base44.integrations.Core.UploadFile({ file });
@@ -121,6 +125,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
       }));
     } catch (err) {
       console.error("Document upload/analysis error:", err);
+      setFormError(err?.message || "The document could not be uploaded or analyzed. No document was added.");
     } finally {
       setUploadingPDF(false);
       setAnalyzingPDF(false);
@@ -182,12 +187,12 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
   };
 
   const handleSave = async () => {
-    // Check for duplicates
     if (!form.name || !form.state) {
-      alert('Please fill in Name and State');
+      setFormError("Name and State are required before this jurisdiction can be saved.");
       return;
     }
 
+    setFormError("");
     setSaving(true);
     try {
       const savePayload = {
@@ -204,7 +209,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
       await onSave(savePayload);
     } catch (e) {
       console.error("Save error:", e);
-      alert(e?.message || "Error saving jurisdiction");
+      setFormError(e?.message || "The jurisdiction could not be saved safely.");
     }
     setSaving(false);
   };
@@ -217,6 +222,13 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
         </DialogHeader>
 
         <div className="space-y-4">
+          {formError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
+
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -388,7 +400,7 @@ export default function JurisdictionFormDialog({ open, onClose, jurisdiction, on
                         }
                       } catch (error) {
                         console.error("Jurisdiction delete failed:", error);
-                        alert(error?.message || "Jurisdiction could not be deleted safely.");
+                        setFormError(error?.message || "Jurisdiction could not be deleted safely.");
                       } finally {
                         setDeleting(false);
                       }
