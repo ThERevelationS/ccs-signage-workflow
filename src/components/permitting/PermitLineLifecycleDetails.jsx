@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, BadgeCheck, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
+import { getPermitLineLifecycleSummary } from "./permitQueue";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -125,6 +126,7 @@ function DateField({ label, value, disabled, onCommit }) {
 }
 
 export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
+  const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
     const todayDate = parseLocalDate(today);
@@ -144,18 +146,33 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
           <FileKey2 className="h-3.5 w-3.5 text-slate-500" /> Permit details
         </div>
-        {expirationState && (
-          <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-            expirationState.tone === "expired"
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+            lifecycleSummary.tone === "danger"
               ? "border-red-200 bg-red-50 text-red-700"
-              : expirationState.tone === "soon"
+              : lifecycleSummary.tone === "warning"
                 ? "border-amber-200 bg-amber-50 text-amber-800"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : lifecycleSummary.tone === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : lifecycleSummary.tone === "info"
+                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-600"
           }`}>
-            {expirationState.tone === "expired" ? <AlertTriangle className="h-3 w-3" /> : <BadgeCheck className="h-3 w-3" />}
-            {expirationState.label}
+            {lifecycleSummary.label}
           </span>
-        )}
+          {expirationState && (
+            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+              expirationState.tone === "expired"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : expirationState.tone === "soon"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+            }`}>
+              {expirationState.tone === "expired" ? <AlertTriangle className="h-3 w-3" /> : <BadgeCheck className="h-3 w-3" />}
+              {expirationState.label}
+            </span>
+          )}
+        </div>
       </div>
 
       {(lineItem.submitted_date || lineItem.permit_received_date) && (
