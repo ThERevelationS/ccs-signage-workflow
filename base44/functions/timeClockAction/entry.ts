@@ -2531,19 +2531,113 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'clock_out') {
+      const submittedClockOut = clockOutSubmissionForHash(body);
+      const clockOutPayloadHash = await payloadHash(submittedClockOut);
+
       if (state.status === 'clocked_out') {
         const prior = await uniqueRow(entryEntity, { user_email: target.email, clock_out_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-out request');
         if (prior?.id && prior.status === 'clocked_out') {
-          return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true, user: publicEmployee(target) });
+          const priorAudit = await clockOutAuditForRequest(auditEntity, requestId, prior.id);
+          const stateHash = String(state.last_request_id || '') === requestId ? String(state.last_request_payload_hash || '') : '';
+          const auditHash = String(priorAudit?.details?.payload_hash || '');
+          if (stateHash && !constantTimeEqual(stateHash, clockOutPayloadHash)) {
+            return Response.json({ success: false, error: 'This Clock Out request id is already bound to different reconciliation details.' }, { status: 409 });
+          }
+          if (auditHash && !constantTimeEqual(auditHash, clockOutPayloadHash)) {
+            return Response.json({ success: false, error: 'This Clock Out request id is already bound to a different confirmed audit payload.' }, { status: 409 });
+          }
+          if (priorAudit && !['confirmed', 'recovered', 'reused'].includes(String(priorAudit.outcome || ''))) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but its audit is not finalized. Retry this same request.' }, { status: 409 });
+          }
+          return Response.json({ success: true, status: 'already_clocked_out', entry: prior, reused: true, user: publicEmployee(target), audit_saved: Boolean(priorAudit) });
         }
         return Response.json({ success: false, error: 'Employee is not currently clocked in.' }, { status: 409 });
       }
-      const resumingClockOut = state.status === 'clocking_out' && String(state.last_request_id || '') === requestId;
+
+      let resumingClockOut = state.status === 'clocking_out' && String(state.last_request_id || '') === requestId;
+      if (resumingClockOut) {
+        const boundHash = String(state.last_request_payload_hash || '');
+        if (boundHash && !constantTimeEqual(boundHash, clockOutPayloadHash)) {
+          return Response.json({ success: false, error: 'This Clock Out request id is already bound to different reconciliation details. Retry with the original allocations, lunch, and notes.' }, { status: 409 });
+        }
+        if (!boundHash) {
+          const rebound = await setState(stateEntity, state, 'clocking_out', requestId, { last_request_payload_hash: clockOutPayloadHash });
+          if (!rebound) return Response.json({ success: false, retry_same_request: true, error: 'Clock-out recovery lost a concurrency race. Reload status and retry the same request.' }, { status: 409 });
+          state = rebound;
+          resumingClockOut = true;
+        }
+      }
       if ((state.status !== 'clocked_in' && !resumingClockOut) || !state.active_entry_id) {
         return Response.json({ success: false, error: 'Another Time Clock action is still in progress or the active entry is missing.' }, { status: 409 });
       }
 
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      const completedSameRequest = Boolean(
+        resumingClockOut && entry?.id && entry.status === 'clocked_out' &&
+        String(entry.clock_out_request_id || '') === requestId && asEmail(entry.user_email) === target.email &&
+        !entry.archived_test_data && !entry.archived_admin
+      );
+      if (completedSameRequest) {
+        let existingAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+        if (existingAudit) {
+          const auditHash = String(existingAudit?.details?.payload_hash || '');
+          if (auditHash && !constantTimeEqual(auditHash, clockOutPayloadHash)) {
+            return Response.json({ success: false, error: 'This completed Clock Out has a different audit payload. Admin review is required.' }, { status: 409 });
+          }
+          if (!['confirmed', 'recovered', 'reused'].includes(String(existingAudit.outcome || ''))) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but audit finalization is still incomplete. Retry the same request.' }, { status: 409 });
+          }
+        } else {
+          const pendingStarted = state.pending_started_at ? new Date(state.pending_started_at) : null;
+          const pendingAgeMs = pendingStarted && Number.isFinite(pendingStarted.getTime()) ? Date.now() - pendingStarted.getTime() : Number.POSITIVE_INFINITY;
+          if (pendingAgeMs < 5000) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved and finalization is still in progress. Retry the same request.' }, { status: 409 });
+          }
+          const recoveryStartedAt = new Date().toISOString();
+          const recoveryClaim = await setState(stateEntity, state, 'clocking_out', requestId, {
+            pending_started_at: recoveryStartedAt,
+            last_request_payload_hash: clockOutPayloadHash,
+          });
+          if (!recoveryClaim) {
+            existingAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+            if (!existingAudit) return Response.json({ success: false, retry_same_request: true, error: 'Another Clock Out recovery is already in progress. Retry the same request.' }, { status: 409 });
+          } else {
+            state = recoveryClaim;
+            const recoveryBreakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+            const recoveryWorkPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+            const recoveryAuditSaved = await audit(auditEntity, {
+              action: 'clock_out', outcome: 'recovered', user_email: target.email,
+              user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+              authentication_method: authenticationMethodFor(actor, target),
+              server_timestamp: entry.clock_out, request_id: requestId, time_entry_id: entry.id,
+              reason: 'Recovered interrupted Clock Out audit finalization',
+              details: {
+                payload_hash: clockOutPayloadHash,
+                submitted_lunch_minutes: submittedClockOut.lunch_minutes,
+                lunch_minutes: Number(entry.lunch_minutes || 0), total_hours: Number(entry.total_hours || 0),
+                break_summary: recoveryBreakSummary, work_pause_summary: recoveryWorkPauseSummary,
+                recovered_after_entry_save: true,
+              },
+            });
+            if (!recoveryAuditSaved) return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but its audit recovery was interrupted. Retry the same request.' }, { status: 409 });
+            existingAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
+          }
+        }
+
+        const currentRecoveryState = await freshState(stateEntity, state.id);
+        const finalizedRecovery = await setState(stateEntity, currentRecoveryState, 'clocking_out', requestId, {
+          status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out,
+          pending_started_at: null, break_status: 'working', active_break_id: null,
+          last_break_request_id: null, break_pending_started_at: null,
+          work_pause_status: 'working', active_work_pause_id: null,
+          last_work_pause_request_id: null, work_pause_pending_started_at: null,
+          labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+          labor_pending_activity_type: '', labor_pending_work_order_id: '',
+        });
+        if (!finalizedRecovery) return Response.json({ success: false, retry_same_request: true, error: 'Clock-out and audit are saved but state finalization was interrupted. Retry the same request.' }, { status: 409 });
+        return Response.json({ success: true, status: 'clocked_out', entry, reused: true, recovered: true, user: publicEmployee(target), audit_saved: Boolean(existingAudit) });
+      }
+
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
       }
@@ -2560,7 +2654,7 @@ Deno.serve(async (req) => {
       const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
       const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
       const trackedUnpaidMinutes = breakSummary.unpaid_minutes;
-      const manualLunchMinutes = Math.round(Number(body?.lunch_minutes));
+      const manualLunchMinutes = submittedClockOut.lunch_minutes;
       let lunchMinutes = trackedUnpaidMinutes;
       if (trackedUnpaidMinutes <= 0) {
         if (!Number.isFinite(manualLunchMinutes) || manualLunchMinutes < 0 || manualLunchMinutes > 240) {
@@ -2568,7 +2662,7 @@ Deno.serve(async (req) => {
         }
         lunchMinutes = manualLunchMinutes;
       }
-      const allocations = Array.isArray(body?.job_allocations) ? body.job_allocations : [];
+      const allocations = submittedClockOut.job_allocations;
       if (allocations.length === 0) return Response.json({ success: false, error: 'At least one job allocation is required.' }, { status: 400 });
       for (const job of allocations) {
         if (minutesFromAllocation(job) <= 0) return Response.json({ success: false, error: 'Every job allocation must contain positive time.' }, { status: 400 });
@@ -2596,7 +2690,7 @@ Deno.serve(async (req) => {
       const claimed = resumingClockOut
         ? state
         : await setState(stateEntity, state, 'clocked_in', null, {
-            status: 'clocking_out', last_request_id: requestId, pending_started_at: officialClockOut,
+            status: 'clocking_out', last_request_id: requestId, last_request_payload_hash: clockOutPayloadHash, pending_started_at: officialClockOut,
           });
       if (!claimed) return Response.json({ success: false, error: 'Clock-out lost a concurrency race. Reload status before retrying.' }, { status: 409 });
 
@@ -2610,8 +2704,8 @@ Deno.serve(async (req) => {
         clock_out_request_id: requestId,
         lunch_minutes: lunchMinutes,
         total_hours: workableMinutes / 60,
-        job_allocations: allocations.map((job: any) => allocationForStorage(job)),
-        notes: String(body?.notes || '').trim(),
+        job_allocations: allocations,
+        notes: submittedClockOut.notes,
         status: 'clocked_out',
         clock_source: 'server',
         break_tracking_used: breakSummary.count > 0,
@@ -2631,8 +2725,25 @@ Deno.serve(async (req) => {
         if (!(fresh?.status === 'clocked_out' && String(fresh.clock_out_request_id || '') === requestId)) {
           return Response.json({ success: false, retry_same_request: true, error: 'Clock-out could not safely update the active TimeEntry. Retry the same request after status reload.' }, { status: 409 });
         }
+        return Response.json({ success: false, retry_same_request: true, error: 'Clock-out was saved by this request in another execution. Retry the same request to complete audit and state finalization.' }, { status: 409 });
       }
       const savedEntry = await entryEntity.get(entry.id);
+
+      const auditSaved = await audit(auditEntity, {
+        action: 'clock_out', outcome: 'confirmed', user_email: target.email,
+        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+        authentication_method: authenticationMethodFor(actor, target),
+        server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
+        details: {
+          payload_hash: clockOutPayloadHash,
+          submitted_lunch_minutes: submittedClockOut.lunch_minutes,
+          lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours,
+          break_summary: breakSummary, work_pause_summary: workPauseSummary,
+        },
+      });
+      if (!auditSaved) {
+        return Response.json({ success: false, retry_same_request: true, error: 'Clock-out was saved but its audit could not be confirmed. Retry this same request to recover safely.' }, { status: 409 });
+      }
 
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setState(stateEntity, currentClaim, 'clocking_out', requestId, {
@@ -2645,17 +2756,10 @@ Deno.serve(async (req) => {
         labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (!finalized) {
-        return Response.json({ success: false, retry_same_request: true, error: 'Clock-out was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+        return Response.json({ success: false, retry_same_request: true, error: 'Clock-out and audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       }
 
-      const auditSaved = await audit(auditEntity, {
-        action: 'clock_out', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target),
-        server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
-        details: { lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours, break_summary: breakSummary, work_pause_summary: workPauseSummary },
-      });
-      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_out', entry: savedEntry, user: publicEmployee(target), audit_saved: true });
     }
 
     return Response.json({ success: false, error: 'Unsupported Time Clock action.' }, { status: 400 });
