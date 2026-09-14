@@ -163,7 +163,7 @@ export default function SalesPipeline() {
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-  const attentionChipClass = (value) => `rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+  const attentionChipClass = (value) => `rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition-colors ${
     attentionFilter === value
       ? "border-blue-500 bg-blue-50 text-blue-800"
       : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
