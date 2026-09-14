@@ -208,91 +208,88 @@ export default function WorkPauseOverlay({
   const countedWorkMinutes = Math.max(0, shiftSpanMinutes - unpaidBreakMinutes - priorPauseMinutes - pauseElapsedMinutes);
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[100] flex cursor-pointer items-center justify-center overflow-y-auto p-4 sm:p-6"
-        style={{
-          background: "radial-gradient(circle at top, rgba(91,33,182,0.97), rgba(30,27,75,0.99) 55%, rgba(15,23,42,1))",
-          paddingTop: "max(1rem, env(safe-area-inset-top))",
-          paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
-        }}
-        onClick={() => { if (!resumeBusy) setShowResumePrompt(true); }}
-        role="presentation"
-      >
-        <div className="w-full max-w-xl rounded-[28px] border border-white/20 bg-white/95 p-6 shadow-2xl sm:p-9 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 shadow-inner">
-            <Pause className="h-8 w-8 text-purple-700" />
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-[2px] sm:p-6"
+      style={{
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+      }}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) dismissReminder();
+      }}
+      role="presentation"
+    >
+      <div className="relative w-full max-w-xl rounded-[28px] border border-purple-200 bg-white p-6 text-center shadow-2xl sm:p-9">
+        <button
+          type="button"
+          onClick={dismissReminder}
+          disabled={resumeBusy}
+          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50"
+          aria-label="Ignore Work Pause reminder for now"
+          title="Ignore for now"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 shadow-inner">
+          <Pause className="h-8 w-8 text-purple-700" />
+        </div>
+        <p className="text-xs font-bold tracking-[0.24em] text-purple-600">TIME CLOCK</p>
+        <h1 className="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">WORK PAUSED</h1>
+        <p className="mt-3 text-sm text-slate-600">
+          Your counted work timer is stopped. Resume when you return to work.
+        </p>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-purple-100 bg-purple-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-purple-600">Paused For</p>
+            <p className="mt-1 text-3xl font-black text-purple-800">{formatDuration(pauseElapsedMinutes)}</p>
+            {Number.isFinite(pauseStarted.getTime()) && <p className="mt-1 text-xs text-purple-600">Since {format(pauseStarted, "h:mm a")}</p>}
           </div>
-          <p className="text-xs font-bold tracking-[0.24em] text-purple-600">TIME CLOCK</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">WORK PAUSED</h1>
-          <p className="mt-3 text-sm text-slate-600">
-            Your counted work timer is stopped. Resume when you return to work.
-          </p>
-
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-purple-100 bg-purple-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-purple-600">Paused For</p>
-              <p className="mt-1 text-3xl font-black text-purple-800">{formatDuration(pauseElapsedMinutes)}</p>
-              {Number.isFinite(pauseStarted.getTime()) && <p className="mt-1 text-xs text-purple-600">Since {format(pauseStarted, "h:mm a")}</p>}
-            </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Counted Work This Shift</p>
-              <p className="mt-1 text-3xl font-black text-emerald-800">{formatDuration(countedWorkMinutes)}</p>
-              <p className="mt-1 text-xs text-emerald-700">Paused time is excluded</p>
-            </div>
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Counted Work This Shift</p>
+            <p className="mt-1 text-3xl font-black text-emerald-800">{formatDuration(countedWorkMinutes)}</p>
+            <p className="mt-1 text-xs text-emerald-700">Paused time is excluded</p>
           </div>
+        </div>
 
-          {priorPauseMinutes > 0 && (
-            <p className="mt-3 text-xs text-slate-500">Earlier Work Pauses this shift: {formatDuration(priorPauseMinutes)}</p>
-          )}
+        {priorPauseMinutes > 0 && (
+          <p className="mt-3 text-xs text-slate-500">Earlier Work Pauses this shift: {formatDuration(priorPauseMinutes)}</p>
+        )}
 
-          {error && (
-            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-sm text-red-800">
-              <div className="font-semibold">Work timer is still paused</div>
-              <div className="mt-1 text-xs">{error}</div>
-            </div>
-          )}
+        {error && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-left text-sm text-red-800">
+            <div className="font-semibold">Work timer is still paused</div>
+            <div className="mt-1 text-xs">{error}</div>
+          </div>
+        )}
 
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <Button
             type="button"
-            onClick={() => setShowResumePrompt(true)}
+            onClick={dismissReminder}
             disabled={resumeBusy}
-            className="mt-6 min-h-[56px] w-full bg-green-600 text-lg font-bold text-white hover:bg-green-700"
+            variant="outline"
+            className="min-h-[54px] border-slate-300 bg-white text-base font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Ignore for now
+          </Button>
+          <Button
+            type="button"
+            onClick={resumeWork}
+            disabled={resumeBusy}
+            className="min-h-[54px] bg-green-600 text-base font-bold text-white hover:bg-green-700"
           >
             {resumeBusy ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5" />}
             Resume Work
           </Button>
+        </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-            <Clock3 className="h-3.5 w-3.5" />
-            <span>Refreshing from authoritative Time Clock state automatically</span>
-          </div>
+        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
+          <Clock3 className="h-3.5 w-3.5" />
+          <span>If you ignore this reminder and keep using the app, it returns in 2 minutes.</span>
         </div>
       </div>
-
-      <AlertDialog open={showResumePrompt} onOpenChange={(open) => { if (!resumeBusy) setShowResumePrompt(open); }}>
-        <AlertDialogContent className="clay-card border-none z-[120]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5 text-green-600" />
-              Resume work?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You are currently Work Paused. If you are returning to CCS work, resume now so your counted work time starts again. Nothing resumes automatically.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={resumeBusy}>Stay Paused</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => { event.preventDefault(); resumeWork(); }}
-              disabled={resumeBusy}
-              className="bg-green-600 text-white hover:bg-green-700"
-            >
-              {resumeBusy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Resuming...</> : "Resume Work"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   );
 }
