@@ -376,34 +376,94 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return operation;
   };
 
-  const loadWorkOrders = async (showLoading = true) => {
+  const readArchivePage = async (query, skip = 0) => {
+    const page = await withRateLimitRetry(() => WorkOrder.filter(query, "-created_date", ARCHIVE_PAGE_SIZE, skip));
+    if (!Array.isArray(page)) throw new Error("Sales archive page could not be verified.");
+    return page;
+  };
+
+  const mergeLoadedRows = (rows) => [...new Map(rows.map((order) => [order.id, order])).values()]
+    .map((order) => ({ ...order, ...(pendingChangesRef.current[order.id] || {}) }))
+    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+
+  const loadWorkOrders = async (showLoading = true, scope = recordScope) => {
+    const requestId = ++loadRequestRef.current;
     if (showLoading) setIsLoading(true);
     try {
-      const [activeOrders, modernOutcomes, usersData] = await Promise.all([
-        loadAllEntityRows({
+      const usersPromise = loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" });
+      let rows = [];
+      let pagedCount = 0;
+      let hasMore = false;
+
+      if (scope === "current") {
+        rows = await loadAllEntityRows({
           entity: WorkOrder,
-          query: { is_rider: false, completed: false, deleted: { $ne: true } },
-          sort: "created_date",
-          label: "Sales Pipeline active Work Orders",
-        }),
-        loadAllEntityRows({
+          query: { is_rider: false, completed: false, in_pipeline: true, sales_status: { $nin: ["won", "lost"] }, deleted: { $ne: true } },
+          sort: "-created_date",
+          label: "Sales Pipeline current opportunities",
+        });
+      } else if (scope === "outcomes") {
+        rows = await loadAllEntityRows({
           entity: WorkOrder,
           query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
           sort: "-close_date",
           label: "Sales Pipeline modern outcomes",
-        }),
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" })
-      ]);
-      const mergedOrders = [...new Map([...activeOrders, ...modernOutcomes].map((order) => [order.id, order])).values()];
-      setWorkOrders(mergedOrders.map((order) => ({
-        ...order,
-        ...(pendingChangesRef.current[order.id] || {}),
-      })).sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")));
+        });
+      } else if (scope === "history") {
+        const page = await readArchivePage(LEGACY_CLOSED_QUERY, 0);
+        rows = page;
+        pagedCount = page.length;
+        hasMore = page.length === ARCHIVE_PAGE_SIZE;
+      } else {
+        const [activePage, modernOutcomes, completedLegacy] = await Promise.all([
+          readArchivePage(ALL_RECORDS_ACTIVE_QUERY, 0),
+          loadAllEntityRows({
+            entity: WorkOrder,
+            query: { is_rider: false, in_pipeline: true, sales_status: { $in: ["won", "lost"] }, deleted: { $ne: true } },
+            sort: "-close_date",
+            label: "Sales Pipeline modern outcomes",
+          }),
+          loadAllEntityRows({
+            entity: WorkOrder,
+            query: { ...LEGACY_CLOSED_QUERY, completed: true },
+            sort: "-created_date",
+            label: "Sales Pipeline completed legacy history",
+          }),
+        ]);
+        rows = [...activePage, ...modernOutcomes, ...completedLegacy];
+        pagedCount = activePage.length;
+        hasMore = activePage.length === ARCHIVE_PAGE_SIZE;
+      }
+
+      const usersData = await usersPromise;
+      if (requestId !== loadRequestRef.current) return;
+      archiveSkipRef.current = pagedCount;
+      setArchiveHasMore(hasMore);
+      setWorkOrders(mergeLoadedRows(rows));
       setUsers(usersData);
     } catch (error) {
-      console.error("Error loading work orders:", error);
+      if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
+    } finally {
+      if (requestId === loadRequestRef.current) setIsLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  const loadMoreArchive = async () => {
+    if (archiveLoadingMore || !archiveHasMore || !["history", "all"].includes(recordScope)) return;
+    const scopeAtStart = recordScope;
+    setArchiveLoadingMore(true);
+    try {
+      const query = scopeAtStart === "history" ? LEGACY_CLOSED_QUERY : ALL_RECORDS_ACTIVE_QUERY;
+      const page = await readArchivePage(query, archiveSkipRef.current);
+      if (recordScope !== scopeAtStart) return;
+      archiveSkipRef.current += page.length;
+      setArchiveHasMore(page.length === ARCHIVE_PAGE_SIZE);
+      setWorkOrders((current) => mergeLoadedRows([...current, ...page]));
+    } catch (error) {
+      console.error("Error loading older Sales Pipeline archive rows:", error);
+    } finally {
+      if (recordScope === scopeAtStart) setArchiveLoadingMore(false);
+    }
   };
 
   const calculateDays = (fromDate, toDate) => {
