@@ -54,8 +54,20 @@ Deno.serve(async (req) => {
       }
       isResetFlow = true;
     } else {
-      const admin = await verifyTokenIsAdmin(session_token, secret, base44);
-      if (!admin) {
+      let admin;
+      try {
+        admin = await authenticateSignShopSession(base44, session_token);
+      } catch (authError) {
+        const status = Number(authError?.status || 401);
+        const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+        const error = safeStatus === 503
+          ? 'Session authentication is unavailable'
+          : safeStatus === 409
+            ? 'Admin authentication could not be verified'
+            : 'Admin authentication required';
+        return Response.json({ success: false, error }, { status: safeStatus });
+      }
+      if (admin?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin authentication required' }, { status: 403 });
       }
       const lookupEmail = (user_email || '').toLowerCase().trim();
