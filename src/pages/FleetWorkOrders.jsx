@@ -99,6 +99,12 @@ export default function FleetWorkOrders() {
       completed: orders.filter(w => w.status === "completed").length,
     };
   }, [orders]);
+  const applySummaryFilter = (nextStatus, nextAttention = "all") => {
+    setStatus(nextStatus);
+    setPriority("all");
+    setAttention(nextAttention);
+  };
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const todayText = easternTodayText();
@@ -211,12 +217,12 @@ export default function FleetWorkOrders() {
         {actionError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
 
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-          <Summary label="Active" value={summary.active} />
-          <Summary label="High / Critical" value={summary.highCritical} attention={summary.highCritical > 0} />
-          <Summary label="Unassigned" value={summary.unassigned} attention={summary.unassigned > 0} />
-          <Summary label="Stale 30+ Days" value={summary.stale30} attention={summary.stale30 > 0} />
-          <Summary label="Past Projected" value={summary.pastProjected} attention={summary.pastProjected > 0} />
-          <Summary label="Completed" value={summary.completed} />
+          <Summary label="Active" value={summary.active} selected={status === "active" && attention === "all" && priority === "all"} onClick={() => applySummaryFilter("active")} />
+          <Summary label="High / Critical" value={summary.highCritical} attention={summary.highCritical > 0} selected={status === "active" && attention === "high_priority"} onClick={() => applySummaryFilter("active", "high_priority")} />
+          <Summary label="Unassigned" value={summary.unassigned} attention={summary.unassigned > 0} selected={status === "active" && attention === "unassigned"} onClick={() => applySummaryFilter("active", "unassigned")} />
+          <Summary label="Stale 30+ Days" value={summary.stale30} attention={summary.stale30 > 0} selected={status === "active" && attention === "stale30"} onClick={() => applySummaryFilter("active", "stale30")} />
+          <Summary label="Past Projected" value={summary.pastProjected} attention={summary.pastProjected > 0} selected={status === "active" && attention === "past_projected"} onClick={() => applySummaryFilter("active", "past_projected")} />
+          <Summary label="Completed" value={summary.completed} selected={status === "completed" && attention === "all" && priority === "all"} onClick={() => applySummaryFilter("completed")} />
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -378,7 +384,7 @@ function PriorityBadge({ priority }) {
   return <span className={`shrink-0 text-[10px] uppercase font-bold rounded-full px-2 py-1 ${style}`}>{pretty(priority)}</span>;
 }
 
-function Summary({ label, value, attention = false }) { return <div className={`rounded-xl border p-3 ${attention ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}><div className="text-xs text-gray-400">{label}</div><div className={`text-2xl font-bold mt-1 ${attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div></div>; }
+function Summary({ label, value, attention = false, selected = false, onClick }) { const tone = selected ? "border-indigo-400 bg-indigo-50 ring-2 ring-indigo-100 dark:border-indigo-700 dark:bg-indigo-950/30 dark:ring-indigo-950/60" : attention ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" : "border-gray-200 bg-white dark:border-slate-800 dark:bg-slate-900"; return <button type="button" onClick={onClick} aria-pressed={selected} className={`min-h-11 rounded-xl border p-3 text-left transition-colors hover:border-indigo-300 dark:hover:border-indigo-700 ${tone}`}><div className="text-xs text-gray-400">{label}</div><div className={`text-2xl font-bold mt-1 ${selected ? "text-indigo-700 dark:text-indigo-300" : attention ? "text-amber-700 dark:text-amber-300" : "text-gray-900 dark:text-slate-100"}`}>{value}</div></button>; }
 function Info({ label, value }) { return <div><div className="text-xs text-gray-400">{label}</div><div className="text-gray-800 dark:text-slate-200 mt-0.5 capitalize">{value}</div></div>; }
 function Section({ title, text }) { return <div><div className="font-medium text-gray-900 dark:text-slate-100 mb-1">{title}</div><div className="text-gray-600 dark:text-slate-300 whitespace-pre-wrap">{text}</div></div>; }
 function Usage({ title, rows }) { return <div><div className="font-medium text-gray-900 dark:text-slate-100 mb-1">{title}</div><ul className="text-gray-600 dark:text-slate-300 space-y-1">{rows.map((r,i) => <li key={i}>• {r}</li>)}</ul></div>; }
