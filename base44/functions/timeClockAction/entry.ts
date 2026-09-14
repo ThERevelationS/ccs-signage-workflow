@@ -470,6 +470,71 @@ async function laborSummaryForEntry(laborEntity: any, entryId: string, userEmail
   return { count: rows.length, total_minutes: total };
 }
 
+function laborActivityLabel(value: string) {
+  const labels: Record<string, string> = {
+    fabrication: 'Fabrication', cnc: 'CNC', laser: 'Laser', paint: 'Paint', welding: 'Welding',
+    electrical: 'Electrical', installation: 'Installation', service: 'Service', survey: 'Survey',
+    design: 'Design', permitting: 'Permitting', estimating: 'Estimating', admin: 'Admin',
+    shop: 'Shop', travel: 'Travel', other: 'Other',
+  };
+  return labels[String(value || '').trim()] || 'Other';
+}
+
+async function laborAllocationPreviewForEntry(laborEntity: any, entryId: string, userEmail: string) {
+  const rows = await laborEntity.filter({ time_entry_id: entryId, user_email: userEmail });
+  if (!Array.isArray(rows)) throw new Error('Labor allocation preview lookup did not return a record list.');
+  const serverNow = new Date();
+  const grouped = new Map<string, any>();
+  let trackedMinutes = 0;
+
+  for (const row of rows) {
+    let minutes = 0;
+    if (row.status === 'completed') {
+      minutes = Math.max(0, Math.round(Number(row.duration_minutes || 0)));
+    } else if (row.status === 'active' && row.started_at) {
+      const startedMs = new Date(row.started_at).getTime();
+      if (Number.isFinite(startedMs) && serverNow.getTime() >= startedMs) {
+        minutes = Math.max(0, Math.floor((serverNow.getTime() - startedMs) / 60000));
+      }
+    }
+    if (minutes <= 0) continue;
+    trackedMinutes += minutes;
+
+    const workOrderId = String(row.work_order_id || '').trim();
+    const activityType = String(row.activity_type || 'other').trim();
+    const key = workOrderId ? `wo:${workOrderId}` : `activity:${activityType}`;
+    const existing = grouped.get(key) || (workOrderId ? {
+      work_order_id: workOrderId,
+      work_order_title: String(row.work_order_title || ''),
+      client_name: String(row.client_name || ''),
+      hours: 0,
+      minutes: 0,
+      is_inhouse: false,
+      inhouse_task: '',
+      suggested_from_current_work: true,
+    } : {
+      work_order_id: '',
+      work_order_title: 'Tracked Activity',
+      client_name: 'Internal',
+      hours: 0,
+      minutes: 0,
+      is_inhouse: true,
+      inhouse_task: laborActivityLabel(activityType),
+      suggested_from_current_work: true,
+    });
+    existing.minutes += minutes;
+    existing.hours = existing.minutes / 60;
+    grouped.set(key, existing);
+  }
+
+  return {
+    generated_at: serverNow.toISOString(),
+    segment_count: rows.length,
+    tracked_minutes: trackedMinutes,
+    suggested_allocations: [...grouped.values()],
+  };
+}
+
 async function activeLaborForEntry(laborEntity: any, entryId: string, userEmail: string) {
   const rows = await laborEntity.filter({ time_entry_id: entryId, user_email: userEmail, status: 'active' });
   if (!Array.isArray(rows)) throw new Error('Active labor lookup did not return a record list.');
