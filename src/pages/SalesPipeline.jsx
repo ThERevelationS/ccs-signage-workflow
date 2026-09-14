@@ -417,7 +417,7 @@ export default function SalesPipeline() {
               </button>
             </div>
 
-            <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2.5">
+            <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1.5">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                 <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
                   <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-700" />
