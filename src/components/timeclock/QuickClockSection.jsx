@@ -30,9 +30,38 @@ function newRequestId() {
 
 function apiErrorFrom(err, fallback) {
   const data = err?.response?.data;
+  const status = Number(err?.response?.status || 0);
   const error = new Error(data?.error || err?.message || fallback);
   error.retrySameRequest = data?.retry_same_request === true;
+  // No response (network/interruption) or a 5xx response can have an unknown
+  // commit outcome. Keep the same idempotency key so a retry can recover.
+  error.ambiguousOutcome = !err?.response || status >= 500;
   return error;
+}
+
+function requestStorageKey(action, email) {
+  return `ccs_timeclock_request:${action}:${String(email || "").trim().toLowerCase()}`;
+}
+
+function storedRequestId(action, email) {
+  try {
+    const value = sessionStorage.getItem(requestStorageKey(action, email)) || "";
+    return value.length >= 8 && value.length <= 128 ? value : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistRequestId(action, email, requestId) {
+  try { sessionStorage.setItem(requestStorageKey(action, email), requestId); } catch {}
+}
+
+function removeStoredRequestId(action, email) {
+  try { sessionStorage.removeItem(requestStorageKey(action, email)); } catch {}
+}
+
+function shouldRetainRequest(err) {
+  return err?.retrySameRequest === true || err?.ambiguousOutcome === true;
 }
 
 export default function QuickClockSection({
@@ -107,6 +136,7 @@ export default function QuickClockSection({
       if (!data?.success) {
         const error = new Error(data?.error || "Time Clock action was not confirmed.");
         error.retrySameRequest = data?.retry_same_request === true;
+        error.ambiguousOutcome = false;
         throw error;
       }
       return data;
@@ -119,17 +149,19 @@ export default function QuickClockSection({
   const requestIdFor = (action, email) => {
     const key = `${action}:${String(email || "").trim().toLowerCase()}`;
     if (requestRef.current?.[key]) return requestRef.current[key];
-    const id = newRequestId();
+    const recovered = storedRequestId(action, email);
+    const id = recovered || newRequestId();
     requestRef.current = { ...requestRef.current, [key]: id };
+    if (!recovered) persistRequestId(action, email, id);
     return id;
   };
 
   const clearRequest = (action, email) => {
     const key = `${action}:${String(email || "").trim().toLowerCase()}`;
-    if (!requestRef.current?.[key]) return;
     const next = { ...requestRef.current };
     delete next[key];
     requestRef.current = next;
+    removeStoredRequestId(action, email);
   };
 
   const stopFaceCamera = () => {
