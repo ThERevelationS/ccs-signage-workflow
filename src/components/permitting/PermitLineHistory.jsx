@@ -1,0 +1,132 @@
+import { useState } from "react";
+import { format } from "date-fns";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, History, Loader2, RefreshCw } from "lucide-react";
+
+const CellHistory = base44.entities.CellHistory;
+
+const FIELD_LABELS = {
+  row_name: "Permit line name",
+  locality_id: "Locality link",
+  locality_name: "Locality",
+  office_type: "Office type",
+  office_types: "Office types",
+  assigned_to: "Owner",
+  status: "Workflow status",
+  submitted_date: "Submitted date",
+  next_followup_date: "Follow-up date",
+  permit_received_date: "Permit received date",
+  application_reference_number: "Application / Reference #",
+  permit_number: "Permit #",
+  approval_date: "Approval date",
+  expiration_date: "Expiration date",
+  jurisdiction_fee_amount: "Actual jurisdiction fee",
+  jurisdiction_fee_status: "Fee payment status",
+  jurisdiction_fee_paid_date: "Fee paid date",
+  correction_status: "Correction state",
+  corrections_received_date: "Corrections received date",
+  resubmitted_date: "Resubmitted date",
+  closeout_status: "Inspection / closeout state",
+  inspection_date: "Inspection date",
+  closeout_date: "Closeout date",
+};
+
+function displayValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "—";
+  return text.replace(/_/g, " ");
+}
+
+function displayTimestamp(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return format(date, "MMM d, yyyy h:mm a");
+}
+
+export default function PermitLineHistory({ lineItemId }) {
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadHistory = async () => {
+    if (!lineItemId || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      const result = await CellHistory.filter(
+        { entity_type: "PermitLineItem", entity_id: lineItemId },
+        "-created_date",
+        25,
+      );
+      setRows(Array.isArray(result) ? result : []);
+      setLoaded(true);
+    } catch (loadError) {
+      console.error("Permit line history could not be loaded:", loadError);
+      setRows([]);
+      setLoaded(true);
+      setError(loadError?.message || "Recent permit changes could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggle = async () => {
+    const nextOpen = !open;
+    setOpen(nextOpen);
+    if (nextOpen && !loaded) await loadHistory();
+  };
+
+  return (
+    <div className="mt-2 border-t border-slate-200 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={toggle}
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
+          aria-expanded={open}
+        >
+          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          <History className="h-3.5 w-3.5" /> Recent changes
+        </button>
+        {open && loaded && (
+          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 px-2 text-[10px]" onClick={loadHistory} disabled={loading}>
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Refresh
+          </Button>
+        )}
+      </div>
+
+      {open && (
+        <div className="mt-2 rounded-md border border-slate-200 bg-white/80 p-2">
+          {loading && !loaded ? (
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading recent changes…</div>
+          ) : error ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+          ) : rows.length === 0 ? (
+            <div className="py-4 text-center text-xs text-slate-400">No tracked permit-line changes yet. New lifecycle edits will appear here.</div>
+          ) : (
+            <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+              {rows.map((entry) => (
+                <div key={entry.id} className="rounded-md border border-slate-100 bg-slate-50/70 px-2.5 py-2 text-[11px]">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    <span className="font-semibold text-slate-700">{FIELD_LABELS[entry.field_name] || entry.field_name || "Permit field"}</span>
+                    <span className="text-[10px] text-slate-400">{displayTimestamp(entry.created_date)}</span>
+                  </div>
+                  <div className="mt-0.5 break-words text-slate-600">
+                    <span className="text-slate-400 line-through">{displayValue(entry.old_value)}</span>
+                    <span className="mx-1.5 text-slate-400">→</span>
+                    <span className="font-medium text-slate-700">{displayValue(entry.new_value)}</span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-slate-400">{entry.changed_by_name || entry.changed_by_email || "Unknown user"}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
