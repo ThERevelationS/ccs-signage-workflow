@@ -331,23 +331,34 @@ function WorkOrderBoard({ rows, equipmentNames, startingId, onOpen, onStart, onC
     { key: "assigned", label: "Assigned" },
     { key: "in_progress", label: "In Progress" },
     { key: "completed", label: "Completed" },
+    { key: "cancelled", label: "Cancelled" },
   ];
   const grouped = Object.fromEntries(columns.map(column => [column.key, rows.filter(row => row.status === column.key)]));
   const visibleCount = columns.reduce((sum, column) => sum + grouped[column.key].length, 0);
+  const mobileColumns = columns.filter(column => grouped[column.key].length > 0);
 
   if (visibleCount === 0) return <div className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 py-12 text-center text-gray-500">No Fleet work orders match these board filters.</div>;
 
-  return <div className="overflow-x-auto pb-2">
-    <div className="grid grid-cols-4 gap-3 min-w-[1100px]">
-      {columns.map(column => <section key={column.key} className="rounded-xl border border-gray-200 bg-gray-100/70 dark:bg-slate-900/60 dark:border-slate-800 overflow-hidden">
-        <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between gap-2"><h2 className="text-sm font-bold text-gray-800 dark:text-slate-100">{column.label}</h2><span className="text-xs font-semibold rounded-full bg-white dark:bg-slate-800 px-2 py-0.5 text-gray-500 dark:text-slate-300">{grouped[column.key].length}</span></div>
-        <div className="p-2 space-y-2 max-h-[68vh] overflow-y-auto">
-          {grouped[column.key].map(workOrder => <BoardCard key={workOrder.id} workOrder={workOrder} equipmentName={equipmentNames[workOrder.equipment_id]} starting={startingId === workOrder.id} onOpen={() => onOpen(workOrder)} onStart={() => onStart(workOrder)} onComplete={() => onComplete(workOrder)} />)}
-          {grouped[column.key].length === 0 && <div className="py-8 px-3 text-center text-xs text-gray-400">No {column.label.toLowerCase()} work orders.</div>}
-        </div>
-      </section>)}
+  return <>
+    <div className="md:hidden space-y-4">
+      {mobileColumns.map(column => <BoardColumn key={column.key} column={column} rows={grouped[column.key]} equipmentNames={equipmentNames} startingId={startingId} onOpen={onOpen} onStart={onStart} onComplete={onComplete} />)}
     </div>
-  </div>;
+    <div className="hidden md:block overflow-x-auto pb-2">
+      <div className="grid grid-cols-5 gap-3 min-w-[1375px]">
+        {columns.map(column => <BoardColumn key={column.key} column={column} rows={grouped[column.key]} equipmentNames={equipmentNames} startingId={startingId} onOpen={onOpen} onStart={onStart} onComplete={onComplete} desktop />)}
+      </div>
+    </div>
+  </>;
+}
+
+function BoardColumn({ column, rows, equipmentNames, startingId, onOpen, onStart, onComplete, desktop = false }) {
+  return <section className="rounded-xl border border-gray-200 bg-gray-100/70 dark:bg-slate-900/60 dark:border-slate-800 overflow-hidden">
+    <div className="px-3 py-3 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between gap-2"><h2 className="text-sm font-bold text-gray-800 dark:text-slate-100">{column.label}</h2><span className="text-xs font-semibold rounded-full bg-white dark:bg-slate-800 px-2 py-0.5 text-gray-500 dark:text-slate-300">{rows.length}</span></div>
+    <div className={`p-2 space-y-2 ${desktop ? "max-h-[68vh] overflow-y-auto" : ""}`}>
+      {rows.map(workOrder => <BoardCard key={workOrder.id} workOrder={workOrder} equipmentName={equipmentNames[workOrder.equipment_id]} starting={startingId === workOrder.id} onOpen={() => onOpen(workOrder)} onStart={() => onStart(workOrder)} onComplete={() => onComplete(workOrder)} />)}
+      {rows.length === 0 && <div className="py-8 px-3 text-center text-xs text-gray-400">No {column.label.toLowerCase()} work orders.</div>}
+    </div>
+  </section>;
 }
 
 function BoardCard({ workOrder, equipmentName, starting, onOpen, onStart, onComplete }) {
