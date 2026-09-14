@@ -184,7 +184,7 @@ export default function LocalityPickerDialog({
               />
             </div>
           </div>
-          <Button onClick={runSearch} disabled={searching || !address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 h-9">
+          <Button onClick={runSearch} disabled={searching || !address.trim()} className="bg-purple-600 hover:bg-purple-700 gap-1 h-9 w-full sm:w-auto">
             {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {searching ? "Searching…" : "AI Lookup"}
           </Button>
@@ -193,7 +193,7 @@ export default function LocalityPickerDialog({
           <Button
             variant="outline"
             onClick={() => setExcludeElectrical(v => !v)}
-            className={`gap-1 h-9 ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+            className={`gap-1 h-9 w-full sm:w-auto ${excludeElectrical ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100' : 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
             title={excludeElectrical ? "Electrical Inspectors will be hidden/excluded" : "Electrical Inspectors will be included"}
           >
             {excludeElectrical ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
@@ -208,10 +208,9 @@ export default function LocalityPickerDialog({
           </div>
         )}
 
-        {/* Split: results left (fixed width) | map right (square, fills rest) */}
-        <div className="flex gap-3 overflow-hidden min-h-0" style={{ height: '680px' }}>
-          {/* Left: AI results — fixed width */}
-          <div className="overflow-y-auto space-y-3 pr-1" style={{ width: '420px', flexShrink: 0 }}>
+        {/* Responsive split: stacked on smaller screens, two columns on desktop. */}
+        <div className="flex flex-1 flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden min-h-0 lg:h-[680px]">
+          <div className="w-full lg:w-[420px] lg:flex-shrink-0 lg:overflow-y-auto space-y-3 pr-1">
             {!result && !searching && (
               <div className="h-full flex items-center justify-center text-gray-400 text-sm p-8 text-center border border-dashed rounded">
                 Enter an address above and click <strong>AI Lookup</strong> to get locality, zoning, and parcel info.
@@ -415,8 +414,8 @@ export default function LocalityPickerDialog({
             )}
           </div>
 
-          {/* Right: Map — square, fills available width */}
-          <div className="rounded-lg overflow-hidden border relative flex-1 aspect-square self-start bg-gray-100" style={{ maxHeight: '680px' }}>
+          {/* Map stays visible on mobile without forcing a 420px results column beside it. */}
+          <div className="rounded-lg overflow-hidden border relative w-full min-h-[280px] lg:min-h-0 lg:flex-1 lg:aspect-square lg:self-start lg:max-h-[680px] bg-gray-100">
             <GoogleMapView position={mapPosition} markerTitle={markerTitle} />
           </div>
         </div>
@@ -454,18 +453,18 @@ export default function LocalityPickerDialog({
           </AlertDialogContent>
         </AlertDialog>
 
-        <div className="flex items-center justify-between gap-2 border-t pt-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t pt-3">
           <div className="text-[11px] text-gray-500">
             {excludeElectrical ? "🚫 Electrical Inspectors will be excluded" : "⚡ Electrical Inspectors will be included"}
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} className="gap-1">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={onClose} className="gap-1 flex-1 sm:flex-none">
               <X className="w-4 h-4" /> Close
             </Button>
             <Button
               onClick={handleApply}
               disabled={!selectedLocalityId}
-              className="bg-purple-600 hover:bg-purple-700 gap-1"
+              className="bg-purple-600 hover:bg-purple-700 gap-1 flex-1 sm:flex-none"
             >
               <Save className="w-4 h-4" /> Save & Apply
             </Button>
