@@ -2,17 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Clock3, Loader2, Pause, Play } from "lucide-react";
+import { Clock3, Loader2, Pause, Play, X } from "lucide-react";
 import { format } from "date-fns";
 
 function newRequestId() {
@@ -52,6 +42,9 @@ export default function WorkPauseOverlay({
   const [error, setError] = useState("");
   const resumeRequestRef = useRef("");
   const mountedRef = useRef(true);
+  const pauseIdRef = useRef("");
+  const dismissedAtRef = useRef(0);
+  const lastActivityAtRef = useRef(Date.now());
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
     if (disabled || !currentUser?.email || !hasCredential) {
