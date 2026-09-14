@@ -26,6 +26,7 @@ const EMPTY_PIPELINE_SUMMARY = {
   noNextActionCount: 0,
   nextActionCoverageCount: 0,
   needsAttentionCount: 0,
+  placeholderCount: 0,
   quoteAwaitingResponseCount: 0,
   quoteTimingCoverageCount: 0,
   quoteTimingMissingCount: 0,
@@ -431,6 +432,21 @@ export default function SalesPipeline() {
                 </div>
               </div>
             </div>
+
+            {pipelineSummary.placeholderCount > 0 && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
+                      <div className="mt-0.5 text-xs text-rose-700">{pipelineSummary.placeholderCount} current opportunit{pipelineSummary.placeholderCount === 1 ? "y has" : "ies have"} an exact placeholder customer name (Test/asdf). They remain in metrics until a user explicitly removes them from Current Pipeline.</div>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review likely test records ({pipelineSummary.placeholderCount})</button>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
               <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Operational Attention</span>
