@@ -29,9 +29,9 @@ function clearRequestId(action, email) {
   try { sessionStorage.removeItem(requestStorageKey(action, email)); } catch {}
 }
 
-function signalPauseChanged() {
+function signalPauseChanged(data = null) {
   try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
-  window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
+  window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: data }));
 }
 
 export default function GlobalWorkPauseControl({ className = "", fullWidth = false } = {}) {
@@ -119,8 +119,12 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
         throw err;
       }
       clearRequestId(action, email);
-      signalPauseChanged();
-      await loadStatus();
+      const confirmedStatus = data?.work_pause_status === "paused" && data?.work_pause?.id
+        ? { ...data, active_work_pause: data.work_pause }
+        : data;
+      if (mountedRef.current) setStatus(confirmedStatus);
+      signalPauseChanged(confirmedStatus);
+      void loadStatus();
     } catch (err) {
       const responseStatus = Number(err?.response?.status || 0);
       const retrySame = err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true || !err?.response || responseStatus >= 500;
