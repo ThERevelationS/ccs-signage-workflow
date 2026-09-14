@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
-    const secret = Deno.env.get('SESSION_SIGNING_SECRET');
 
     let targetUser = null;
     let isResetFlow = false;
@@ -47,7 +46,11 @@ Deno.serve(async (req) => {
           label: `Password reset token for ${candidate.email}`,
         });
       } catch (claimError) {
-        return Response.json({ success: false, error: claimError.message }, { status: 409 });
+        console.error('Password reset token claim failed:', claimError?.message || claimError);
+        return Response.json({
+          success: false,
+          error: 'This password reset link could not be claimed safely. Request a new reset link.',
+        }, { status: 409 });
       }
       isResetFlow = true;
     } else {
