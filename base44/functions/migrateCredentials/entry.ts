@@ -6,11 +6,23 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
 
-    // Must be authenticated admin via Base44's normal auth
+    let actor;
+    try {
+      actor = await authenticateSignShopSession(base44, body?.session_token);
+    } catch (authError) {
+      const status = Number(authError?.status || 401);
+      return Response.json({ success: false, error: authError?.message || 'Authentication required' }, { status });
+    }
+    if (actor?.role !== 'admin') {
+      return Response.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
+    // Keep Base44 identity as a second, independent privileged-action check.
     const me = await base44.auth.me().catch(() => null);
     if (!me || me.role !== 'admin') {
-      return Response.json({ success: false, error: 'Admin access required' }, { status: 403 });
+      return Response.json({ success: false, error: 'Base44 admin access required' }, { status: 403 });
     }
 
     // AuthorizedEmail is the current credential source of truth used by verifyLogin.
