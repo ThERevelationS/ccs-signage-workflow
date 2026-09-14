@@ -390,7 +390,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-sky-900">{formatPipelineValue(pipelineSummary.weightedValue)}</div>
                 <div className="mt-1 text-xs text-sky-700/80">{pipelineSummary.ratedProbabilityCount}/{pipelineSummary.openCount} opportunities rated{pipelineSummary.unratedProbabilityCount > 0 ? " · click to complete" : ""}</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter("due")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter("due")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-red-600">Follow-ups Due</div>
                 <div className="mt-1 text-2xl font-bold text-red-800">{pipelineSummary.dueCount}</div>
                 <div className="mt-1 text-xs text-red-600">{pipelineSummary.overdueCount} overdue · {pipelineSummary.dueTodayCount} today</div>
