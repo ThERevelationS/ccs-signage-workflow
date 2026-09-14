@@ -1,5 +1,6 @@
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
+import { isCurrentPipelineOpportunity } from "@/components/sales/salesRecordScopes";
 
 const DEFINITIONS = {
   next_action: {
@@ -60,7 +61,7 @@ const SUGGESTED_PROBABILITY_BY_STATUS = {
 };
 
 export const getSalesAttentionItems = (workOrder, today = new Date()) => {
-  if (!workOrder || ["won", "lost"].includes(workOrder.sales_status)) return [];
+  if (!isCurrentPipelineOpportunity(workOrder)) return [];
 
   const items = [];
   const add = (key) => items.push(DEFINITIONS[key]);
