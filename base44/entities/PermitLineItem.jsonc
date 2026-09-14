@@ -147,6 +147,25 @@
       "format": "date",
       "description": "Date the actual jurisdiction fee for this permit line was paid, when known."
     },
+    "correction_status": {
+      "type": "string",
+      "enum": [
+        "corrections_received",
+        "working_corrections",
+        "resubmitted"
+      ],
+      "description": "Staff-recorded correction/resubmission state for this individual permit line. Blank means no correction state is currently recorded."
+    },
+    "corrections_received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the issuing authority sent or communicated the latest correction request for this permit line."
+    },
+    "resubmitted_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the latest corrected package was resubmitted for this permit line."
+    },
     "last_submitted_trigger_date": {
       "type": "string",
       "format": "date",
