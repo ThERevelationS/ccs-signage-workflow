@@ -117,7 +117,7 @@ export default function ClockOutDialog({
     return () => clearInterval(timer);
   }, [isOpen]);
 
-  const loadLaborPreview = async ({ allowAutoApply = false } = {}) => {
+  const loadLaborPreview = async ({ allowAutoApply = false, invalidateReview = false } = {}) => {
     if (!onLoadLaborAllocationPreview || !timeEntry?.id || laborPreviewBusy) return null;
     setLaborPreviewBusy(true);
     setLaborPreviewError("");
@@ -125,6 +125,7 @@ export default function ClockOutDialog({
       const data = await onLoadLaborAllocationPreview();
       const preview = data?.preview || null;
       setLaborPreview(preview);
+      if (invalidateReview) setAllocationsReviewed(false);
       if (allowAutoApply && preview?.suggested_allocations?.length) {
         setJobAllocations((current) => {
           if (current.length > 0 || allocationEditedRef.current || previewAppliedRef.current) return current;
@@ -145,6 +146,7 @@ export default function ClockOutDialog({
     if (!isOpen || !timeEntry?.id || !onLoadLaborAllocationPreview) return;
     allocationEditedRef.current = false;
     previewAppliedRef.current = false;
+    setAllocationsReviewed(false);
     setLaborPreview(null);
     setLaborPreviewError("");
     loadLaborPreview({ allowAutoApply: true });
@@ -156,6 +158,7 @@ export default function ClockOutDialog({
     if (!suggestions.length) return;
     allocationEditedRef.current = true;
     previewAppliedRef.current = true;
+    setAllocationsReviewed(false);
     setJobAllocations(suggestions.map((allocation) => ({ ...allocation })));
     setError("");
   };
