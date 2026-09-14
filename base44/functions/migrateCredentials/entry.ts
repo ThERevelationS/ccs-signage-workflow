@@ -54,8 +54,11 @@ Deno.serve(async (req) => {
         });
         results.migrated++;
       } catch (e) {
-        console.error('Password hash upgrade error for', user.email, e);
-        results.errors.push({ email: user.email, error: e.message });
+        console.error('Password hash upgrade error for AuthorizedEmail id:', user.id, e);
+        results.errors.push({
+          email: user.email,
+          error: 'Credential migration could not be completed safely for this user',
+        });
       }
     }
 
