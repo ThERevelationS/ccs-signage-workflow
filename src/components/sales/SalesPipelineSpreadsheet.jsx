@@ -1901,17 +1901,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setQuickEditError("");
     try {
       await waitForPendingSalesSave(workOrder.id);
+      const queueBeforeRemoval = filteredWorkOrdersRef.current;
+      const queueIndex = queueBeforeRemoval.findIndex((row) => row.id === workOrder.id);
+      const nextOpportunity = advance && queueIndex >= 0 ? queueBeforeRemoval[queueIndex + 1] || null : null;
       const latest = await WorkOrder.get(workOrder.id);
       if (!latest?.id) throw new Error("The WorkOrder could not be reloaded before cleanup.");
       if (latest.in_pipeline !== true) {
         setWorkOrders((current) => current.map((row) => row.id === latest.id ? { ...row, ...latest } : row));
-        setSelectedWorkOrder((selected) => selected?.id === latest.id ? { ...selected, ...latest } : selected);
+        if (advance) {
+          if (nextOpportunity) {
+            selectedQueueIndexRef.current = queueIndex;
+            setSelectedWorkOrder(nextOpportunity);
+            setShowFullWorkOrderDetails(false);
+          } else {
+            selectedQueueIndexRef.current = null;
+            setSelectedWorkOrder(null);
+            setShowFullWorkOrderDetails(false);
+          }
+        } else {
+          setSelectedWorkOrder((selected) => selected?.id === latest.id ? { ...selected, ...latest } : selected);
+        }
         return { ok: true, alreadyRemoved: true };
       }
-
-      const queueBeforeRemoval = filteredWorkOrdersRef.current;
-      const queueIndex = queueBeforeRemoval.findIndex((row) => row.id === workOrder.id);
-      const nextOpportunity = advance && queueIndex >= 0 ? queueBeforeRemoval[queueIndex + 1] || null : null;
       const activityStamp = new Date().toISOString();
       const saved = await replaceWorkOrderFieldsIfUnchanged({
         workOrderId: latest.id,
