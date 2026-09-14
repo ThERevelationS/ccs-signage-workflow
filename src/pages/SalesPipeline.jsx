@@ -466,7 +466,7 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("stage_aged")} className={attentionChipClass("stage_aged")}>Stage Aged 14+ Days {pipelineSummary.stageAgedCount > 0 ? `(${pipelineSummary.stageAgedCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities {pipelineSummary.myOpportunityCount > 0 ? `(${pipelineSummary.myOpportunityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("age_90_plus")} className={attentionChipClass("age_90_plus")}>Age 90+ Days {pipelineSummary.age90PlusCount > 0 ? `(${pipelineSummary.age90PlusCount})` : ""}</button>
-              <span className="ml-auto text-xs text-gray-500">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
+              <span className="ml-auto hidden text-[10px] text-gray-500 2xl:inline">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
             </div>
           </div>
         )}
