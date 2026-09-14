@@ -156,6 +156,16 @@ function allocationForStorage(job: any) {
   };
 }
 
+function clockOutSubmissionForHash(body: any) {
+  const submittedLunch = Number(body?.lunch_minutes);
+  const allocations = Array.isArray(body?.job_allocations) ? body.job_allocations : [];
+  return {
+    lunch_minutes: Number.isFinite(submittedLunch) ? Math.round(submittedLunch) : null,
+    job_allocations: allocations.map((job: any) => allocationForStorage(job)),
+    notes: String(body?.notes || '').trim(),
+  };
+}
+
 function entryAuditSnapshot(entry: any) {
   return {
     id: entry?.id || null,
@@ -225,6 +235,10 @@ async function audit(auditEntity: any, data: any) {
     console.error('timeClockAction audit write failed:', error?.message || error);
     return false;
   }
+}
+
+async function clockOutAuditForRequest(auditEntity: any, requestId: string, entryId: string) {
+  return uniqueRow(auditEntity, { action: 'clock_out', request_id: requestId, time_entry_id: entryId }, 'Clock-out audit request');
 }
 
 async function ensureState(stateEntity: any, target: any) {
