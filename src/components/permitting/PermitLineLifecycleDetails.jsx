@@ -239,6 +239,47 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
 
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Inspection / closeout</span>
+          <span className="text-[10px] text-slate-500">Optional — record only when this permit line has a required post-issuance inspection or closeout step.</span>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <label className="min-w-0">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Closeout state</span>
+            <Select
+              value={lineItem.closeout_status || "__none__"}
+              onValueChange={(value) => update("closeout_status", value === "__none__" ? null : value)}
+              disabled={!isRegistered}
+            >
+              <SelectTrigger className="h-8 bg-white text-xs">
+                <SelectValue placeholder="No closeout tracked" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No closeout tracked</SelectItem>
+                <SelectItem value="inspection_required">Inspection required</SelectItem>
+                <SelectItem value="inspection_scheduled">Inspection scheduled</SelectItem>
+                <SelectItem value="inspection_failed">Inspection failed</SelectItem>
+                <SelectItem value="inspection_passed">Inspection passed</SelectItem>
+                <SelectItem value="closed_out">Closed out</SelectItem>
+              </SelectContent>
+            </Select>
+          </label>
+          <DateField
+            label="Inspection date"
+            value={lineItem.inspection_date}
+            disabled={!isRegistered}
+            onCommit={(value) => update("inspection_date", value)}
+          />
+          <DateField
+            label="Closeout date"
+            value={lineItem.closeout_date}
+            disabled={!isRegistered}
+            onCommit={(value) => update("closeout_date", value)}
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 border-t border-slate-200 pt-2">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
           <span className="text-[10px] text-slate-500">Record the actual office fee only; do not copy estimator or repository estimates.</span>
         </div>
