@@ -118,6 +118,7 @@ export default function SalesOpportunityDialog({
   const [historyError, setHistoryError] = useState("");
   const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
   const [removeFromPipelineBusy, setRemoveFromPipelineBusy] = useState(false);
+  const [removeFromPipelineAction, setRemoveFromPipelineAction] = useState("");
   const [removeFromPipelineError, setRemoveFromPipelineError] = useState("");
 
   useEffect(() => {
@@ -179,6 +180,7 @@ export default function SalesOpportunityDialog({
   const confirmRemoveFromPipeline = async (advance) => {
     if (!onRemoveFromCurrentPipeline || removeFromPipelineBusy) return;
     setRemoveFromPipelineBusy(true);
+    setRemoveFromPipelineAction(advance ? "next" : "only");
     setRemoveFromPipelineError("");
     try {
       const result = await onRemoveFromCurrentPipeline(workOrder, { advance });
@@ -191,6 +193,7 @@ export default function SalesOpportunityDialog({
       setRemoveFromPipelineError(error?.message || "This opportunity could not be removed safely.");
     } finally {
       setRemoveFromPipelineBusy(false);
+      setRemoveFromPipelineAction("");
     }
   };
   const lastFollowUpCompleted = workOrder.sales_last_follow_up_completed_at
@@ -462,18 +465,18 @@ export default function SalesOpportunityDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Remove this record from Current Pipeline?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created. Each record requires its own confirmation.
+            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created. Each record requires its own confirmation. “Remove & Next” advances to the next record in the current filtered queue only after this save succeeds.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {removeFromPipelineError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{removeFromPipelineError}</div>}
         <AlertDialogFooter className="gap-2 sm:gap-0">
           <AlertDialogCancel disabled={removeFromPipelineBusy}>Cancel</AlertDialogCancel>
           <Button type="button" variant="outline" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(false)} className="border-rose-300 text-rose-800 hover:bg-rose-50 hover:text-rose-900">
-            {removeFromPipelineBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove only
+            {removeFromPipelineAction === "only" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove only
           </Button>
           {queueNavigation?.canNext && (
             <Button type="button" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(true)} className="bg-rose-600 text-white hover:bg-rose-700">
-              {removeFromPipelineBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove & Next<ChevronRight className="ml-1 h-4 w-4" />
+              {removeFromPipelineAction === "next" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove & Next<ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           )}
         </AlertDialogFooter>
