@@ -410,7 +410,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-cyan-900">{pipelineSummary.nearCloseCount}</div>
                 <div className="mt-1 text-xs text-cyan-700/80">Based on expected close date</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter("stale")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "stale" ? "border-rose-400 bg-rose-50" : "border-rose-200 bg-white hover:border-rose-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter("stale")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "stale" ? "border-rose-400 bg-rose-50" : "border-rose-200 bg-white hover:border-rose-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-rose-700">Stale 14+ Days</div>
                 <div className="mt-1 text-2xl font-bold text-rose-900">{pipelineSummary.staleCount}</div>
                 <div className="mt-1 text-xs text-rose-700/80">Verified sales activity only</div>
