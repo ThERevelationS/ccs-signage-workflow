@@ -1866,7 +1866,7 @@ export default function ProductChecklistDialog({
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
                                                 <span className="text-xs flex-1 min-w-0">{task.text}</span>
                                                 {isRegistered && (
-                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                                 )}
                                               </div>
                                             )}
@@ -1879,15 +1879,17 @@ export default function ProductChecklistDialog({
                                             />
                                             {isRegistered && (
                                               <button
+                                                type="button"
                                                 onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
-                                                className="px-0.5 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover/dtask:opacity-100"
+                                                className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                                                 title="Add Subtask"
+                                                aria-label={`Add subtask under ${task.text || "task"}`}
                                               >
                                                 +S
                                               </button>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100">
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
@@ -1917,7 +1919,7 @@ export default function ProductChecklistDialog({
                                       </div>
                                     )}
                                               {isRegistered && (
-                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100">
+                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100 md:focus:opacity-100" aria-label={`Delete subtask ${subtask.text || ""}`}>
                                                   <Trash2 className="w-2 h-2" />
                                                 </Button>
                                               )}
@@ -2113,7 +2115,7 @@ export default function ProductChecklistDialog({
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
                                         <span className="text-xs flex-1 min-w-0">{task.text}</span>
                                         {isRegistered && (
-                                          <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                          <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                         )}
                                       </div>
                                     )}
@@ -2124,7 +2126,7 @@ export default function ProductChecklistDialog({
                                       disabled={!isRegistered}
                                     />
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-4 md:w-4 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100">
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                         <Trash2 className="w-2.5 h-2.5" />
                                       </Button>
                                     )}
@@ -2164,21 +2166,23 @@ export default function ProductChecklistDialog({
                                         <div className="flex-1 flex items-center gap-1 min-w-0">
                                           <span className="flex-1 min-w-0">{detail.text}</span>
                                           {isRegistered && (
-                                            <button type="button" onClick={(e) => startEditItem(detail, e)} className="p-1 rounded hover:bg-purple-100 text-purple-700 shrink-0" title="Edit detail"><Pencil className="w-3 h-3" /></button>
+                                            <button type="button" onClick={(e) => startEditItem(detail, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-purple-100 text-purple-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" title="Edit detail" aria-label={`Edit detail ${detail.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                           )}
                                         </div>
                                       )}
                                       {isRegistered && (
                                         <button
+                                          type="button"
                                           onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
-                                          className="px-1 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100"
+                                          className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                           title="Add Task"
+                                          aria-label={`Add task under ${detail.text || "detail"}`}
                                         >
                                           +Task
                                         </button>
                                       )}
                                       {isRegistered && (
-                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-7 w-7 md:h-4 md:w-4 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100">
+                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100" aria-label={`Delete detail ${detail.text || ""}`}>
                                           <Trash2 className="w-2.5 h-2.5" />
                                         </Button>
                                       )}
@@ -2223,12 +2227,12 @@ export default function ProductChecklistDialog({
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
                                                 <span className="flex-1 min-w-0">{task.text}</span>
                                                 {isRegistered && (
-                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="p-1 rounded hover:bg-orange-100 text-orange-700 shrink-0" title="Edit task"><Pencil className="w-3 h-3" /></button>
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                                 )}
                                               </div>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-7 w-7 md:h-3 md:w-3 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100">
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
