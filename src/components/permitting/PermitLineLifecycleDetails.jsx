@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, BadgeCheck, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 
@@ -47,6 +48,63 @@ function CommitTextField({ label, value, placeholder, disabled, onCommit }) {
         placeholder={placeholder}
         className="h-8 text-xs bg-white"
       />
+    </label>
+  );
+}
+
+function CommitMoneyField({ label, value, disabled, onCommit }) {
+  const normalizedValue = value === null || value === undefined || value === "" ? "" : String(value);
+  const [draft, setDraft] = useState(normalizedValue);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setDraft(normalizedValue);
+    setError("");
+  }, [normalizedValue]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      setError("");
+      if (normalizedValue !== "") onCommit(null);
+      return;
+    }
+    const amount = Number(trimmed);
+    if (!Number.isFinite(amount) || amount < 0) {
+      setError("Enter a valid amount of $0 or more.");
+      return;
+    }
+    setError("");
+    if (amount !== Number(normalizedValue)) onCommit(amount);
+  };
+
+  return (
+    <label className="min-w-0">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
+        <Input
+          type="number"
+          min="0"
+          step="0.01"
+          inputMode="decimal"
+          value={draft}
+          onChange={(event) => { setDraft(event.target.value); setError(""); }}
+          onBlur={commit}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") {
+              setDraft(normalizedValue);
+              setError("");
+              event.currentTarget.blur();
+            }
+          }}
+          disabled={disabled}
+          placeholder="0.00"
+          className="h-8 bg-white pl-6 text-xs"
+        />
+      </div>
+      {error && <span className="mt-1 block text-[10px] font-medium text-red-600">{error}</span>}
     </label>
   );
 }
@@ -138,6 +196,45 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           disabled={!isRegistered}
           onCommit={(value) => update("expiration_date", value)}
         />
+      </div>
+
+      <div className="mt-3 border-t border-slate-200 pt-2">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
+          <span className="text-[10px] text-slate-500">Record the actual office fee only; do not copy estimator or repository estimates.</span>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <CommitMoneyField
+            label="Actual fee amount"
+            value={lineItem.jurisdiction_fee_amount}
+            disabled={!isRegistered}
+            onCommit={(value) => update("jurisdiction_fee_amount", value)}
+          />
+          <label className="min-w-0">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Payment status</span>
+            <Select
+              value={lineItem.jurisdiction_fee_status || "__not_recorded__"}
+              onValueChange={(value) => update("jurisdiction_fee_status", value === "__not_recorded__" ? null : value)}
+              disabled={!isRegistered}
+            >
+              <SelectTrigger className="h-8 bg-white text-xs">
+                <SelectValue placeholder="Not recorded" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__not_recorded__">Not recorded</SelectItem>
+                <SelectItem value="due">Due</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="waived">Waived</SelectItem>
+              </SelectContent>
+            </Select>
+          </label>
+          <DateField
+            label="Paid date"
+            value={lineItem.jurisdiction_fee_paid_date}
+            disabled={!isRegistered}
+            onCommit={(value) => update("jurisdiction_fee_paid_date", value)}
+          />
+        </div>
       </div>
     </div>
   );
