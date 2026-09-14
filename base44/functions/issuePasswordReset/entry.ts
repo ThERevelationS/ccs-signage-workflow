@@ -24,12 +24,20 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const sessionToken = String(body?.session_token || '').trim();
     const requestedEmail = String(body?.target_email || '').trim().toLowerCase();
-    const secret = Deno.env.get('SESSION_SIGNING_SECRET') || '';
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
 
-    const actor = await verifySessionToken(sessionToken, secret, authorized);
-    if (!actor?.id) {
-      return Response.json({ success: false, error: 'A valid signed-in session is required' }, { status: 401 });
+    let actor;
+    try {
+      actor = await authenticateSignShopSession(base44, sessionToken);
+    } catch (authError) {
+      const status = Number(authError?.status || 401);
+      const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+      const error = safeStatus === 503
+        ? 'Session authentication is unavailable'
+        : safeStatus === 409
+          ? 'Signed-in user identity could not be verified'
+          : 'A valid signed-in session is required';
+      return Response.json({ success: false, error }, { status: safeStatus });
     }
 
     const actorEmail = String(actor.email || '').trim().toLowerCase();
