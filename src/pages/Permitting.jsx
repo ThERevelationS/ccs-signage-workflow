@@ -654,15 +654,15 @@ export default function Permitting() {
   );
 
   const issueCount = useMemo(
-    () => searchedGroups.filter((group) => getPermitGroupReadiness(group).hasIssues).length,
-    [searchedGroups]
+    () => searchedGroups.filter((group) => getPermitGroupReadiness(group, today).hasIssues).length,
+    [searchedGroups, today]
   );
 
   const filteredGroups = useMemo(() => searchedGroups.filter((group) => {
     if (assignedToMeOnly && !isPermitGroupAssignedToUser(group, currentUser)) return false;
-    if (issuesOnly && !getPermitGroupReadiness(group).hasIssues) return false;
+    if (issuesOnly && !getPermitGroupReadiness(group, today).hasIssues) return false;
     return true;
-  }), [searchedGroups, assignedToMeOnly, issuesOnly, currentUser]);
+  }), [searchedGroups, assignedToMeOnly, issuesOnly, currentUser, today]);
 
   // Guided queue: every Work Order lands in one plain-English state so staff can
   // immediately see what needs attention without losing the detailed tracker below.
