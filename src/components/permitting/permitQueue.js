@@ -48,6 +48,34 @@ function normalizedAssignment(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+export function getPermitLineLifecycleReviews(line, today) {
+  const reviews = [];
+  const label = lineLabel(line);
+  const todayKey = asDateKey(today);
+  const approvalDate = asDateKey(line?.approval_date);
+  const receivedDate = asDateKey(line?.permit_received_date);
+  const expirationDate = asDateKey(line?.expiration_date);
+
+  if (approvalDate && receivedDate && receivedDate < approvalDate) {
+    reviews.push(`${label} has a permit received date before its approval date.`);
+  }
+
+  const latestLifecycleDate = [approvalDate, receivedDate].filter(Boolean).sort().pop() || "";
+  if (expirationDate && latestLifecycleDate && expirationDate < latestLifecycleDate) {
+    reviews.push(`${label} has an expiration date before its recorded approval/permit received date.`);
+  }
+
+  if (expirationDate && todayKey) {
+    if (expirationDate < todayKey) {
+      reviews.push(`${label} expired on ${formatDateKey(expirationDate)}.`);
+    } else if (expirationDate === todayKey) {
+      reviews.push(`${label} expires today (${formatDateKey(expirationDate)}).`);
+    }
+  }
+
+  return reviews;
+}
+
 export function isPermitGroupAssignedToUser(group, user) {
   const identities = [user?.full_name, user?.email]
     .map(normalizedAssignment)
@@ -63,12 +91,12 @@ export function isPermitGroupAssignedToUser(group, user) {
   return assignments.some((assignment) => identities.includes(assignment));
 }
 
-export function getPermitGroupReadiness(group) {
+export function getPermitGroupReadiness(group, today = "") {
   const wo = group?.work_order || {};
   const lines = Array.isArray(group?.lines) ? group.lines : [];
   const openLines = lines.filter((line) => line?.status !== "completed");
   const blockers = [];
-  const reviews = [];
+  const reviews = lines.flatMap((line) => getPermitLineLifecycleReviews(line, today));
 
   if (lines.length === 0) blockers.push("Permit workflow has not been configured yet.");
 
@@ -249,7 +277,7 @@ export function summarizePermitQueue(groups, today) {
   const summary = Object.fromEntries(PERMIT_QUEUE_ORDER.map((key) => [key, []]));
   (Array.isArray(groups) ? groups : []).forEach((group) => {
     const state = getPermitGroupQueueState(group, today);
-    const readiness = getPermitGroupReadiness(group);
+    const readiness = getPermitGroupReadiness(group, today);
     summary[state.key].push({ ...group, queueState: state, readiness });
   });
   PERMIT_QUEUE_ORDER.forEach((key) => summary[key].sort(queueSort));
