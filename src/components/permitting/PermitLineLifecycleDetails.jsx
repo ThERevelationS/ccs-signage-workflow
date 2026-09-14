@@ -58,7 +58,7 @@ function DateField({ label, value, disabled, onCommit }) {
       <Input
         type="date"
         value={value || ""}
-        onChange={(event) => onCommit(event.target.value)}
+        onChange={(event) => onCommit(event.target.value || null)}
         disabled={disabled}
         className="h-8 text-xs bg-white"
       />
