@@ -659,6 +659,21 @@ export default function QuickClockSection({
     }
   };
 
+  const handleLoadLaborAllocationPreview = async () => {
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Allocation preview identity is no longer verified. Close this dialog and identify again.");
+    }
+    try {
+      return await invokeTimeClock({
+        action: "labor_allocation_preview",
+        ...credentialPayload(credentialRef.current, selectedUser.email),
+      });
+    } catch (err) {
+      setPersistenceError(err?.message || "Tracked Current Work suggestions could not be loaded.");
+      throw err;
+    }
+  };
+
   const handleClockOut = async (data) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock-out identity is no longer verified. Close this dialog and identify again.");
@@ -886,6 +901,7 @@ export default function QuickClockSection({
           onStartLabor={(payload) => handleLaborAction("labor_start", payload)}
           onChangeLabor={(payload) => handleLaborAction("labor_change", payload)}
           onStopLabor={() => handleLaborAction("labor_stop")}
+          onLoadLaborAllocationPreview={handleLoadLaborAllocationPreview}
           onClockOut={handleClockOut}
         />
       )}
