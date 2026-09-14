@@ -135,6 +135,10 @@ Deno.serve(async (req) => {
     }
     
     const results = [];
+    const recordBackupFailure = (type, error) => {
+      console.error(`Google Drive backup data set failed (${type}):`, error);
+      results.push({ type, error: 'Backup data set could not be completed safely' });
+    };
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').slice(0, -5);
     
     // Cache for folder IDs (key: folderName, value: folderId)
@@ -360,7 +364,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(sanitizedUsers, 'Users_Backup', 'SignShop Users Backup');
         results.push({ type: 'users', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'users', error: e.message });
+        recordBackupFailure('users', e);
       }
     }
     
@@ -378,7 +382,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(formattedEntries, 'TimeEntries_Backup', 'SignShop Time Clock Backup');
         results.push({ type: 'timeclock', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'timeclock', error: e.message });
+        recordBackupFailure('timeclock', e);
       }
     }
     
@@ -392,7 +396,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(orders, 'Orders_Backup', 'SignShop Orders Backup');
         results.push({ type: 'orders', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'orders', error: e.message });
+        recordBackupFailure('orders', e);
       }
     }
     
@@ -440,7 +444,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(formattedWO, 'WorkOrders_Backup', 'SignShop Work Orders Backup');
         results.push({ type: 'workorders', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'workorders', error: e.message });
+        recordBackupFailure('workorders', e);
       }
     }
     
@@ -454,7 +458,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(timeOffRequests, 'TimeOffRequests_Backup', 'SignShop Time Off Backup');
         results.push({ type: 'timeoff', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'timeoff', error: e.message });
+        recordBackupFailure('timeoff', e);
       }
     }
     
@@ -472,7 +476,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(formattedPTO, 'PTOBalances_Backup', 'SignShop PTO Backup');
         results.push({ type: 'pto', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'pto', error: e.message });
+        recordBackupFailure('pto', e);
       }
     }
 
@@ -547,7 +551,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(exportData, 'SalesPipeline_Export', 'SignShop Sales Pipeline Backup');
         results.push({ type: 'salespipeline', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'salespipeline', error: e.message });
+        recordBackupFailure('salespipeline', e);
       }
     }
 
@@ -576,7 +580,7 @@ Deno.serve(async (req) => {
         const result = await uploadToGoogleDrive(exportData, 'OrderForm_Export', 'SignShop Order Form Backup');
         results.push({ type: 'orderform', filename: result.name, id: result.id, skipped: result.skipped, uploadedToRoot: result.uploadedToRoot });
       } catch (e) {
-        results.push({ type: 'orderform', error: e.message });
+        recordBackupFailure('orderform', e);
       }
     }
 
