@@ -508,7 +508,7 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (startedRows.length > 1) throw new Error('Current Work start recovery is ambiguous.');
     if (startedRows.length === 1) {
       const recovered = await setLaborState(stateEntity, state, laborStatus, requestId, {
-        labor_status: 'idle', labor_pending_started_at: null,
+        labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -532,7 +532,7 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
 
     if (startedRows.length === 0 && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setLaborState(stateEntity, state, laborStatus, requestId || null, {
-        labor_status: 'idle', labor_pending_started_at: null,
+        labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (rolledBack) {
         await audit(auditEntity, {
@@ -555,7 +555,7 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (endedRows.length > 1) throw new Error('Current Work stop recovery is ambiguous.');
     if (endedRows.length === 1 && endedRows[0]?.status === 'completed') {
       const recovered = await setLaborState(stateEntity, state, 'stopping', requestId, {
-        labor_status: 'idle', labor_pending_started_at: null,
+        labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -570,7 +570,7 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     }
     if (endedRows.length === 0 && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setLaborState(stateEntity, state, 'stopping', requestId || null, {
-        labor_status: 'idle', labor_pending_started_at: null,
+        labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (rolledBack) return rolledBack;
     }
