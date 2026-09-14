@@ -77,6 +77,17 @@ export default function ProductChecklistDialog({
   const [discardWarning, setDiscardWarning] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
 
+  // Build shared O(1) lookup indexes once per render. Long checklists previously
+  // rescanned the full checklist repeatedly while resolving hierarchy rows.
+  const checklistItemById = new Map(checklist.map(item => [item.id, item]));
+  const checklistChildrenByParentId = new Map();
+  checklist.forEach(item => {
+    if (!item.parent_id) return;
+    if (!checklistChildrenByParentId.has(item.parent_id)) checklistChildrenByParentId.set(item.parent_id, []);
+    checklistChildrenByParentId.get(item.parent_id).push(item);
+  });
+  const dropdownConditionByName = new Map(dropdownConditions.map(condition => [condition.name, condition]));
+
   useEffect(() => {
     if (isOpen && workOrder) {
       loadData();
@@ -352,21 +363,20 @@ export default function ProductChecklistDialog({
 
   const getDescendantIds = (itemId) => {
     const ids = new Set([itemId]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      checklist.forEach(item => {
-        if (item.parent_id && ids.has(item.parent_id) && !ids.has(item.id)) {
-          ids.add(item.id);
-          changed = true;
-        }
+    const pendingParentIds = [itemId];
+    while (pendingParentIds.length > 0) {
+      const parentId = pendingParentIds.pop();
+      (checklistChildrenByParentId.get(parentId) || []).forEach(child => {
+        if (ids.has(child.id)) return;
+        ids.add(child.id);
+        pendingParentIds.push(child.id);
       });
     }
     return ids;
   };
 
   const deleteChecklistItem = (itemId) => {
-    const item = checklist.find(entry => entry.id === itemId);
+    const item = checklistItemById.get(itemId);
     if (!item) return;
     const deleteIds = getDescendantIds(itemId);
     setPendingDelete({
@@ -386,7 +396,7 @@ export default function ProductChecklistDialog({
 
   // Check if an item's children are all complete
   const areChildrenComplete = (itemId) => {
-    const children = checklist.filter(c => c.parent_id === itemId);
+    const children = checklistChildrenByParentId.get(itemId) || [];
     if (children.length === 0) return true;
     
     return children.every(child => {
@@ -406,7 +416,7 @@ export default function ProductChecklistDialog({
   };
 
   const applyChecklistStatus = (itemId, value) => {
-    const item = checklist.find(entry => entry.id === itemId);
+    const item = checklistItemById.get(itemId);
     if (!item || !value) return false;
 
     const itemLabel = item.type === 'detail' ? 'detail' : 'checklist item';
@@ -418,7 +428,7 @@ export default function ProductChecklistDialog({
       return false;
     }
 
-    const selectedCondition = dropdownConditions.find(dd => dd.name === value);
+    const selectedCondition = dropdownConditionByName.get(value);
     if (selectedCondition?.is_completed && !areChildrenComplete(itemId)) {
       setValidationDialog({
         title: "Tasks Still Open",
@@ -436,7 +446,7 @@ export default function ProductChecklistDialog({
   const getItemAttentionLabel = (item) => {
     if (!item?.approved_by) return "Needs approver";
     if (!item?.custom_dropdown_value) return "Needs status";
-    const selectedCondition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    const selectedCondition = dropdownConditionByName.get(item.custom_dropdown_value);
     if (selectedCondition?.is_completed && !areChildrenComplete(item.id)) return "Tasks open";
     return null;
   };
@@ -453,7 +463,7 @@ export default function ProductChecklistDialog({
       if (!item.approved_by || !item.custom_dropdown_value) return false;
       
       // Find the selected condition and check if it's a "completed" condition
-      const selectedCondition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+      const selectedCondition = dropdownConditionByName.get(item.custom_dropdown_value);
       // If condition exists and is NOT marked as completed, the item is not complete
       if (selectedCondition && !selectedCondition.is_completed) return false;
       
@@ -841,7 +851,7 @@ export default function ProductChecklistDialog({
     
     // Helper to traverse parent chain and get the root product info
     const getParentChainInfo = (itemId) => {
-      const item = checklist.find(i => i.id === itemId);
+      const item = checklistItemById.get(itemId);
       if (!item) return null;
       
       // If this item has valid product_name, use it
@@ -873,7 +883,7 @@ export default function ProductChecklistDialog({
         subTemplateName = parentInfo.sub_template_name;
       } else {
         // Direct parent lookup as fallback
-        const parentItem = checklist.find(item => item.id === parentId);
+        const parentItem = checklistItemById.get(parentId);
         if (parentItem) {
           actualProductName = parentItem.product_name || productName;
           subTemplateName = parentItem.sub_template_name || null;
@@ -920,7 +930,7 @@ export default function ProductChecklistDialog({
           if (checklist[i].parent_id === parentId) {
             insertIndex = i + 1;
           } else if (checklist[i].parent_id !== parentId && 
-                     checklist.find(p => p.id === checklist[i].parent_id)?.parent_id === parentId) {
+                     checklistItemById.get(checklist[i].parent_id)?.parent_id === parentId) {
             // This is a grandchild (e.g., subtask under a task), continue
             insertIndex = i + 1;
           } else {
@@ -970,16 +980,16 @@ export default function ProductChecklistDialog({
       group.mainItems.forEach(item => {
         if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
           // Main checklist item - check if completed
-          const isCompleted = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value)?.is_completed;
+          const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
           const targetGroup = isCompleted ? completed : active;
           
           // Add the item and ALL its children
           targetGroup[productName].mainItems.push(item);
         } else {
           // Child item - add to same group as its parent
-          const parent = group.mainItems.find(p => p.id === item.parent_id);
+          const parent = checklistItemById.get(item.parent_id);
           if (parent) {
-            const parentCompleted = dropdownConditions.find(dd => dd.name === parent.custom_dropdown_value)?.is_completed;
+            const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
             const targetGroup = parentCompleted ? completed : active;
             targetGroup[productName].mainItems.push(item);
           } else {
@@ -995,13 +1005,13 @@ export default function ProductChecklistDialog({
         
         stItems.forEach(item => {
           if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
-            const isCompleted = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value)?.is_completed;
+            const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
             const targetGroup = isCompleted ? completed : active;
             targetGroup[productName].subTemplates[stName].push(item);
           } else {
-            const parent = stItems.find(p => p.id === item.parent_id);
+            const parent = checklistItemById.get(item.parent_id);
             if (parent) {
-              const parentCompleted = dropdownConditions.find(dd => dd.name === parent.custom_dropdown_value)?.is_completed;
+              const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
               const targetGroup = parentCompleted ? completed : active;
               targetGroup[productName].subTemplates[stName].push(item);
             } else {
@@ -1041,11 +1051,11 @@ export default function ProductChecklistDialog({
   const primaryChecklistItems = checklist.filter(item => item.type !== 'task' && item.type !== 'subtask');
   const completedPrimaryCount = primaryChecklistItems.filter(item => {
     if (!item.approved_by || !item.custom_dropdown_value) return false;
-    const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    const condition = dropdownConditionByName.get(item.custom_dropdown_value);
     return !condition || condition.is_completed;
   }).length;
   const continuedPrimaryCount = primaryChecklistItems.filter(item => {
-    const condition = dropdownConditions.find(dd => dd.name === item.custom_dropdown_value);
+    const condition = dropdownConditionByName.get(item.custom_dropdown_value);
     return Boolean(item.approved_by && condition && !condition.is_completed);
   }).length;
   const needsInputPrimaryItems = primaryChecklistItems.filter(item => !item.approved_by || !item.custom_dropdown_value);
@@ -1086,7 +1096,7 @@ export default function ProductChecklistDialog({
     const visited = new Set();
     while (current?.parent_id && !visited.has(current.id)) {
       visited.add(current.id);
-      const parent = checklist.find(candidate => candidate.id === current.parent_id);
+      const parent = checklistItemById.get(current.parent_id);
       if (!parent) break;
       current = parent;
     }
@@ -1448,14 +1458,15 @@ export default function ProductChecklistDialog({
                         // Treat items without type as checklist items
                         const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                         // Find associated tasks/details from the SAME group
-                        const itemTasks = group.mainItems.filter(i => i.type === 'task' && i.parent_id === item.id);
-                        const itemDetails = group.mainItems.filter(i => i.type === 'detail' && i.parent_id === item.id).map(detail => ({
+                        const itemChildren = checklistChildrenByParentId.get(item.id) || [];
+                        const itemTasks = itemChildren.filter(i => i.type === 'task');
+                        const itemDetails = itemChildren.filter(i => i.type === 'detail').map(detail => ({
                           ...detail,
-                          tasks: group.mainItems.filter(i => i.type === 'task' && i.parent_id === detail.id)
+                          tasks: (checklistChildrenByParentId.get(detail.id) || []).filter(i => i.type === 'task')
                         }));
                         
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
-                        const isItemCompleted = dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed;
+                        const isItemCompleted = dropdownConditionByName.get(displayItem.custom_dropdown_value)?.is_completed;
                         return (
                         <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === displayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                           {/* Main checklist item */}
@@ -1479,7 +1490,7 @@ export default function ProductChecklistDialog({
                               </div>
                             ) : (
                               <div className="flex-1 flex items-center gap-1 min-w-0">
-                                <span className={`font-medium text-sm flex-1 min-w-0 rounded px-1 ${dropdownConditions.find(dd => dd.name === displayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{displayItem.text}</span>
+                                <span className={`font-medium text-sm flex-1 min-w-0 rounded px-1 ${isItemCompleted ? 'line-through text-gray-400' : ''}`}>{displayItem.text}</span>
                                 {isRegistered && (
                                   <button type="button" onClick={(e) => startEditItem(displayItem, e)} className="p-1 rounded hover:bg-gray-100 text-gray-500 shrink-0" title="Edit checklist item">
                                     <Pencil className="w-3.5 h-3.5" />
@@ -1627,7 +1638,7 @@ export default function ProductChecklistDialog({
                                   )}
                                 </div>
                                 {/* Subtasks */}
-                                {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
+                                {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
                                   <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <Checkbox 
                                       checked={!!subtask.approved_by}
@@ -1720,7 +1731,7 @@ export default function ProductChecklistDialog({
 
                               {/* Detail items */}
                               {displayItem.details?.map(detail => {
-                                const isDetailCompleted = dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed;
+                                const isDetailCompleted = dropdownConditionByName.get(detail.custom_dropdown_value)?.is_completed;
                                 return (
                                 <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                   <div className="flex flex-wrap items-center gap-2">
@@ -1733,7 +1744,7 @@ export default function ProductChecklistDialog({
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
-                                        <span className={`text-sm flex-1 min-w-0 px-1 ${dropdownConditions.find(dd => dd.name === detail.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
+                                        <span className={`text-sm flex-1 min-w-0 px-1 ${isDetailCompleted ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
                                         {isRegistered && (
                                           <button type="button" onClick={(e) => startEditItem(detail, e)} className="p-1 rounded hover:bg-gray-100 text-gray-500 shrink-0" title="Edit detail">
                                             <Pencil className="w-3 h-3" />
@@ -1879,7 +1890,7 @@ export default function ProductChecklistDialog({
                                             )}
                                           </div>
                                           {/* Subtasks under detail task */}
-                                          {checklist.filter(st => st.type === 'subtask' && st.parent_id === task.id).map(subtask => (
+                                          {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
                                             <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                               <Checkbox 
                                                 checked={!!subtask.approved_by}
@@ -1949,15 +1960,16 @@ export default function ProductChecklistDialog({
                       <div className="space-y-2">
                         {stItems.map(rawItem => {
                           const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
-                          const stItemTasks = stItems.filter(i => i.type === 'task' && i.parent_id === stItem.id);
-                          const stItemDetails = stItems.filter(i => i.type === 'detail' && i.parent_id === stItem.id).map(detail => ({
+                          const stItemChildren = checklistChildrenByParentId.get(stItem.id) || [];
+                          const stItemTasks = stItemChildren.filter(i => i.type === 'task');
+                          const stItemDetails = stItemChildren.filter(i => i.type === 'detail').map(detail => ({
                             ...detail,
-                            tasks: stItems.filter(i => i.type === 'task' && i.parent_id === detail.id)
+                            tasks: (checklistChildrenByParentId.get(detail.id) || []).filter(i => i.type === 'task')
                           }));
                           if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                           
                           const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
-                          const isStItemCompleted = dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed;
+                          const isStItemCompleted = dropdownConditionByName.get(stDisplayItem.custom_dropdown_value)?.is_completed;
                           return (
                           <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === stDisplayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                             <div 
@@ -1980,7 +1992,7 @@ export default function ProductChecklistDialog({
                                 </div>
                               ) : (
                                 <div className="flex-1 flex items-center gap-1 min-w-0">
-                                  <span className={`text-sm flex-1 min-w-0 px-1 ${dropdownConditions.find(dd => dd.name === stDisplayItem.custom_dropdown_value)?.is_completed ? 'line-through text-gray-400' : ''}`}>{stDisplayItem.text}</span>
+                                  <span className={`text-sm flex-1 min-w-0 px-1 ${isStItemCompleted ? 'line-through text-gray-400' : ''}`}>{stDisplayItem.text}</span>
                                   {isRegistered && (
                                     <button type="button" onClick={(e) => startEditItem(stDisplayItem, e)} className="p-1 rounded hover:bg-gray-100 text-gray-500 shrink-0" title="Edit checklist item">
                                       <Pencil className="w-3 h-3" />
