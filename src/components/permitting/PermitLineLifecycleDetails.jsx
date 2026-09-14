@@ -200,6 +200,45 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
 
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Corrections / resubmission</span>
+          <span className="text-[10px] text-slate-500">Track the current correction cycle for this office line.</span>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <label className="min-w-0">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-gray-500">Correction state</span>
+            <Select
+              value={lineItem.correction_status || "__none__"}
+              onValueChange={(value) => update("correction_status", value === "__none__" ? null : value)}
+              disabled={!isRegistered}
+            >
+              <SelectTrigger className="h-8 bg-white text-xs">
+                <SelectValue placeholder="No corrections recorded" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No corrections recorded</SelectItem>
+                <SelectItem value="corrections_received">Corrections received</SelectItem>
+                <SelectItem value="working_corrections">Working corrections</SelectItem>
+                <SelectItem value="resubmitted">Resubmitted</SelectItem>
+              </SelectContent>
+            </Select>
+          </label>
+          <DateField
+            label="Corrections received"
+            value={lineItem.corrections_received_date}
+            disabled={!isRegistered}
+            onCommit={(value) => update("corrections_received_date", value)}
+          />
+          <DateField
+            label="Last resubmitted"
+            value={lineItem.resubmitted_date}
+            disabled={!isRegistered}
+            onCommit={(value) => update("resubmitted_date", value)}
+          />
+        </div>
+      </div>
+
+      <div className="mt-3 border-t border-slate-200 pt-2">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Jurisdiction fee</span>
           <span className="text-[10px] text-slate-500">Record the actual office fee only; do not copy estimator or repository estimates.</span>
         </div>
