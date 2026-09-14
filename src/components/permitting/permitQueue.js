@@ -87,6 +87,10 @@ export function getPermitLineHandoffReadiness(line) {
     reviews.push(`${label} was issued/received but has no permit or application/reference number recorded.`);
   }
 
+  if (permitReceived && line?.status !== "completed" && closeoutStatus !== "closed_out") {
+    reviews.push(`${label} was issued/received but the permit workflow line is still active.`);
+  }
+
   if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount > 0 && !feeStatus) {
     reviews.push(`${label} has an actual jurisdiction fee recorded but no payment status.`);
   }
