@@ -795,6 +795,21 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'A Time Clock action is still in progress. Retry shortly.' }, { status: 409 });
     }
 
+    if (action === 'labor_allocation_preview') {
+      if (state.status !== 'clocked_in' || !state.active_entry_id) {
+        return Response.json({ success: false, error: 'Employee must be clocked in to preview Current Work allocations.' }, { status: 409 });
+      }
+      if (actor.role !== 'badge' && actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees can only preview allocations for their own active shift.' }, { status: 403 });
+      }
+      const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+      if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+        return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
+      }
+      const preview = await laborAllocationPreviewForEntry(laborEntity, entry.id, target.email);
+      return Response.json({ success: true, status: 'clocked_in', entry, preview, user: publicEmployee(target) });
+    }
+
     if (!requestId) return Response.json({ success: false, error: 'A valid request id is required.' }, { status: 400 });
 
     if (action === 'pay_period_create') {
