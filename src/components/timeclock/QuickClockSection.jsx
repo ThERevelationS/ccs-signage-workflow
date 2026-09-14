@@ -602,6 +602,10 @@ export default function QuickClockSection({
   };
 
   const startRecognition = async () => {
+    if (authoritativeTransition) {
+      setPersistenceError("A Time Clock punch is still being finalized by the server. Wait for authoritative status to settle before starting another punch.");
+      return;
+    }
     setPersistenceError("");
     setUsernameInput("");
     setManualPassword("");
