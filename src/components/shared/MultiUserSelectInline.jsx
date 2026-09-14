@@ -11,7 +11,8 @@ export default function MultiUserSelectInline({
   onSelectionChange, 
   disabled = false,
   placeholder = "Assign...",
-  className = ""
+  className = "",
+  ariaLabel = "Assign users"
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,7 +37,10 @@ export default function MultiUserSelectInline({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild disabled={disabled}>
         <button 
+          type="button"
           className={`h-5 text-xs px-1 flex items-center gap-1 border rounded hover:bg-gray-50 min-w-[80px] max-w-[120px] ${className}`}
+          aria-label={ariaLabel}
+          aria-expanded={open}
         >
           {normalizedSelected.length > 1 && <Users className="w-3 h-3 text-purple-500 flex-shrink-0" />}
           <span className="truncate flex-1 text-left">{displayText}</span>
