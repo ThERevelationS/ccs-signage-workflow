@@ -59,8 +59,60 @@ function normalizedCloseoutStatus(line) {
   return String(line?.closeout_status || "").trim().toLowerCase();
 }
 
+export function getPermitLineHandoffReadiness(line) {
+  const blockers = [];
+  const reviews = [];
+  const label = lineLabel(line);
+  const closeoutStatus = normalizedCloseoutStatus(line);
+  const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
+  const feeAmount = line?.jurisdiction_fee_amount;
+  const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
+  const permitReceived = !!asDateKey(line?.permit_received_date);
+  const hasPermitIdentifier = !!String(line?.permit_number || line?.application_reference_number || "").trim();
+  const lateLifecycle = line?.status === "completed" || permitReceived || !!closeoutStatus;
+
+  if (feeStatus === "due") blockers.push(`${label} still has a jurisdiction fee recorded as due.`);
+
+  if (OUTSTANDING_CLOSEOUT_STATUSES.has(closeoutStatus)) {
+    const closeoutLabels = {
+      inspection_required: "still requires an inspection",
+      inspection_scheduled: "still has a scheduled inspection to complete",
+      inspection_failed: "has a failed inspection that still needs resolution",
+      inspection_passed: "passed inspection but still needs final closeout",
+    };
+    blockers.push(`${label} ${closeoutLabels[closeoutStatus]}.`);
+  }
+
+  if (permitReceived && !hasPermitIdentifier) {
+    reviews.push(`${label} was issued/received but has no permit or application/reference number recorded.`);
+  }
+
+  if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount > 0 && !feeStatus) {
+    reviews.push(`${label} has an actual jurisdiction fee recorded but no payment status.`);
+  }
+
+  if (permitReceived && ["corrections_received", "working_corrections"].includes(correctionStatus)) {
+    reviews.push(`${label} was issued/received but its correction state still shows active corrections.`);
+  }
+
+  if (closeoutStatus === "closed_out" && line?.status !== "completed") {
+    reviews.push(`${label} is marked closed out but the permit workflow line is not marked complete.`);
+  }
+
+  return {
+    applicable: lateLifecycle || blockers.length > 0 || reviews.length > 0,
+    blockers,
+    reviews,
+    issueCount: blockers.length + reviews.length,
+    hasBlockers: blockers.length > 0,
+    hasIssues: blockers.length > 0 || reviews.length > 0,
+    isReady: lateLifecycle && blockers.length === 0 && reviews.length === 0,
+  };
+}
+
 export function isPermitLineEffectivelyComplete(line) {
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(normalizedCloseoutStatus(line))) return false;
+  if (String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due") return false;
   return line?.status === "completed";
 }
 
@@ -176,6 +228,11 @@ export function getPermitGroupReadiness(group, today = "") {
   const openLines = lines.filter((line) => !isPermitLineEffectivelyComplete(line));
   const blockers = [];
   const reviews = lines.flatMap((line) => getPermitLineLifecycleReviews(line, today));
+  const handoffReadiness = lines.map((line) => getPermitLineHandoffReadiness(line));
+  handoffReadiness.forEach((handoff) => {
+    blockers.push(...handoff.blockers);
+    reviews.push(...handoff.reviews);
+  });
 
   if (lines.length === 0) blockers.push("Permit workflow has not been configured yet.");
 
@@ -278,6 +335,17 @@ export function getPermitGroupQueueState(group, today) {
       nextAction: "Permit workflow complete.",
       followupDate: "",
       timingLabel: "Complete",
+      urgencyDays: null,
+    };
+  }
+
+  const feeDueLine = openLines.find((line) => String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due");
+  if (feeDueLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Resolve the recorded jurisdiction fee due for ${lineLabel(feeDueLine)}.`,
+      followupDate: "",
+      timingLabel: "Fee due",
       urgencyDays: null,
     };
   }
