@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
 import { Info, Trash2 } from "lucide-react";
+import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -276,6 +277,14 @@ export default function PermitSpreadsheetRow({
           })}
         </div>
       </div>
+
+      <PermitLineLifecycleDetails
+        lineItem={lineItem}
+        onUpdateField={onUpdateField}
+        isRegistered={isRegistered}
+        today={today}
+      />
+
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
