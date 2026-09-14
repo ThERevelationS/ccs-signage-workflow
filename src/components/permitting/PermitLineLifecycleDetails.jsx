@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, BadgeCheck, FileKey2 } from "lucide-react";
+import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
 import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary } from "./permitQueue";
 
@@ -128,6 +128,23 @@ function DateField({ label, value, disabled, onCommit }) {
 export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem), [lineItem]);
+  const hasAdditionalDetails = useMemo(() => [
+    lineItem?.correction_status,
+    lineItem?.corrections_received_date,
+    lineItem?.resubmitted_date,
+    lineItem?.closeout_status,
+    lineItem?.inspection_date,
+    lineItem?.closeout_date,
+    lineItem?.jurisdiction_fee_amount,
+    lineItem?.jurisdiction_fee_status,
+    lineItem?.jurisdiction_fee_paid_date,
+  ].some((value) => value !== null && value !== undefined && value !== ""), [lineItem]);
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(hasAdditionalDetails || handoffReadiness.hasIssues);
+
+  useEffect(() => {
+    if (hasAdditionalDetails || handoffReadiness.hasIssues) setShowAdditionalDetails(true);
+  }, [hasAdditionalDetails, handoffReadiness.hasIssues]);
+
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
     const todayDate = parseLocalDate(today);
@@ -216,6 +233,21 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
         />
       </div>
 
+      <button
+        type="button"
+        onClick={() => setShowAdditionalDetails((open) => !open)}
+        className="mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold text-slate-600 hover:bg-white hover:text-slate-900"
+        aria-expanded={showAdditionalDetails}
+      >
+        {showAdditionalDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {showAdditionalDetails ? "Hide additional details" : "Show corrections, inspections & fees"}
+        {hasAdditionalDetails && !showAdditionalDetails && (
+          <span className="ml-1 rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] text-blue-700">Recorded info</span>
+        )}
+      </button>
+
+      {showAdditionalDetails && (
+        <>
       <div className="mt-3 border-t border-slate-200 pt-2">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Corrections / resubmission</span>
@@ -334,6 +366,8 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
           />
         </div>
       </div>
+        </>
+      )}
 
       {handoffReadiness.applicable && (
         <div className={`mt-3 rounded-md border px-3 py-2 ${handoffReadiness.hasBlockers ? "border-red-200 bg-red-50/80" : handoffReadiness.hasIssues ? "border-amber-200 bg-amber-50/80" : "border-emerald-200 bg-emerald-50/70"}`}>
