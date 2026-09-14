@@ -2080,6 +2080,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {quickEditWarning}
         {destructiveActionWarning}
         {globalSettingsWarning}
+        {archivePagingNotice}
         <div className="min-h-0 flex-1">
           <SalesPipelineInsights summary={pipelineSummary} />
         </div>
@@ -2095,6 +2096,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {quickEditWarning}
         {destructiveActionWarning}
         {globalSettingsWarning}
+        {archivePagingNotice}
         <SalesPipelineMobileCards
           workOrders={filteredWorkOrders}
           onOpenDetails={openOpportunityDetails}
@@ -2116,6 +2118,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {quickEditWarning}
         {destructiveActionWarning}
         {globalSettingsWarning}
+        {archivePagingNotice}
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={importFromExcel} className="hidden" />
         <div className="min-h-0 flex-1">
           <SalesPipelineKanban
