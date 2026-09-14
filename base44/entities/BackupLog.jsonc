@@ -61,7 +61,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__backup_log_backend_only__"
       }
     },
     "read": {
@@ -71,12 +71,12 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__backup_log_backend_only__"
       }
     },
     "delete": {
       "user_condition": {
-        "role": "admin"
+        "role": "__backup_log_backend_only__"
       }
     }
   }
