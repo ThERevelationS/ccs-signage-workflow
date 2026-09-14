@@ -118,22 +118,72 @@ export function isPermitLineEffectivelyComplete(line) {
 
 export function getPermitLineLifecycleSummary(line) {
   const closeoutStatus = normalizedCloseoutStatus(line);
-  if (closeoutStatus === "closed_out") return { key: "closed_out", label: "Closed out", tone: "success" };
-  if (closeoutStatus === "inspection_failed") return { key: "inspection_failed", label: "Inspection failed", tone: "danger" };
-  if (closeoutStatus === "inspection_passed") return { key: "inspection_passed", label: "Inspection passed · closeout needed", tone: "info" };
-  if (closeoutStatus === "inspection_scheduled") return { key: "inspection_scheduled", label: "Inspection scheduled", tone: "info" };
-  if (closeoutStatus === "inspection_required") return { key: "inspection_required", label: "Inspection needed", tone: "warning" };
+  if (closeoutStatus === "closed_out") return { key: "closed_out", label: "Closed out", shortLabel: "Closed out", tone: "success" };
+  if (closeoutStatus === "inspection_failed") return { key: "inspection_failed", label: "Inspection failed", shortLabel: "Inspection failed", tone: "danger" };
+  if (closeoutStatus === "inspection_passed") return { key: "inspection_passed", label: "Inspection passed · closeout needed", shortLabel: "Inspection passed", tone: "info" };
+  if (closeoutStatus === "inspection_scheduled") return { key: "inspection_scheduled", label: "Inspection scheduled", shortLabel: "Inspection scheduled", tone: "info" };
+  if (closeoutStatus === "inspection_required") return { key: "inspection_required", label: "Inspection needed", shortLabel: "Inspection needed", tone: "warning" };
 
-  if (asDateKey(line?.permit_received_date)) return { key: "permit_issued", label: "Permit issued", tone: "success" };
-  if (asDateKey(line?.approval_date)) return { key: "approved", label: "Approved", tone: "success" };
+  if (asDateKey(line?.permit_received_date)) return { key: "permit_issued", label: "Permit issued", shortLabel: "Permit issued", tone: "success" };
+  if (asDateKey(line?.approval_date)) return { key: "approved", label: "Approved", shortLabel: "Approved", tone: "success" };
 
   const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
   if (correctionStatus === "corrections_received" || correctionStatus === "working_corrections") {
-    return { key: "corrections", label: "Corrections", tone: "warning" };
+    return { key: "corrections", label: "Corrections", shortLabel: "Corrections", tone: "warning" };
   }
-  if (correctionStatus === "resubmitted") return { key: "resubmitted", label: "Resubmitted", tone: "info" };
-  if (asDateKey(line?.submitted_date)) return { key: "submitted", label: "Submitted", tone: "info" };
-  return { key: "pre_submission", label: "Pre-submission", tone: "neutral" };
+  if (correctionStatus === "resubmitted") return { key: "resubmitted", label: "Resubmitted", shortLabel: "Resubmitted", tone: "info" };
+  if (asDateKey(line?.submitted_date)) return { key: "submitted", label: "Submitted", shortLabel: "Submitted", tone: "info" };
+  return { key: "pre_submission", label: "Pre-submission", shortLabel: "Pre-submission", tone: "neutral" };
+}
+
+const PERMIT_LIFECYCLE_PROGRESS_ORDER = [
+  "pre_submission",
+  "submitted",
+  "corrections",
+  "resubmitted",
+  "approved",
+  "permit_issued",
+  "inspection_required",
+  "inspection_scheduled",
+  "inspection_failed",
+  "inspection_passed",
+  "closed_out",
+];
+
+export function getPermitGroupProgress(group) {
+  const lines = Array.isArray(group?.lines) ? group.lines : [];
+  const stagesByKey = new Map();
+  let completedCount = 0;
+  let handoffApplicableCount = 0;
+  let handoffReadyCount = 0;
+
+  lines.forEach((line) => {
+    if (isPermitLineEffectivelyComplete(line)) completedCount += 1;
+
+    const lifecycle = getPermitLineLifecycleSummary(line);
+    const current = stagesByKey.get(lifecycle.key);
+    if (current) current.count += 1;
+    else stagesByKey.set(lifecycle.key, { ...lifecycle, count: 1 });
+
+    const handoff = getPermitLineHandoffReadiness(line);
+    if (handoff.applicable) {
+      handoffApplicableCount += 1;
+      if (handoff.isReady) handoffReadyCount += 1;
+    }
+  });
+
+  const lifecycleStages = PERMIT_LIFECYCLE_PROGRESS_ORDER
+    .map((key) => stagesByKey.get(key))
+    .filter(Boolean);
+
+  return {
+    totalCount: lines.length,
+    completedCount,
+    activeCount: Math.max(0, lines.length - completedCount),
+    lifecycleStages,
+    handoffApplicableCount,
+    handoffReadyCount,
+  };
 }
 
 export function getPermitLineLifecycleReviews(line, today) {
