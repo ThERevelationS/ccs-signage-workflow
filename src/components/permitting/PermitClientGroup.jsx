@@ -16,7 +16,15 @@ import PermitLineNotesSection from "./PermitLineNotesSection";
 import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
-import { PERMIT_QUEUE_META } from "./permitQueue";
+import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
+
+const LIFECYCLE_PROGRESS_TONES = {
+  neutral: "border-slate-200 bg-white text-slate-600",
+  info: "border-blue-200 bg-blue-50 text-blue-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-800",
+  danger: "border-red-200 bg-red-50 text-red-800",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+};
 
 export default function PermitClientGroup({
   group,
@@ -46,6 +54,7 @@ export default function PermitClientGroup({
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
+  const progress = getPermitGroupProgress(group);
 
   // Est/Inv # — prefer corbridge_invoice_number, else est_inv_at
   const estInvNumber = wo?.corbridge_invoice_number || wo?.est_inv_at || "";
@@ -187,6 +196,37 @@ export default function PermitClientGroup({
           )}
           <span className="font-semibold text-gray-600">Next:</span>
           <span className="text-gray-700">{queueState.nextAction}</span>
+        </div>
+      )}
+
+      {progress.totalCount > 1 && (
+        <div className="border-b bg-slate-50/70 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-semibold text-slate-700">Permit progress</span>
+            <span className="text-slate-500">
+              {progress.completedCount}/{progress.totalCount} lines complete
+            </span>
+            <span className="hidden text-slate-300 sm:inline">•</span>
+            <div className="flex flex-wrap items-center gap-1">
+              {progress.lifecycleStages.map((stage) => (
+                <span
+                  key={stage.key}
+                  className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${LIFECYCLE_PROGRESS_TONES[stage.tone] || LIFECYCLE_PROGRESS_TONES.neutral}`}
+                  title={`${stage.count} permit line${stage.count === 1 ? "" : "s"} at ${stage.label.toLowerCase()}`}
+                >
+                  {stage.count > 1 ? `${stage.count} × ` : ""}{stage.shortLabel || stage.label}
+                </span>
+              ))}
+            </div>
+            {progress.handoffApplicableCount > 0 && (
+              <span
+                className={`ml-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:ml-auto ${progress.handoffBlockedCount > 0 ? "border-red-200 bg-red-50 text-red-800" : progress.handoffIssueCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+                title="Handoff readiness uses only recorded permit facts and does not change workflow status."
+              >
+                Handoff {progress.handoffReadyCount}/{progress.handoffApplicableCount} ready
+              </span>
+            )}
+          </div>
         </div>
       )}
 
