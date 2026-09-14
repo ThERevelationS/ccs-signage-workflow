@@ -800,7 +800,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
     }
     if (entry?.id && entry.status === 'clocked_in' && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setState(stateEntity, state, 'clocking_out', requestId, {
-        status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
+        status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null, last_request_payload_hash: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
         labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
@@ -2218,7 +2218,7 @@ Deno.serve(async (req) => {
       let claimedState: any = null;
       if (entry.status === 'clocked_in' && clockOut) {
         claimedState = await setState(stateEntity, state, 'clocked_in', null, {
-          status: 'clocking_out', last_request_id: requestId, pending_started_at: now,
+          status: 'clocking_out', last_request_id: requestId, last_request_payload_hash: null, pending_started_at: now,
         });
         if (!claimedState) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Authoritative state changed before correction claim.' } } });
@@ -2402,7 +2402,7 @@ Deno.serve(async (req) => {
       let claimedState: any = null;
       if (entry.status === 'clocked_in') {
         claimedState = await setState(stateEntity, state, 'clocked_in', null, {
-          status: 'clocking_out', last_request_id: requestId, pending_started_at: now,
+          status: 'clocking_out', last_request_id: requestId, last_request_payload_hash: null, pending_started_at: now,
         });
         if (!claimedState) {
           await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked' } });
@@ -2476,7 +2476,7 @@ Deno.serve(async (req) => {
       const claimed = resumingClockIn
         ? state
         : await setState(stateEntity, state, 'clocked_out', null, {
-            status: 'clocking_in', active_entry_id: null, last_request_id: requestId,
+            status: 'clocking_in', active_entry_id: null, last_request_id: requestId, last_request_payload_hash: null,
             pending_started_at: officialClockIn, break_status: 'working', active_break_id: null,
             last_break_request_id: null, break_pending_started_at: null,
             work_pause_status: 'working', active_work_pause_id: null,
