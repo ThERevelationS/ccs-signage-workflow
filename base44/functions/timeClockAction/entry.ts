@@ -709,6 +709,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -726,6 +728,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         status: 'clocked_out', active_entry_id: null, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (rolledBack) {
         await audit(auditEntity, {
@@ -747,6 +751,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || new Date().toISOString(), pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -764,6 +770,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
         await audit(auditEntity, {
@@ -781,6 +789,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
         status: 'clocked_in', active_entry_id: entry.id, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (rolledBack) {
         await audit(auditEntity, {
