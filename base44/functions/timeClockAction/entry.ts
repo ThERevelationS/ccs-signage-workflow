@@ -722,6 +722,18 @@ async function activeLaborForEntry(laborEntity: any, entryId: string, userEmail:
   return rows[0] || null;
 }
 
+async function ensureLaborStopAudit({ auditEntity, entry, target, actor, actorEmail, requestId, endReason, segment }: any) {
+  if (!segment?.id || segment.status !== 'completed') throw new Error('Completed Current Work labor is required before its stop audit can be confirmed.');
+  return ensureActionAudit(auditEntity, {
+    action: 'labor_stop', outcome: 'confirmed',
+    user_email: target.email, user_name: target.full_name || target.email,
+    actor_email: actorEmail, actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target), server_timestamp: segment.ended_at,
+    request_id: requestId, time_entry_id: entry.id, reason: endReason || segment.end_reason || 'manual_stop',
+    details: { labor_segment_id: segment.id, activity_type: segment.activity_type, work_order_id: segment.work_order_id || null, duration_minutes: segment.duration_minutes },
+  }, 'Current Work stop audit');
+}
+
 async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target, actor, actorEmail, requestId, endReason, officialEnd }: any) {
   const prior = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-end request');
   if (prior?.id && prior.status === 'completed') return prior;
