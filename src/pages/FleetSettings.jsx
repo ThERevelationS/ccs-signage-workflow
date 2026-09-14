@@ -615,7 +615,7 @@ function IntegrityPanel({data,busy,onRefresh}) {
   return <div className={`rounded-xl border bg-white dark:bg-slate-900 p-4 shadow-sm ${tone}`}>
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
       <div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet Data Integrity</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Read-only relationship and inventory audit. Preserved historical findings are surfaced, never auto-repaired.</p></div>
-      <button onClick={onRefresh} disabled={busy} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{busy?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Run integrity audit</button>
+      <button onClick={onRefresh} disabled={busy} className="min-h-11 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">{busy?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Run integrity audit</button>
     </div>
     {data ? <>
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
