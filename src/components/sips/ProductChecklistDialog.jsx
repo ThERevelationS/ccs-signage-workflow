@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -77,16 +77,22 @@ export default function ProductChecklistDialog({
   const [discardWarning, setDiscardWarning] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
 
-  // Build shared O(1) lookup indexes once per render. Long checklists previously
-  // rescanned the full checklist repeatedly while resolving hierarchy rows.
-  const checklistItemById = new Map(checklist.map(item => [item.id, item]));
-  const checklistChildrenByParentId = new Map();
-  checklist.forEach(item => {
-    if (!item.parent_id) return;
-    if (!checklistChildrenByParentId.has(item.parent_id)) checklistChildrenByParentId.set(item.parent_id, []);
-    checklistChildrenByParentId.get(item.parent_id).push(item);
-  });
-  const dropdownConditionByName = new Map(dropdownConditions.map(condition => [condition.name, condition]));
+  // Keep hierarchy indexes stable while unrelated dialog state changes. Long
+  // checklists should only rebuild these O(n) structures when their source data changes.
+  const { checklistItemById, checklistChildrenByParentId } = useMemo(() => {
+    const itemById = new Map(checklist.map(item => [item.id, item]));
+    const childrenByParentId = new Map();
+    checklist.forEach(item => {
+      if (!item.parent_id) return;
+      if (!childrenByParentId.has(item.parent_id)) childrenByParentId.set(item.parent_id, []);
+      childrenByParentId.get(item.parent_id).push(item);
+    });
+    return { checklistItemById: itemById, checklistChildrenByParentId: childrenByParentId };
+  }, [checklist]);
+  const dropdownConditionByName = useMemo(
+    () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
+    [dropdownConditions]
+  );
 
   useEffect(() => {
     if (isOpen && workOrder) {
