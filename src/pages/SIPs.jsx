@@ -42,6 +42,7 @@ export default function SIPs() {
   const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [quickEditError, setQuickEditError] = useState("");
   const [boardError, setBoardError] = useState("");
+  const [checklistConfigWarning, setChecklistConfigWarning] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortMode, setSortMode] = useState("meeting");
@@ -64,6 +65,7 @@ export default function SIPs() {
     if (showLoading) setIsLoading(true);
     if (!showLoading) setIsRefreshing(true);
     setBoardError("");
+    setChecklistConfigWarning("");
     try {
       const [orders, usersData, taskDescSetting, dropdownsSetting] = await Promise.all([
         loadAllEntityRows({
@@ -83,6 +85,8 @@ export default function SIPs() {
           settingKey: "dropdownConditions",
           label: "SIPs checklist dropdown conditions",
         })
+          .then(setting => ({ setting, error: null }))
+          .catch(error => ({ setting: null, error }))
       ]);
       
       // Get task descriptions that have SIPs page assigned OR have WIP flag
@@ -99,7 +103,12 @@ export default function SIPs() {
         });
       }
       setWipTaskDescriptions(wipDescs);
-      setDropdownConditions(dropdownsSetting?.setting_value?.items || []);
+      if (dropdownsSetting?.error) {
+        console.error("Error loading SIPs checklist dropdown conditions:", dropdownsSetting.error);
+        setChecklistConfigWarning("Checklist status definitions could not refresh. Work Orders are current, but checklist progress may use the last loaded rules.");
+      } else {
+        setDropdownConditions(dropdownsSetting?.setting?.setting_value?.items || []);
+      }
       
       // Filter for SIPs - items where:
       // 1. current_task_assigned_to is "SIPs", OR
@@ -445,6 +454,13 @@ export default function SIPs() {
             Showing {visibleActiveWorkOrders.length} of {activeWorkOrders.length} active item{activeWorkOrders.length === 1 ? "" : "s"}
           </div>
         </div>
+
+        {checklistConfigWarning && (
+          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="font-medium">Checklist progress rules could not refresh</div>
+            <div className="mt-1 text-xs">{checklistConfigWarning}</div>
+          </div>
+        )}
 
         {boardError && (
           <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 flex items-center justify-between gap-3">
