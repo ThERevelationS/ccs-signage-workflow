@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import PermitSpreadsheetRow from "./PermitSpreadsheetRow";
 import PermitLineNotesSection from "./PermitLineNotesSection";
+import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import { PERMIT_QUEUE_META } from "./permitQueue";
@@ -251,6 +252,13 @@ export default function PermitClientGroup({
                 />
               )}
             </>
+          )}
+
+          {wo && (
+            <PermitJobDocuments
+              workOrder={wo}
+              onManageFiles={() => onOpenWorkOrder(group.work_order_id)}
+            />
           )}
         </div>
       )}
