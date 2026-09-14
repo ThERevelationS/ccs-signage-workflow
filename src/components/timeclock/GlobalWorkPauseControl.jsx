@@ -55,6 +55,10 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       });
       const data = response?.data || response;
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
+      if (data?.status === "clocked_in" && !data?.transition && ["working", "paused"].includes(data?.work_pause_status)) {
+        clearRequestId("work_pause_start", email);
+        clearRequestId("work_pause_resume", email);
+      }
       if (mountedRef.current) {
         setStatus(data);
         setError("");
