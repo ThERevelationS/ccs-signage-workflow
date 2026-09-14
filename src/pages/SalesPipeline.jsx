@@ -418,7 +418,7 @@ export default function SalesPipeline() {
                   <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-700" />
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
-                    <span className="block text-xs text-amber-700">{pipelineSummary.needsAttentionCount} of {pipelineSummary.openCount} open opportunities have a missing next action or key Sales data</span>
+                    <span className="block text-xs text-amber-700">{pipelineSummary.needsAttentionCount} of {pipelineSummary.openCount} open opportunities have actionable gaps · combined queue prioritizes quote timing and next-action gaps</span>
                   </span>
                 </button>
                 <div className="flex flex-wrap gap-1.5 lg:ml-auto">
@@ -427,7 +427,7 @@ export default function SalesPipeline() {
                   <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
                   <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
                   <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
+                  <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing (history) {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
                 </div>
               </div>
             </div>
