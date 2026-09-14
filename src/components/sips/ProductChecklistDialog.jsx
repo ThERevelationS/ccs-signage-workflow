@@ -1624,6 +1624,8 @@ export default function ProductChecklistDialog({
                                     selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                     onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                     disabled={!isRegistered}
+                                    className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                    ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                   />
                                   {isRegistered && (
                                     <button
@@ -1878,7 +1880,8 @@ export default function ProductChecklistDialog({
                                               selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                               onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                               disabled={!isRegistered}
-                                              className="h-4 min-w-[70px]"
+                                              className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                              ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                             />
                                             {isRegistered && (
                                               <button
