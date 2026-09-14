@@ -275,6 +275,20 @@ export default function QuickClockSection({
     setActiveLabor(status?.active_labor || null);
     setLaborSummary(status?.labor_summary || { count: 0, total_minutes: 0 });
 
+    if (status?.transition) {
+      const transition = status.transition;
+      setAuthoritativeTransition({
+        status: status.status || "clocked_in",
+        transition,
+        startedAt: status.transition_started_at || null,
+      });
+      setActiveEntry(status?.entry?.id ? status.entry : null);
+      setShowClockOut(false);
+      setIsRecognizing(false);
+      setRecognitionStatus(`${transitionLabel(transition)} is being finalized by the server. Conflicting Time Clock actions are temporarily blocked.`);
+      return "transition";
+    }
+
     if (status?.status === "clocked_in" && status?.entry?.id) {
       setAuthoritativeTransition(null);
       setActiveEntry(status.entry);
@@ -284,18 +298,13 @@ export default function QuickClockSection({
     }
 
     if (["clocking_in", "clocking_out"].includes(status?.status)) {
-      setAuthoritativeTransition({
-        status: status.status,
-        transition: status.transition || (status.status === "clocking_out" ? "clock_out" : "clock_in"),
-        startedAt: status.transition_started_at || null,
-      });
+      const transition = status.status === "clocking_out" ? "clock_out" : "clock_in";
+      setAuthoritativeTransition({ status: status.status, transition, startedAt: status.transition_started_at || null });
       setActiveEntry(null);
       setShowClockOut(false);
       setIsRecognizing(false);
-      setRecognitionStatus(status.status === "clocking_out"
-        ? "Clock Out is being finalized by the server. New punch actions are temporarily blocked."
-        : "Clock In is being finalized by the server. New punch actions are temporarily blocked.");
-      return status.status;
+      setRecognitionStatus(`${transitionLabel(transition)} is being finalized by the server. Conflicting Time Clock actions are temporarily blocked.`);
+      return "transition";
     }
 
     setAuthoritativeTransition(null);
