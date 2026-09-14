@@ -2172,6 +2172,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       {quickEditWarning}
       {destructiveActionWarning}
       {globalSettingsWarning}
+      {archivePagingNotice}
       {/* Hidden file input for import */}
       <input
         ref={fileInputRef}
