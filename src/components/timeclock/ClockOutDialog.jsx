@@ -145,7 +145,6 @@ export default function ClockOutDialog({
     setLaborPreviewError("");
     loadLaborPreview({ allowAutoApply: true });
     // The dialog is recreated for each verified active shift; only entry/open changes should trigger the automatic suggestion load.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, timeEntry?.id]);
 
   const applyLaborPreview = () => {
