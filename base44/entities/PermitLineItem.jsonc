@@ -111,6 +111,24 @@
       "format": "date",
       "description": "When the permit was received \u2014 marks complete"
     },
+    "application_reference_number": {
+      "type": "string",
+      "description": "Application, case, tracking, or reference number for this individual permit/office line. Line-level; does not overwrite legacy WorkOrder permit fields."
+    },
+    "permit_number": {
+      "type": "string",
+      "description": "Issued permit number for this individual permit/office line. Line-level; does not overwrite the legacy WorkOrder permit_number field."
+    },
+    "approval_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this individual permit/office line was approved, when approval is distinct from permit receipt/issuance."
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiration date for this individual permit/office line, when provided by the issuing authority."
+    },
     "last_submitted_trigger_date": {
       "type": "string",
       "format": "date",
