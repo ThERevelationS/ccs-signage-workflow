@@ -157,17 +157,6 @@ export default function SIPs() {
     return wo.current_task_description && wipTaskDescriptions.includes(wo.current_task_description);
   };
 
-  // Completion must go through the checklist dialog so approvals, statuses,
-  // child tasks, and concurrency-safe completion are validated consistently.
-  // Reopening a completed WIP item is safe to do directly.
-  const toggleSipCompleted = async (wo) => {
-    if (!wo.sip_completed) {
-      openChecklist(wo);
-      return;
-    }
-    await updateWorkOrder(wo.id, "sip_completed", false);
-  };
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -175,6 +164,47 @@ export default function SIPs() {
     if (!wo.sip_revisit_date) return false;
     const d = parseLocalDate(wo.sip_revisit_date);
     return d && d > today;
+  };
+
+  // Completion must go through the checklist dialog so approvals, statuses,
+  // child tasks, and concurrency-safe completion are validated consistently.
+  // Reopening a completed WIP item returns it to the active queue. If legacy
+  // completed data still carries a future revisit date, clear that stale date
+  // atomically so reopening cannot immediately move it into Revisit Later.
+  const toggleSipCompleted = async (wo) => {
+    if (!wo.sip_completed) {
+      openChecklist(wo);
+      return;
+    }
+
+    if (!isRevisitFuture(wo)) {
+      await updateWorkOrder(wo.id, "sip_completed", false);
+      return;
+    }
+
+    setQuickEditError("");
+    setWorkOrders(prev => prev.map(item => item.id === wo.id
+      ? { ...item, sip_completed: false, sip_revisit_date: "" }
+      : item));
+    try {
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: wo.id,
+        expectedFields: {
+          sip_completed: wo.sip_completed,
+          sip_revisit_date: wo.sip_revisit_date,
+        },
+        nextFields: {
+          sip_completed: false,
+          sip_revisit_date: "",
+        },
+        label: "SIPs reopen completed WIP and clear stale revisit",
+      });
+      setWorkOrders(prev => prev.map(item => item.id === wo.id ? { ...item, ...saved } : item));
+    } catch (error) {
+      console.error("Error reopening completed SIP WIP item:", error);
+      setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
+      await loadWorkOrders(false);
+    }
   };
 
   // All non-completed active items
