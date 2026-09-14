@@ -2546,6 +2546,9 @@ Deno.serve(async (req) => {
           if (auditHash && !constantTimeEqual(auditHash, clockOutPayloadHash)) {
             return Response.json({ success: false, error: 'This Clock Out request id is already bound to a different confirmed audit payload.' }, { status: 409 });
           }
+          if (!priorAudit && stateHash) {
+            return Response.json({ success: false, error: 'Clock-out is complete but its required audit record is missing. Admin review is required before this request can be treated as fully confirmed.' }, { status: 409 });
+          }
           if (priorAudit && !['confirmed', 'recovered', 'reused'].includes(String(priorAudit.outcome || ''))) {
             return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but its audit is not finalized. Retry this same request.' }, { status: 409 });
           }
@@ -2622,6 +2625,14 @@ Deno.serve(async (req) => {
             if (!recoveryAuditSaved) return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but its audit recovery was interrupted. Retry the same request.' }, { status: 409 });
             existingAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
           }
+        }
+
+        const recoveredAuditHash = String(existingAudit?.details?.payload_hash || '');
+        if (!existingAudit || !['confirmed', 'recovered', 'reused'].includes(String(existingAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Clock-out is saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+        }
+        if (recoveredAuditHash && !constantTimeEqual(recoveredAuditHash, clockOutPayloadHash)) {
+          return Response.json({ success: false, error: 'Clock-out audit recovery produced a payload mismatch. Admin review is required.' }, { status: 409 });
         }
 
         const currentRecoveryState = await freshState(stateEntity, state.id);
