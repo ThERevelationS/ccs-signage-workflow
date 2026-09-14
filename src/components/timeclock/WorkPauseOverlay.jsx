@@ -60,12 +60,21 @@ export default function WorkPauseOverlay({
       if (!data?.success) throw new Error(data?.error || "Work Pause status could not be verified.");
       if (!mountedRef.current) return data;
       if (data.status === "clocked_in" && data.work_pause_status === "paused" && data.active_work_pause?.id) {
+        const pauseId = String(data.active_work_pause.id);
         setPauseState(data);
+        if (pauseIdRef.current !== pauseId) {
+          pauseIdRef.current = pauseId;
+          dismissedAtRef.current = 0;
+          lastActivityAtRef.current = Date.now();
+          setShowResumePrompt(true);
+        }
       } else {
         setPauseState(null);
         setShowResumePrompt(false);
         setError("");
         resumeRequestRef.current = "";
+        pauseIdRef.current = "";
+        dismissedAtRef.current = 0;
       }
       return data;
     } catch (err) {
@@ -105,6 +114,47 @@ export default function WorkPauseOverlay({
     return () => clearInterval(timer);
   }, [pauseState]);
 
+  useEffect(() => {
+    if (!pauseState) return undefined;
+
+    const recordActivity = () => {
+      const nowMs = Date.now();
+      lastActivityAtRef.current = nowMs;
+      if (!showResumePrompt && dismissedAtRef.current > 0 && nowMs - dismissedAtRef.current >= 2 * 60 * 1000) {
+        setShowResumePrompt(true);
+      }
+    };
+
+    const reminderCheck = setInterval(() => {
+      if (showResumePrompt || document.visibilityState !== "visible" || dismissedAtRef.current <= 0) return;
+      const nowMs = Date.now();
+      const recentlyActive = nowMs - lastActivityAtRef.current <= 30 * 1000;
+      if (recentlyActive && nowMs - dismissedAtRef.current >= 2 * 60 * 1000) {
+        setShowResumePrompt(true);
+      }
+    }, 5000);
+
+    window.addEventListener("pointerdown", recordActivity);
+    window.addEventListener("keydown", recordActivity);
+    window.addEventListener("touchstart", recordActivity, { passive: true });
+    window.addEventListener("wheel", recordActivity, { passive: true });
+    return () => {
+      clearInterval(reminderCheck);
+      window.removeEventListener("pointerdown", recordActivity);
+      window.removeEventListener("keydown", recordActivity);
+      window.removeEventListener("touchstart", recordActivity);
+      window.removeEventListener("wheel", recordActivity);
+    };
+  }, [pauseState, showResumePrompt]);
+
+  const dismissReminder = () => {
+    if (resumeBusy) return;
+    const nowMs = Date.now();
+    dismissedAtRef.current = nowMs;
+    lastActivityAtRef.current = nowMs;
+    setShowResumePrompt(false);
+  };
+
   const resumeWork = async () => {
     if (!pauseState?.active_work_pause?.id || !currentUser?.email || !hasCredential || resumeBusy) return;
     const requestId = resumeRequestRef.current || newRequestId();
@@ -126,6 +176,8 @@ export default function WorkPauseOverlay({
       resumeRequestRef.current = "";
       setShowResumePrompt(false);
       setPauseState(null);
+      pauseIdRef.current = "";
+      dismissedAtRef.current = 0;
       if (typeof onResumed === "function") onResumed(data);
       try { localStorage.setItem("ccs_work_pause_signal", String(Date.now())); } catch {}
       window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed"));
@@ -135,13 +187,13 @@ export default function WorkPauseOverlay({
       const retrySame = err?.retrySameRequest === true || data?.retry_same_request === true;
       if (!retrySame) resumeRequestRef.current = "";
       setError(data?.error || err?.message || "Resume Work was not confirmed. Your work timer remains paused.");
-      setShowResumePrompt(false);
+      setShowResumePrompt(true);
     } finally {
       setResumeBusy(false);
     }
   };
 
-  if (disabled || !pauseState?.active_work_pause?.started_at) return null;
+  if (disabled || !pauseState?.active_work_pause?.started_at || !showResumePrompt) return null;
 
   const pauseStarted = new Date(pauseState.active_work_pause.started_at);
   const pauseElapsedMinutes = Number.isFinite(pauseStarted.getTime())
