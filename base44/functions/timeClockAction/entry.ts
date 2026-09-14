@@ -854,6 +854,7 @@ Deno.serve(async (req) => {
     state = await recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor });
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
+    state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
 
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
@@ -887,6 +888,9 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Stored Work Pause state contains an unexpected active pause. Admin review is required.' }, { status: 409 });
         }
         const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+        if (laborStatusOf(state) !== 'idle') {
+          return Response.json({ success: false, error: 'A Current Work action is still in progress. Retry status shortly.' }, { status: 409 });
+        }
         const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
         const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
         return Response.json({
@@ -924,6 +928,9 @@ Deno.serve(async (req) => {
       }
       if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
         return Response.json({ success: false, error: 'Resume Work before refreshing Clock Out reconciliation.' }, { status: 409 });
+      }
+      if (laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is changing. Retry Clock Out reconciliation after the server confirms that action.' }, { status: 409 });
       }
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
