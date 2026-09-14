@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,6 +106,7 @@ export default function SalesOpportunityDialog({
   isRegistered,
   onClose,
   onUpdateFields,
+  onRemoveFromCurrentPipeline,
   onRequestStatusChange,
   onCompleteFollowUp,
   onOpenFullDetails,
@@ -116,6 +117,8 @@ export default function SalesOpportunityDialog({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [removeFromPipelineOpen, setRemoveFromPipelineOpen] = useState(false);
+  const [removeFromPipelineBusy, setRemoveFromPipelineBusy] = useState(false);
+  const [removeFromPipelineError, setRemoveFromPipelineError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -172,6 +175,23 @@ export default function SalesOpportunityDialog({
     date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() + days);
     return format(date, "yyyy-MM-dd");
+  };
+  const confirmRemoveFromPipeline = async (advance) => {
+    if (!onRemoveFromCurrentPipeline || removeFromPipelineBusy) return;
+    setRemoveFromPipelineBusy(true);
+    setRemoveFromPipelineError("");
+    try {
+      const result = await onRemoveFromCurrentPipeline(workOrder, { advance });
+      if (result?.ok) {
+        setRemoveFromPipelineOpen(false);
+        return;
+      }
+      setRemoveFromPipelineError(result?.message || "This opportunity could not be removed safely.");
+    } catch (error) {
+      setRemoveFromPipelineError(error?.message || "This opportunity could not be removed safely.");
+    } finally {
+      setRemoveFromPipelineBusy(false);
+    }
   };
   const lastFollowUpCompleted = workOrder.sales_last_follow_up_completed_at
     ? new Date(workOrder.sales_last_follow_up_completed_at)
@@ -236,7 +256,7 @@ export default function SalesOpportunityDialog({
                   <div className="flex items-center gap-2 font-semibold text-rose-900"><AlertTriangle className="h-4 w-4" />Pipeline Hygiene</div>
                   <p className="mt-1 text-xs text-rose-800">{placeholderReason} Review it before cleanup. Removing it from Current Pipeline does not delete the WorkOrder and does not create a Won/Lost outcome.</p>
                 </div>
-                {isRegistered && <Button type="button" variant="outline" size="sm" className="shrink-0 border-rose-300 bg-white text-rose-800 hover:bg-rose-100 hover:text-rose-900" onClick={() => setRemoveFromPipelineOpen(true)}>Remove from Current Pipeline</Button>}
+                {isRegistered && <Button type="button" variant="outline" size="sm" className="shrink-0 border-rose-300 bg-white text-rose-800 hover:bg-rose-100 hover:text-rose-900" onClick={() => { setRemoveFromPipelineError(""); setRemoveFromPipelineOpen(true); }}>Remove from Current Pipeline</Button>}
               </div>
             </section>
           )}
@@ -437,17 +457,25 @@ export default function SalesOpportunityDialog({
       </DialogContent>
     </Dialog>
 
-    <AlertDialog open={removeFromPipelineOpen} onOpenChange={setRemoveFromPipelineOpen}>
+    <AlertDialog open={removeFromPipelineOpen} onOpenChange={(open) => { if (!removeFromPipelineBusy) { setRemoveFromPipelineOpen(open); if (!open) setRemoveFromPipelineError(""); } }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Remove this record from Current Pipeline?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created.
+            This will set Current Pipeline membership to off for “{workOrder.client_name || "Unnamed opportunity"}”. The WorkOrder will not be deleted and will remain available in All Records. No Won or Lost outcome will be created. Each record requires its own confirmation.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction className="bg-rose-600 hover:bg-rose-700" onClick={() => { update({ in_pipeline: false }); setRemoveFromPipelineOpen(false); }}>Remove from Current Pipeline</AlertDialogAction>
+        {removeFromPipelineError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">{removeFromPipelineError}</div>}
+        <AlertDialogFooter className="gap-2 sm:gap-0">
+          <AlertDialogCancel disabled={removeFromPipelineBusy}>Cancel</AlertDialogCancel>
+          <Button type="button" variant="outline" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(false)} className="border-rose-300 text-rose-800 hover:bg-rose-50 hover:text-rose-900">
+            {removeFromPipelineBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove only
+          </Button>
+          {queueNavigation?.canNext && (
+            <Button type="button" disabled={removeFromPipelineBusy} onClick={() => confirmRemoveFromPipeline(true)} className="bg-rose-600 text-white hover:bg-rose-700">
+              {removeFromPipelineBusy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}Remove & Next<ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
