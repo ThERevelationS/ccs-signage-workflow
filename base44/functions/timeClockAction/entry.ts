@@ -399,6 +399,26 @@ async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, s
         return recovered;
       }
     }
+    if (matches.length === 1 && matches[0]?.status === 'completed' && matches[0]?.end_request_id) {
+      const breakRow = matches[0];
+      await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: state.active_entry_id });
+      await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId: String(breakRow.end_request_id), entryId: state.active_entry_id });
+      const recovered = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+        break_status: 'working', active_break_id: null,
+        last_break_request_id: String(breakRow.end_request_id), break_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Recovered stale break-start state after the matching break had already ended',
+          details: { break_id: breakRow.id, end_request_id: breakRow.end_request_id },
+        });
+        return recovered;
+      }
+    }
     if (matches.length === 0 && ageMs > 5 * 60 * 1000) {
       const rolledBack = await setBreakState(stateEntity, state, 'starting_break', requestId, {
         break_status: 'working', active_break_id: null, break_pending_started_at: null,
