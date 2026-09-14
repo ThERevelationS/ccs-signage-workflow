@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, BadgeCheck, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
-import { getPermitLineLifecycleSummary } from "./permitQueue";
+import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary } from "./permitQueue";
 
 function parseLocalDate(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
@@ -127,6 +127,7 @@ function DateField({ label, value, disabled, onCommit }) {
 
 export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
+  const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem), [lineItem]);
   const expirationState = useMemo(() => {
     const expiration = parseLocalDate(lineItem?.expiration_date);
     const todayDate = parseLocalDate(today);
