@@ -534,7 +534,17 @@ export default function SIPs() {
                       </button>
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
                     </div>
-                    <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" title={wo.sip_completed ? "Reopen this WIP item" : "Open checklist to complete"} />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleSipCompleted(wo)}
+                      disabled={!isRegistered}
+                      className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
+                      aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
+                    </Button>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5 mt-3">
@@ -931,7 +941,17 @@ export default function SIPs() {
                         </button>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
                       </div>
-                      <Checkbox checked={wo.sip_completed || false} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" title={wo.sip_completed ? "Reopen this WIP item" : "Open checklist to complete"} />
+                      <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleSipCompleted(wo)}
+                      disabled={!isRegistered}
+                      className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
+                      aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
+                    </Button>
                     </div>
 
                     <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
@@ -1072,7 +1092,17 @@ export default function SIPs() {
                       </button>
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.current_task_description || wo.description || "No task description"}</p>
                     </div>
-                    <Checkbox checked={true} onCheckedChange={() => toggleSipCompleted(wo)} disabled={!isRegistered} className="h-5 w-5 shrink-0 mt-1" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleSipCompleted(wo)}
+                      disabled={!isRegistered}
+                      className="h-9 px-2.5 shrink-0 text-xs bg-white border-green-200 text-green-700 hover:bg-green-50"
+                      aria-label={`Reopen ${wo.client_name || "this Work Order"} in the active SIPs queue`}
+                    >
+                      Reopen
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
@@ -1085,7 +1115,7 @@ export default function SIPs() {
                   <div className="mt-3 pt-3 border-t border-green-100">
                     <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="w-full justify-center bg-white">Open Work Order</Button>
                   </div>
-                  {isRegistered && <p className="text-[11px] text-gray-400 text-center mt-2">Uncheck the box to return this WIP item to the active queue.</p>}
+                  {isRegistered && <p className="text-[11px] text-gray-500 text-center mt-2">Reopen returns this WIP item to the active queue.</p>}
                 </div>
               ))}
             </div>
