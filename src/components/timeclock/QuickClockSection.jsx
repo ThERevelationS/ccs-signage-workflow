@@ -243,6 +243,105 @@ export default function QuickClockSection({
     };
   };
 
+  const applyAuthoritativeStatus = useCallback((status, fallbackUser, credential) => {
+    const verifiedUser = status?.user || fallbackUser;
+    if (!verifiedUser?.email) throw new Error("The server did not return a verified employee identity.");
+
+    credentialRef.current = credential;
+    setSelectedUser(verifiedUser);
+    setBreakStatus(status?.break_status || "working");
+    setActiveBreak(status?.active_break || null);
+    setBreakSummary(status?.break_summary || { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+    setWorkPauseAllowed(status?.work_pause_allowed === true);
+    setWorkPauseStatus(status?.work_pause_status || "working");
+    setActiveWorkPause(status?.active_work_pause || null);
+    setWorkPauseSummary(status?.work_pause_summary || { count: 0, total_minutes: 0 });
+    setActiveLabor(status?.active_labor || null);
+    setLaborSummary(status?.labor_summary || { count: 0, total_minutes: 0 });
+
+    if (status?.status === "clocked_in" && status?.entry?.id) {
+      setAuthoritativeTransition(null);
+      setActiveEntry(status.entry);
+      setShowClockOut(true);
+      setIsRecognizing(false);
+      return "clocked_in";
+    }
+
+    if (["clocking_in", "clocking_out"].includes(status?.status)) {
+      setAuthoritativeTransition({
+        status: status.status,
+        transition: status.transition || (status.status === "clocking_out" ? "clock_out" : "clock_in"),
+        startedAt: status.transition_started_at || null,
+      });
+      setActiveEntry(null);
+      setShowClockOut(false);
+      setIsRecognizing(false);
+      setRecognitionStatus(status.status === "clocking_out"
+        ? "Clock Out is being finalized by the server. New punch actions are temporarily blocked."
+        : "Clock In is being finalized by the server. New punch actions are temporarily blocked.");
+      return status.status;
+    }
+
+    setAuthoritativeTransition(null);
+    setActiveEntry(null);
+    setShowClockOut(false);
+    return status?.status || "clocked_out";
+  }, []);
+
+  const refreshAuthoritativeSessionState = useCallback(async ({ quiet = false } = {}) => {
+    const email = String(authoritativeSessionUser?.email || "").trim().toLowerCase();
+    if (!authoritativeSessionToken || !email) return null;
+
+    if (!quiet) setIsLoading(true);
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "status",
+        session_token: authoritativeSessionToken,
+        target_email: email,
+      });
+      const status = response?.data || response;
+      if (!status?.success) throw new Error(status?.error || "Authoritative Time Clock status could not be restored.");
+      const restored = applyAuthoritativeStatus(status, authoritativeSessionUser, { sessionToken: authoritativeSessionToken });
+      if (restored === "clocked_in") {
+        setPersistenceError("");
+        setRecognitionStatus(`Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
+      } else if (restored === "clocked_out") {
+        setPersistenceError("");
+        setRecognitionStatus("");
+      }
+      return status;
+    } catch (err) {
+      if (!quiet) setPersistenceError(err?.response?.data?.error || err?.message || "Authoritative Time Clock status could not be restored.");
+      return null;
+    } finally {
+      if (!quiet) setIsLoading(false);
+    }
+  }, [applyAuthoritativeStatus, authoritativeSessionToken, authoritativeSessionUser]);
+
+  useEffect(() => {
+    if (!authoritativeSessionToken || !authoritativeSessionUser?.email) {
+      setAuthoritativeTransition(null);
+      return undefined;
+    }
+    refreshAuthoritativeSessionState({ quiet: true });
+    const onFocus = () => refreshAuthoritativeSessionState({ quiet: true });
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshAuthoritativeSessionState({ quiet: true });
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
+
+  useEffect(() => {
+    if (!authoritativeTransition || !authoritativeSessionToken || !authoritativeSessionUser?.email) return undefined;
+    const poll = setInterval(() => refreshAuthoritativeSessionState({ quiet: true }), 3000);
+    return () => clearInterval(poll);
+  }, [authoritativeTransition, authoritativeSessionToken, authoritativeSessionUser?.email, refreshAuthoritativeSessionState]);
+
   const resetState = async () => {
     recognitionLockedRef.current = false;
     await stopAllMedia();
