@@ -493,10 +493,9 @@ function laborActivityLabel(value: string) {
   return labels[String(value || '').trim()] || 'Other';
 }
 
-async function laborAllocationPreviewForEntry(laborEntity: any, entryId: string, userEmail: string) {
+async function laborAllocationPreviewForEntry(laborEntity: any, entryId: string, userEmail: string, serverNow = new Date()) {
   const rows = await laborEntity.filter({ time_entry_id: entryId, user_email: userEmail });
   if (!Array.isArray(rows)) throw new Error('Labor allocation preview lookup did not return a record list.');
-  const serverNow = new Date();
   const grouped = new Map<string, any>();
   let trackedMinutes = 0;
 
@@ -815,11 +814,28 @@ Deno.serve(async (req) => {
       if (actor.role !== 'badge' && actorEmail !== target.email) {
         return Response.json({ success: false, error: 'Employees can only preview allocations for their own active shift.' }, { status: 403 });
       }
+      if (breakStatusOf(state) !== 'working' || state.active_break_id) {
+        return Response.json({ success: false, error: 'End the active break before refreshing Clock Out reconciliation.' }, { status: 409 });
+      }
+      if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
+        return Response.json({ success: false, error: 'Resume Work before refreshing Clock Out reconciliation.' }, { status: 409 });
+      }
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
       }
-      const preview = await laborAllocationPreviewForEntry(laborEntity, entry.id, target.email);
+      await activeLaborForEntry(laborEntity, entry.id, target.email);
+      const serverNow = new Date();
+      const clockInMs = new Date(entry.clock_in).getTime();
+      if (!Number.isFinite(clockInMs) || serverNow.getTime() < clockInMs) {
+        return Response.json({ success: false, error: 'The stored clock-in timestamp is invalid.' }, { status: 409 });
+      }
+      const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
+      const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
+      const preview = await laborAllocationPreviewForEntry(laborEntity, entry.id, target.email, serverNow);
+      preview.elapsed_minutes = Math.max(0, Math.floor((serverNow.getTime() - clockInMs) / 60000));
+      preview.tracked_unpaid_minutes = breakSummary.unpaid_minutes;
+      preview.work_pause_minutes = workPauseSummary.total_minutes;
       return Response.json({ success: true, status: 'clocked_in', entry, preview, user: publicEmployee(target) });
     }
 
@@ -2352,7 +2368,7 @@ Deno.serve(async (req) => {
         clock_out_request_id: requestId,
         lunch_minutes: lunchMinutes,
         total_hours: workableMinutes / 60,
-        job_allocations: allocations.map((job: any) => ({ ...job, minutes: minutesFromAllocation(job), hours: minutesFromAllocation(job) / 60 })),
+        job_allocations: allocations.map((job: any) => allocationForStorage(job)),
         notes: String(body?.notes || '').trim(),
         status: 'clocked_out',
         clock_source: 'server',
