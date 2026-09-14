@@ -474,6 +474,111 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
   return freshState(stateEntity, state.id);
 }
 
+function laborStatusOf(state: any) {
+  const value = String(state?.labor_status || 'idle');
+  return ['idle', 'starting', 'changing', 'stopping'].includes(value) ? value : 'idle';
+}
+
+async function setLaborState(stateEntity: any, state: any, expectedLaborStatus: string, expectedRequestId: string | null, nextFields: any) {
+  const query: any = {
+    id: state.id,
+    updated_date: state.updated_date,
+    status: 'clocked_in',
+    labor_status: expectedLaborStatus,
+  };
+  if (expectedRequestId !== null) query.last_labor_request_id = expectedRequestId;
+  const result = await stateEntity.updateMany(query, { $set: nextFields });
+  if (!result || typeof result.updated !== 'number') throw new Error('Time Clock Current Work state update could not be verified.');
+  if (result.updated !== 1) return null;
+  return freshState(stateEntity, state.id);
+}
+
+async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor }: any) {
+  if (state?.status !== 'clocked_in') return state;
+  const laborStatus = laborStatusOf(state);
+  if (laborStatus === 'idle') return state;
+  const requestId = String(state.last_labor_request_id || '');
+  const started = state.labor_pending_started_at ? new Date(state.labor_pending_started_at) : null;
+  const ageMs = started && Number.isFinite(started.getTime()) ? Date.now() - started.getTime() : Number.POSITIVE_INFINITY;
+  const base = { user_email: target.email, time_entry_id: state.active_entry_id };
+
+  if (laborStatus === 'starting' || laborStatus === 'changing') {
+    const startedRows = requestId ? await laborEntity.filter({ ...base, start_request_id: requestId }) : [];
+    if (!Array.isArray(startedRows)) throw new Error('Current Work start recovery lookup did not return a record list.');
+    if (startedRows.length > 1) throw new Error('Current Work start recovery is ambiguous.');
+    if (startedRows.length === 1) {
+      const recovered = await setLaborState(stateEntity, state, laborStatus, requestId, {
+        labor_status: 'idle', labor_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: laborStatus === 'changing' ? 'Recovered interrupted Current Work change finalization' : 'Recovered interrupted Current Work start finalization',
+          details: { labor_segment_id: startedRows[0].id },
+        });
+        return recovered;
+      }
+    }
+
+    if (laborStatus === 'changing' && requestId) {
+      const endedRows = await laborEntity.filter({ ...base, end_request_id: requestId });
+      if (!Array.isArray(endedRows)) throw new Error('Current Work change recovery lookup did not return a record list.');
+      if (endedRows.length > 1) throw new Error('Current Work change recovery is ambiguous.');
+      if (endedRows.length === 1 && ageMs <= 5 * 60 * 1000) return state;
+    }
+
+    if (startedRows.length === 0 && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setLaborState(stateEntity, state, laborStatus, requestId || null, {
+        labor_status: 'idle', labor_pending_started_at: null,
+      });
+      if (rolledBack) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: laborStatus === 'changing'
+            ? 'Rolled back abandoned Current Work change transition; any already-ended segment remains preserved'
+            : 'Rolled back abandoned Current Work start transition with no labor segment',
+        });
+        return rolledBack;
+      }
+    }
+  }
+
+  if (laborStatus === 'stopping') {
+    const endedRows = requestId ? await laborEntity.filter({ ...base, end_request_id: requestId }) : [];
+    if (!Array.isArray(endedRows)) throw new Error('Current Work stop recovery lookup did not return a record list.');
+    if (endedRows.length > 1) throw new Error('Current Work stop recovery is ambiguous.');
+    if (endedRows.length === 1 && endedRows[0]?.status === 'completed') {
+      const recovered = await setLaborState(stateEntity, state, 'stopping', requestId, {
+        labor_status: 'idle', labor_pending_started_at: null,
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
+          request_id: requestId, time_entry_id: state.active_entry_id,
+          reason: 'Recovered interrupted Current Work stop finalization', details: { labor_segment_id: endedRows[0].id },
+        });
+        return recovered;
+      }
+    }
+    if (endedRows.length === 0 && ageMs > 5 * 60 * 1000) {
+      const rolledBack = await setLaborState(stateEntity, state, 'stopping', requestId || null, {
+        labor_status: 'idle', labor_pending_started_at: null,
+      });
+      if (rolledBack) return rolledBack;
+    }
+  }
+
+  return freshState(stateEntity, state.id);
+}
+
 const LABOR_ACTIVITY_TYPES = new Set(['fabrication','cnc','laser','paint','welding','electrical','installation','service','survey','design','permitting','estimating','admin','shop','travel','other']);
 
 async function laborSummaryForEntry(laborEntity: any, entryId: string, userEmail: string) {
