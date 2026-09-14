@@ -99,10 +99,24 @@ function validatePendingBuilderMutation(pending, { estimateId, builder, line }) 
   }
 }
 
+function currentSignShopSessionToken() {
+  try {
+    if (typeof window === "undefined") return "";
+    return String(window.localStorage?.getItem("sss_session_token") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 export async function ensureBuilderPriceRevision(idempotencyKey, revision) {
+  const sessionToken = currentSignShopSessionToken();
+  if (!sessionToken) {
+    throw new Error("Your signed sign-shop session is no longer available. Sign in again before changing Builder pricing.");
+  }
   const response = await base44.functions.invoke("ensureBuilderPriceRevision", {
     idempotency_key: idempotencyKey,
     revision,
+    session_token: sessionToken,
   });
   const result = response?.data || response;
   if (result?.error) throw new Error(result.error);
