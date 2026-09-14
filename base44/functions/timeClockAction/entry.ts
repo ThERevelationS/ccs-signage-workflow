@@ -1553,20 +1553,16 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This Current Work request id is already bound to different labor details. Admin review is required.' }, { status: 409 });
       }
 
+      await ensureLaborStartAudit({
+        auditEntity,
+        action: action === 'labor_change' ? 'labor_change' : 'labor_start',
+        segment, target, actor, requestId, entryId: entry.id,
+      });
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setLaborState(stateEntity, currentClaim, expectedLaborStatus, requestId, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
-      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work was saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
-
-      await audit(auditEntity, {
-        action: action === 'labor_change' ? 'labor_change' : 'labor_start', outcome: 'confirmed',
-        user_email: target.email, user_name: target.full_name || target.email,
-        actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: segment.started_at,
-        request_id: requestId, time_entry_id: entry.id,
-        details: { labor_segment_id: segment.id, activity_type: segment.activity_type, work_order_id: segment.work_order_id || null, work_order_title: segment.work_order_title || '', client_name: segment.client_name || '' },
-      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work and its audit were saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
       const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
       return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target), reused: resumingLaborAction });
     }
@@ -1650,23 +1646,17 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This break-start request is already bound to different break details.' }, { status: 409 });
       }
 
+      await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setBreakState(stateEntity, currentClaim, 'starting_break', requestId, {
         break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
       });
       if (!finalized) {
-        return Response.json({ success: false, retry_same_request: true, error: 'Break start was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+        return Response.json({ success: false, retry_same_request: true, error: 'Break start and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       }
-      const auditSaved = await audit(auditEntity, {
-        action: 'break_start', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: breakRow.started_at,
-        request_id: requestId, time_entry_id: entry.id,
-        details: { break_id: breakRow.id, break_type: breakRow.break_type, is_paid: breakRow.is_paid },
-      });
       const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
       const laborSummary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', break_status: 'on_break', break: breakRow, break_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_in', break_status: 'on_break', break: breakRow, break_summary: summary, active_labor: null, labor_summary: laborSummary, entry, user: publicEmployee(target), audit_saved: true });
     }
 
     if (action === 'break_end') {
@@ -1682,6 +1672,7 @@ Deno.serve(async (req) => {
       if (currentBreakStatus === 'working') {
         const prior = await uniqueRow(breakEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Break-end request');
         if (prior?.id && prior.status === 'completed') {
+          await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow: prior, target, actor, requestId, entryId: entry.id });
           const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
           return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: prior, break_summary: summary, entry, user: publicEmployee(target), reused: true });
         }
@@ -1698,6 +1689,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'The active break does not match this employee shift. Admin review is required.' }, { status: 409 });
       }
       if (breakRow.status === 'completed' && String(breakRow.end_request_id || '') === requestId) {
+        await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId, entryId: entry.id });
         const currentState = await freshState(stateEntity, state.id);
         if (breakStatusOf(currentState) === 'ending_break') {
           const recovered = await setBreakState(stateEntity, currentState, 'ending_break', requestId, {
@@ -1739,21 +1731,14 @@ Deno.serve(async (req) => {
         breakRow = await breakEntity.get(breakRow.id);
       }
 
+      await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
       const finalized = await setBreakState(stateEntity, currentClaim, 'ending_break', requestId, {
         break_status: 'working', active_break_id: null, break_pending_started_at: null,
       });
-      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Break end was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
-
-      const auditSaved = await audit(auditEntity, {
-        action: 'break_end', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: breakRow.ended_at,
-        request_id: requestId, time_entry_id: entry.id,
-        details: { break_id: breakRow.id, break_type: breakRow.break_type, is_paid: breakRow.is_paid, duration_minutes: breakRow.duration_minutes },
-      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Break end and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_in', break_status: 'working', break: breakRow, break_summary: summary, entry, user: publicEmployee(target), audit_saved: true });
     }
 
     if (action === 'work_pause_start') {
