@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
+import { getSalesAttentionItems } from "@/components/sales/salesAttention";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -148,6 +149,8 @@ export default function SalesOpportunityDialog({
   const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
   const stageAging = getStageAgingState(workOrder);
   const quoteAging = getQuoteAgingState(workOrder);
+  const attentionItems = getSalesAttentionItems(workOrder);
+  const attentionKeys = new Set(attentionItems.map((item) => item.key));
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -192,13 +195,43 @@ export default function SalesOpportunityDialog({
         </DialogHeader>
 
         <div className="space-y-5 p-4 sm:p-6">
+          {attentionItems.length > 0 && (
+            <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-amber-900">Needs Attention</div>
+                  <p className="mt-0.5 text-xs text-amber-800">Fix the actionable gaps you know are accurate. Missing historical timing stays missing rather than being guessed.</p>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {attentionItems.map((item) => (
+                  <div key={item.key} className="rounded-lg border border-amber-200/80 bg-white/80 px-3 py-2">
+                    <div className="text-xs font-semibold text-amber-900">{item.label}</div>
+                    <div className="mt-0.5 text-[11px] leading-4 text-amber-800">{item.detail}</div>
+                  </div>
+                ))}
+              </div>
+              {isRegistered && !closeout && (attentionKeys.has("next_action") || attentionKeys.has("quote_timing_missing")) && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-amber-200 pt-3">
+                  {attentionKeys.has("next_action") && <span className="text-xs font-medium text-amber-900">Schedule follow-up:</span>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>}
+                  {attentionKeys.has("quote_timing_missing") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Quote sent today</Button>}
+                </div>
+              )}
+            </section>
+          )}
+
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="rounded-xl border bg-white p-3">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><CircleDollarSign className="h-4 w-4" />Opportunity Value</div>
               <div className="mt-2 text-2xl font-bold text-gray-900">{money(value)}</div>
               <div className="mt-1 text-xs text-gray-500">{workOrder.quoted_amount != null ? "Quoted value" : "Estimate value"}</div>
             </div>
-            <div className="rounded-xl border bg-white p-3">
+            <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
               <Select value={workOrder.sales_status || "lead"} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered}>
                 <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
@@ -210,7 +243,7 @@ export default function SalesOpportunityDialog({
                 <div className="mt-2 text-xs text-gray-400">Stage age begins tracking after the next verified stage change.</div>
               )}
             </div>
-            <div className="rounded-xl border bg-white p-3">
+            <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("probability_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Probability</Label>
               <div className="mt-2 flex items-center gap-2">
                 <Input type="number" min="0" max="100" value={workOrder.probability ?? ""} disabled={!isRegistered} onChange={(event) => update({ probability: Math.max(0, Math.min(100, Number(event.target.value) || 0)) })} className="h-9" />
@@ -226,7 +259,7 @@ export default function SalesOpportunityDialog({
                 <div className="mt-2 text-xs text-gray-400">No probability set.</div>
               )}
             </div>
-            <div className="rounded-xl border bg-white p-3">
+            <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("owner_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Owner</Label>
               <Select value={workOrder.sales_rep || "__unassigned__"} onValueChange={(value) => update({ sales_rep: value === "__unassigned__" ? "" : value })} disabled={!isRegistered}>
                 <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
@@ -237,7 +270,7 @@ export default function SalesOpportunityDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-xl border bg-white p-3">
+            <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("source_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Lead Source</Label>
               <Select value={workOrder.lead_source || "__unspecified__"} onValueChange={(value) => update({ lead_source: value === "__unspecified__" ? "" : value })} disabled={!isRegistered}>
                 <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
@@ -251,7 +284,7 @@ export default function SalesOpportunityDialog({
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border bg-white p-4">
+            <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("next_action") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><CalendarClock className="h-4 w-4 text-orange-600" />Next Action</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-9" /></div>
@@ -294,7 +327,7 @@ export default function SalesOpportunityDialog({
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border bg-white p-4">
+            <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("quote_timing_missing") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><FileText className="h-4 w-4 text-indigo-600" />Quote & Closeout</div>
               <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                 <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.corbridge_invoice_number || workOrder.est_inv_at || "—"}</div></div>
