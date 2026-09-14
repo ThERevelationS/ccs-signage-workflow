@@ -400,7 +400,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-amber-900">{pipelineSummary.quoteNoFollowUpCount}</div>
                 <div className="mt-1 text-xs text-amber-700/80">{pipelineSummary.quoteAwaitingResponseCount} awaiting response · {pipelineSummary.quoteTimingMissingCount} timing missing</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.noNextActionCount > 0 ? "no_next_action" : "all")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "no_next_action" ? "border-violet-400 bg-violet-50" : "border-violet-200 bg-white hover:border-violet-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter(pipelineSummary.noNextActionCount > 0 ? "no_next_action" : "all")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "no_next_action" ? "border-violet-400 bg-violet-50" : "border-violet-200 bg-white hover:border-violet-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-violet-700">Next Action Coverage</div>
                 <div className="mt-1 text-2xl font-bold text-violet-900">{pipelineSummary.nextActionCoverageCount}/{pipelineSummary.openCount}</div>
                 <div className="mt-1 text-xs text-violet-700/80">{pipelineSummary.noNextActionCount} missing follow-up or task deadline{pipelineSummary.noNextActionCount > 0 ? " · click to review" : ""}</div>
