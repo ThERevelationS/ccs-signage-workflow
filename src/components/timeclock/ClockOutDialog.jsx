@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,21 @@ import CurrentWorkCard from "@/components/timeclock/CurrentWorkCard";
 const WorkOrder = base44.entities.WorkOrder;
 
 const INHOUSE_TASKS = [
+  "Fabrication",
+  "CNC",
+  "Laser",
+  "Paint",
+  "Welding",
+  "Electrical",
+  "Installation",
+  "Service",
+  "Survey",
+  "Design",
+  "Permitting",
+  "Estimating",
+  "Admin",
+  "Shop",
+  "Travel",
   "Shop Cleaning",
   "Equipment Maintenance",
   "Inventory Management",
@@ -44,6 +59,7 @@ export default function ClockOutDialog({
   onStartLabor,
   onChangeLabor,
   onStopLabor,
+  onLoadLaborAllocationPreview,
 }) {
   const [lunchMinutes, setLunchMinutes] = useState("");
   const [jobAllocations, setJobAllocations] = useState([]);
@@ -57,6 +73,11 @@ export default function ClockOutDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [breakActionBusy, setBreakActionBusy] = useState(false);
   const [workPauseBusy, setWorkPauseBusy] = useState(false);
+  const [laborPreview, setLaborPreview] = useState(null);
+  const [laborPreviewBusy, setLaborPreviewBusy] = useState(false);
+  const [laborPreviewError, setLaborPreviewError] = useState("");
+  const allocationEditedRef = useRef(false);
+  const previewAppliedRef = useRef(false);
 
   // Display time is refreshed while the dialog is open. The backend still owns
   // the official clock-out timestamp and recalculates the final duration.
