@@ -163,14 +163,20 @@ export default function SalesPipeline() {
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-  const attentionChipClass = (value) => `rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+  const attentionChipClass = (value) => `rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition-colors ${
     attentionFilter === value
       ? "border-blue-500 bg-blue-50 text-blue-800"
       : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
   }`;
 
   return (
-    <div className="flex flex-col p-4 sm:p-6" style={{ height: '100%', overflow: 'hidden' }}>
+          <div className="clay-card p-2 flex-shrink-0">
+            <DollarSign className="w-5 h-5 text-green-600" />
+          </div>
+          <div className="flex-shrink-0 leading-tight">
+            <h1 className="text-xl font-bold text-gray-800">Sales Pipeline</h1>
+            <p className="text-gray-500 text-[10px] hidden xl:block">Manage leads and opportunities</p>
+          </div>
       <div className="w-full max-w-[98%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <div className="clay-card p-3 flex-shrink-0">
@@ -183,12 +189,12 @@ export default function SalesPipeline() {
           {/* Pending Imports tab */}
           <button
             onClick={() => setShowPendingImports(!showPendingImports)}
-            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
+            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
           >
-            <Inbox className="w-4 h-4" />
+            <Inbox className="w-3.5 h-3.5" />
             {showPendingImports ? '← Return' : 'Pending Imports / Duplicates'}
             {!showPendingImports && pendingCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+              <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
                 {pendingCount}
               </span>
             )}
@@ -196,7 +202,7 @@ export default function SalesPipeline() {
 
           <div className="flex-1" />
 
-          <div className="flex flex-wrap items-end gap-2">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
             {isRegistered && (
               <Button 
                 onClick={() => setShowNewClientForm(true)}
@@ -209,14 +215,14 @@ export default function SalesPipeline() {
             )}
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Workspace</span>
+              <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
                 setAttentionFilter("all");
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
-                <SelectTrigger className="w-44 h-9">
+                <SelectTrigger className="w-40 h-8 text-xs">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
@@ -231,21 +237,21 @@ export default function SalesPipeline() {
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-500 mb-1">View</span>
-                <div className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
-                  <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
-                  <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
-                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("daily"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
-                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("insights"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "insights" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />Insights</span></button>}
+                <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">View</span>
+                <div className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
+                  <button type="button" onClick={() => setViewMode("table")} className={`px-2.5 text-[11px] font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
+                  <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-2.5 text-[11px] font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
+                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("daily"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-2.5 text-[11px] font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
+                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("insights"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-2.5 text-[11px] font-medium transition-colors ${viewMode === "insights" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />Insights</span></button>}
                 </div>
               </div>
             )}
 
             {recordScope === "outcomes" && (
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-500 mb-1">Outcome Period</span>
+                <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
-                  <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tracked</SelectItem>
                     <SelectItem value="30">Last 30 Days</SelectItem>
@@ -257,14 +263,14 @@ export default function SalesPipeline() {
             )}
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Search</span>
+              <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">Search</span>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Customer, contact, estimate, address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-64 h-9"
+              <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">Information Filters</span>
                 />
               </div>
             </div>
@@ -278,7 +284,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger className="w-48 h-9">
+                <SelectTrigger className="w-44 h-8 text-xs">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -307,7 +313,7 @@ export default function SalesPipeline() {
             </div>
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Column Filters</span>
+              <span className="text-[10px] font-medium text-gray-500 mb-0.5 leading-none">Column Filters</span>
               <Select 
               value={activeColumnPreset?.id || "default"} 
               onValueChange={(value) => {
@@ -321,7 +327,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger className="w-48 h-9">
+              <SelectTrigger className="w-44 h-8 text-xs">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
@@ -348,11 +354,11 @@ export default function SalesPipeline() {
             </div>
             
             {canImportExport && (
-              <div className="flex items-center gap-1 h-9">
+              <div className="flex items-center gap-0.5 h-8">
                 <Button 
                   onClick={() => spreadsheetRef.current?.importFromExcel()}
                   size="sm" 
-                  className="h-9 px-2"
+                  className="h-8 px-2"
                   variant="ghost"
                 >
                   <Upload className="w-3 h-3" />
@@ -360,7 +366,7 @@ export default function SalesPipeline() {
                 <Button 
                   onClick={() => spreadsheetRef.current?.exportToExcel()}
                   size="sm" 
-                  className="h-9 px-2"
+                  className="h-8 px-2"
                   variant="ghost"
                 >
                   <Download className="w-3 h-3" />
