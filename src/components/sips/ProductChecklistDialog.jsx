@@ -2106,7 +2106,8 @@ export default function ProductChecklistDialog({
                                       checked={!!task.approved_by}
                                       onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
                                       disabled={!isRegistered}
-                                      className="h-3 w-3"
+                                      className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                      aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
                                     />
                                     <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
                                     {editingItemId === task.id ? (
