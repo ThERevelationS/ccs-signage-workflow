@@ -26,12 +26,36 @@ function CoverageRow({ label, covered, total, note }) {
 
 export default function SalesPipelineInsights({ summary }) {
   const openCount = summary?.openCount || 0;
+  const placeholderCount = summary?.placeholderCount || 0;
+  const placeholderValue = summary?.placeholderValue || 0;
+  const notFlaggedCount = Math.max(0, openCount - placeholderCount);
+  const notFlaggedValue = Math.max(0, (summary?.openValue || 0) - placeholderValue);
   const outcomeReady = (summary?.totalTrackedOutcomeCount || 0) > 0;
   const stageReady = (summary?.stageAgeCoverageCount || 0) === openCount && openCount > 0;
+  const pipelineHygieneReady = placeholderCount === 0;
 
   return (
     <div className="h-full overflow-y-auto p-3 sm:p-4">
       <div className="mx-auto max-w-7xl space-y-4">
+        {placeholderCount > 0 && (
+          <section className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 shadow-sm">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-rose-900">Pipeline data-quality warning</div>
+                <p className="mt-1 text-xs text-rose-800">Raw Current Pipeline reporting still includes {placeholderCount} exact-name test placeholder record{placeholderCount === 1 ? "" : "s"} (Test/asdf). They are not excluded automatically; cleanup requires an explicit user action.</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-lg border border-rose-200 bg-white/80 p-2.5"><div className="text-[11px] uppercase tracking-wide text-rose-600">Raw current</div><div className="mt-1 text-lg font-bold text-rose-900">{openCount}</div></div>
+                  <div className="rounded-lg border border-rose-200 bg-white/80 p-2.5"><div className="text-[11px] uppercase tracking-wide text-rose-600">Not flagged</div><div className="mt-1 text-lg font-bold text-rose-900">{notFlaggedCount}</div></div>
+                  <div className="rounded-lg border border-rose-200 bg-white/80 p-2.5"><div className="text-[11px] uppercase tracking-wide text-rose-600">Raw value</div><div className="mt-1 text-lg font-bold text-rose-900">{money(summary?.openValue || 0)}</div></div>
+                  <div className="rounded-lg border border-rose-200 bg-white/80 p-2.5"><div className="text-[11px] uppercase tracking-wide text-rose-600">Not-flagged value</div><div className="mt-1 text-lg font-bold text-rose-900">{money(notFlaggedValue)}</div></div>
+                </div>
+                <div className="mt-2 text-[11px] text-rose-700">Flagged placeholder value: {money(placeholderValue)}. “Not flagged” means only that the exact Test/asdf rule did not match; it is not a guarantee that every remaining record is valid.</div>
+              </div>
+            </div>
+          </section>
+        )}
+
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Clock3 className="h-4 w-4" />Pipeline Age</div>
@@ -198,6 +222,7 @@ export default function SalesPipelineInsights({ summary }) {
           <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-800"><DatabaseZap className="h-4 w-4 text-teal-600" />Reporting Readiness</div>
             <div className="mt-3 space-y-3">
+              <CoverageRow label="Not flagged as test placeholder" covered={notFlaggedCount} total={openCount} note="Exact Test/asdf names only. Raw reporting still includes flagged records until explicit cleanup." />
               <CoverageRow label="Sales owner" covered={summary?.assignedOwnerCount || 0} total={openCount} note="Needed for fair salesperson workload and performance reporting." />
               <CoverageRow label="Lead source" covered={summary?.sourceCoverageCount || 0} total={openCount} note="Needed for source conversion and source-value reporting." />
               <CoverageRow label="Probability" covered={summary?.ratedProbabilityCount || 0} total={openCount} note="Needed for complete weighted pipeline forecasting." />
@@ -205,9 +230,9 @@ export default function SalesPipelineInsights({ summary }) {
               <CoverageRow label="Stage-change timing" covered={summary?.stageAgeCoverageCount || 0} total={openCount} note="Days-in-stage is withheld until this tracking has meaningful coverage." />
               <CoverageRow label="Quote sent timing" covered={summary?.quoteTimingCoverageCount || 0} total={summary?.quoteAwaitingResponseCount || 0} note="Needed for trustworthy quote-age and quote-response follow-up reporting." />
             </div>
-            <div className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${outcomeReady && stageReady ? "border-teal-200 bg-teal-50 text-teal-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
-              {outcomeReady && stageReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />}
-              <span>{outcomeReady ? `${summary.totalTrackedOutcomeCount} authoritative Won/Lost outcome${summary.totalTrackedOutcomeCount === 1 ? " is" : "s are"} available for outcome reporting.` : "No authoritative modern Won/Lost outcomes exist yet, so salesperson and source conversion rankings are not meaningful yet."} {stageReady ? "Stage-change timing has full current-pipeline coverage." : "Days-in-stage reporting remains intentionally withheld until stage-change timing has meaningful coverage."}</span>
+            <div className={`mt-4 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${outcomeReady && stageReady && pipelineHygieneReady ? "border-teal-200 bg-teal-50 text-teal-800" : "border-slate-200 bg-slate-50 text-slate-700"}`}>
+              {outcomeReady && stageReady && pipelineHygieneReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />}
+              <span>{pipelineHygieneReady ? "No exact-name test placeholders are currently flagged." : `${placeholderCount} exact-name test placeholder${placeholderCount === 1 ? " remains" : "s remain"} in raw Current Pipeline reporting.`} {outcomeReady ? `${summary.totalTrackedOutcomeCount} authoritative Won/Lost outcome${summary.totalTrackedOutcomeCount === 1 ? " is" : "s are"} available for outcome reporting.` : "No authoritative modern Won/Lost outcomes exist yet, so salesperson and source conversion rankings are not meaningful yet."} {stageReady ? "Stage-change timing has full current-pipeline coverage." : "Days-in-stage reporting remains intentionally withheld until stage-change timing has meaningful coverage."}</span>
             </div>
           </section>
         </div>
