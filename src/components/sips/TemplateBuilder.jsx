@@ -1104,7 +1104,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
 
                 <div className="flex flex-col h-auto lg:h-full">
-                  <h3 className="font-bold text-sm mb-2">Selected ({selectedProducts.length})</h3>
+                  <h3 className="font-bold text-sm">Current Selection ({selectedProducts.length})</h3>
+                  {selectedProducts.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1 mb-2">
+                      Removing a row here only removes it from this apply selection. Saved Work Order checklist data is not deleted.
+                    </p>
+                  )}
                   {selectedProducts.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
                   ) : (
@@ -1125,8 +1130,23 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           <div className="flex items-center gap-2 mb-1">
                             <div {...provided.dragHandleProps}><GripVertical className="w-4 h-4 text-gray-400 cursor-grab" /></div>
                             <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} disabled={product.isExisting} className="h-7 text-sm flex-1" />
-                            {product.isExisting && <span className="text-[10px] font-medium rounded bg-green-100 text-green-700 px-1.5 py-0.5">Existing</span>}
-                            <button onClick={() => setSelectedProducts(selectedProducts.filter(p => p.id !== product.id))} className="p-1"><Trash2 className="w-4 h-4 text-red-500" /></button>
+                            {product.isExisting && (
+                              <span
+                                className="text-[10px] font-medium rounded bg-green-100 text-green-700 px-1.5 py-0.5"
+                                title="Existing saved Work Order checklist"
+                              >
+                                Existing
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedProducts(current => current.filter(p => p.id !== product.id))}
+                              className="p-1 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                              title={product.isExisting ? "Remove from selection — saved Work Order checklist data is not deleted" : "Remove from selection"}
+                              aria-label={`Remove ${product.customName} from selection`}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
                           <div className="text-xs text-gray-500 mb-1">Type: {product.productType}</div>
                           {(() => {
@@ -1148,7 +1168,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     <div
                                       key={st.id}
                                       onClick={() => { if (!isAlreadyApplied) toggleSubTemplateForProduct(product.id, st.id); }}
-                                      title={isAlreadyApplied ? "Already applied to this product" : undefined}
+                                      title={isAlreadyApplied ? "Applied — this saved checklist option remains on the Work Order" : undefined}
                                       className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${
                                         isAlreadyApplied
                                           ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
@@ -1203,7 +1223,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         return (
                           <div key={product.id} className="mb-4 last:mb-0">
                             <h4 className="font-bold text-sm text-purple-800 mb-2 pb-1 border-b">📦 {product.customName}</h4>
-                            {template?.items?.map((item, idx) => {
+                            {product.isExisting && (
+                              <div className="mb-2 rounded border border-green-200 bg-green-50 px-2 py-1.5 text-xs text-green-800">
+                                Existing base checklist is already saved and will stay unchanged. Only newly selected checklist options below will be added.
+                              </div>
+                            )}
+                            {!product.isExisting && template?.items?.map((item, idx) => {
                               const conditionNames = (item.dropdown_ids || []).map(id => dropdownConditions.find(d => d.id === id)?.name).filter(Boolean);
                               return (
                                 <div key={idx} className="mb-2">
