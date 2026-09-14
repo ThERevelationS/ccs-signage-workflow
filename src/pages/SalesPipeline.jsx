@@ -395,7 +395,7 @@ export default function SalesPipeline() {
                 <div className="mt-1 text-2xl font-bold text-red-800">{pipelineSummary.dueCount}</div>
                 <div className="mt-1 text-xs text-red-600">{pipelineSummary.overdueCount} overdue · {pipelineSummary.dueTodayCount} today</div>
               </button>
-              <button type="button" onClick={() => applyAttentionFilter("quote_no_followup")} className={`rounded-xl border p-3 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
+              <button type="button" onClick={() => applyAttentionFilter("quote_no_followup")} className={`rounded-lg border p-2 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
                 <div className="text-xs font-medium uppercase tracking-wide text-amber-700">Quotes Need Follow-up</div>
                 <div className="mt-1 text-2xl font-bold text-amber-900">{pipelineSummary.quoteNoFollowUpCount}</div>
                 <div className="mt-1 text-xs text-amber-700/80">{pipelineSummary.quoteAwaitingResponseCount} awaiting response · {pipelineSummary.quoteTimingMissingCount} timing missing</div>
