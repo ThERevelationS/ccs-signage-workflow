@@ -635,7 +635,13 @@ export default function Permitting() {
       if (wo?.title?.toLowerCase().includes(q)) return true;
       if (g.lines.some(li =>
         li.locality_name?.toLowerCase().includes(q) ||
+        li.row_name?.toLowerCase().includes(q) ||
         li.office_type?.toLowerCase().includes(q) ||
+        (li.office_types || []).some((type) => String(type || "").toLowerCase().includes(q)) ||
+        li.application_reference_number?.toLowerCase().includes(q) ||
+        li.permit_number?.toLowerCase().includes(q) ||
+        li.approval_date?.toLowerCase().includes(q) ||
+        li.expiration_date?.toLowerCase().includes(q) ||
         li.notes?.toLowerCase().includes(q)
       )) return true;
       return false;
