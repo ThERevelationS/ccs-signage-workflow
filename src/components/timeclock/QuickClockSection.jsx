@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,7 @@ export default function QuickClockSection({
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [recognitionMethod, setRecognitionMethod] = useState(null); // face | qr | manual
   const [recognitionStatus, setRecognitionStatus] = useState("");
+  const [authoritativeTransition, setAuthoritativeTransition] = useState(null);
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -262,6 +263,7 @@ export default function QuickClockSection({
     setIsRecognizing(false);
     setRecognitionMethod(null);
     setRecognitionStatus("");
+    setAuthoritativeTransition(null);
     setUsernameInput("");
     setManualPassword("");
     setUsernameError("");
