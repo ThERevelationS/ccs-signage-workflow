@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getSalesAttentionItems } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -27,7 +27,7 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [] }) {
   return (
     <div className="space-y-3 p-3">
       {workOrders.map((wo) => {
@@ -40,7 +40,9 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
         const stageAging = getStageAgingState(wo, today);
         const quoteAging = getQuoteAgingState(wo, today);
-        const attentionItems = getSalesAttentionItems(wo, today);
+        const attentionItems = getActionableSalesAttentionItems(wo, today);
+        const attentionKeys = new Set(attentionItems.map((item) => item.key));
+        const suggestedProbability = getSuggestedProbabilityForStatus(wo.sales_status || "lead");
         return (
           <div
             key={wo.id}
@@ -75,6 +77,22 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
                 <span className="font-semibold">Needs attention:</span>{" "}
                 {attentionItems.slice(0, 2).map((item) => item.shortLabel).join(" · ")}{attentionItems.length > 2 ? ` · +${attentionItems.length - 2}` : ""}
+                {isRegistered && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-amber-200 pt-2" onClick={(event) => event.stopPropagation()}>
+                    {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && (
+                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "sales_rep", currentSalesOwnerLabel)} className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Assign to me</button>
+                    )}
+                    {attentionKeys.has("probability_missing") && suggestedProbability != null && (
+                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "probability", suggestedProbability)} className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Set {suggestedProbability}%</button>
+                    )}
+                    {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
+                      <Select onValueChange={(value) => onUpdateWorkOrder?.(wo.id, "lead_source", value)}>
+                        <SelectTrigger className="h-7 w-[132px] rounded-full border-amber-300 bg-white px-2.5 text-[11px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
+                        <SelectContent>{leadSources.filter(Boolean).map((source) => <SelectItem key={source} value={source}>{source}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
