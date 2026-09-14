@@ -438,7 +438,7 @@ export default function SalesPipeline() {
             </div>
 
             {pipelineSummary.placeholderCount > 0 && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-2.5">
+              <div className="rounded-lg border border-rose-200 bg-rose-50/70 px-2 py-1.5">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
