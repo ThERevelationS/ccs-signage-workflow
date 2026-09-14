@@ -240,6 +240,7 @@ async function ensureState(stateEntity: any, target: any) {
     status: 'clocked_out',
     break_status: 'working',
     work_pause_status: 'working',
+    labor_status: 'idle',
   });
   rows = await stateEntity.filter({ user_email: email });
   if (!Array.isArray(rows) || rows.length !== 1) {
