@@ -2177,6 +2177,9 @@ Deno.serve(async (req) => {
       if (entry.status === 'clocked_in' && (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id)) {
         return Response.json({ success: false, error: 'Resume the employee Work Pause before correcting an active shift.' }, { status: 409 });
       }
+      if (entry.status === 'clocked_in' && laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is still changing. Retry the active-shift correction after that server action finishes.' }, { status: 409 });
+      }
 
       const intent = await auditEntity.create({
         action: 'admin_correction', outcome: 'pending', user_email: target.email,
@@ -2354,6 +2357,9 @@ Deno.serve(async (req) => {
       if (entry.status === 'clocked_in' && (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id)) {
         return Response.json({ success: false, error: 'Resume the employee Work Pause before archiving an active shift.' }, { status: 409 });
       }
+      if (entry.status === 'clocked_in' && laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is still changing. Retry archival after that server action finishes.' }, { status: 409 });
+      }
 
       const now = new Date().toISOString();
       const intent = await auditEntity.create({
@@ -2502,6 +2508,9 @@ Deno.serve(async (req) => {
       }
       if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
         return Response.json({ success: false, error: 'Resume Work before clocking out.' }, { status: 409 });
+      }
+      if (laborStatusOf(state) !== 'idle') {
+        return Response.json({ success: false, error: 'Current Work is still changing. Retry Clock Out after that server action finishes.' }, { status: 409 });
       }
       const breakSummary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
       const workPauseSummary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
