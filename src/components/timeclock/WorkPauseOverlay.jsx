@@ -49,7 +49,11 @@ export default function WorkPauseOverlay({
 
   const loadStatus = useCallback(async ({ preservePausedOnError = true } = {}) => {
     if (disabled || !currentUser?.email || !hasCredential) {
-      if (mountedRef.current) setPauseState(null);
+      pauseStateRef.current = null;
+      if (mountedRef.current) {
+        setPauseState(null);
+        setShowResumePrompt(false);
+      }
       return null;
     }
     try {
@@ -93,7 +97,7 @@ export default function WorkPauseOverlay({
       if (pauseStateRef.current) setError(err?.response?.data?.error || err?.message || "Paused status could not be refreshed. The timer remains treated as paused until confirmed otherwise.");
       return null;
     }
-  }, [currentUser?.email, hasCredential, credentialPayload.badgeCode, credentialPayload.session_token, disabled]);
+  }, [currentUser?.email, hasCredential, credentialPayload.badge_code, credentialPayload.session_token, disabled]);
 
   useEffect(() => {
     mountedRef.current = true;
