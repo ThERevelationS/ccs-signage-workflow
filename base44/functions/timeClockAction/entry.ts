@@ -783,7 +783,13 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, state,
       let clockOutAudit = await clockOutAuditForRequest(auditEntity, requestId, entry.id);
       const statePayloadHash = String(state.last_request_payload_hash || '');
 
-      if (!clockOutAudit && statePayloadHash) {
+      if (!clockOutAudit && statePayloadHash && ageMs > 5000) {
+        const auditRecoveryClaim = await setState(stateEntity, state, 'clocking_out', requestId, {
+          pending_started_at: state.pending_started_at || new Date().toISOString(),
+        });
+        if (!auditRecoveryClaim) return freshState(stateEntity, state.id);
+        state = auditRecoveryClaim;
+
         const reconstructedSubmission = clockOutSubmissionForHash({
           lunch_minutes: entry.lunch_minutes,
           job_allocations: entry.job_allocations,
