@@ -143,6 +143,12 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
 export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem), [lineItem]);
+  const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
+  const hasActiveCorrections = ["corrections_received", "working_corrections"].includes(correctionStatus);
+  const canMarkLineComplete = !!lineItem?.permit_received_date
+    && lineItem?.status !== "completed"
+    && !handoffReadiness.hasBlockers
+    && !hasActiveCorrections;
   const hasAdditionalDetails = useMemo(() => [
     lineItem?.correction_status,
     lineItem?.corrections_received_date,
@@ -413,6 +419,21 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
                 </div>
               ) : (
                 <div className="mt-0.5 text-[10px] text-emerald-700">No recorded fee, identifier, correction, or closeout issues remain for this permit line.</div>
+              )}
+              {canMarkLineComplete && (
+                <div className="mt-2 flex flex-col gap-2 rounded-md border border-amber-200 bg-white/75 p-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-[10px] leading-snug text-amber-800">
+                    The permit is recorded as issued/received, but this workflow line is still active. Completing it changes only the line status; recorded permit details remain unchanged.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => update("status", "completed")}
+                    disabled={!isRegistered}
+                    className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-amber-300 bg-white px-3 text-[11px] font-semibold text-amber-900 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Mark line complete
+                  </button>
+                </div>
               )}
             </div>
           </div>
