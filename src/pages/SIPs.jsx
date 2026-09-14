@@ -942,16 +942,16 @@ export default function SIPs() {
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
                       </div>
                       <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleSipCompleted(wo)}
-                      disabled={!isRegistered}
-                      className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
-                      aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
-                    </Button>
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleSipCompleted(wo)}
+                        disabled={!isRegistered}
+                        className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
+                        aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
+                      </Button>
                     </div>
 
                     <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
