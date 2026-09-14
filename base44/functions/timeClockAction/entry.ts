@@ -1157,23 +1157,67 @@ Deno.serve(async (req) => {
       if (workPauseStatusOf(state) !== 'working' || state.active_work_pause_id) {
         return Response.json({ success: false, error: 'Resume Work before changing current work.' }, { status: 409 });
       }
+
+      const expectedLaborStatus = action === 'labor_start' ? 'starting' : action === 'labor_change' ? 'changing' : 'stopping';
+      const currentLaborStatus = laborStatusOf(state);
+      const resumingLaborAction = currentLaborStatus === expectedLaborStatus && String(state.last_labor_request_id || '') === requestId;
+      if (currentLaborStatus !== 'idle' && !resumingLaborAction) {
+        return Response.json({ success: false, error: 'Another Current Work action is still in progress. Retry after status refresh.' }, { status: 409 });
+      }
+
       const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
       if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'Active TimeEntry no longer matches stored clock state. Admin review is required.' }, { status: 409 });
       }
 
       if (action === 'labor_stop') {
+        const priorEnd = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-stop request');
+        if (priorEnd?.id && priorEnd.status === 'completed' && currentLaborStatus === 'idle') {
+          const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', entry, active_labor: null, ended_labor: priorEnd, labor_summary: summary, user: publicEmployee(target), reused: true });
+        }
+
+        const active = await activeLaborForEntry(laborEntity, entry.id, target.email);
+        if (!active?.id && !resumingLaborAction) {
+          const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
+          return Response.json({ success: true, status: 'clocked_in', entry, active_labor: null, ended_labor: null, labor_summary: summary, user: publicEmployee(target), reused: false });
+        }
+
+        const officialEnd = resumingLaborAction && state.labor_pending_started_at
+          ? state.labor_pending_started_at
+          : new Date().toISOString();
+        const claimed = resumingLaborAction
+          ? state
+          : await setLaborState(stateEntity, state, 'idle', null, {
+              labor_status: 'stopping', last_labor_request_id: requestId,
+              labor_pending_started_at: officialEnd, labor_pending_activity_type: '', labor_pending_work_order_id: '',
+            });
+        if (!claimed) return Response.json({ success: false, error: 'Current Work stop lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
         const ended = await closeActiveLaborSegment({
           laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
-          endReason: 'manual_stop', officialEnd: new Date().toISOString(),
+          endReason: 'manual_stop', officialEnd,
         });
+        const currentClaim = await freshState(stateEntity, claimed.id);
+        const finalized = await setLaborState(stateEntity, currentClaim, 'stopping', requestId, {
+          labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
+        });
+        if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work stop was saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
         const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
-        return Response.json({ success: true, status: 'clocked_in', entry, active_labor: null, ended_labor: ended, labor_summary: summary, user: publicEmployee(target), reused: Boolean(ended?.end_request_id === requestId) });
+        return Response.json({ success: true, status: 'clocked_in', entry, active_labor: null, ended_labor: ended, labor_summary: summary, user: publicEmployee(target), reused: Boolean(priorEnd?.id) });
       }
 
       const activityType = String(body?.activity_type || '').trim();
       if (!LABOR_ACTIVITY_TYPES.has(activityType)) return Response.json({ success: false, error: 'A valid work activity is required.' }, { status: 400 });
       const workOrderId = String(body?.work_order_id || '').trim();
+      if (resumingLaborAction) {
+        const pendingActivity = String(state.labor_pending_activity_type || '').trim();
+        const pendingWorkOrderId = String(state.labor_pending_work_order_id || '').trim();
+        if (pendingActivity !== activityType || pendingWorkOrderId !== workOrderId) {
+          return Response.json({ success: false, error: 'This Current Work request id is already bound to different work details. Retry with the original activity and WorkOrder.' }, { status: 409 });
+        }
+      }
+
       let workOrder: any = null;
       if (workOrderId) {
         workOrder = await workOrderEntity.get(workOrderId).catch(() => null);
@@ -1186,31 +1230,57 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, status: 'clocked_in', entry, active_labor: priorStart.status === 'active' ? priorStart : null, labor_summary: summary, user: publicEmployee(target), reused: true });
       }
 
-      let active = await activeLaborForEntry(laborEntity, entry.id, target.email);
+      const active = await activeLaborForEntry(laborEntity, entry.id, target.email);
       if (action === 'labor_start' && active?.id) return Response.json({ success: false, error: 'Current Work is already active. Use Change Work instead.' }, { status: 409 });
-      const officialStart = new Date().toISOString();
-      if (action === 'labor_change' && active?.id) {
+      if (action === 'labor_change' && !active?.id && !resumingLaborAction) return Response.json({ success: false, error: 'No Current Work is active. Use Start Work instead.' }, { status: 409 });
+
+      const officialStart = resumingLaborAction && state.labor_pending_started_at
+        ? state.labor_pending_started_at
+        : new Date().toISOString();
+      const claimed = resumingLaborAction
+        ? state
+        : await setLaborState(stateEntity, state, 'idle', null, {
+            labor_status: expectedLaborStatus, last_labor_request_id: requestId,
+            labor_pending_started_at: officialStart,
+            labor_pending_activity_type: activityType,
+            labor_pending_work_order_id: workOrderId,
+          });
+      if (!claimed) return Response.json({ success: false, error: 'Current Work changed in another tab or device before this action could be claimed. Reload status before retrying.' }, { status: 409 });
+
+      if (action === 'labor_change') {
         await closeActiveLaborSegment({
           laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
           endReason: 'change_work', officialEnd: officialStart,
         });
-        active = null;
       }
 
-      const segment = await laborEntity.create({
-        user_email: target.email,
-        user_name: target.full_name || target.email,
-        time_entry_id: entry.id,
-        activity_type: activityType,
-        work_order_id: workOrder?.id || '',
-        work_order_title: workOrder?.title || '',
-        client_name: workOrder?.client_name || '',
-        started_at: officialStart,
-        status: 'active',
-        start_request_id: requestId,
-        source: 'server',
-      });
+      let segment = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Labor-start request');
+      if (!segment) {
+        segment = await laborEntity.create({
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          time_entry_id: entry.id,
+          activity_type: activityType,
+          work_order_id: workOrder?.id || '',
+          work_order_title: workOrder?.title || '',
+          client_name: workOrder?.client_name || '',
+          started_at: officialStart,
+          status: 'active',
+          start_request_id: requestId,
+          source: 'server',
+        });
+      }
       if (!segment?.id) throw new Error('Current Work labor segment could not be created.');
+      if (String(segment.activity_type || '') !== activityType || String(segment.work_order_id || '') !== workOrderId) {
+        return Response.json({ success: false, error: 'This Current Work request id is already bound to different labor details. Admin review is required.' }, { status: 409 });
+      }
+
+      const currentClaim = await freshState(stateEntity, claimed.id);
+      const finalized = await setLaborState(stateEntity, currentClaim, expectedLaborStatus, requestId, {
+        labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
+      });
+      if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Current Work was saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
+
       await audit(auditEntity, {
         action: action === 'labor_change' ? 'labor_change' : 'labor_start', outcome: 'confirmed',
         user_email: target.email, user_name: target.full_name || target.email,
@@ -1220,7 +1290,7 @@ Deno.serve(async (req) => {
         details: { labor_segment_id: segment.id, activity_type: segment.activity_type, work_order_id: segment.work_order_id || null, work_order_title: segment.work_order_title || '', client_name: segment.client_name || '' },
       });
       const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
-      return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target) });
+      return Response.json({ success: true, status: 'clocked_in', entry, active_labor: segment, labor_summary: summary, user: publicEmployee(target), reused: resumingLaborAction });
     }
 
     if (action === 'break_start') {
