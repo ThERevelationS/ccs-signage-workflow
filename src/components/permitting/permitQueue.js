@@ -64,6 +64,26 @@ export function isPermitLineEffectivelyComplete(line) {
   return line?.status === "completed";
 }
 
+export function getPermitLineLifecycleSummary(line) {
+  const closeoutStatus = normalizedCloseoutStatus(line);
+  if (closeoutStatus === "closed_out") return { key: "closed_out", label: "Closed out", tone: "success" };
+  if (closeoutStatus === "inspection_failed") return { key: "inspection_failed", label: "Inspection failed", tone: "danger" };
+  if (closeoutStatus === "inspection_passed") return { key: "inspection_passed", label: "Inspection passed · closeout needed", tone: "info" };
+  if (closeoutStatus === "inspection_scheduled") return { key: "inspection_scheduled", label: "Inspection scheduled", tone: "info" };
+  if (closeoutStatus === "inspection_required") return { key: "inspection_required", label: "Inspection needed", tone: "warning" };
+
+  if (asDateKey(line?.permit_received_date)) return { key: "permit_issued", label: "Permit issued", tone: "success" };
+  if (asDateKey(line?.approval_date)) return { key: "approved", label: "Approved", tone: "success" };
+
+  const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
+  if (correctionStatus === "corrections_received" || correctionStatus === "working_corrections") {
+    return { key: "corrections", label: "Corrections", tone: "warning" };
+  }
+  if (correctionStatus === "resubmitted") return { key: "resubmitted", label: "Resubmitted", tone: "info" };
+  if (asDateKey(line?.submitted_date)) return { key: "submitted", label: "Submitted", tone: "info" };
+  return { key: "pre_submission", label: "Pre-submission", tone: "neutral" };
+}
+
 export function getPermitLineLifecycleReviews(line, today) {
   const reviews = [];
   const label = lineLabel(line);
