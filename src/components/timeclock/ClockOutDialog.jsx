@@ -273,11 +273,20 @@ export default function ClockOutDialog({
     setWorkPauseBusy(true);
     try {
       await onStartWorkPause();
+      setAllocationsReviewed(false);
     } catch (err) {
       setError(err?.message || "Work Pause was not confirmed by the server.");
     } finally {
       setWorkPauseBusy(false);
     }
+  };
+
+  const handleLaborMutation = async (handler, payload) => {
+    if (!handler) return null;
+    const result = await handler(payload);
+    setAllocationsReviewed(false);
+    await loadLaborPreview({ invalidateReview: true });
+    return result;
   };
 
   const handleClockOut = async () => {
@@ -391,9 +400,9 @@ export default function ClockOutDialog({
             laborSummary={laborSummary}
             disabled={onBreak || workPauseBusy || breakActionBusy || isSubmitting}
             disabledReason={onBreak ? "End the current break before changing Current Work." : workPauseBusy ? "Work Pause is changing. Current Work will be available after the server confirms the new state." : ""}
-            onStart={onStartLabor}
-            onChange={onChangeLabor}
-            onStop={onStopLabor}
+            onStart={(payload) => handleLaborMutation(onStartLabor, payload)}
+            onChange={(payload) => handleLaborMutation(onChangeLabor, payload)}
+            onStop={() => handleLaborMutation(onStopLabor)}
           />
 
           {workPauseAllowed && (
@@ -506,7 +515,10 @@ export default function ClockOutDialog({
                   min="0"
                   max="240"
                   value={lunchMinutes}
-                  onChange={(e) => setLunchMinutes(e.target.value)}
+                  onChange={(e) => {
+                    setLunchMinutes(e.target.value);
+                    setAllocationsReviewed(false);
+                  }}
                   placeholder="Enter 0 if none"
                   disabled={breakActionBusy || onBreak}
                   className={`mt-2 w-36 ${!lunchEntered ? 'border-red-400 text-red-600 placeholder:text-red-400' : ''}`}
@@ -568,7 +580,7 @@ export default function ClockOutDialog({
                     {laborPreviewError && <p className="text-xs text-red-700 mt-1">{laborPreviewError}</p>}
                   </div>
                   <div className="flex gap-2 flex-wrap shrink-0">
-                    <Button type="button" size="sm" variant="outline" onClick={() => loadLaborPreview()} disabled={laborPreviewBusy || isSubmitting}>
+                    <Button type="button" size="sm" variant="outline" onClick={() => loadLaborPreview({ invalidateReview: true })} disabled={laborPreviewBusy || isSubmitting}>
                       {laborPreviewBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
                       Refresh
                     </Button>
