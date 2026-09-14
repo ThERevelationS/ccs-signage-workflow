@@ -1540,7 +1540,7 @@ export default function ProductChecklistDialog({
                               onValueChange={(val) => updateChecklistItem(displayItem.id, { approved_by: val })}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-7 text-xs w-full sm:w-32">
+                              <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${displayItem.text || "checklist item"}`}>
                                 <SelectValue placeholder="Answered by..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -1564,7 +1564,7 @@ export default function ProductChecklistDialog({
                               }}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-7 text-xs w-full sm:w-36">
+                              <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-36 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${displayItem.text || "checklist item"}`}>
                                 <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Answer..."}>
                                   {displayItem.custom_dropdown_value || "Answer..."}
                                 </SelectValue>
@@ -1781,7 +1781,7 @@ export default function ProductChecklistDialog({
                                       onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-7 text-xs w-full sm:w-28">
+                                      <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Answered by for detail: ${detail.text || "detail"}`}>
                                         <SelectValue placeholder="Answered..." />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1804,7 +1804,7 @@ export default function ProductChecklistDialog({
                                       }}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-7 text-xs w-full sm:w-32">
+                                      <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Status for detail: ${detail.text || "detail"}`}>
                                         <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Answer..."}>
                                           {detail.custom_dropdown_value || "Answer..."}
                                         </SelectValue>
@@ -2053,7 +2053,7 @@ export default function ProductChecklistDialog({
                                 onValueChange={(val) => updateChecklistItem(stDisplayItem.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-7 text-xs w-full sm:w-28">
+                                <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${stDisplayItem.text || "checklist item"}`}>
                                   <SelectValue placeholder="Answered..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -2076,7 +2076,7 @@ export default function ProductChecklistDialog({
                                 }}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-7 text-xs w-full sm:w-32">
+                                <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${stDisplayItem.text || "checklist item"}`}>
                                   <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Answer..."}>
                                     {stDisplayItem.custom_dropdown_value || "Answer..."}
                                   </SelectValue>
