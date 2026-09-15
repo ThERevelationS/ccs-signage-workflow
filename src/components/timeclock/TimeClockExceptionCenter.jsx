@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock3, Coffee, FileWarning, Pause, RefreshCw, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Briefcase, Clock3, Coffee, FileWarning, Pause, RefreshCw, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
@@ -39,6 +39,7 @@ export default function TimeClockExceptionCenter({
   employeeStates = [],
   activeBreaks = [],
   activeWorkPauses = [],
+  activeLaborSegments = [],
   correctionRequests = [],
   onReviewEntry,
   onRefresh,
@@ -46,12 +47,36 @@ export default function TimeClockExceptionCenter({
   const nowMs = Date.now();
   const activeEntries = timeEntries.filter(entry => entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data);
   const activeEntryById = new Map(activeEntries.map(entry => [entry.id, entry]));
-  const stateByEntryId = new Map(employeeStates.filter(state => state.active_entry_id).map(state => [state.active_entry_id, state]));
   const breakById = new Map(activeBreaks.map(row => [row.id, row]));
   const pauseById = new Map(activeWorkPauses.map(row => [row.id, row]));
   const referencedBreakIds = new Set(employeeStates.map(state => state.active_break_id).filter(Boolean));
   const referencedPauseIds = new Set(employeeStates.map(state => state.active_work_pause_id).filter(Boolean));
   const exceptions = [];
+
+  const statesByEntryId = new Map();
+  const statesByEmail = new Map();
+  const activeEntriesByEmail = new Map();
+  const breaksByEntryId = new Map();
+  const pausesByEntryId = new Map();
+  const laborByEntryId = new Map();
+
+  const addGrouped = (map, key, row) => {
+    if (!key) return;
+    const rows = map.get(key) || [];
+    rows.push(row);
+    map.set(key, rows);
+  };
+
+  for (const state of employeeStates) {
+    addGrouped(statesByEntryId, state.active_entry_id, state);
+    addGrouped(statesByEmail, String(state.user_email || "").toLowerCase(), state);
+  }
+  for (const entry of activeEntries) addGrouped(activeEntriesByEmail, String(entry.user_email || "").toLowerCase(), entry);
+  for (const row of activeBreaks) addGrouped(breaksByEntryId, row.time_entry_id, row);
+  for (const row of activeWorkPauses) addGrouped(pausesByEntryId, row.time_entry_id, row);
+  for (const row of activeLaborSegments) addGrouped(laborByEntryId, row.time_entry_id, row);
+
+  const stateByEntryId = new Map([...statesByEntryId.entries()].filter(([, rows]) => rows.length === 1).map(([entryId, rows]) => [entryId, rows[0]]));
 
   for (const entry of activeEntries) {
     const age = ageMs(entry.clock_in, nowMs);
