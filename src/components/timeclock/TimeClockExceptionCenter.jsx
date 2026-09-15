@@ -204,7 +204,18 @@ export default function TimeClockExceptionCenter({
 
   for (const state of employeeStates) {
     const employee = state.user_name || state.user_email;
-    if (state.status === "clocked_in" && state.active_entry_id && !activeEntryById.has(state.active_entry_id)) {
+    const entry = state.active_entry_id ? activeEntryById.get(state.active_entry_id) : null;
+
+    if (state.status === "clocked_in" && !state.active_entry_id) {
+      exceptions.push({
+        key: `state-missing-entry-id:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Clocked-in state has no active shift id",
+        employee,
+        detail: "Authoritative employee state says Clocked In but does not reference a TimeEntry. Do not punch or correct time until reviewed.",
+      });
+    } else if (state.status === "clocked_in" && state.active_entry_id && !entry) {
       exceptions.push({
         key: `state-entry:${state.id}`,
         severity: "critical",
@@ -215,22 +226,72 @@ export default function TimeClockExceptionCenter({
       });
     }
 
-    const transitionTimestamp = ["clocking_in", "clocking_out"].includes(state.status)
-      ? state.pending_started_at
-      : ["starting_break", "ending_break"].includes(state.break_status)
-        ? state.break_pending_started_at
-        : ["pausing", "resuming"].includes(state.work_pause_status)
-          ? state.work_pause_pending_started_at
-          : null;
-    const transitionAge = ageMs(transitionTimestamp, nowMs);
-    if (transitionAge !== null && transitionAge >= FIVE_MINUTES) {
+    if (state.status === "clocked_out" && state.active_entry_id) {
       exceptions.push({
-        key: `transition:${state.id}`,
-        severity: "warning",
-        icon: RefreshCw,
-        title: "Time Clock transition appears stuck",
+        key: `clocked-out-entry-ref:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Clocked-out state still references a shift",
         employee,
-        detail: `${state.status !== "clocked_in" ? state.status.replaceAll("_", " ") : state.break_status !== "working" ? state.break_status.replaceAll("_", " ") : state.work_pause_status.replaceAll("_", " ")} has been pending for ${formatAge(transitionAge)}. Reload authoritative status before making manual changes.`,
+        detail: "Employee state is Clocked Out but active_entry_id is still populated. Review the state before the next punch.",
+        entry,
+      });
+    }
+
+    if (entry && String(entry.user_email || "").toLowerCase() !== String(state.user_email || "").toLowerCase()) {
+      exceptions.push({
+        key: `state-entry-user:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Employee state references another user's shift",
+        employee,
+        detail: `State belongs to ${state.user_email || "this employee"}, but the referenced TimeEntry belongs to ${entry.user_email || "another user"}.`,
+        entry,
+      });
+    }
+
+    const transitionParts = [];
+    if (["clocking_in", "clocking_out"].includes(state.status)) transitionParts.push({ label: state.status, timestamp: state.pending_started_at });
+    if (["starting_break", "ending_break"].includes(state.break_status)) transitionParts.push({ label: state.break_status, timestamp: state.break_pending_started_at });
+    if (["pausing", "resuming"].includes(state.work_pause_status)) transitionParts.push({ label: state.work_pause_status, timestamp: state.work_pause_pending_started_at });
+    if (["starting", "changing", "stopping"].includes(state.labor_status)) transitionParts.push({ label: `current work ${state.labor_status}`, timestamp: state.labor_pending_started_at });
+
+    if (transitionParts.length > 1) {
+      exceptions.push({
+        key: `overlapping-transition:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Multiple Time Clock transitions are active",
+        employee,
+        detail: `Authoritative state has overlapping transitions (${transitionParts.map(part => part.label.replaceAll("_", " ")).join(", ")}). These actions should be serialized.`,
+        entry,
+      });
+    }
+
+    for (const transitionPart of transitionParts) {
+      const transitionAge = ageMs(transitionPart.timestamp, nowMs);
+      if (transitionAge !== null && transitionAge >= FIVE_MINUTES) {
+        exceptions.push({
+          key: `transition:${state.id}:${transitionPart.label}`,
+          severity: "warning",
+          icon: RefreshCw,
+          title: "Time Clock transition appears stuck",
+          employee,
+          detail: `${transitionPart.label.replaceAll("_", " ")} has been pending for ${formatAge(transitionAge)}. Reload authoritative status before making manual changes.`,
+          entry,
+        });
+      }
+    }
+
+    if (state.break_status === "on_break" && state.work_pause_status === "paused") {
+      exceptions.push({
+        key: `break-pause-overlap:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Break and Work Pause are active together",
+        employee,
+        detail: "Break and Work Pause are mutually exclusive. Review the authoritative records before resuming or closing this shift.",
+        entry,
       });
     }
 
