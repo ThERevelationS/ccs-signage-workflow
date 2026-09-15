@@ -671,6 +671,10 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (!Array.isArray(startedRows)) throw new Error('Current Work start recovery lookup did not return a record list.');
     if (startedRows.length > 1) throw new Error('Current Work start recovery is ambiguous.');
     if (startedRows.length === 1) {
+      const auditClaim = await setLaborState(stateEntity, state, laborStatus, requestId, {
+        labor_pending_started_at: state.labor_pending_started_at || startedRows[0].started_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       if (laborStatus === 'changing') {
         const endedRows = await laborEntity.filter({ ...base, end_request_id: requestId });
         if (!Array.isArray(endedRows)) throw new Error('Current Work change recovery lookup did not return a record list.');
@@ -687,7 +691,7 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
         action: laborStatus === 'changing' ? 'labor_change' : 'labor_start',
         segment: startedRows[0], target, actor, requestId, entryId: state.active_entry_id,
       });
-      const recovered = await setLaborState(stateEntity, state, laborStatus, requestId, {
+      const recovered = await setLaborState(stateEntity, auditClaim, laborStatus, requestId, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
@@ -745,11 +749,15 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     if (!Array.isArray(endedRows)) throw new Error('Current Work stop recovery lookup did not return a record list.');
     if (endedRows.length > 1) throw new Error('Current Work stop recovery is ambiguous.');
     if (endedRows.length === 1 && endedRows[0]?.status === 'completed') {
+      const auditClaim = await setLaborState(stateEntity, state, 'stopping', requestId, {
+        labor_pending_started_at: state.labor_pending_started_at || endedRows[0].ended_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureLaborStopAudit({
         auditEntity, entry: { id: state.active_entry_id }, target, actor, actorEmail: asEmail(actor.email),
         requestId, endReason: endedRows[0].end_reason || 'manual_stop', segment: endedRows[0],
       });
-      const recovered = await setLaborState(stateEntity, state, 'stopping', requestId, {
+      const recovered = await setLaborState(stateEntity, auditClaim, 'stopping', requestId, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (recovered) {
