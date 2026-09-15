@@ -201,11 +201,15 @@ export default function TimeClockAdmin() {
   const needsReviewEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "needs_review");
   const unreviewedEntries = completedEntries.filter(entry => (entry.approval_status || "unreviewed") === "unreviewed");
 
+  const isTransitionalState = (state) => ["clocking_in", "clocking_out"].includes(state.status)
+    || ["starting_break", "ending_break"].includes(state.break_status)
+    || ["pausing", "resuming"].includes(state.work_pause_status)
+    || ["starting", "changing", "stopping"].includes(state.labor_status);
   const clockedInStates = employeeStates.filter(state => state.status === "clocked_in");
   const onBreakStates = clockedInStates.filter(state => state.break_status === "on_break");
   const workPausedStates = clockedInStates.filter(state => state.work_pause_status === "paused");
-  const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working" && (state.work_pause_status || "working") === "working");
-  const transitionalStates = employeeStates.filter(state => ["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status) || ["pausing", "resuming"].includes(state.work_pause_status));
+  const transitionalStates = employeeStates.filter(isTransitionalState);
+  const workingStates = clockedInStates.filter(state => (state.break_status || "working") === "working" && (state.work_pause_status || "working") === "working" && !isTransitionalState(state));
   const activeEntryById = new Map(timeEntries.filter(entry => entry.status === "clocked_in").map(entry => [entry.id, entry]));
   const activeBreakById = new Map(activeBreaks.map(breakRow => [breakRow.id, breakRow]));
   const activeWorkPauseById = new Map(activeWorkPauses.map(pauseRow => [pauseRow.id, pauseRow]));
@@ -226,6 +230,9 @@ export default function TimeClockAdmin() {
     if (state.break_status === "on_break") return "On break";
     if (state.break_status === "starting_break") return "Starting break";
     if (state.break_status === "ending_break") return "Ending break";
+    if (state.labor_status === "starting") return "Starting Current Work";
+    if (state.labor_status === "changing") return "Changing Current Work";
+    if (state.labor_status === "stopping") return "Stopping Current Work";
     if (state.status === "clocking_in") return "Clocking in";
     if (state.status === "clocking_out") return "Clocking out";
     return "Working";
@@ -234,7 +241,7 @@ export default function TimeClockAdmin() {
   const statusClass = (state) => {
     if (state.work_pause_status === "paused") return "bg-purple-100 text-purple-800 border-purple-200";
     if (state.break_status === "on_break") return "bg-amber-100 text-amber-800 border-amber-200";
-    if (["clocking_in", "clocking_out"].includes(state.status) || ["starting_break", "ending_break"].includes(state.break_status) || ["pausing", "resuming"].includes(state.work_pause_status)) return "bg-blue-100 text-blue-800 border-blue-200";
+    if (isTransitionalState(state)) return "bg-blue-100 text-blue-800 border-blue-200";
     return "bg-green-100 text-green-800 border-green-200";
   };
 
@@ -639,6 +646,7 @@ export default function TimeClockAdmin() {
         employeeStates={employeeStates}
         activeBreaks={activeBreaks}
         activeWorkPauses={activeWorkPauses}
+        activeLaborSegments={activeLaborSegments}
         correctionRequests={correctionRequests}
         onReviewEntry={handleEditEntry}
         onRefresh={loadData}
