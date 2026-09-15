@@ -2584,9 +2584,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
       if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before correcting it.' }, { status: 409 });
-      if (String(entry.updated_date || '') !== expectedUpdatedDate) {
-        return Response.json({ success: false, error: 'This time entry changed in another session. Reload before correcting it.' }, { status: 409 });
-      }
 
       const clockIn = new Date(String(correction?.clock_in || ''));
       const hasClockOut = Boolean(correction?.clock_out);
