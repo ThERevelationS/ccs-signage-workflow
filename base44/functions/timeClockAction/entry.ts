@@ -907,7 +907,7 @@ async function closeActiveLaborSegment({ laborEntity, auditEntity, entry, target
   return active;
 }
 
-async function recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor }: any) {
+async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborEntity, state, target, actor }: any) {
   if (!['clocking_in', 'clocking_out'].includes(String(state?.status || ''))) return state;
   const requestId = String(state.last_request_id || '');
   const started = state.pending_started_at ? new Date(state.pending_started_at) : null;
@@ -1123,7 +1123,7 @@ Deno.serve(async (req) => {
     const actorEmail = asEmail(actor.email);
 
     let state = await ensureState(stateEntity, target);
-    state = await recoverTransition({ stateEntity, entryEntity, auditEntity, state, target, actor });
+    state = await recoverTransition({ stateEntity, entryEntity, auditEntity, laborEntity, state, target, actor });
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
     state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
