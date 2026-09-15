@@ -420,6 +420,8 @@ export default function TimeClockExceptionCenter({
   }
 
   for (const row of activeBreaks) {
+    const entry = activeEntryById.get(row.time_entry_id);
+    const referencingState = employeeStates.find(state => state.active_break_id === row.id) || null;
     if (!referencedBreakIds.has(row.id)) {
       exceptions.push({
         key: `orphan-break:${row.id}`,
@@ -428,11 +430,36 @@ export default function TimeClockExceptionCenter({
         title: "Orphaned active break record",
         employee: row.user_name || row.user_email,
         detail: "An active break exists without an authoritative employee-state reference.",
+        entry,
+      });
+    }
+    if (!entry || String(entry.user_email || "").toLowerCase() !== String(row.user_email || "").toLowerCase()) {
+      exceptions.push({
+        key: `break-entry:${row.id}`,
+        severity: "critical",
+        icon: Coffee,
+        title: "Active break is not linked to its employee's active shift",
+        employee: row.user_name || row.user_email,
+        detail: "The active break references a missing/inactive TimeEntry or a TimeEntry owned by another employee.",
+        entry,
+      });
+    }
+    if (referencingState && (referencingState.active_entry_id !== row.time_entry_id || String(referencingState.user_email || "").toLowerCase() !== String(row.user_email || "").toLowerCase())) {
+      exceptions.push({
+        key: `break-state-link:${row.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Active break and employee state linkage disagree",
+        employee: row.user_name || row.user_email,
+        detail: "The state row referencing this break points to a different TimeEntry or employee.",
+        entry,
       });
     }
   }
 
   for (const row of activeWorkPauses) {
+    const entry = activeEntryById.get(row.time_entry_id);
+    const referencingState = employeeStates.find(state => state.active_work_pause_id === row.id) || null;
     if (!referencedPauseIds.has(row.id)) {
       exceptions.push({
         key: `orphan-pause:${row.id}`,
@@ -441,7 +468,82 @@ export default function TimeClockExceptionCenter({
         title: "Orphaned active Work Pause record",
         employee: row.user_name || row.user_email,
         detail: "An active Work Pause exists without an authoritative employee-state reference.",
+        entry,
       });
+    }
+    if (!entry || String(entry.user_email || "").toLowerCase() !== String(row.user_email || "").toLowerCase()) {
+      exceptions.push({
+        key: `pause-entry:${row.id}`,
+        severity: "critical",
+        icon: Pause,
+        title: "Active Work Pause is not linked to its employee's active shift",
+        employee: row.user_name || row.user_email,
+        detail: "The active Work Pause references a missing/inactive TimeEntry or a TimeEntry owned by another employee.",
+        entry,
+      });
+    }
+    if (referencingState && (referencingState.active_entry_id !== row.time_entry_id || String(referencingState.user_email || "").toLowerCase() !== String(row.user_email || "").toLowerCase())) {
+      exceptions.push({
+        key: `pause-state-link:${row.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Active Work Pause and employee state linkage disagree",
+        employee: row.user_name || row.user_email,
+        detail: "The state row referencing this Work Pause points to a different TimeEntry or employee.",
+        entry,
+      });
+    }
+  }
+
+  for (const row of activeLaborSegments) {
+    const entry = activeEntryById.get(row.time_entry_id);
+    const linkedStates = statesByEntryId.get(row.time_entry_id) || [];
+    if (!entry || String(entry.user_email || "").toLowerCase() !== String(row.user_email || "").toLowerCase()) {
+      exceptions.push({
+        key: `orphan-labor:${row.id}`,
+        severity: "critical",
+        icon: Briefcase,
+        title: "Orphaned active Current Work segment",
+        employee: row.user_name || row.user_email,
+        detail: "An active labor segment references a missing/inactive TimeEntry or a TimeEntry owned by another employee.",
+        entry,
+      });
+      continue;
+    }
+    if (linkedStates.length === 0) {
+      exceptions.push({
+        key: `labor-state:${row.id}`,
+        severity: "critical",
+        icon: Briefcase,
+        title: "Active Current Work has no authoritative employee state",
+        employee: row.user_name || row.user_email,
+        detail: "The labor segment belongs to an active shift, but no employee-state row references that TimeEntry.",
+        entry,
+      });
+    } else if (linkedStates.length === 1) {
+      const state = linkedStates[0];
+      if (state.status !== "clocked_in") {
+        exceptions.push({
+          key: `labor-nonactive-state:${row.id}`,
+          severity: "critical",
+          icon: Briefcase,
+          title: "Current Work remains active while shift state is not Clocked In",
+          employee: row.user_name || row.user_email,
+          detail: `Authoritative state is ${String(state.status || "unknown").replaceAll("_", " ")} while this labor segment remains active.`,
+          entry,
+        });
+      }
+      if (state.break_status === "on_break" || state.work_pause_status === "paused") {
+        exceptions.push({
+          key: `labor-stable-substate:${row.id}`,
+          severity: "critical",
+          icon: Briefcase,
+          title: "Current Work conflicts with Break/Work Pause state",
+          employee: row.user_name || row.user_email,
+          detail: "An active labor segment exists while authoritative state says the employee is on Break or Work Paused.",
+          entry,
+        });
+      }
     }
   }
 
