@@ -76,8 +76,6 @@ export default function TimeClockExceptionCenter({
   for (const row of activeWorkPauses) addGrouped(pausesByEntryId, row.time_entry_id, row);
   for (const row of activeLaborSegments) addGrouped(laborByEntryId, row.time_entry_id, row);
 
-  const stateByEntryId = new Map([...statesByEntryId.entries()].filter(([, rows]) => rows.length === 1).map(([entryId, rows]) => [entryId, rows[0]]));
-
   for (const [email, rows] of statesByEmail.entries()) {
     if (rows.length > 1) {
       exceptions.push({
