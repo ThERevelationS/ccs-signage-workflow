@@ -715,18 +715,23 @@ async function recoverLaborTransition({ stateEntity, laborEntity, auditEntity, s
     }
 
     if (startedRows.length === 0 && ageMs > 5 * 60 * 1000) {
+      let rollbackClaim = state;
       if (laborStatus === 'changing' && requestId) {
         const endedRows = await laborEntity.filter({ ...base, end_request_id: requestId });
         if (!Array.isArray(endedRows)) throw new Error('Current Work abandoned-change audit lookup did not return a record list.');
         if (endedRows.length > 1) throw new Error('Current Work abandoned-change recovery is ambiguous.');
         if (endedRows.length === 1) {
+          rollbackClaim = await setLaborState(stateEntity, state, laborStatus, requestId, {
+            labor_pending_started_at: state.labor_pending_started_at || endedRows[0].ended_at,
+          });
+          if (!rollbackClaim) return freshState(stateEntity, state.id);
           await ensureLaborStopAudit({
             auditEntity, entry: { id: state.active_entry_id }, target, actor, actorEmail: asEmail(actor.email),
             requestId, endReason: endedRows[0].end_reason || 'change_work', segment: endedRows[0],
           });
         }
       }
-      const rolledBack = await setLaborState(stateEntity, state, laborStatus, requestId || null, {
+      const rolledBack = await setLaborState(stateEntity, rollbackClaim, laborStatus, requestId || null, {
         labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (rolledBack) {
@@ -1694,9 +1699,13 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This break-start request is already bound to different break details.' }, { status: 409 });
       }
 
-      await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
-      const finalized = await setBreakState(stateEntity, currentClaim, 'starting_break', requestId, {
+      const auditClaim = await setBreakState(stateEntity, currentClaim, 'starting_break', requestId, {
+        break_pending_started_at: currentClaim.break_pending_started_at || officialStart,
+      });
+      if (!auditClaim) return Response.json({ success: false, retry_same_request: true, error: 'Break start is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+      await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: entry.id });
+      const finalized = await setBreakState(stateEntity, auditClaim, 'starting_break', requestId, {
         break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
       });
       if (!finalized) {
@@ -1779,9 +1788,13 @@ Deno.serve(async (req) => {
         breakRow = await breakEntity.get(breakRow.id);
       }
 
-      await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
-      const finalized = await setBreakState(stateEntity, currentClaim, 'ending_break', requestId, {
+      const auditClaim = await setBreakState(stateEntity, currentClaim, 'ending_break', requestId, {
+        break_pending_started_at: currentClaim.break_pending_started_at || officialEnd,
+      });
+      if (!auditClaim) return Response.json({ success: false, retry_same_request: true, error: 'Break end is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+      await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId, entryId: entry.id });
+      const finalized = await setBreakState(stateEntity, auditClaim, 'ending_break', requestId, {
         break_status: 'working', active_break_id: null, break_pending_started_at: null,
       });
       if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Break end and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
@@ -1872,9 +1885,13 @@ Deno.serve(async (req) => {
       if (!pauseRow?.id) throw new Error('Work Pause record could not be created.');
       if (pauseRow.status !== 'active') return Response.json({ success: false, error: 'This Work Pause request is not in an active state.' }, { status: 409 });
 
-      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
-      const finalized = await setWorkPauseState(stateEntity, currentClaim, 'pausing', requestId, {
+      const auditClaim = await setWorkPauseState(stateEntity, currentClaim, 'pausing', requestId, {
+        work_pause_pending_started_at: currentClaim.work_pause_pending_started_at || officialStart,
+      });
+      if (!auditClaim) return Response.json({ success: false, retry_same_request: true, error: 'Work Pause is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow, target, actor, requestId, entryId: entry.id });
+      const finalized = await setWorkPauseState(stateEntity, auditClaim, 'pausing', requestId, {
         work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
       });
       if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Work Pause and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
@@ -1970,9 +1987,13 @@ Deno.serve(async (req) => {
         pauseRow = await workPauseEntity.get(pauseRow.id);
       }
 
-      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId, entryId: entry.id });
       const currentClaim = await freshState(stateEntity, claimed.id);
-      const finalized = await setWorkPauseState(stateEntity, currentClaim, 'resuming', requestId, {
+      const auditClaim = await setWorkPauseState(stateEntity, currentClaim, 'resuming', requestId, {
+        work_pause_pending_started_at: currentClaim.work_pause_pending_started_at || officialResume,
+      });
+      if (!auditClaim) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+      await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId, entryId: entry.id });
+      const finalized = await setWorkPauseState(stateEntity, auditClaim, 'resuming', requestId, {
         work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
       });
       if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'Resume Work and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
