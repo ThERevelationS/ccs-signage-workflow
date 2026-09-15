@@ -2643,6 +2643,65 @@ Deno.serve(async (req) => {
             : 0;
         return { ...job, minutes, hours: minutes / 60 };
       });
+      const normalizedNotes = String(correction?.notes || '').trim();
+      const correctionPayloadHash = await payloadHash({
+        entry_id: entry.id,
+        expected_updated_date: expectedUpdatedDate,
+        reason,
+        correction: {
+          clock_in: clockIn.toISOString(),
+          clock_out: clockOut ? clockOut.toISOString() : null,
+          lunch_minutes: submittedLunchMinutes,
+          notes: normalizedNotes,
+          job_allocations: normalizedAllocations.map((job: any) => allocationForStorage(job)),
+        },
+      });
+      const priorCorrectionAudits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(priorCorrectionAudits)) throw new Error('Administrative correction audit lookup did not return a record list.');
+      if (priorCorrectionAudits.length > 1) return Response.json({ success: false, error: 'This administrative correction request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      let intent = priorCorrectionAudits[0] || null;
+      const priorPayloadHash = String(intent?.details?.payload_hash || '');
+      if (intent && (!priorPayloadHash || !constantTimeEqual(priorPayloadHash, correctionPayloadHash))) {
+        return Response.json({ success: false, error: 'This correction request id is already bound to different correction details. Submit a new correction request.' }, { status: 409 });
+      }
+      if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This correction request was previously blocked. Reload and submit a new correction request.' }, { status: 409 });
+      if (String(entry.last_correction_request_id || '') === requestId) {
+        if (intent?.outcome === 'pending') {
+          const auditFinalized = await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: { ...(intent.details || {}), corrected: entryAuditSnapshot(entry), recovered_after_entry_save: true },
+            } },
+          );
+          if (!auditFinalized || auditFinalized.updated !== 1) {
+            const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+            if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved but its audit is still being finalized. Retry this same correction request.' }, { status: 409 });
+          }
+        }
+        if (entry.status === 'clocked_out' && state.status === 'clocking_out' && String(state.last_request_id || '') === requestId) {
+          const freshStateRow = await freshState(stateEntity, state.id);
+          const finalized = await setState(stateEntity, freshStateRow, 'clocking_out', requestId, {
+            status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out,
+            pending_started_at: null, break_status: 'working', active_break_id: null,
+            last_break_request_id: null, break_pending_started_at: null,
+            work_pause_status: 'working', active_work_pause_id: null,
+            last_work_pause_request_id: null, work_pause_pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
+          });
+          if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved and audited but employee state finalization is still incomplete. Retry this same correction request.' }, { status: 409 });
+        }
+        if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered' || intent?.outcome === 'pending') {
+          return Response.json({ success: true, entry, audit_id: intent?.id || null, reused: true });
+        }
+      }
+      if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
+        return Response.json({ success: false, error: 'This correction request was already confirmed but the TimeEntry request marker does not match. Admin investigation is required.' }, { status: 409 });
+      }
+      if (String(entry.updated_date || '') !== expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'This time entry changed in another session. Reload before correcting it.' }, { status: 409 });
+      }
       const now = new Date().toISOString();
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
