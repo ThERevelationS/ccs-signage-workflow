@@ -2595,13 +2595,43 @@ Deno.serve(async (req) => {
       if (entry.status === 'clocked_out' && !clockOut) {
         return Response.json({ success: false, error: 'A completed shift cannot be reopened by clearing its clock-out. Create a reviewed correction instead.' }, { status: 400 });
       }
-      const lunchMinutes = Math.round(Number(correction?.lunch_minutes || 0));
-      if (!Number.isFinite(lunchMinutes) || lunchMinutes < 0 || lunchMinutes > 240) {
+      const submittedLunchMinutes = Math.round(Number(correction?.lunch_minutes || 0));
+      if (!Number.isFinite(submittedLunchMinutes) || submittedLunchMinutes < 0 || submittedLunchMinutes > 240) {
         return Response.json({ success: false, error: 'Lunch minutes must be between 0 and 240.' }, { status: 400 });
       }
       const totalMinutes = clockOut ? Math.floor((clockOut.getTime() - clockIn.getTime()) / 60000) : null;
-      const trackedWorkPauseMinutes = Math.max(0, Math.round(Number(entry.tracked_work_pause_minutes || 0)));
-      if (totalMinutes !== null && (lunchMinutes + trackedWorkPauseMinutes) > totalMinutes) return Response.json({ success: false, error: 'Lunch and Work Pause time cannot exceed the corrected shift duration.' }, { status: 400 });
+      const activeForceClose = entry.status === 'clocked_in' && Boolean(clockOut);
+      const breakSummary = activeForceClose
+        ? await breakSummaryForEntry(breakEntity, entry.id, target.email)
+        : {
+            count: entry.break_tracking_used ? 1 : 0,
+            total_minutes: Math.max(0, Math.round(Number(entry.tracked_break_minutes || 0))),
+            paid_minutes: Math.max(0, Math.round(Number(entry.tracked_paid_break_minutes || 0))),
+            unpaid_minutes: Math.max(0, Math.round(Number(entry.tracked_unpaid_break_minutes || 0))),
+          };
+      const workPauseSummary = activeForceClose
+        ? await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email)
+        : {
+            count: entry.work_pause_tracking_used ? 1 : 0,
+            total_minutes: Math.max(0, Math.round(Number(entry.tracked_work_pause_minutes || 0))),
+          };
+      const lunchMinutes = activeForceClose && breakSummary.unpaid_minutes > 0
+        ? breakSummary.unpaid_minutes
+        : submittedLunchMinutes;
+      const trackedWorkPauseMinutes = workPauseSummary.total_minutes;
+      if (totalMinutes !== null && (lunchMinutes + trackedWorkPauseMinutes) > totalMinutes) {
+        return Response.json({ success: false, error: 'Unpaid Break/Lunch and Work Pause time cannot exceed the corrected shift duration.' }, { status: 400 });
+      }
+      let activeLaborAtCorrection: any = null;
+      if (activeForceClose) {
+        activeLaborAtCorrection = await activeLaborForEntry(laborEntity, entry.id, target.email);
+        if (activeLaborAtCorrection?.id) {
+          const laborStartMs = new Date(activeLaborAtCorrection.started_at).getTime();
+          if (!Number.isFinite(laborStartMs) || clockOut!.getTime() < laborStartMs) {
+            return Response.json({ success: false, error: 'Corrected clock-out cannot be earlier than the active Current Work segment start.' }, { status: 400 });
+          }
+        }
+      }
       const allocations = Array.isArray(correction?.job_allocations) ? correction.job_allocations : [];
       const normalizedAllocations = allocations.map((job: any) => {
         const editedHours = Number(job?.hours);
