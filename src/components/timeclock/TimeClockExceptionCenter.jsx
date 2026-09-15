@@ -295,6 +295,55 @@ export default function TimeClockExceptionCenter({
       });
     }
 
+    if (state.break_status === "working" && state.active_break_id) {
+      exceptions.push({
+        key: `working-break-ref:${state.id}`,
+        severity: "critical",
+        icon: Coffee,
+        title: "Working state still references an active break",
+        employee,
+        detail: "Break status is Working but active_break_id is still populated. Review the break/state relationship before the next action.",
+        entry,
+      });
+    }
+
+    if (state.work_pause_status === "working" && state.active_work_pause_id) {
+      exceptions.push({
+        key: `working-pause-ref:${state.id}`,
+        severity: "critical",
+        icon: Pause,
+        title: "Working state still references an active Work Pause",
+        employee,
+        detail: "Work Pause status is Working but active_work_pause_id is still populated. Review the pause/state relationship before the next action.",
+        entry,
+      });
+    }
+
+    if (state.status !== "clocked_in" && (state.active_break_id || state.active_work_pause_id)) {
+      exceptions.push({
+        key: `nonactive-substate-ref:${state.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Non-active shift state still references Break/Work Pause",
+        employee,
+        detail: "Break or Work Pause references remain while the employee is not in stable Clocked In state.",
+        entry,
+      });
+    }
+
+    const activeLaborRows = state.active_entry_id ? (laborByEntryId.get(state.active_entry_id) || []) : [];
+    if (activeLaborRows.length > 0 && (state.break_status === "on_break" || state.work_pause_status === "paused")) {
+      exceptions.push({
+        key: `labor-substate-overlap:${state.id}`,
+        severity: "critical",
+        icon: Briefcase,
+        title: "Current Work remained active during Break/Work Pause",
+        employee,
+        detail: "Break and Work Pause must end the active Current Work segment. An active labor segment still exists for this shift.",
+        entry,
+      });
+    }
+
     if (state.break_status === "on_break") {
       const breakRow = state.active_break_id ? breakById.get(state.active_break_id) : null;
       if (!breakRow) {
@@ -306,6 +355,16 @@ export default function TimeClockExceptionCenter({
           employee,
           detail: "Do not close or correct this shift until the break mismatch is reviewed.",
         });
+      } else if (String(breakRow.user_email || "").toLowerCase() !== String(state.user_email || "").toLowerCase() || breakRow.time_entry_id !== state.active_entry_id) {
+        exceptions.push({
+          key: `break-owner:${state.id}`,
+          severity: "critical",
+          icon: Coffee,
+          title: "Break record does not match its employee shift",
+          employee,
+          detail: "The referenced active break belongs to a different employee or TimeEntry than the authoritative state row.",
+          entry,
+        });
       } else {
         const breakAge = ageMs(breakRow.started_at, nowMs);
         if (breakAge !== null && breakAge >= TWO_HOURS) {
@@ -316,6 +375,7 @@ export default function TimeClockExceptionCenter({
             title: "Long-running active break",
             employee,
             detail: `This break has remained active for ${formatAge(breakAge)}. This is a review reminder only; nothing is changed automatically.`,
+            entry,
           });
         }
       }
@@ -332,6 +392,16 @@ export default function TimeClockExceptionCenter({
           employee,
           detail: "Resume/reconcile the pause before closing or correcting this shift.",
         });
+      } else if (String(pauseRow.user_email || "").toLowerCase() !== String(state.user_email || "").toLowerCase() || pauseRow.time_entry_id !== state.active_entry_id) {
+        exceptions.push({
+          key: `pause-owner:${state.id}`,
+          severity: "critical",
+          icon: Pause,
+          title: "Work Pause record does not match its employee shift",
+          employee,
+          detail: "The referenced active Work Pause belongs to a different employee or TimeEntry than the authoritative state row.",
+          entry,
+        });
       } else {
         const pauseAge = ageMs(pauseRow.started_at, nowMs);
         if (pauseAge !== null && pauseAge >= FOUR_HOURS) {
@@ -342,6 +412,7 @@ export default function TimeClockExceptionCenter({
             title: "Long-running Work Pause",
             employee,
             detail: `Work Pause has remained active for ${formatAge(pauseAge)}. This is an operational reminder only and has no automatic payroll effect.`,
+            entry,
           });
         }
       }
