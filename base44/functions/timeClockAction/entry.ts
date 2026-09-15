@@ -962,8 +962,59 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
   if (state.status === 'clocking_out') {
     const entry = state.active_entry_id ? await entryEntity.get(state.active_entry_id).catch(() => null) : null;
     if (entry?.id && entry.archived_admin && requestId) {
+      if (entry.archive_request_id && String(entry.archive_request_id) !== requestId) return state;
+      const archiveAudits = await auditEntity.filter({ action: 'admin_archive', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(archiveAudits)) throw new Error('Administrative archive recovery audit lookup did not return a record list.');
+      if (archiveAudits.length > 1) throw new Error('Administrative archive recovery is ambiguous because multiple audit records exist.');
+      const archiveAudit = archiveAudits[0] || null;
+      if (!archiveAudit || !['pending', 'confirmed', 'recovered'].includes(String(archiveAudit.outcome || ''))) return state;
+      if (archiveAudit.outcome === 'pending' && ageMs <= 5000) return state;
+
+      const recoveryClaim = await setState(stateEntity, state, 'clocking_out', requestId, {
+        pending_started_at: state.pending_started_at || entry.archived_at || new Date().toISOString(),
+      });
+      if (!recoveryClaim) return freshState(stateEntity, state.id);
+      state = recoveryClaim;
+
+      const archiveActor = {
+        email: asEmail(archiveAudit.actor_email) || target.email,
+        role: String(archiveAudit.actor_role || 'admin'),
+      };
+      const archiveEnd = entry.archived_at || state.pending_started_at || new Date().toISOString();
+      const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+      if (activeLabor?.id) {
+        const laborStartMs = new Date(activeLabor.started_at).getTime();
+        const archiveEndMs = new Date(archiveEnd).getTime();
+        if (!Number.isFinite(laborStartMs) || !Number.isFinite(archiveEndMs) || archiveEndMs < laborStartMs) {
+          throw new Error('Archived shift ends before its active Current Work segment began. Admin review is required.');
+        }
+        await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor: archiveActor,
+          actorEmail: asEmail(archiveActor.email), requestId,
+          endReason: 'admin_correction', officialEnd: archiveEnd,
+        });
+      }
+
+      if (archiveAudit.outcome === 'pending') {
+        const auditFinalized = await auditEntity.updateMany(
+          { id: archiveAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+          { $set: {
+            outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+            details: {
+              ...(archiveAudit.details || {}),
+              archived_entry: entryAuditSnapshot(entry),
+              recovered_after_entry_save: true,
+            },
+          } },
+        );
+        if (!auditFinalized || auditFinalized.updated !== 1) {
+          const freshAudit = await auditEntity.get(archiveAudit.id).catch(() => null);
+          if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return state;
+        }
+      }
+
       const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
-        status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || new Date().toISOString(), pending_started_at: null,
+        status: 'clocked_out', active_entry_id: null, last_action_at: archiveEnd, pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
         labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
@@ -975,7 +1026,78 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
-          reason: 'Recovered interrupted administrative archive finalization',
+          reason: 'Recovered interrupted administrative archive after labor and audit reconciliation',
+          details: { admin_archive_audit_id: archiveAudit.id },
+        });
+        return recovered;
+      }
+    }
+
+    if (entry?.id && entry.status === 'clocked_out' && entry.clock_source === 'admin_correction' && String(entry.clock_out_request_id || '') === requestId) {
+      const correctionAudits = await auditEntity.filter({ action: 'admin_correction', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(correctionAudits)) throw new Error('Administrative correction recovery audit lookup did not return a record list.');
+      if (correctionAudits.length > 1) throw new Error('Administrative correction recovery is ambiguous because multiple audit records exist.');
+      const correctionAudit = correctionAudits[0] || null;
+      if (!correctionAudit || !['pending', 'confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) return state;
+      if (correctionAudit.outcome === 'pending' && ageMs <= 5000) return state;
+
+      const recoveryClaim = await setState(stateEntity, state, 'clocking_out', requestId, {
+        pending_started_at: state.pending_started_at || entry.clock_out || new Date().toISOString(),
+      });
+      if (!recoveryClaim) return freshState(stateEntity, state.id);
+      state = recoveryClaim;
+
+      const correctionActor = {
+        email: asEmail(correctionAudit.actor_email) || target.email,
+        role: String(correctionAudit.actor_role || 'admin'),
+      };
+      const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+      if (activeLabor?.id) {
+        const laborStartMs = new Date(activeLabor.started_at).getTime();
+        const correctedEndMs = new Date(entry.clock_out).getTime();
+        if (!Number.isFinite(laborStartMs) || !Number.isFinite(correctedEndMs) || correctedEndMs < laborStartMs) {
+          throw new Error('Corrected clock-out is earlier than active Current Work start. Admin review is required.');
+        }
+        await closeActiveLaborSegment({
+          laborEntity, auditEntity, entry, target, actor: correctionActor,
+          actorEmail: asEmail(correctionActor.email), requestId,
+          endReason: 'admin_correction', officialEnd: entry.clock_out,
+        });
+      }
+
+      if (correctionAudit.outcome === 'pending') {
+        const auditFinalized = await auditEntity.updateMany(
+          { id: correctionAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+          { $set: {
+            outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+            details: {
+              ...(correctionAudit.details || {}),
+              corrected: entryAuditSnapshot(entry),
+              recovered_after_entry_save: true,
+            },
+          } },
+        );
+        if (!auditFinalized || auditFinalized.updated !== 1) {
+          const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
+          if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return state;
+        }
+      }
+
+      const recovered = await setState(stateEntity, state, 'clocking_out', requestId, {
+        status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out, pending_started_at: null,
+        break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+        work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
+        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+        labor_pending_activity_type: '', labor_pending_work_order_id: '',
+      });
+      if (recovered) {
+        await audit(auditEntity, {
+          action: 'state_recovery', outcome: 'recovered', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target),
+          server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
+          reason: 'Recovered interrupted active-shift administrative correction after labor and audit reconciliation',
+          details: { admin_correction_audit_id: correctionAudit.id },
         });
         return recovered;
       }
