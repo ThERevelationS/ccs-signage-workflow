@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarClock, CheckCircle2, RotateCcw } from "lucide-react";
@@ -62,9 +62,12 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
       <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] sm:w-full max-w-sm max-h-[94vh] overflow-y-auto p-4 sm:p-6 [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <CalendarClock className="w-5 h-5 text-purple-600" />
+            <CalendarClock className="w-5 h-5 text-purple-600" aria-hidden="true" />
             When should this return to SIPs?
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Choose a future revisit date to move this Work Order to Revisit Later, or keep it in the active SIPs queue.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-lg border border-purple-100 bg-purple-50 p-3 text-xs text-purple-900">
@@ -72,8 +75,8 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
         </div>
 
         {currentParsedDate && (
-          <div className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
-            <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border bg-white px-3 py-2 text-xs text-gray-600">
+            <RotateCcw className="w-3.5 h-3.5 text-purple-600" aria-hidden="true" />
             Current revisit: <strong className="text-gray-800">{format(currentParsedDate, "MMM d, yyyy")}</strong>
             {!currentDateIsFuture && <span className="text-amber-700">— active now</span>}
           </div>
@@ -93,7 +96,9 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
                   size="sm"
                   onClick={() => setSelected(date)}
                   disabled={isSubmitting}
-                  className="h-9"
+                  className="h-11 sm:h-9"
+                  aria-pressed={Boolean(isSelected)}
+                  aria-label={`Choose ${option.label} as the revisit date: ${format(date, "MMMM d, yyyy")}`}
                 >
                   {option.label}
                 </Button>
@@ -109,13 +114,13 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
             selected={selected}
             onSelect={setSelected}
             disabled={{ before: earliestRevisitDate }}
-            className="rounded-lg border mx-auto"
+            className="rounded-lg border mx-auto w-full max-w-[320px]"
           />
         </div>
 
         {selected && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm">
-            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm" aria-live="polite">
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" aria-hidden="true" />
             <span className="text-green-800">Return to active SIPs on <strong>{format(selected, "MMM d, yyyy")}</strong></span>
           </div>
         )}
@@ -124,7 +129,7 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
           <Button
             onClick={() => submitDate(selected)}
             disabled={!selected || selected < earliestRevisitDate || isSubmitting}
-            className="w-full h-10 bg-blue-600 hover:bg-blue-700"
+            className="w-full h-11 sm:h-10 bg-blue-600 hover:bg-blue-700"
           >
             Save with Revisit Date
           </Button>
@@ -133,11 +138,11 @@ export default function RevisitDatePopup({ isOpen, onClose, onSave, currentDate 
             variant="outline"
             onClick={() => submitDate(null)}
             disabled={isSubmitting}
-            className="w-full h-10"
+            className="w-full h-11 sm:h-10"
           >
             {currentDate ? "Clear Revisit & Keep Active" : "Keep in Active Queue (No Revisit)"}
           </Button>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting} className="w-full h-9 text-gray-500">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting} className="w-full h-11 sm:h-9 text-gray-500">
             Cancel — Don’t Save Yet
           </Button>
         </div>
