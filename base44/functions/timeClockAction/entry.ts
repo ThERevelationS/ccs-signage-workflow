@@ -384,8 +384,12 @@ async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, s
     if (matches.length > 1) throw new Error('Break-start recovery is ambiguous.');
     if (matches.length === 1 && matches[0]?.status === 'active') {
       const breakRow = matches[0];
+      const auditClaim = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+        break_pending_started_at: state.break_pending_started_at || breakRow.started_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: state.active_entry_id });
-      const recovered = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+      const recovered = await setBreakState(stateEntity, auditClaim, 'starting_break', requestId, {
         break_status: 'on_break', active_break_id: breakRow.id, break_pending_started_at: null,
       });
       if (recovered) {
@@ -401,9 +405,13 @@ async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, s
     }
     if (matches.length === 1 && matches[0]?.status === 'completed' && matches[0]?.end_request_id) {
       const breakRow = matches[0];
+      const auditClaim = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+        break_pending_started_at: state.break_pending_started_at || breakRow.started_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow, target, actor, requestId, entryId: state.active_entry_id });
       await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId: String(breakRow.end_request_id), entryId: state.active_entry_id });
-      const recovered = await setBreakState(stateEntity, state, 'starting_break', requestId, {
+      const recovered = await setBreakState(stateEntity, auditClaim, 'starting_break', requestId, {
         break_status: 'working', active_break_id: null,
         last_break_request_id: String(breakRow.end_request_id), break_pending_started_at: null,
       });
@@ -439,8 +447,12 @@ async function recoverBreakTransition({ stateEntity, breakEntity, auditEntity, s
   if (breakStatus === 'ending_break') {
     const breakRow = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
     if (breakRow?.id && breakRow.status === 'completed' && String(breakRow.end_request_id || '') === requestId) {
+      const auditClaim = await setBreakState(stateEntity, state, 'ending_break', requestId, {
+        break_pending_started_at: state.break_pending_started_at || breakRow.ended_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureBreakAudit({ auditEntity, action: 'break_end', breakRow, target, actor, requestId, entryId: state.active_entry_id });
-      const recovered = await setBreakState(stateEntity, state, 'ending_break', requestId, {
+      const recovered = await setBreakState(stateEntity, auditClaim, 'ending_break', requestId, {
         break_status: 'working', active_break_id: null, break_pending_started_at: null,
       });
       if (recovered) {
