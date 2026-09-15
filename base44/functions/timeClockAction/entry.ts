@@ -545,8 +545,12 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
     if (matches.length > 1) throw new Error('Work Pause start recovery is ambiguous.');
     if (matches.length === 1 && matches[0]?.status === 'active') {
       const pauseRow = matches[0];
+      const auditClaim = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+        work_pause_pending_started_at: state.work_pause_pending_started_at || pauseRow.started_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow, target, actor, requestId, entryId: state.active_entry_id });
-      const recovered = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+      const recovered = await setWorkPauseState(stateEntity, auditClaim, 'pausing', requestId, {
         work_pause_status: 'paused', active_work_pause_id: pauseRow.id, work_pause_pending_started_at: null,
       });
       if (recovered) {
@@ -562,9 +566,13 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
     }
     if (matches.length === 1 && matches[0]?.status === 'completed' && matches[0]?.resume_request_id) {
       const pauseRow = matches[0];
+      const auditClaim = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+        work_pause_pending_started_at: state.work_pause_pending_started_at || pauseRow.started_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow, target, actor, requestId, entryId: state.active_entry_id });
       await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId: String(pauseRow.resume_request_id), entryId: state.active_entry_id });
-      const recovered = await setWorkPauseState(stateEntity, state, 'pausing', requestId, {
+      const recovered = await setWorkPauseState(stateEntity, auditClaim, 'pausing', requestId, {
         work_pause_status: 'working', active_work_pause_id: null,
         last_work_pause_request_id: String(pauseRow.resume_request_id || requestId),
         work_pause_pending_started_at: null,
@@ -592,8 +600,12 @@ async function recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditE
   if (pauseStatus === 'resuming') {
     const pauseRow = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
     if (pauseRow?.id && pauseRow.status === 'completed' && String(pauseRow.resume_request_id || '') === requestId) {
+      const auditClaim = await setWorkPauseState(stateEntity, state, 'resuming', requestId, {
+        work_pause_pending_started_at: state.work_pause_pending_started_at || pauseRow.resumed_at,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
       await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_resume', pauseRow, target, actor, requestId, entryId: state.active_entry_id });
-      const recovered = await setWorkPauseState(stateEntity, state, 'resuming', requestId, {
+      const recovered = await setWorkPauseState(stateEntity, auditClaim, 'resuming', requestId, {
         work_pause_status: 'working', active_work_pause_id: null, work_pause_pending_started_at: null,
       });
       if (recovered) return recovered;
