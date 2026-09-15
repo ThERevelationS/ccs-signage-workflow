@@ -78,6 +78,93 @@ export default function TimeClockExceptionCenter({
 
   const stateByEntryId = new Map([...statesByEntryId.entries()].filter(([, rows]) => rows.length === 1).map(([entryId, rows]) => [entryId, rows[0]]));
 
+  for (const [email, rows] of statesByEmail.entries()) {
+    if (rows.length > 1) {
+      exceptions.push({
+        key: `duplicate-state:${email}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Employee has multiple authoritative state rows",
+        employee: rows[0]?.user_name || email,
+        detail: `${rows.length} Time Clock employee-state rows exist for the same email. Do not punch or correct time until the duplicate state is reviewed.`,
+      });
+    }
+  }
+
+  for (const [email, rows] of activeEntriesByEmail.entries()) {
+    if (rows.length > 1) {
+      exceptions.push({
+        key: `duplicate-active-entry:${email}`,
+        severity: "critical",
+        icon: Clock3,
+        title: "Employee has multiple active shifts",
+        employee: rows[0]?.user_name || email,
+        detail: `${rows.length} non-archived TimeEntries are simultaneously clocked in for this employee. Nothing was changed automatically.`,
+        entry: rows[0],
+      });
+    }
+  }
+
+  for (const [entryId, rows] of statesByEntryId.entries()) {
+    if (rows.length > 1) {
+      const entry = activeEntryById.get(entryId);
+      exceptions.push({
+        key: `duplicate-entry-state:${entryId}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Multiple employee states reference one active shift",
+        employee: entry?.user_name || rows[0]?.user_name || rows[0]?.user_email,
+        detail: `${rows.length} authoritative state rows point to the same TimeEntry. Review identity/state integrity before any manager action.`,
+        entry,
+      });
+    }
+  }
+
+  for (const [entryId, rows] of breaksByEntryId.entries()) {
+    if (rows.length > 1) {
+      const entry = activeEntryById.get(entryId);
+      exceptions.push({
+        key: `duplicate-active-break:${entryId}`,
+        severity: "critical",
+        icon: Coffee,
+        title: "Multiple active breaks exist for one shift",
+        employee: entry?.user_name || rows[0]?.user_name || rows[0]?.user_email,
+        detail: `${rows.length} active break records belong to the same TimeEntry. Review before ending the break or closing the shift.`,
+        entry,
+      });
+    }
+  }
+
+  for (const [entryId, rows] of pausesByEntryId.entries()) {
+    if (rows.length > 1) {
+      const entry = activeEntryById.get(entryId);
+      exceptions.push({
+        key: `duplicate-active-pause:${entryId}`,
+        severity: "critical",
+        icon: Pause,
+        title: "Multiple active Work Pauses exist for one shift",
+        employee: entry?.user_name || rows[0]?.user_name || rows[0]?.user_email,
+        detail: `${rows.length} active Work Pause records belong to the same TimeEntry. Review before resuming or closing the shift.`,
+        entry,
+      });
+    }
+  }
+
+  for (const [entryId, rows] of laborByEntryId.entries()) {
+    if (rows.length > 1) {
+      const entry = activeEntryById.get(entryId);
+      exceptions.push({
+        key: `duplicate-active-labor:${entryId}`,
+        severity: "critical",
+        icon: Briefcase,
+        title: "Multiple Current Work segments are active for one shift",
+        employee: entry?.user_name || rows[0]?.user_name || rows[0]?.user_email,
+        detail: `${rows.length} active labor segments belong to the same TimeEntry. Current Work must have at most one active segment.`,
+        entry,
+      });
+    }
+  }
+
   for (const entry of activeEntries) {
     const age = ageMs(entry.clock_in, nowMs);
     if (age !== null && age >= TWENTY_FOUR_HOURS) {
@@ -91,7 +178,8 @@ export default function TimeClockExceptionCenter({
         entry,
       });
     }
-    if (!stateByEntryId.has(entry.id)) {
+    const linkedStates = statesByEntryId.get(entry.id) || [];
+    if (linkedStates.length === 0) {
       exceptions.push({
         key: `entry-state:${entry.id}`,
         severity: "critical",
@@ -99,6 +187,16 @@ export default function TimeClockExceptionCenter({
         title: "Active shift is not linked to employee state",
         employee: entry.user_name || entry.user_email,
         detail: "The TimeEntry is active but no authoritative employee-state row references it. Review before another punch or correction.",
+        entry,
+      });
+    } else if (linkedStates.length === 1 && String(linkedStates[0].user_email || "").toLowerCase() !== String(entry.user_email || "").toLowerCase()) {
+      exceptions.push({
+        key: `entry-state-owner:${entry.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Active shift and employee state belong to different users",
+        employee: entry.user_name || entry.user_email,
+        detail: `The TimeEntry belongs to ${entry.user_email}, but its authoritative state row belongs to ${linkedStates[0].user_email || "another user"}.`,
         entry,
       });
     }
