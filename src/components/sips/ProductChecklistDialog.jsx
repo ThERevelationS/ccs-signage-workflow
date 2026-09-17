@@ -1507,13 +1507,16 @@ export default function ProductChecklistDialog({
                           <div 
                             className="flex flex-wrap items-center gap-2 group"
                           >
-                            <button 
+                            <button
+                              type="button"
                               onClick={() => toggleExpanded(displayItem.id)}
-                              className="p-1 hover:bg-gray-100 rounded"
+                              className="h-11 w-11 md:h-7 md:w-7 inline-flex items-center justify-center hover:bg-gray-100 rounded shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                              aria-label={`${expandedItems[displayItem.id] !== false ? "Collapse" : "Expand"} checklist item details for ${displayItem.text || "checklist item"}`}
+                              aria-expanded={expandedItems[displayItem.id] !== false}
                             >
                               {(displayItem.details?.length > 0 || displayItem.tasks?.length > 0) ? (
-                                (expandedItems[displayItem.id] !== false) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-                              ) : <div className="w-4" />}
+                                (expandedItems[displayItem.id] !== false) ? <ChevronDown className="w-4 h-4" aria-hidden="true" /> : <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                              ) : <div className="w-4" aria-hidden="true" />}
                             </button>
                             <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                             {editingItemId === displayItem.id ? (
@@ -2028,13 +2031,16 @@ export default function ProductChecklistDialog({
                             <div 
                               className="flex flex-wrap items-center gap-2 group"
                             >
-                              <button 
+                              <button
+                                type="button"
                                 onClick={() => toggleExpanded(stDisplayItem.id)}
-                                className="p-1 hover:bg-gray-100 rounded"
+                                className="h-11 w-11 md:h-7 md:w-7 inline-flex items-center justify-center hover:bg-gray-100 rounded shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                aria-label={`${expandedItems[stDisplayItem.id] !== false ? "Collapse" : "Expand"} checklist option details for ${stDisplayItem.text || "checklist item"}`}
+                                aria-expanded={expandedItems[stDisplayItem.id] !== false}
                               >
                                 {(stDisplayItem.details?.length > 0 || stDisplayItem.tasks?.length > 0) ? (
-                                  (expandedItems[stDisplayItem.id] !== false) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
-                                ) : <div className="w-3" />}
+                                  (expandedItems[stDisplayItem.id] !== false) ? <ChevronDown className="w-4 h-4" aria-hidden="true" /> : <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                                ) : <div className="w-4" aria-hidden="true" />}
                               </button>
                               <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Checklist</span>
                               {editingItemId === stDisplayItem.id ? (
@@ -2333,11 +2339,19 @@ export default function ProductChecklistDialog({
                 {/* Completed Items Section */}
                 {Object.keys(completedChecklist).length > 0 && (
                   <div className="mt-5 border-t pt-3">
-                    <Button type="button" variant="ghost" className="w-full justify-between h-9 text-green-800 hover:bg-green-50" onClick={() => setShowCompletedItems(prev => !prev)}>
-                      <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" />Completed items ({completedPrimaryCount})</span>
-                      {showCompletedItems ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full justify-between h-11 sm:h-9 text-green-800 hover:bg-green-50"
+                      onClick={() => setShowCompletedItems(prev => !prev)}
+                      aria-expanded={showCompletedItems}
+                      aria-controls="sips-completed-items"
+                    >
+                      <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" aria-hidden="true" />Completed items ({completedPrimaryCount})</span>
+                      {showCompletedItems ? <ChevronDown className="w-4 h-4" aria-hidden="true" /> : <ChevronRight className="w-4 h-4" aria-hidden="true" />}
                     </Button>
                     {showCompletedItems && (
+                      <div id="sips-completed-items">
                       <ChecklistCompletedSection
                         completedChecklist={completedChecklist}
                         dropdownConditions={dropdownConditions}
@@ -2348,6 +2362,7 @@ export default function ProductChecklistDialog({
                         setShowOtherPopup={setShowOtherPopup}
                         focusedNeedsInputId={focusedNeedsInputId}
                       />
+                      </div>
                     )}
                   </div>
                 )}
