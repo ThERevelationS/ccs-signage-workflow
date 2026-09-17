@@ -1522,14 +1522,14 @@ export default function ProductChecklistDialog({
                             {editingItemId === displayItem.id ? (
                               <div className="flex-1 flex gap-1">
                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') { setEditingItemId(null); } }} />
-                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                               </div>
                             ) : (
                               <div className="flex-1 flex items-center gap-1 min-w-0">
                                 <span className={`font-medium text-sm flex-1 min-w-0 rounded px-1 ${isItemCompleted ? 'line-through text-gray-400' : ''}`}>{displayItem.text}</span>
                                 {isRegistered && (
-                                  <button type="button" onClick={(e) => startEditItem(displayItem, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" title="Edit checklist item" aria-label={`Edit checklist item ${displayItem.text || ""}`}>
+                                  <button type="button" onClick={(e) => startEditItem(displayItem, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" title="Edit checklist item" aria-label={`Edit checklist item ${displayItem.text || ""}`}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
                                 )}
@@ -1619,7 +1619,7 @@ export default function ProductChecklistDialog({
                             </Select>
 
                             {isRegistered && (
-                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(displayItem.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${displayItem.text || ""}`}>
+                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(displayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${displayItem.text || ""}`}>
                                 <Trash2 className="w-3 h-3" />
                               </Button>
                             )}
@@ -1643,14 +1643,14 @@ export default function ProductChecklistDialog({
                                   {editingItemId === task.id ? (
                                     <div className="flex-1 flex gap-1">
                                       <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                      <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                      <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                     </div>
                                   ) : (
                                     <div className="flex-1 flex items-center gap-1 min-w-0">
                                       <span className="text-xs flex-1 min-w-0 px-0.5">{task.text}</span>
                                       {isRegistered && (
-                                        <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}>
+                                        <button type="button" onClick={(e) => startEditItem(task, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}>
                                           <Pencil className="w-3 h-3" />
                                         </button>
                                       )}
@@ -1675,7 +1675,7 @@ export default function ProductChecklistDialog({
                                     </button>
                                   )}
                                   {isRegistered && (
-                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
+                                    <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                       <Trash2 className="w-2.5 h-2.5" />
                                     </Button>
                                   )}
@@ -1694,19 +1694,19 @@ export default function ProductChecklistDialog({
                                     {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
                                         <span className="flex-1 min-w-0">{subtask.text}</span>
                                         {isRegistered && (
-                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-yellow-100 text-yellow-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400" title="Edit subtask" aria-label={`Edit subtask ${subtask.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-yellow-100 text-yellow-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400" title="Edit subtask" aria-label={`Edit subtask ${subtask.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                         )}
                                       </div>
                                     )}
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/subtask:opacity-100 md:focus:opacity-100" aria-label={`Delete subtask ${subtask.text || ""}`}>
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/subtask:opacity-100 md:focus:opacity-100" aria-label={`Delete subtask ${subtask.text || ""}`}>
                                         <Trash2 className="w-2 h-2" />
                                       </Button>
                                     )}
@@ -1786,14 +1786,14 @@ export default function ProductChecklistDialog({
                                     {editingItemId === detail.id ? (
                                       <div className="flex-1 flex gap-1">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
                                         <span className={`text-sm flex-1 min-w-0 px-1 ${isDetailCompleted ? 'line-through text-gray-400' : ''}`}>{detail.text}</span>
                                         {isRegistered && (
-                                          <button type="button" onClick={(e) => startEditItem(detail, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" title="Edit detail" aria-label={`Edit detail ${detail.text || ""}`}>
+                                          <button type="button" onClick={(e) => startEditItem(detail, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" title="Edit detail" aria-label={`Edit detail ${detail.text || ""}`}>
                                             <Pencil className="w-3 h-3" />
                                           </button>
                                         )}
@@ -1864,7 +1864,7 @@ export default function ProductChecklistDialog({
                                     </Select>
 
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete detail ${detail.text || ""}`}>
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete detail ${detail.text || ""}`}>
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
                                     )}
@@ -1907,14 +1907,14 @@ export default function ProductChecklistDialog({
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
                                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                                <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                                <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
                                             ) : (
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
                                                 <span className="text-xs flex-1 min-w-0">{task.text}</span>
                                                 {isRegistered && (
-                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                                 )}
                                               </div>
                                             )}
@@ -1938,7 +1938,7 @@ export default function ProductChecklistDialog({
                                               </button>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
@@ -1957,19 +1957,19 @@ export default function ProductChecklistDialog({
                                               {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
                                         <span className="flex-1 min-w-0">{subtask.text}</span>
                                         {isRegistered && (
-                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-yellow-100 text-yellow-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400" title="Edit subtask" aria-label={`Edit subtask ${subtask.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                          <button type="button" onClick={(e) => startEditItem(subtask, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-yellow-100 text-yellow-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400" title="Edit subtask" aria-label={`Edit subtask ${subtask.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                         )}
                                       </div>
                                     )}
                                               {isRegistered && (
-                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100 md:focus:opacity-100" aria-label={`Delete subtask ${subtask.text || ""}`}>
+                                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(subtask.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/dsub:opacity-100 md:focus:opacity-100" aria-label={`Delete subtask ${subtask.text || ""}`}>
                                                   <Trash2 className="w-2 h-2" />
                                                 </Button>
                                               )}
@@ -2046,14 +2046,14 @@ export default function ProductChecklistDialog({
                               {editingItemId === stDisplayItem.id ? (
                                 <div className="flex-1 flex gap-1">
                                   <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-sm flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                  <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                  <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                  <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs bg-green-600 hover:bg-green-700" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                  <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                 </div>
                               ) : (
                                 <div className="flex-1 flex items-center gap-1 min-w-0">
                                   <span className={`text-sm flex-1 min-w-0 px-1 ${isStItemCompleted ? 'line-through text-gray-400' : ''}`}>{stDisplayItem.text}</span>
                                   {isRegistered && (
-                                    <button type="button" onClick={(e) => startEditItem(stDisplayItem, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" title="Edit checklist item" aria-label={`Edit checklist item ${stDisplayItem.text || ""}`}>
+                                    <button type="button" onClick={(e) => startEditItem(stDisplayItem, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400" title="Edit checklist item" aria-label={`Edit checklist item ${stDisplayItem.text || ""}`}>
                                       <Pencil className="w-3 h-3" />
                                     </button>
                                   )}
@@ -2141,7 +2141,7 @@ export default function ProductChecklistDialog({
                               </Select>
 
                               {isRegistered && (
-                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(stDisplayItem.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${stDisplayItem.text || ""}`}>
+                                <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(stDisplayItem.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500" aria-label={`Delete checklist item ${stDisplayItem.text || ""}`}>
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
                               )}
@@ -2163,14 +2163,14 @@ export default function ProductChecklistDialog({
                                     {editingItemId === task.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
                                         <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                        <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                       </div>
                                     ) : (
                                       <div className="flex-1 flex items-center gap-1 min-w-0">
                                         <span className="text-xs flex-1 min-w-0">{task.text}</span>
                                         {isRegistered && (
-                                          <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                          <button type="button" onClick={(e) => startEditItem(task, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                         )}
                                       </div>
                                     )}
@@ -2183,7 +2183,7 @@ export default function ProductChecklistDialog({
                                       ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                     />
                                     {isRegistered && (
-                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
+                                      <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/sttask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                         <Trash2 className="w-2.5 h-2.5" />
                                       </Button>
                                     )}
@@ -2217,14 +2217,14 @@ export default function ProductChecklistDialog({
                                       {editingItemId === detail.id ? (
                                         <div className="flex-1 flex gap-1 min-w-0">
                                           <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                          <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                          <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                          <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                          <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                         </div>
                                       ) : (
                                         <div className="flex-1 flex items-center gap-1 min-w-0">
                                           <span className="flex-1 min-w-0">{detail.text}</span>
                                           {isRegistered && (
-                                            <button type="button" onClick={(e) => startEditItem(detail, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-purple-100 text-purple-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" title="Edit detail" aria-label={`Edit detail ${detail.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                            <button type="button" onClick={(e) => startEditItem(detail, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-purple-100 text-purple-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" title="Edit detail" aria-label={`Edit detail ${detail.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                           )}
                                         </div>
                                       )}
@@ -2240,7 +2240,7 @@ export default function ProductChecklistDialog({
                                         </button>
                                       )}
                                       {isRegistered && (
-                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100" aria-label={`Delete detail ${detail.text || ""}`}>
+                                        <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(detail.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100" aria-label={`Delete detail ${detail.text || ""}`}>
                                           <Trash2 className="w-2.5 h-2.5" />
                                         </Button>
                                       )}
@@ -2280,19 +2280,19 @@ export default function ProductChecklistDialog({
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
                                                 <Input value={editingItemText} onChange={(e) => setEditingItemText(e.target.value)} className="h-9 md:h-7 text-xs flex-1" autoFocus onKeyDown={(e) => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') setEditingItemId(null); }} />
-                                                <Button type="button" size="sm" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
-                                                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
+                                                <Button type="button" size="sm" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={saveEditItem} aria-label="Save edit">✓</Button>
+                                                <Button type="button" size="sm" variant="ghost" className="h-11 w-11 md:h-7 md:w-7 p-0 text-xs" onClick={() => setEditingItemId(null)} aria-label="Cancel edit">✕</Button>
                                               </div>
                                             ) : (
                                               <div className="flex-1 flex items-center gap-1 min-w-0">
                                                 <span className="flex-1 min-w-0">{task.text}</span>
                                                 {isRegistered && (
-                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-9 w-9 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
+                                                  <button type="button" onClick={(e) => startEditItem(task, e)} className="h-11 w-11 md:h-7 md:w-7 flex items-center justify-center rounded hover:bg-orange-100 text-orange-700 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400" title="Edit task" aria-label={`Edit task ${task.text || ""}`}><Pencil className="w-3 h-3" /></button>
                                                 )}
                                               </div>
                                             )}
                                             {isRegistered && (
-                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-9 w-9 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
+                                              <Button variant="ghost" size="sm" onClick={() => deleteChecklistItem(task.id)} className="h-11 w-11 md:h-7 md:w-7 p-0 text-red-500 md:opacity-0 md:group-hover/stdtask:opacity-100 md:focus:opacity-100" aria-label={`Delete task ${task.text || ""}`}>
                                                 <Trash2 className="w-2 h-2" />
                                               </Button>
                                             )}
