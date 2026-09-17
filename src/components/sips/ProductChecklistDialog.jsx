@@ -2123,7 +2123,7 @@ export default function ProductChecklistDialog({
                                 }}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${stDisplayItem.text || "checklist item"`}>
+                                <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${stDisplayItem.text || "checklist item"}`}>
                                   <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Answer..."}>
                                     {stDisplayItem.custom_dropdown_value || "Answer..."}
                                   </SelectValue>
