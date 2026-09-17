@@ -959,6 +959,110 @@ export default function ProductChecklistDialog({
     setNewItemText("");
   };
 
+  // Active/completed grouping is checklist-derived. Expansion, search position,
+  // inline editing, and dialog warnings should not rebuild the whole hierarchy.
+  const { active: activeChecklist, completed: completedChecklist } = useMemo(() => {
+    const active = {};
+    const completed = {};
+
+    Object.entries(groupedChecklist).forEach(([productName, group]) => {
+      active[productName] = { ...group, mainItems: [], subTemplates: {} };
+      completed[productName] = { ...group, mainItems: [], subTemplates: {} };
+
+      group.mainItems.forEach(item => {
+        if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
+          const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
+          (isCompleted ? completed : active)[productName].mainItems.push(item);
+          return;
+        }
+        const parent = checklistItemById.get(item.parent_id);
+        if (parent) {
+          const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
+          (parentCompleted ? completed : active)[productName].mainItems.push(item);
+        } else {
+          active[productName].mainItems.push(item);
+        }
+      });
+
+      Object.entries(group.subTemplates).forEach(([stName, stItems]) => {
+        active[productName].subTemplates[stName] = [];
+        completed[productName].subTemplates[stName] = [];
+
+        stItems.forEach(item => {
+          if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
+            const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
+            (isCompleted ? completed : active)[productName].subTemplates[stName].push(item);
+            return;
+          }
+          const parent = checklistItemById.get(item.parent_id);
+          if (parent) {
+            const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
+            (parentCompleted ? completed : active)[productName].subTemplates[stName].push(item);
+          } else {
+            active[productName].subTemplates[stName].push(item);
+          }
+        });
+
+        if (active[productName].subTemplates[stName].length === 0) delete active[productName].subTemplates[stName];
+        if (completed[productName].subTemplates[stName].length === 0) delete completed[productName].subTemplates[stName];
+      });
+
+      if (active[productName].mainItems.length === 0 && Object.keys(active[productName].subTemplates).length === 0) delete active[productName];
+      if (completed[productName].mainItems.length === 0 && Object.keys(completed[productName].subTemplates).length === 0) delete completed[productName];
+    });
+
+    return { active, completed };
+  }, [groupedChecklist, dropdownConditionByName, checklistItemById]);
+
+  // Build summary data in one pass only when checklist/status data changes.
+  const {
+    primaryChecklistItems,
+    completedPrimaryCount,
+    continuedPrimaryCount,
+    needsInputPrimaryItems,
+    taskItems,
+    completedTaskCount,
+    expandableChecklistIds,
+  } = useMemo(() => {
+    const primaryItems = [];
+    const needsInputItems = [];
+    const tasks = [];
+    const expandableIds = [];
+    let completedPrimary = 0;
+    let continuedPrimary = 0;
+    let completedTasks = 0;
+
+    checklist.forEach(item => {
+      if (item.type === 'task' || item.type === 'subtask') {
+        tasks.push(item);
+        if (item.approved_by) completedTasks += 1;
+        return;
+      }
+
+      primaryItems.push(item);
+      if (!item.parent_id && (item.type === 'checklist' || !item.type)) expandableIds.push(item.id);
+      if (!item.approved_by || !item.custom_dropdown_value) {
+        needsInputItems.push(item);
+        return;
+      }
+
+      const condition = dropdownConditionByName.get(item.custom_dropdown_value);
+      if (condition && !condition.is_completed) continuedPrimary += 1;
+      else completedPrimary += 1;
+    });
+
+    return {
+      primaryChecklistItems: primaryItems,
+      completedPrimaryCount: completedPrimary,
+      continuedPrimaryCount: continuedPrimary,
+      needsInputPrimaryItems: needsInputItems,
+      taskItems: tasks,
+      completedTaskCount: completedTasks,
+      expandableChecklistIds: expandableIds,
+    };
+  }, [checklist, dropdownConditionByName]);
+  const needsInputPrimaryCount = needsInputPrimaryItems.length;
+
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -971,104 +1075,12 @@ export default function ProductChecklistDialog({
     );
   }
 
-  // Separate active and completed checklists
-  const separateCompletedItems = () => {
-    const active = {};
-    const completed = {};
-    
-    Object.entries(groupedChecklist).forEach(([productName, group]) => {
-      active[productName] = { ...group, mainItems: [], subTemplates: {} };
-      completed[productName] = { ...group, mainItems: [], subTemplates: {} };
-      
-      // Separate main items
-      group.mainItems.forEach(item => {
-        if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
-          // Main checklist item - check if completed
-          const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
-          const targetGroup = isCompleted ? completed : active;
-          
-          // Add the item and ALL its children
-          targetGroup[productName].mainItems.push(item);
-        } else {
-          // Child item - add to same group as its parent
-          const parent = checklistItemById.get(item.parent_id);
-          if (parent) {
-            const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
-            const targetGroup = parentCompleted ? completed : active;
-            targetGroup[productName].mainItems.push(item);
-          } else {
-            active[productName].mainItems.push(item);
-          }
-        }
-      });
-      
-      // Separate sub-template items
-      Object.entries(group.subTemplates).forEach(([stName, stItems]) => {
-        active[productName].subTemplates[stName] = [];
-        completed[productName].subTemplates[stName] = [];
-        
-        stItems.forEach(item => {
-          if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
-            const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
-            const targetGroup = isCompleted ? completed : active;
-            targetGroup[productName].subTemplates[stName].push(item);
-          } else {
-            const parent = checklistItemById.get(item.parent_id);
-            if (parent) {
-              const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
-              const targetGroup = parentCompleted ? completed : active;
-              targetGroup[productName].subTemplates[stName].push(item);
-            } else {
-              active[productName].subTemplates[stName].push(item);
-            }
-          }
-        });
-        
-        // Remove empty sub-template groups
-        if (active[productName].subTemplates[stName].length === 0) {
-          delete active[productName].subTemplates[stName];
-        }
-        if (completed[productName].subTemplates[stName].length === 0) {
-          delete completed[productName].subTemplates[stName];
-        }
-      });
-      
-      // Remove empty product groups
-      if (active[productName].mainItems.length === 0 && Object.keys(active[productName].subTemplates).length === 0) {
-        delete active[productName];
-      }
-      if (completed[productName].mainItems.length === 0 && Object.keys(completed[productName].subTemplates).length === 0) {
-        delete completed[productName];
-      }
-    });
-    
-    return { active, completed };
-  };
-  
-  const { active: activeChecklist, completed: completedChecklist } = separateCompletedItems();
   const countPrimaryItemsInGroup = (group) => (
     group.mainItems.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length +
     Object.values(group.subTemplates).reduce((sum, items) => (
       sum + items.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length
     ), 0)
   );
-  const primaryChecklistItems = checklist.filter(item => item.type !== 'task' && item.type !== 'subtask');
-  const completedPrimaryCount = primaryChecklistItems.filter(item => {
-    if (!item.approved_by || !item.custom_dropdown_value) return false;
-    const condition = dropdownConditionByName.get(item.custom_dropdown_value);
-    return !condition || condition.is_completed;
-  }).length;
-  const continuedPrimaryCount = primaryChecklistItems.filter(item => {
-    const condition = dropdownConditionByName.get(item.custom_dropdown_value);
-    return Boolean(item.approved_by && condition && !condition.is_completed);
-  }).length;
-  const needsInputPrimaryItems = primaryChecklistItems.filter(item => !item.approved_by || !item.custom_dropdown_value);
-  const needsInputPrimaryCount = needsInputPrimaryItems.length;
-  const taskItems = checklist.filter(item => item.type === 'task' || item.type === 'subtask');
-  const completedTaskCount = taskItems.filter(item => item.approved_by).length;
-  const expandableChecklistIds = checklist
-    .filter(item => !item.parent_id && (item.type === 'checklist' || !item.type))
-    .map(item => item.id);
   const allDetailsCollapsed = expandableChecklistIds.length > 0 && expandableChecklistIds.every(id => expandedItems[id] === false);
   const toggleAllDetails = () => {
     const nextExpanded = { ...expandedItems };
