@@ -2887,29 +2887,72 @@ Deno.serve(async (req) => {
       }
       if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
       if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
-      if (String(entry.approval_request_id || '') === requestId) {
-        const expectedStatus = decision === 'approve' ? 'approved' : 'needs_review';
-        if ((entry.approval_status || 'unreviewed') === expectedStatus) {
-          return Response.json({ success: true, entry, reused: true });
-        }
-        return Response.json({ success: false, error: 'This approval request id is already associated with a different approval state.' }, { status: 409 });
-      }
-      if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
 
-      const now = new Date().toISOString();
+      const approvalPayloadHash = await payloadHash({
+        entry_id: entry.id,
+        expected_updated_date: expectedUpdatedDate,
+        decision,
+        note,
+      });
       const priorApprovalAudits = await auditEntity.filter({ action: 'time_approval', request_id: requestId, time_entry_id: entry.id });
       if (!Array.isArray(priorApprovalAudits)) throw new Error('Approval audit lookup did not return a record list.');
       if (priorApprovalAudits.length > 1) return Response.json({ success: false, error: 'This approval request has multiple audit records. Admin investigation is required.' }, { status: 409 });
       let intent = priorApprovalAudits[0] || null;
-      if (intent?.outcome === 'confirmed') return Response.json({ success: false, error: 'This approval request was already confirmed but the TimeEntry marker does not match. Admin investigation is required.' }, { status: 409 });
+      const priorPayloadHash = String(intent?.details?.payload_hash || '');
+      if (intent && priorPayloadHash && !constantTimeEqual(priorPayloadHash, approvalPayloadHash)) {
+        return Response.json({ success: false, error: 'This approval request id is already bound to different review details. Submit a new approval action.' }, { status: 409 });
+      }
+      if (intent && !priorPayloadHash) {
+        const priorDecision = String(intent?.details?.decision || '');
+        const priorNote = String(intent?.details?.note || '');
+        if ((priorDecision && priorDecision !== decision) || priorNote !== note) {
+          return Response.json({ success: false, error: 'This approval request id is already bound to different review details. Submit a new approval action.' }, { status: 409 });
+        }
+      }
       if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This approval request was previously blocked. Reload and submit a new approval action.' }, { status: 409 });
+
+      const expectedStatus = decision === 'approve' ? 'approved' : 'needs_review';
+      if (String(entry.approval_request_id || '') === requestId) {
+        if ((entry.approval_status || 'unreviewed') !== expectedStatus) {
+          return Response.json({ success: false, error: 'This approval request id is already associated with a different approval state.' }, { status: 409 });
+        }
+        if (!intent?.id) {
+          return Response.json({ success: false, error: 'The approval is saved but its required audit record is missing. Admin review is required.' }, { status: 409 });
+        }
+        if (intent.outcome === 'pending') {
+          const auditFinalized = await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: { ...(intent.details || {}), payload_hash: approvalPayloadHash, updated: entryAuditSnapshot(entry), decision, note, recovered_after_entry_save: true },
+            } },
+          );
+          if (!auditFinalized || auditFinalized.updated !== 1) {
+            const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved but its audit is still being finalized. Retry the same approval action.' }, { status: 409 });
+            }
+          }
+        }
+        const finalAudit = await auditEntity.get(intent.id).catch(() => null);
+        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved but a confirmed audit could not be verified yet. Retry the same approval action.' }, { status: 409 });
+        }
+        return Response.json({ success: true, entry, audit_id: intent.id, reused: true });
+      }
+      if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
+        return Response.json({ success: false, error: 'This approval request was already confirmed but the TimeEntry marker does not match. Admin investigation is required.' }, { status: 409 });
+      }
+      if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
+
+      const now = new Date().toISOString();
       if (!intent) {
         intent = await auditEntity.create({
           action: 'time_approval', outcome: 'pending', user_email: target.email,
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
           request_id: requestId, time_entry_id: entry.id, reason: note || (decision === 'approve' ? 'Manager reviewed completed shift' : 'Returned shift for manager review'),
-          details: { original: entryAuditSnapshot(entry), decision, note },
+          details: { payload_hash: approvalPayloadHash, original: entryAuditSnapshot(entry), decision, note },
         });
       }
       if (!intent?.id) throw new Error('Approval audit intent could not be persisted. No TimeEntry was changed.');
