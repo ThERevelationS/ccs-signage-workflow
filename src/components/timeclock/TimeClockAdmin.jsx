@@ -332,11 +332,16 @@ export default function TimeClockAdmin() {
     }
     setSaveBusy(true);
     try {
+      const requestId = correctionRequestId || storedAdminRequestId("admin_correct_entry", editingEntryBaseline.id) || newRequestId();
+      if (!correctionRequestId) {
+        setCorrectionRequestId(requestId);
+        persistAdminRequestId("admin_correct_entry", editingEntryBaseline.id, requestId);
+      }
       const response = await base44.functions.invoke("timeClockAction", {
         action: "admin_correct_entry",
         session_token: sessionToken,
         target_email: editingEntryBaseline.user_email,
-        request_id: newRequestId(),
+        request_id: requestId,
         entry_id: editingEntryBaseline.id,
         expected_updated_date: editingEntryBaseline.updated_date,
         reason: correctionReason.trim(),
@@ -349,8 +354,10 @@ export default function TimeClockAdmin() {
         },
       });
       const data = functionData(response);
-      if (!data?.success) throw new Error(data?.error || "The correction was not confirmed by the server.");
+      if (!data?.success) throw adminActionError(data, "The correction was not confirmed by the server.");
 
+      clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id);
+      setCorrectionRequestId("");
       setShowEditDialog(false);
       setEditingEntry(null);
       setEditingEntryBaseline(null);
@@ -358,7 +365,13 @@ export default function TimeClockAdmin() {
       await loadData();
     } catch (err) {
       console.error("Error saving entry:", err);
-      setTimeEntryError(err?.response?.data?.error || err?.message || "This time entry changed in another session. The correction was not applied.");
+      const message = err?.response?.data?.error || err?.message || "This time entry changed in another session. The correction was not applied.";
+      const retainRequest = shouldRetainAdminRequest(err);
+      setTimeEntryError(message);
+      if (!retainRequest && editingEntryBaseline?.id) {
+        clearAdminRequestId("admin_correct_entry", editingEntryBaseline.id);
+        setCorrectionRequestId("");
+      }
       await loadData();
     } finally {
       setSaveBusy(false);
