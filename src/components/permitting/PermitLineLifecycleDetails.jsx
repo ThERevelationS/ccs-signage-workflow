@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, BadgeCheck, ChevronDown, ChevronRight, FileKey2 } from "lucide-react";
 import { differenceInCalendarDays, format, isValid } from "date-fns";
-import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary } from "./permitQueue";
+import { getPermitLineHandoffReadiness, getPermitLineLifecycleSummary, isPermitLineEffectivelyComplete } from "./permitQueue";
 import PermitLineHistory from "./PermitLineHistory";
 
 function parseLocalDate(value) {
@@ -145,6 +145,7 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
   const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem), [lineItem]);
   const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
   const hasActiveCorrections = ["corrections_received", "working_corrections"].includes(correctionStatus);
+  const storedCompletionNeedsRepair = lineItem?.status === "completed" && !isPermitLineEffectivelyComplete(lineItem);
   const canMarkLineComplete = !!lineItem?.permit_received_date
     && lineItem?.status !== "completed"
     && !handoffReadiness.hasBlockers
@@ -419,6 +420,21 @@ export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, is
                 </div>
               ) : (
                 <div className="mt-0.5 text-[10px] text-emerald-700">No recorded fee, identifier, correction, or closeout issues remain for this permit line.</div>
+              )}
+              {storedCompletionNeedsRepair && (
+                <div className="mt-2 flex flex-col gap-2 rounded-md border border-red-200 bg-white/80 p-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-[10px] leading-snug text-red-800">
+                    This line is stored as complete, but recorded permit facts still make it active. Reopen it before continuing so completion remains explicit and auditable.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => update("status", "active")}
+                    disabled={!isRegistered}
+                    className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-red-300 bg-white px-3 text-[11px] font-semibold text-red-900 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Reopen line
+                  </button>
+                </div>
               )}
               {canMarkLineComplete && (
                 <div className="mt-2 flex flex-col gap-2 rounded-md border border-amber-200 bg-white/75 p-2 sm:flex-row sm:items-center sm:justify-between">
