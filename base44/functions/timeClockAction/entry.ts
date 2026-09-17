@@ -2981,7 +2981,7 @@ Deno.serve(async (req) => {
         { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
         { $set: {
           outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-          details: { original: entryAuditSnapshot(entry), updated: entryAuditSnapshot(savedEntry), decision, note },
+          details: { ...(intent.details || {}), payload_hash: approvalPayloadHash, original: entryAuditSnapshot(entry), updated: entryAuditSnapshot(savedEntry), decision, note },
         } },
       );
       if (!auditFinalized || auditFinalized.updated !== 1) {
