@@ -64,12 +64,17 @@ const getColWidth = (step) => {
 function CommitStepTextInput({ value, disabled, onCommit }) {
   const normalizedValue = value || "";
   const [draft, setDraft] = useState(normalizedValue);
+  const cancelCommitRef = useRef(false);
 
   useEffect(() => {
     setDraft(normalizedValue);
   }, [normalizedValue]);
 
   const commit = () => {
+    if (cancelCommitRef.current) {
+      cancelCommitRef.current = false;
+      return;
+    }
     if (draft === normalizedValue) return;
     onCommit(draft);
   };
@@ -82,6 +87,7 @@ function CommitStepTextInput({ value, disabled, onCommit }) {
       onKeyDown={(event) => {
         if (event.key === "Enter") event.currentTarget.blur();
         if (event.key === "Escape") {
+          cancelCommitRef.current = true;
           setDraft(normalizedValue);
           event.currentTarget.blur();
         }
