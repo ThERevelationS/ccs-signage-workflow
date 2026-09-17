@@ -65,6 +65,41 @@ function functionData(response) {
   return response?.data || response;
 }
 
+function adminRequestStorageKey(action, entryId) {
+  return `ccs_timeclock_admin_request:${action}:${String(entryId || "").trim()}`;
+}
+
+function storedAdminRequestId(action, entryId) {
+  try {
+    const value = sessionStorage.getItem(adminRequestStorageKey(action, entryId)) || "";
+    return value.length >= 8 && value.length <= 128 ? value : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistAdminRequestId(action, entryId, requestId) {
+  try { sessionStorage.setItem(adminRequestStorageKey(action, entryId), requestId); } catch {}
+}
+
+function clearAdminRequestId(action, entryId) {
+  try { sessionStorage.removeItem(adminRequestStorageKey(action, entryId)); } catch {}
+}
+
+function adminActionError(data, fallback) {
+  const error = new Error(data?.error || fallback);
+  error.retrySameRequest = data?.retry_same_request === true;
+  error.confirmedServerResponse = true;
+  return error;
+}
+
+function shouldRetainAdminRequest(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
+}
+
 export default function TimeClockAdmin() {
   const { sessionToken } = useAuth();
   const [timeEntries, setTimeEntries] = useState([]);
@@ -87,7 +122,9 @@ export default function TimeClockAdmin() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [correctionReason, setCorrectionReason] = useState("");
+  const [correctionRequestId, setCorrectionRequestId] = useState("");
   const [archiveReason, setArchiveReason] = useState("");
+  const [archiveRequestId, setArchiveRequestId] = useState("");
   const [timeEntryError, setTimeEntryError] = useState("");
   const [approvalEntry, setApprovalEntry] = useState(null);
   const [approvalDecision, setApprovalDecision] = useState("approve");
