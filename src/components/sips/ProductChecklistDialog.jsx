@@ -2642,7 +2642,7 @@ export default function ProductChecklistDialog({
 
       {/* Other Dropdown Popup */}
       <OtherDialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
-        <OtherDialogContent className="max-w-md clay-card border-none">
+        <OtherDialogContent className="max-w-md clay-card border-none [&>button]:h-11 [&>button]:w-11 [&>button]:inline-flex [&>button]:items-center [&>button]:justify-center sm:[&>button]:h-9 sm:[&>button]:w-9">
           <OtherDialogHeader>
             <OtherDialogTitle className="flex items-center gap-2">
               <List className="w-5 h-5 text-purple-500" />
@@ -2660,25 +2660,27 @@ export default function ProductChecklistDialog({
                   </div>
                 ) : (
                   dropdownConditions.map(dd => (
-                    <div
+                    <button
+                      type="button"
                       key={dd.id}
                       onClick={() => {
                         if (showOtherPopup?.itemId && applyChecklistStatus(showOtherPopup.itemId, dd.name)) {
                           setShowOtherPopup(null);
                         }
                       }}
-                      className={`p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 transition-colors ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}
+                      className={`w-full min-h-11 p-3 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-inset ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}
+                      aria-label={`Use ${dd.name} status, ${dd.is_completed ? 'Completed' : 'Continued'}`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${dd.is_completed ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                      <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${dd.is_completed ? 'bg-green-500' : 'bg-yellow-500'}`}>
                         {dd.is_completed ? <CheckCircle2 className="w-4 h-4 text-white" /> : <List className="w-4 h-4 text-white" />}
-                      </div>
-                      <div className="flex-1">
+                      </span>
+                      <span className="flex-1 min-w-0">
                         <span className="font-medium">{dd.name}</span>
                         <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
                           {dd.is_completed ? 'Completed' : 'Continued'}
                         </span>
-                      </div>
-                    </div>
+                      </span>
+                    </button>
                   ))
                 )}
               </div>
@@ -2691,13 +2693,13 @@ export default function ProductChecklistDialog({
                   value={customDropdownValue}
                   onChange={(e) => setCustomDropdownValue(e.target.value)}
                   placeholder="Type custom value..."
-                  className="flex-1"
+                  className="h-11 flex-1 min-w-0 sm:h-9"
                   onKeyDown={(e) => e.key === 'Enter' && showOtherPopup?.itemId && handleCreateCustomValue(showOtherPopup.itemId)}
                 />
                 <Button 
                   onClick={() => showOtherPopup?.itemId && handleCreateCustomValue(showOtherPopup.itemId)} 
                   disabled={!customDropdownValue.trim()}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="h-11 bg-purple-600 hover:bg-purple-700 sm:h-9"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Use
@@ -2707,7 +2709,7 @@ export default function ProductChecklistDialog({
           </div>
 
           <OtherDialogFooter>
-            <Button variant="outline" onClick={() => setShowOtherPopup(null)}>
+            <Button variant="outline" onClick={() => setShowOtherPopup(null)} className="h-11 sm:h-9">
               Cancel
             </Button>
           </OtherDialogFooter>
