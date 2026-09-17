@@ -1551,7 +1551,7 @@ export default function ProductChecklistDialog({
                                     setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
                                     setNewItemInput({ show: true, parentId: displayItem.id, type: 'task', productName: displayItem.product_name || productName }); 
                                   }}
-                                  className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                  className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                   title="Add Task"
                                   aria-label={`Add task under ${displayItem.text || "checklist item"}`}
                                 >
@@ -1563,7 +1563,7 @@ export default function ProductChecklistDialog({
                                     setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
                                     setNewItemInput({ show: true, parentId: displayItem.id, type: 'detail', productName: displayItem.product_name || productName }); 
                                   }}
-                                  className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                                  className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                                   title="Add Detail"
                                   aria-label={`Add detail under ${displayItem.text || "checklist item"}`}
                                 >
@@ -1667,7 +1667,7 @@ export default function ProductChecklistDialog({
                                   {isRegistered && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
-                                      className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                                      className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                                       title="Add Subtask"
                                       aria-label={`Add subtask under ${task.text || "task"}`}
                                     >
@@ -1810,7 +1810,7 @@ export default function ProductChecklistDialog({
                                       <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: displayItem.product_name || productName }); }}
-                                        className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                        className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/detail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                         title="Add Task"
                                         aria-label={`Add task under ${detail.text || "detail"}`}
                                       >
@@ -1930,7 +1930,7 @@ export default function ProductChecklistDialog({
                                               <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
-                                                className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                                                className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover/dtask:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                                                 title="Add Subtask"
                                                 aria-label={`Add subtask under ${task.text || "task"}`}
                                               >
@@ -2074,7 +2074,7 @@ export default function ProductChecklistDialog({
                                       setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
                                       setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'task', productName: stDisplayItem.product_name || productName }); 
                                     }}
-                                    className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                    className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                     title="Add Task"
                                     aria-label={`Add task under ${stDisplayItem.text || "checklist item"}`}
                                   >
@@ -2086,7 +2086,7 @@ export default function ProductChecklistDialog({
                                       setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
                                       setNewItemInput({ show: true, parentId: stDisplayItem.id, type: 'detail', productName: stDisplayItem.product_name || productName }); 
                                     }}
-                                    className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                                    className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                                     title="Add Detail"
                                     aria-label={`Add detail under ${stDisplayItem.text || "checklist item"}`}
                                   >
@@ -2232,7 +2232,7 @@ export default function ProductChecklistDialog({
                                         <button
                                           type="button"
                                           onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: detail.id, type: 'task', productName: stDisplayItem.product_name || productName }); }}
-                                          className="h-9 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                                          className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200 md:opacity-0 md:group-hover/stdetail:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                                           title="Add Task"
                                           aria-label={`Add task under ${detail.text || "detail"}`}
                                         >
