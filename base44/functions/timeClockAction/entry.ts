@@ -2940,8 +2940,72 @@ Deno.serve(async (req) => {
       if (reason.length < 3 || reason.length > 500) return Response.json({ success: false, error: 'An archive reason between 3 and 500 characters is required.' }, { status: 400 });
 
       const entry = await entryEntity.get(entryId).catch(() => null);
-      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
-        return Response.json({ success: false, error: 'TimeEntry was not found or is already archived.' }, { status: 404 });
+      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data) {
+        return Response.json({ success: false, error: 'TimeEntry was not found or is unavailable.' }, { status: 404 });
+      }
+      const archivePayloadHash = await payloadHash({ entry_id: entry.id, expected_updated_date: expectedUpdatedDate, reason });
+      const priorArchiveAudits = await auditEntity.filter({ action: 'admin_archive', request_id: requestId, time_entry_id: entry.id });
+      if (!Array.isArray(priorArchiveAudits)) throw new Error('Administrative archive audit lookup did not return a record list.');
+      if (priorArchiveAudits.length > 1) return Response.json({ success: false, error: 'This archive request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      let intent = priorArchiveAudits[0] || null;
+      const priorPayloadHash = String(intent?.details?.payload_hash || '');
+      if (intent && priorPayloadHash && !constantTimeEqual(priorPayloadHash, archivePayloadHash)) {
+        return Response.json({ success: false, error: 'This archive request id is already bound to different archive details. Submit a new archive request.' }, { status: 409 });
+      }
+      if (intent && !priorPayloadHash && String(intent.reason || '') !== reason) {
+        return Response.json({ success: false, error: 'This archive request id is already bound to a different archive reason. Submit a new archive request.' }, { status: 409 });
+      }
+      if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This archive request was previously blocked. Reload and submit a new archive request.' }, { status: 409 });
+      const archiveTime = String(intent?.server_timestamp || entry.archived_at || new Date().toISOString());
+
+      if (entry.archived_admin) {
+        if (!intent?.id) return Response.json({ success: false, error: 'TimeEntry is already archived by a different or unknown request.' }, { status: 409 });
+        if (state.status === 'clocking_out' && String(state.last_request_id || '') === requestId && state.active_entry_id === entry.id) {
+          const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+          if (activeLabor?.id) {
+            const laborStartMs = new Date(activeLabor.started_at).getTime();
+            const archiveEndMs = new Date(entry.archived_at || archiveTime).getTime();
+            if (!Number.isFinite(laborStartMs) || !Number.isFinite(archiveEndMs) || archiveEndMs < laborStartMs) {
+              return Response.json({ success: false, error: 'The saved archive time is earlier than active Current Work. Admin review is required.' }, { status: 409 });
+            }
+            await closeActiveLaborSegment({
+              laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+              endReason: 'admin_correction', officialEnd: entry.archived_at || archiveTime,
+            });
+          }
+        }
+        if (intent.outcome === 'pending') {
+          const auditFinalized = await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: { ...(intent.details || {}), payload_hash: archivePayloadHash, archived_entry: entryAuditSnapshot(entry), recovered_after_entry_save: true },
+            } },
+          );
+          if (!auditFinalized || auditFinalized.updated !== 1) {
+            const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The entry is archived but its audit is still being finalized. Retry this same archive request.' }, { status: 409 });
+            }
+          }
+        }
+        if (state.status === 'clocking_out' && String(state.last_request_id || '') === requestId && state.active_entry_id === entry.id) {
+          const freshClaim = await freshState(stateEntity, state.id);
+          const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
+            status: 'clocked_out', active_entry_id: null, last_action_at: entry.archived_at || archiveTime, pending_started_at: null,
+            break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
+            work_pause_status: 'working', active_work_pause_id: null,
+            last_work_pause_request_id: null, work_pause_pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
+          });
+          if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'The archive and audit are saved but employee state finalization is incomplete. Retry this same archive request.' }, { status: 409 });
+        }
+        return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id, reused: true });
+      }
+
+      if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
+        return Response.json({ success: false, error: 'This archive request was already confirmed but the TimeEntry is not archived. Admin investigation is required.' }, { status: 409 });
       }
       if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before archiving it.' }, { status: 409 });
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This time entry changed in another session. Reload before archiving it.' }, { status: 409 });
