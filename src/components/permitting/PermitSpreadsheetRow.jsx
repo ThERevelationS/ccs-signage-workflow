@@ -121,9 +121,12 @@ export default function PermitSpreadsheetRow({
       style={followupStyle}
     >
       {/* MICRO HEADER — office-type badges + column labels */}
-        <div className="flex flex-wrap gap-1 pt-0.5 sm:max-w-[130px] sm:flex-shrink-0">
+      <div
+        className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 sm:grid-cols-[130px_minmax(0,1fr)_auto] sm:gap-x-3"
+        style={{ fontSize: '12px' }}
+      >
         {/* Office type badges (possibly multiple) */}
-        <div className="flex-shrink-0 pt-0.5 flex flex-wrap gap-1 max-w-[130px]">
+        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap gap-1 pt-0.5 sm:w-[130px] sm:flex-shrink-0">
           {officeTypes.length === 0 ? (
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -146,7 +149,7 @@ export default function PermitSpreadsheetRow({
         <div
           ref={headerScrollRef}
           onScroll={() => syncHorizontalScroll(headerScrollRef, dataScrollRef)}
-          className="flex flex-1 items-end overflow-x-auto overscroll-x-contain"
+          className="col-span-2 row-start-2 flex min-w-0 items-end overflow-x-auto overscroll-x-contain sm:col-span-1 sm:col-start-2 sm:row-start-1"
         >
           <div className="w-[200px] flex-shrink-0 px-1 font-semibold text-gray-500 uppercase tracking-wide text-[11px]">Office / Locality</div>
           {steps.map(step => (
@@ -164,7 +167,7 @@ export default function PermitSpreadsheetRow({
         {isRegistered && onDeleteLine && (
           <button
             onClick={() => setConfirmDeleteOpen(true)}
-            className="p-1.5 sm:p-0.5 hover:bg-red-50 rounded opacity-100 sm:opacity-0 sm:group-hover/line:opacity-100 transition-opacity flex-shrink-0"
+            className="col-start-2 row-start-1 flex-shrink-0 rounded p-1.5 opacity-100 transition-opacity hover:bg-red-50 sm:col-start-3 sm:p-0.5 sm:opacity-0 sm:group-hover/line:opacity-100"
             title="Delete this line"
           >
             <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
