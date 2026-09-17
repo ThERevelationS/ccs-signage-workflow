@@ -1548,6 +1548,7 @@ export default function ProductChecklistDialog({
                             {isRegistered && (
                               <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
                                 <button
+                                  type="button"
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
                                     setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
@@ -1560,6 +1561,7 @@ export default function ProductChecklistDialog({
                                   +Task
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
                                     setExpandedItems(prev => ({ ...prev, [displayItem.id]: true }));
@@ -1671,6 +1673,7 @@ export default function ProductChecklistDialog({
                                   />
                                   {isRegistered && (
                                     <button
+                                      type="button"
                                       onClick={(e) => { e.stopPropagation(); setNewItemInput({ show: true, parentId: task.id, type: 'subtask', productName: displayItem.product_name || productName }); }}
                                       className="h-11 md:h-7 px-2 md:px-1.5 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                                       title="Add Subtask"
