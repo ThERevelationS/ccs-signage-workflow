@@ -216,7 +216,7 @@ export default function SalesPipeline() {
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
-                <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectTrigger aria-label="Workspace" className="h-8 w-40 text-xs">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
@@ -245,7 +245,7 @@ export default function SalesPipeline() {
               <div className="flex items-center">
                 <span className="sr-only">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
-                  <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Outcome Period" className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tracked</SelectItem>
                     <SelectItem value="30">Last 30 Days</SelectItem>
@@ -279,7 +279,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectTrigger aria-label="Information Filters" className="h-8 w-40 text-xs">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -322,7 +322,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-40 text-xs">
+              <SelectTrigger aria-label="Column Filters" className="h-8 w-40 text-xs">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
