@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
+import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, Settings, Search, UserRoundCheck, X } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -669,18 +669,28 @@ export default function Permitting() {
 
   // Search first, then optionally narrow to the signed-in employee's assigned work.
   const searchedGroups = useMemo(() => {
-    if (!searchTerm) return allGroups;
-    const q = searchTerm.toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return allGroups;
     return allGroups.filter(g => {
       const wo = g.work_order;
-      if (wo?.client_name?.toLowerCase().includes(q)) return true;
-      if (wo?.description?.toLowerCase().includes(q)) return true;
-      if (wo?.title?.toLowerCase().includes(q)) return true;
+      const workOrderValues = [
+        wo?.client_name,
+        wo?.description,
+        wo?.title,
+        wo?.corbridge_invoice_number,
+        wo?.est_inv_at,
+        wo?.current_task_assigned_to,
+        wo?.assigned_to,
+        wo?.project_manager,
+        wo?.current_task_description,
+      ];
+      if (workOrderValues.some((value) => String(value || "").toLowerCase().includes(q))) return true;
       if ((wo?.files || []).some((file) => file?.name?.toLowerCase().includes(q))) return true;
       if (g.lines.some(li =>
         li.locality_name?.toLowerCase().includes(q) ||
         li.row_name?.toLowerCase().includes(q) ||
         li.office_type?.toLowerCase().includes(q) ||
+        li.assigned_to?.toLowerCase().includes(q) ||
         (li.office_types || []).some((type) => String(type || "").toLowerCase().includes(q)) ||
         li.application_reference_number?.toLowerCase().includes(q) ||
         li.permit_number?.toLowerCase().includes(q) ||
@@ -731,8 +741,16 @@ export default function Permitting() {
   const visibleGroups = queueFilter === "all"
     ? filteredGroups
     : (queueSummary[queueFilter] || []);
+  const hasActiveFilters = !!searchTerm.trim() || assignedToMeOnly || issuesOnly || queueFilter !== "all";
   const allVisibleGroupsCollapsed = visibleGroups.length > 0
     && visibleGroups.every((group) => collapsedGroupIds.has(group.work_order_id));
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setQueueFilter("all");
+    setAssignedToMeOnly(false);
+    setIssuesOnly(false);
+  };
 
   const setGroupExpanded = (workOrderId, expanded) => {
     setCollapsedGroupIds((previous) => {
@@ -836,14 +854,29 @@ export default function Permitting() {
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-              <div className="relative">
+              <div
+                className="relative w-full sm:w-56"
+                title="Search client, job, Est/Inv, assignee, project manager, task, locality, permit number, dates, fees, status, or notes"
+              >
                 <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Search..."
-                  className="h-8 text-sm pl-8 w-full sm:w-48"
+                  placeholder="Search permits & jobs..."
+                  aria-label="Search permitting jobs"
+                  className="h-8 w-full pl-8 pr-8 text-sm"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                    aria-label="Clear permitting search"
+                    title="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
               <Button
                 type="button"
@@ -885,6 +918,20 @@ export default function Permitting() {
               )}
             </div>
           </div>
+          {hasActiveFilters && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2 text-xs text-gray-500">
+              <span>
+                Showing <span className="font-semibold text-gray-700">{visibleGroups.length}</span> of <span className="font-semibold text-gray-700">{allGroups.length}</span> permitting job{allGroups.length === 1 ? "" : "s"}
+              </span>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex min-h-7 items-center gap-1 rounded px-2 font-semibold text-purple-700 hover:bg-purple-50 hover:text-purple-900"
+              >
+                <X className="h-3.5 w-3.5" /> Clear filters
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
