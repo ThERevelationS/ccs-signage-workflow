@@ -204,6 +204,34 @@ export default function PayPeriodManager({
     }
   };
 
+  useEffect(() => {
+    if (!sessionToken || recoveryAttemptedRef.current) return;
+    recoveryAttemptedRef.current = true;
+    const recoverSubmittedRequests = async () => {
+      const pending = submittedPeriodRequests();
+      if (!pending.length) return;
+      let changed = false;
+      let unresolved = false;
+      for (const stored of pending) {
+        try {
+          await invoke({ ...stored.payload, session_token: sessionToken, request_id: stored.request_id });
+          clearRequestId(stored.key);
+          changed = true;
+        } catch (err) {
+          if (shouldRetainPeriodRequest(err)) {
+            unresolved = true;
+          } else {
+            clearRequestId(stored.key);
+            changed = true;
+          }
+        }
+      }
+      if (changed) await Promise.all([loadPeriods(), onEntriesChanged?.()]);
+      if (unresolved) setError("A previously submitted pay-period action still needs server confirmation. Its original request is being preserved for a safe retry.");
+    };
+    recoverSubmittedRequests();
+  }, [sessionToken]);
+
   const createPeriod = async () => {
     if (busy) return;
     if (!sessionToken) {
@@ -265,18 +293,18 @@ export default function PayPeriodManager({
       return;
     }
     const key = `${actionDecision}:${actionPeriod.id}`;
-    const requestId = requestIdFor(key);
+    const payload = {
+      action: "pay_period_status",
+      pay_period_id: actionPeriod.id,
+      decision: actionDecision,
+      note: actionNote.trim(),
+    };
+    const requestId = requestIdFor(key, payload);
+    markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
     try {
-      await invoke({
-        action: "pay_period_status",
-        session_token: sessionToken,
-        request_id: requestId,
-        pay_period_id: actionPeriod.id,
-        decision: actionDecision,
-        note: actionNote.trim(),
-      });
+      await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
       clearRequestId(key);
       setActionPeriod(null);
       setActionDecision("");
