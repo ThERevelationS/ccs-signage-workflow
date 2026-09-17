@@ -312,6 +312,7 @@ export default function PermitClientGroup({
                     onDeleteLine={onDeleteLine}
                     isRegistered={isRegistered}
                     users={users}
+                    currentUser={currentUser}
                     today={today}
                   />
                 ))}
