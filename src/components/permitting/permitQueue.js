@@ -55,6 +55,11 @@ const OUTSTANDING_CLOSEOUT_STATUSES = new Set([
   "inspection_passed",
 ]);
 
+const ACTIVE_CORRECTION_STATUSES = new Set([
+  "corrections_received",
+  "working_corrections",
+]);
+
 function normalizedCloseoutStatus(line) {
   return String(line?.closeout_status || "").trim().toLowerCase();
 }
@@ -95,8 +100,8 @@ export function getPermitLineHandoffReadiness(line) {
     reviews.push(`${label} has an actual jurisdiction fee recorded but no payment status.`);
   }
 
-  if (permitReceived && ["corrections_received", "working_corrections"].includes(correctionStatus)) {
-    reviews.push(`${label} was issued/received but its correction state still shows active corrections.`);
+  if (lateLifecycle && ACTIVE_CORRECTION_STATUSES.has(correctionStatus)) {
+    blockers.push(`${label} still has active corrections recorded.`);
   }
 
   if (closeoutStatus === "closed_out" && line?.status !== "completed") {
@@ -117,6 +122,7 @@ export function getPermitLineHandoffReadiness(line) {
 export function isPermitLineEffectivelyComplete(line) {
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(normalizedCloseoutStatus(line))) return false;
   if (String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due") return false;
+  if (ACTIVE_CORRECTION_STATUSES.has(String(line?.correction_status || "").trim().toLowerCase())) return false;
   return line?.status === "completed";
 }
 
