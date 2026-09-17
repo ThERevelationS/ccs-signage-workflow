@@ -435,12 +435,12 @@ function MetricCard({ icon: Icon, label, value, sub }) {
 function QuickLink({ icon: Icon, title, text, page, rawPage = false }) {
   const to = rawPage ? `/${page}` : createPageUrl(page);
   return (
-    <Link to={to} className="block rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+    <Link to={to} className="min-h-11 block rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center"><Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" /></div>
+        <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center shrink-0"><Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-300" /></div>
         <div className="min-w-0">
-          <div className="font-semibold text-gray-900 dark:text-slate-100">{title}</div>
-          <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{text}</div>
+          <div className="font-semibold leading-snug text-gray-900 dark:text-slate-100 break-words">{title}</div>
+          <div className="text-xs leading-relaxed text-gray-500 dark:text-slate-400 mt-0.5 break-words">{text}</div>
         </div>
       </div>
     </Link>
@@ -450,9 +450,9 @@ function QuickLink({ icon: Icon, title, text, page, rawPage = false }) {
 function AttentionRow({ icon: Icon, label, value, page, query = "" }) {
   const to = query ? `${createPageUrl(page)}?${query}` : createPageUrl(page);
   return (
-    <Link to={to} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors">
-      <span className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300"><Icon className="w-4 h-4 text-gray-400" />{label}</span>
-      <span className={`text-sm font-bold ${value > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}>{value}</span>
+    <Link to={to} className="min-h-11 flex items-center justify-between gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+      <span className="min-w-0 inline-flex items-center gap-2 text-sm leading-snug text-gray-600 dark:text-slate-300"><Icon className="w-4 h-4 shrink-0 text-gray-400" /><span className="break-words">{label}</span></span>
+      <span className={`shrink-0 text-sm font-bold ${value > 0 ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}>{value}</span>
     </Link>
   );
 }
