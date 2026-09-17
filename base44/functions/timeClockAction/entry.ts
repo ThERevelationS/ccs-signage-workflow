@@ -990,7 +990,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
         await closeActiveLaborSegment({
           laborEntity, auditEntity, entry, target, actor: archiveActor,
           actorEmail: asEmail(archiveActor.email), requestId,
-          endReason: 'admin_correction', officialEnd: archiveEnd,
+          endReason: 'admin_archive', officialEnd: archiveEnd,
         });
       }
 
@@ -2969,7 +2969,7 @@ Deno.serve(async (req) => {
             }
             await closeActiveLaborSegment({
               laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
-              endReason: 'admin_correction', officialEnd: entry.archived_at || archiveTime,
+              endReason: 'admin_archive', officialEnd: entry.archived_at || archiveTime,
             });
           }
         }
@@ -3077,7 +3077,7 @@ Deno.serve(async (req) => {
       if (claimedState) {
         await closeActiveLaborSegment({
           laborEntity, auditEntity, entry: savedEntry, target, actor, actorEmail, requestId,
-          endReason: 'admin_correction', officialEnd: now,
+          endReason: 'admin_archive', officialEnd: now,
         });
       }
 
