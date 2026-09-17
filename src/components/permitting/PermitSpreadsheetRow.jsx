@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -60,6 +60,38 @@ const getColWidth = (step) => {
   }
   return Math.max(100, Math.min(220, name.length * 7.5 + 30));
 };
+
+function CommitStepTextInput({ value, disabled, onCommit }) {
+  const normalizedValue = value || "";
+  const [draft, setDraft] = useState(normalizedValue);
+
+  useEffect(() => {
+    setDraft(normalizedValue);
+  }, [normalizedValue]);
+
+  const commit = () => {
+    if (draft === normalizedValue) return;
+    onCommit(draft);
+  };
+
+  return (
+    <Input
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key === "Escape") {
+          setDraft(normalizedValue);
+          event.currentTarget.blur();
+        }
+      }}
+      disabled={disabled}
+      placeholder="…"
+      className="h-7 border-none p-0 px-1 text-[13px] shadow-none placeholder:text-gray-300 hover:bg-gray-100 focus:bg-white"
+    />
+  );
+}
 
 export default function PermitSpreadsheetRow({
   lineItem,
@@ -301,15 +333,13 @@ export default function PermitSpreadsheetRow({
               );
             }
 
-            // text
+            // Free-text workflow steps edit locally and commit once, avoiding a backend save per keystroke.
             return (
               <div key={step.id} className={`flex-shrink-0 px-1 ${tiedComplete ? 'opacity-60 bg-gray-100' : ''}`} style={{ width: `${w}px` }}>
-                <Input
-                  value={step.value || ""}
-                  onChange={e => onUpdateStep(lineItem.id, step.id, { value: e.target.value })}
+                <CommitStepTextInput
+                  value={step.value}
                   disabled={!isRegistered}
-                  placeholder="…"
-                  className="h-7 text-[13px] border-none shadow-none p-0 px-1 hover:bg-gray-100 focus:bg-white placeholder:text-gray-300"
+                  onCommit={(value) => onUpdateStep(lineItem.id, step.id, { value })}
                 />
               </div>
             );
