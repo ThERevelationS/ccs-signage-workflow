@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,21 +21,48 @@ function periodRequestStorageKey(key) {
   return `ccs_timeclock_pay_period_request:${String(key || "").trim()}`;
 }
 
-function storedPeriodRequestId(key) {
+function storedPeriodRequest(key) {
   try {
-    const value = sessionStorage.getItem(periodRequestStorageKey(key)) || "";
-    return value.length >= 8 && value.length <= 128 ? value : "";
+    const raw = sessionStorage.getItem(periodRequestStorageKey(key));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    if (requestId.length < 8 || requestId.length > 128 || !parsed?.payload || typeof parsed.payload !== "object") return null;
+    return { request_id: requestId, payload: parsed.payload, submitted: parsed.submitted === true };
   } catch {
-    return "";
+    return null;
   }
 }
 
-function persistPeriodRequestId(key, requestId) {
-  try { sessionStorage.setItem(periodRequestStorageKey(key), requestId); } catch {}
+function persistPeriodRequest(key, requestId, payload, submitted = false) {
+  try {
+    sessionStorage.setItem(periodRequestStorageKey(key), JSON.stringify({ request_id: requestId, payload, submitted }));
+  } catch {}
 }
 
 function clearStoredPeriodRequestId(key) {
   try { sessionStorage.removeItem(periodRequestStorageKey(key)); } catch {}
+}
+
+function samePeriodPayload(left, right) {
+  return JSON.stringify(left || {}) === JSON.stringify(right || {});
+}
+
+function submittedPeriodRequests() {
+  try {
+    const prefix = "ccs_timeclock_pay_period_request:";
+    const items = [];
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const storageKey = sessionStorage.key(index);
+      if (!storageKey?.startsWith(prefix)) continue;
+      const key = storageKey.slice(prefix.length);
+      const stored = storedPeriodRequest(key);
+      if (stored?.submitted) items.push({ key, ...stored });
+    }
+    return items;
+  } catch {
+    return [];
+  }
 }
 
 function shouldRetainPeriodRequest(err) {
@@ -109,6 +136,7 @@ export default function PayPeriodManager({
   const [actionDecision, setActionDecision] = useState("");
   const [actionNote, setActionNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const recoveryAttemptedRef = useRef(false);
 
   const loadPeriods = async () => {
     setLoading(true);
@@ -137,12 +165,17 @@ export default function PayPeriodManager({
     return map;
   }, [periods, timeEntries, correctionRequests]);
 
-  const requestIdFor = (key) => {
-    const stored = storedPeriodRequestId(key);
-    if (stored) return stored;
+  const requestIdFor = (key, payload) => {
+    const stored = storedPeriodRequest(key);
+    if (stored && samePeriodPayload(stored.payload, payload)) return stored.request_id;
+    if (stored) clearStoredPeriodRequestId(key);
     const id = newRequestId();
-    persistPeriodRequestId(key, id);
+    persistPeriodRequest(key, id, payload, false);
     return id;
+  };
+
+  const markRequestSubmitted = (key, requestId, payload) => {
+    persistPeriodRequest(key, requestId, payload, true);
   };
 
   const clearRequestId = (key) => {
