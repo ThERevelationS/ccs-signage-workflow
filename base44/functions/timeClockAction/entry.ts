@@ -1627,7 +1627,7 @@ Deno.serve(async (req) => {
         if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
           await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
             outcome: 'blocked', details: {
-              pay_period_id: period.id, decision,
+              ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note,
               active_shift_count: activeOverlap.length, unapproved_count: unapproved.length,
               pending_correction_count: pendingCorrections.length, locked_elsewhere_count: lockedElsewhere.length,
             },
@@ -1672,18 +1672,21 @@ Deno.serve(async (req) => {
           pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '',
         } });
         if (!unlock || typeof unlock.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but entry unlock verification was interrupted. Retry the same reopen request.' }, { status: 409 });
+        const stillLocked = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(stillLocked)) throw new Error('Pay-period unlock verification did not return a record list.');
+        if (stillLocked.length) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but some entry locks remain. Retry the same reopen request.' }, { status: 409 });
       }
 
       period = await payPeriodEntity.get(period.id);
-      const auditFinalized = await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
+      const auditFinalized = await auditEntity.updateMany({ id: intent.id, outcome: 'pending', request_id: requestId }, { $set: {
         outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-        details: { pay_period_id: period.id, decision, status: period.status },
+        details: { ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note, status: period.status },
       } });
       if (!auditFinalized || auditFinalized.updated !== 1) {
         const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-        if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The pay-period action was saved but audit finalization was interrupted. Retry the same action.' }, { status: 409 });
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The pay-period action was saved but audit finalization was interrupted. Retry the same action.' }, { status: 409 });
       }
-      return Response.json({ success: true, period });
+      return Response.json({ success: true, period, audit_id: intent.id });
     }
 
     if (['labor_start', 'labor_change', 'labor_stop'].includes(action)) {
