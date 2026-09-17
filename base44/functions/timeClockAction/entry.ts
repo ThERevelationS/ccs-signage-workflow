@@ -1526,13 +1526,45 @@ Deno.serve(async (req) => {
       let period = await payPeriodEntity.get(periodId).catch(() => null);
       if (!period?.id) return Response.json({ success: false, error: 'Pay period was not found.' }, { status: 404 });
       const expectedStatus = decision === 'review' ? 'review' : decision === 'finalize' ? 'finalized' : 'review';
-      const finalizeRecoveredAudit = async () => {
-        const audits = await auditEntity.filter({ action: 'pay_period_status', request_id: requestId });
-        if (!Array.isArray(audits) || audits.length !== 1 || audits[0].outcome !== 'pending') return;
-        await auditEntity.updateMany({ id: audits[0].id, outcome: 'pending' }, { $set: {
-          outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-          details: { pay_period_id: period.id, decision, status: period.status, recovered_after_interruption: true },
-        } });
+      const statusPayloadHash = await payloadHash({ pay_period_id: period.id, decision, note });
+      const statusAuditRows = await auditEntity.filter({ action: 'pay_period_status', request_id: requestId });
+      if (!Array.isArray(statusAuditRows)) throw new Error('Pay-period audit lookup did not return a record list.');
+      if (statusAuditRows.length > 1) return Response.json({ success: false, error: 'This pay-period action has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      let intent = statusAuditRows[0] || null;
+      const priorStatusHash = String(intent?.details?.payload_hash || '');
+      if (intent && priorStatusHash && !constantTimeEqual(priorStatusHash, statusPayloadHash)) {
+        return Response.json({ success: false, error: 'This pay-period request id is already bound to a different period action. Submit a new action.' }, { status: 409 });
+      }
+      if (intent && !priorStatusHash) {
+        const details = intent.details || {};
+        const expectedReason = note || `${decision} pay period`;
+        if (
+          String(details.pay_period_id || '') !== period.id ||
+          String(details.decision || '') !== decision ||
+          (String(intent.reason || '') && String(intent.reason || '') !== expectedReason)
+        ) {
+          return Response.json({ success: false, error: 'This pay-period request id is already bound to a different period action. Submit a new action.' }, { status: 409 });
+        }
+      }
+      if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This pay-period request was previously blocked. Reload and submit a new action.' }, { status: 409 });
+
+      const ensureStatusAuditConfirmed = async (recoveredAfterInterruption = false) => {
+        if (!intent?.id) return false;
+        if (intent.outcome === 'pending') {
+          const finalized = await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: { ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note, status: period.status, ...(recoveredAfterInterruption ? { recovered_after_interruption: true } : {}) },
+            } },
+          );
+          if (!finalized || finalized.updated !== 1) {
+            const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return false;
+          }
+        }
+        const finalAudit = await auditEntity.get(intent.id).catch(() => null);
+        return Boolean(finalAudit && ['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')));
       };
 
       if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
@@ -1540,12 +1572,18 @@ Deno.serve(async (req) => {
           pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '',
         } });
         if (!unlock || typeof unlock.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but entry unlock verification was interrupted. Retry the same reopen action.' }, { status: 409 });
-        await finalizeRecoveredAudit();
-        return Response.json({ success: true, period, reused: true });
+        const stillLocked = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(stillLocked)) throw new Error('Pay-period unlock verification did not return a record list.');
+        if (stillLocked.length) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but some entry locks remain. Retry the same reopen action.' }, { status: 409 });
+        if (!await ensureStatusAuditConfirmed(true)) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its audit is still being finalized. Retry the same reopen action.' }, { status: 409 });
+        return Response.json({ success: true, period, audit_id: intent.id, reused: true });
       }
       if (String(period.last_request_id || '') === requestId && period.status === expectedStatus) {
-        await finalizeRecoveredAudit();
-        return Response.json({ success: true, period, reused: true });
+        if (!await ensureStatusAuditConfirmed(true)) return Response.json({ success: false, retry_same_request: true, error: 'The pay-period action is saved but its confirmed audit could not be verified yet. Retry the same action.' }, { status: 409 });
+        return Response.json({ success: true, period, audit_id: intent.id, reused: true });
+      }
+      if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
+        return Response.json({ success: false, error: 'This pay-period audit is confirmed but the period request marker does not match. Admin investigation is required.' }, { status: 409 });
       }
       if (decision === 'review' && period.status !== 'open') return Response.json({ success: false, error: 'Only an open pay period can move to review.' }, { status: 409 });
       if (decision === 'finalize' && period.status !== 'review') return Response.json({ success: false, error: 'Only a pay period in Review can be finalized.' }, { status: 409 });
