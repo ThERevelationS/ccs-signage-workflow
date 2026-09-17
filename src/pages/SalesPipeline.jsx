@@ -163,7 +163,7 @@ export default function SalesPipeline() {
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-  const attentionChipClass = (value) => `rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition-colors ${
+  const attentionChipClass = (value) => `shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition-colors ${
     attentionFilter === value
       ? "border-blue-500 bg-blue-50 text-blue-800"
       : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
@@ -447,43 +447,32 @@ export default function SalesPipeline() {
               </button>
             </div>
 
-            <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1.5">
-              <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-700" />
-                  <span className="min-w-0 lg:flex lg:items-center lg:gap-1.5">
-                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
-                    <span className="block text-[10px] leading-tight text-amber-700">{pipelineSummary.needsAttentionCount}/{pipelineSummary.openCount} open opportunities have actionable gaps</span>
-                  </span>
+            <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1.5" title="Coverage and data-quality gaps. Swipe or scroll horizontally to see every filter.">
+              <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-1 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
+                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-amber-700" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
+                <span className="text-[10px] text-amber-700">{pipelineSummary.needsAttentionCount}/{pipelineSummary.openCount}</span>
+              </button>
+              <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={attentionChipClass("no_next_action")}>Next Action {pipelineSummary.noNextActionCount > 0 ? `(${pipelineSummary.noNextActionCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
+              <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
+              {pipelineSummary.placeholderCount > 0 && (
+                <button
+                  type="button"
+                  title={`${pipelineSummary.placeholderCount}/${pipelineSummary.openCount} exact-name test placeholders (Test/asdf), representing ${formatPipelineValue(pipelineSummary.placeholderValue)} of ${formatPipelineValue(pipelineSummary.openValue)} raw pipeline value. Raw totals include them until explicitly removed from Current Pipeline.`}
+                  onClick={() => applyAttentionFilter("placeholder")}
+                  className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-semibold leading-none transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}
+                >
+                  Test Records {pipelineSummary.placeholderCount > 0 ? `(${pipelineSummary.placeholderCount})` : ""} · {formatPipelineValue(pipelineSummary.placeholderValue)}
                 </button>
-                <div className="flex flex-wrap gap-1.5 lg:ml-auto">
-                  <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={attentionChipClass("no_next_action")}>Next Action {pipelineSummary.noNextActionCount > 0 ? `(${pipelineSummary.noNextActionCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
-                  <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing (history) {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
-                </div>
-              </div>
+              )}
             </div>
 
-            {pipelineSummary.placeholderCount > 0 && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50/70 px-2 py-1.5">
-                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-700" />
-                    <div className="min-w-0 lg:flex lg:items-center lg:gap-1.5">
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-rose-800">Pipeline Hygiene</div>
-                      <div className="text-[10px] leading-tight text-rose-700">{pipelineSummary.placeholderCount}/{pipelineSummary.openCount} exact-name test placeholders (Test/asdf) · {formatPipelineValue(pipelineSummary.placeholderValue)} of {formatPipelineValue(pipelineSummary.openValue)} raw pipeline</div>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => applyAttentionFilter("placeholder")} className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-semibold leading-none transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}>Review test records ({pipelineSummary.placeholderCount})</button>
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5">
-              <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Operational Attention</span>
+            <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5" title="Operational timing filters. Swipe or scroll horizontally to see every filter.">
+              <span className="mr-1 shrink-0 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-gray-500">Operational Attention</span>
               <button type="button" onClick={() => applyAttentionFilter("all")} className={attentionChipClass("all")}>All</button>
               <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
@@ -496,7 +485,6 @@ export default function SalesPipeline() {
               <button type="button" onClick={() => applyAttentionFilter("stage_aged")} className={attentionChipClass("stage_aged")}>Stage Aged 14+ Days {pipelineSummary.stageAgedCount > 0 ? `(${pipelineSummary.stageAgedCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities {pipelineSummary.myOpportunityCount > 0 ? `(${pipelineSummary.myOpportunityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("age_90_plus")} className={attentionChipClass("age_90_plus")}>Age 90+ Days {pipelineSummary.age90PlusCount > 0 ? `(${pipelineSummary.age90PlusCount})` : ""}</button>
-              <span className="ml-auto hidden text-[10px] text-gray-500 2xl:inline">Weighted value uses entered probabilities only; stage suggestions never auto-apply.</span>
             </div>
           </div>
         )}
