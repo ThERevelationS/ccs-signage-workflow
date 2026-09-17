@@ -215,18 +215,18 @@ export default function PayPeriodManager({
       return;
     }
     const key = "create";
-    const requestId = requestIdFor(key);
+    const payload = {
+      action: "pay_period_create",
+      label: label.trim(),
+      start_date: startDate,
+      end_date: endDate,
+    };
+    const requestId = requestIdFor(key, payload);
+    markRequestSubmitted(key, requestId, payload);
     setBusy(true);
     setError("");
     try {
-      await invoke({
-        action: "pay_period_create",
-        session_token: sessionToken,
-        request_id: requestId,
-        label: label.trim(),
-        start_date: startDate,
-        end_date: endDate,
-      });
+      await invoke({ ...payload, session_token: sessionToken, request_id: requestId });
       clearRequestId(key);
       setShowCreate(false);
       setLabel("");
@@ -242,9 +242,15 @@ export default function PayPeriodManager({
   };
 
   const openAction = (period, decision) => {
+    const key = `${decision}:${period?.id || ""}`;
+    const stored = storedPeriodRequest(key);
+    const storedPayload = stored?.payload || {};
+    const matchingStoredAction = storedPayload.action === "pay_period_status"
+      && storedPayload.pay_period_id === period?.id
+      && storedPayload.decision === decision;
     setActionPeriod(period);
     setActionDecision(decision);
-    setActionNote("");
+    setActionNote(matchingStoredAction ? String(storedPayload.note || "") : "");
     setError("");
   };
 
