@@ -962,7 +962,6 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
   if (state.status === 'clocking_out') {
     const entry = state.active_entry_id ? await entryEntity.get(state.active_entry_id).catch(() => null) : null;
     if (entry?.id && entry.archived_admin && requestId) {
-      if (entry.archive_request_id && String(entry.archive_request_id) !== requestId) return state;
       const archiveAudits = await auditEntity.filter({ action: 'admin_archive', request_id: requestId, time_entry_id: entry.id });
       if (!Array.isArray(archiveAudits)) throw new Error('Administrative archive recovery audit lookup did not return a record list.');
       if (archiveAudits.length > 1) throw new Error('Administrative archive recovery is ambiguous because multiple audit records exist.');
