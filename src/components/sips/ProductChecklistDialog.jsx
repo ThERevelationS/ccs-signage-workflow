@@ -2086,6 +2086,7 @@ export default function ProductChecklistDialog({
                               {isRegistered && (
                                 <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
                                   <button
+                                    type="button"
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
                                       setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
@@ -2098,6 +2099,7 @@ export default function ProductChecklistDialog({
                                     +Task
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={(e) => { 
                                       e.stopPropagation(); 
                                       setExpandedItems(prev => ({ ...prev, [stDisplayItem.id]: true }));
