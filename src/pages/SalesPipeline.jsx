@@ -172,13 +172,13 @@ export default function SalesPipeline() {
   return (
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
-        <div className="flex flex-wrap items-center gap-1.5 mb-2">
+        <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
           <div className="clay-card p-2 flex-shrink-0">
             <DollarSign className="w-5 h-5 text-green-600" />
           </div>
-          <div className="flex-shrink-0 leading-tight">
-            <h1 className="text-xl font-bold text-gray-800">Sales Pipeline</h1>
-            <p className="hidden text-[10px] text-gray-500 xl:block">Manage leads and opportunities</p>
+          <div className="flex-shrink-0 leading-none">
+            <h1 className="whitespace-nowrap text-lg font-bold text-gray-800">Sales Pipeline</h1>
+            <span className="sr-only">Manage leads and opportunities</span>
           </div>
           {/* Pending Imports tab */}
           <button
@@ -196,7 +196,7 @@ export default function SalesPipeline() {
 
           <div className="flex-1" />
 
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
             {isRegistered && (
               <Button 
                 onClick={() => setShowNewClientForm(true)}
@@ -208,8 +208,8 @@ export default function SalesPipeline() {
               </Button>
             )}
 
-            <div className="flex flex-col">
-              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Workspace</span>
+            <div className="flex items-center">
+              <span className="sr-only">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
                 setAttentionFilter("all");
@@ -230,9 +230,9 @@ export default function SalesPipeline() {
             </div>
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
-              <div className="flex flex-col">
-                <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">View</span>
-                <div className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
+              <div className="flex items-center">
+                <span className="sr-only">View</span>
+                <div role="group" aria-label="View" className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
                   <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
                   <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
                   {recordScope === "current" && <button type="button" onClick={() => { setViewMode("daily"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
@@ -242,8 +242,8 @@ export default function SalesPipeline() {
             )}
 
             {recordScope === "outcomes" && (
-              <div className="flex flex-col">
-                <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Outcome Period</span>
+              <div className="flex items-center">
+                <span className="sr-only">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
                   <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -256,21 +256,22 @@ export default function SalesPipeline() {
               </div>
             )}
 
-            <div className="flex flex-col">
-              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Search</span>
+            <div className="flex items-center">
+              <span className="sr-only">Search</span>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Customer, contact, estimate, address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  aria-label="Search sales pipeline"
                   className="h-8 w-56 pl-9 text-xs"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col">
-              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Information Filters</span>
+            <div className="flex items-center">
+              <span className="sr-only">Information Filters</span>
               <Select value={filterStatus} onValueChange={(value) => {
                 if (value === "manage_filters") {
                   setShowCustomFilterDialog(true);
@@ -306,8 +307,8 @@ export default function SalesPipeline() {
             </Select>
             </div>
 
-            <div className="flex flex-col">
-              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Column Filters</span>
+            <div className="flex items-center">
+              <span className="sr-only">Column Filters</span>
               <Select 
               value={activeColumnPreset?.id || "default"} 
               onValueChange={(value) => {
