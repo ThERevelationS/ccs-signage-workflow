@@ -1632,13 +1632,16 @@ export default function ProductChecklistDialog({
                               {displayItem.tasks?.map(task => (
                               <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-1 rounded border-l-2 border-orange-300 group ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  <Checkbox 
-                                    checked={!!task.approved_by}
-                                    onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                    disabled={!isRegistered}
-                                    className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
-                                    aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
-                                  />
+                                  <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
+                                    <Checkbox 
+                                      id={`sips-complete-${task.id}`}
+                                      checked={!!task.approved_by}
+                                      onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                      disabled={!isRegistered}
+                                      className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                      aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
+                                    />
+                                  </label>
                                   <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-600 font-medium">T</span>
                                   {editingItemId === task.id ? (
                                     <div className="flex-1 flex gap-1 min-w-0">
@@ -1683,13 +1686,16 @@ export default function ProductChecklistDialog({
                                 {/* Subtasks */}
                                 {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
                                   <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
-                                    <Checkbox 
-                                      checked={!!subtask.approved_by}
-                                      onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
-                                      disabled={!isRegistered}
-                                      className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
-                                      aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
-                                    />
+                                    <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
+                                      <Checkbox 
+                                        id={`sips-complete-${subtask.id}`}
+                                        checked={!!subtask.approved_by}
+                                        onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
+                                        disabled={!isRegistered}
+                                        className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
+                                        aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
+                                      />
+                                    </label>
                                     <span className="px-0.5 py-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                     {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
@@ -1896,13 +1902,16 @@ export default function ProductChecklistDialog({
                                       {detail.tasks.map(task => (
                                         <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`bg-orange-50 p-0.5 rounded group/dtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                           <div className="flex flex-wrap items-center gap-1">
-                                            <Checkbox 
-                                              checked={!!task.approved_by}
-                                              onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                              disabled={!isRegistered}
-                                              className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
-                                              aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
-                                            />
+                                            <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
+                                              <Checkbox 
+                                                id={`sips-complete-${task.id}`}
+                                                checked={!!task.approved_by}
+                                                onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                                disabled={!isRegistered}
+                                                className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                                aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
+                                              />
+                                            </label>
                                             <span className="text-xs px-0.5 py-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
@@ -1946,13 +1955,16 @@ export default function ProductChecklistDialog({
                                           {/* Subtasks under detail task */}
                                           {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
                                             <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
-                                              <Checkbox 
-                                                checked={!!subtask.approved_by}
-                                                onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
-                                                disabled={!isRegistered}
-                                                className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
-                                                aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
-                                              />
+                                              <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
+                                                <Checkbox 
+                                                  id={`sips-complete-${subtask.id}`}
+                                                  checked={!!subtask.approved_by}
+                                                  onCheckedChange={(checked) => updateChecklistItem(subtask.id, { approved_by: checked ? "Done" : "" })}
+                                                  disabled={!isRegistered}
+                                                  className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-1"
+                                                  aria-label={`${subtask.approved_by ? "Mark subtask incomplete" : "Mark subtask complete"}: ${subtask.text || "subtask"}`}
+                                                />
+                                              </label>
                                               <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                                               {editingItemId === subtask.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
@@ -2152,13 +2164,16 @@ export default function ProductChecklistDialog({
                               <div className="ml-6 mt-2 space-y-1 border-l-2 border-gray-200 pl-2">
                                 {stDisplayItem.tasks?.map(task => (
                                   <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex flex-wrap items-center gap-2 bg-orange-50 p-1.5 rounded border-l-4 border-orange-400 group/sttask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
-                                    <Checkbox 
-                                      checked={!!task.approved_by}
-                                      onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                      disabled={!isRegistered}
-                                      className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
-                                      aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
-                                    />
+                                    <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
+                                      <Checkbox 
+                                        id={`sips-complete-${task.id}`}
+                                        checked={!!task.approved_by}
+                                        onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                        disabled={!isRegistered}
+                                        className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                        aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
+                                      />
+                                    </label>
                                     <span className="text-xs px-1 py-0.5 rounded bg-orange-100 text-orange-700">Task</span>
                                     {editingItemId === task.id ? (
                                       <div className="flex-1 flex gap-1 min-w-0">
@@ -2269,13 +2284,16 @@ export default function ProductChecklistDialog({
                                       <div className="ml-4 mt-1 space-y-0.5">
                                         {detail.tasks.map(task => (
                                           <div data-sips-checklist-item-id={String(task.id)} key={task.id} className={`flex items-center gap-1 bg-orange-50 p-0.5 rounded group/stdtask ${focusedSearchId === task.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
-                                            <Checkbox 
-                                              checked={!!task.approved_by}
-                                              onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
-                                              disabled={!isRegistered}
-                                              className="h-7 w-7 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
-                                              aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
-                                            />
+                                            <label htmlFor={`sips-complete-${task.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-orange-400 focus-within:ring-offset-1">
+                                              <Checkbox 
+                                                id={`sips-complete-${task.id}`}
+                                                checked={!!task.approved_by}
+                                                onCheckedChange={(checked) => updateChecklistItem(task.id, { approved_by: checked ? "Done" : "" })}
+                                                disabled={!isRegistered}
+                                                className="h-5 w-5 md:h-4 md:w-4 shrink-0 focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-1"
+                                                aria-label={`${task.approved_by ? "Mark task incomplete" : "Mark task complete"}: ${task.text || "task"}`}
+                                              />
+                                            </label>
                                             <span className="px-0.5 rounded bg-orange-100 text-orange-600">T</span>
                                             {editingItemId === task.id ? (
                                               <div className="flex-1 flex gap-1 min-w-0">
