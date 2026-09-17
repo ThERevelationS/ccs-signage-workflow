@@ -1067,7 +1067,6 @@ export default function ProductChecklistDialog({
   // Query navigation and unrelated dialog state can then reuse this index.
   const checklistSearchIndexData = useMemo(() => {
     const searchIndex = [];
-    const seenIds = new Set();
 
     Object.entries(activeChecklist).forEach(([productName, group]) => {
       const collections = [
@@ -1077,8 +1076,6 @@ export default function ProductChecklistDialog({
 
       collections.forEach(({ items, subTemplateName }) => {
         items.forEach(item => {
-          if (seenIds.has(item.id)) return;
-          seenIds.add(item.id);
           const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
           const searchableText = [
             productName,
@@ -1098,9 +1095,14 @@ export default function ProductChecklistDialog({
   const normalizedChecklistSearch = checklistSearchQuery.trim().toLowerCase();
   const checklistSearchResults = useMemo(() => {
     if (!normalizedChecklistSearch) return [];
-    return checklistSearchIndexData
-      .filter(entry => entry.searchableText.includes(normalizedChecklistSearch))
-      .map(({ item, productName }) => ({ item, productName }));
+    const results = [];
+    const seenIds = new Set();
+    checklistSearchIndexData.forEach(entry => {
+      if (seenIds.has(entry.item.id) || !entry.searchableText.includes(normalizedChecklistSearch)) return;
+      seenIds.add(entry.item.id);
+      results.push({ item: entry.item, productName: entry.productName });
+    });
+    return results;
   }, [checklistSearchIndexData, normalizedChecklistSearch]);
 
   if (isLoading) {
