@@ -2986,7 +2986,7 @@ Deno.serve(async (req) => {
       );
       if (!auditFinalized || auditFinalized.updated !== 1) {
         const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-        if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but audit finalization was interrupted. Retry the same approval action.' }, { status: 409 });
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but audit finalization was interrupted. Retry the same approval action.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
