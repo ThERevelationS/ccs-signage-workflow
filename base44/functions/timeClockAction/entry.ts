@@ -3074,11 +3074,33 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This time entry changed in another session. It was not archived.' }, { status: 409 });
       }
 
+      const savedEntry = await entryEntity.get(entry.id);
       if (claimedState) {
         await closeActiveLaborSegment({
-          laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+          laborEntity, auditEntity, entry: savedEntry, target, actor, actorEmail, requestId,
           endReason: 'admin_correction', officialEnd: now,
         });
+      }
+
+      const auditFinalized = await auditEntity.updateMany(
+        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+        { $set: {
+          outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+          details: {
+            ...(intent.details || {}),
+            payload_hash: archivePayloadHash,
+            archived_entry: entryAuditSnapshot(savedEntry),
+          },
+        } },
+      );
+      if (!auditFinalized || auditFinalized.updated !== 1) {
+        const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The entry was archived but its audit finalization was interrupted. Retry this same archive request.' }, { status: 409 });
+        }
+      }
+
+      if (claimedState) {
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
           status: 'clocked_out', active_entry_id: null, last_action_at: now, pending_started_at: null,
@@ -3089,12 +3111,10 @@ Deno.serve(async (req) => {
           labor_pending_activity_type: '', labor_pending_work_order_id: '',
         });
         if (!finalized) {
-          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), reason: 'Entry archived but authoritative state finalization requires review.' } } });
-          return Response.json({ success: false, error: 'The entry was archived, but authoritative employee state could not be finalized. Admin review is required.' }, { status: 409 });
+          return Response.json({ success: false, retry_same_request: true, error: 'The archive and audit were saved but employee state finalization was interrupted. Retry this same archive request.' }, { status: 409 });
         }
       }
 
-      await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'confirmed', server_timestamp: new Date().toISOString() } });
       return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
     }
 
