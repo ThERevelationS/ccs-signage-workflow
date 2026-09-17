@@ -1590,17 +1590,13 @@ Deno.serve(async (req) => {
       if (decision === 'reopen' && period.status !== 'finalized') return Response.json({ success: false, error: 'Only a finalized pay period can be reopened.' }, { status: 409 });
 
       const now = new Date().toISOString();
-      let intentRows = await auditEntity.filter({ action: 'pay_period_status', request_id: requestId });
-      if (!Array.isArray(intentRows)) throw new Error('Pay-period audit lookup did not return a record list.');
-      if (intentRows.length > 1) return Response.json({ success: false, error: 'This pay-period action has multiple audit records. Admin investigation is required.' }, { status: 409 });
-      let intent = intentRows[0] || null;
-      if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This pay-period request was previously blocked. Reload and submit a new action.' }, { status: 409 });
       if (!intent) {
         intent = await auditEntity.create({
           action: 'pay_period_status', outcome: 'pending', user_email: actorEmail,
           user_name: actor.full_name || actorEmail, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: 'session', server_timestamp: now, request_id: requestId,
-          reason: note || `${decision} pay period`, details: { pay_period_id: period.id, decision, prior_status: period.status },
+          reason: note || `${decision} pay period`,
+          details: { payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note, prior_status: period.status },
         });
       }
       if (!intent?.id) throw new Error('Pay-period audit intent could not be persisted. No status change was made.');
