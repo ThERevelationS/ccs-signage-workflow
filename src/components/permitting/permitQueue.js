@@ -332,7 +332,6 @@ export function getPermitGroupReadiness(group, today = "") {
     if (!String(line?.locality_id || line?.locality_name || "").trim()) blockers.push(`${label} is missing its locality.`);
     if (!Array.isArray(line?.steps) || line.steps.length === 0) blockers.push(`${label} has no workflow steps configured.`);
     if (line?.submitted_date && !line?.permit_received_date && !asDateKey(line?.next_followup_date)) reviews.push(`${label} was submitted but has no next follow-up scheduled.`);
-    if (line?.permit_received_date && line?.status !== "completed") reviews.push(`${label} has a permit received date but is not marked complete.`);
   });
 
   const hasOwner = [
