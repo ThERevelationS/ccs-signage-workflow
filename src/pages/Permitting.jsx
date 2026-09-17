@@ -309,9 +309,10 @@ export default function Permitting() {
       }
       if (s.type === 'permit_received_date' && s.value) permitReceived = s.value;
     });
-    const newStatus = permitReceived ? 'completed' : 'active';
-
-    const lineUpdate = { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate, status: newStatus };
+    // Recording a received permit is not the same as completing the permit line.
+    // Preserve status here so staff can review any recorded fee/inspection/closeout
+    // obligations and explicitly use the audited "Mark line complete" action.
+    const lineUpdate = { steps: newSteps, next_followup_date: nextFollowup, permit_received_date: permitReceived, submitted_date: submittedDate };
     setLineItems(prev => prev.map(li => li.id === lineItemId ? { ...li, ...lineUpdate } : li));
     const savedLine = await persistPermitLineItemFields(lineItemId, lineUpdate, "Permit workflow step update");
     if (!savedLine) return;
