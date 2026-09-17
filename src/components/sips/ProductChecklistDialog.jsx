@@ -1062,6 +1062,23 @@ export default function ProductChecklistDialog({
     };
   }, [checklist, dropdownConditionByName]);
   const needsInputPrimaryCount = needsInputPrimaryItems.length;
+  const activeProductNames = useMemo(() => Object.keys(activeChecklist), [activeChecklist]);
+  const activeProductRenderGroups = useMemo(() => {
+    const renderGroups = [];
+    Object.entries(activeChecklist).forEach(([productName, group]) => {
+      let primaryCount = 0;
+      group.mainItems.forEach(item => {
+        if (!item.parent_id && (item.type === 'checklist' || !item.type)) primaryCount += 1;
+      });
+      Object.values(group.subTemplates).forEach(items => {
+        items.forEach(item => {
+          if (!item.parent_id && (item.type === 'checklist' || !item.type)) primaryCount += 1;
+        });
+      });
+      if (primaryCount > 0) renderGroups.push({ productName, group, primaryCount });
+    });
+    return renderGroups;
+  }, [activeChecklist]);
 
   // Build normalized searchable text only when the active checklist changes.
   // Query navigation and unrelated dialog state can then reuse this index.
@@ -1117,12 +1134,6 @@ export default function ProductChecklistDialog({
     );
   }
 
-  const countPrimaryItemsInGroup = (group) => (
-    group.mainItems.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length +
-    Object.values(group.subTemplates).reduce((sum, items) => (
-      sum + items.filter(item => !item.parent_id && (item.type === 'checklist' || !item.type)).length
-    ), 0)
-  );
   const allDetailsCollapsed = expandableChecklistIds.length > 0 && expandableChecklistIds.every(id => expandedItems[id] === false);
   const toggleAllDetails = () => {
     const nextExpanded = { ...expandedItems };
@@ -1131,7 +1142,6 @@ export default function ProductChecklistDialog({
     });
     setExpandedItems(nextExpanded);
   };
-  const activeProductNames = Object.keys(activeChecklist);
   const allProductsCollapsed = activeProductNames.length > 0 && activeProductNames.every(productName => collapsedProducts[productName] === true);
   const toggleAllProducts = () => {
     setCollapsedProducts(prev => {
@@ -1416,17 +1426,7 @@ export default function ProductChecklistDialog({
             ) : (
               <>
                 {/* Active Items */}
-                {Object.entries(activeChecklist)
-                  .filter(([, group]) => {
-                    const hasMainChecklistItems = group.mainItems.some(item => 
-                      !item.parent_id && (item.type === 'checklist' || !item.type)
-                    );
-                    const hasSubTemplateItems = Object.values(group.subTemplates).some(stItems => 
-                      stItems.some(item => !item.parent_id && (item.type === 'checklist' || !item.type))
-                    );
-                    return hasMainChecklistItems || hasSubTemplateItems;
-                  })
-                  .map(([productName, group]) => (
+                {activeProductRenderGroups.map(({ productName, group, primaryCount }) => (
                 <div 
                   key={productName} 
                   className="border-2 border-purple-200 rounded-lg p-3 bg-purple-50/20"
@@ -1468,7 +1468,7 @@ export default function ProductChecklistDialog({
                             </span>
                           )}
                           <span className="text-[10px] font-medium bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            {countPrimaryItemsInGroup(group)} open
+                            {primaryCount} open
                           </span>
                         </h3>
                       )}
