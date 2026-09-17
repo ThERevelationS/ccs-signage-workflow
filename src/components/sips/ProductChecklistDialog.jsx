@@ -1218,6 +1218,7 @@ export default function ProductChecklistDialog({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTemplateBuilder(true)}
+                    className="w-full h-11 sm:w-auto sm:h-8"
                   >
                     <Pencil className="w-4 h-4 mr-1" />
                     Checklist Builder
@@ -2457,9 +2458,9 @@ export default function ProductChecklistDialog({
             <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <div className="font-medium">SIP product checklist save blocked</div>
               <div className="mt-1 text-xs">{saveError}</div>
-              <div className="mt-2 flex items-center justify-between gap-3">
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                 <span className="text-xs text-red-700">Reloading discards unsaved checklist and product edits.</span>
-                <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || isSaving} className="shrink-0 border-red-300 bg-white text-red-800">
+                <Button type="button" size="sm" variant="outline" onClick={loadData} disabled={isLoading || isSaving} className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 sm:h-8 sm:w-auto">
                   {isLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                   Reload latest
                 </Button>
