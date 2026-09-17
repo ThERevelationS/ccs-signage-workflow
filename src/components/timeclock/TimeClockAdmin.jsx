@@ -436,6 +436,16 @@ export default function TimeClockAdmin() {
     }
   };
 
+  const openArchiveEntry = (entry) => {
+    setTimeEntryError("");
+    setArchiveReason("");
+    const recoveredRequestId = storedAdminRequestId("admin_archive_entry", entry?.id);
+    const requestId = recoveredRequestId || newRequestId();
+    if (!recoveredRequestId && entry?.id) persistAdminRequestId("admin_archive_entry", entry.id, requestId);
+    setArchiveRequestId(requestId);
+    setDeleteConfirm(entry);
+  };
+
   const handleArchiveEntry = async () => {
     const entry = deleteConfirm;
     if (!entry?.id || deleteBusy) return;
@@ -450,25 +460,38 @@ export default function TimeClockAdmin() {
     }
     setDeleteBusy(true);
     try {
+      const requestId = archiveRequestId || storedAdminRequestId("admin_archive_entry", entry.id) || newRequestId();
+      if (!archiveRequestId) {
+        setArchiveRequestId(requestId);
+        persistAdminRequestId("admin_archive_entry", entry.id, requestId);
+      }
       const response = await base44.functions.invoke("timeClockAction", {
         action: "admin_archive_entry",
         session_token: sessionToken,
         target_email: entry.user_email,
-        request_id: newRequestId(),
+        request_id: requestId,
         entry_id: entry.id,
         expected_updated_date: entry.updated_date,
         reason: archiveReason.trim(),
       });
       const data = functionData(response);
-      if (!data?.success) throw new Error(data?.error || "The archive was not confirmed by the server.");
+      if (!data?.success) throw adminActionError(data, "The archive was not confirmed by the server.");
+      clearAdminRequestId("admin_archive_entry", entry.id);
+      setArchiveRequestId("");
       setDeleteConfirm(null);
       setArchiveReason("");
       await loadData();
     } catch (err) {
       console.error("Error archiving entry:", err);
-      setTimeEntryError(err?.response?.data?.error || err?.message || "This time entry changed in another session and was not archived.");
-      setDeleteConfirm(null);
-      setArchiveReason("");
+      const message = err?.response?.data?.error || err?.message || "This time entry changed in another session and was not archived.";
+      const retainRequest = shouldRetainAdminRequest(err);
+      setTimeEntryError(message);
+      if (!retainRequest) {
+        clearAdminRequestId("admin_archive_entry", entry.id);
+        setArchiveRequestId("");
+        setDeleteConfirm(null);
+        setArchiveReason("");
+      }
       await loadData();
     } finally {
       setDeleteBusy(false);
@@ -1019,7 +1042,7 @@ export default function TimeClockAdmin() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => { setArchiveReason(""); setDeleteConfirm(entry); }}
+                          onClick={() => openArchiveEntry(entry)}
                           className="h-7 w-7"
                           disabled={Boolean(entry.pay_period_id)}
                           title={entry.pay_period_id ? "Reopen the finalized pay period before archiving this shift" : "Archive time entry"}
