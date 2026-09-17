@@ -3184,7 +3184,14 @@ Deno.serve(async (req) => {
       if (!entry?.id) throw new Error('Clock-in TimeEntry could not be created.');
 
       const currentClaim = await freshState(stateEntity, claimed.id);
-      const finalized = await setState(stateEntity, currentClaim, 'clocking_in', requestId, {
+      const auditClaim = await setState(stateEntity, currentClaim, 'clocking_in', requestId, {
+        pending_started_at: currentClaim.pending_started_at || entry.clock_in,
+      });
+      if (!auditClaim) {
+        return Response.json({ success: false, retry_same_request: true, error: 'Clock-in is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+      }
+      await ensureClockInAudit({ auditEntity, entry, target, actor, requestId });
+      const finalized = await setState(stateEntity, auditClaim, 'clocking_in', requestId, {
         status: 'clocked_in', active_entry_id: entry.id, last_action_at: entry.clock_in,
         pending_started_at: null, break_status: 'working', active_break_id: null,
         last_break_request_id: null, break_pending_started_at: null,
@@ -3194,16 +3201,10 @@ Deno.serve(async (req) => {
         labor_pending_activity_type: '', labor_pending_work_order_id: '',
       });
       if (!finalized) {
-        return Response.json({ success: false, retry_same_request: true, error: 'Clock-in was saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+        return Response.json({ success: false, retry_same_request: true, error: 'Clock-in and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
       }
 
-      const auditSaved = await audit(auditEntity, {
-        action: 'clock_in', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target),
-        server_timestamp: entry.clock_in, request_id: requestId, time_entry_id: entry.id,
-      });
-      return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: auditSaved });
+      return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
     }
 
     if (action === 'clock_out') {
