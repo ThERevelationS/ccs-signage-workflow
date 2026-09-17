@@ -827,11 +827,11 @@ export default function Permitting() {
     <div className="h-full overflow-auto p-3 sm:p-6">
       <div className="w-full">
         {/* Header */}
-        <div className="clay-card p-5 mb-5">
+        <div className="clay-card p-4 mb-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Permitting Tracker</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">Permitting Tracker</h1>
+              <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
                 {totalLines} total lines · {activeLinesCount} active · {completedLinesCount} completed
               </p>
             </div>
@@ -887,15 +887,18 @@ export default function Permitting() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-2 mb-5">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
           <button
             type="button"
             onClick={() => setQueueFilter("all")}
-            className={`rounded-xl border p-3 text-left transition-colors ${queueFilter === "all" ? "border-purple-400 bg-purple-50 ring-2 ring-purple-100" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+            aria-pressed={queueFilter === "all"}
+            title="Show every permitting job"
+            className={`min-h-[52px] rounded-lg border px-3 py-2 text-left transition-colors ${queueFilter === "all" ? "border-purple-400 bg-purple-50 ring-2 ring-purple-100" : "border-gray-200 bg-white hover:bg-gray-50"}`}
           >
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">All Permits</div>
-            <div className="text-2xl font-bold text-gray-900 mt-0.5">{filteredGroups.length}</div>
-            <div className="text-[11px] text-gray-500 mt-1">Show every permitting job</div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">All Permits</span>
+              <span className="text-lg font-bold text-gray-900">{filteredGroups.length}</span>
+            </div>
           </button>
 
           {PERMIT_QUEUE_ORDER.map((key) => {
@@ -905,11 +908,14 @@ export default function Permitting() {
                 key={key}
                 type="button"
                 onClick={() => setQueueFilter(key)}
-                className={`rounded-xl border p-3 text-left transition-colors ${queueFilter === key ? `${meta.className} ring-2 ring-black/5` : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                aria-pressed={queueFilter === key}
+                title={`${meta.label}: ${meta.description}`}
+                className={`min-h-[52px] rounded-lg border px-3 py-2 text-left transition-colors ${queueFilter === key ? `${meta.className} ring-2 ring-black/5` : "border-gray-200 bg-white hover:bg-gray-50"}`}
               >
-                <div className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{meta.shortLabel}</div>
-                <div className="text-2xl font-bold mt-0.5">{queueCounts[key] || 0}</div>
-                <div className="text-[11px] mt-1 opacity-75 line-clamp-2">{meta.description}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{meta.shortLabel}</span>
+                  <span className="text-lg font-bold">{queueCounts[key] || 0}</span>
+                </div>
               </button>
             );
           })}
