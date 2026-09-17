@@ -1415,18 +1415,61 @@ Deno.serve(async (req) => {
       if (label.length < 2 || label.length > 100) return Response.json({ success: false, error: 'Pay period label must be between 2 and 100 characters.' }, { status: 400 });
       if (!startDate || !endDate || startDate > endDate) return Response.json({ success: false, error: 'A valid pay-period start and end date are required.' }, { status: 400 });
 
+      const createPayloadHash = await payloadHash({ label, start_date: startDate, end_date: endDate });
+      const createAudits = await auditEntity.filter({ action: 'pay_period_create', request_id: requestId });
+      if (!Array.isArray(createAudits)) throw new Error('Pay-period create audit lookup did not return a record list.');
+      if (createAudits.length > 1) return Response.json({ success: false, error: 'This pay-period create request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      let createIntent = createAudits[0] || null;
+      const priorCreateHash = String(createIntent?.details?.payload_hash || '');
+      if (createIntent && priorCreateHash && !constantTimeEqual(priorCreateHash, createPayloadHash)) {
+        return Response.json({ success: false, error: 'This pay-period request id is already bound to different create details. Submit a new create action.' }, { status: 409 });
+      }
+      if (createIntent && !priorCreateHash) {
+        const details = createIntent.details || {};
+        if (
+          String(details.label || '') !== label ||
+          String(details.start_date || '') !== startDate ||
+          String(details.end_date || '') !== endDate
+        ) {
+          return Response.json({ success: false, error: 'This pay-period request id is already bound to different create details. Submit a new create action.' }, { status: 409 });
+        }
+      }
+      if (createIntent?.outcome === 'blocked') return Response.json({ success: false, error: 'This pay-period create request was previously blocked. Submit a new create action.' }, { status: 409 });
+
       const prior = await payPeriodEntity.filter({ last_request_id: requestId });
       if (!Array.isArray(prior)) throw new Error('Pay period idempotency lookup did not return a record list.');
       if (prior.length > 1) return Response.json({ success: false, error: 'This pay-period request id is ambiguous. Admin investigation is required.' }, { status: 409 });
       if (prior.length === 1) {
-        const audits = await auditEntity.filter({ action: 'pay_period_create', request_id: requestId });
-        if (Array.isArray(audits) && audits.length === 1 && audits[0].outcome === 'pending') {
-          await auditEntity.updateMany({ id: audits[0].id, outcome: 'pending' }, { $set: {
-            outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-            details: { label: prior[0].label, start_date: prior[0].start_date, end_date: prior[0].end_date, pay_period_id: prior[0].id, recovered_after_interruption: true },
-          } });
+        const period = prior[0];
+        if (period.label !== label || period.start_date !== startDate || period.end_date !== endDate) {
+          return Response.json({ success: false, error: 'This pay-period request id is already associated with different period details.' }, { status: 409 });
         }
-        return Response.json({ success: true, period: prior[0], reused: true });
+        if (!createIntent?.id) {
+          return Response.json({ success: false, error: 'The pay period exists but its required create audit is missing. Admin investigation is required.' }, { status: 409 });
+        }
+        if (createIntent.outcome === 'pending') {
+          const recovered = await auditEntity.updateMany(
+            { id: createIntent.id, outcome: 'pending', request_id: requestId },
+            { $set: {
+              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              details: { ...(createIntent.details || {}), payload_hash: createPayloadHash, label: period.label, start_date: period.start_date, end_date: period.end_date, pay_period_id: period.id, recovered_after_interruption: true },
+            } },
+          );
+          if (!recovered || recovered.updated !== 1) {
+            const freshAudit = await auditEntity.get(createIntent.id).catch(() => null);
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The pay period exists but its create audit is still being finalized. Retry the same create action.' }, { status: 409 });
+            }
+          }
+        }
+        const finalAudit = await auditEntity.get(createIntent.id).catch(() => null);
+        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The pay period exists but a confirmed create audit could not be verified yet. Retry the same create action.' }, { status: 409 });
+        }
+        return Response.json({ success: true, period, audit_id: createIntent.id, reused: true });
+      }
+      if (createIntent?.outcome === 'confirmed' || createIntent?.outcome === 'recovered') {
+        return Response.json({ success: false, error: 'This pay-period create audit is confirmed but the matching period request marker is missing. Admin investigation is required.' }, { status: 409 });
       }
 
       const existingPeriods = await payPeriodEntity.filter({});
@@ -1436,27 +1479,38 @@ Deno.serve(async (req) => {
         const existingEnd = validDateKey(period.end_date);
         return existingStart && existingEnd && !(endDate < existingStart || startDate > existingEnd);
       });
-      if (overlap?.id) return Response.json({ success: false, error: `Pay period overlaps ${overlap.label || 'an existing period'} (${overlap.start_date} to ${overlap.end_date}).` }, { status: 409 });
+      if (overlap?.id) {
+        if (createIntent?.id && createIntent.outcome === 'pending') await auditEntity.updateMany({ id: createIntent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+        return Response.json({ success: false, error: `Pay period overlaps ${overlap.label || 'an existing period'} (${overlap.start_date} to ${overlap.end_date}).` }, { status: 409 });
+      }
 
       const now = new Date().toISOString();
-      const intent = await auditEntity.create({
-        action: 'pay_period_create', outcome: 'pending', user_email: actorEmail,
-        user_name: actor.full_name || actorEmail, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: 'session', server_timestamp: now, request_id: requestId,
-        reason: `Create pay period ${label}`, details: { label, start_date: startDate, end_date: endDate },
-      });
-      if (!intent?.id) throw new Error('Pay-period audit intent could not be persisted. No period was created.');
+      if (!createIntent) {
+        createIntent = await auditEntity.create({
+          action: 'pay_period_create', outcome: 'pending', user_email: actorEmail,
+          user_name: actor.full_name || actorEmail, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: 'session', server_timestamp: now, request_id: requestId,
+          reason: `Create pay period ${label}`, details: { payload_hash: createPayloadHash, label, start_date: startDate, end_date: endDate },
+        });
+      }
+      if (!createIntent?.id) throw new Error('Pay-period audit intent could not be persisted. No period was created.');
 
       const period = await payPeriodEntity.create({
         label, start_date: startDate, end_date: endDate, status: 'open',
         created_at: now, created_by: actorEmail, last_request_id: requestId,
       });
       if (!period?.id) throw new Error('Pay period could not be created.');
-      await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
+      const auditFinalized = await auditEntity.updateMany({ id: createIntent.id, outcome: 'pending', request_id: requestId }, { $set: {
         outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-        details: { label, start_date: startDate, end_date: endDate, pay_period_id: period.id },
+        details: { ...(createIntent.details || {}), payload_hash: createPayloadHash, label, start_date: startDate, end_date: endDate, pay_period_id: period.id },
       } });
-      return Response.json({ success: true, period });
+      if (!auditFinalized || auditFinalized.updated !== 1) {
+        const freshAudit = await auditEntity.get(createIntent.id).catch(() => null);
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The pay period was created but audit finalization was interrupted. Retry the same create action.' }, { status: 409 });
+        }
+      }
+      return Response.json({ success: true, period, audit_id: createIntent.id });
     }
 
     if (action === 'pay_period_status') {
