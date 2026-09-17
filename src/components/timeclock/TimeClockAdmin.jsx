@@ -310,6 +310,10 @@ export default function TimeClockAdmin() {
   const handleEditEntry = (entry) => {
     setTimeEntryError("");
     setCorrectionReason("");
+    const recoveredRequestId = storedAdminRequestId("admin_correct_entry", entry?.id);
+    const requestId = recoveredRequestId || newRequestId();
+    if (!recoveredRequestId && entry?.id) persistAdminRequestId("admin_correct_entry", entry.id, requestId);
+    setCorrectionRequestId(requestId);
     setEditingEntryBaseline(entry);
     setEditingEntry({ ...entry });
     setShowEditDialog(true);
