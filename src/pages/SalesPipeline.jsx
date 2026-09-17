@@ -188,7 +188,7 @@ export default function SalesPipeline() {
             <Inbox className="w-4 h-4" />
             {showPendingImports ? '← Return' : 'Pending Imports / Duplicates'}
             {!showPendingImports && pendingCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
                 {pendingCount}
               </span>
             )}
@@ -200,7 +200,7 @@ export default function SalesPipeline() {
             {isRegistered && (
               <Button 
                 onClick={() => setShowNewClientForm(true)}
-                className="clay-button border-none text-gray-800 h-9"
+                className="clay-button h-8 border-none px-2.5 text-xs text-gray-800"
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -209,14 +209,14 @@ export default function SalesPipeline() {
             )}
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Workspace</span>
+              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
                 setAttentionFilter("all");
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
-                <SelectTrigger className="w-44 h-9">
+                <SelectTrigger className="h-8 w-40 text-xs">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
@@ -231,8 +231,8 @@ export default function SalesPipeline() {
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-500 mb-1">View</span>
-                <div className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
+                <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">View</span>
+                <div className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
                   <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
                   <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
                   {recordScope === "current" && <button type="button" onClick={() => { setViewMode("daily"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
@@ -243,9 +243,9 @@ export default function SalesPipeline() {
 
             {recordScope === "outcomes" && (
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-500 mb-1">Outcome Period</span>
+                <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
-                  <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tracked</SelectItem>
                     <SelectItem value="30">Last 30 Days</SelectItem>
@@ -257,20 +257,20 @@ export default function SalesPipeline() {
             )}
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Search</span>
+              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Search</span>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Customer, contact, estimate, address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 w-64 h-9"
+                  className="h-8 w-56 pl-9 text-xs"
                 />
               </div>
             </div>
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Information Filters</span>
+              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Information Filters</span>
               <Select value={filterStatus} onValueChange={(value) => {
                 if (value === "manage_filters") {
                   setShowCustomFilterDialog(true);
@@ -278,7 +278,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger className="w-48 h-9">
+                <SelectTrigger className="h-8 w-40 text-xs">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -307,7 +307,7 @@ export default function SalesPipeline() {
             </div>
 
             <div className="flex flex-col">
-              <span className="text-xs font-medium text-gray-500 mb-1">Column Filters</span>
+              <span className="mb-0.5 text-[9px] font-medium leading-none text-gray-500">Column Filters</span>
               <Select 
               value={activeColumnPreset?.id || "default"} 
               onValueChange={(value) => {
@@ -321,7 +321,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger className="w-48 h-9">
+              <SelectTrigger className="h-8 w-40 text-xs">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
@@ -348,11 +348,11 @@ export default function SalesPipeline() {
             </div>
             
             {canImportExport && (
-              <div className="flex items-center gap-1 h-9">
+              <div className="flex h-8 items-center gap-0.5">
                 <Button 
                   onClick={() => spreadsheetRef.current?.importFromExcel()}
                   size="sm" 
-                  className="h-9 px-2"
+                  className="h-8 px-2"
                   variant="ghost"
                 >
                   <Upload className="w-3 h-3" />
@@ -360,7 +360,7 @@ export default function SalesPipeline() {
                 <Button 
                   onClick={() => spreadsheetRef.current?.exportToExcel()}
                   size="sm" 
-                  className="h-9 px-2"
+                  className="h-8 px-2"
                   variant="ghost"
                 >
                   <Download className="w-3 h-3" />
