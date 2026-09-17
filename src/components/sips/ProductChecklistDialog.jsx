@@ -79,7 +79,7 @@ export default function ProductChecklistDialog({
 
   // Keep hierarchy indexes stable while unrelated dialog state changes. Long
   // checklists should only rebuild these O(n) structures when their source data changes.
-  const { checklistItemById, checklistChildrenByParentId } = useMemo(() => {
+  const { checklistItemById, checklistChildrenByParentId, childrenCompleteByItemId } = useMemo(() => {
     const itemById = new Map(checklist.map(item => [item.id, item]));
     const childrenByParentId = new Map();
     checklist.forEach(item => {
@@ -87,12 +87,59 @@ export default function ProductChecklistDialog({
       if (!childrenByParentId.has(item.parent_id)) childrenByParentId.set(item.parent_id, []);
       childrenByParentId.get(item.parent_id).push(item);
     });
-    return { checklistItemById: itemById, checklistChildrenByParentId: childrenByParentId };
+
+    // Cache descendant-completion state once per checklist change. Rendering attention
+    // labels and validating a status should not recursively walk the same subtrees again.
+    const completionByItemId = new Map();
+    const computing = new Set();
+    const computeChildrenComplete = (itemId) => {
+      if (completionByItemId.has(itemId)) return completionByItemId.get(itemId);
+      if (computing.has(itemId)) return false;
+      computing.add(itemId);
+      const children = childrenByParentId.get(itemId) || [];
+      const isComplete = children.every(child => {
+        if (child.type === 'detail') {
+          return Boolean(child.approved_by && child.custom_dropdown_value && computeChildrenComplete(child.id));
+        }
+        if (child.type === 'task' || child.type === 'subtask') {
+          return Boolean(child.approved_by && computeChildrenComplete(child.id));
+        }
+        return true;
+      });
+      computing.delete(itemId);
+      completionByItemId.set(itemId, isComplete);
+      return isComplete;
+    };
+    checklist.forEach(item => computeChildrenComplete(item.id));
+
+    return {
+      checklistItemById: itemById,
+      checklistChildrenByParentId: childrenByParentId,
+      childrenCompleteByItemId: completionByItemId,
+    };
   }, [checklist]);
   const dropdownConditionByName = useMemo(
     () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
     [dropdownConditions]
   );
+  const itemAttentionLabelById = useMemo(() => {
+    const labels = new Map();
+    checklist.forEach(item => {
+      let label = null;
+      if (!item?.approved_by) {
+        label = "Needs approver";
+      } else if (!item?.custom_dropdown_value) {
+        label = "Needs status";
+      } else {
+        const selectedCondition = dropdownConditionByName.get(item.custom_dropdown_value);
+        if (selectedCondition?.is_completed && childrenCompleteByItemId.get(item.id) === false) {
+          label = "Tasks open";
+        }
+      }
+      labels.set(item.id, label);
+    });
+    return labels;
+  }, [checklist, dropdownConditionByName, childrenCompleteByItemId]);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -400,26 +447,8 @@ export default function ProductChecklistDialog({
     setPendingDelete(null);
   };
 
-  // Check if an item's children are all complete
-  const areChildrenComplete = (itemId) => {
-    const children = checklistChildrenByParentId.get(itemId) || [];
-    if (children.length === 0) return true;
-    
-    return children.every(child => {
-      if (child.type === 'detail') {
-        // Detail must have both approved_by and condition
-        if (!child.approved_by || !child.custom_dropdown_value) return false;
-        // Check if detail's children (tasks) are complete
-        return areChildrenComplete(child.id);
-      } else if (child.type === 'task' || child.type === 'subtask') {
-        // Task/subtask must have approved_by (checked)
-        if (!child.approved_by) return false;
-        // Check if task's children (subtasks) are complete
-        return areChildrenComplete(child.id);
-      }
-      return true;
-    });
-  };
+  // Descendant completion is memoized above so repeated render/validation checks are O(1).
+  const areChildrenComplete = (itemId) => childrenCompleteByItemId.get(itemId) ?? true;
 
   const applyChecklistStatus = (itemId, value) => {
     const item = checklistItemById.get(itemId);
@@ -449,13 +478,7 @@ export default function ProductChecklistDialog({
     return true;
   };
 
-  const getItemAttentionLabel = (item) => {
-    if (!item?.approved_by) return "Needs approver";
-    if (!item?.custom_dropdown_value) return "Needs status";
-    const selectedCondition = dropdownConditionByName.get(item.custom_dropdown_value);
-    if (selectedCondition?.is_completed && !areChildrenComplete(item.id)) return "Tasks open";
-    return null;
-  };
+  const getItemAttentionLabel = (item) => itemAttentionLabelById.get(item?.id) || null;
 
   const checkIfComplete = () => {
     if (!checklist || checklist.length === 0) {
