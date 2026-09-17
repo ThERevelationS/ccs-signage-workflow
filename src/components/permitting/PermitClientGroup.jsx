@@ -45,13 +45,20 @@ export default function PermitClientGroup({
   users,
   taskDescriptions,
   today,
-  queueState
+  queueState,
+  expanded: controlledExpanded,
+  onExpandedChange
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [internalExpanded, setInternalExpanded] = useState(true);
   const [showLocalityPicker, setShowLocalityPicker] = useState(false);
   const [stageFixOpen, setStageFixOpen] = useState(false);
   const [stageFixSaving, setStageFixSaving] = useState(false);
   const [showAllReadinessIssues, setShowAllReadinessIssues] = useState(false);
+  const expanded = controlledExpanded ?? internalExpanded;
+  const setExpanded = (nextExpanded) => {
+    if (onExpandedChange) onExpandedChange(nextExpanded);
+    else setInternalExpanded(nextExpanded);
+  };
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
