@@ -929,7 +929,13 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
     const matches = requestId ? await entryEntity.filter({ user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }) : [];
     if (Array.isArray(matches) && matches.length === 1) {
       const entry = matches[0];
-      const recovered = await setState(stateEntity, state, 'clocking_in', requestId, {
+      if (entry?.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email) return state;
+      const auditClaim = await setState(stateEntity, state, 'clocking_in', requestId, {
+        pending_started_at: state.pending_started_at || entry.clock_in,
+      });
+      if (!auditClaim) return freshState(stateEntity, state.id);
+      await ensureClockInAudit({ auditEntity, entry, target, actor, requestId });
+      const recovered = await setState(stateEntity, auditClaim, 'clocking_in', requestId, {
         status: 'clocked_in',
         active_entry_id: entry.id,
         last_action_at: entry.clock_in,
@@ -945,7 +951,7 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
           user_name: target.full_name || target.email, actor_email: actor.email, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target),
           server_timestamp: new Date().toISOString(), request_id: requestId, time_entry_id: entry.id,
-          reason: 'Recovered interrupted clock-in finalization',
+          reason: 'Recovered interrupted clock-in after confirming the required Clock In audit',
         });
         return recovered;
       }
