@@ -458,6 +458,18 @@ export function getPermitGroupQueueState(group, today) {
     };
   }
 
+  const storedCompletionConflictLine = openLines.find((line) => line?.status === "completed");
+  if (storedCompletionConflictLine) {
+    return {
+      key: "needs_action",
+      nextAction: `Reopen ${lineLabel(storedCompletionConflictLine)} before continuing its recorded permit work.`,
+      followupDate: "",
+      timingLabel: "Completion needs repair",
+      urgencyDays: null,
+      actionPriority: 5,
+    };
+  }
+
   const feeDueLine = openLines.find((line) => String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due");
   if (feeDueLine) {
     return {
