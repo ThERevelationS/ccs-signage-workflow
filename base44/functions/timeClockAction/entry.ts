@@ -2666,6 +2666,24 @@ Deno.serve(async (req) => {
       }
       if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This correction request was previously blocked. Reload and submit a new correction request.' }, { status: 409 });
       if (String(entry.last_correction_request_id || '') === requestId) {
+        const savedForceClose = entry.status === 'clocked_out'
+          && String(entry.clock_out_request_id || '') === requestId
+          && state.status === 'clocking_out'
+          && String(state.last_request_id || '') === requestId;
+        if (savedForceClose) {
+          const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+          if (activeLabor?.id) {
+            const laborStartMs = new Date(activeLabor.started_at).getTime();
+            const correctedEndMs = new Date(entry.clock_out).getTime();
+            if (!Number.isFinite(laborStartMs) || !Number.isFinite(correctedEndMs) || correctedEndMs < laborStartMs) {
+              return Response.json({ success: false, error: 'The saved corrected clock-out is earlier than active Current Work. Admin review is required.' }, { status: 409 });
+            }
+            await closeActiveLaborSegment({
+              laborEntity, auditEntity, entry, target, actor, actorEmail, requestId,
+              endReason: 'admin_correction', officialEnd: entry.clock_out,
+            });
+          }
+        }
         if (intent?.outcome === 'pending') {
           const auditFinalized = await auditEntity.updateMany(
             { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
@@ -2679,7 +2697,7 @@ Deno.serve(async (req) => {
             if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved but its audit is still being finalized. Retry this same correction request.' }, { status: 409 });
           }
         }
-        if (entry.status === 'clocked_out' && state.status === 'clocking_out' && String(state.last_request_id || '') === requestId) {
+        if (savedForceClose) {
           const freshStateRow = await freshState(stateEntity, state.id);
           const finalized = await setState(stateEntity, freshStateRow, 'clocking_out', requestId, {
             status: 'clocked_out', active_entry_id: null, last_action_at: entry.clock_out,
@@ -2798,6 +2816,24 @@ Deno.serve(async (req) => {
           { $set: { last_action_at: savedEntry.clock_in } },
         );
       }
+      const auditFinalized = await auditEntity.updateMany(
+        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+        { $set: {
+          outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+          details: {
+            ...(intent.details || {}),
+            payload_hash: correctionPayloadHash,
+            corrected: entryAuditSnapshot(savedEntry),
+          },
+        } },
+      );
+      if (!auditFinalized || auditFinalized.updated !== 1) {
+        const freshAudit = await auditEntity.get(intent.id).catch(() => null);
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction was saved but its audit finalization was interrupted. Retry this same correction request.' }, { status: 409 });
+        }
+      }
+
       if (claimedState) {
         const freshClaim = await freshState(stateEntity, claimedState.id);
         const finalized = await setState(stateEntity, freshClaim, 'clocking_out', requestId, {
@@ -2810,15 +2846,10 @@ Deno.serve(async (req) => {
           labor_pending_activity_type: '', labor_pending_work_order_id: '',
         });
         if (!finalized) {
-          await auditEntity.updateMany({ id: intent.id }, { $set: { outcome: 'blocked', details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry), reason: 'Correction saved but authoritative state finalization requires review.' } } });
-          return Response.json({ success: false, error: 'The correction was saved, but employee clock state could not be finalized safely. Admin review is required before another punch.' }, { status: 409 });
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction and audit were saved but employee state finalization was interrupted. Retry this same correction request.' }, { status: 409 });
         }
       }
 
-      await auditEntity.updateMany({ id: intent.id }, { $set: {
-        outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-        details: { original: entryAuditSnapshot(entry), corrected: entryAuditSnapshot(savedEntry) },
-      } });
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
 
