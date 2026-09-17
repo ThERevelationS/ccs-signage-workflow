@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
-import { Info, Trash2 } from "lucide-react";
+import { Info, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
 
@@ -69,6 +69,7 @@ export default function PermitSpreadsheetRow({
   onDeleteLine,
   isRegistered,
   users,
+  currentUser,
   today
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
@@ -95,8 +96,11 @@ export default function PermitSpreadsheetRow({
   const officeTypes = getOfficeTypes(lineItem);
   const followupStyle = getFollowupStyle();
   const localityLabel = lineItem.locality_name || "—";
+  const currentUserOwnerLabel = currentUser?.full_name || currentUser?.email || "";
   const ownerOptions = [...new Set((users || []).map((user) => user.full_name || user.email).filter(Boolean))].sort();
+  if (currentUserOwnerLabel && !ownerOptions.includes(currentUserOwnerLabel)) ownerOptions.unshift(currentUserOwnerLabel);
   if (lineItem.assigned_to && !ownerOptions.includes(lineItem.assigned_to)) ownerOptions.unshift(lineItem.assigned_to);
+  const canAssignToMe = isRegistered && !isCompleted && !String(lineItem.assigned_to || "").trim() && !!currentUserOwnerLabel;
 
   return (
     <div
@@ -178,14 +182,14 @@ export default function PermitSpreadsheetRow({
                 </button>
               )}
             </div>
-            <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
               <span className="flex-shrink-0">Owner:</span>
               <Select
                 value={lineItem.assigned_to || "__unassigned__"}
                 onValueChange={(value) => onUpdateField(lineItem.id, 'assigned_to', value === "__unassigned__" ? "" : value)}
                 disabled={!isRegistered}
               >
-                <SelectTrigger className="h-6 min-w-0 w-[140px] border-gray-200 px-2 text-[11px] shadow-none">
+                <SelectTrigger className="h-7 min-w-0 w-[140px] border-gray-200 px-2 text-[11px] shadow-none">
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
@@ -195,6 +199,16 @@ export default function PermitSpreadsheetRow({
                   ))}
                 </SelectContent>
               </Select>
+              {canAssignToMe && (
+                <button
+                  type="button"
+                  onClick={() => onUpdateField(lineItem.id, 'assigned_to', currentUserOwnerLabel)}
+                  className="inline-flex min-h-7 items-center gap-1 rounded-md border border-purple-200 bg-purple-50 px-2 text-[10px] font-semibold text-purple-800 hover:bg-purple-100"
+                  title={`Assign this permit line to ${currentUserOwnerLabel}`}
+                >
+                  <UserRoundPlus className="h-3 w-3" /> Assign to me
+                </button>
+              )}
             </div>
           </div>
 
