@@ -270,8 +270,8 @@ export default function FleetOverview() {
       <FleetModuleNav />
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div><h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Fleet Overview</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Bouncie tracking and CCS maintenance data in one Fleet area.</p></div>
-          <button type="button" onClick={() => setCustomizeOpen(true)} className="min-h-11 px-4 rounded-lg border border-gray-300 bg-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-700"><SlidersHorizontal className="w-4 h-4" />Customize Dashboard</button>
+          <div className="min-w-0"><h1 className="text-2xl sm:text-3xl font-bold leading-tight text-gray-900 dark:text-slate-100">Fleet Overview</h1><p className="text-sm leading-relaxed text-gray-500 dark:text-slate-400 mt-1">Bouncie tracking and CCS maintenance data in one Fleet area.</p></div>
+          <button type="button" onClick={() => setCustomizeOpen(true)} className="min-h-11 w-full sm:w-auto px-4 rounded-lg border border-gray-300 bg-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-700"><SlidersHorizontal className="w-4 h-4 shrink-0" />Customize Dashboard</button>
         </div>
 
         {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3">{error}</div>}
@@ -291,7 +291,7 @@ export default function FleetOverview() {
             </div>}
 
             {widgetVisible("today") && <div style={{ order: widgetOrder("today") }}><section className="rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Today</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">The operational picture to act on first.</p></div>
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100">Today</h2><p className="text-xs leading-relaxed text-gray-500 dark:text-slate-400 mt-1">The operational picture to act on first.</p></div>
               <div className="grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-800">
                 <TodayCell label="Ready / available" value={`${metrics.availableEquipment.length} of ${metrics.activeEquipment.length}`} detail={`${metrics.currentAssignments.length} currently reserved / checked out`} attention={metrics.pastDueAssignments.length > 0} />
                 <TodayCell label="Maintenance due today" value={metrics.dueToday.length} detail={`${metrics.overdueTasks.length} already overdue`} attention={metrics.dueToday.length > 0 || metrics.overdueTasks.length > 0} />
@@ -302,21 +302,21 @@ export default function FleetOverview() {
 
             {widgetVisible("system_health") && <div style={{ order: widgetOrder("system_health") }}><div className={`rounded-xl border border-gray-200 bg-white dark:bg-slate-900 dark:border-slate-800 shadow-sm ${dashboardPreference.density === "compact" ? "p-3" : "p-4"}`}>
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${!isAdmin || adminHealth?.bouncieHealthy ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${!isAdmin || adminHealth?.bouncieHealthy ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-amber-50 dark:bg-amber-950/40"}`}>
                     <Activity className={`w-5 h-5 ${!isAdmin || adminHealth?.bouncieHealthy ? "text-emerald-600 dark:text-emerald-300" : "text-amber-600 dark:text-amber-300"}`} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="font-semibold text-gray-900 dark:text-slate-100">Fleet System Health</h2>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-slate-400">
-                      {!isAdmin && <span className="inline-flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {metrics.uniqueTracked} tracked VIN{metrics.uniqueTracked === 1 ? "" : "s"} available</span>}
-                      {isAdmin && <span className="inline-flex items-center gap-1">{adminHealth?.bouncieHealthy ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-amber-600" />} Bouncie: {adminHealth?.bouncieHealthy ? "healthy" : "needs attention"}{adminHealth?.bouncieFreshMinutes != null ? ` · activity ${adminHealth.bouncieFreshMinutes}m ago` : ""}</span>}
-                      {isAdmin && <span className="inline-flex items-center gap-1">{(adminHealth?.unresolved || 0) === 0 ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-red-600" />} Automation issues: {adminHealth?.unresolved ?? "…"}</span>}
-                      {isAdmin && <span>{adminHealth?.logs?.length || 0}/4 core automation heartbeats recorded</span>}
+                    <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-1 text-xs leading-relaxed text-gray-500 dark:text-slate-400">
+                      {!isAdmin && <span className="inline-flex items-start gap-1"><CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600" /> <span className="break-words">{metrics.uniqueTracked} tracked VIN{metrics.uniqueTracked === 1 ? "" : "s"} available</span></span>}
+                      {isAdmin && <span className="inline-flex items-start gap-1">{adminHealth?.bouncieHealthy ? <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-600" />} <span className="break-words">Bouncie: {adminHealth?.bouncieHealthy ? "healthy" : "needs attention"}{adminHealth?.bouncieFreshMinutes != null ? ` · activity ${adminHealth.bouncieFreshMinutes}m ago` : ""}</span></span>}
+                      {isAdmin && <span className="inline-flex items-start gap-1">{(adminHealth?.unresolved || 0) === 0 ? <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-red-600" />} <span className="break-words">Automation issues: {adminHealth?.unresolved ?? "…"}</span></span>}
+                      {isAdmin && <span className="break-words">{adminHealth?.logs?.length || 0}/4 core automation heartbeats recorded</span>}
                     </div>
                   </div>
                 </div>
-                {isAdmin && <Link to={createPageUrl("FleetSettings")} className="text-sm text-indigo-600 dark:text-indigo-300 inline-flex items-center gap-1">Operations health <ArrowRight className="w-4 h-4" /></Link>}
+                {isAdmin && <Link to={createPageUrl("FleetSettings")} className="min-h-11 w-full sm:w-auto px-3 rounded-lg text-sm font-semibold text-indigo-600 hover:bg-gray-50 dark:text-indigo-300 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1">Operations health <ArrowRight className="w-4 h-4 shrink-0" /></Link>}
               </div>
             </div></div>}
 
