@@ -1239,8 +1239,9 @@ export default function ProductChecklistDialog({
                 type="button"
                 onClick={focusFirstNeedsInput}
                 disabled={needsInputPrimaryCount === 0}
-                className={`rounded-lg px-2 py-1 text-left transition-colors ${needsInputPrimaryCount > 0 ? "hover:bg-red-50 cursor-pointer" : "cursor-default"}`}
+                className={`min-h-11 rounded-lg px-2 py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1 ${needsInputPrimaryCount > 0 ? "hover:bg-red-50 cursor-pointer" : "cursor-default"}`}
                 title={needsInputPrimaryCount > 0 ? "Go to the first checklist item that still needs an approver or status" : "No checklist items need input"}
+                aria-label={needsInputPrimaryCount > 0 ? `Needs input: ${needsInputPrimaryCount}. Go to the first checklist item that still needs input.` : "Needs input: 0"}
               >
                 <div className="text-[11px] text-gray-500">Needs input</div>
                 <div className={`text-sm font-semibold ${needsInputPrimaryCount > 0 ? "text-red-700" : "text-green-700"}`}>{needsInputPrimaryCount}</div>
@@ -2545,7 +2546,7 @@ export default function ProductChecklistDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>OK</AlertDialogCancel>
+            <AlertDialogCancel className="h-11 sm:h-9">OK</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -2563,13 +2564,13 @@ export default function ProductChecklistDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogCancel className="h-11 sm:h-9">Keep Editing</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setDiscardWarning(false);
                 onClose();
               }}
-              className="bg-red-600 hover:bg-red-700"
+              className="h-11 bg-red-600 hover:bg-red-700 sm:h-9"
             >
               Discard Changes
             </AlertDialogAction>
@@ -2591,8 +2592,8 @@ export default function ProductChecklistDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteChecklistItem} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel className="h-11 sm:h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteChecklistItem} className="h-11 bg-red-600 hover:bg-red-700 sm:h-9">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -2612,7 +2613,7 @@ export default function ProductChecklistDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setValidationDialog(null)}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => setValidationDialog(null)} className="h-11 sm:h-9">OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -2630,8 +2631,8 @@ export default function ProductChecklistDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={proceedWithCheckOff} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+            <AlertDialogCancel className="h-11 sm:h-9">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={proceedWithCheckOff} disabled={isSaving} className="h-11 bg-green-600 hover:bg-green-700 sm:h-9">
               {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Yes, Mark Complete
             </AlertDialogAction>
