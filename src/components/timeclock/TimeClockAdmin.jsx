@@ -86,6 +86,10 @@ function clearAdminRequestId(action, entryId) {
   try { sessionStorage.removeItem(adminRequestStorageKey(action, entryId)); } catch {}
 }
 
+function approvalRequestStorageAction(decision) {
+  return `admin_set_entry_approval:${decision === "reopen" ? "reopen" : "approve"}`;
+}
+
 function adminActionError(data, fallback) {
   const error = new Error(data?.error || fallback);
   error.retrySameRequest = data?.retry_same_request === true;
@@ -379,11 +383,15 @@ export default function TimeClockAdmin() {
   };
 
   const openApprovalDialog = (entry, decision) => {
+    const requestAction = approvalRequestStorageAction(decision);
+    const recoveredRequestId = storedAdminRequestId(requestAction, entry?.id);
+    const requestId = recoveredRequestId || newRequestId();
+    if (!recoveredRequestId && entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
     setApprovalEntry(entry);
     setApprovalDecision(decision);
     setApprovalNote("");
     setApprovalError("");
-    setApprovalRequestId(newRequestId());
+    setApprovalRequestId(requestId);
   };
 
   const handleApproval = async () => {
@@ -398,12 +406,18 @@ export default function TimeClockAdmin() {
     }
     setApprovalBusy(true);
     setApprovalError("");
+    const requestAction = approvalRequestStorageAction(approvalDecision);
+    const requestId = approvalRequestId || storedAdminRequestId(requestAction, approvalEntry.id) || newRequestId();
+    if (!approvalRequestId) {
+      setApprovalRequestId(requestId);
+      persistAdminRequestId(requestAction, approvalEntry.id, requestId);
+    }
     try {
       const response = await base44.functions.invoke("timeClockAction", {
         action: "admin_set_entry_approval",
         session_token: sessionToken,
         target_email: approvalEntry.user_email,
-        request_id: approvalRequestId,
+        request_id: requestId,
         entry_id: approvalEntry.id,
         expected_updated_date: approvalEntry.updated_date,
         decision: approvalDecision,
@@ -415,16 +429,19 @@ export default function TimeClockAdmin() {
         err.retrySameRequest = data?.retry_same_request === true;
         throw err;
       }
+      clearAdminRequestId(approvalRequestStorageAction("approve"), approvalEntry.id);
+      clearAdminRequestId(approvalRequestStorageAction("reopen"), approvalEntry.id);
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
       await loadData();
     } catch (err) {
       const data = err?.response?.data || {};
-      const retrySameRequest = err?.retrySameRequest === true || data?.retry_same_request === true;
+      const retainRequest = shouldRetainAdminRequest(err);
       setApprovalError(data?.error || err?.message || "The approval could not be completed safely.");
-      if (!retrySameRequest) {
+      if (!retainRequest) {
         const message = data?.error || err?.message || "The approval could not be completed safely.";
+        clearAdminRequestId(requestAction, approvalEntry.id);
         await loadData();
         setApprovalEntry(null);
         setApprovalNote("");
