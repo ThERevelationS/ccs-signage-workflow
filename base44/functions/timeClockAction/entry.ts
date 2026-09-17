@@ -2715,7 +2715,16 @@ Deno.serve(async (req) => {
         last_corrected_at: now,
         last_corrected_by: actorEmail,
         last_correction_reason: reason,
+        last_correction_request_id: requestId,
         approval_status: clockOut ? 'needs_review' : (entry.approval_status || 'unreviewed'),
+        ...(activeForceClose ? {
+          break_tracking_used: breakSummary.count > 0,
+          tracked_break_minutes: breakSummary.total_minutes,
+          tracked_paid_break_minutes: breakSummary.paid_minutes,
+          tracked_unpaid_break_minutes: breakSummary.unpaid_minutes,
+          work_pause_tracking_used: workPauseSummary.count > 0,
+          tracked_work_pause_minutes: workPauseSummary.total_minutes,
+        } : {}),
       };
       if (entry.status === 'clocked_in' && clockOut) nextFields['clock_out_request_id'] = requestId;
 
@@ -2732,13 +2741,15 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Current Work is still changing. Retry the active-shift correction after that server action finishes.' }, { status: 409 });
       }
 
-      const intent = await auditEntity.create({
-        action: 'admin_correction', outcome: 'pending', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
-        time_entry_id: entry.id, reason,
-        details: { original: entryAuditSnapshot(entry), requested: nextFields },
-      });
+      if (!intent) {
+        intent = await auditEntity.create({
+          action: 'admin_correction', outcome: 'pending', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
+          time_entry_id: entry.id, reason,
+          details: { payload_hash: correctionPayloadHash, original: entryAuditSnapshot(entry), requested: nextFields },
+        });
+      }
       if (!intent?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
 
       let claimedState: any = null;
