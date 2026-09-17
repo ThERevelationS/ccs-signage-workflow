@@ -931,6 +931,11 @@ export default function ProductChecklistDialog({
     setNewItemInput({ show: false, parentId: null, type: null, productName: null });
   };
 
+  const cancelNewItemInput = () => {
+    setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+    setNewItemText("");
+  };
+
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1466,11 +1471,11 @@ export default function ProductChecklistDialog({
                           autoFocus
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') addNewItem('checklist', null, productName);
-                            if (e.key === 'Escape') { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }
+                            if (e.key === 'Escape') cancelNewItemInput();
                           }}
                         />
                         <Button size="sm" className="h-9 md:h-7 px-3 text-xs" onClick={() => addNewItem('checklist', null, productName)}>Add</Button>
-                        <Button type="button" size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => { setNewItemInput({ show: false, parentId: null, type: null, productName: null }); setNewItemText(""); }}>Cancel</Button>
+                        <Button type="button" size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={cancelNewItemInput}>Cancel</Button>
                       </div>
                     </div>
                   )}
@@ -1714,11 +1719,11 @@ export default function ProductChecklistDialog({
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') addNewItem('subtask', task.id, displayItem.product_name || productName);
-                                        if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                        if (e.key === 'Escape') cancelNewItemInput();
                                       }}
                                     />
                                     <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('subtask', task.id, displayItem.product_name || productName)}>Add</Button>
-                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                   </div>
                                 )}
                               </div>
@@ -1735,11 +1740,11 @@ export default function ProductChecklistDialog({
                                   autoFocus
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') addNewItem('task', displayItem.id, displayItem.product_name || productName);
-                                    if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                    if (e.key === 'Escape') cancelNewItemInput();
                                   }}
                                 />
                                 <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', displayItem.id, displayItem.product_name || productName)}>Add</Button>
-                                <Button size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>Cancel</Button>
+                                <Button size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={cancelNewItemInput}>Cancel</Button>
                               </div>
                               )}
 
@@ -1755,11 +1760,11 @@ export default function ProductChecklistDialog({
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') addNewItem('detail', displayItem.id, displayItem.product_name || productName);
-                                        if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                        if (e.key === 'Escape') cancelNewItemInput();
                                       }}
                                     />
                                     <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('detail', displayItem.id, displayItem.product_name || productName)}>Add</Button>
-                                    <Button size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })}>Cancel</Button>
+                                    <Button size="sm" variant="ghost" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={cancelNewItemInput}>Cancel</Button>
                                   </div>
                                 </div>
                               )}
@@ -1869,11 +1874,11 @@ export default function ProductChecklistDialog({
                                         autoFocus
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter') addNewItem('task', detail.id, displayItem.product_name || productName);
-                                          if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                          if (e.key === 'Escape') cancelNewItemInput();
                                         }}
                                       />
                                       <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', detail.id, displayItem.product_name || productName)}>Add</Button>
-                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                     </div>
                                   )}
 
@@ -1973,11 +1978,11 @@ export default function ProductChecklistDialog({
                                                 autoFocus
                                                 onKeyDown={(e) => {
                                                   if (e.key === 'Enter') addNewItem('subtask', task.id, displayItem.product_name || productName);
-                                                  if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                                  if (e.key === 'Escape') cancelNewItemInput();
                                                 }}
                                               />
                                               <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('subtask', task.id, displayItem.product_name || productName)}>Add</Button>
-                                              <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                              <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                             </div>
                                           )}
                                         </div>
@@ -2184,11 +2189,11 @@ export default function ProductChecklistDialog({
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') addNewItem('task', stDisplayItem.id, stDisplayItem.product_name || productName);
-                                        if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                        if (e.key === 'Escape') cancelNewItemInput();
                                       }}
                                     />
                                     <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                    <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                   </div>
                                 )}
                                 
@@ -2238,11 +2243,11 @@ export default function ProductChecklistDialog({
                                           autoFocus
                                           onKeyDown={(e) => {
                                             if (e.key === 'Enter') addNewItem('task', detail.id, stDisplayItem.product_name || productName);
-                                            if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                            if (e.key === 'Escape') cancelNewItemInput();
                                           }}
                                         />
                                         <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('task', detail.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                        <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                       </div>
                                     )}
                                     {/* Tasks under detail */}
@@ -2296,11 +2301,11 @@ export default function ProductChecklistDialog({
                                         autoFocus
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter') addNewItem('detail', stDisplayItem.id, stDisplayItem.product_name || productName);
-                                          if (e.key === 'Escape') setNewItemInput({ show: false, parentId: null, type: null, productName: null });
+                                          if (e.key === 'Escape') cancelNewItemInput();
                                         }}
                                       />
                                       <Button size="sm" className="h-9 md:h-7 px-3 md:px-2 text-xs" onClick={() => addNewItem('detail', stDisplayItem.id, stDisplayItem.product_name || productName)}>Add</Button>
-                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={() => setNewItemInput({ show: false, parentId: null, type: null, productName: null })} aria-label="Cancel add">×</Button>
+                                      <Button type="button" size="sm" variant="ghost" className="h-9 w-9 md:h-7 md:w-7 p-0 text-xs" onClick={cancelNewItemInput} aria-label="Cancel add">×</Button>
                                     </div>
                                   </div>
                                 )}
