@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,34 @@ const COMPANY_TIME_ZONE = "America/New_York";
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `tc-period-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function periodRequestStorageKey(key) {
+  return `ccs_timeclock_pay_period_request:${String(key || "").trim()}`;
+}
+
+function storedPeriodRequestId(key) {
+  try {
+    const value = sessionStorage.getItem(periodRequestStorageKey(key)) || "";
+    return value.length >= 8 && value.length <= 128 ? value : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistPeriodRequestId(key, requestId) {
+  try { sessionStorage.setItem(periodRequestStorageKey(key), requestId); } catch {}
+}
+
+function clearStoredPeriodRequestId(key) {
+  try { sessionStorage.removeItem(periodRequestStorageKey(key)); } catch {}
+}
+
+function shouldRetainPeriodRequest(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
 }
 
 function dateKey(value) {
@@ -81,7 +109,6 @@ export default function PayPeriodManager({
   const [actionDecision, setActionDecision] = useState("");
   const [actionNote, setActionNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const requestIdsRef = useRef({});
 
   const loadPeriods = async () => {
     setLoading(true);
@@ -111,14 +138,15 @@ export default function PayPeriodManager({
   }, [periods, timeEntries, correctionRequests]);
 
   const requestIdFor = (key) => {
-    if (requestIdsRef.current[key]) return requestIdsRef.current[key];
+    const stored = storedPeriodRequestId(key);
+    if (stored) return stored;
     const id = newRequestId();
-    requestIdsRef.current[key] = id;
+    persistPeriodRequestId(key, id);
     return id;
   };
 
   const clearRequestId = (key) => {
-    delete requestIdsRef.current[key];
+    clearStoredPeriodRequestId(key);
   };
 
   const invoke = async (payload) => {
@@ -128,14 +156,17 @@ export default function PayPeriodManager({
       if (!data?.success) {
         const err = new Error(data?.error || "Pay-period action was not confirmed.");
         err.retrySameRequest = data?.retry_same_request === true;
+        err.confirmedServerResponse = true;
         throw err;
       }
       return data;
     } catch (err) {
-      if (err?.retrySameRequest !== undefined) throw err;
+      if (err?.confirmedServerResponse === true) throw err;
       const data = err?.response?.data || {};
+      const status = Number(err?.response?.status || 0);
       const wrapped = new Error(data?.error || err?.message || "Pay-period action was not confirmed.");
       wrapped.retrySameRequest = data?.retry_same_request === true;
+      wrapped.confirmedServerResponse = Boolean(err?.response) && status > 0 && status < 500;
       throw wrapped;
     }
   };
@@ -170,7 +201,7 @@ export default function PayPeriodManager({
       setEndDate("");
       await loadPeriods();
     } catch (err) {
-      if (!err.retrySameRequest) clearRequestId(key);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
       setError(err?.message || "Pay period could not be created.");
     } finally {
       setBusy(false);
@@ -213,7 +244,7 @@ export default function PayPeriodManager({
       setActionNote("");
       await Promise.all([loadPeriods(), onEntriesChanged?.()]);
     } catch (err) {
-      if (!err.retrySameRequest) clearRequestId(key);
+      if (!shouldRetainPeriodRequest(err)) clearRequestId(key);
       setError(err?.message || "Pay-period action could not be completed.");
     } finally {
       setBusy(false);
