@@ -270,6 +270,18 @@ async function clockOutAuditForRequest(auditEntity: any, requestId: string, entr
   return uniqueRow(auditEntity, { action: 'clock_out', request_id: requestId, time_entry_id: entryId }, 'Clock-out audit request');
 }
 
+async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId }: any) {
+  if (!entry?.id || entry.status !== 'clocked_in' || String(entry.clock_in_request_id || '') !== requestId) {
+    throw new Error('A matching active TimeEntry is required before its Clock In audit can be confirmed.');
+  }
+  return ensureActionAudit(auditEntity, {
+    action: 'clock_in', outcome: 'confirmed', user_email: target.email,
+    user_name: target.full_name || target.email, actor_email: asEmail(actor.email), actor_role: actor.role,
+    authentication_method: authenticationMethodFor(actor, target),
+    server_timestamp: entry.clock_in, request_id: requestId, time_entry_id: entry.id,
+  }, 'Clock In audit');
+}
+
 async function ensureState(stateEntity: any, target: any) {
   const email = asEmail(target?.email);
   let rows = await stateEntity.filter({ user_email: email });
