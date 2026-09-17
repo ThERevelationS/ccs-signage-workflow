@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
+import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, Settings, Search, UserRoundCheck } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -72,6 +72,7 @@ export default function Permitting() {
   const [queueFilter, setQueueFilter] = useState("all");
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [issuesOnly, setIssuesOnly] = useState(false);
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
   const lineItemBaselinesRef = useRef(new Map());
@@ -727,6 +728,31 @@ export default function Permitting() {
   const visibleQueueKeys = queueFilter === "all"
     ? PERMIT_QUEUE_ORDER
     : [queueFilter];
+  const visibleGroups = queueFilter === "all"
+    ? filteredGroups
+    : (queueSummary[queueFilter] || []);
+  const allVisibleGroupsCollapsed = visibleGroups.length > 0
+    && visibleGroups.every((group) => collapsedGroupIds.has(group.work_order_id));
+
+  const setGroupExpanded = (workOrderId, expanded) => {
+    setCollapsedGroupIds((previous) => {
+      const next = new Set(previous);
+      if (expanded) next.delete(workOrderId);
+      else next.add(workOrderId);
+      return next;
+    });
+  };
+
+  const setAllVisibleGroupsExpanded = (expanded) => {
+    setCollapsedGroupIds((previous) => {
+      const next = new Set(previous);
+      visibleGroups.forEach((group) => {
+        if (expanded) next.delete(group.work_order_id);
+        else next.add(group.work_order_id);
+      });
+      return next;
+    });
+  };
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
 
@@ -787,6 +813,8 @@ export default function Permitting() {
                 users={users}
                 taskDescriptions={taskDescriptions}
                 today={today}
+                expanded={!collapsedGroupIds.has(group.work_order_id)}
+                onExpandedChange={(expanded) => setGroupExpanded(group.work_order_id, expanded)}
               />
             ))}
           </div>
@@ -837,6 +865,18 @@ export default function Permitting() {
                 title="Show only permitting jobs with proven setup, ownership, follow-up, or routing issues"
               >
                 <AlertTriangle className="w-4 h-4" /> Needs Review ({issueCount})
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setAllVisibleGroupsExpanded(allVisibleGroupsCollapsed)}
+                disabled={visibleGroups.length === 0}
+                className="gap-1"
+                title={allVisibleGroupsCollapsed ? "Expand all currently visible permitting jobs" : "Collapse all currently visible permitting jobs"}
+              >
+                {allVisibleGroupsCollapsed ? <ChevronsDown className="w-4 h-4" /> : <ChevronsUp className="w-4 h-4" />}
+                {allVisibleGroupsCollapsed ? "Expand jobs" : "Collapse jobs"}
               </Button>
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
