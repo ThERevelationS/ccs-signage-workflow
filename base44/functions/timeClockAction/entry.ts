@@ -3022,14 +3022,29 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Current Work is still changing. Retry archival after that server action finishes.' }, { status: 409 });
       }
 
-      const now = new Date().toISOString();
-      const intent = await auditEntity.create({
-        action: 'admin_archive', outcome: 'pending', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
-        time_entry_id: entry.id, reason, details: { original: entryAuditSnapshot(entry) },
-      });
+      const now = archiveTime;
+      if (!intent) {
+        intent = await auditEntity.create({
+          action: 'admin_archive', outcome: 'pending', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
+          time_entry_id: entry.id, reason,
+          details: { payload_hash: archivePayloadHash, original: entryAuditSnapshot(entry) },
+        });
+      }
       if (!intent?.id) throw new Error('Archive audit intent could not be persisted. No TimeEntry was changed.');
+
+      if (entry.status === 'clocked_in') {
+        const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+        if (activeLabor?.id) {
+          const laborStartMs = new Date(activeLabor.started_at).getTime();
+          const archiveEndMs = new Date(now).getTime();
+          if (!Number.isFinite(laborStartMs) || !Number.isFinite(archiveEndMs) || archiveEndMs < laborStartMs) {
+            await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
+            return Response.json({ success: false, error: 'Archive time cannot be earlier than the active Current Work segment start.' }, { status: 409 });
+          }
+        }
+      }
 
       let claimedState: any = null;
       if (entry.status === 'clocked_in') {
