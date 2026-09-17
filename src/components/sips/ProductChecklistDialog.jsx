@@ -1063,6 +1063,46 @@ export default function ProductChecklistDialog({
   }, [checklist, dropdownConditionByName]);
   const needsInputPrimaryCount = needsInputPrimaryItems.length;
 
+  // Build normalized searchable text only when the active checklist changes.
+  // Query navigation and unrelated dialog state can then reuse this index.
+  const checklistSearchIndexData = useMemo(() => {
+    const searchIndex = [];
+    const seenIds = new Set();
+
+    Object.entries(activeChecklist).forEach(([productName, group]) => {
+      const collections = [
+        { items: group.mainItems, subTemplateName: "" },
+        ...Object.entries(group.subTemplates).map(([subTemplateName, items]) => ({ items, subTemplateName }))
+      ];
+
+      collections.forEach(({ items, subTemplateName }) => {
+        items.forEach(item => {
+          if (seenIds.has(item.id)) return;
+          seenIds.add(item.id);
+          const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
+          const searchableText = [
+            productName,
+            subTemplateName,
+            item.text,
+            item.approved_by,
+            item.custom_dropdown_value,
+            assignedTo
+          ].filter(Boolean).join(" ").toLowerCase();
+          searchIndex.push({ item, productName, searchableText });
+        });
+      });
+    });
+
+    return searchIndex;
+  }, [activeChecklist]);
+  const normalizedChecklistSearch = checklistSearchQuery.trim().toLowerCase();
+  const checklistSearchResults = useMemo(() => {
+    if (!normalizedChecklistSearch) return [];
+    return checklistSearchIndexData
+      .filter(entry => entry.searchableText.includes(normalizedChecklistSearch))
+      .map(({ item, productName }) => ({ item, productName }));
+  }, [checklistSearchIndexData, normalizedChecklistSearch]);
+
   if (isLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -1156,38 +1196,6 @@ export default function ProductChecklistDialog({
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
   };
-  const normalizedChecklistSearch = checklistSearchQuery.trim().toLowerCase();
-  const checklistSearchResults = normalizedChecklistSearch
-    ? (() => {
-        const results = [];
-        const seenIds = new Set();
-        Object.entries(activeChecklist).forEach(([productName, group]) => {
-          const collections = [
-            { items: group.mainItems, subTemplateName: "" },
-            ...Object.entries(group.subTemplates).map(([subTemplateName, items]) => ({ items, subTemplateName }))
-          ];
-          collections.forEach(({ items, subTemplateName }) => {
-            items.forEach(item => {
-              if (seenIds.has(item.id)) return;
-              const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
-              const searchableText = [
-                productName,
-                subTemplateName,
-                item.text,
-                item.approved_by,
-                item.custom_dropdown_value,
-                assignedTo
-              ].filter(Boolean).join(" ").toLowerCase();
-              if (searchableText.includes(normalizedChecklistSearch)) {
-                seenIds.add(item.id);
-                results.push({ item, productName });
-              }
-            });
-          });
-        });
-        return results;
-      })()
-    : [];
   const navigateChecklistSearch = (direction = 1) => {
     if (checklistSearchResults.length === 0) return;
     const nextIndex = checklistSearchIndex < 0
