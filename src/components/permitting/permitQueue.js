@@ -78,6 +78,10 @@ export function getPermitLineHandoffReadiness(line) {
 
   if (feeStatus === "due") blockers.push(`${label} still has a jurisdiction fee recorded as due.`);
 
+  if (line?.status === "completed" && !permitReceived) {
+    reviews.push(`${label} is marked complete but has no permit issued/received date recorded.`);
+  }
+
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(closeoutStatus)) {
     const closeoutLabels = {
       inspection_required: "still requires an inspection",
@@ -120,10 +124,12 @@ export function getPermitLineHandoffReadiness(line) {
 }
 
 export function isPermitLineEffectivelyComplete(line) {
+  if (line?.status !== "completed") return false;
+  if (!asDateKey(line?.permit_received_date)) return false;
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(normalizedCloseoutStatus(line))) return false;
   if (String(line?.jurisdiction_fee_status || "").trim().toLowerCase() === "due") return false;
   if (ACTIVE_CORRECTION_STATUSES.has(String(line?.correction_status || "").trim().toLowerCase())) return false;
-  return line?.status === "completed";
+  return true;
 }
 
 export function getPermitLineLifecycleSummary(line) {
