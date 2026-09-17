@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -74,6 +74,9 @@ export default function PermitSpreadsheetRow({
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const headerScrollRef = useRef(null);
+  const dataScrollRef = useRef(null);
+  const syncingScrollRef = useRef(false);
 
   const isCompleted = isPermitLineEffectivelyComplete(lineItem);
   const steps = lineItem.steps || [];
@@ -102,13 +105,23 @@ export default function PermitSpreadsheetRow({
   if (lineItem.assigned_to && !ownerOptions.includes(lineItem.assigned_to)) ownerOptions.unshift(lineItem.assigned_to);
   const canAssignToMe = isRegistered && !isCompleted && !String(lineItem.assigned_to || "").trim() && !!currentUserOwnerLabel;
 
+  const syncHorizontalScroll = (sourceRef, targetRef) => {
+    if (syncingScrollRef.current) return;
+    const source = sourceRef.current;
+    const target = targetRef.current;
+    if (!source || !target || source.scrollLeft === target.scrollLeft) return;
+    syncingScrollRef.current = true;
+    target.scrollLeft = source.scrollLeft;
+    requestAnimationFrame(() => { syncingScrollRef.current = false; });
+  };
+
   return (
     <div
       className={`group/line px-3 py-2 transition-colors ${isCompleted ? 'opacity-60 bg-gray-50/40' : 'hover:bg-gray-50/40'}`}
       style={followupStyle}
     >
       {/* MICRO HEADER — office-type badges + column labels */}
-      <div className="flex items-start gap-3 mb-1.5" style={{ fontSize: '12px' }}>
+        <div className="flex flex-wrap gap-1 pt-0.5 sm:max-w-[130px] sm:flex-shrink-0">
         {/* Office type badges (possibly multiple) */}
         <div className="flex-shrink-0 pt-0.5 flex flex-wrap gap-1 max-w-[130px]">
           {officeTypes.length === 0 ? (
@@ -130,7 +143,11 @@ export default function PermitSpreadsheetRow({
           })}
         </div>
 
-        <div className="flex items-end flex-1 overflow-x-auto">
+        <div
+          ref={headerScrollRef}
+          onScroll={() => syncHorizontalScroll(headerScrollRef, dataScrollRef)}
+          className="flex flex-1 items-end overflow-x-auto overscroll-x-contain"
+        >
           <div className="w-[200px] flex-shrink-0 px-1 font-semibold text-gray-500 uppercase tracking-wide text-[11px]">Office / Locality</div>
           {steps.map(step => (
             <div
@@ -156,13 +173,17 @@ export default function PermitSpreadsheetRow({
       </div>
 
       {/* DATA ROW */}
-      <div className="flex items-center gap-3" style={{ fontSize: '13px' }}>
-        {/* Spacer to align with office type badge column */}
-        <div className="flex-shrink-0 invisible" style={{ width: '130px' }}>
+      <div className="flex items-center gap-0 sm:gap-3" style={{ fontSize: '13px' }}>
+        {/* Desktop spacer keeps the data row aligned with the office-type badge column. */}
+        <div className="hidden flex-shrink-0 invisible sm:block" style={{ width: '130px' }}>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full">—</span>
         </div>
 
-        <div className="flex items-center flex-1 overflow-x-auto">
+        <div
+          ref={dataScrollRef}
+          onScroll={() => syncHorizontalScroll(dataScrollRef, headerScrollRef)}
+          className="flex min-w-0 flex-1 items-center overflow-x-auto overscroll-x-contain"
+        >
           {/* Office / Locality — static text + large info button */}
           <div className="w-[200px] flex-shrink-0 px-1">
             <div className="flex items-center gap-1.5">
