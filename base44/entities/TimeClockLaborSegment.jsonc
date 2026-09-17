@@ -86,7 +86,8 @@
         "work_pause",
         "clock_out",
         "manual_stop",
-        "admin_correction"
+        "admin_correction",
+        "admin_archive"
       ],
       "description": "Why this labor segment ended"
     },
