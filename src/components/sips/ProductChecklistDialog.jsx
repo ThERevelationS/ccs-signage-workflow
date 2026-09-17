@@ -1577,7 +1577,7 @@ export default function ProductChecklistDialog({
                               onValueChange={(val) => updateChecklistItem(displayItem.id, { approved_by: val })}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${displayItem.text || "checklist item"}`}>
+                              <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${displayItem.text || "checklist item"}`}>
                                 <SelectValue placeholder="Answered by..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -1601,7 +1601,7 @@ export default function ProductChecklistDialog({
                               }}
                               disabled={!isRegistered}
                             >
-                              <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-36 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${displayItem.text || "checklist item"}`}>
+                              <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-36 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${displayItem.text || "checklist item"}`}>
                                 <SelectValue placeholder={getDropdownName(displayItem.dropdown_id) || "Answer..."}>
                                   {displayItem.custom_dropdown_value || "Answer..."}
                                 </SelectValue>
@@ -1661,7 +1661,7 @@ export default function ProductChecklistDialog({
                                     selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                     onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                     disabled={!isRegistered}
-                                    className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                    className="h-11 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
                                     ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                   />
                                   {isRegistered && (
@@ -1823,7 +1823,7 @@ export default function ProductChecklistDialog({
                                       onValueChange={(val) => updateChecklistItem(detail.id, { approved_by: val })}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Answered by for detail: ${detail.text || "detail"}`}>
+                                      <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Answered by for detail: ${detail.text || "detail"}`}>
                                         <SelectValue placeholder="Answered..." />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1846,7 +1846,7 @@ export default function ProductChecklistDialog({
                                       }}
                                       disabled={!isRegistered}
                                     >
-                                      <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Status for detail: ${detail.text || "detail"}`}>
+                                      <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-purple-400 focus:ring-offset-1" aria-label={`Status for detail: ${detail.text || "detail"}`}>
                                         <SelectValue placeholder={getDropdownName(detail.dropdown_id) || "Answer..."}>
                                           {detail.custom_dropdown_value || "Answer..."}
                                         </SelectValue>
@@ -1923,7 +1923,7 @@ export default function ProductChecklistDialog({
                                               selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                               onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                               disabled={!isRegistered}
-                                              className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                              className="h-11 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
                                               ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                             />
                                             {isRegistered && (
@@ -2100,7 +2100,7 @@ export default function ProductChecklistDialog({
                                 onValueChange={(val) => updateChecklistItem(stDisplayItem.id, { approved_by: val })}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${stDisplayItem.text || "checklist item"}`}>
+                                <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-28 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Answered by for checklist item: ${stDisplayItem.text || "checklist item"}`}>
                                   <SelectValue placeholder="Answered..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -2123,7 +2123,7 @@ export default function ProductChecklistDialog({
                                 }}
                                 disabled={!isRegistered}
                               >
-                                <SelectTrigger className="h-9 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${stDisplayItem.text || "checklist item"}`}>
+                                <SelectTrigger className="h-11 md:h-7 text-xs w-full sm:w-32 focus:ring-2 focus:ring-blue-400 focus:ring-offset-1" aria-label={`Status for checklist item: ${stDisplayItem.text || "checklist item"`}>
                                   <SelectValue placeholder={getDropdownName(stDisplayItem.dropdown_id) || "Answer..."}>
                                     {stDisplayItem.custom_dropdown_value || "Answer..."}
                                   </SelectValue>
@@ -2179,7 +2179,7 @@ export default function ProductChecklistDialog({
                                       selectedUsers={task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to : [task.assigned_to]) : []}
                                       onSelectionChange={(val) => updateChecklistItem(task.id, { assigned_to: val })}
                                       disabled={!isRegistered}
-                                      className="h-9 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
+                                      className="h-11 md:h-7 min-w-[96px] max-w-[140px] px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1"
                                       ariaLabel={`Assign users for task: ${task.text || "task"}`}
                                     />
                                     {isRegistered && (
