@@ -57,7 +57,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
 
   return (
     <AlertDialog open onOpenChange={(open) => !open && onClose?.()}>
-      <AlertDialogContent className="max-w-lg">
+      <AlertDialogContent className="w-[95vw] max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -72,7 +72,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
         {closing && (
           <div className="space-y-1.5 py-1">
             <Label>Close date <span className="text-red-600">*</span></Label>
-            <Input type="date" value={closeDate} max={todayStamp} onChange={(event) => setCloseDate(event.target.value)} />
+            <Input type="date" value={closeDate} max={todayStamp} onChange={(event) => setCloseDate(event.target.value)} className="h-11 sm:h-9" />
             {closeDate && closeDate > todayStamp && <p className="text-xs text-red-600">Close date cannot be in the future.</p>}
           </div>
         )}
@@ -82,7 +82,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
             <div className="space-y-1.5">
               <Label>Lost reason <span className="text-red-600">*</span></Label>
               <Select value={lostReason} onValueChange={setLostReason}>
-                <SelectTrigger><SelectValue placeholder="Select why this opportunity was lost" /></SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-9"><SelectValue placeholder="Select why this opportunity was lost" /></SelectTrigger>
                 <SelectContent>
                   {LOST_REASONS.map((reason) => <SelectItem key={reason} value={reason}>{reason}</SelectItem>)}
                 </SelectContent>
@@ -91,18 +91,18 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
             {lostReason === "Other" && (
               <div className="space-y-1.5">
                 <Label>Reason details</Label>
-                <Input value={otherReason} onChange={(event) => setOtherReason(event.target.value)} placeholder="Enter the reason" autoFocus />
+                <Input value={otherReason} onChange={(event) => setOtherReason(event.target.value)} placeholder="Enter the reason" autoFocus className="h-11 sm:h-9" />
               </div>
             )}
           </div>
         )}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => onClose?.()}>Cancel</AlertDialogCancel>
+        <AlertDialogFooter className="gap-2 sm:gap-0">
+          <AlertDialogCancel className="h-11 sm:h-9" onClick={() => onClose?.()}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={!canConfirm}
             onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "", closeDate: closing ? closeDate : "" })}
-            className={isLost ? "bg-red-600 hover:bg-red-700" : ""}
+            className={isLost ? "h-11 bg-red-600 hover:bg-red-700 sm:h-9" : "h-11 sm:h-9"}
           >
             {closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
           </AlertDialogAction>
