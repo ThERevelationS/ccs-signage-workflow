@@ -67,7 +67,7 @@ const MobileDescription = ({ value, fallback = "No description", label = "Job de
 
   return (
     <div className="mt-2 min-w-0">
-      <p className={`text-sm leading-relaxed text-gray-600 break-words whitespace-pre-wrap ${expanded ? "" : "line-clamp-2"}`}>
+      <p className={`text-sm leading-relaxed text-gray-600 break-words whitespace-pre-wrap ${canExpand && !expanded ? "line-clamp-2" : ""}`}>
         {text}
       </p>
       {canExpand && (
