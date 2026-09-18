@@ -282,15 +282,15 @@ export default function SalesOpportunityDialog({
                 ))}
               </div>
               {isRegistered && !closeout && attentionItems.length > 0 && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-amber-200 pt-3">
-                  {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ sales_rep: currentSalesOwnerLabel })}>Assign to me</Button>}
-                  {attentionKeys.has("probability_missing") && suggestedProbability != null && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ probability: suggestedProbability })}>Set {suggestedProbability}% probability</Button>}
-                  {attentionKeys.has("next_action") && <span className="text-xs font-medium text-amber-900">Schedule follow-up:</span>}
-                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>}
-                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
-                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>}
-                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>}
-                  {attentionKeys.has("quote_timing_missing") && <Button type="button" size="sm" variant="outline" className="h-7 border-amber-300 bg-white px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Quote sent today</Button>}
+                <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-amber-200 pt-3 sm:flex-wrap sm:overflow-visible" aria-label="Opportunity attention quick actions">
+                  {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ sales_rep: currentSalesOwnerLabel })}>Assign to me</Button>}
+                  {attentionKeys.has("probability_missing") && suggestedProbability != null && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ probability: suggestedProbability })}>Set {suggestedProbability}% probability</Button>}
+                  {attentionKeys.has("next_action") && <span className="shrink-0 text-xs font-medium text-amber-900">Schedule follow-up:</span>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>}
+                  {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>}
+                  {attentionKeys.has("quote_timing_missing") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Quote sent today</Button>}
                 </div>
               )}
             </section>
@@ -368,13 +368,13 @@ export default function SalesOpportunityDialog({
               </div>
 
               {!closeout && isRegistered && (
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
-                  <span className="text-xs font-medium text-gray-500">Quick follow-up:</span>
-                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>
-                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>
-                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>
-                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>
-                  <Button type="button" size="sm" className="h-7 px-2 text-xs" onClick={() => onCompleteFollowUp?.(workOrder)}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete / Log</Button>
+                <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-3 sm:flex-wrap sm:overflow-visible" aria-label="Opportunity follow-up quick actions">
+                  <span className="shrink-0 text-xs font-medium text-gray-500">Quick follow-up:</span>
+                  <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>
+                  <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>
+                  <Button type="button" size="sm" className="h-11 shrink-0 px-3 text-xs sm:h-7" onClick={() => onCompleteFollowUp?.(workOrder)}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete / Log</Button>
                 </div>
               )}
 
