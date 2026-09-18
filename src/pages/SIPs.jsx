@@ -621,17 +621,6 @@ export default function SIPs() {
                       </button>
 
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleSipCompleted(wo)}
-                      disabled={!isRegistered}
-                      className="min-h-11 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50 touch-manipulation"
-                      aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
-                    </Button>
                   </div>
 
                   <MobileDescription value={wo.description || wo.current_task_description} />
@@ -1045,17 +1034,6 @@ export default function SIPs() {
                         </button>
   
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleSipCompleted(wo)}
-                        disabled={!isRegistered}
-                        className="min-h-11 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50 touch-manipulation"
-                        aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
-                      </Button>
                     </div>
 
                     <MobileDescription value={wo.description || wo.current_task_description} />
@@ -1074,7 +1052,7 @@ export default function SIPs() {
 
                     <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-amber-100">
                       <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="min-h-11 justify-center bg-white touch-manipulation">
-                        <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist
+                        <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist {progress.completed}/{progress.total}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 justify-center bg-white touch-manipulation">Open Work Order</Button>
                     </div>
