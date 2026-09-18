@@ -2299,8 +2299,70 @@ Deno.serve(async (req) => {
 
       const priorByRequest = await uniqueRow(correctionRequestEntity, { request_id: requestId }, 'Correction request id');
       if (priorByRequest?.id) {
-        if (asEmail(priorByRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request id is already in use.' }, { status: 409 });
-        return Response.json({ success: true, request: priorByRequest, reused: true });
+        if (asEmail(priorByRequest.user_email) !== target.email || String(priorByRequest.time_entry_id || '') !== entryId) {
+          return Response.json({ success: false, error: 'Correction request id is already in use.' }, { status: 409 });
+        }
+        const priorChanges = priorByRequest.requested_changes || {};
+        const retryClockIn = new Date(String(requested?.clock_in ?? priorChanges.clock_in ?? ''));
+        const retryClockOut = new Date(String(requested?.clock_out ?? priorChanges.clock_out ?? ''));
+        const retryLunchMinutes = Math.round(Number(requested?.lunch_minutes ?? priorChanges.lunch_minutes ?? 0));
+        if (!Number.isFinite(retryClockIn.getTime()) || !Number.isFinite(retryClockOut.getTime()) || retryClockOut.getTime() < retryClockIn.getTime()) {
+          return Response.json({ success: false, error: 'Retrying this correction request requires the original valid punch values.' }, { status: 400 });
+        }
+        const retryChanges = {
+          clock_in: retryClockIn.toISOString(),
+          clock_out: retryClockOut.toISOString(),
+          lunch_minutes: retryLunchMinutes,
+          notes: String(requested?.notes ?? priorChanges.notes ?? '').trim().slice(0, 4000),
+        };
+        const retryHash = await payloadHash({ entry_id: entryId, expected_updated_date: expectedUpdatedDate, reason, requested_changes: retryChanges });
+        const storedHash = await payloadHash({
+          entry_id: priorByRequest.time_entry_id,
+          expected_updated_date: priorByRequest.time_entry_updated_date,
+          reason: priorByRequest.employee_reason,
+          requested_changes: priorChanges,
+        });
+        if (!constantTimeEqual(retryHash, storedHash)) {
+          return Response.json({ success: false, error: 'This correction request id is already bound to different correction details. Submit a new request.' }, { status: 409 });
+        }
+
+        const priorAudits = await auditEntity.filter({ action: 'correction_request', request_id: requestId, time_entry_id: entryId });
+        if (!Array.isArray(priorAudits)) throw new Error('Correction-request audit lookup did not return a record list.');
+        if (priorAudits.length > 1) return Response.json({ success: false, error: 'This correction request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+        let correctionAudit = priorAudits[0] || null;
+        const priorAuditHash = String(correctionAudit?.details?.payload_hash || '');
+        if (priorAuditHash && !constantTimeEqual(priorAuditHash, storedHash)) {
+          return Response.json({ success: false, error: 'This correction request audit is bound to different correction details. Admin investigation is required.' }, { status: 409 });
+        }
+        if (correctionAudit?.outcome === 'pending') {
+          await auditEntity.updateMany(
+            { id: correctionAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: entryId },
+            { $set: {
+              outcome: 'confirmed',
+              server_timestamp: new Date().toISOString(),
+              details: { ...(correctionAudit.details || {}), payload_hash: storedHash, correction_request_id: priorByRequest.id, requested_changes: priorChanges, recovered_after_request_save: true },
+            } },
+          );
+          correctionAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
+        }
+        if (!correctionAudit?.id) {
+          try {
+            const ensured = await ensureActionAudit(auditEntity, {
+              action: 'correction_request', outcome: 'confirmed', user_email: target.email,
+              user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+              authentication_method: authenticationMethodFor(actor, target), server_timestamp: priorByRequest.requested_at || new Date().toISOString(),
+              request_id: requestId, time_entry_id: entryId, reason: priorByRequest.employee_reason,
+              details: { payload_hash: storedHash, correction_request_id: priorByRequest.id, requested_changes: priorChanges, recovered_after_request_save: true },
+            }, 'Correction-request audit');
+            correctionAudit = ensured.audit;
+          } catch {
+            return Response.json({ success: false, retry_same_request: true, error: 'The correction request is saved but its audit is still being finalized. Retry the same request.' }, { status: 409 });
+          }
+        }
+        if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction request is saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+        }
+        return Response.json({ success: true, request: priorByRequest, audit_id: correctionAudit.id, reused: true });
       }
 
       const entry = await entryEntity.get(entryId).catch(() => null);
@@ -2335,6 +2397,12 @@ Deno.serve(async (req) => {
         notes: String(requested?.notes ?? entry.notes ?? '').trim().slice(0, 4000),
       };
       const now = new Date().toISOString();
+      const submissionHash = await payloadHash({
+        entry_id: entry.id,
+        expected_updated_date: entry.updated_date,
+        reason,
+        requested_changes: requestedChanges,
+      });
       const correctionRequest = await correctionRequestEntity.create({
         user_email: target.email,
         user_name: target.full_name || target.email,
@@ -2348,14 +2416,24 @@ Deno.serve(async (req) => {
         status: 'pending',
       });
       if (!correctionRequest?.id) throw new Error('Correction request could not be persisted.');
-      await audit(auditEntity, {
-        action: 'correction_request', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
-        request_id: requestId, time_entry_id: entry.id, reason,
-        details: { correction_request_id: correctionRequest.id, requested_changes: requestedChanges },
-      });
-      return Response.json({ success: true, request: correctionRequest });
+
+      let correctionAudit: any = null;
+      try {
+        const ensured = await ensureActionAudit(auditEntity, {
+          action: 'correction_request', outcome: 'confirmed', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
+          request_id: requestId, time_entry_id: entry.id, reason,
+          details: { payload_hash: submissionHash, correction_request_id: correctionRequest.id, requested_changes: requestedChanges },
+        }, 'Correction-request audit');
+        correctionAudit = ensured.audit;
+      } catch {
+        return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but audit finalization was interrupted. Retry the same request.' }, { status: 409 });
+      }
+      if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+      }
+      return Response.json({ success: true, request: correctionRequest, audit_id: correctionAudit.id });
     }
 
     if (action === 'review_correction_request') {
