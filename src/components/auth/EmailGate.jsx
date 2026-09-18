@@ -7,6 +7,41 @@ import { Label } from "@/components/ui/label";
 import { Loader2, LogIn, Eye, AlertCircle } from "lucide-react";
 
 const TOKEN_KEY = "sss_session_token";
+const ADMIN_UNLOCKED_KEY = "adminUnlocked";
+const ADMIN_CAPABILITY_KEY = "adminSettingsCapability";
+const ADMIN_CAPABILITY_EXPIRES_KEY = "adminSettingsCapabilityExpires";
+
+export function clearAdminSettingsAuthorization() {
+  try {
+    sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
+    sessionStorage.removeItem(ADMIN_CAPABILITY_KEY);
+    sessionStorage.removeItem(ADMIN_CAPABILITY_EXPIRES_KEY);
+  } catch (_) {}
+}
+
+export function getStoredAdminSettingsCapability() {
+  try {
+    const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
+    const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
+    if (capability && Number.isFinite(expiresAt) && expiresAt > Date.now()) return capability;
+  } catch (_) {}
+  clearAdminSettingsAuthorization();
+  return "";
+}
+
+export function hasStoredAdminSettingsAuthorization() {
+  try {
+    return sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === "true" && !!getStoredAdminSettingsCapability();
+  } catch (_) {
+    return false;
+  }
+}
+
+export function storeAdminSettingsAuthorization(capability, expiresAt) {
+  sessionStorage.setItem(ADMIN_UNLOCKED_KEY, "true");
+  sessionStorage.setItem(ADMIN_CAPABILITY_KEY, capability);
+  sessionStorage.setItem(ADMIN_CAPABILITY_EXPIRES_KEY, expiresAt);
+}
 
 const AuthContext = createContext(null);
 
@@ -26,6 +61,7 @@ export function AuthProvider({ children }) {
   const restoreSession = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
+      clearAdminSettingsAuthorization();
       setIsLoading(false);
       return;
     }
@@ -36,9 +72,11 @@ export function AuthProvider({ children }) {
         setCurrentUser(data.user);
       } else {
         localStorage.removeItem(TOKEN_KEY);
+        clearAdminSettingsAuthorization();
       }
     } catch {
       localStorage.removeItem(TOKEN_KEY);
+      clearAdminSettingsAuthorization();
     }
     setIsLoading(false);
   }, []);
@@ -49,6 +87,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    clearAdminSettingsAuthorization();
     setCurrentUser(null);
     setBrowseOnly(false);
     setShowLogin(true);
@@ -59,6 +98,7 @@ export function AuthProvider({ children }) {
       const res = await base44.functions.invoke("verifyLogin", { username, password });
       const data = res?.data || res;
       if (data?.success && data.token) {
+        clearAdminSettingsAuthorization();
         localStorage.setItem(TOKEN_KEY, data.token);
         setCurrentUser(data.user);
         setBrowseOnly(false);
