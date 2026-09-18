@@ -1,26 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import { constantTimeEqual } from '../../shared/constantTime.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
-function b64urlEncode(str) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
 function b64urlDecode(str) {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   while (str.length % 4) str += '=';
   return atob(str);
-}
-
-async function hmacSign(message, secret) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
 }
 
 Deno.serve(async (req) => {
@@ -32,47 +16,29 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false, error: 'No token provided' }, { status: 400 });
     }
 
-    const parts = token.split('.');
-    if (parts.length !== 2) {
-      return Response.json({ valid: false, error: 'Malformed token' }, { status: 401 });
-    }
-
-    const [payloadStr, providedSig] = parts;
-    const secret = Deno.env.get('SESSION_SIGNING_SECRET');
-    if (!secret) {
-      console.error('verifySession session signing secret is unavailable');
-      return Response.json({ valid: false, error: 'Session verification service is unavailable' }, { status: 500 });
-    }
-
-    const expectedSig = await hmacSign(payloadStr, secret);
-    if (!constantTimeEqual(expectedSig, providedSig)) {
-      return Response.json({ valid: false, error: 'Invalid signature' }, { status: 401 });
-    }
-
-    const payload = JSON.parse(b64urlDecode(payloadStr));
-    const issuedAt = Number(payload?.iat);
-    const expiresAt = Number(payload?.exp);
-    if (
-      !payload?.email ||
-      !Number.isFinite(issuedAt) || issuedAt <= 0 ||
-      !Number.isFinite(expiresAt) || expiresAt <= Date.now() || expiresAt <= issuedAt
-    ) {
-      return Response.json({ valid: false, error: 'Token expired or invalid' }, { status: 401 });
-    }
-
-    // Fetch fresh user data as service role
     const base44 = createClientFromRequest(req);
-    const users = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: payload.email });
-    if (!Array.isArray(users) || users.length !== 1) {
+    let user;
+    try {
+      user = await authenticateSignShopSession(base44, token);
+    } catch (authError) {
+      const status = Number(authError?.status || 500);
+      if (status === 503) console.error('verifySession session authentication service is unavailable');
+      const safeStatus = [401, 409].includes(status) ? status : 500;
       return Response.json({
         valid: false,
-        error: Array.isArray(users) && users.length === 0 ? 'User no longer exists' : 'User identity could not be verified uniquely'
-      }, { status: Array.isArray(users) && users.length === 0 ? 404 : 409 });
+        error: safeStatus === 409 ? 'User identity could not be verified uniquely' :
+          safeStatus === 401 ? 'Session is invalid, expired, or revoked' :
+          'Session verification service is unavailable',
+      }, { status: safeStatus });
     }
-    const user = users[0];
-    const notBefore = Date.parse(String(user?.session_not_before || ''));
-    if (Number.isFinite(notBefore) && notBefore > 0 && (!Number.isFinite(issuedAt) || issuedAt < notBefore)) {
-      return Response.json({ valid: false, error: 'Session has been revoked' }, { status: 401 });
+
+    // Authentication above verifies the signed payload. Decode only to preserve
+    // the legacy username fallback when the AuthorizedEmail record has none.
+    let payload = {};
+    try {
+      payload = JSON.parse(b64urlDecode(String(token).split('.')[0] || ''));
+    } catch {
+      // The shared verifier already validated this payload; keep a safe fallback.
     }
 
     return Response.json({
