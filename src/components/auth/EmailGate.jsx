@@ -24,7 +24,7 @@ export function getStoredAdminSettingsCapability() {
     const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
     const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
     if (capability && Number.isFinite(expiresAt) && expiresAt > Date.now()) return capability;
-  } catch (_) {}
+  } catch {}
   clearAdminSettingsAuthorization();
   return "";
 }
