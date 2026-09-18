@@ -1173,7 +1173,9 @@ export default function SIPs() {
             <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-600" />Completed WIP Items ({visibleCompletedWipItems.length})</h3>
 
             <div className="lg:hidden space-y-3">
-              {visibleCompletedWipItems.map((wo) => (
+              {visibleCompletedWipItems.map((wo) => {
+                const progress = getChecklistProgress(wo);
+                return (
                 <div key={wo.id} className="rounded-xl border border-green-200 bg-green-50/40 p-3">
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0">
@@ -1205,6 +1207,14 @@ export default function SIPs() {
                     label="Task description"
                   />
 
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-100 bg-white px-3 py-2 text-xs">
+                    <ClipboardList className="h-4 w-4 shrink-0 text-blue-600" aria-hidden="true" />
+                    <span className="text-gray-500">Checklist</span>
+                    <span className="font-semibold text-gray-700">
+                      {progress.total > 0 ? `${progress.completed}/${progress.total} completed` : "No checklist items"}
+                    </span>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
                     <div><span className="text-gray-400 block">Deadline</span><span className="font-medium text-gray-700">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "—"}</span></div>
                     <div><span className="text-gray-400 block">PM</span><span className="font-medium text-gray-700 truncate block">{wo.project_manager || "—"}</span></div>
@@ -1217,7 +1227,8 @@ export default function SIPs() {
                   </div>
                   {isRegistered && <p className="text-[11px] text-gray-500 text-center mt-2">Reopen returns this WIP item to the active queue.</p>}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="hidden lg:block overflow-x-hidden">
