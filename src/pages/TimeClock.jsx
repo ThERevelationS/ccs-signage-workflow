@@ -50,6 +50,39 @@ function newRequestId() {
   return `tc-notes-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 }
 
+function notesRequestStorageKey(entryId) {
+  return `ccs_timeclock_notes_request:${String(entryId || "").trim()}`;
+}
+
+function storedNotesRequest(entryId) {
+  try {
+    const raw = sessionStorage.getItem(notesRequestStorageKey(entryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload
+      ? { request_id: requestId, payload: parsed.payload }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistNotesRequest(entryId, requestId, payload) {
+  try { sessionStorage.setItem(notesRequestStorageKey(entryId), JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearNotesRequest(entryId) {
+  try { sessionStorage.removeItem(notesRequestStorageKey(entryId)); } catch {}
+}
+
+function shouldRetainNotesRequest(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
+}
+
 export default function TimeClock() {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
@@ -195,25 +228,43 @@ export default function TimeClock() {
       setTimeEntryError("Your signed Time Clock session is no longer available. Sign in again before editing notes.");
       return;
     }
+    const stored = storedNotesRequest(entryId);
+    const payload = stored?.payload || {
+      action: "update_notes",
+      target_email: loggedInUser.email,
+      entry_id: loadedEntry.id,
+      expected_updated_date: loadedEntry.updated_date,
+      notes: editNotesText,
+    };
+    if (stored && String(payload.notes || "") !== editNotesText) {
+      setTimeEntryError("A previous notes update may already be saved. Retry the preserved update before changing the note again.");
+      return;
+    }
+    const requestId = stored?.request_id || newRequestId();
+    persistNotesRequest(entryId, requestId, payload);
+
     setTimeEntryError("");
     setSavingNotesId(entryId);
     try {
       const response = await base44.functions.invoke("timeClockAction", {
-        action: "update_notes",
+        ...payload,
         session_token: timeClockSessionToken,
-        target_email: loggedInUser.email,
-        request_id: newRequestId(),
-        entry_id: loadedEntry.id,
-        expected_updated_date: loadedEntry.updated_date,
-        notes: editNotesText,
+        request_id: requestId,
       });
       const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "The notes update was not confirmed by the server.");
+      if (!data?.success) {
+        const error = new Error(data?.error || "The notes update was not confirmed by the server.");
+        error.retrySameRequest = data?.retry_same_request === true;
+        error.confirmedServerResponse = true;
+        throw error;
+      }
+      clearNotesRequest(entryId);
       setEditingNotes(null);
       setEditNotesText("");
       await loadData();
     } catch (err) {
       console.error("Error saving notes:", err);
+      if (!shouldRetainNotesRequest(err)) clearNotesRequest(entryId);
       setTimeEntryError(err?.response?.data?.error || err?.message || "The notes changed in another session. Latest data was reloaded.");
       await loadData();
     } finally {
@@ -222,8 +273,9 @@ export default function TimeClock() {
   };
 
   const startEditingNotes = (entry) => {
+    const stored = storedNotesRequest(entry.id);
     setEditingNotes(entry.id);
-    setEditNotesText(entry.notes || "");
+    setEditNotesText(stored?.payload?.notes ?? entry.notes ?? "");
   };
 
   if (isLoading && allUsers.length === 0) {
