@@ -7,20 +7,7 @@
  * the security lockout, so admins can then set passwords for everyone.
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-function b64urlEncode(str) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-async function hmacSign(message, secret) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
-}
+import { signShopSessionPayload } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -44,12 +31,6 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Not an admin in AuthorizedEmail' }, { status: 403 });
     }
 
-    const secret = Deno.env.get('SESSION_SIGNING_SECRET');
-    if (!secret) {
-      console.error('adminBootstrapLogin session signing secret is unavailable');
-      return Response.json({ success: false, error: 'Emergency admin sign-in service is unavailable' }, { status: 500 });
-    }
-
     const payload = {
       email: user.email,
       username: user.username || user.email.split('@')[0],
@@ -58,9 +39,16 @@ Deno.serve(async (req) => {
       exp: Date.now() + 1000 * 60 * 60 * 24 * 30,
       bootstrap: true,
     };
-    const payloadStr = b64urlEncode(JSON.stringify(payload));
-    const sig = await hmacSign(payloadStr, secret);
-    const token = `${payloadStr}.${sig}`;
+    let token;
+    try {
+      token = await signShopSessionPayload(payload);
+    } catch (signError) {
+      if (Number(signError?.status || 500) === 503) {
+        console.error('adminBootstrapLogin session signing secret is unavailable');
+        return Response.json({ success: false, error: 'Emergency admin sign-in service is unavailable' }, { status: 500 });
+      }
+      throw signError;
+    }
 
     return Response.json({
       success: true,
