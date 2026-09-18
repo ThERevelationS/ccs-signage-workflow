@@ -30,7 +30,7 @@ const futureDateStamp = (days) => {
 
 export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [] }) {
   return (
-    <div className="space-y-3 p-3">
+    <div className="space-y-2 p-1.5">
       {workOrders.map((wo) => {
         const status = SALES_STATUSES.find(s => s.value === wo.sales_status);
         const deadline = wo.current_task_deadline ? safeDate(wo.current_task_deadline) : null;
@@ -48,7 +48,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         return (
           <div
             key={wo.id}
-            className="clay-card p-4 cursor-pointer active:opacity-80 transition-opacity"
+            className="clay-card cursor-pointer p-3 transition-opacity active:opacity-80"
             style={{ minHeight: '44px', fontSize: '14px' }}
             onClick={() => onOpenDetails && onOpenDetails(wo)}
           >
@@ -63,7 +63,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               {status && (
                 <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
                   <Select value={wo.sales_status || "lead"} onValueChange={(value) => onRequestStatusChange?.(wo, value)} disabled={!isRegistered}>
-                    <SelectTrigger className={`h-8 w-[112px] border-0 text-xs font-medium ${status.color}`}>
+                    <SelectTrigger className={`h-11 w-[112px] border-0 text-xs font-medium ${status.color}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -85,14 +85,14 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 {isRegistered && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-amber-200 pt-2" onClick={(event) => event.stopPropagation()}>
                     {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && (
-                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "sales_rep", currentSalesOwnerLabel)} className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Assign to me</button>
+                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "sales_rep", currentSalesOwnerLabel)} className="min-h-[44px] rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Assign to me</button>
                     )}
                     {attentionKeys.has("probability_missing") && suggestedProbability != null && (
-                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "probability", suggestedProbability)} className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Set {suggestedProbability}%</button>
+                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "probability", suggestedProbability)} className="min-h-[44px] rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Set {suggestedProbability}%</button>
                     )}
                     {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
                       <Select onValueChange={(value) => onUpdateWorkOrder?.(wo.id, "lead_source", value)}>
-                        <SelectTrigger className="h-7 w-[132px] rounded-full border-amber-300 bg-white px-2.5 text-[11px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
+                        <SelectTrigger className="h-11 w-[132px] rounded-full border-amber-300 bg-white px-3 text-[11px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
                         <SelectContent>{leadSources.filter(Boolean).map((source) => <SelectItem key={source} value={source}>{source}</SelectItem>)}</SelectContent>
                       </Select>
                     )}
@@ -137,14 +137,14 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
             </div>
 
             {isRegistered && !["won", "lost"].includes(wo.sales_status) && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3" onClick={(event) => event.stopPropagation()}>
-                <span className="text-xs font-medium text-gray-500">Schedule follow-up:</span>
-                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(1))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">Tomorrow</button>
-                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
-                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
-                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(14))} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 active:bg-gray-100">+14 days</button>
-                {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 active:bg-amber-100">Mark quote sent today</button>}
-                <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 active:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>
+              <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-2.5" aria-label="Follow-up quick actions. Swipe horizontally for more actions." onClick={(event) => event.stopPropagation()}>
+                <span className="shrink-0 text-xs font-medium text-gray-500">Follow-up:</span>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(1))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">Tomorrow</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
+                <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(14))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+14 days</button>
+                {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="min-h-[44px] shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-800 active:bg-amber-100">Mark quote sent today</button>}
+                <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 active:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>
               </div>
             )}
           </div>
