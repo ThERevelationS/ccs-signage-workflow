@@ -22,12 +22,14 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
   const [outcome, setOutcome] = useState("");
   const [details, setDetails] = useState("");
   const [nextFollowUpDate, setNextFollowUpDate] = useState("");
+  const [leaveUnscheduled, setLeaveUnscheduled] = useState(false);
   const [nextAction, setNextAction] = useState("");
 
   useEffect(() => {
     setOutcome("");
     setDetails("");
     setNextFollowUpDate("");
+    setLeaveUnscheduled(false);
     setNextAction(workOrder?.current_task_description || "");
   }, [workOrder?.id]);
 
@@ -43,7 +45,8 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
   if (!workOrder) return null;
 
   const nextDateIsValid = !nextFollowUpDate || nextFollowUpDate >= todayStamp;
-  const canConfirm = Boolean(finalOutcome) && nextDateIsValid;
+  const nextStepChosen = Boolean(nextFollowUpDate) || leaveUnscheduled;
+  const canConfirm = Boolean(finalOutcome) && nextDateIsValid && nextStepChosen;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose?.()}>
