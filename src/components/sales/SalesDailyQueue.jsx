@@ -191,13 +191,13 @@ export default function SalesDailyQueue({
                       )}
 
                       {isRegistered && (
-                        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-gray-100 pt-2.5">
-                          {workOrder.follow_up_date && <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>}
-                          <span className="ml-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Reschedule</span>
-                          <button type="button" onClick={() => setFollowUpDays(workOrder, 1)} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50">Tomorrow</button>
-                          <button type="button" onClick={() => setFollowUpDays(workOrder, 3)} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50">+3</button>
-                          <button type="button" onClick={() => setFollowUpDays(workOrder, 7)} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50">+7</button>
-                          <button type="button" onClick={() => setFollowUpDays(workOrder, 14)} className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50">+14</button>
+                        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-2.5 sm:flex-wrap sm:overflow-visible" aria-label="Daily queue follow-up actions">
+                          <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex h-11 shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 sm:h-7"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />{workOrder.follow_up_date ? "Complete" : "Log follow-up"}</button>
+                          <span className="ml-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{workOrder.follow_up_date ? "Reschedule" : "Schedule"}</span>
+                          <button type="button" onClick={() => setFollowUpDays(workOrder, 1)} className="h-11 shrink-0 rounded-full border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-700 hover:bg-gray-50 sm:h-7">Tomorrow</button>
+                          <button type="button" onClick={() => setFollowUpDays(workOrder, 3)} className="h-11 shrink-0 rounded-full border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-700 hover:bg-gray-50 sm:h-7">+3</button>
+                          <button type="button" onClick={() => setFollowUpDays(workOrder, 7)} className="h-11 shrink-0 rounded-full border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-700 hover:bg-gray-50 sm:h-7">+7</button>
+                          <button type="button" onClick={() => setFollowUpDays(workOrder, 14)} className="h-11 shrink-0 rounded-full border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-700 hover:bg-gray-50 sm:h-7">+14</button>
                         </div>
                       )}
                     </article>
