@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { addDays, format } from "date-fns";
 import { Loader2, Link as LinkIcon, ClipboardList, Search, RefreshCw, CalendarClock, CheckCircle2, Settings2, AlertTriangle, X } from "lucide-react";
@@ -81,6 +81,8 @@ export default function SIPs() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
+  const [isClearingRevisit, setIsClearingRevisit] = useState(false);
 
   // Set document title
   useEffect(() => {
@@ -236,6 +238,27 @@ export default function SIPs() {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
       await loadWorkOrders(false);
+    }
+  };
+
+  const requestClearRevisit = (wo) => {
+    setOpenDatePopover(null);
+    setPendingRevisitClear({
+      id: wo.id,
+      clientName: wo.client_name || "this Work Order",
+      returnsToActive: isRevisitFuture(wo),
+    });
+  };
+
+  const confirmClearRevisit = async () => {
+    if (!pendingRevisitClear || isClearingRevisit) return;
+
+    setIsClearingRevisit(true);
+    try {
+      await updateWorkOrder(pendingRevisitClear.id, "sip_revisit_date", "");
+      setPendingRevisitClear(null);
+    } finally {
+      setIsClearingRevisit(false);
     }
   };
 
@@ -628,7 +651,7 @@ export default function SIPs() {
                       />
                       {wo.sip_revisit_date && (
                         <div className="p-2 border-t">
-                          <button type="button" onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear revisit date</button>
+                          <button type="button" onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear revisit date</button>
                         </div>
                       )}
                     </PopoverContent>
@@ -934,7 +957,7 @@ export default function SIPs() {
                           {wo.sip_revisit_date && (
                             <div className="p-2 border-t">
                               <button
-                                onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }}
+                                onClick={() => requestClearRevisit(wo)}
                                 className="text-xs text-red-500 hover:underline w-full text-center"
                               >
                                 Clear date
@@ -1045,7 +1068,7 @@ export default function SIPs() {
                           }}
                         />
                         <div className="p-2 border-t">
-                          <button type="button" onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear date & return to active</button>
+                          <button type="button" onClick={() => requestClearRevisit(wo)} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear date & return to active</button>
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -1123,7 +1146,7 @@ export default function SIPs() {
                               }}
                             />
                             <div className="p-2 border-t">
-                              <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear date</button>
+                              <button onClick={() => requestClearRevisit(wo)} className="text-xs text-red-500 hover:underline w-full text-center">Clear date</button>
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -1326,6 +1349,40 @@ export default function SIPs() {
           }}
         />
       )}
+
+      <AlertDialog
+        open={!!pendingRevisitClear}
+        onOpenChange={(open) => {
+          if (!open && !isClearingRevisit) setPendingRevisitClear(null);
+        }}
+      >
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {pendingRevisitClear?.returnsToActive ? "Return this item to active SIPs?" : "Clear revisit date?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRevisitClear?.returnsToActive
+                ? `Clearing the revisit date for ${pendingRevisitClear.clientName} will move it out of Revisit Later and back into the active SIPs queue.`
+                : `This removes the saved revisit date for ${pendingRevisitClear?.clientName || "this Work Order"}. The item will remain in the active SIPs queue.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isClearingRevisit}>Keep revisit date</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmClearRevisit}
+              disabled={isClearingRevisit}
+              className="min-h-11"
+            >
+              {isClearingRevisit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {pendingRevisitClear?.returnsToActive ? "Clear & return to active" : "Clear revisit date"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!actionError} onOpenChange={(open) => { if (!open) setActionError(null); }}>
         <AlertDialogContent className="clay-card border-none">
