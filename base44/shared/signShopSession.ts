@@ -23,7 +23,7 @@ async function hmacSign(message: string, secret: string) {
   return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
 }
 
-export async function signSignShopSessionPayload(payload: Record<string, unknown>) {
+export async function signShopSessionPayload(payload: Record<string, unknown>) {
   const secret = Deno.env.get('SESSION_SIGNING_SECRET');
   if (!secret) throw Object.assign(new Error('Session authentication is unavailable'), { status: 503 });
 
