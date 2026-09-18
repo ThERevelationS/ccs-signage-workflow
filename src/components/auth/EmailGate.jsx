@@ -16,7 +16,7 @@ export function clearAdminSettingsAuthorization() {
     sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
     sessionStorage.removeItem(ADMIN_CAPABILITY_KEY);
     sessionStorage.removeItem(ADMIN_CAPABILITY_EXPIRES_KEY);
-  } catch (_) {}
+  } catch {}
 }
 
 export function getStoredAdminSettingsCapability() {
@@ -32,7 +32,7 @@ export function getStoredAdminSettingsCapability() {
 export function hasStoredAdminSettingsAuthorization() {
   try {
     return sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === "true" && !!getStoredAdminSettingsCapability();
-  } catch (_) {
+  } catch {
     return false;
   }
 }
