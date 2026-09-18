@@ -18,6 +18,35 @@ function localDateTime(iso) {
   try { return format(parseISO(iso), "yyyy-MM-dd'T'HH:mm"); } catch { return ""; }
 }
 
+function correctionSubmissionKey(entryId) {
+  return `ccs_timeclock_correction_request:${String(entryId || "").trim()}`;
+}
+
+function storedCorrectionSubmission(entryId) {
+  try {
+    const raw = sessionStorage.getItem(correctionSubmissionKey(entryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload ? { request_id: requestId, payload: parsed.payload } : null;
+  } catch { return null; }
+}
+
+function persistCorrectionSubmission(entryId, requestId, payload) {
+  try { sessionStorage.setItem(correctionSubmissionKey(entryId), JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearCorrectionSubmission(entryId) {
+  try { sessionStorage.removeItem(correctionSubmissionKey(entryId)); } catch {}
+}
+
+function shouldRetainCorrectionRequest(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
+}
+
 export default function CorrectionRequestDialog({ open, onOpenChange, entry, sessionToken, onSubmitted }) {
   const [clockIn, setClockIn] = useState("");
   const [clockOut, setClockOut] = useState("");
@@ -26,14 +55,19 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [requestId, setRequestId] = useState("");
 
   useEffect(() => {
     if (!open || !entry) return;
-    setClockIn(localDateTime(entry.clock_in));
-    setClockOut(localDateTime(entry.clock_out));
-    setLunchMinutes(String(entry.lunch_minutes || 0));
-    setNotes(entry.notes || "");
-    setReason("");
+    const stored = storedCorrectionSubmission(entry.id);
+    const payload = stored?.payload || null;
+    const requested = payload?.requested_changes || null;
+    setClockIn(requested?.clock_in ? localDateTime(requested.clock_in) : localDateTime(entry.clock_in));
+    setClockOut(requested?.clock_out ? localDateTime(requested.clock_out) : localDateTime(entry.clock_out));
+    setLunchMinutes(String(requested?.lunch_minutes ?? entry.lunch_minutes ?? 0));
+    setNotes(requested?.notes ?? entry.notes ?? "");
+    setReason(payload?.reason || "");
+    setRequestId(stored?.request_id || newRequestId());
     setError("");
   }, [open, entry]);
 
@@ -47,29 +81,50 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
       setError("Enter valid clock-in and clock-out times.");
       return;
     }
+    const payload = {
+      action: "submit_correction_request",
+      target_email: entry.user_email,
+      entry_id: entry.id,
+      expected_updated_date: entry.updated_date,
+      reason: reason.trim(),
+      requested_changes: {
+        clock_in: parsedIn.toISOString(),
+        clock_out: parsedOut.toISOString(),
+        lunch_minutes: Math.max(0, Number(lunchMinutes) || 0),
+        notes,
+      },
+    };
+    const stored = storedCorrectionSubmission(entry.id);
+    const activeRequestId = stored?.request_id || requestId || newRequestId();
+    if (stored && JSON.stringify(stored.payload) !== JSON.stringify(payload)) {
+      setError("A previous submission may already be saved. Retry the preserved request with its original details before making a different correction.");
+      return;
+    }
+    persistCorrectionSubmission(entry.id, activeRequestId, payload);
+    setRequestId(activeRequestId);
     setBusy(true);
     setError("");
     try {
       const response = await base44.functions.invoke("timeClockAction", {
-        action: "submit_correction_request",
+        ...payload,
         session_token: sessionToken,
-        target_email: entry.user_email,
-        request_id: newRequestId(),
-        entry_id: entry.id,
-        expected_updated_date: entry.updated_date,
-        reason: reason.trim(),
-        requested_changes: {
-          clock_in: parsedIn.toISOString(),
-          clock_out: parsedOut.toISOString(),
-          lunch_minutes: Math.max(0, Number(lunchMinutes) || 0),
-          notes,
-        },
+        request_id: activeRequestId,
       });
       const data = response?.data || response;
-      if (!data?.success) throw new Error(data?.error || "The correction request was not confirmed by the server.");
+      if (!data?.success) {
+        const err = new Error(data?.error || "The correction request was not confirmed by the server.");
+        err.retrySameRequest = data?.retry_same_request === true;
+        err.confirmedServerResponse = true;
+        throw err;
+      }
+      clearCorrectionSubmission(entry.id);
       onOpenChange(false);
       await onSubmitted?.();
     } catch (err) {
+      if (!shouldRetainCorrectionRequest(err)) {
+        clearCorrectionSubmission(entry.id);
+        setRequestId(newRequestId());
+      }
       setError(err?.response?.data?.error || err?.message || "The correction request could not be submitted safely.");
     } finally {
       setBusy(false);
