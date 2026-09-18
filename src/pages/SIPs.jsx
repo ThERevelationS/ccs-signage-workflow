@@ -60,6 +60,31 @@ const CondensedDescription = ({ value, label = "Job description" }) => {
   );
 };
 
+const MobileDescription = ({ value, fallback = "No description", label = "Job description" }) => {
+  const [expanded, setExpanded] = useState(false);
+  const text = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  const canExpand = text.length > 110;
+
+  return (
+    <div className="mt-2 min-w-0">
+      <p className={`text-sm leading-relaxed text-gray-600 break-words whitespace-pre-wrap ${expanded ? "" : "line-clamp-2"}`}>
+        {text}
+      </p>
+      {canExpand && (
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className="min-h-11 -ml-2 px-2 text-xs font-medium text-blue-700 hover:text-blue-800 underline-offset-2 hover:underline touch-manipulation"
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "Collapse" : "Show full"} ${label.toLowerCase()}`}
+        >
+          {expanded ? "Show less" : "Show full description"}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export default function SIPs() {
   const { currentUser, isRegistered } = useAuth();
   const [workOrders, setWorkOrders] = useState([]);
@@ -594,7 +619,7 @@ export default function SIPs() {
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
+
                     </div>
                     <Button
                       type="button"
@@ -608,6 +633,8 @@ export default function SIPs() {
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
                     </Button>
                   </div>
+
+                  <MobileDescription value={wo.description || wo.current_task_description} />
 
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {isWip && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">WIP</Badge>}
@@ -1016,7 +1043,7 @@ export default function SIPs() {
                           <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.description || wo.current_task_description || "No description"}</p>
+  
                       </div>
                       <Button
                         type="button"
@@ -1030,6 +1057,8 @@ export default function SIPs() {
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
                       </Button>
                     </div>
+
+                    <MobileDescription value={wo.description || wo.current_task_description} />
 
                     <div className="mt-3 rounded-lg border border-amber-200 bg-white px-3 py-2">
                       <div className="text-[11px] uppercase tracking-wide text-amber-600 font-medium">Returns to active SIPs</div>
@@ -1177,7 +1206,7 @@ export default function SIPs() {
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{wo.current_task_description || wo.description || "No task description"}</p>
+
                     </div>
                     <Button
                       type="button"
@@ -1191,6 +1220,12 @@ export default function SIPs() {
                       Reopen
                     </Button>
                   </div>
+
+                  <MobileDescription
+                    value={wo.current_task_description || wo.description}
+                    fallback="No task description"
+                    label="Task description"
+                  />
 
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
                     <div><span className="text-gray-400 block">Deadline</span><span className="font-medium text-gray-700">{wo.current_task_deadline ? format(parseLocalDate(wo.current_task_deadline), "MM/dd/yy") : "—"}</span></div>
