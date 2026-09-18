@@ -22,6 +22,39 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function newBadgeRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `tc-badge-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function badgeRotationStorageKey(email) {
+  return `ccs_timeclock_badge_rotate:${String(email || "").trim().toLowerCase()}`;
+}
+
+function storedBadgeRotationRequest(email) {
+  try {
+    const value = sessionStorage.getItem(badgeRotationStorageKey(email)) || "";
+    return value.length >= 8 && value.length <= 128 ? value : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistBadgeRotationRequest(email, requestId) {
+  try { sessionStorage.setItem(badgeRotationStorageKey(email), requestId); } catch {}
+}
+
+function clearBadgeRotationRequest(email) {
+  try { sessionStorage.removeItem(badgeRotationStorageKey(email)); } catch {}
+}
+
+function shouldRetainBadgeRotation(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
+}
+
 export default function UserQRCode({ user, sessionToken = "" }) {
   const qrRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -38,6 +71,11 @@ export default function UserQRCode({ user, sessionToken = "" }) {
       return;
     }
 
+    const requestId = rotate
+      ? (storedBadgeRotationRequest(user.email) || newBadgeRequestId())
+      : "";
+    if (rotate) persistBadgeRotationRequest(user.email, requestId);
+
     rotate ? setIsReplacing(true) : setIsLoading(true);
     setError("");
     try {
@@ -45,14 +83,20 @@ export default function UserQRCode({ user, sessionToken = "" }) {
         session_token: sessionToken,
         target_email: user.email,
         rotate,
+        ...(rotate ? { request_id: requestId } : {}),
       });
       const data = response?.data || response;
       if (!data?.success || !data?.badge_code) {
-        throw new Error(data?.error || "Secure Time Clock badge could not be loaded.");
+        const actionError = new Error(data?.error || "Secure Time Clock badge could not be loaded.");
+        actionError.retrySameRequest = data?.retry_same_request === true;
+        actionError.confirmedServerResponse = true;
+        throw actionError;
       }
+      if (rotate) clearBadgeRotationRequest(user.email);
       setBadgeCode(data.badge_code);
       setBadgeVersion(data.badge_version || null);
     } catch (err) {
+      if (rotate && !shouldRetainBadgeRotation(err)) clearBadgeRotationRequest(user.email);
       const apiError = err?.response?.data?.error;
       setError(apiError || err?.message || "Secure Time Clock badge could not be loaded.");
     } finally {
