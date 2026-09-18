@@ -372,7 +372,7 @@ export default function SalesPipeline() {
         </div>
 
         {!showPendingImports && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
-          <div className="mb-2 space-y-1.5">
+          <div className="mb-1 space-y-1">
             <div className="flex gap-1.5 overflow-x-auto pb-0.5" title="Pipeline summary. Swipe or scroll horizontally on smaller screens.">
               <button type="button" onClick={() => applyAttentionFilter("all")} className="min-w-[180px] flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="flex items-center justify-between gap-2">
@@ -448,7 +448,7 @@ export default function SalesPipeline() {
               </button>
             </div>
 
-            <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-white/80 px-2 py-1.5" title="Sales attention filters. Swipe or scroll horizontally to see every filter.">
+            <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-white/80 px-2 py-1" title="Sales attention filters. Swipe or scroll horizontally to see every filter.">
               <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-1 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
                 <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-amber-700" />
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
