@@ -407,11 +407,11 @@ export default function SIPs() {
 
             <div className="flex flex-wrap items-center gap-2">
               {currentUser?.role === "admin" && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)}>
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateBuilder(true)} className="h-11 sm:h-8">
                   <Settings2 className="w-4 h-4 mr-2" />Manage Templates
                 </Button>
               )}
-              <Button type="button" variant="outline" size="sm" onClick={() => loadWorkOrders(false)} disabled={isRefreshing}>
+              <Button type="button" variant="outline" size="sm" onClick={() => loadWorkOrders(false)} disabled={isRefreshing} className="h-11 sm:h-8">
                 <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />Refresh
               </Button>
             </div>
@@ -485,10 +485,10 @@ export default function SIPs() {
           <div className="grid grid-cols-1 md:grid-cols-[minmax(260px,1fr)_190px_180px_auto] gap-2 mt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search customer, job, task, employee, estimate or invoice…" className="pl-9 bg-white" />
+              <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search customer, job, task, employee, estimate or invoice…" className="h-11 min-w-0 pl-9 bg-white md:h-9" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-11 bg-white md:h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All active items</SelectItem>
                 <SelectItem value="attention">Needs attention</SelectItem>
@@ -498,7 +498,7 @@ export default function SIPs() {
               </SelectContent>
             </Select>
             <Select value={sortMode} onValueChange={setSortMode}>
-              <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-11 bg-white md:h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="meeting">Meeting order</SelectItem>
                 <SelectItem value="deadline">Deadline</SelectItem>
@@ -507,7 +507,7 @@ export default function SIPs() {
               </SelectContent>
             </Select>
             {hasBoardViewFilters && (
-              <Button type="button" variant="ghost" onClick={resetBoardView} className="justify-self-start md:justify-self-auto">
+              <Button type="button" variant="ghost" onClick={resetBoardView} className="h-11 w-full justify-center md:h-9 md:w-auto md:justify-self-auto">
                 <X className="w-4 h-4 mr-2" />Clear
               </Button>
             )}
