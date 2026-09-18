@@ -316,6 +316,11 @@ export default function FleetNotifications() {
     return result;
   }, [notifications]);
   const visible = filter === "all" ? notifications : notifications.filter(row => row.group === filter);
+  const visibleSections = [
+    { key: "critical", label: "Critical", description: "Highest-priority Fleet issues" },
+    { key: "warning", label: "Needs attention", description: "Items that should be reviewed soon" },
+    { key: "info", label: "Updates", description: "Active informational items" },
+  ].map(section => ({ ...section, items: visible.filter(row => row.severity === section.key) })).filter(section => section.items.length > 0);
 
   if (!data && !error) return <div className="min-h-full bg-gray-50 dark:bg-slate-950"><FleetModuleNav /><div className="py-24 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div></div>;
 
@@ -344,7 +349,18 @@ export default function FleetNotifications() {
         {Object.entries(groupConfig).map(([key, config]) => <FilterButton key={key} active={filter === key} onClick={() => setFilter(key)} icon={config.icon} label={config.label} count={counts[key] || 0} />)}
       </div></div>
 
-      {visible.length === 0 ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 py-12 px-5 text-center dark:border-emerald-900 dark:bg-emerald-950/20"><Bell className="w-8 h-8 mx-auto text-emerald-500" /><div className="mt-3 font-semibold text-emerald-800 dark:text-emerald-200">No active signals in this view</div><p className="mt-1 text-sm text-emerald-700/80 dark:text-emerald-300/80">Nothing currently needs attention for this category.</p></div> : <div className="space-y-3">{visible.map(item => <NotificationCard key={item.key} item={item} />)}</div>}
+      {visible.length === 0 ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 py-12 px-5 text-center dark:border-emerald-900 dark:bg-emerald-950/20"><Bell className="w-8 h-8 mx-auto text-emerald-500" /><div className="mt-3 font-semibold text-emerald-800 dark:text-emerald-200">No active signals in this view</div><p className="mt-1 text-sm text-emerald-700/80 dark:text-emerald-300/80">Nothing currently needs attention for this category.</p></div> : <div className="space-y-5">
+        {visibleSections.map(section => <section key={section.key} aria-labelledby={`fleet-notifications-${section.key}`}>
+          <div className="mb-2 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <h2 id={`fleet-notifications-${section.key}`} className="text-sm font-bold text-gray-900 dark:text-slate-100">{section.label}</h2>
+              <p className="text-xs text-gray-500 dark:text-slate-400">{section.description}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-slate-300">{section.items.length}</span>
+          </div>
+          <div className="space-y-2.5">{section.items.map(item => <NotificationCard key={item.key} item={item} />)}</div>
+        </section>)}
+      </div>}
     </div>
   </div>;
 }
