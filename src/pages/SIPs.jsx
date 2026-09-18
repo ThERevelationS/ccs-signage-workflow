@@ -1369,13 +1369,13 @@ export default function SIPs() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isClearingRevisit}>Keep revisit date</AlertDialogCancel>
+            <AlertDialogCancel disabled={isClearingRevisit} className="min-h-11 touch-manipulation">Keep revisit date</AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
               onClick={confirmClearRevisit}
               disabled={isClearingRevisit}
-              className="min-h-11"
+              className="min-h-11 touch-manipulation"
             >
               {isClearingRevisit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {pendingRevisitClear?.returnsToActive ? "Clear & return to active" : "Clear revisit date"}
