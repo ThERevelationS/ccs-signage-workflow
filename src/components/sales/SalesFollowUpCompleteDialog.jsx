@@ -77,18 +77,35 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Next follow-up</Label>
-              <Input type="date" min={todayStamp} value={nextFollowUpDate} onChange={(event) => setNextFollowUpDate(event.target.value)} />
-              <div className="flex flex-wrap gap-1.5">
+              <Input
+                type="date"
+                min={todayStamp}
+                value={nextFollowUpDate}
+                onChange={(event) => {
+                  setNextFollowUpDate(event.target.value);
+                  setLeaveUnscheduled(false);
+                }}
+              />
+              <div className="flex items-center gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5" aria-label="Choose the next follow-up date or explicitly leave it unscheduled">
                 {[1, 3, 7, 14].map((days) => {
                   const date = new Date();
                   date.setHours(0, 0, 0, 0);
                   date.setDate(date.getDate() + days);
                   const stamp = format(date, "yyyy-MM-dd");
-                  return <button key={days} type="button" onClick={() => setNextFollowUpDate(stamp)} className="rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+{days}d</button>;
+                  return <button key={days} type="button" onClick={() => { setNextFollowUpDate(stamp); setLeaveUnscheduled(false); }} className="h-11 shrink-0 rounded-full border border-gray-200 px-3 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+{days}d</button>;
                 })}
-                {nextFollowUpDate && <button type="button" onClick={() => setNextFollowUpDate("")} className="rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-500 hover:bg-gray-50">No next date</button>}
+                <button
+                  type="button"
+                  onClick={() => { setNextFollowUpDate(""); setLeaveUnscheduled(true); }}
+                  className={leaveUnscheduled
+                    ? "h-11 shrink-0 rounded-full border border-amber-400 bg-amber-100 px-3 text-[11px] font-semibold text-amber-900 sm:h-7"
+                    : "h-11 shrink-0 rounded-full border border-gray-200 px-3 text-[11px] font-semibold text-gray-500 hover:bg-gray-50 sm:h-7"}
+                >
+                  Leave unscheduled
+                </button>
               </div>
               {!nextDateIsValid && <p className="text-xs text-red-600">Next follow-up cannot be in the past.</p>}
+              {nextDateIsValid && !nextStepChosen && <p className="text-xs font-medium text-amber-700">Choose a next date or explicitly select Leave unscheduled.</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Next action</Label>
@@ -96,17 +113,18 @@ export default function SalesFollowUpCompleteDialog({ workOrder, onClose, onConf
             </div>
           </div>
 
-          {!nextFollowUpDate && (
+          {leaveUnscheduled && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              No next follow-up will be scheduled. If there is also no task deadline, this opportunity will appear in the No Next Action queue.
+              You chose to leave this follow-up unscheduled. If there is also no task deadline, this opportunity will appear in the No Next Action queue.
             </div>
           )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={() => onClose?.()}>Cancel</Button>
+          <Button type="button" variant="outline" className="h-11 sm:h-9" onClick={() => onClose?.()}>Cancel</Button>
           <Button
             type="button"
+            className="h-11 sm:h-9"
             disabled={!canConfirm}
             onClick={() => onConfirm?.({ outcome: finalOutcome, nextFollowUpDate, nextAction: nextAction.trim() })}
           >
