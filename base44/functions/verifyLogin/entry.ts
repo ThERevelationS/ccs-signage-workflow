@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
-import { signSignShopSessionPayload } from '../../shared/signShopSession.ts';
+import { signShopSessionPayload } from '../../shared/signShopSession.ts';
 
 // Fixed bcrypt work factor for invalid/unknown credentials. This is not a real
 // account credential; it only keeps failed-login timing closer to valid-user
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     };
     let token;
     try {
-      token = await signSignShopSessionPayload(payload);
+      token = await signShopSessionPayload(payload);
     } catch (signError) {
       if (Number(signError?.status || 500) === 503) {
         console.error('verifyLogin session signing secret is unavailable');
