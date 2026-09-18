@@ -355,10 +355,12 @@ export default function FleetNotifications() {
         </select>
         <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">{visible.length} signal{visible.length === 1 ? "" : "s"} shown</p>
       </div>
-      <div className="hidden sm:block overflow-x-auto -mx-1 px-1"><div className="inline-flex min-w-max rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
-        <FilterButton active={filter === "all"} onClick={() => setFilter("all")} icon={Bell} label="All" count={counts.all || 0} />
-        {Object.entries(groupConfig).map(([key, config]) => <FilterButton key={key} active={filter === key} onClick={() => setFilter(key)} icon={config.icon} label={config.label} count={counts[key] || 0} />)}
-      </div></div>
+      <div className="hidden sm:block">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+          <FilterButton active={filter === "all"} onClick={() => setFilter("all")} icon={Bell} label="All" count={counts.all || 0} />
+          {Object.entries(groupConfig).map(([key, config]) => <FilterButton key={key} active={filter === key} onClick={() => setFilter(key)} icon={config.icon} label={config.label} count={counts[key] || 0} />)}
+        </div>
+      </div>
 
       {visible.length === 0 ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 py-12 px-5 text-center dark:border-emerald-900 dark:bg-emerald-950/20"><Bell className="w-8 h-8 mx-auto text-emerald-500" /><div className="mt-3 font-semibold text-emerald-800 dark:text-emerald-200">No active signals in this view</div><p className="mt-1 text-sm text-emerald-700/80 dark:text-emerald-300/80">Nothing currently needs attention for this category.</p></div> : <div className="space-y-5">
         {visibleSections.map(section => <section key={section.key} aria-labelledby={`fleet-notifications-${section.key}`}>
