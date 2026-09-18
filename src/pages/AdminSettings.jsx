@@ -77,7 +77,12 @@ import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
-import { useAuth } from "@/components/auth/EmailGate";
+import {
+  getStoredAdminSettingsCapability,
+  hasStoredAdminSettingsAuthorization,
+  storeAdminSettingsAuthorization,
+  useAuth,
+} from "@/components/auth/EmailGate";
 import { verifyLogin } from "@/functions/verifyLogin";
 import PasswordMigrationButton from "@/components/admin/PasswordMigrationButton";
 import {
@@ -315,18 +320,6 @@ const TEMPLATE_VARIABLES = [
 ];
 
 const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "Brian", "Chris"];
-const ADMIN_UNLOCKED_KEY = "adminUnlocked";
-const ADMIN_CAPABILITY_KEY = "adminSettingsCapability";
-const ADMIN_CAPABILITY_EXPIRES_KEY = "adminSettingsCapabilityExpires";
-
-function storedAdminCapability() {
-  try {
-    const capability = String(sessionStorage.getItem(ADMIN_CAPABILITY_KEY) || "").trim();
-    const expiresAt = Date.parse(String(sessionStorage.getItem(ADMIN_CAPABILITY_EXPIRES_KEY) || ""));
-    if (capability && Number.isFinite(expiresAt) && expiresAt > Date.now()) return capability;
-  } catch (_) {}
-  return "";
-}
 
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
@@ -338,8 +331,8 @@ export default function AdminSettings() {
   
   // Password/Face ID protection state. A UI unlock is valid only while the
   // backend-issued Admin Settings capability is still present and unexpired.
-  const [adminCapability, setAdminCapability] = useState(() => storedAdminCapability());
-  const [isUnlocked, setIsUnlocked] = useState(() => sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true' && !!storedAdminCapability());
+  const [adminCapability, setAdminCapability] = useState(() => getStoredAdminSettingsCapability());
+  const [isUnlocked, setIsUnlocked] = useState(() => hasStoredAdminSettingsAuthorization());
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -368,9 +361,7 @@ export default function AdminSettings() {
     if (!capability || !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt) <= Date.now()) {
       throw new Error("Admin Settings authorization could not be verified.");
     }
-    sessionStorage.setItem(ADMIN_UNLOCKED_KEY, "true");
-    sessionStorage.setItem(ADMIN_CAPABILITY_KEY, capability);
-    sessionStorage.setItem(ADMIN_CAPABILITY_EXPIRES_KEY, expiresAt);
+    storeAdminSettingsAuthorization(capability, expiresAt);
     setAdminCapability(capability);
     setIsUnlocked(true);
   };
