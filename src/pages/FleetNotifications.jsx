@@ -326,7 +326,20 @@ export default function FleetNotifications() {
       <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">This page reads operational state and links to the owning workflow. It does not alter Fleet email queue/retry state. Bouncie alerts can still be marked read from Tracking.</div>
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
-      <div className="overflow-x-auto -mx-1 px-1"><div className="inline-flex min-w-max rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+      <div className="sm:hidden">
+        <label htmlFor="fleet-notification-filter" className="text-sm font-semibold text-gray-700 dark:text-slate-200">Notification category</label>
+        <select
+          id="fleet-notification-filter"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value)}
+          className="mt-1 min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-base font-medium text-gray-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        >
+          <option value="all">All · {counts.all || 0}</option>
+          {Object.entries(groupConfig).map(([key, config]) => <option key={key} value={key}>{config.label} · {counts[key] || 0}</option>)}
+        </select>
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">{visible.length} signal{visible.length === 1 ? "" : "s"} shown</p>
+      </div>
+      <div className="hidden sm:block overflow-x-auto -mx-1 px-1"><div className="inline-flex min-w-max rounded-xl border border-gray-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
         <FilterButton active={filter === "all"} onClick={() => setFilter("all")} icon={Bell} label="All" count={counts.all || 0} />
         {Object.entries(groupConfig).map(([key, config]) => <FilterButton key={key} active={filter === key} onClick={() => setFilter(key)} icon={config.icon} label={config.label} count={counts[key] || 0} />)}
       </div></div>
@@ -337,7 +350,7 @@ export default function FleetNotifications() {
 }
 
 function FilterButton({ active, onClick, icon: Icon, label, count }) {
-  return <button type="button" onClick={onClick} className={`min-h-11 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${active ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><Icon className="w-4 h-4" />{label}<span className={`min-w-[20px] h-5 px-1 rounded-full text-[10px] inline-flex items-center justify-center ${active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-200"}`}>{count}</span></button>;
+  return <button type="button" aria-pressed={active} onClick={onClick} className={`min-h-11 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${active ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}><Icon className="w-4 h-4" />{label}<span className={`min-w-[20px] h-5 px-1 rounded-full text-[10px] inline-flex items-center justify-center ${active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-200"}`}>{count}</span></button>;
 }
 
 function NotificationCard({ item }) {
@@ -345,7 +358,7 @@ function NotificationCard({ item }) {
   const Icon = item.group === "inventory" && item.title.includes("fluid") ? Droplets : item.group === "work_orders" && item.detail.includes("unassigned") ? UserRoundX : item.group === "bouncie" && item.title.includes("identity") ? Truck : config.icon;
   const critical = item.severity === "critical";
   const info = item.severity === "info";
-  return <Link to={item.to} className={`block rounded-xl border bg-white p-4 shadow-sm transition hover:border-indigo-300 dark:bg-slate-900 dark:hover:border-indigo-700 ${critical ? "border-red-200 dark:border-red-900" : info ? "border-gray-200 dark:border-slate-800" : "border-amber-200 dark:border-amber-900"}`}>
-    <div className="flex items-start gap-3"><div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${critical ? "bg-red-50 dark:bg-red-950/40" : info ? "bg-gray-100 dark:bg-slate-800" : "bg-amber-50 dark:bg-amber-950/40"}`}><Icon className={`w-5 h-5 ${critical ? "text-red-600 dark:text-red-300" : info ? "text-gray-500 dark:text-slate-300" : "text-amber-600 dark:text-amber-300"}`} /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><div className="font-semibold text-gray-900 dark:text-slate-100">{item.title}</div><span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${critical ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300" : info ? "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"}`}>{item.severity}</span></div><div className="text-sm text-gray-500 dark:text-slate-400 mt-1 break-words">{item.detail}</div><div className="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-300">Open {config.label}</div></div></div>
+  return <Link to={item.to} className={`block rounded-xl border bg-white p-3 shadow-sm transition hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-4 dark:bg-slate-900 dark:hover:border-indigo-700 dark:focus-visible:ring-offset-slate-950 ${critical ? "border-red-200 dark:border-red-900" : info ? "border-gray-200 dark:border-slate-800" : "border-amber-200 dark:border-amber-900"}`}>
+    <div className="flex items-start gap-3"><div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 ${critical ? "bg-red-50 dark:bg-red-950/40" : info ? "bg-gray-100 dark:bg-slate-800" : "bg-amber-50 dark:bg-amber-950/40"}`}><Icon className={`w-5 h-5 ${critical ? "text-red-600 dark:text-red-300" : info ? "text-gray-500 dark:text-slate-300" : "text-amber-600 dark:text-amber-300"}`} /></div><div className="min-w-0 flex-1"><div className="flex flex-col items-start gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2"><div className="font-semibold leading-snug text-gray-900 break-words dark:text-slate-100">{item.title}</div><span className={`w-fit shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${critical ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300" : info ? "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"}`}>{item.severity}</span></div><div className="mt-1 text-sm leading-5 text-gray-500 break-words dark:text-slate-400">{item.detail}</div><div className="mt-2 text-xs font-semibold text-indigo-600 dark:text-indigo-300">Open {config.label}</div></div></div>
   </Link>;
 }
