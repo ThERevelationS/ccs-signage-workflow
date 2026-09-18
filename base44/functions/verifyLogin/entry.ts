@@ -1,29 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+import { signSignShopSessionPayload } from '../../shared/signShopSession.ts';
 
 // Fixed bcrypt work factor for invalid/unknown credentials. This is not a real
 // account credential; it only keeps failed-login timing closer to valid-user
 // bcrypt verification so username existence is harder to infer remotely.
 const DUMMY_PASSWORD_HASH = '$2a$10$ApDRjqUs6Q5EbAw/6UybWuLWQOAa5Eg4dLKs/F9iQRZUXfcubNGKa';
-
-// Base64url helpers
-function b64urlEncode(str) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-async function hmacSign(message, secret) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return b64urlEncode(String.fromCharCode(...new Uint8Array(sig)));
-}
 
 Deno.serve(async (req) => {
   try {
@@ -107,13 +90,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build signed session token: base64url(payload).base64url(signature)
-    const secret = Deno.env.get('SESSION_SIGNING_SECRET');
-    if (!secret) {
-      console.error('verifyLogin session signing secret is unavailable');
-      return Response.json({ success: false, error: 'Sign in service is unavailable' }, { status: 500 });
-    }
-
+    // Build signed session token with the shared sign-shop signing primitive.
     const payload = {
       email: user.email,
       username: user.username,
@@ -121,9 +98,16 @@ Deno.serve(async (req) => {
       iat: Date.now(),
       exp: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30 days
     };
-    const payloadStr = b64urlEncode(JSON.stringify(payload));
-    const sig = await hmacSign(payloadStr, secret);
-    const token = `${payloadStr}.${sig}`;
+    let token;
+    try {
+      token = await signSignShopSessionPayload(payload);
+    } catch (signError) {
+      if (Number(signError?.status || 500) === 503) {
+        console.error('verifyLogin session signing secret is unavailable');
+        return Response.json({ success: false, error: 'Sign in service is unavailable' }, { status: 500 });
+      }
+      throw signError;
+    }
 
     return Response.json({
       success: true,
