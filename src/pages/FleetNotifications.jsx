@@ -327,8 +327,19 @@ export default function FleetNotifications() {
   return <div className="min-h-full bg-gray-50 dark:bg-slate-950">
     <FleetModuleNav />
     <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3"><div><h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Fleet Notification Center</h1><p className="text-sm text-gray-500 dark:text-slate-400 mt-1">One operational attention queue for maintenance, work orders, inventory, warranties, assignments, approvals, Bouncie, and Fleet system health.</p></div><div className="text-sm font-semibold text-gray-700 dark:text-slate-200">{notifications.length} active signal{notifications.length === 1 ? "" : "s"}</div></div>
-      <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">This page reads operational state and links to the owning workflow. It does not alter Fleet email queue/retry state. Bouncie alerts can still be marked read from Tracking.</div>
+      <div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-slate-100">Fleet Notification Center</h1>
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-800">{notifications.length} active signal{notifications.length === 1 ? "" : "s"}</span>
+        </div>
+        <p className="mt-1 text-sm text-gray-500 sm:hidden dark:text-slate-400">Operational Fleet items that need review or action.</p>
+        <p className="mt-1 hidden text-sm text-gray-500 sm:block dark:text-slate-400">One operational attention queue for maintenance, work orders, inventory, warranties, assignments, approvals, Bouncie, and Fleet system health.</p>
+      </div>
+      <details className="rounded-lg border border-blue-200 bg-blue-50 text-xs text-blue-800 sm:hidden dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">
+        <summary className="min-h-11 cursor-pointer px-3 py-2.5 font-semibold">About this attention queue</summary>
+        <div className="border-t border-blue-200 px-3 py-2.5 leading-5 dark:border-blue-900">This page reads operational state and links to the owning workflow. It does not alter Fleet email queue/retry state. Bouncie alerts can still be marked read from Tracking.</div>
+      </details>
+      <div className="hidden rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 sm:block dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-200">This page reads operational state and links to the owning workflow. It does not alter Fleet email queue/retry state. Bouncie alerts can still be marked read from Tracking.</div>
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
       <div className="sm:hidden">
@@ -354,7 +365,7 @@ export default function FleetNotifications() {
           <div className="mb-2 flex items-end justify-between gap-3">
             <div className="min-w-0">
               <h2 id={`fleet-notifications-${section.key}`} className="text-sm font-bold text-gray-900 dark:text-slate-100">{section.label}</h2>
-              <p className="text-xs text-gray-500 dark:text-slate-400">{section.description}</p>
+              <p className="hidden text-xs text-gray-500 sm:block dark:text-slate-400">{section.description}</p>
             </div>
             <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-slate-300">{section.items.length}</span>
           </div>
