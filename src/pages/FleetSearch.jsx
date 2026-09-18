@@ -110,8 +110,9 @@ export default function FleetSearch() {
     <FleetModuleNav />
     <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Search CCS Fleet</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Search across CCS Fleet equipment, work orders, maintenance, inspections, inventory, fuel, warranties, assignments, requests, and admin-only planning records without loading the complete Fleet database into your browser.</p>
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-slate-100">Search CCS Fleet</h1>
+        <p className="mt-1 text-sm text-gray-500 sm:hidden dark:text-slate-400">Find Fleet assets, work, inventory, records, and assignments.</p>
+        <p className="mt-1 hidden text-sm text-gray-500 sm:block dark:text-slate-400">Search across CCS Fleet equipment, work orders, maintenance, inspections, inventory, fuel, warranties, assignments, requests, and admin-only planning records without loading the complete Fleet database into your browser.</p>
       </div>
 
       <div className="relative">
@@ -124,7 +125,7 @@ export default function FleetSearch() {
           className="w-full rounded-xl border border-gray-300 bg-white py-3.5 pl-12 pr-12 text-base shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-indigo-950"
           aria-label="Search CCS Fleet"
         />
-        {query && <button type="button" onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-slate-800 dark:hover:text-slate-100" aria-label="Clear Fleet search"><X className="w-4 h-4" /></button>}
+        {query && <button type="button" onClick={() => setQuery("")} className="absolute right-1.5 top-1/2 min-h-11 min-w-11 -translate-y-1/2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-100" aria-label="Clear Fleet search"><X className="w-4 h-4 mx-auto" /></button>}
       </div>
 
       {!hasQuery && <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -149,7 +150,7 @@ export default function FleetSearch() {
           const Icon = group.icon;
           return <section key={group.key} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-slate-900">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 dark:border-slate-800"><h2 className="font-semibold text-gray-900 dark:text-slate-100 inline-flex items-center gap-2"><Icon className="w-4 h-4 text-indigo-500" />{group.label}</h2><span className="text-xs text-gray-400">{rows.length} shown</span></div>
-            <div className="divide-y divide-gray-100 dark:divide-slate-800">{rows.map(result => <Link key={`${result.kind}-${result.id}`} to={resultUrl(result)} className="block px-4 py-3.5 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none dark:hover:bg-slate-800/50 dark:focus:bg-slate-800/50"><div className="flex items-start gap-3"><div className="mt-0.5 w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 dark:bg-indigo-950/40"><Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-300" /></div><div className="min-w-0 flex-1"><div className="font-medium text-gray-900 dark:text-slate-100 break-words">{result.title}</div>{result.subtitle && <div className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 break-words">{result.subtitle}</div>}{result.meta && <div className="text-xs text-gray-400 mt-1 break-words capitalize">{result.meta}</div>}</div></div></Link>)}</div>
+            <div className="divide-y divide-gray-100 dark:divide-slate-800">{rows.map(result => <Link key={`${result.kind}-${result.id}`} to={resultUrl(result)} className="block px-4 py-3.5 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:hover:bg-slate-800/50"><div className="flex items-start gap-3"><div className="mt-0.5 w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 dark:bg-indigo-950/40"><Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-300" /></div><div className="min-w-0 flex-1"><div className="font-medium text-gray-900 dark:text-slate-100 break-words">{result.title}</div>{result.subtitle && <div className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 break-words">{result.subtitle}</div>}{result.meta && <div className="text-xs text-gray-400 mt-1 break-words capitalize">{result.meta}</div>}</div></div></Link>)}</div>
           </section>;
         })}
       </div>
