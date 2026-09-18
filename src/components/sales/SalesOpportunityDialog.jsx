@@ -240,11 +240,11 @@ export default function SalesOpportunityDialog({
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex">
-                <Button type="button" variant="outline" size="sm" className="h-9 justify-center px-3" onClick={queueNavigation.onPrevious} disabled={!queueNavigation.canPrevious}>
-                  <ChevronLeft className="mr-1 h-4 w-4" />Previous
+                <Button type="button" variant="outline" size="sm" className="h-11 justify-center px-3 sm:h-9" onClick={queueNavigation.onPrevious} disabled={!queueNavigation.canPrevious}>
+                  <ChevronLeft className="mr-1 h-4 w-4" />{queueNavigation.index >= 0 ? "Previous" : "Previous remaining"}
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="h-9 justify-center px-3" onClick={queueNavigation.onNext} disabled={!queueNavigation.canNext}>
-                  Next<ChevronRight className="ml-1 h-4 w-4" />
+                <Button type="button" variant="outline" size="sm" className="h-11 justify-center px-3 sm:h-9" onClick={queueNavigation.onNext} disabled={!queueNavigation.canNext}>
+                  {queueNavigation.index >= 0 ? "Next" : queueNavigation.total > 0 ? "Next remaining" : "Next"}<ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function SalesOpportunityDialog({
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
               <Select value={workOrder.sales_status || "lead"} onValueChange={(nextStatus) => onRequestStatusChange?.(workOrder, nextStatus)} disabled={!isRegistered}>
-                <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-2 h-11 sm:h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>{SALES_STATUSES.map((status) => <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>)}</SelectContent>
               </Select>
               {stageAging.tracked ? (
