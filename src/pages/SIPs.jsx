@@ -556,11 +556,18 @@ export default function SIPs() {
               return (
                 <div key={wo.id} className={`rounded-xl border p-3 bg-white ${focusedRowId === wo.id ? "ring-2 ring-purple-400" : ""}`}>
                   <div className="flex items-start gap-3">
-                    <button type="button" onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)} className="w-8 h-8 rounded-lg text-white font-bold text-sm shrink-0" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setFocusedRowId(focusedRowId === wo.id ? null : wo.id)}
+                      className="w-11 h-11 rounded-lg text-white font-bold text-sm shrink-0 touch-manipulation"
+                      style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' }}
+                      aria-label={`${focusedRowId === wo.id ? "Remove focus from" : "Focus"} ${wo.client_name || "this Work Order"}`}
+                      aria-pressed={focusedRowId === wo.id}
+                    >
                       {index + 1}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                      <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -572,7 +579,7 @@ export default function SIPs() {
                       size="sm"
                       onClick={() => toggleSipCompleted(wo)}
                       disabled={!isRegistered}
-                      className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
+                      className="min-h-11 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50 touch-manipulation"
                       aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
@@ -594,17 +601,17 @@ export default function SIPs() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t">
-                    <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="justify-center">
+                    <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="min-h-11 justify-center touch-manipulation">
                       <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist {progress.completed}/{progress.total}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="justify-center">Open Work Order</Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 justify-center touch-manipulation">Open Work Order</Button>
                   </div>
                   <Popover
                     open={openDatePopover === `revisit-active-mobile-${wo.id}`}
                     onOpenChange={(open) => setOpenDatePopover(open ? `revisit-active-mobile-${wo.id}` : null)}
                   >
                     <PopoverTrigger asChild disabled={!isRegistered}>
-                      <Button variant="ghost" size="sm" className="w-full mt-2 text-amber-700 hover:bg-amber-50">
+                      <Button variant="ghost" size="sm" className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-50 touch-manipulation">
                         <CalendarClock className="w-4 h-4 mr-2" />
                         {wo.sip_revisit_date ? "Change Revisit Date" : "Set Revisit Date"}
                       </Button>
@@ -621,7 +628,7 @@ export default function SIPs() {
                       />
                       {wo.sip_revisit_date && (
                         <div className="p-2 border-t">
-                          <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear revisit date</button>
+                          <button type="button" onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear revisit date</button>
                         </div>
                       )}
                     </PopoverContent>
@@ -982,7 +989,7 @@ export default function SIPs() {
                         <CalendarClock className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                        <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                           <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                           <span className="truncate">{wo.client_name || "Unnamed"}</span>
                         </button>
@@ -994,7 +1001,7 @@ export default function SIPs() {
                         size="sm"
                         onClick={() => toggleSipCompleted(wo)}
                         disabled={!isRegistered}
-                        className="h-9 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50"
+                        className="min-h-11 px-2.5 shrink-0 text-xs border-green-200 bg-white text-green-700 hover:bg-green-50 touch-manipulation"
                         aria-label={`Complete SIP checklist for ${wo.client_name || "this Work Order"}`}
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Complete
@@ -1014,10 +1021,10 @@ export default function SIPs() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-amber-100">
-                      <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="justify-center bg-white">
+                      <Button variant="outline" size="sm" onClick={() => openChecklist(wo)} className="min-h-11 justify-center bg-white touch-manipulation">
                         <ClipboardList className="w-4 h-4 mr-2 text-blue-600" />Checklist
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="justify-center bg-white">Open Work Order</Button>
+                      <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 justify-center bg-white touch-manipulation">Open Work Order</Button>
                     </div>
 
                     <Popover
@@ -1025,7 +1032,7 @@ export default function SIPs() {
                       onOpenChange={(open) => setOpenDatePopover(open ? `revisit-future-mobile-${wo.id}` : null)}
                     >
                       <PopoverTrigger asChild disabled={!isRegistered}>
-                        <Button variant="ghost" size="sm" className="w-full mt-2 text-amber-700 hover:bg-amber-100">Change Revisit Date</Button>
+                        <Button variant="ghost" size="sm" className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-100 touch-manipulation">Change Revisit Date</Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
@@ -1038,7 +1045,7 @@ export default function SIPs() {
                           }}
                         />
                         <div className="p-2 border-t">
-                          <button onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="text-xs text-red-500 hover:underline w-full text-center">Clear date & return to active</button>
+                          <button type="button" onClick={() => { updateWorkOrder(wo.id, "sip_revisit_date", ""); setOpenDatePopover(null); }} className="min-h-11 px-3 text-xs text-red-600 hover:underline w-full text-center touch-manipulation">Clear date & return to active</button>
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -1143,7 +1150,7 @@ export default function SIPs() {
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <button onClick={() => setSelectedWorkOrder(wo)} className="font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full">
+                      <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1155,7 +1162,7 @@ export default function SIPs() {
                       size="sm"
                       onClick={() => toggleSipCompleted(wo)}
                       disabled={!isRegistered}
-                      className="h-9 px-2.5 shrink-0 text-xs bg-white border-green-200 text-green-700 hover:bg-green-50"
+                      className="min-h-11 px-2.5 shrink-0 text-xs bg-white border-green-200 text-green-700 hover:bg-green-50 touch-manipulation"
                       aria-label={`Reopen ${wo.client_name || "this Work Order"} in the active SIPs queue`}
                     >
                       Reopen
@@ -1170,7 +1177,7 @@ export default function SIPs() {
                   </div>
 
                   <div className="mt-3 pt-3 border-t border-green-100">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="w-full justify-center bg-white">Open Work Order</Button>
+                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkOrder(wo)} className="w-full min-h-11 justify-center bg-white touch-manipulation">Open Work Order</Button>
                   </div>
                   {isRegistered && <p className="text-[11px] text-gray-500 text-center mt-2">Reopen returns this WIP item to the active queue.</p>}
                 </div>
