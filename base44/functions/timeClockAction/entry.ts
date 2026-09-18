@@ -2480,6 +2480,69 @@ Deno.serve(async (req) => {
         const storedDecision = String(correctionRequest.review_decision || '');
         return Boolean(storedHash) && constantTimeEqual(storedHash, reviewHash) && storedDecision === decision;
       };
+      const finalReviewStatus = decision === 'approve_modified' ? 'approved_modified' : decision === 'approve' ? 'approved' : 'rejected';
+      const ensureReviewAuditConfirmed = async (requestRecord: any, recoveredAfterInterruption = false) => {
+        const rows = await auditEntity.filter({
+          action: 'correction_review',
+          request_id: requestId,
+          time_entry_id: correctionRequest.time_entry_id,
+        });
+        if (!Array.isArray(rows)) throw new Error('Correction-review audit lookup did not return a record list.');
+        if (rows.length > 1) return { audit: null, investigation: true };
+        let reviewAudit: any = rows[0] || null;
+        const storedAuditHash = String(reviewAudit?.details?.review_payload_hash || '');
+        if (storedAuditHash && !constantTimeEqual(storedAuditHash, reviewHash)) return { audit: null, investigation: true };
+
+        if (!reviewAudit?.id) {
+          try {
+            const ensured = await ensureActionAudit(auditEntity, {
+              action: 'correction_review', outcome: 'confirmed', user_email: target.email,
+              user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+              authentication_method: authenticationMethodFor(actor, target),
+              server_timestamp: requestRecord?.reviewed_at || new Date().toISOString(),
+              request_id: requestId, time_entry_id: correctionRequest.time_entry_id, reason: reviewerReason,
+              details: {
+                correction_request_id: correctionRequest.id,
+                decision: finalReviewStatus,
+                applied_audit_id: requestRecord?.applied_audit_id || undefined,
+                review_payload_hash: reviewHash,
+                ...(recoveredAfterInterruption ? { recovered_after_review_save: true } : {}),
+              },
+            }, 'Correction-review audit');
+            reviewAudit = ensured.audit;
+          } catch {
+            return { audit: null, retry: true };
+          }
+        }
+
+        if (reviewAudit?.outcome === 'pending') {
+          const finalizedAudit = await auditEntity.updateMany(
+            { id: reviewAudit.id, outcome: 'pending', request_id: requestId, time_entry_id: correctionRequest.time_entry_id },
+            { $set: {
+              outcome: 'confirmed',
+              server_timestamp: requestRecord?.reviewed_at || new Date().toISOString(),
+              details: {
+                ...(reviewAudit.details || {}),
+                correction_request_id: correctionRequest.id,
+                decision: finalReviewStatus,
+                applied_audit_id: requestRecord?.applied_audit_id || undefined,
+                review_payload_hash: reviewHash,
+                ...(recoveredAfterInterruption ? { recovered_after_review_save: true } : {}),
+              },
+            } },
+          );
+          if (!finalizedAudit || finalizedAudit.updated !== 1) {
+            reviewAudit = await auditEntity.get(reviewAudit.id).catch(() => null);
+          } else {
+            reviewAudit = await auditEntity.get(reviewAudit.id);
+          }
+        }
+
+        if (!reviewAudit || !['confirmed', 'recovered'].includes(String(reviewAudit.outcome || ''))) {
+          return { audit: null, retry: true };
+        }
+        return { audit: reviewAudit };
+      };
       const releaseReview = async (claimRequestId = requestId) => correctionRequestEntity.updateMany(
         { id: correctionRequest.id, status: 'reviewing', review_request_id: claimRequestId },
         {
@@ -2494,7 +2557,10 @@ Deno.serve(async (req) => {
       if (['approved', 'approved_modified', 'rejected'].includes(correctionRequest.status)) {
         if (String(correctionRequest.review_request_id || '') === requestId) {
           if (!sameReviewPayload()) return Response.json({ success: false, error: 'This review request id is already bound to a different manager decision or payload.' }, { status: 409 });
-          return Response.json({ success: true, request: correctionRequest, reused: true });
+          const reviewAuditResult = await ensureReviewAuditConfirmed(correctionRequest, true);
+          if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'This completed correction review has ambiguous or mismatched audit evidence. Admin investigation is required.' }, { status: 409 });
+          if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The correction review is saved but its audit is still being finalized. Retry the same review.' }, { status: 409 });
+          return Response.json({ success: true, request: correctionRequest, review_audit_id: reviewAuditResult.audit.id, reused: true });
         }
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
       }
@@ -2599,14 +2665,10 @@ Deno.serve(async (req) => {
         );
         if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The rejection could not be finalized safely. Retry the same review.' }, { status: 409 });
         const savedRequest = await correctionRequestEntity.get(correctionRequest.id);
-        await audit(auditEntity, {
-          action: 'correction_review', outcome: 'confirmed', user_email: target.email,
-          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-          authentication_method: authenticationMethodFor(actor, target), server_timestamp: savedRequest.reviewed_at,
-          request_id: requestId, time_entry_id: correctionRequest.time_entry_id, reason: reviewerReason,
-          details: { correction_request_id: correctionRequest.id, decision: 'rejected', review_payload_hash: reviewHash },
-        });
-        return Response.json({ success: true, request: savedRequest });
+        const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
+        if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The rejection was saved but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
+        if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The rejection was saved but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
+        return Response.json({ success: true, request: savedRequest, review_audit_id: reviewAuditResult.audit.id });
       }
 
       let entry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
@@ -2746,14 +2808,10 @@ Deno.serve(async (req) => {
       );
       if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The TimeEntry correction was applied, but request finalization was interrupted. Retry this same review to recover safely.' }, { status: 409 });
       const savedRequest = await correctionRequestEntity.get(correctionRequest.id);
-      await audit(auditEntity, {
-        action: 'correction_review', outcome: 'confirmed', user_email: target.email,
-        user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-        authentication_method: authenticationMethodFor(actor, target), server_timestamp: savedRequest.reviewed_at,
-        request_id: requestId, time_entry_id: correctionRequest.time_entry_id, reason: reviewerReason,
-        details: { correction_request_id: correctionRequest.id, decision: finalStatus, applied_audit_id: correctionAuditId, review_payload_hash: reviewHash },
-      });
-      return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId });
+      const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
+      if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The correction was applied but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
+      if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied and review saved, but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
+      return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
     }
 
     if (action === 'admin_correct_entry') {
