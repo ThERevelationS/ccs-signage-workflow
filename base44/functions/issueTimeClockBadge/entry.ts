@@ -84,6 +84,10 @@ Deno.serve(async (req) => {
     const sessionToken = String(body?.session_token || '').trim();
     const requestedEmail = asEmail(body?.target_email);
     const rotate = body?.rotate === true;
+    const requestId = String(body?.request_id || '').trim();
+    if (rotate && (requestId.length < 8 || requestId.length > 128)) {
+      return Response.json({ success: false, error: 'A valid request id is required to replace a Time Clock badge.' }, { status: 400 });
+    }
     const secret = Deno.env.get('SESSION_SIGNING_SECRET') || '';
 
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
@@ -130,7 +134,64 @@ Deno.serve(async (req) => {
     }
 
     const currentVersion = existing ? Math.max(1, Number(existing.badge_version) || 1) : Math.max(0, highestHistoricalVersion);
-    const badgeVersion = existing ? (rotate ? currentVersion + 1 : currentVersion) : Math.max(1, currentVersion + 1);
+    let priorRotationAudit: any = null;
+    if (rotate) {
+      const priorRotationAudits = await auditEntity.filter({ action: 'badge_rotate', request_id: requestId });
+      if (!Array.isArray(priorRotationAudits)) throw new Error('Badge rotation audit lookup did not return a record list.');
+      if (priorRotationAudits.length > 1) {
+        return Response.json({ success: false, error: 'This badge replacement request has multiple audit records. Admin investigation is required.' }, { status: 409 });
+      }
+      priorRotationAudit = priorRotationAudits[0] || null;
+      if (priorRotationAudit?.id && asEmail(priorRotationAudit.user_email) !== targetEmail) {
+        return Response.json({ success: false, error: 'This badge replacement request id is already bound to another employee.' }, { status: 409 });
+      }
+      if (priorRotationAudit?.outcome === 'blocked') {
+        return Response.json({ success: false, error: 'This badge replacement request was previously blocked. Reload and submit a new replacement.' }, { status: 409 });
+      }
+      const priorRequestedVersion = Number(priorRotationAudit?.details?.requested_badge_version || priorRotationAudit?.details?.badge_version || 0);
+      if (priorRotationAudit?.id && priorRequestedVersion > 0 && existing?.id && Number(existing.badge_version) === priorRequestedVersion) {
+        if (priorRotationAudit.outcome === 'pending') {
+          const recoveredAudit = await auditEntity.updateMany(
+            { id: priorRotationAudit.id, outcome: 'pending', request_id: requestId },
+            { $set: {
+              outcome: 'confirmed',
+              server_timestamp: new Date().toISOString(),
+              details: { ...(priorRotationAudit.details || {}), badge_version: priorRequestedVersion, recovered_after_badge_save: true },
+            } },
+          );
+          if (!recoveredAudit || recoveredAudit.updated !== 1) {
+            const freshAudit = await auditEntity.get(priorRotationAudit.id).catch(() => null);
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The replacement badge was saved but its audit is still being finalized. Retry the same replacement.' }, { status: 409 });
+            }
+          }
+        } else if (!['confirmed', 'recovered'].includes(String(priorRotationAudit.outcome || ''))) {
+          return Response.json({ success: false, error: 'This badge replacement has an unexpected audit state. Admin investigation is required.' }, { status: 409 });
+        }
+        const recoveredToken = await badgeTokenHex(targetEmail, priorRequestedVersion, secret);
+        return Response.json({
+          success: true,
+          badge_code: `TIMECLOCK2:${b64urlEncode(targetEmail)}:${priorRequestedVersion}:${recoveredToken}`,
+          badge_version: priorRequestedVersion,
+          issued_at: existing.issued_at,
+          rotated: true,
+          reused: true,
+        });
+      }
+      if (priorRotationAudit?.id && ['confirmed', 'recovered'].includes(String(priorRotationAudit.outcome || ''))) {
+        return Response.json({ success: false, error: 'This badge replacement already completed, but the active badge has since changed. Reload the current badge.' }, { status: 409 });
+      }
+    }
+
+    let badgeVersion = existing ? (rotate ? currentVersion + 1 : currentVersion) : Math.max(1, currentVersion + 1);
+    if (priorRotationAudit?.outcome === 'pending') {
+      const priorRequestedVersion = Number(priorRotationAudit?.details?.requested_badge_version || 0);
+      const priorVersion = Number(priorRotationAudit?.details?.previous_badge_version || 0);
+      if (priorRequestedVersion <= 0 || (existing && priorVersion > 0 && currentVersion !== priorVersion)) {
+        return Response.json({ success: false, error: 'The interrupted badge replacement no longer matches the active badge version. Admin investigation is required.' }, { status: 409 });
+      }
+      badgeVersion = priorRequestedVersion;
+    }
     const rawToken = await badgeTokenHex(targetEmail, badgeVersion, secret);
     const tokenHash = await sha256Hex(`${targetEmail}|${badgeVersion}|${rawToken}`);
     const now = new Date().toISOString();
@@ -138,14 +199,14 @@ Deno.serve(async (req) => {
 
     let saved: any;
     let changed = false;
-    let auditIntent: any = null;
+    let auditIntent: any = priorRotationAudit;
     const authenticationMethod = actorEmail === targetEmail ? 'session' : 'admin_kiosk';
     const auditAction = existingRows.length > 0 ? 'badge_rotate' : 'badge_issue';
 
     if (existing?.id) {
       const needsNormalization = String(existing.token_hash || '') !== tokenHash || Number(existing.badge_version) !== badgeVersion;
       if (rotate || needsNormalization) {
-        auditIntent = await auditEntity.create({
+        if (!auditIntent) auditIntent = await auditEntity.create({
           action: auditAction,
           outcome: 'pending',
           user_email: targetEmail,
@@ -154,6 +215,7 @@ Deno.serve(async (req) => {
           actor_role: actor.role,
           authentication_method: authenticationMethod,
           server_timestamp: now,
+          ...(rotate ? { request_id: requestId } : {}),
           details: { previous_badge_version: Number(existing.badge_version) || null, requested_badge_version: badgeVersion },
         });
         if (!auditIntent?.id) throw new Error('Badge audit intent could not be persisted. No badge was changed.');
@@ -172,7 +234,7 @@ Deno.serve(async (req) => {
         saved = existing;
       }
     } else {
-      auditIntent = await auditEntity.create({
+      if (!auditIntent) auditIntent = await auditEntity.create({
         action: auditAction,
         outcome: 'pending',
         user_email: targetEmail,
@@ -181,6 +243,7 @@ Deno.serve(async (req) => {
         actor_role: actor.role,
         authentication_method: authenticationMethod,
         server_timestamp: now,
+        ...(rotate ? { request_id: requestId } : {}),
         details: { previous_badge_version: highestHistoricalVersion || null, requested_badge_version: badgeVersion },
       });
       if (!auditIntent?.id) throw new Error('Badge audit intent could not be persisted. No badge was changed.');
@@ -218,7 +281,11 @@ Deno.serve(async (req) => {
         },
       } });
       if (!auditResult || auditResult.updated !== 1) {
-        throw new Error('Badge changed but audit finalization could not be verified.');
+        const freshAudit = await auditEntity.get(auditIntent.id).catch(() => null);
+        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+          if (rotate) return Response.json({ success: false, retry_same_request: true, error: 'Badge replacement was saved but audit finalization was interrupted. Retry the same replacement.' }, { status: 409 });
+          throw new Error('Badge changed but audit finalization could not be verified.');
+        }
       }
     }
 
