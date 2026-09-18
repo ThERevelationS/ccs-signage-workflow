@@ -1779,6 +1779,40 @@ Deno.serve(async (req) => {
 
       const priorStart = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, start_request_id: requestId }, 'Labor-start request');
       if (priorStart?.id) {
+        if (String(priorStart.activity_type || '') !== activityType || String(priorStart.work_order_id || '') !== workOrderId) {
+          return Response.json({ success: false, error: 'This Current Work request id is already bound to different labor details. Retry with the original activity and WorkOrder.' }, { status: 409 });
+        }
+
+        if (action === 'labor_change') {
+          const priorEnded = await uniqueRow(laborEntity, { user_email: target.email, time_entry_id: entry.id, end_request_id: requestId }, 'Labor-change end request');
+          if (!priorEnded?.id || priorEnded.status !== 'completed') {
+            return Response.json({ success: false, retry_same_request: true, error: 'The Current Work change created its new segment but the previous segment close is not yet verified. Retry the same change.' }, { status: 409 });
+          }
+          await ensureLaborStopAudit({
+            auditEntity, entry, target, actor, actorEmail, requestId,
+            endReason: priorEnded.end_reason || 'change_work', segment: priorEnded,
+          });
+        }
+
+        await ensureLaborStartAudit({
+          auditEntity,
+          action: action === 'labor_change' ? 'labor_change' : 'labor_start',
+          segment: priorStart, target, actor, requestId, entryId: entry.id,
+        });
+
+        if (currentLaborStatus !== 'idle') {
+          const currentClaim = await freshState(stateEntity, state.id);
+          if (laborStatusOf(currentClaim) !== expectedLaborStatus || String(currentClaim.last_labor_request_id || '') !== requestId) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Current Work was saved, but its authoritative state is being reconciled. Retry the same action after status refresh.' }, { status: 409 });
+          }
+          const finalized = await setLaborState(stateEntity, currentClaim, expectedLaborStatus, requestId, {
+            labor_status: 'idle', labor_pending_started_at: null, labor_pending_activity_type: '', labor_pending_work_order_id: '',
+          });
+          if (!finalized) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Current Work and its audit were saved but state finalization was interrupted. Retry the same action to recover safely.' }, { status: 409 });
+          }
+        }
+
         const summary = await laborSummaryForEntry(laborEntity, entry.id, target.email);
         return Response.json({ success: true, status: 'clocked_in', entry, active_labor: priorStart.status === 'active' ? priorStart : null, labor_summary: summary, user: publicEmployee(target), reused: true });
       }
