@@ -146,6 +146,9 @@ export default function SalesDailyQueue({
                   const value = Number(workOrder.quoted_amount ?? workOrder.estimate_amount ?? 0) || 0;
                   const quoteAging = getQuoteAgingState(workOrder, today);
                   const quoteTimingMissing = quoteAging.awaitingResponse && !quoteAging.tracked;
+                  const expectedCloseStamp = String(workOrder.expected_close_date || "").slice(0, 10);
+                  const expectedCloseOverdue = Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp);
+                  const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp);
                   const placeholder = isLikelySalesPlaceholder(workOrder);
                   return (
                     <article key={workOrder.id} className="rounded-lg border border-white/80 bg-white p-3 shadow-sm">
@@ -164,9 +167,33 @@ export default function SalesDailyQueue({
                         <span className="font-semibold text-gray-800">{money(value)}</span>
                         <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3" />{workOrder.sales_rep || "Unassigned"}</span>
                         {workOrder.follow_up_date && <span>Follow-up {dateLabel(workOrder.follow_up_date)}</span>}
-                        {workOrder.expected_close_date && <span>Close {dateLabel(workOrder.expected_close_date)}</span>}
+                        {workOrder.expected_close_date && (
+                          <span className={expectedCloseOverdue ? "font-semibold text-rose-700" : expectedCloseNear ? "font-semibold text-cyan-700" : ""}>
+                            Close {dateLabel(workOrder.expected_close_date)}{expectedCloseOverdue ? " · overdue" : expectedCloseNear ? " · next 14d" : ""}
+                          </span>
+                        )}
                         {quoteAging.awaitingResponse && (quoteAging.tracked ? <span>Quote {quoteAging.ageDays}d</span> : <span className="font-medium text-amber-700">Quote Timing Missing</span>)}
                       </div>
+
+                      {isRegistered && (expectedCloseOverdue || expectedCloseNear) && (
+                        <div className={`mt-3 rounded-lg border p-2.5 ${expectedCloseOverdue ? "border-rose-200 bg-rose-50/70" : "border-cyan-200 bg-cyan-50/70"}`}>
+                          <label>
+                            <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
+                              {expectedCloseOverdue ? "Expected close overdue — review timing" : "Expected close within 14 days"}
+                            </span>
+                            <input
+                              type="date"
+                              value={expectedCloseStamp}
+                              onChange={(event) => onUpdateWorkOrder?.(workOrder.id, "expected_close_date", event.target.value)}
+                              aria-label={`Expected close date for ${workOrder.client_name || "opportunity"}`}
+                              className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-sm text-gray-800 outline-none focus:ring-2 sm:h-9 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
+                            />
+                          </label>
+                          <p className={`mt-1.5 text-[11px] ${expectedCloseOverdue ? "text-rose-700" : "text-cyan-700"}`}>
+                            Update the forecast here if the expected close has changed; the original value remains in Sales history after save.
+                          </p>
+                        </div>
+                      )}
 
                       {isRegistered && quoteTimingMissing && (
                         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
