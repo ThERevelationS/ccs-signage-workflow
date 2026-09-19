@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, UserRound, Wrench } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Contact, ExternalLink, FileClock, FileText, FolderOpen, Loader2, Mail, Phone, UserRound, Wrench } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
@@ -167,6 +167,7 @@ export default function SalesOpportunityDialog({
     .slice()
     .sort((a, b) => String(b?.timestamp || "").localeCompare(String(a?.timestamp || "")))
     .slice(0, 5), [workOrder?.work_notes]);
+  const taskOwners = useMemo(() => users.filter((user) => user.full_name && user.sales_roles?.includes("Task Assigned")), [users]);
 
   if (!workOrder) return null;
 
@@ -363,7 +364,21 @@ export default function SalesOpportunityDialog({
                 <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-9" /></div>
                 <div><Label className="text-xs text-gray-500">Expected close</Label><Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className="mt-1 h-9" /></div>
                 <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-9" /></div>
-                <div><Label className="text-xs text-gray-500">Task owner</Label><div className="mt-1 h-9 rounded-md border px-3 py-2 text-sm text-gray-700">{workOrder.current_task_assigned_to || "Unassigned"}</div></div>
+                <div>
+                  <Label className="text-xs text-gray-500">Task owner</Label>
+                  <Select
+                    value={workOrder.current_task_assigned_to || "__unassigned__"}
+                    onValueChange={(value) => update({ current_task_assigned_to: value === "__unassigned__" ? "" : value })}
+                    disabled={!isRegistered || closeout}
+                  >
+                    <SelectTrigger className="mt-1 h-11 sm:h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                      {workOrder.current_task_assigned_to && !taskOwners.some((user) => user.full_name === workOrder.current_task_assigned_to) && <SelectItem value={workOrder.current_task_assigned_to}>{workOrder.current_task_assigned_to}</SelectItem>}
+                      {taskOwners.map((user) => <SelectItem key={user.email || user.id} value={user.full_name}>{user.full_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="sm:col-span-2"><Label className="text-xs text-gray-500">Next action / task</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-9" /></div>
               </div>
 
@@ -389,12 +404,25 @@ export default function SalesOpportunityDialog({
             </div>
 
             <div className="rounded-xl border bg-white p-4">
-              <div className="flex items-center gap-2 font-semibold text-gray-800"><Contact className="h-4 w-4 text-blue-600" />Customer & Contact</div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 font-semibold text-gray-800"><Contact className="h-4 w-4 text-blue-600" />Customer & Contact</div>
+                {workOrder.customer_id && (
+                  <Button variant="outline" size="sm" className="h-11 justify-center sm:h-8" asChild>
+                    <a href={`/EstimatorCustomers?customer=${encodeURIComponent(workOrder.customer_id)}`} target="_blank" rel="noreferrer">Open Customer<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
+                  </Button>
+                )}
+              </div>
               <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                 <div><div className="text-xs text-gray-400">Primary contact</div><div className="font-medium text-gray-800">{workOrder.contact_name || workOrder.representative || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Phone</div><div className="font-medium text-gray-800">{workOrder.contact_phone || "—"}</div></div>
                 <div className="sm:col-span-2"><div className="text-xs text-gray-400">Email</div><div className="break-all font-medium text-gray-800">{workOrder.contact_email || "—"}</div></div>
                 <div className="sm:col-span-2"><div className="text-xs text-gray-400">Install location</div><div className="font-medium text-gray-800">{workOrder.install_location || [workOrder.billing_address, workOrder.township_city].filter(Boolean).join(", ") || "—"}</div></div>
+                {(workOrder.contact_phone || workOrder.contact_email) && (
+                  <div className="flex flex-wrap gap-2 pt-1 sm:col-span-2">
+                    {workOrder.contact_phone && <Button variant="outline" size="sm" className="h-11 sm:h-8" asChild><a href={`tel:${workOrder.contact_phone}`}><Phone className="mr-1.5 h-3.5 w-3.5" />Call</a></Button>}
+                    {workOrder.contact_email && <Button variant="outline" size="sm" className="h-11 sm:h-8" asChild><a href={`mailto:${workOrder.contact_email}`}><Mail className="mr-1.5 h-3.5 w-3.5" />Email</a></Button>}
+                  </div>
+                )}
               </div>
             </div>
           </section>
