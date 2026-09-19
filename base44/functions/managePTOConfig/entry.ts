@@ -306,6 +306,9 @@ async function deletePolicy(Policy: any, Balance: any, Audit: any, body: any, ad
   }
 
   let current = await Policy.get(id).catch(() => null);
+  if (current?.id && audit?.id && ['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+    throw Object.assign(new Error('This PTO policy deletion audit is complete but the policy still exists. Admin investigation is required.'), { status: 409 });
+  }
   if (!current?.id) {
     if (!audit?.id) {
       throw Object.assign(new Error('PTO policy no longer exists, and this deletion request has no matching audit evidence.'), { status: 404 });
