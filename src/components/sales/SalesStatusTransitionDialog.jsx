@@ -62,9 +62,9 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
             {closing
-              ? `${workOrder?.client_name || "This opportunity"} will be closed using the date below. Its sales history remains preserved and it can be reopened later.`
+              ? `${workOrder?.client_name || "This opportunity"} will be closed using the date below. Follow-up scheduling will be cleared, while expected-close and task-planning values stay preserved as historical sales context.`
               : reopening
-                ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history.`
+                ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history. Review the preserved expected-close/task plan and schedule a new follow-up after reopening.`
                 : `${workOrder?.client_name || "This opportunity"} will move to the selected sales stage.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
