@@ -181,13 +181,35 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                         </label>
                       )}
 
+                      {isRegistered && isOpen && quoteAging.awaitingResponse && !quoteAging.tracked && (
+                        <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/70 p-2" onClick={(event) => event.stopPropagation()}>
+                          <label>
+                            <span className="block text-[9px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
+                            <div className="mt-1 flex items-center gap-1.5">
+                              <input
+                                type="date"
+                                max={futureDateStamp(0)}
+                                value={workOrder.date_estimate_sent || ""}
+                                onChange={(event) => {
+                                  const nextDate = event.target.value;
+                                  if (!nextDate || nextDate <= futureDateStamp(0)) onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", nextDate);
+                                }}
+                                className="h-11 min-w-0 flex-1 rounded-md border border-amber-200 bg-white px-2 text-xs text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 sm:h-8"
+                                aria-label={`Actual quote sent date for ${workOrder.client_name || "opportunity"}`}
+                              />
+                              <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", futureDateStamp(0))} className="h-11 shrink-0 rounded-md border border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-800 hover:bg-amber-100 sm:h-8">Today</button>
+                            </div>
+                          </label>
+                          <p className="mt-1 text-[10px] text-amber-700">Use the real sent date; future dates are blocked.</p>
+                        </div>
+                      )}
+
                       {isRegistered && isOpen && (
                         <div className="mt-2 flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">Tomorrow</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+3d</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(7))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+7d</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(14))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+14d</button>
-                          {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100">Sent today</button>}
                           <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"><CheckCircle2 className="mr-1 h-3 w-3" />Done</button>
                         </div>
                       )}
