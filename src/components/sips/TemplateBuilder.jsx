@@ -1051,40 +1051,43 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         {workOrderProducts.map((product, index) => {
                           const hasTemplate = product.product_type && productTypeTemplates[product.product_type]?.items?.length > 0;
                           return (
-                            <div 
-                              key={product.id} 
+                            <button
+                              key={product.id}
+                              type="button"
                               onClick={() => {
-                                if (hasTemplate) {
-                                  // Add this specific product with its description as the name
-                                  const existingNames = getExistingProductNames();
-                                  const selectedNames = new Set(selectedProducts.map(p => p.customName));
-                                  const allNames = new Set([...existingNames, ...selectedNames]);
-                                  
-                                  let customName = product.description || product.product_type;
-                                  let counter = 1;
-                                  while (allNames.has(customName)) { counter++; customName = `${product.description || product.product_type} ${counter}`; }
-                                  
-                                  setSelectedProducts([...selectedProducts, {
-                                    id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                                    productType: product.product_type,
-                                    customName: customName,
-                                    subTemplates: [],
-                                    isExisting: false
-                                  }]);
-                                }
+                                // Add this specific product with its description as the name
+                                const existingNames = getExistingProductNames();
+                                const selectedNames = new Set(selectedProducts.map(p => p.customName));
+                                const allNames = new Set([...existingNames, ...selectedNames]);
+
+                                let customName = product.description || product.product_type;
+                                let counter = 1;
+                                while (allNames.has(customName)) { counter++; customName = `${product.description || product.product_type} ${counter}`; }
+
+                                setSelectedProducts([...selectedProducts, {
+                                  id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                  productType: product.product_type,
+                                  customName: customName,
+                                  subTemplates: [],
+                                  isExisting: false
+                                }]);
                               }}
-                              className={`p-2 rounded border flex items-center justify-between ${hasTemplate ? 'bg-white hover:bg-purple-100 cursor-pointer border-purple-300' : 'bg-gray-100 opacity-50 border-gray-200'}`}
+                              disabled={!hasTemplate}
+                              className={`min-h-11 w-full p-2 rounded border flex items-center justify-between text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 ${hasTemplate ? 'bg-white hover:bg-purple-100 border-purple-300' : 'bg-gray-100 opacity-50 border-gray-200 cursor-not-allowed'}`}
+                              aria-label={hasTemplate
+                                ? `Add checklist template for ${product.description || `Product ${index + 1}`}`
+                                : `${product.description || `Product ${index + 1}`} has no checklist template`}
                             >
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{product.description || `Product ${index + 1}`}</div>
-                                <div className="text-xs text-purple-600">{product.product_type || 'No type'}</div>
-                              </div>
-                              {hasTemplate && <Plus className="w-4 h-4 text-purple-500 flex-shrink-0" />}
-                            </div>
+                              <span className="flex-1 min-w-0">
+                                <span className="font-medium text-sm truncate block">{product.description || `Product ${index + 1}`}</span>
+                                <span className="text-xs text-purple-600 block">{product.product_type || 'No type'}</span>
+                              </span>
+                              {hasTemplate && <Plus className="w-4 h-4 text-purple-500 flex-shrink-0" aria-hidden="true" />}
+                            </button>
                           );
                         })}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Click a product to apply its template</p>
+                      <p className="text-xs text-gray-500 mt-1">Choose a product to add its checklist template</p>
                     </div>
                   )}
                   
@@ -1093,11 +1096,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     {productTypes.map(type => {
                       const hasTemplate = productTypeTemplates[type]?.items?.length > 0;
                       return (
-                        <div key={type} onClick={() => hasTemplate && addProductToSelection(type)}
-                          className={`p-2 rounded border flex items-center justify-between ${hasTemplate ? 'bg-white hover:bg-blue-50 cursor-pointer' : 'bg-gray-100 opacity-50'}`}>
-                          <div><div className="font-medium text-sm">{type}</div><div className="text-xs text-gray-500">{hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}</div></div>
-                          {hasTemplate && <Plus className="w-4 h-4 text-blue-500" />}
-                        </div>
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => addProductToSelection(type)}
+                          disabled={!hasTemplate}
+                          className={`min-h-11 w-full p-2 rounded border flex items-center justify-between text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 ${hasTemplate ? 'bg-white hover:bg-blue-50' : 'bg-gray-100 opacity-50 cursor-not-allowed'}`}
+                          aria-label={hasTemplate ? `Add ${type} checklist with ${productTypeTemplates[type].items.length} items` : `${type} has no checklist template`}
+                        >
+                          <span>
+                            <span className="font-medium text-sm block">{type}</span>
+                            <span className="text-xs text-gray-500 block">{hasTemplate ? `${productTypeTemplates[type].items.length} items` : 'No template'}</span>
+                          </span>
+                          {hasTemplate && <Plus className="w-4 h-4 text-blue-500" aria-hidden="true" />}
+                        </button>
                       );
                     })}
                   </div>
@@ -1111,7 +1123,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     </p>
                   )}
                   {selectedProducts.length === 0 ? (
-                    <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Click a product type to add</div>
+                    <div className="text-center py-6 text-gray-500 border rounded bg-gray-50 text-sm">Choose a product type to add</div>
                   ) : (
                     <DragDropContext onDragEnd={(result) => {
                       if (!result.destination) return;
