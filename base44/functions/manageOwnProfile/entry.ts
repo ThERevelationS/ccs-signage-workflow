@@ -18,6 +18,19 @@ function jsonSize(value: unknown) {
   }
 }
 
+function normalizeStructured(value: any): any {
+  if (Array.isArray(value)) return value.map(normalizeStructured);
+  if (!value || typeof value !== 'object') return value;
+  return Object.keys(value).sort().reduce((out: Record<string, unknown>, key) => {
+    out[key] = normalizeStructured(value[key]);
+    return out;
+  }, {});
+}
+
+function sameStructured(a: unknown, b: unknown) {
+  return JSON.stringify(normalizeStructured(a ?? {})) === JSON.stringify(normalizeStructured(b ?? {}));
+}
+
 async function loadExactOwnRecord(AuthorizedEmail: any, email: string) {
   const rows = await AuthorizedEmail.filter({ email });
   if (!Array.isArray(rows)) throw new Error('User profile lookup did not return a record list.');
@@ -79,11 +92,14 @@ Deno.serve(async (req) => {
       }
 
       const expectedHrData = body?.expected_hr_data === undefined ? user.hr_data : body.expected_hr_data;
+      if (!sameStructured(user.hr_data, expectedHrData)) {
+        return Response.json({ error: 'Your HR profile changed in another session. Reload before saving.' }, { status: 409 });
+      }
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: AuthorizedEmail,
         user,
         nextFields: { hr_data: hrData },
-        guardFields: { email: user.email, hr_data: expectedHrData },
+        guardFields: { email: user.email },
         label: `HR profile for ${actorEmail}`,
       });
       return Response.json({ success: true, record: saved });
