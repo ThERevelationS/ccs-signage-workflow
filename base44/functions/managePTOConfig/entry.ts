@@ -132,7 +132,7 @@ async function updatePolicy(Policy: any, body: any) {
   return saved;
 }
 
-async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: any, body: any) {
+async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: any, body: any, admin: any) {
   const userEmail = String(body?.user_email || '').trim().toLowerCase();
   const policyId = String(body?.policy_id || '').trim();
   const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
@@ -207,7 +207,7 @@ async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: 
       outcome: 'pending',
       user_email: userEmail,
       user_name: user.full_name || userEmail,
-      actor_email: '',
+      actor_email: String(admin?.email || '').trim().toLowerCase(),
       actor_role: 'admin',
       authentication_method: 'admin_kiosk',
       server_timestamp: new Date().toISOString(),
@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    await verifyAdminSettingsCapability(base44, body?.admin_capability);
+    const admin = await verifyAdminSettingsCapability(base44, body?.admin_capability);
 
     const action = String(body?.action || '').trim();
     const Policy = base44.asServiceRole.entities.PTOPolicy;
@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
     if (action === 'create') return Response.json(await createPolicy(Policy, body?.data));
     if (action === 'update') return Response.json({ record: await updatePolicy(Policy, body) });
     if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, body));
-    if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body));
+    if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body, admin));
     return Response.json({ error: 'Invalid PTO configuration action.' }, { status: 400 });
   } catch (error) {
     const status = Number(error?.status || 500);
