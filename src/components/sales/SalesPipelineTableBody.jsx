@@ -31,7 +31,7 @@ const parseLocalDate = (dateString) => {
 };
 
 function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered }) {
-  const preventsFutureDate = field === "quote_date" || field === "date_estimate_sent";
+  const preventsFutureDate = field === "quote_date" || field === "date_estimate_sent" || field === "close_date";
   const today = new Date();
   today.setHours(23, 59, 59, 999);
   const displayDate = () => {
@@ -307,9 +307,9 @@ export default function SalesPipelineTableBody({
                 <td className="px-1 py-0.5 border-r text-center">
                   {quoteAging.awaitingResponse ? (
                     quoteAging.tracked ? (
-                      <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since explicit quote/estimate sent date (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
+                      <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since ${wo.date_estimate_sent ? "explicit estimate-sent date" : "explicit quote issue date"} (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
                     ) : (
-                      <span className="text-[11px] font-medium text-amber-600" title="Quoted/Follow Up opportunity has no explicit quote sent date.">Missing</span>
+                      <span className="text-[11px] font-medium text-amber-600" title="Quoted/Follow Up opportunity has neither an explicit estimate-sent date nor quote issue date.">Missing</span>
                     )
                   ) : <span className="text-[11px] text-gray-300">—</span>}
                 </td>
