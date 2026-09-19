@@ -27,7 +27,7 @@ import UserCalendarSettingsPanel from "@/components/calendar/UserCalendarSetting
 import TimeClockLoginDialog from "@/components/timeclock/TimeClockLoginDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import DeleteAccountSection from "@/components/user/DeleteAccountSection";
-import { updateAuthorizedEmailIfUnchanged } from "@/components/admin/authorizedEmailPersistence";
+import { updateOwnHrData, updateOwnUsername } from "@/components/user/ownProfilePersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function UserSettings() {
@@ -107,13 +107,10 @@ export default function UserSettings() {
         }
       }
       
-      const savedUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
-        record: userData,
-        nextFields: { username: username.toLowerCase().trim() },
-        exactVersion: false,
-        enforceIdentity: true,
-        label: `Username for ${userData.full_name || userData.email}`
+      const savedUser = await updateOwnUsername({
+        userData,
+        username,
+        sessionToken,
       });
       setUserData(savedUser);
       
@@ -358,6 +355,7 @@ export default function UserSettings() {
             <UserHRDataForm 
               userData={userData} 
               onUpdate={loadUsers}
+              onSave={(hrData) => updateOwnHrData({ userData, hrData, sessionToken })}
               section="personal"
             />
           </TabsContent>
@@ -366,6 +364,7 @@ export default function UserSettings() {
             <UserHRDataForm 
               userData={userData} 
               onUpdate={loadUsers}
+              onSave={(hrData) => updateOwnHrData({ userData, hrData, sessionToken })}
               section="emergency"
             />
           </TabsContent>
@@ -374,6 +373,7 @@ export default function UserSettings() {
             <UserHRDataForm 
               userData={userData} 
               onUpdate={loadUsers}
+              onSave={(hrData) => updateOwnHrData({ userData, hrData, sessionToken })}
               section="qualifications"
             />
           </TabsContent>
@@ -382,6 +382,7 @@ export default function UserSettings() {
             <UserHRDataForm 
               userData={userData} 
               onUpdate={loadUsers}
+              onSave={(hrData) => updateOwnHrData({ userData, hrData, sessionToken })}
               section="clothing"
             />
           </TabsContent>
