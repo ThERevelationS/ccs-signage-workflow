@@ -28,7 +28,8 @@
         "labor_change",
         "labor_stop",
         "time_off_request_create",
-        "time_off_request_update"
+        "time_off_request_update",
+        "pto_balance_assign"
       ]
     },
     "outcome": {
