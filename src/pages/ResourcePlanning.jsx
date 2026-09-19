@@ -37,6 +37,7 @@ const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {
   const { currentUser, sessionToken, isRegistered } = useAuth();
+  const canManageCapacity = currentUser?.role === 'admin';
   const [users, setUsers] = useState([]);
   const [userCapacities, setUserCapacities] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -199,7 +200,7 @@ export default function ResourcePlanning() {
   };
   
   const handleSaveCapacity = async () => {
-    if (!editingCapacity || capacitySaving) return;
+    if (!canManageCapacity || !editingCapacity || capacitySaving) return;
     setCapacitySaving(true);
     setCapacityError("");
     try {
@@ -259,7 +260,7 @@ export default function ResourcePlanning() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Resource Planning</h1>
-          <p className="text-gray-500">Manage team capacity and workload</p>
+          <p className="text-gray-500">{canManageCapacity ? "Manage team capacity and workload" : "View team capacity and workload"}</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -385,22 +386,24 @@ export default function ResourcePlanning() {
                       {Math.round(allocation.utilizationPercent)}% utilized
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const cap = userCapacities.find(c => c.user_email === allocation.user.email) || null;
-                      setCapacityRecord(cap);
-                      setCapacityError("");
-                      setCapacityForm({
-                        weekly_hours_capacity: cap?.weekly_hours_capacity || 40,
-                        daily_hours_capacity: cap?.daily_hours_capacity || 8
-                      });
-                      setEditingCapacity(allocation.user);
-                    }}
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                  {canManageCapacity && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const cap = userCapacities.find(c => c.user_email === allocation.user.email) || null;
+                        setCapacityRecord(cap);
+                        setCapacityError("");
+                        setCapacityForm({
+                          weekly_hours_capacity: cap?.weekly_hours_capacity || 40,
+                          daily_hours_capacity: cap?.daily_hours_capacity || 8
+                        });
+                        setEditingCapacity(allocation.user);
+                      }}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               
@@ -432,7 +435,7 @@ export default function ResourcePlanning() {
       </div>
       
       {/* Capacity Edit Dialog */}
-      <Dialog open={!!editingCapacity} onOpenChange={() => setEditingCapacity(null)}>
+      <Dialog open={canManageCapacity && !!editingCapacity} onOpenChange={() => setEditingCapacity(null)}>
         <DialogContent className="clay-card border-none max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
