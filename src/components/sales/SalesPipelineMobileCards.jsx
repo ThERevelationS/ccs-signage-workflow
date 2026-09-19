@@ -155,6 +155,29 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               </label>
             )}
 
+            {isRegistered && isOpen && quoteAging.awaitingResponse && !quoteAging.tracked && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5" onClick={(event) => event.stopPropagation()}>
+                <label>
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">Actual quote sent date</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      type="date"
+                      max={futureDateStamp(0)}
+                      value={wo.date_estimate_sent || ""}
+                      onChange={(event) => {
+                        const nextDate = event.target.value;
+                        if (!nextDate || nextDate <= futureDateStamp(0)) onUpdateWorkOrder?.(wo.id, "date_estimate_sent", nextDate);
+                      }}
+                      className="h-11 min-w-0 flex-1 rounded-md border border-amber-200 bg-white px-2 text-sm text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                      aria-label={`Actual quote sent date for ${wo.client_name || "opportunity"}`}
+                    />
+                    <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", futureDateStamp(0))} className="h-11 shrink-0 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-800 active:bg-amber-100">Today</button>
+                  </div>
+                </label>
+                <p className="mt-1.5 text-[11px] text-amber-700">Enter the real sent date. Future dates are blocked and quote age is never inferred from record activity.</p>
+              </div>
+            )}
+
             {isRegistered && isOpen && (
               <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-2.5" aria-label="Follow-up quick actions. Swipe horizontally for more actions." onClick={(event) => event.stopPropagation()}>
                 <span className="shrink-0 text-xs font-medium text-gray-500">Follow-up:</span>
@@ -162,7 +185,6 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(3))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+3 days</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(7))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+7 days</button>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(14))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">+14 days</button>
-                {quoteAging.awaitingResponse && !quoteAging.tracked && <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", format(new Date(), "yyyy-MM-dd"))} className="min-h-[44px] shrink-0 rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-800 active:bg-amber-100">Mark quote sent today</button>}
                 <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 active:bg-emerald-100"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</button>
               </div>
             )}
