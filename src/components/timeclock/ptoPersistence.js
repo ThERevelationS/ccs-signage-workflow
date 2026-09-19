@@ -115,8 +115,48 @@ async function invokePTOConfig(payload) {
     const response = await base44.functions.invoke("managePTOConfig", payload);
     return response?.data || response;
   } catch (error) {
-    throw new Error(error?.response?.data?.error || error?.message || "PTO configuration could not be changed safely.");
+    const wrapped = new Error(error?.response?.data?.error || error?.message || "PTO configuration could not be changed safely.");
+    wrapped.retrySameRequest = error?.response?.data?.retry_same_request === true;
+    wrapped.confirmedServerResponse = Boolean(error?.response);
+    throw wrapped;
   }
+}
+
+function newPTORequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `pto-assign-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function ptoAssignmentStorageKey(userEmail) {
+  return `ccs_pto_balance_assign:${String(userEmail || "").trim().toLowerCase()}`;
+}
+
+function storedPTOAssignment(userEmail) {
+  try {
+    const raw = sessionStorage.getItem(ptoAssignmentStorageKey(userEmail));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload
+      ? { request_id: requestId, payload: parsed.payload }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistPTOAssignment(userEmail, requestId, payload) {
+  try { sessionStorage.setItem(ptoAssignmentStorageKey(userEmail), JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearPTOAssignment(userEmail) {
+  try { sessionStorage.removeItem(ptoAssignmentStorageKey(userEmail)); } catch {}
+}
+
+function shouldRetainPTOAssignment(error) {
+  if (error?.retrySameRequest === true) return true;
+  if (error?.confirmedServerResponse === true) return false;
+  return true;
 }
 
 export async function createPTOPolicyIfAbsent({ data, adminCapability, label = "PTO policy" } = {}) {
@@ -153,59 +193,42 @@ export async function deletePTOPolicyIfUnused({ policy, adminCapability, label =
 }
 
 export async function assignPTOBalanceIfUnchanged({
-  entity,
   existingBalance,
   data,
+  adminCapability,
   label = "Employee PTO balance",
 } = {}) {
   const userEmail = String(data?.user_email || existingBalance?.user_email || "").trim().toLowerCase();
-  if (!userEmail || typeof entity?.filter !== "function" || typeof entity?.create !== "function") {
-    throw new Error(`${label} could not initialize its concurrency-safe assignment.`);
+  const policyId = String(data?.policy_id || "").trim();
+  if (!userEmail || !policyId) {
+    throw new Error(`${label} requires an employee and PTO policy.`);
   }
 
-  if (existingBalance?.id) {
-    const nextFields = {
-      policy_id: data.policy_id,
-      balances: data.balances,
-      floating_holidays_remaining: data.floating_holidays_remaining,
-    };
-    return replaceEntityFieldsIfUnchanged({
-      entity,
-      id: existingBalance.id,
-      expectedUpdatedAt: existingBalance.updated_date || "",
-      expectedFields: expectedEntityFields(existingBalance, nextFields),
-      nextFields,
-      guardFields: { user_email: existingBalance.user_email },
-      label,
-    });
+  const payload = {
+    action: "assign_balance",
+    user_email: userEmail,
+    policy_id: policyId,
+    expected_updated_date: existingBalance?.updated_date || "",
+  };
+  const stored = storedPTOAssignment(userEmail);
+  if (stored && JSON.stringify(stored.payload) !== JSON.stringify(payload)) {
+    throw new Error(`${label} has an earlier assignment whose outcome is still uncertain. Retry that preserved assignment before choosing a different policy.`);
   }
 
-  const desired = { ...data, user_email: userEmail };
-  const existing = await verifySingleMatch({ rows: await entity.filter({ user_email: userEmail }), label });
-  if (existing?.id) {
-    if (!fieldsMatch(existing, desired, Object.keys(desired))) {
-      throw new Error(`${label} for ${userEmail} was created in another session with different values. Reload before assigning a policy.`);
-    }
-    return existing;
-  }
+  const requestId = stored?.request_id || newPTORequestId();
+  persistPTOAssignment(userEmail, requestId, payload);
 
-  let createError = null;
   try {
-    await entity.create(desired);
+    const result = await invokePTOConfig({
+      ...payload,
+      request_id: requestId,
+      admin_capability: requireAdminCapability(adminCapability, label),
+    });
+    if (!result?.record?.id) throw new Error(`${label} assignment could not be verified.`);
+    clearPTOAssignment(userEmail);
+    return result.record;
   } catch (error) {
-    createError = error;
-  }
-  const afterRows = await entity.filter({ user_email: userEmail }).catch(error => {
-    if (createError) throw createError;
+    if (!shouldRetainPTOAssignment(error)) clearPTOAssignment(userEmail);
     throw error;
-  });
-  const saved = await verifySingleMatch({ rows: afterRows, label });
-  if (saved?.id) {
-    if (!fieldsMatch(saved, desired, Object.keys(desired))) {
-      throw new Error(`${label} for ${userEmail} was created concurrently with different values. Reload before changing it.`);
-    }
-    return saved;
   }
-  if (createError) throw createError;
-  throw new Error(`${label} could not verify whether the balance assignment was created.`);
 }
