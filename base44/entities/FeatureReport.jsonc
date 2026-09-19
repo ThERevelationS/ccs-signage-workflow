@@ -69,7 +69,11 @@
         "role": "__feature_report_backend_only__"
       }
     },
-    "read": {},
+    "read": {
+      "user_condition": {
+        "role": "__feature_report_backend_only__"
+      }
+    },
     "update": {
       "user_condition": {
         "role": "__feature_report_backend_only__"
