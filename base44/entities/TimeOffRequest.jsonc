@@ -72,6 +72,14 @@
       "type": "string",
       "format": "date-time",
       "description": "When pre-production test data was reset/archived"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Last authoritative Time Clock request id that created or edited this request"
+    },
+    "last_request_payload_hash": {
+      "type": "string",
+      "description": "Payload hash bound to the last authoritative Time Clock request"
     }
   },
   "required": [
