@@ -77,7 +77,7 @@
   "rls": {
     "create": {
       "user_condition": {
-        "role": "admin"
+        "role": "__pto_balance_backend_only__"
       }
     },
     "read": {
@@ -94,7 +94,7 @@
     },
     "update": {
       "user_condition": {
-        "role": "admin"
+        "role": "__pto_balance_backend_only__"
       }
     },
     "delete": {
