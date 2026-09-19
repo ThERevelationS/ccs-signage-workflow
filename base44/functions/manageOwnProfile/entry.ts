@@ -55,12 +55,15 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'This username is already taken.' }, { status: 409 });
       }
 
-      const expectedUsername = body?.expected_username === undefined ? user.username : cleanUsername(body.expected_username);
+      const expectedUsername = body?.expected_username === undefined ? cleanUsername(user.username) : cleanUsername(body.expected_username);
+      if (cleanUsername(user.username) !== expectedUsername) {
+        return Response.json({ error: 'Your username changed in another session. Reload before saving.' }, { status: 409 });
+      }
       const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
         entity: AuthorizedEmail,
         user,
         nextFields: { username },
-        guardFields: { email: user.email, username: expectedUsername },
+        guardFields: { email: user.email },
         label: `Username for ${actorEmail}`,
       });
       return Response.json({ success: true, record: saved });
