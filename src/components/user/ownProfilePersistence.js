@@ -25,7 +25,7 @@ export async function updateOwnUsername({ userData, username, sessionToken } = {
     action: "update_username",
     session_token: requireSessionToken(sessionToken),
     username,
-    expected_username: userData.username || "",
+    expected_username: userData.username ?? null,
   });
 }
 
@@ -35,6 +35,6 @@ export async function updateOwnHrData({ userData, hrData, sessionToken } = {}) {
     action: "update_hr",
     session_token: requireSessionToken(sessionToken),
     hr_data: hrData,
-    expected_hr_data: userData.hr_data || {},
+    expected_hr_data: userData.hr_data ?? null,
   });
 }
