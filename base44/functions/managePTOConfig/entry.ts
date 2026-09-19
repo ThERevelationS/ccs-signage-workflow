@@ -285,27 +285,109 @@ async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: 
   return { record: balance, status: 'assigned', audit_id: auditIntent.id };
 }
 
-async function deletePolicy(Policy: any, Balance: any, body: any) {
+async function deletePolicy(Policy: any, Balance: any, Audit: any, body: any, admin: any) {
   const id = String(body?.id || '').trim();
   const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
-  if (!id || !expectedUpdatedDate) {
-    throw Object.assign(new Error('PTO policy version is required.'), { status: 400 });
+  const requestId = String(body?.request_id || '').trim();
+  if (!id || !expectedUpdatedDate || requestId.length < 8 || requestId.length > 128) {
+    throw Object.assign(new Error('PTO policy version and a valid deletion request id are required.'), { status: 400 });
   }
-  const current = await Policy.get(id).catch(() => null);
-  if (!current?.id) return { deleted: true, already_deleted: true };
+
+  const payloadHash = await sha256Hex({ id, expected_updated_date: expectedUpdatedDate });
+  let audit = await uniqueRow(Audit, { action: 'pto_policy_delete', request_id: requestId }, 'PTO policy delete audit');
+  if (audit?.id) {
+    const priorHash = String(audit.details?.payload_hash || '');
+    if (priorHash && priorHash !== payloadHash) {
+      throw Object.assign(new Error('This PTO policy deletion request id is already bound to a different policy or version.'), { status: 409 });
+    }
+    if (audit.outcome === 'blocked') {
+      throw Object.assign(new Error('This PTO policy deletion request was previously blocked. Reload before trying again.'), { status: 409 });
+    }
+  }
+
+  let current = await Policy.get(id).catch(() => null);
+  if (!current?.id) {
+    if (!audit?.id) {
+      throw Object.assign(new Error('PTO policy no longer exists, and this deletion request has no matching audit evidence.'), { status: 404 });
+    }
+    if (audit.outcome === 'pending') {
+      const finalized = await Audit.updateMany(
+        { id: audit.id, outcome: 'pending', request_id: requestId },
+        { $set: {
+          outcome: 'recovered',
+          server_timestamp: new Date().toISOString(),
+          details: { ...(audit.details || {}), payload_hash: payloadHash, policy_id: id, recovered_after_delete: true },
+        } },
+      );
+      if (!finalized || finalized.updated !== 1) {
+        const fresh = await Audit.get(audit.id).catch(() => null);
+        if (!fresh || !['confirmed', 'recovered'].includes(String(fresh.outcome || ''))) {
+          throw Object.assign(new Error('The PTO policy is deleted but its audit is still being finalized. Retry the same deletion request.'), { status: 409, retry_same_request: true });
+        }
+        audit = fresh;
+      }
+    } else if (!['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy is missing and its deletion audit is not in a recoverable state.'), { status: 409 });
+    }
+    return { deleted: true, reused: true, audit_id: audit.id };
+  }
+
   if (String(current.updated_date || '') !== expectedUpdatedDate) {
     throw Object.assign(new Error('PTO policy changed in another session and was not deleted.'), { status: 409 });
   }
+
   const assigned = await Balance.filter({ policy_id: id });
   if (!Array.isArray(assigned)) throw new Error('PTO policy assignment lookup could not be verified.');
   if (assigned.length > 0) {
+    if (audit?.id && audit.outcome === 'pending') {
+      await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+    }
     throw Object.assign(new Error(`PTO policy is assigned to ${assigned.length} employee balance record${assigned.length === 1 ? '' : 's'}. Reassign those employees before deleting it.`), { status: 409 });
   }
+
+  if (!audit?.id) {
+    audit = await Audit.create({
+      action: 'pto_policy_delete',
+      outcome: 'pending',
+      user_email: String(admin?.email || '').trim().toLowerCase(),
+      user_name: admin?.full_name || admin?.email || 'Admin',
+      actor_email: String(admin?.email || '').trim().toLowerCase(),
+      actor_role: 'admin',
+      authentication_method: 'admin_kiosk',
+      server_timestamp: new Date().toISOString(),
+      request_id: requestId,
+      details: {
+        payload_hash: payloadHash,
+        policy_id: id,
+        expected_updated_date: expectedUpdatedDate,
+        policy_name: current.name || '',
+        policy_snapshot: cleanPolicy(current),
+      },
+    });
+  }
+  if (!audit?.id) throw new Error('PTO policy deletion audit intent could not be persisted.');
+
   const result = await Policy.deleteMany({ id, updated_date: expectedUpdatedDate, name: current.name });
   if (!result || result.deleted !== 1) {
+    await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
     throw Object.assign(new Error('PTO policy changed in another session and was not deleted.'), { status: 409 });
   }
-  return { deleted: true };
+
+  const finalized = await Audit.updateMany(
+    { id: audit.id, outcome: 'pending', request_id: requestId },
+    { $set: {
+      outcome: 'confirmed',
+      server_timestamp: new Date().toISOString(),
+      details: { ...(audit.details || {}), payload_hash: payloadHash, policy_id: id, deleted: true },
+    } },
+  );
+  if (!finalized || finalized.updated !== 1) {
+    const fresh = await Audit.get(audit.id).catch(() => null);
+    if (!fresh || !['confirmed', 'recovered'].includes(String(fresh.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy was deleted but audit finalization was interrupted. Retry the same deletion request.'), { status: 409, retry_same_request: true });
+    }
+  }
+  return { deleted: true, audit_id: audit.id };
 }
 
 Deno.serve(async (req) => {
@@ -322,7 +404,7 @@ Deno.serve(async (req) => {
 
     if (action === 'create') return Response.json(await createPolicy(Policy, body?.data));
     if (action === 'update') return Response.json({ record: await updatePolicy(Policy, body) });
-    if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, body));
+    if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, Audit, body, admin));
     if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body, admin));
     return Response.json({ error: 'Invalid PTO configuration action.' }, { status: 400 });
   } catch (error) {
