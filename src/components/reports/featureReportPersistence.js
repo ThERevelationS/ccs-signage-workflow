@@ -15,6 +15,16 @@ async function invokeFeatureReport(payload) {
   }
 }
 
+export async function listFeatureReports({ scope = "open", sessionToken = "" } = {}) {
+  const result = await invokeFeatureReport({
+    action: "list",
+    scope,
+    session_token: String(sessionToken || "").trim(),
+  });
+  if (!Array.isArray(result?.records)) throw new Error("Feature reports could not be loaded safely.");
+  return result.records;
+}
+
 export async function createFeatureReportWithRecovery({ data, sessionToken, label = "Feature report" } = {}) {
   const result = await invokeFeatureReport({
     action: "create",
