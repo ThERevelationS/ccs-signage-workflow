@@ -74,7 +74,11 @@ export function getPermitLineHandoffReadiness(line) {
   const feeAmount = line?.jurisdiction_fee_amount;
   const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
   const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
-  const permitReceived = !!asDateKey(line?.permit_received_date);
+  const submittedDate = asDateKey(line?.submitted_date);
+  const approvalDate = asDateKey(line?.approval_date);
+  const receivedDate = asDateKey(line?.permit_received_date);
+  const expirationDate = asDateKey(line?.expiration_date);
+  const permitReceived = !!receivedDate;
   const hasPermitIdentifier = !!String(line?.permit_number || line?.application_reference_number || "").trim();
   const lateLifecycle = line?.status === "completed" || permitReceived || !!closeoutStatus;
 
@@ -82,6 +86,19 @@ export function getPermitLineHandoffReadiness(line) {
 
   if (line?.status === "completed" && !permitReceived) {
     reviews.push(`${label} is marked complete but has no permit issued/received date recorded.`);
+  }
+  if (submittedDate && approvalDate && approvalDate < submittedDate) {
+    reviews.push(`${label} has an approval date before its submitted date.`);
+  }
+  if (submittedDate && receivedDate && receivedDate < submittedDate) {
+    reviews.push(`${label} has a permit received date before its submitted date.`);
+  }
+  if (approvalDate && receivedDate && receivedDate < approvalDate) {
+    reviews.push(`${label} has a permit received date before its approval date.`);
+  }
+  const latestLifecycleDate = [approvalDate, receivedDate].filter(Boolean).sort().pop() || "";
+  if (expirationDate && latestLifecycleDate && expirationDate < latestLifecycleDate) {
+    reviews.push(`${label} has an expiration date before its recorded approval/permit received date.`);
   }
 
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(closeoutStatus)) {
