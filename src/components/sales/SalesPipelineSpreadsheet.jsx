@@ -2461,7 +2461,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("quote_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quote_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('quote_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'quote_date', 'Quote Date')}>
                 <div className="flex items-center gap-1">Quote {getSortIcon('quote_date')}</div>
               </th>}
-              {isColumnVisible("quote_age") && <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since the explicit estimate/quote sent date. Missing means the opportunity is Quoted/Follow Up without a trustworthy sent date.">Quote Age</th>}
+              {isColumnVisible("quote_age") && <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since explicit estimate-sent date; otherwise explicit quote issue date. Missing means neither trustworthy date is available.">Quote Age</th>}
               {isColumnVisible("follow_up_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
                 <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
               </th>}
