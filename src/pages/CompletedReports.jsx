@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +14,7 @@ import {
   RotateCcw,
   ChevronLeft
 } from "lucide-react";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-import { deleteFeatureReportSafely, updateFeatureReportFields } from "@/components/reports/featureReportPersistence";
+import { deleteFeatureReportSafely, listFeatureReports, updateFeatureReportFields } from "@/components/reports/featureReportPersistence";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,8 +25,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-
-const FeatureReport = base44.entities.FeatureReport;
 
 const TYPE_CONFIG = {
   bug: { label: "Bug", icon: Bug, color: "bg-red-100 text-red-700" },
@@ -53,12 +49,7 @@ export default function CompletedReports() {
     setIsLoading(true);
     setReadError("");
     try {
-      const completedReports = await loadAllEntityRows({
-        entity: FeatureReport,
-        query: { status: "completed" },
-        sort: "-completed_date",
-        label: "Completed Feature Reports",
-      });
+      const completedReports = await listFeatureReports({ scope: "completed", sessionToken });
       setReports(completedReports);
     } catch (error) {
       console.error("Error loading completed reports:", error);
@@ -185,7 +176,7 @@ export default function CompletedReports() {
                       {report.description && (
                         <p className="text-sm text-gray-500 mt-2">{report.description}</p>
                       )}
-                      {report.admin_notes && (
+                      {isAdmin && report.admin_notes && (
                         <p className="text-sm text-purple-600 mt-2 italic">Note: {report.admin_notes}</p>
                       )}
                       <p className="text-xs text-gray-400 mt-2">
