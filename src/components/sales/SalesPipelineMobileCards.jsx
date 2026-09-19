@@ -38,7 +38,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const expectedClose = wo.expected_close_date ? safeDate(wo.expected_close_date) : null;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(wo.sales_status);
+        const isOpen = !["won", "lost"].includes(wo.sales_status);
+        const followUpDue = followUp && followUp <= today && isOpen;
+        const nearClose = safeDate(futureDateStamp(14));
+        const expectedCloseOverdue = expectedClose && expectedClose < today && isOpen;
+        const expectedCloseNear = expectedClose && expectedClose >= today && expectedClose <= nearClose && isOpen;
         const stageAging = getStageAgingState(wo, today);
         const quoteAging = getQuoteAgingState(wo, today);
         const attentionItems = getActionableSalesAttentionItems(wo, today);
@@ -130,13 +134,28 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                 </span>
               )}
               {expectedClose && (
-                <span className={expectedClose < today && !["won", "lost"].includes(wo.sales_status) ? "font-semibold text-red-700" : ""}>
-                  Expected close: <span>{format(expectedClose, 'MMM d, yyyy')}</span>
+                <span className={expectedCloseOverdue ? "font-semibold text-rose-700" : expectedCloseNear ? "font-semibold text-cyan-700" : ""}>
+                  Expected close: <span>{format(expectedClose, 'MMM d, yyyy')}{expectedCloseOverdue ? " · overdue" : expectedCloseNear ? " · next 14d" : ""}</span>
                 </span>
               )}
             </div>
 
-            {isRegistered && !["won", "lost"].includes(wo.sales_status) && (
+            {isRegistered && (expectedCloseOverdue || expectedCloseNear) && (
+              <label className={`mt-3 block rounded-lg border p-2.5 ${expectedCloseOverdue ? "border-rose-200 bg-rose-50/70" : "border-cyan-200 bg-cyan-50/70"}`} onClick={(event) => event.stopPropagation()}>
+                <span className={`block text-[10px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
+                  {expectedCloseOverdue ? "Expected close overdue — review timing" : "Expected close within 14 days"}
+                </span>
+                <input
+                  type="date"
+                  value={wo.expected_close_date || ""}
+                  onChange={(event) => onUpdateWorkOrder?.(wo.id, "expected_close_date", event.target.value)}
+                  className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-sm text-gray-800 outline-none focus:ring-2 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
+                  aria-label={`Expected close date for ${wo.client_name || "opportunity"}`}
+                />
+              </label>
+            )}
+
+            {isRegistered && isOpen && (
               <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-2.5" aria-label="Follow-up quick actions. Swipe horizontally for more actions." onClick={(event) => event.stopPropagation()}>
                 <span className="shrink-0 text-xs font-medium text-gray-500">Follow-up:</span>
                 <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "follow_up_date", futureDateStamp(1))} className="min-h-[44px] shrink-0 rounded-full border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 active:bg-gray-100">Tomorrow</button>
