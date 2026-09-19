@@ -489,9 +489,9 @@ export default function UserManagement() {
                     size="icon"
                     onClick={() => setFaceEnrollUser(user)}
                     className="h-8 w-8"
-                    title={user.face_descriptors?.length ? "Re-enroll Face ID" : "Enroll Face ID"}
+                    title={user.has_face_enrollment ? "Re-enroll Face ID" : "Enroll Face ID"}
                   >
-                    {user.face_descriptors?.length ? (
+                    {user.has_face_enrollment ? (
                       <Scan className="w-4 h-4 text-green-600" />
                     ) : (
                       <Camera className="w-4 h-4 text-gray-400" />
@@ -739,6 +739,7 @@ export default function UserManagement() {
                   <UserHRDataForm 
                     userData={editingUser} 
                     onUpdate={loadUsers}
+                    onSave={(hrData) => updateAuthorizedUserHrAdmin({ record: editingUser, hrData, sessionToken })}
                     section="all"
                     isAdmin={true}
                   />
