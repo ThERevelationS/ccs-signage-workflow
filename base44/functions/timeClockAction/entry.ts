@@ -266,6 +266,28 @@ async function ensureActionAudit(auditEntity: any, data: any, label = 'Time Cloc
   throw new Error(`${label} could not be persisted. The action remains in a recoverable transition state.`);
 }
 
+async function ensureUserActionAudit(auditEntity: any, data: any, label = 'Time Clock user action audit') {
+  const action = String(data?.action || '').trim();
+  const requestId = String(data?.request_id || '').trim();
+  const userEmail = asEmail(data?.user_email);
+  if (!action || !requestId || !userEmail) throw new Error(`${label} is missing its action, request id, or employee email.`);
+
+  const query = { action, request_id: requestId, user_email: userEmail };
+  let existing = await uniqueRow(auditEntity, query, label);
+  if (existing?.id) return { audit: existing, reused: true };
+
+  try {
+    const created = await auditEntity.create(data);
+    if (created?.id) return { audit: created, reused: false };
+  } catch (error) {
+    console.error(`${label} write failed; checking for a concurrent audit:`, error?.message || error);
+  }
+
+  existing = await uniqueRow(auditEntity, query, label);
+  if (existing?.id) return { audit: existing, reused: true };
+  throw new Error(`${label} could not be persisted. Retry the same request.`);
+}
+
 async function clockOutAuditForRequest(auditEntity: any, requestId: string, entryId: string) {
   return uniqueRow(auditEntity, { action: 'clock_out', request_id: requestId, time_entry_id: entryId }, 'Clock-out audit request');
 }
@@ -1230,6 +1252,7 @@ Deno.serve(async (req) => {
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
+    const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
