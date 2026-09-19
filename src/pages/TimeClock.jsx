@@ -728,6 +728,7 @@ export default function TimeClock() {
           isOpen={showTimeOffRequest}
           onClose={() => setShowTimeOffRequest(false)}
           currentUser={loggedInUser}
+          sessionToken={timeClockSessionToken}
           onSubmit={loadData}
         />
       )}
@@ -737,6 +738,7 @@ export default function TimeClock() {
           isOpen={!!editingTimeOff}
           onClose={() => setEditingTimeOff(null)}
           currentUser={loggedInUser}
+          sessionToken={timeClockSessionToken}
           onSubmit={loadData}
           existingRequest={editingTimeOff}
         />
