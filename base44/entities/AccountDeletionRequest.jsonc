@@ -1,0 +1,80 @@
+{
+  "name": "AccountDeletionRequest",
+  "type": "object",
+  "description": "Persistent user-requested account deletion review. Submission never deletes the user or related company data; processing is a separate admin action.",
+  "properties": {
+    "creation_key": {
+      "type": "string",
+      "description": "Deterministic one-record-per-authorized-user identity for idempotent request submission"
+    },
+    "authorized_email_id": {
+      "type": "string",
+      "description": "AuthorizedEmail record ID for the signed-in requester"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Normalized email of the signed-in requester at submission time"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the signed-in requester at submission time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Administrative processing state; submission only creates pending requests"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the requester submitted the deletion review request"
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When an administrator later resolved the request"
+    },
+    "processed_by": {
+      "type": "string",
+      "description": "Administrator email that later resolved the request"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Administrative processing notes"
+    }
+  },
+  "required": [
+    "creation_key",
+    "authorized_email_id",
+    "user_email",
+    "status",
+    "requested_at"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__account_deletion_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__account_deletion_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__account_deletion_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__account_deletion_backend_only__"
+      }
+    }
+  }
+}
