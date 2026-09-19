@@ -188,13 +188,10 @@ export default function UserManagement() {
       const newPassword = dataToSave.password_hash;
       // Never send password_hash directly — use secure backend
       delete dataToSave.password_hash;
-      const savedUser = await updateAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
+      const savedUser = await updateAuthorizedUserAdmin({
         record: editingUser,
         nextFields: dataToSave,
-        exactVersion: false,
-        enforceIdentity: true,
-        label: `Authorized user ${editingUser.full_name || editingUser.email}`
+        sessionToken,
       });
 
       // If a new password was entered, save it securely via backend function
@@ -238,21 +235,12 @@ export default function UserManagement() {
     try {
       const email = inviteEmail.trim().toLowerCase();
       
-      // Check if already authorized
-      const existing = await base44.entities.AuthorizedEmail.filter({ email });
-      if (existing.length > 0) {
-        setInviteError("This email is already authorized");
-        setIsInviting(false);
-        return;
-      }
-      
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
 
-      // Add the authorized user first. The server issues the invitation token only
-      // after this guarded identity create succeeds, so no onboarding secret ever
-      // needs to exist in browser state.
-      const inviteResult = await createAuthorizedEmailIfAbsent({
-        entity: base44.entities.AuthorizedEmail,
+      // Add the authorized user first through the signed sign-shop admin boundary.
+      // The server issues the invitation token only after this guarded identity create
+      // succeeds, so no onboarding secret ever needs to exist in browser state.
+      const inviteResult = await createAuthorizedUserAdmin({
         data: {
           email,
           full_name: fullName || null,
@@ -262,7 +250,7 @@ export default function UserManagement() {
           can_work_pause: false,
           onboarding_complete: false
         },
-        label: `Authorized user invitation ${email}`
+        sessionToken,
       });
       if (inviteResult.status === "existing") {
         setInviteError("This email is already authorized");
@@ -299,10 +287,9 @@ export default function UserManagement() {
     setUserMutationError("");
     setUserMutationSaving(true);
     try {
-      await deleteAuthorizedEmailIfUnchanged({
-        entity: base44.entities.AuthorizedEmail,
+      await deleteAuthorizedUserAdmin({
         record: user,
-        label: `Authorized user ${user.full_name || user.email} deletion`
+        sessionToken,
       });
       setDeleteConfirm(null);
       await loadUsers();
