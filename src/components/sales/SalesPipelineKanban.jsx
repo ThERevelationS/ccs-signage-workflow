@@ -40,6 +40,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
   const [draggedId, setDraggedId] = useState(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const nearClose = localDate(futureDateStamp(14));
 
   const requestStatusChange = (workOrder, nextStatus) => {
     if (!isRegistered || !workOrder?.id || !nextStatus || workOrder.sales_status === nextStatus) return;
@@ -80,8 +81,10 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                 {items.map((workOrder) => {
                   const followUp = localDate(workOrder.follow_up_date);
                   const expectedClose = localDate(workOrder.expected_close_date);
-                  const followUpDue = followUp && followUp <= today && !["won", "lost"].includes(workOrder.sales_status);
-                  const expectedCloseOverdue = expectedClose && expectedClose < today && !["won", "lost"].includes(workOrder.sales_status);
+                  const isOpen = !["won", "lost"].includes(workOrder.sales_status);
+                  const followUpDue = followUp && followUp <= today && isOpen;
+                  const expectedCloseOverdue = expectedClose && expectedClose < today && isOpen;
+                  const expectedCloseNear = expectedClose && expectedClose >= today && expectedClose <= nearClose && isOpen;
                   const stageAging = getStageAgingState(workOrder, today);
                   const quoteAging = getQuoteAgingState(workOrder, today);
                   const attentionItems = getActionableSalesAttentionItems(workOrder, today);
@@ -158,12 +161,27 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       ) : null}
 
                       {expectedClose && (
-                        <div className={`mt-2 rounded-md px-2 py-1 text-xs ${expectedCloseOverdue ? "bg-red-50 font-semibold text-red-700" : "bg-cyan-50 text-cyan-700"}`}>
-                          Expected close {format(expectedClose, "MMM d, yyyy")}{expectedCloseOverdue ? " · overdue" : ""}
+                        <div className={`mt-2 rounded-md px-2 py-1 text-xs ${expectedCloseOverdue ? "bg-rose-50 font-semibold text-rose-700" : expectedCloseNear ? "bg-cyan-50 font-semibold text-cyan-700" : "bg-slate-50 text-slate-600"}`}>
+                          Expected close {format(expectedClose, "MMM d, yyyy")}{expectedCloseOverdue ? " · overdue" : expectedCloseNear ? " · next 14d" : ""}
                         </div>
                       )}
 
-                      {isRegistered && !["won", "lost"].includes(workOrder.sales_status) && (
+                      {isRegistered && (expectedCloseOverdue || expectedCloseNear) && (
+                        <label className={`mt-2 block rounded-md border p-2 ${expectedCloseOverdue ? "border-rose-200 bg-rose-50/60" : "border-cyan-200 bg-cyan-50/60"}`} onClick={(event) => event.stopPropagation()}>
+                          <span className={`block text-[9px] font-bold uppercase tracking-wide ${expectedCloseOverdue ? "text-rose-800" : "text-cyan-800"}`}>
+                            {expectedCloseOverdue ? "Review overdue close" : "Review near close"}
+                          </span>
+                          <input
+                            type="date"
+                            value={workOrder.expected_close_date || ""}
+                            onChange={(event) => onUpdateWorkOrder?.(workOrder.id, "expected_close_date", event.target.value)}
+                            className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-xs text-gray-800 outline-none focus:ring-2 sm:h-8 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
+                            aria-label={`Expected close date for ${workOrder.client_name || "opportunity"}`}
+                          />
+                        </label>
+                      )}
+
+                      {isRegistered && isOpen && (
                         <div className="mt-2 flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">Tomorrow</button>
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50">+3d</button>
