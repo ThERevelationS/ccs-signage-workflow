@@ -1104,10 +1104,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
 
                 <div className="flex flex-col h-auto lg:h-full">
-                  <h3 className="font-bold text-sm">Current Selection ({selectedProducts.length})</h3>
+                  <h3 className="font-bold text-sm">Apply Setup ({selectedProducts.length})</h3>
                   {selectedProducts.length > 0 && (
                     <p className="text-xs text-gray-500 mt-1 mb-2">
-                      Removing a row here only removes it from this apply selection. Saved Work Order checklist data is not deleted.
+                      Saved Work Order products stay listed so checklist options can be added safely. They are never reapplied or deleted here; only new template selections can be removed.
                     </p>
                   )}
                   {selectedProducts.length === 0 ? (
@@ -1133,20 +1133,22 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                             {product.isExisting && (
                               <span
                                 className="text-[10px] font-medium rounded bg-green-100 text-green-700 px-1.5 py-0.5"
-                                title="Existing saved Work Order checklist"
+                                title="Saved Work Order checklist — preserved and not reapplied"
                               >
-                                Existing
+                                Saved
                               </span>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => setSelectedProducts(current => current.filter(p => p.id !== product.id))}
-                              className="p-1 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                              title={product.isExisting ? "Remove from selection — saved Work Order checklist data is not deleted" : "Remove from selection"}
-                              aria-label={`Remove ${product.customName} from selection`}
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                            {!product.isExisting && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedProducts(current => current.filter(p => p.id !== product.id))}
+                                className="h-11 w-11 shrink-0 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 touch-manipulation lg:h-7 lg:w-7"
+                                title="Remove this new template from the apply setup"
+                                aria-label={`Remove new template ${product.customName} from apply setup`}
+                              >
+                                <X className="w-4 h-4 mx-auto" aria-hidden="true" />
+                              </button>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500 mb-1">Type: {product.productType}</div>
                           {(() => {
