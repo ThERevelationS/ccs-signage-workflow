@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 
 const TYPES = new Set(['bug', 'feature', 'improvement']);
 const PRIORITIES = new Set(['low', 'medium', 'high', 'critical']);
@@ -24,6 +25,15 @@ function sameValue(a: any, b: any) {
 
 function matchesFields(row: any, fields: Record<string, any>) {
   return Object.entries(fields).every(([key, value]) => sameValue(row?.[key], value));
+}
+
+function reportForViewer(row: any, isAdmin: boolean) {
+  const report = { ...(row || {}) };
+  if (!isAdmin) {
+    delete report.submitted_by_email;
+    delete report.admin_notes;
+  }
+  return report;
 }
 
 function cleanCreateInput(value: any) {
@@ -150,9 +160,21 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const actor = await authenticateSignShopSession(base44, body?.session_token);
     const action = String(body?.action || '').trim();
     const Report = base44.asServiceRole.entities.FeatureReport;
+    const sessionToken = String(body?.session_token || '').trim();
+    let actor: any = null;
+
+    if (action === 'list') {
+      if (sessionToken) actor = await authenticateSignShopSession(base44, sessionToken);
+      const scope = String(body?.scope || 'open') === 'completed' ? 'completed' : 'open';
+      const query = scope === 'completed' ? { status: 'completed' } : { status: { $ne: 'completed' } };
+      const sort = scope === 'completed' ? '-completed_date' : '-created_date';
+      const rows = await loadAllEntityRows({ entity: Report, query, sort, label: `${scope} feature reports` });
+      return Response.json({ records: rows.map((row: any) => reportForViewer(row, actor?.role === 'admin')) });
+    }
+
+    actor = await authenticateSignShopSession(base44, sessionToken);
 
     if (action === 'create') {
       const form = cleanCreateInput(body?.data);
