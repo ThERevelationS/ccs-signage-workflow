@@ -2509,6 +2509,216 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, request: requestRecord, audit_id: updateAudit.id, reused: String(requestRecord.last_request_id || '') === requestId && Boolean(priorUpdateAudit?.id) });
     }
 
+    if (action === 'time_off_request_create' || action === 'time_off_request_update') {
+      if (actor.role === 'badge' || actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to manage time-off requests.' }, { status: 403 });
+      }
+
+      const requestType = String(body?.request_type || '').trim();
+      const startDate = validDateKey(body?.start_date);
+      const endDate = validDateKey(body?.end_date);
+      const hoursRequested = Number(body?.hours_requested);
+      const reason = String(body?.reason || '').trim().slice(0, 1000);
+      if (!['vacation', 'sick', 'personal', 'bereavement', 'jury_duty', 'other'].includes(requestType)) {
+        return Response.json({ success: false, error: 'A valid time-off request type is required.' }, { status: 400 });
+      }
+      if (!startDate || !endDate || endDate < startDate) {
+        return Response.json({ success: false, error: 'Valid time-off start and end dates are required.' }, { status: 400 });
+      }
+      if (!Number.isFinite(hoursRequested) || hoursRequested <= 0 || hoursRequested > 2000) {
+        return Response.json({ success: false, error: 'Requested time-off hours must be greater than zero.' }, { status: 400 });
+      }
+
+      const requestedFields = {
+        request_type: requestType,
+        start_date: startDate,
+        end_date: endDate,
+        hours_requested: hoursRequested,
+        reason,
+      };
+
+      if (action === 'time_off_request_create') {
+        const createPayloadHash = await payloadHash(requestedFields);
+        const priorAudit = await uniqueRow(
+          auditEntity,
+          { action: 'time_off_request_create', request_id: requestId, user_email: target.email },
+          'Time-off request create audit',
+        );
+        if (priorAudit?.id) {
+          const priorHash = String(priorAudit.details?.payload_hash || '');
+          if (priorHash && !constantTimeEqual(priorHash, createPayloadHash)) {
+            return Response.json({ success: false, error: 'This time-off request id is already bound to different request details.' }, { status: 409 });
+          }
+          if (['confirmed', 'recovered'].includes(String(priorAudit.outcome || ''))) {
+            const priorId = String(priorAudit.details?.time_off_request_id || '');
+            const priorRecord = priorId ? await timeOffRequestEntity.get(priorId).catch(() => null) : null;
+            if (!priorRecord?.id || asEmail(priorRecord.user_email) !== target.email) {
+              return Response.json({ success: false, error: 'The time-off create audit is confirmed but its request record is missing. Admin investigation is required.' }, { status: 409 });
+            }
+            return Response.json({ success: true, request: priorRecord, audit_id: priorAudit.id, reused: true });
+          }
+        }
+
+        let saved = await uniqueRow(
+          timeOffRequestEntity,
+          { user_email: target.email, last_request_id: requestId },
+          'Time-off create request id',
+        );
+        if (saved?.id) {
+          const storedHash = String(saved.last_request_payload_hash || '');
+          if (storedHash && !constantTimeEqual(storedHash, createPayloadHash)) {
+            return Response.json({ success: false, error: 'This time-off request id is already bound to different request details.' }, { status: 409 });
+          }
+        } else {
+          const matching = await timeOffRequestEntity.filter({
+            user_email: target.email,
+            request_type: requestType,
+            start_date: startDate,
+            end_date: endDate,
+            status: 'pending',
+            archived_test_data: { $ne: true },
+          });
+          if (!Array.isArray(matching)) throw new Error('Pending time-off request lookup did not return a record list.');
+          if (matching.length > 1) return Response.json({ success: false, error: 'Multiple matching pending time-off requests already exist. Admin review is required before another is submitted.' }, { status: 409 });
+          if (matching.length === 1) {
+            const existing = matching[0];
+            if (
+              Number(existing.hours_requested || 0) !== hoursRequested ||
+              String(existing.reason || '') !== reason
+            ) {
+              return Response.json({ success: false, error: 'A pending request already exists for these dates and type with different details. Edit that request instead.' }, { status: 409 });
+            }
+            saved = existing;
+          } else {
+            saved = await timeOffRequestEntity.create({
+              user_email: target.email,
+              user_name: target.full_name || target.email,
+              ...requestedFields,
+              status: 'pending',
+              last_request_id: requestId,
+              last_request_payload_hash: createPayloadHash,
+            });
+            if (!saved?.id) throw new Error('Time-off request could not be persisted.');
+            const requestRows = await timeOffRequestEntity.filter({ user_email: target.email, last_request_id: requestId });
+            if (!Array.isArray(requestRows) || requestRows.length !== 1 || requestRows[0]?.id !== saved.id) {
+              return Response.json({ success: false, error: 'Time-off request creation could not be verified uniquely. Admin review is required.' }, { status: 409 });
+            }
+          }
+        }
+
+        let createAudit: any = null;
+        try {
+          const ensured = await ensureUserActionAudit(auditEntity, {
+            action: 'time_off_request_create',
+            outcome: 'confirmed',
+            user_email: target.email,
+            user_name: target.full_name || target.email,
+            actor_email: actorEmail,
+            actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target),
+            server_timestamp: new Date().toISOString(),
+            request_id: requestId,
+            reason,
+            details: {
+              payload_hash: createPayloadHash,
+              time_off_request_id: saved.id,
+              request_type: requestType,
+              start_date: startDate,
+              end_date: endDate,
+              hours_requested: hoursRequested,
+            },
+          }, 'Time-off request create audit');
+          createAudit = ensured.audit;
+        } catch {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off request was saved but its audit could not be confirmed. Retry the same request.' }, { status: 409 });
+        }
+        if (String(createAudit?.details?.payload_hash || '') && !constantTimeEqual(String(createAudit.details.payload_hash), createPayloadHash)) {
+          return Response.json({ success: false, error: 'The time-off request audit is bound to different request details. Admin investigation is required.' }, { status: 409 });
+        }
+        return Response.json({ success: true, request: saved, audit_id: createAudit.id, reused: Boolean(priorAudit?.id) });
+      }
+
+      const timeOffRequestId = String(body?.time_off_request_id || '').trim();
+      const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+      if (!timeOffRequestId || !expectedUpdatedDate) {
+        return Response.json({ success: false, error: 'The loaded time-off request version is required before editing it.' }, { status: 400 });
+      }
+      const updatePayloadHash = await payloadHash({
+        time_off_request_id: timeOffRequestId,
+        expected_updated_date: expectedUpdatedDate,
+        ...requestedFields,
+      });
+      let requestRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!requestRecord?.id || asEmail(requestRecord.user_email) !== target.email || requestRecord.archived_test_data) {
+        return Response.json({ success: false, error: 'Time-off request was not found or is archived.' }, { status: 404 });
+      }
+
+      const priorUpdateAudit = await uniqueRow(
+        auditEntity,
+        { action: 'time_off_request_update', request_id: requestId, user_email: target.email },
+        'Time-off request update audit',
+      );
+      if (priorUpdateAudit?.id) {
+        const priorHash = String(priorUpdateAudit.details?.payload_hash || '');
+        if (priorHash && !constantTimeEqual(priorHash, updatePayloadHash)) {
+          return Response.json({ success: false, error: 'This time-off update request id is already bound to different details.' }, { status: 409 });
+        }
+      }
+
+      if (String(requestRecord.last_request_id || '') === requestId) {
+        if (!constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), updatePayloadHash)) {
+          return Response.json({ success: false, error: 'This time-off update request id is already bound to different details.' }, { status: 409 });
+        }
+      } else {
+        if (requestRecord.status !== 'pending') {
+          return Response.json({ success: false, error: 'Only pending time-off requests can be edited.' }, { status: 409 });
+        }
+        if (String(requestRecord.updated_date || '') !== expectedUpdatedDate) {
+          return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before editing it.' }, { status: 409 });
+        }
+        const updated = await timeOffRequestEntity.updateMany(
+          { id: requestRecord.id, updated_date: expectedUpdatedDate, user_email: target.email, status: 'pending', archived_test_data: { $ne: true } },
+          { $set: { ...requestedFields, last_request_id: requestId, last_request_payload_hash: updatePayloadHash } },
+        );
+        if (!updated || updated.updated !== 1) {
+          return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before editing it.' }, { status: 409 });
+        }
+        requestRecord = await timeOffRequestEntity.get(requestRecord.id);
+      }
+
+      let updateAudit: any = null;
+      try {
+        const ensured = await ensureUserActionAudit(auditEntity, {
+          action: 'time_off_request_update',
+          outcome: 'confirmed',
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          actor_email: actorEmail,
+          actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target),
+          server_timestamp: new Date().toISOString(),
+          request_id: requestId,
+          reason,
+          details: {
+            payload_hash: updatePayloadHash,
+            time_off_request_id: requestRecord.id,
+            expected_updated_date: expectedUpdatedDate,
+            request_type: requestType,
+            start_date: startDate,
+            end_date: endDate,
+            hours_requested: hoursRequested,
+          },
+        }, 'Time-off request update audit');
+        updateAudit = ensured.audit;
+      } catch {
+        return Response.json({ success: false, retry_same_request: true, error: 'The time-off request update was saved but its audit could not be confirmed. Retry the same update.' }, { status: 409 });
+      }
+      if (String(updateAudit?.details?.payload_hash || '') && !constantTimeEqual(String(updateAudit.details.payload_hash), updatePayloadHash)) {
+        return Response.json({ success: false, error: 'The time-off update audit is bound to different details. Admin investigation is required.' }, { status: 409 });
+      }
+      return Response.json({ success: true, request: requestRecord, audit_id: updateAudit.id, reused: String(requestRecord.last_request_id || '') === requestId && Boolean(priorUpdateAudit?.id) });
+    }
+
     if (action === 'list_correction_requests') {
       if (actor.role === 'badge') return Response.json({ success: false, error: 'A signed-in session is required to view correction requests.' }, { status: 403 });
       const adminScope = actor.role === 'admin' && String(body?.scope || '') === 'admin';
