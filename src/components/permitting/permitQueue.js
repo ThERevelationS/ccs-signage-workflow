@@ -71,6 +71,7 @@ export function getPermitLineHandoffReadiness(line) {
   const closeoutStatus = normalizedCloseoutStatus(line);
   const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
   const feeAmount = line?.jurisdiction_fee_amount;
+  const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
   const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
   const permitReceived = !!asDateKey(line?.permit_received_date);
   const hasPermitIdentifier = !!String(line?.permit_number || line?.application_reference_number || "").trim();
@@ -102,6 +103,13 @@ export function getPermitLineHandoffReadiness(line) {
 
   if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount > 0 && !feeStatus) {
     reviews.push(`${label} has an actual jurisdiction fee recorded but no payment status.`);
+  }
+  if (feeStatus === "paid" && !feePaidDate) {
+    reviews.push(`${label} is marked fee paid but has no paid date.`);
+  }
+  if (feePaidDate && feeStatus !== "paid") {
+    const statusLabel = feeStatus || "not recorded";
+    reviews.push(`${label} has a fee paid date but payment status is ${statusLabel}.`);
   }
 
   if (lateLifecycle && ACTIVE_CORRECTION_STATUSES.has(correctionStatus)) {
