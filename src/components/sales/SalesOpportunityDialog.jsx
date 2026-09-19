@@ -15,6 +15,7 @@ import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const CellHistory = base44.entities.CellHistory;
 
@@ -74,6 +75,16 @@ const money = (value) => new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0,
 }).format(Number(value) || 0);
+
+const fileMeta = (file) => {
+  const bits = [];
+  if (file?.uploaded_by) bits.push(file.uploaded_by);
+  if (file?.uploaded_at) {
+    const parsed = new Date(file.uploaded_at);
+    if (!Number.isNaN(parsed.getTime())) bits.push(parsed.toLocaleDateString());
+  }
+  return bits.join(" · ");
+};
 
 const displayValue = (field, value) => {
   if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
@@ -168,6 +179,10 @@ export default function SalesOpportunityDialog({
     .sort((a, b) => String(b?.timestamp || "").localeCompare(String(a?.timestamp || "")))
     .slice(0, 5), [workOrder?.work_notes]);
   const taskOwners = useMemo(() => users.filter((user) => user.full_name && user.sales_roles?.includes("Task Assigned")), [users]);
+  const attachedFiles = Array.isArray(workOrder?.files) ? workOrder.files : [];
+  const previewFiles = attachedFiles.slice(0, 4);
+  const coreBridgeUrl = safeExternalHttpUrl(workOrder?.corbridge_link);
+  const driveUrl = safeExternalHttpUrl(workOrder?.google_drive_folder_url);
 
   if (!workOrder) return null;
 
@@ -221,11 +236,11 @@ export default function SalesOpportunityDialog({
             </div>
             <div className="flex flex-wrap gap-2">
               {workOrder.estimate_id && (
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="h-11 sm:h-8" asChild>
                   <a href={`/EstimateDetail?id=${workOrder.estimate_id}`} target="_blank" rel="noreferrer"><FileText className="mr-1.5 h-4 w-4" />Source Estimate<ExternalLink className="ml-1 h-3 w-3" /></a>
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={() => onOpenFullDetails?.(workOrder)}><Wrench className="mr-1.5 h-4 w-4" />Full Work Order</Button>
+              <Button variant="outline" size="sm" className="h-11 sm:h-8" onClick={() => onOpenFullDetails?.(workOrder)}><Wrench className="mr-1.5 h-4 w-4" />Full Work Order</Button>
             </div>
           </div>
           {queueNavigation && (
@@ -446,14 +461,64 @@ export default function SalesOpportunityDialog({
                 <div><div className="text-xs text-gray-400">Close date</div><div className="font-medium text-gray-800">{workOrder.close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Lost reason</div><div className={`font-medium ${workOrder.sales_status === "lost" ? "text-red-700" : "text-gray-800"}`}>{workOrder.lost_reason || "—"}</div></div>
               </div>
-              {workOrder.corbridge_link && <Button variant="outline" size="sm" className="mt-3" asChild><a href={workOrder.corbridge_link} target="_blank" rel="noreferrer">Open CoreBridge <ExternalLink className="ml-1 h-3 w-3" /></a></Button>}
+              {workOrder.corbridge_link && (
+                coreBridgeUrl ? (
+                  <Button type="button" variant="outline" size="sm" className="mt-3 h-11 sm:h-8" onClick={() => openExternalHttpUrl(coreBridgeUrl)}>
+                    Open CoreBridge <ExternalLink className="ml-1 h-3 w-3" />
+                  </Button>
+                ) : (
+                  <div className="mt-3 text-xs font-medium text-amber-700">CoreBridge link is present but not a usable http/https URL.</div>
+                )
+              )}
             </div>
 
             <div className="rounded-xl border bg-white p-4">
-              <div className="flex items-center gap-2 font-semibold text-gray-800"><FolderOpen className="h-4 w-4 text-violet-600" />Files & Notes</div>
-              <div className="mt-3 text-sm text-gray-600">{workOrder.files?.length || 0} uploaded file{workOrder.files?.length === 1 ? "" : "s"}</div>
-              {workOrder.google_drive_folder_url && <Button variant="outline" size="sm" className="mt-2" asChild><a href={workOrder.google_drive_folder_url} target="_blank" rel="noreferrer">Open Drive Folder <ExternalLink className="ml-1 h-3 w-3" /></a></Button>}
-              <div className="mt-3 space-y-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 font-semibold text-gray-800"><FolderOpen className="h-4 w-4 text-violet-600" />Files & Notes</div>
+                <div className="flex flex-wrap gap-2">
+                  {workOrder.google_drive_folder_url && (
+                    driveUrl ? (
+                      <Button type="button" variant="outline" size="sm" className="h-11 sm:h-8" onClick={() => openExternalHttpUrl(driveUrl)}>
+                        Open Drive Folder <ExternalLink className="ml-1 h-3 w-3" />
+                      </Button>
+                    ) : (
+                      <span className="self-center text-xs font-medium text-amber-700">Drive link unavailable</span>
+                    )
+                  )}
+                  <Button type="button" variant="outline" size="sm" className="h-11 sm:h-8" onClick={() => onOpenFullDetails?.(workOrder)}>
+                    Manage files & notes <Wrench className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-gray-600">{attachedFiles.length} uploaded file{attachedFiles.length === 1 ? "" : "s"}</div>
+              {previewFiles.length > 0 && (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {previewFiles.map((file, index) => {
+                    const fileUrl = safeExternalHttpUrl(file?.url);
+                    const meta = fileMeta(file);
+                    return (
+                      <button
+                        key={file?.id || `${file?.name || "file"}-${index}`}
+                        type="button"
+                        disabled={!fileUrl}
+                        onClick={() => openExternalHttpUrl(fileUrl)}
+                        className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        title={fileUrl ? `Open ${file?.name || "file"}` : "This file does not have a usable link"}
+                      >
+                        <FileText className="h-4 w-4 shrink-0 text-blue-600" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-medium text-gray-800">{file?.name || "Unnamed file"}</span>
+                          {meta && <span className="block truncate text-[11px] text-gray-400">{meta}</span>}
+                        </span>
+                        {fileUrl && <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gray-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {attachedFiles.length > previewFiles.length && <div className="mt-2 text-[11px] text-gray-500">+{attachedFiles.length - previewFiles.length} more file{attachedFiles.length - previewFiles.length === 1 ? "" : "s"} available in Full Work Order.</div>}
+              <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Recent client/admin notes</div>
                 {clientNotes.length === 0 ? <div className="text-xs text-gray-400">No recent client/admin notes.</div> : clientNotes.map((note) => (
                   <div key={note.id || note.timestamp} className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-700">
                     <div>{note.text}</div>
