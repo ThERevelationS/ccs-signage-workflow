@@ -193,6 +193,11 @@ export default function SalesOpportunityDialog({
     date.setDate(date.getDate() + days);
     return format(date, "yyyy-MM-dd");
   };
+  const todayStamp = futureDateStamp(0);
+  const nearCloseStamp = futureDateStamp(14);
+  const expectedCloseStamp = String(workOrder.expected_close_date || "").slice(0, 10);
+  const expectedCloseOverdue = !closeout && Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp);
+  const expectedCloseNear = !closeout && Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp);
   const confirmRemoveFromPipeline = async (advance) => {
     if (!onRemoveFromCurrentPipeline || removeFromPipelineBusy) return;
     setRemoveFromPipelineBusy(true);
@@ -376,9 +381,14 @@ export default function SalesOpportunityDialog({
             <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("next_action") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><CalendarClock className="h-4 w-4 text-orange-600" />Next Action</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-9" /></div>
-                <div><Label className="text-xs text-gray-500">Expected close</Label><Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className="mt-1 h-9" /></div>
-                <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-9" /></div>
+                <div><Label className="text-xs text-gray-500">Follow-up date</Label><Input type="date" value={workOrder.follow_up_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ follow_up_date: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
+                <div>
+                  <Label className="text-xs text-gray-500">{closeout ? "Expected close (planned)" : "Expected close"}</Label>
+                  <Input type="date" value={workOrder.expected_close_date || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ expected_close_date: event.target.value })} className={`mt-1 h-11 sm:h-9 ${expectedCloseOverdue ? "border-rose-300 focus-visible:ring-rose-200" : expectedCloseNear ? "border-cyan-300 focus-visible:ring-cyan-200" : ""}`} />
+                  {expectedCloseOverdue && <div className="mt-1 text-[11px] font-semibold text-rose-700">Expected close is overdue — confirm the forecast or resolve the opportunity.</div>}
+                  {expectedCloseNear && <div className="mt-1 text-[11px] font-medium text-cyan-700">Expected close is within the next 14 days.</div>}
+                </div>
+                <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">Task owner</Label>
                   <Select
@@ -394,8 +404,14 @@ export default function SalesOpportunityDialog({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="sm:col-span-2"><Label className="text-xs text-gray-500">Next action / task</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-9" /></div>
+                <div className="sm:col-span-2"><Label className="text-xs text-gray-500">{closeout ? "Last planned action / task" : "Next action / task"}</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-11 sm:h-9" /></div>
               </div>
+
+              {closeout && (
+                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  Follow-up scheduling is closed. Expected close and task planning remain visible as historical context so the outcome retains its sales trail.
+                </div>
+              )}
 
               {!closeout && isRegistered && (
                 <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-gray-100 pt-3 sm:flex-wrap sm:overflow-visible" aria-label="Opportunity follow-up quick actions">
@@ -445,31 +461,49 @@ export default function SalesOpportunityDialog({
           <section className="grid gap-4 lg:grid-cols-2">
             <div className={`rounded-xl border bg-white p-4 ${attentionKeys.has("quote_timing_missing") ? "border-amber-300 bg-amber-50/20" : ""}`}>
               <div className="flex items-center gap-2 font-semibold text-gray-800"><FileText className="h-4 w-4 text-indigo-600" />Quote & Closeout</div>
+              {closeout && (
+                <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  Closed {workOrder.close_date || "without a recorded close date"}. Planned close timing is retained below for historical context; active follow-up is no longer scheduled.
+                </div>
+              )}
               <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                 <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.corbridge_invoice_number || workOrder.est_inv_at || "—"}</div></div>
                 <div>
                   <div className="text-xs text-gray-400">Quote sent date</div>
                   <div className="mt-1 flex items-center gap-2">
-                    <Input type="date" max={format(new Date(), "yyyy-MM-dd")} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-9" />
-                    {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-9 px-2 text-xs" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Today</Button>}
+                    <Input type="date" max={todayStamp} value={workOrder.date_estimate_sent || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ date_estimate_sent: event.target.value })} className="h-11 sm:h-9" />
+                    {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-11 px-3 text-xs sm:h-9" onClick={() => update({ date_estimate_sent: todayStamp })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (
                     quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}{workOrder.date_estimate_sent ? "" : " · using quote issue date"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
                   ) : null}
                 </div>
-                <div><div className="text-xs text-gray-400">Expected close</div><div className="font-medium text-gray-800">{workOrder.expected_close_date || "—"}</div></div>
+                <div><div className="text-xs text-gray-400">Quote issue date</div><div className="font-medium text-gray-800">{workOrder.quote_date || "—"}</div></div>
+                <div>
+                  <div className="text-xs text-gray-400">{closeout ? "Expected close (planned)" : "Expected close"}</div>
+                  <div className={`font-medium ${expectedCloseOverdue ? "text-rose-700" : expectedCloseNear ? "text-cyan-700" : "text-gray-800"}`}>
+                    {workOrder.expected_close_date || "—"}{expectedCloseOverdue ? " · overdue" : expectedCloseNear ? " · next 14 days" : ""}
+                  </div>
+                </div>
                 <div><div className="text-xs text-gray-400">Close date</div><div className="font-medium text-gray-800">{workOrder.close_date || "—"}</div></div>
                 <div><div className="text-xs text-gray-400">Lost reason</div><div className={`font-medium ${workOrder.sales_status === "lost" ? "text-red-700" : "text-gray-800"}`}>{workOrder.lost_reason || "—"}</div></div>
               </div>
-              {workOrder.corbridge_link && (
-                coreBridgeUrl ? (
-                  <Button type="button" variant="outline" size="sm" className="mt-3 h-11 sm:h-8" onClick={() => openExternalHttpUrl(coreBridgeUrl)}>
-                    Open CoreBridge <ExternalLink className="ml-1 h-3 w-3" />
+              <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3 sm:flex-row sm:flex-wrap">
+                {workOrder.estimate_id && (
+                  <Button variant="outline" size="sm" className="h-11 justify-center sm:h-8" asChild>
+                    <a href={`/EstimateDetail?id=${workOrder.estimate_id}`} target="_blank" rel="noreferrer">Source Estimate<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a>
                   </Button>
-                ) : (
-                  <div className="mt-3 text-xs font-medium text-amber-700">CoreBridge link is present but not a usable http/https URL.</div>
-                )
-              )}
+                )}
+                {workOrder.corbridge_link && (
+                  coreBridgeUrl ? (
+                    <Button type="button" variant="outline" size="sm" className="h-11 justify-center sm:h-8" onClick={() => openExternalHttpUrl(coreBridgeUrl)}>
+                      Open CoreBridge <ExternalLink className="ml-1 h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <div className="self-center text-xs font-medium text-amber-700">CoreBridge link is present but not a usable http/https URL.</div>
+                  )
+                )}
+              </div>
             </div>
 
             <div className="rounded-xl border bg-white p-4">
