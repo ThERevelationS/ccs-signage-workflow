@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const user = await authenticateSignShopSession(base44, body?.session_token);
-    if (user?.role !== 'admin' && user?.can_view_resources !== true) {
-      return Response.json({ error: 'Resource Planning access is required.' }, { status: 403 });
+    if (user?.role !== 'admin') {
+      return Response.json({ error: 'Admin access is required to change Resource Planning capacity.' }, { status: 403 });
     }
 
     const email = normalizeEmail(body?.user_email);
