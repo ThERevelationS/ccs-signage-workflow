@@ -11,6 +11,7 @@ import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -71,6 +72,12 @@ export default function SalesPipelineTableBody({
   leadSources, users, taskDescriptions, projectTypes, rowVirtualizer,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStamp = format(today, "yyyy-MM-dd");
+  const nearCloseDate = new Date(today);
+  nearCloseDate.setDate(nearCloseDate.getDate() + 14);
+  const nearCloseStamp = format(nearCloseDate, "yyyy-MM-dd");
 
   return (
     <tbody>
@@ -90,6 +97,11 @@ export default function SalesPipelineTableBody({
         const quoteAging = getQuoteAgingState(wo);
         const attentionItems = getActionableSalesAttentionItems(wo);
         const likelyPlaceholder = isLikelySalesPlaceholder(wo);
+        const coreBridgeUrl = safeExternalHttpUrl(wo.corbridge_link);
+        const expectedCloseStamp = String(wo.expected_close_date || "").slice(0, 10);
+        const isOpen = !["won", "lost"].includes(wo.sales_status);
+        const expectedCloseOverdue = Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp && isOpen);
+        const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp && isOpen);
 
         return (
           <React.Fragment key={wo.id}>
@@ -208,8 +220,10 @@ export default function SalesPipelineTableBody({
               {isColumnVisible("est_inv_at") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "est_inv_at", "Est/Inv #", wo.est_inv_at)}>
                   <div className="flex items-center gap-1">
-                    {wo.corbridge_link ? (
-                      <a href={wo.corbridge_link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate flex-1">{wo.corbridge_invoice_number || wo.est_inv_at || "Link"}</a>
+                    {coreBridgeUrl ? (
+                      <button type="button" onClick={() => openExternalHttpUrl(coreBridgeUrl)} className="min-w-0 flex-1 truncate text-left text-xs text-blue-600 hover:underline" title="Open CoreBridge">{wo.corbridge_invoice_number || wo.est_inv_at || "Link"}</button>
+                    ) : wo.corbridge_link ? (
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium text-amber-700" title="CoreBridge link is present but is not a usable http/https URL. Use the link button to correct it.">{wo.corbridge_invoice_number || wo.est_inv_at || "Invalid link"}</span>
                     ) : (
                       <Input value={wo.est_inv_at || ""} onChange={(e) => updateWorkOrder(wo.id, "est_inv_at", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1 flex-1" placeholder="-" disabled={!isRegistered} />
                     )}
@@ -309,7 +323,11 @@ export default function SalesPipelineTableBody({
                 </td>
               )}
               {isColumnVisible("expected_close_date") && (
-                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "expected_close_date", "Expected Close Date", wo.expected_close_date)}>
+                <td
+                  className={`px-1 py-0.5 border-r ${expectedCloseOverdue ? "bg-rose-50" : expectedCloseNear ? "bg-cyan-50" : ""}`}
+                  title={expectedCloseOverdue ? "Expected close is overdue. Review the forecast or resolve the opportunity." : expectedCloseNear ? "Expected close is within the next 14 days." : undefined}
+                  onContextMenu={(e) => handleContextMenu(e, wo, "expected_close_date", "Expected Close Date", wo.expected_close_date)}
+                >
                   <DateCell woId={wo.id} field="expected_close_date" value={wo.expected_close_date} popoverKey={`expectedclose-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
                 </td>
               )}
