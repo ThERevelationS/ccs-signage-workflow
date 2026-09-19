@@ -2098,6 +2098,10 @@ Deno.serve(async (req) => {
       if (pauseStatus === 'paused') {
         const activePause = state.active_work_pause_id ? await workPauseEntity.get(state.active_work_pause_id).catch(() => null) : null;
         if (activePause?.id && activePause.status === 'active' && activePause.time_entry_id === entry.id && asEmail(activePause.user_email) === target.email) {
+          if (String(activePause.start_request_id || '') !== requestId) {
+            return Response.json({ success: false, error: 'Work is already paused. Resume Work before starting another pause.' }, { status: 409 });
+          }
+          await ensureWorkPauseAudit({ auditEntity, action: 'work_pause_start', pauseRow: activePause, target, actor, requestId, entryId: entry.id });
           const summary = await workPauseSummaryForEntry(workPauseEntity, entry.id, target.email);
           return Response.json({ success: true, status: 'already_paused', work_pause_status: 'paused', work_pause: activePause, work_pause_summary: summary, entry, user: publicEmployee(target), reused: true, work_pause_allowed: true });
         }
