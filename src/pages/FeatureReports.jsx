@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { sendGmail } from "@/functions/sendGmail";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -35,9 +34,9 @@ import { createPageUrl } from "@/utils";
 import {
   createFeatureReportWithRecovery,
   deleteFeatureReportSafely,
+  listFeatureReports,
   updateFeatureReportFields,
 } from "@/components/reports/featureReportPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   Plus,
   Bug,
@@ -52,8 +51,6 @@ import {
   Edit,
   ChevronRight
 } from "lucide-react";
-
-const FeatureReport = base44.entities.FeatureReport;
 
 const TYPE_CONFIG = {
   bug: { label: "Bug", icon: Bug, color: "bg-red-100 text-red-700", borderColor: "border-red-300" },
@@ -99,12 +96,7 @@ export default function FeatureReports() {
 
   const loadReports = async () => {
     setIsLoading(true);
-    const allReports = await loadAllEntityRows({
-      entity: FeatureReport,
-      query: { status: { $ne: "completed" } },
-      sort: "-created_date",
-      label: "Open feature reports",
-    });
+    const allReports = await listFeatureReports({ scope: "open", sessionToken });
     setReports(allReports);
     setIsLoading(false);
   };
