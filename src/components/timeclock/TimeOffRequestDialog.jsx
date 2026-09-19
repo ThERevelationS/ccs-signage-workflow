@@ -8,9 +8,44 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
 import { differenceInBusinessDays } from "date-fns";
-import { createPendingTimeOffRequestIfAbsent, updatePendingTimeOffRequestIfUnchanged } from "@/components/timeclock/ptoPersistence";
 
-const TimeOffRequest = base44.entities.TimeOffRequest;
+function newRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `tc-timeoff-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function operationStorageKey(existingRequest, currentUser) {
+  return `ccs_timeclock_timeoff:${existingRequest?.id ? `edit:${existingRequest.id}` : `new:${String(currentUser?.email || "").toLowerCase()}`}`;
+}
+
+function storedOperation(key) {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload
+      ? { request_id: requestId, payload: parsed.payload }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistOperation(key, requestId, payload) {
+  try { sessionStorage.setItem(key, JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearOperation(key) {
+  try { sessionStorage.removeItem(key); } catch {}
+}
+
+function shouldRetainOperation(err) {
+  if (err?.retrySameRequest === true || err?.response?.data?.retry_same_request === true) return true;
+  if (err?.confirmedServerResponse === true) return false;
+  const status = Number(err?.response?.status || 0);
+  return !err?.response || status >= 500;
+}
 
 const REQUEST_TYPES = [
   { value: "vacation", label: "Vacation" },
@@ -21,7 +56,7 @@ const REQUEST_TYPES = [
   { value: "other", label: "Other" }
 ];
 
-export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onSubmit, existingRequest }) {
+export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, sessionToken = "", onSubmit, existingRequest }) {
   const [requestType, setRequestType] = useState(existingRequest?.request_type || "");
   const [startDate, setStartDate] = useState(existingRequest?.start_date || "");
   const [endDate, setEndDate] = useState(existingRequest?.end_date || "");
@@ -31,6 +66,18 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
+    if (!isOpen) return;
+    const stored = storedOperation(operationStorageKey(existingRequest, currentUser));
+    const savedFields = stored?.payload || null;
+    if (savedFields) {
+      setRequestType(savedFields.request_type || "");
+      setStartDate(savedFields.start_date || "");
+      setEndDate(savedFields.end_date || "");
+      setReason(savedFields.reason || "");
+      const days = differenceInBusinessDays(new Date(savedFields.end_date), new Date(savedFields.start_date)) + 1;
+      setHoursPerDay(days > 0 ? Math.round(Number(savedFields.hours_requested || 0) / days) : 8);
+      return;
+    }
     if (existingRequest) {
       setRequestType(existingRequest.request_type || "");
       setStartDate(existingRequest.start_date || "");
@@ -39,7 +86,7 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
       const days = differenceInBusinessDays(new Date(existingRequest.end_date), new Date(existingRequest.start_date)) + 1;
       setHoursPerDay(days > 0 ? Math.round(existingRequest.hours_requested / days) : 8);
     }
-  }, [existingRequest]);
+  }, [isOpen, existingRequest, currentUser]);
 
   const calculateHours = () => {
     if (!startDate || !endDate) return 0;
@@ -63,41 +110,58 @@ export default function TimeOffRequestDialog({ isOpen, onClose, currentUser, onS
       return;
     }
 
+    if (!sessionToken || !currentUser?.email) {
+      setError("Your signed Time Clock session is no longer available. Sign in again before submitting time off.");
+      return;
+    }
+
+    const requestFields = {
+      request_type: requestType,
+      start_date: startDate,
+      end_date: endDate,
+      hours_requested: calculateHours(),
+      reason: reason.trim(),
+    };
+    const payload = {
+      action: existingRequest ? "time_off_request_update" : "time_off_request_create",
+      target_email: currentUser.email,
+      ...requestFields,
+      ...(existingRequest ? {
+        time_off_request_id: existingRequest.id,
+        expected_updated_date: existingRequest.updated_date,
+      } : {}),
+    };
+    const storageKey = operationStorageKey(existingRequest, currentUser);
+    const stored = storedOperation(storageKey);
+    if (stored && JSON.stringify(stored.payload) !== JSON.stringify(payload)) {
+      setError("A previous time-off submission may already be saved. Retry the preserved request with its original details before changing it.");
+      return;
+    }
+    const requestId = stored?.request_id || newRequestId();
+    persistOperation(storageKey, requestId, payload);
+
     setIsSubmitting(true);
     try {
-      const requestFields = {
-        request_type: requestType,
-        start_date: startDate,
-        end_date: endDate,
-        hours_requested: calculateHours(),
-        reason
-      };
-
-      if (existingRequest) {
-        await updatePendingTimeOffRequestIfUnchanged({
-          entity: TimeOffRequest,
-          request: existingRequest,
-          nextFields: requestFields,
-          label: `Time off request for ${existingRequest.user_name || existingRequest.user_email || existingRequest.id}`,
-        });
-      } else {
-        await createPendingTimeOffRequestIfAbsent({
-          entity: TimeOffRequest,
-          data: {
-            user_email: currentUser?.email,
-            user_name: currentUser?.full_name || currentUser?.email,
-            ...requestFields,
-            status: "pending"
-          },
-          label: `Time off request for ${currentUser?.full_name || currentUser?.email || "employee"}`,
-        });
+      const response = await base44.functions.invoke("timeClockAction", {
+        ...payload,
+        session_token: sessionToken,
+        request_id: requestId,
+      });
+      const data = response?.data || response;
+      if (!data?.success) {
+        const actionError = new Error(data?.error || "The time-off request was not confirmed by the server.");
+        actionError.retrySameRequest = data?.retry_same_request === true;
+        actionError.confirmedServerResponse = true;
+        throw actionError;
       }
-      
+
+      clearOperation(storageKey);
       if (onSubmit) await onSubmit();
       onClose();
     } catch (err) {
       console.error("Time off request save blocked:", err);
-      setError(err?.message || "Failed to submit request safely. Reload your requests before trying again.");
+      if (!shouldRetainOperation(err)) clearOperation(storageKey);
+      setError(err?.response?.data?.error || err?.message || "Failed to submit request safely. Reload your requests before trying again.");
     } finally {
       setIsSubmitting(false);
     }
