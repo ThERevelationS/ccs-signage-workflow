@@ -159,6 +159,12 @@ async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: 
     if (priorHash && priorHash !== payloadHash) {
       throw Object.assign(new Error('This PTO assignment request id is already bound to different details.'), { status: 409 });
     }
+    if (priorAudit.outcome === 'blocked') {
+      throw Object.assign(new Error('This PTO assignment request was previously blocked. Reload and submit a new assignment.'), { status: 409 });
+    }
+    if (['confirmed', 'recovered'].includes(String(priorAudit.outcome || '')) && String(balance?.last_request_id || '') !== requestId) {
+      throw Object.assign(new Error('This PTO assignment audit is complete but the employee balance no longer matches that request. Reload before continuing.'), { status: 409 });
+    }
   }
 
   if (balance?.id && String(balance.last_request_id || '') === requestId) {
