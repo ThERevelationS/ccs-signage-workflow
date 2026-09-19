@@ -60,6 +60,14 @@
     "custom_overrides": {
       "type": "object",
       "description": "Per-user overrides to the policy"
+    },
+    "last_request_id": {
+      "type": "string",
+      "description": "Last authoritative PTO balance assignment request id"
+    },
+    "last_request_payload_hash": {
+      "type": "string",
+      "description": "Payload hash bound to the last authoritative PTO balance assignment"
     }
   },
   "required": [
