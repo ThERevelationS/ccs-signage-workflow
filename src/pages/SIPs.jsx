@@ -566,29 +566,69 @@ export default function SIPs() {
         </div>
 
         {checklistConfigWarning && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <div className="font-medium">Checklist progress rules could not refresh</div>
-            <div className="mt-1 text-xs">{checklistConfigWarning}</div>
+          <div
+            className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+            role="status"
+          >
+            <div className="min-w-0">
+              <div className="font-medium">Checklist progress rules could not refresh</div>
+              <div className="mt-1 text-xs">{checklistConfigWarning}</div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => loadWorkOrders(false)}
+              disabled={isRefreshing}
+              className="h-11 w-full shrink-0 border-amber-300 bg-white text-amber-900 touch-manipulation sm:h-8 sm:w-auto"
+            >
+              {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Retry
+            </Button>
           </div>
         )}
 
         {boardError && (
-          <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 flex items-center justify-between gap-3">
-            <div>
+          <div
+            className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+            role="alert"
+          >
+            <div className="min-w-0">
               <div className="font-medium">SIPs refresh issue</div>
               <div className="mt-1 text-xs">{boardError}</div>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={() => loadWorkOrders(false)} className="shrink-0 border-amber-300 bg-white text-amber-900">Retry</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => loadWorkOrders(false)}
+              disabled={isRefreshing}
+              className="h-11 w-full shrink-0 border-amber-300 bg-white text-amber-900 touch-manipulation sm:h-8 sm:w-auto"
+            >
+              {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Retry
+            </Button>
           </div>
         )}
 
         {quickEditError && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-center justify-between gap-3">
-            <div>
+          <div
+            className="mb-4 flex flex-col gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between"
+            role="alert"
+          >
+            <div className="min-w-0">
               <div className="font-medium">SIPs Work Order update blocked</div>
               <div className="mt-1 text-xs">{quickEditError}</div>
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={async () => { setQuickEditError(""); await loadWorkOrders(false); }} className="shrink-0 border-red-300 bg-white text-red-800">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={async () => { setQuickEditError(""); await loadWorkOrders(false); }}
+              disabled={isRefreshing}
+              className="h-11 w-full shrink-0 border-red-300 bg-white text-red-800 touch-manipulation sm:h-8 sm:w-auto"
+            >
+              {isRefreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Reload latest
             </Button>
           </div>
