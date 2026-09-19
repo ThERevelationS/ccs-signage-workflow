@@ -1911,6 +1911,13 @@ Deno.serve(async (req) => {
       if (currentBreakStatus === 'on_break') {
         const activeBreak = state.active_break_id ? await breakEntity.get(state.active_break_id).catch(() => null) : null;
         if (activeBreak?.id && activeBreak.status === 'active' && activeBreak.time_entry_id === entry.id && asEmail(activeBreak.user_email) === target.email) {
+          if (String(activeBreak.start_request_id || '') !== requestId) {
+            return Response.json({ success: false, error: 'A break is already active. End the current break before starting another.' }, { status: 409 });
+          }
+          if (activeBreak.break_type !== breakType || activeBreak.is_paid !== isPaid) {
+            return Response.json({ success: false, error: 'This break-start request id is already bound to different break details.' }, { status: 409 });
+          }
+          await ensureBreakAudit({ auditEntity, action: 'break_start', breakRow: activeBreak, target, actor, requestId, entryId: entry.id });
           const summary = await breakSummaryForEntry(breakEntity, entry.id, target.email);
           return Response.json({ success: true, status: 'already_on_break', break_status: 'on_break', break: activeBreak, break_summary: summary, entry, user: publicEmployee(target), reused: true });
         }
