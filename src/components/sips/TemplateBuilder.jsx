@@ -1332,9 +1332,33 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 ) : (
                                   <>
                                     <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{st.name}</div><div className="text-xs text-gray-500">{subTemplateItems[st.id]?.items?.length || 0} items</div></div>
-                                    <button onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingSubTemplateId(st.id); setEditingSubTemplateName(st.name); }} className="p-0.5"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); deleteSubTemplate(st); }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-blue-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-7 lg:w-7"
+                                      title={`Duplicate ${st.name}`}
+                                      aria-label={`Duplicate checklist option ${st.name}`}
+                                    >
+                                      <Copy className="w-4 h-4 text-blue-500 mx-auto" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setEditingSubTemplateId(st.id); setEditingSubTemplateName(st.name); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
+                                      title={`Rename ${st.name}`}
+                                      aria-label={`Rename checklist option ${st.name}`}
+                                    >
+                                      <Pencil className="w-4 h-4 text-gray-500 mx-auto" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); deleteSubTemplate(st); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-7 lg:w-7"
+                                      title={`Delete ${st.name}`}
+                                      aria-label={`Delete checklist option ${st.name}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500 mx-auto" aria-hidden="true" />
+                                    </button>
                                   </>
                                 )}
                               </div>
@@ -1547,9 +1571,33 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 ) : (
                                   <>
                                     <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
-                                    <button onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }} className="p-0.5"><Copy className="w-3 h-3 text-blue-500" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingProductTypeName(type); setEditingProductTypeValue(type); }} className="p-0.5"><Pencil className="w-3 h-3 text-gray-400" /></button>
-                                    <button onClick={(e) => { e.stopPropagation(); requestDeleteProductType(type, index); }} className="p-0.5"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-blue-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-7 lg:w-7"
+                                      title={`Duplicate ${type}`}
+                                      aria-label={`Duplicate product checklist ${type}`}
+                                    >
+                                      <Copy className="w-4 h-4 text-blue-500 mx-auto" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setEditingProductTypeName(type); setEditingProductTypeValue(type); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
+                                      title={`Rename ${type}`}
+                                      aria-label={`Rename product checklist ${type}`}
+                                    >
+                                      <Pencil className="w-4 h-4 text-gray-500 mx-auto" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); requestDeleteProductType(type, index); }}
+                                      className="h-11 w-11 shrink-0 rounded hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-7 lg:w-7"
+                                      title={`Delete ${type}`}
+                                      aria-label={`Delete product checklist ${type}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500 mx-auto" aria-hidden="true" />
+                                    </button>
                                   </>
                                 )}
                               </div>
