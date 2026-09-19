@@ -1,0 +1,98 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
+
+function normalizeEmail(value: unknown) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function cleanUsername(value: unknown) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function jsonSize(value: unknown) {
+  try {
+    return new TextEncoder().encode(JSON.stringify(value)).length;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+async function loadExactOwnRecord(AuthorizedEmail: any, email: string) {
+  const rows = await AuthorizedEmail.filter({ email });
+  if (!Array.isArray(rows)) throw new Error('User profile lookup did not return a record list.');
+  const exact = rows.filter((row: any) => normalizeEmail(row?.email) === email);
+  if (exact.length !== 1) {
+    throw Object.assign(
+      new Error(exact.length === 0 ? 'Your authorized user profile was not found.' : 'Your authorized user profile is ambiguous.'),
+      { status: exact.length === 0 ? 404 : 409 },
+    );
+  }
+  return exact[0];
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    const actor = await authenticateSignShopSession(base44, body?.session_token);
+    const actorEmail = normalizeEmail(actor?.email);
+    if (!actorEmail) return Response.json({ error: 'Authenticated user email is required.' }, { status: 401 });
+
+    const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
+    const user = await loadExactOwnRecord(AuthorizedEmail, actorEmail);
+    const action = String(body?.action || '').trim();
+
+    if (action === 'update_username') {
+      const username = cleanUsername(body?.username);
+      if (!/^[a-z0-9]{3,}$/.test(username)) {
+        return Response.json({ error: 'Username must be at least 3 letters/numbers with no spaces.' }, { status: 400 });
+      }
+
+      const matches = await AuthorizedEmail.filter({ username });
+      if (!Array.isArray(matches)) throw new Error('Username uniqueness could not be verified.');
+      if (matches.some((row: any) => row?.id !== user.id && cleanUsername(row?.username) === username)) {
+        return Response.json({ error: 'This username is already taken.' }, { status: 409 });
+      }
+
+      const expectedUsername = body?.expected_username === undefined ? user.username : cleanUsername(body.expected_username);
+      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+        entity: AuthorizedEmail,
+        user,
+        nextFields: { username },
+        guardFields: { email: user.email, username: expectedUsername },
+        label: `Username for ${actorEmail}`,
+      });
+      return Response.json({ success: true, record: saved });
+    }
+
+    if (action === 'update_hr') {
+      const hrData = body?.hr_data;
+      if (!hrData || typeof hrData !== 'object' || Array.isArray(hrData)) {
+        return Response.json({ error: 'HR data must be an object.' }, { status: 400 });
+      }
+      if (jsonSize(hrData) > 100_000) {
+        return Response.json({ error: 'HR data exceeds the allowed size.' }, { status: 400 });
+      }
+
+      const expectedHrData = body?.expected_hr_data === undefined ? user.hr_data : body.expected_hr_data;
+      const saved = await replaceAuthorizedEmailCredentialFieldsIfUnchanged({
+        entity: AuthorizedEmail,
+        user,
+        nextFields: { hr_data: hrData },
+        guardFields: { email: user.email, hr_data: expectedHrData },
+        label: `HR profile for ${actorEmail}`,
+      });
+      return Response.json({ success: true, record: saved });
+    }
+
+    return Response.json({ error: 'Invalid profile action.' }, { status: 400 });
+  } catch (error) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [400, 401, 403, 404, 409, 503].includes(status) ? status : 500;
+    console.error('manageOwnProfile error:', error?.message || error);
+    return Response.json({
+      error: safeStatus === 500 ? 'Your profile could not be saved safely.' : error?.message,
+    }, { status: safeStatus });
+  }
+});
