@@ -69,6 +69,7 @@ export function getPermitLineHandoffReadiness(line) {
   const reviews = [];
   const label = lineLabel(line);
   const closeoutStatus = normalizedCloseoutStatus(line);
+  const closeoutDate = asDateKey(line?.closeout_date);
   const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
   const feeAmount = line?.jurisdiction_fee_amount;
   const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
@@ -116,6 +117,9 @@ export function getPermitLineHandoffReadiness(line) {
     blockers.push(`${label} still has active corrections recorded.`);
   }
 
+  if (closeoutStatus === "closed_out" && !closeoutDate) {
+    reviews.push(`${label} is marked closed out but has no closeout date.`);
+  }
   if (closeoutStatus === "closed_out" && line?.status !== "completed") {
     reviews.push(`${label} is marked closed out but the permit workflow line is not marked complete.`);
   }
