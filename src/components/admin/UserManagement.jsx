@@ -51,11 +51,12 @@ import FaceEnrollmentDialog from "@/components/timeclock/FaceEnrollmentDialog";
 import UserHRDataForm from "@/components/user/UserHRDataForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  createAuthorizedEmailIfAbsent,
-  deleteAuthorizedEmailIfUnchanged,
-  updateAuthorizedEmailIfUnchanged,
-} from "@/components/admin/authorizedEmailPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+  createAuthorizedUserAdmin,
+  deleteAuthorizedUserAdmin,
+  listAuthorizedUsersAdmin,
+  updateAuthorizedUserAdmin,
+  updateAuthorizedUserHrAdmin,
+} from "@/components/admin/authorizedUserAdminPersistence";
 
 export default function UserManagement() {
   const { sessionToken } = useAuth();
@@ -90,21 +91,23 @@ export default function UserManagement() {
   const [userMutationSaving, setUserMutationSaving] = useState(false);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (sessionToken) loadUsers();
+    else {
+      setUsers([]);
+      setIsLoading(false);
+    }
+  }, [sessionToken]);
 
   const loadUsers = async () => {
+    if (!sessionToken) return;
     setIsLoading(true);
     try {
-      const allUsers = await loadAllEntityRows({
-        entity: base44.entities.AuthorizedEmail,
-        sort: null,
-        label: "User Management authorized users",
-      });
+      const allUsers = await listAuthorizedUsersAdmin({ sessionToken });
       setUsers(allUsers);
     } catch (error) {
       console.error("Error loading users:", error);
       setUsers([]);
+      setUserMutationError(error?.message || "Authorized users could not be loaded safely.");
     }
     setIsLoading(false);
   };
