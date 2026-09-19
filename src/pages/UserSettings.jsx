@@ -409,7 +409,7 @@ export default function UserSettings() {
         </div>
 
         {/* Delete Account */}
-        <DeleteAccountSection userData={userData} />
+        <DeleteAccountSection userData={userData} sessionToken={sessionToken} />
       </div>
     </div>
     </PullToRefresh>
