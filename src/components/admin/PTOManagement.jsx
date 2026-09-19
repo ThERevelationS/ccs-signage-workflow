@@ -344,9 +344,9 @@ export default function PTOManagement({ adminCapability }) {
       };
       
       await assignPTOBalanceIfUnchanged({
-        entity: UserPTOBalance,
         existingBalance,
         data: balanceData,
+        adminCapability,
         label: `PTO balance for ${user?.full_name || userEmail}`,
       });
       
