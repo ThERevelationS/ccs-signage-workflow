@@ -104,11 +104,13 @@ export default function EstimatorCustomers() {
   const rows = customers
     .filter((c) => (linkedCustomerId ? c.id === linkedCustomerId : status ? (c.customer_status || "prospect") === status : true))
     .filter((c) =>
-      term
-        ? [c.company_name, c.contact_first_name, c.contact_last_name, c.contact_email]
-            .filter(Boolean)
-            .some((v) => String(v).toLowerCase().includes(term))
-        : true
+      linkedCustomerId
+        ? true
+        : term
+          ? [c.company_name, c.contact_first_name, c.contact_last_name, c.contact_email]
+              .filter(Boolean)
+              .some((v) => String(v).toLowerCase().includes(term))
+          : true
     );
 
   return (
