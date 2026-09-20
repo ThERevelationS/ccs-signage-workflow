@@ -76,35 +76,146 @@ function nameMatches(rows: any[], name: string, excludeId = '') {
   return (rows || []).filter((row) => String(row?.id || '') !== excludeId && normalizeName(row?.name) === wanted);
 }
 
-async function createPolicy(Policy: any, data: any) {
-  const cleaned = cleanPolicy(data);
+async function createPolicy(Policy: any, Audit: any, body: any, admin: any) {
+  const requestId = String(body?.request_id || '').trim();
+  if (requestId.length < 8 || requestId.length > 128) {
+    throw Object.assign(new Error('A valid PTO policy create request id is required.'), { status: 400 });
+  }
+
+  const cleaned = cleanPolicy(body?.data);
+  const payloadHash = await sha256Hex({ data: cleaned });
+  let audit = await uniqueRow(Audit, { action: 'pto_policy_create', request_id: requestId }, 'PTO policy create audit');
+  if (audit?.id) {
+    const priorHash = String(audit.details?.payload_hash || '');
+    if (priorHash && priorHash !== payloadHash) {
+      throw Object.assign(new Error('This PTO policy create request id is already bound to different settings.'), { status: 409 });
+    }
+    if (audit.outcome === 'blocked') {
+      throw Object.assign(new Error('This PTO policy create request was previously blocked. Reload before trying again.'), { status: 409 });
+    }
+  }
+
   const before = nameMatches(await listPolicies(Policy), cleaned.name);
   if (before.length > 1) {
+    if (audit?.id && audit.outcome === 'pending') {
+      await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+    }
     throw Object.assign(new Error(`PTO policy name “${cleaned.name}” already has duplicate records.`), { status: 409 });
   }
   if (before.length === 1) {
-    if (!fieldsMatch(before[0], cleaned)) {
+    const existing = before[0];
+    if (!fieldsMatch(existing, cleaned)) {
+      if (audit?.id && audit.outcome === 'pending') {
+        await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+      }
       throw Object.assign(new Error(`PTO policy named “${cleaned.name}” already exists with different settings.`), { status: 409 });
     }
-    return { record: before[0], status: 'existing' };
+
+    if (!audit?.id) {
+      audit = await Audit.create({
+        action: 'pto_policy_create',
+        outcome: 'reused',
+        user_email: String(admin?.email || '').trim().toLowerCase(),
+        user_name: admin?.full_name || admin?.email || 'Admin',
+        actor_email: String(admin?.email || '').trim().toLowerCase(),
+        actor_role: 'admin',
+        authentication_method: 'admin_kiosk',
+        server_timestamp: new Date().toISOString(),
+        request_id: requestId,
+        details: { payload_hash: payloadHash, desired_policy: cleaned, policy_id: existing.id, reused_existing: true },
+      });
+      const auditRows = await Audit.filter({ action: 'pto_policy_create', request_id: requestId });
+      if (!Array.isArray(auditRows) || auditRows.length !== 1 || auditRows[0]?.id !== audit.id) {
+        throw Object.assign(new Error('PTO policy create audit could not be verified uniquely. Admin investigation is required.'), { status: 409 });
+      }
+    } else if (audit.outcome === 'pending') {
+      const finalized = await Audit.updateMany(
+        { id: audit.id, outcome: 'pending', request_id: requestId },
+        { $set: {
+          outcome: 'recovered',
+          server_timestamp: new Date().toISOString(),
+          details: { ...(audit.details || {}), payload_hash: payloadHash, desired_policy: cleaned, policy_id: existing.id, recovered_after_policy_create: true },
+        } },
+      );
+      if (!finalized || finalized.updated !== 1) {
+        const fresh = await Audit.get(audit.id).catch(() => null);
+        if (!fresh || !['confirmed', 'recovered', 'reused'].includes(String(fresh.outcome || ''))) {
+          throw Object.assign(new Error('The PTO policy exists but its create audit is still being finalized. Retry the same create request.'), { status: 409, retry_same_request: true });
+        }
+        audit = fresh;
+      }
+    } else if (!['confirmed', 'recovered', 'reused'].includes(String(audit.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy create audit is not in a recoverable state.'), { status: 409 });
+    }
+
+    return { record: existing, status: audit?.outcome === 'reused' ? 'existing' : 'recovered', audit_id: audit?.id || null };
+  }
+
+  if (audit?.id && ['confirmed', 'recovered', 'reused'].includes(String(audit.outcome || ''))) {
+    throw Object.assign(new Error('This PTO policy create audit is complete but the policy no longer exists. Admin investigation is required.'), { status: 409 });
+  }
+
+  if (!audit?.id) {
+    audit = await Audit.create({
+      action: 'pto_policy_create',
+      outcome: 'pending',
+      user_email: String(admin?.email || '').trim().toLowerCase(),
+      user_name: admin?.full_name || admin?.email || 'Admin',
+      actor_email: String(admin?.email || '').trim().toLowerCase(),
+      actor_role: 'admin',
+      authentication_method: 'admin_kiosk',
+      server_timestamp: new Date().toISOString(),
+      request_id: requestId,
+      details: { payload_hash: payloadHash, desired_policy: cleaned },
+    });
+    if (!audit?.id) throw new Error('PTO policy create audit intent could not be persisted.');
+
+    const auditRows = await Audit.filter({ action: 'pto_policy_create', request_id: requestId });
+    if (!Array.isArray(auditRows) || auditRows.length !== 1 || auditRows[0]?.id !== audit.id) {
+      throw Object.assign(new Error('PTO policy create request is ambiguous. No policy was created; admin investigation is required.'), { status: 409 });
+    }
   }
 
   let created: any = null;
   let createError: any = null;
   try { created = await Policy.create(cleaned); } catch (error) { createError = error; }
   await new Promise((resolve) => setTimeout(resolve, 40));
+
   const after = nameMatches(await listPolicies(Policy), cleaned.name);
-  if (after.length === 1) {
-    if (!fieldsMatch(after[0], cleaned)) {
-      throw Object.assign(new Error('PTO policy was created concurrently with different settings.'), { status: 409 });
-    }
-    return { record: after[0], status: created?.id === after[0].id ? 'created' : 'verified_existing' };
-  }
   if (after.length > 1) {
-    throw Object.assign(new Error('PTO policy was created concurrently more than once. Reload and review duplicates.'), { status: 409 });
+    await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+    throw Object.assign(new Error('PTO policy was created concurrently more than once. No duplicate was deleted automatically; reload and review duplicates.'), { status: 409 });
   }
-  if (createError) throw createError;
-  throw new Error('PTO policy create outcome could not be verified.');
+  if (after.length === 0) {
+    if (createError) {
+      await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+      throw createError;
+    }
+    throw Object.assign(new Error('PTO policy create outcome could not be verified. Retry the same request.'), { status: 409, retry_same_request: true });
+  }
+
+  const saved = after[0];
+  if (!fieldsMatch(saved, cleaned)) {
+    await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+    throw Object.assign(new Error('PTO policy was created concurrently with different settings.'), { status: 409 });
+  }
+
+  const finalized = await Audit.updateMany(
+    { id: audit.id, outcome: 'pending', request_id: requestId },
+    { $set: {
+      outcome: 'confirmed',
+      server_timestamp: new Date().toISOString(),
+      details: { ...(audit.details || {}), payload_hash: payloadHash, desired_policy: cleaned, policy_id: saved.id, created: true },
+    } },
+  );
+  if (!finalized || finalized.updated !== 1) {
+    const fresh = await Audit.get(audit.id).catch(() => null);
+    if (!fresh || !['confirmed', 'recovered', 'reused'].includes(String(fresh.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy was created but audit finalization was interrupted. Retry the same create request.'), { status: 409, retry_same_request: true });
+    }
+  }
+
+  return { record: saved, status: created?.id === saved.id ? 'created' : 'recovered', audit_id: audit.id };
 }
 
 async function updatePolicy(Policy: any, Audit: any, body: any, admin: any) {
@@ -509,7 +620,7 @@ Deno.serve(async (req) => {
     const Authorized = base44.asServiceRole.entities.AuthorizedEmail;
     const Audit = base44.asServiceRole.entities.TimeClockAudit;
 
-    if (action === 'create') return Response.json(await createPolicy(Policy, body?.data));
+    if (action === 'create') return Response.json(await createPolicy(Policy, Audit, body, admin));
     if (action === 'update') return Response.json(await updatePolicy(Policy, Audit, body, admin));
     if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, Audit, body, admin));
     if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body, admin));
