@@ -142,7 +142,7 @@ function DateField({ label, value, disabled, onCommit, today = "", showTodayShor
 
 export default function PermitLineLifecycleDetails({ lineItem, onUpdateField, isRegistered, today }) {
   const lifecycleSummary = useMemo(() => getPermitLineLifecycleSummary(lineItem), [lineItem]);
-  const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem), [lineItem]);
+  const handoffReadiness = useMemo(() => getPermitLineHandoffReadiness(lineItem, today), [lineItem, today]);
   const correctionStatus = String(lineItem?.correction_status || "").toLowerCase();
   const hasActiveCorrections = ["corrections_received", "working_corrections"].includes(correctionStatus);
   const storedCompletionNeedsRepair = lineItem?.status === "completed" && !isPermitLineEffectivelyComplete(lineItem);
