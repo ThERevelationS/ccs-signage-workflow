@@ -69,6 +69,7 @@ export function getPermitLineHandoffReadiness(line) {
   const reviews = [];
   const label = lineLabel(line);
   const closeoutStatus = normalizedCloseoutStatus(line);
+  const inspectionDate = asDateKey(line?.inspection_date);
   const closeoutDate = asDateKey(line?.closeout_date);
   const feeStatus = String(line?.jurisdiction_fee_status || "").trim().toLowerCase();
   const feeAmount = line?.jurisdiction_fee_amount;
@@ -151,8 +152,27 @@ export function getPermitLineHandoffReadiness(line) {
     reviews.push(`${label} has a resubmitted date before its corrections received date.`);
   }
 
+  if (closeoutStatus && !receivedDate) {
+    reviews.push(`${label} has inspection/closeout tracking but no permit received date.`);
+  }
+  if (["inspection_scheduled", "inspection_failed", "inspection_passed"].includes(closeoutStatus) && !inspectionDate) {
+    reviews.push(`${label} has an inspection state but no inspection date.`);
+  }
+  if (receivedDate && inspectionDate && inspectionDate < receivedDate) {
+    reviews.push(`${label} has an inspection date before its permit received date.`);
+  }
   if (closeoutStatus === "closed_out" && !closeoutDate) {
     reviews.push(`${label} is marked closed out but has no closeout date.`);
+  }
+  if (closeoutDate && closeoutStatus !== "closed_out") {
+    const statusLabel = closeoutStatus || "not recorded";
+    reviews.push(`${label} has a closeout date but closeout status is ${statusLabel}.`);
+  }
+  if (inspectionDate && closeoutDate && closeoutDate < inspectionDate) {
+    reviews.push(`${label} has a closeout date before its inspection date.`);
+  }
+  if (receivedDate && closeoutDate && closeoutDate < receivedDate) {
+    reviews.push(`${label} has a closeout date before its permit received date.`);
   }
   if (closeoutStatus === "closed_out" && line?.status !== "completed") {
     reviews.push(`${label} is marked closed out but the permit workflow line is not marked complete.`);
