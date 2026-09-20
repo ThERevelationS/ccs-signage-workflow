@@ -54,7 +54,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
   deleteAuthorizedUserAdmin,
+  listAccountDeletionRequestsAdmin,
   listAuthorizedUsersAdmin,
+  resolveAccountDeletionRequestAdmin,
   updateAuthorizedUserAdmin,
   updateAuthorizedUserHrAdmin,
 } from "@/components/admin/authorizedUserAdminPersistence";
