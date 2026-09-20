@@ -64,10 +64,11 @@ function normalizedCloseoutStatus(line) {
   return String(line?.closeout_status || "").trim().toLowerCase();
 }
 
-export function getPermitLineHandoffReadiness(line) {
+export function getPermitLineHandoffReadiness(line, today = "") {
   const blockers = [];
   const reviews = [];
   const label = lineLabel(line);
+  const todayKey = asDateKey(today);
   const closeoutStatus = normalizedCloseoutStatus(line);
   const inspectionDate = asDateKey(line?.inspection_date);
   const closeoutDate = asDateKey(line?.closeout_date);
@@ -102,6 +103,18 @@ export function getPermitLineHandoffReadiness(line) {
   const latestLifecycleDate = [approvalDate, receivedDate].filter(Boolean).sort().pop() || "";
   if (expirationDate && latestLifecycleDate && expirationDate < latestLifecycleDate) {
     reviews.push(`${label} has an expiration date before its recorded approval/permit received date.`);
+  }
+  if (expirationDate && todayKey) {
+    if (expirationDate < todayKey) {
+      reviews.push(`${label} expired on ${formatDateKey(expirationDate)}.`);
+    } else if (expirationDate === todayKey) {
+      reviews.push(`${label} expires today (${formatDateKey(expirationDate)}).`);
+    } else {
+      const daysUntilExpiration = daysBetween(todayKey, expirationDate);
+      if (daysUntilExpiration !== null && daysUntilExpiration <= 30) {
+        reviews.push(`${label} expires in ${pluralDays(daysUntilExpiration)} (${formatDateKey(expirationDate)}).`);
+      }
+    }
   }
 
   if (OUTSTANDING_CLOSEOUT_STATUSES.has(closeoutStatus)) {
@@ -232,7 +245,7 @@ const PERMIT_LIFECYCLE_PROGRESS_ORDER = [
   "closed_out",
 ];
 
-export function getPermitGroupProgress(group) {
+export function getPermitGroupProgress(group, today = "") {
   const lines = Array.isArray(group?.lines) ? group.lines : [];
   const stagesByKey = new Map();
   let completedCount = 0;
@@ -249,7 +262,7 @@ export function getPermitGroupProgress(group) {
     if (current) current.count += 1;
     else stagesByKey.set(lifecycle.key, { ...lifecycle, count: 1 });
 
-    const handoff = getPermitLineHandoffReadiness(line);
+    const handoff = getPermitLineHandoffReadiness(line, today);
     if (handoff.applicable) {
       handoffApplicableCount += 1;
       if (handoff.isReady) handoffReadyCount += 1;
