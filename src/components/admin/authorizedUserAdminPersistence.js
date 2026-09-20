@@ -37,6 +37,22 @@ export async function listAccountDeletionRequestsAdmin({ sessionToken } = {}) {
   return result.deletion_requests;
 }
 
+export async function getAccountDeletionImpactAdmin({ request, sessionToken } = {}) {
+  if (!request?.id) {
+    throw new Error("Deletion request is not loaded. Reload before reviewing its impact.");
+  }
+
+  const result = await invokeAdminUsers({
+    action: "deletion_impact",
+    request_id: request.id,
+    session_token: requireSessionToken(sessionToken),
+  });
+  if (!result?.success || !result?.impact?.read_only) {
+    throw new Error("Account deletion impact could not be verified safely.");
+  }
+  return result.impact;
+}
+
 export async function resolveAccountDeletionRequestAdmin({
   request,
   resolution,
