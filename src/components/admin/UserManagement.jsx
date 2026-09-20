@@ -472,6 +472,107 @@ export default function UserManagement() {
         )}
       </div>
 
+      {/* Account Deletion Requests */}
+      <div className="clay-card p-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-red-50">
+              <ShieldAlert className="w-5 h-5 text-red-700" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-800">Account Deletion Requests</h4>
+              <p className="text-sm text-gray-500">
+                {deletionRequests.filter((request) => request.status === "pending").length} pending review
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={loadDeletionRequests}
+            disabled={deletionRequestsLoading || deletionRequestSaving}
+          >
+            {deletionRequestsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
+          </Button>
+        </div>
+
+        <p className="text-xs text-gray-500 mb-3">
+          Reviewing or cancelling a request only records the admin decision. It does not remove the authorized account or delete company data.
+        </p>
+
+        {deletionRequestsLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        ) : deletionRequests.length === 0 ? (
+          <div className="rounded-lg border border-gray-200 bg-white/50 p-4 text-sm text-gray-500">
+            No account deletion requests have been submitted.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {deletionRequests.map((request) => {
+              const pending = request.status === "pending";
+              const statusLabel = request.status === "processed"
+                ? "Reviewed — no deletion performed"
+                : request.status === "cancelled"
+                  ? "Cancelled"
+                  : "Pending";
+              const statusClass = pending
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : request.status === "cancelled"
+                  ? "border-gray-200 bg-gray-50 text-gray-700"
+                  : "border-blue-200 bg-blue-50 text-blue-800";
+
+              return (
+                <div
+                  key={request.id}
+                  className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white/60 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-gray-800">
+                        {request.user_name || request.user_email || "Unknown user"}
+                      </span>
+                      <Badge variant="outline" className={statusClass}>{statusLabel}</Badge>
+                    </div>
+                    <div className="text-sm text-gray-500">{request.user_email}</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Requested {formatDeletionRequestDate(request.requested_at)}
+                      {!pending && request.processed_by ? " • Resolved by " + request.processed_by : ""}
+                    </div>
+                  </div>
+
+                  {pending && (
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={deletionRequestSaving}
+                        onClick={() => setDeletionRequestConfirm({ request, resolution: "processed" })}
+                      >
+                        Mark Reviewed
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                        disabled={deletionRequestSaving}
+                        onClick={() => setDeletionRequestConfirm({ request, resolution: "cancelled" })}
+                      >
+                        Cancel Request
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Users List */}
       <div className="clay-card p-4">
         <div className="flex items-center justify-between mb-4">
