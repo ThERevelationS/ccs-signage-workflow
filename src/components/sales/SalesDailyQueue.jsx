@@ -116,9 +116,9 @@ export default function SalesDailyQueue({
               <div className="mt-1 text-[11px] font-medium text-slate-400">{total} item{total === 1 ? "" : "s"} need attention in this owner view.</div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <button type="button" onClick={() => setOwnerScope("all")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "all" ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>All</button>
-              {currentSalesOwnerLabel && <button type="button" onClick={() => setOwnerScope("mine")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "mine" ? "border-blue-600 bg-blue-600 text-white" : "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"}`}>Mine</button>}
-              <button type="button" onClick={() => setOwnerScope("unassigned")} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ownerScope === "unassigned" ? "border-amber-600 bg-amber-600 text-white" : "border-amber-200 bg-white text-amber-700 hover:bg-amber-50"}`}>Unassigned</button>
+              <button type="button" onClick={() => setOwnerScope("all")} className={`h-11 rounded-full border px-3 text-xs font-semibold sm:h-8 ${ownerScope === "all" ? "border-slate-700 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>All</button>
+              {currentSalesOwnerLabel && <button type="button" onClick={() => setOwnerScope("mine")} className={`h-11 rounded-full border px-3 text-xs font-semibold sm:h-8 ${ownerScope === "mine" ? "border-blue-600 bg-blue-600 text-white" : "border-blue-200 bg-white text-blue-700 hover:bg-blue-50"}`}>Mine</button>}
+              <button type="button" onClick={() => setOwnerScope("unassigned")} className={`h-11 rounded-full border px-3 text-xs font-semibold sm:h-8 ${ownerScope === "unassigned" ? "border-amber-600 bg-amber-600 text-white" : "border-amber-200 bg-white text-amber-700 hover:bg-amber-50"}`}>Unassigned</button>
             </div>
           </div>
         </section>
@@ -160,7 +160,7 @@ export default function SalesDailyQueue({
                           </div>
                           {(workOrder.title || workOrder.description) && <div className="mt-0.5 line-clamp-1 text-xs text-gray-500">{workOrder.title || workOrder.description}</div>}
                         </button>
-                        <button type="button" onClick={() => onOpenDetails?.(workOrder)} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50" title="Open opportunity"><ChevronRight className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => onOpenDetails?.(workOrder)} className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 sm:h-8 sm:w-8" title="Open opportunity" aria-label={`Open ${workOrder.client_name || "opportunity"} details`}><ChevronRight className="h-4 w-4" /></button>
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600">
@@ -206,10 +206,10 @@ export default function SalesDailyQueue({
                                 value={workOrder.date_estimate_sent || ""}
                                 onChange={(event) => setQuoteSentDate(workOrder, event.target.value)}
                                 aria-label={`Actual quote sent date for ${workOrder.client_name || "opportunity"}`}
-                                className="mt-1 h-9 w-full rounded-md border border-amber-200 bg-white px-2 text-sm text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                                className="mt-1 h-11 w-full rounded-md border border-amber-200 bg-white px-2 text-sm text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 sm:h-9"
                               />
                             </label>
-                            <button type="button" onClick={() => setQuoteSentDate(workOrder, todayStamp)} className="h-9 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-800 hover:bg-amber-100">Today</button>
+                            <button type="button" onClick={() => setQuoteSentDate(workOrder, todayStamp)} className="h-11 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-800 hover:bg-amber-100 sm:h-9">Today</button>
                           </div>
                           <p className={`mt-1.5 text-[11px] ${quoteDateErrors[workOrder.id] ? "font-medium text-red-600" : "text-amber-700"}`}>
                             {quoteDateErrors[workOrder.id] || "Enter the real sent date only. Sales Pipeline will not infer it from record activity."}
