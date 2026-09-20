@@ -466,6 +466,12 @@ Deno.serve(async (req) => {
       return Response.json({ deletion_requests: rows.map(adminDeletionRequestView) });
     }
 
+    if (action === 'deletion_impact') {
+      const Request = base44.asServiceRole.entities.AccountDeletionRequest;
+      const impact = await deletionImpactReport(base44, Request, String(body?.request_id || '').trim());
+      return Response.json({ success: true, impact });
+    }
+
     if (action === 'resolve_deletion_request') {
       const Request = base44.asServiceRole.entities.AccountDeletionRequest;
       const result = await resolveDeletionRequest(Request, actor, body);
