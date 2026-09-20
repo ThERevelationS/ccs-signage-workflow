@@ -576,29 +576,40 @@ export default function UserManagement() {
                     </div>
                   </div>
 
-                  {pending && (
-                    <div className="flex flex-wrap gap-2 shrink-0">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={deletionRequestSaving}
-                        onClick={() => setDeletionRequestConfirm({ request, resolution: "processed" })}
-                      >
-                        Mark Reviewed
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="border-red-200 text-red-700 hover:bg-red-50"
-                        disabled={deletionRequestSaving}
-                        onClick={() => setDeletionRequestConfirm({ request, resolution: "cancelled" })}
-                      >
-                        Cancel Request
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={deletionImpactLoading || deletionRequestSaving}
+                      onClick={() => handleLoadDeletionImpact(request)}
+                    >
+                      Review Impact
+                    </Button>
+                    {pending && (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={deletionRequestSaving}
+                          onClick={() => setDeletionRequestConfirm({ request, resolution: "processed" })}
+                        >
+                          Mark Reviewed
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-red-200 text-red-700 hover:bg-red-50"
+                          disabled={deletionRequestSaving}
+                          onClick={() => setDeletionRequestConfirm({ request, resolution: "cancelled" })}
+                        >
+                          Cancel Request
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             })}
