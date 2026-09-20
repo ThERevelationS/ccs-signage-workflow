@@ -92,12 +92,20 @@ export default function UserManagement() {
   const [faceEnrollUser, setFaceEnrollUser] = useState(null);
   const [userMutationError, setUserMutationError] = useState("");
   const [userMutationSaving, setUserMutationSaving] = useState(false);
+  const [deletionRequests, setDeletionRequests] = useState([]);
+  const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
+  const [deletionRequestConfirm, setDeletionRequestConfirm] = useState(null);
+  const [deletionRequestSaving, setDeletionRequestSaving] = useState(false);
 
   useEffect(() => {
-    if (sessionToken) loadUsers();
-    else {
+    if (sessionToken) {
+      loadUsers();
+      loadDeletionRequests();
+    } else {
       setUsers([]);
+      setDeletionRequests([]);
       setIsLoading(false);
+      setDeletionRequestsLoading(false);
     }
   }, [sessionToken]);
 
