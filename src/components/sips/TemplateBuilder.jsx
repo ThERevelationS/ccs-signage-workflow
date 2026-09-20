@@ -1341,8 +1341,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-4 h-auto lg:h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
-                  <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New sub-template..." className="h-7 text-sm" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
-                  <Button size="sm" className="h-7 px-2" onClick={createSubTemplate}><Plus className="w-3 h-3" /></Button>
+                  <Input value={newSubTemplateName} onChange={(e) => setNewSubTemplateName(e.target.value)} placeholder="New checklist option..." className="h-11 text-sm lg:h-7" onKeyDown={(e) => e.key === 'Enter' && createSubTemplate()} />
+                  <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-2" onClick={createSubTemplate} aria-label="Add checklist option">
+                    <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                  </Button>
                 </div>
                 <DragDropContext onDragEnd={handleSubTemplateDragEnd}>
                   <Droppable droppableId="subtemplates">
@@ -1422,9 +1424,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       )}
                     </div>
                     <div className="flex gap-1 mb-2">
-                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 text-sm flex-1 lg:h-7"
                         onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} />
-                      <Button onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                      <Button type="button" onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add checklist item">
+                        <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                      </Button>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       {renderItemEditor(subTemplateChecklistItems, setSubTemplateChecklistItems, false)}
@@ -1546,8 +1550,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-4 h-auto lg:h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
-                  <Input id="newPT" placeholder="New product type..." className="h-7 text-sm" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
-                  <Button size="sm" className="h-7 px-2" onClick={() => { const input = document.getElementById('newPT'); if (input?.value.trim()) { saveProductTypes([...productTypes, input.value.trim()]); input.value = ""; } }}><Plus className="w-3 h-3" /></Button>
+                  <Input id="newPT" placeholder="New product type..." className="h-11 text-sm lg:h-7" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
+                  <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-2" onClick={() => { const input = document.getElementById('newPT'); if (input?.value.trim()) { saveProductTypes([...productTypes, input.value.trim()]); input.value = ""; } }} aria-label="Add product type">
+                    <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                  </Button>
                 </div>
                 <DragDropContext onDragEnd={handleProductTypeDragEnd}>
                   <Droppable droppableId="producttypes">
@@ -1661,9 +1667,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       )}
                     </div>
                     <div className="flex gap-1 mb-2">
-                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-7 text-sm flex-1"
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 text-sm flex-1 lg:h-7"
                         onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems, true)} />
-                      <Button onClick={() => addChecklistItem(productTypeItems, setProductTypeItems, true)} size="sm" variant="outline" className="h-7"><Plus className="w-3 h-3" /></Button>
+                      <Button type="button" onClick={() => addChecklistItem(productTypeItems, setProductTypeItems, true)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add product checklist item">
+                        <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
+                      </Button>
                     </div>
                     {renderItemEditor(productTypeItems, setProductTypeItems, true)}
                   </>
