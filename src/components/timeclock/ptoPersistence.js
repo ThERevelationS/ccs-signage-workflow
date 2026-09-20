@@ -187,6 +187,32 @@ function clearPTOPolicyDelete(policyId) {
   try { sessionStorage.removeItem(ptoPolicyDeleteStorageKey(policyId)); } catch {}
 }
 
+function ptoPolicyUpdateStorageKey(policyId) {
+  return `ccs_pto_policy_update:${String(policyId || "").trim()}`;
+}
+
+function storedPTOPolicyUpdate(policyId) {
+  try {
+    const raw = sessionStorage.getItem(ptoPolicyUpdateStorageKey(policyId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload
+      ? { request_id: requestId, payload: parsed.payload }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistPTOPolicyUpdate(policyId, requestId, payload) {
+  try { sessionStorage.setItem(ptoPolicyUpdateStorageKey(policyId), JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearPTOPolicyUpdate(policyId) {
+  try { sessionStorage.removeItem(ptoPolicyUpdateStorageKey(policyId)); } catch {}
+}
+
 export async function createPTOPolicyIfAbsent({ data, adminCapability, label = "PTO policy" } = {}) {
   const result = await invokePTOConfig({
     action: "create",
@@ -199,15 +225,33 @@ export async function createPTOPolicyIfAbsent({ data, adminCapability, label = "
 
 export async function updatePTOPolicyIfUnchanged({ policy, nextFields, adminCapability, label = "PTO policy" } = {}) {
   if (!policy?.id || !policy?.updated_date) throw new Error(`${label} is no longer loaded. Reload before saving.`);
-  const result = await invokePTOConfig({
+
+  const payload = {
     action: "update",
     id: policy.id,
     expected_updated_date: policy.updated_date,
     next_fields: nextFields,
-    admin_capability: requireAdminCapability(adminCapability, label),
-  });
-  if (!result?.record?.id) throw new Error(`${label} update could not be verified.`);
-  return result.record;
+  };
+  const stored = storedPTOPolicyUpdate(policy.id);
+  if (stored && JSON.stringify(stored.payload) !== JSON.stringify(payload)) {
+    throw new Error(`${label} has an earlier update whose outcome is still uncertain. Retry that preserved update before changing the policy again.`);
+  }
+  const requestId = stored?.request_id || newPTORequestId();
+  persistPTOPolicyUpdate(policy.id, requestId, payload);
+
+  try {
+    const result = await invokePTOConfig({
+      ...payload,
+      request_id: requestId,
+      admin_capability: requireAdminCapability(adminCapability, label),
+    });
+    if (!result?.record?.id) throw new Error(`${label} update could not be verified.`);
+    clearPTOPolicyUpdate(policy.id);
+    return result.record;
+  } catch (error) {
+    if (!shouldRetainPTOAssignment(error)) clearPTOPolicyUpdate(policy.id);
+    throw error;
+  }
 }
 
 export async function deletePTOPolicyIfUnused({ policy, adminCapability, label = "PTO policy" } = {}) {
