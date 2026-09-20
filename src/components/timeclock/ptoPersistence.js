@@ -213,14 +213,53 @@ function clearPTOPolicyUpdate(policyId) {
   try { sessionStorage.removeItem(ptoPolicyUpdateStorageKey(policyId)); } catch {}
 }
 
+const PTO_POLICY_CREATE_STORAGE_KEY = "ccs_pto_policy_create";
+
+function storedPTOPolicyCreate() {
+  try {
+    const raw = sessionStorage.getItem(PTO_POLICY_CREATE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const requestId = String(parsed?.request_id || "");
+    return requestId.length >= 8 && requestId.length <= 128 && parsed?.payload
+      ? { request_id: requestId, payload: parsed.payload }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistPTOPolicyCreate(requestId, payload) {
+  try { sessionStorage.setItem(PTO_POLICY_CREATE_STORAGE_KEY, JSON.stringify({ request_id: requestId, payload })); } catch {}
+}
+
+function clearPTOPolicyCreate() {
+  try { sessionStorage.removeItem(PTO_POLICY_CREATE_STORAGE_KEY); } catch {}
+}
+
 export async function createPTOPolicyIfAbsent({ data, adminCapability, label = "PTO policy" } = {}) {
-  const result = await invokePTOConfig({
-    action: "create",
-    data,
-    admin_capability: requireAdminCapability(adminCapability, label),
-  });
-  if (!result?.record?.id) throw new Error(`${label} create could not be verified.`);
-  return result;
+  const payload = { action: "create", data };
+  const stored = storedPTOPolicyCreate();
+  if (stored && JSON.stringify(stored.payload) !== JSON.stringify(payload)) {
+    throw new Error(`${label} has an earlier create whose outcome is still uncertain. Retry that preserved create before changing the policy settings.`);
+  }
+
+  const requestId = stored?.request_id || newPTORequestId();
+  persistPTOPolicyCreate(requestId, payload);
+
+  try {
+    const result = await invokePTOConfig({
+      ...payload,
+      request_id: requestId,
+      admin_capability: requireAdminCapability(adminCapability, label),
+    });
+    if (!result?.record?.id) throw new Error(`${label} create could not be verified.`);
+    clearPTOPolicyCreate();
+    return result;
+  } catch (error) {
+    if (!shouldRetainPTOAssignment(error)) clearPTOPolicyCreate();
+    throw error;
+  }
 }
 
 export async function updatePTOPolicyIfUnchanged({ policy, nextFields, adminCapability, label = "PTO policy" } = {}) {
