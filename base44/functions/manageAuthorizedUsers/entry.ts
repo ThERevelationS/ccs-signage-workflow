@@ -142,6 +142,80 @@ async function ensureAnotherAdminExists(AuthorizedEmail: any, targetId: string) 
   }
 }
 
+function adminDeletionRequestView(row: any) {
+  return {
+    id: row?.id,
+    authorized_email_id: row?.authorized_email_id,
+    user_email: row?.user_email,
+    user_name: row?.user_name ?? null,
+    status: row?.status || 'pending',
+    requested_at: row?.requested_at ?? null,
+    processed_at: row?.processed_at ?? null,
+    processed_by: row?.processed_by ?? null,
+    admin_notes: row?.admin_notes ?? '',
+    created_date: row?.created_date,
+    updated_date: row?.updated_date,
+  };
+}
+
+async function resolveDeletionRequest(Request: any, actor: any, body: any) {
+  const id = String(body?.request_id || '').trim();
+  const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
+  const resolution = String(body?.resolution || '').trim().toLowerCase();
+  const adminNotes = cleanText(body?.admin_notes, 2000);
+
+  if (!id || !expectedUpdatedDate) {
+    throw Object.assign(new Error('Deletion request version is required.'), { status: 400 });
+  }
+  if (!['processed', 'cancelled'].includes(resolution)) {
+    throw Object.assign(new Error('Deletion request resolution is invalid.'), { status: 400 });
+  }
+
+  const current = await Request.get(id).catch(() => null);
+  if (!current?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+
+  const actorEmail = cleanEmail(actor?.email);
+  if (
+    current.status === resolution &&
+    cleanEmail(current.processed_by) === actorEmail &&
+    String(current.admin_notes || '') === adminNotes
+  ) {
+    return { record: adminDeletionRequestView(current), reused: true };
+  }
+
+  if (String(current.status || '') !== 'pending') {
+    throw Object.assign(new Error('Deletion request was already resolved. Reload before changing it.'), { status: 409 });
+  }
+  if (String(current.updated_date || '') !== expectedUpdatedDate) {
+    throw Object.assign(new Error('Deletion request changed in another session. Reload before resolving it.'), { status: 409 });
+  }
+
+  const patch = {
+    status: resolution,
+    processed_at: new Date().toISOString(),
+    processed_by: actorEmail,
+    admin_notes: adminNotes,
+  };
+  const result = await Request.updateMany(
+    { id, updated_date: expectedUpdatedDate, status: 'pending' },
+    { $set: patch },
+  );
+  if (!result || result.updated !== 1) {
+    throw Object.assign(new Error('Deletion request changed while it was being resolved. Reload before retrying.'), { status: 409 });
+  }
+
+  const saved = await Request.get(id).catch(() => null);
+  if (
+    !saved?.id ||
+    saved.status !== resolution ||
+    cleanEmail(saved.processed_by) !== actorEmail ||
+    String(saved.admin_notes || '') !== adminNotes
+  ) {
+    throw new Error('Deletion request resolution could not be verified.');
+  }
+  return { record: adminDeletionRequestView(saved), reused: false };
+}
+
 async function createUser(AuthorizedEmail: any, input: any) {
   const email = cleanEmail(input?.email);
   if (!email || email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -207,6 +281,22 @@ Deno.serve(async (req) => {
     if (action === 'list') {
       const rows = await loadAllEntityRows({ entity: AuthorizedEmail, sort: 'email', label: 'Authorized user administration' });
       return Response.json({ users: rows.map(adminUserView) });
+    }
+
+    if (action === 'list_deletion_requests') {
+      const Request = base44.asServiceRole.entities.AccountDeletionRequest;
+      const rows = await loadAllEntityRows({
+        entity: Request,
+        sort: '-requested_at',
+        label: 'Account deletion request administration',
+      });
+      return Response.json({ deletion_requests: rows.map(adminDeletionRequestView) });
+    }
+
+    if (action === 'resolve_deletion_request') {
+      const Request = base44.asServiceRole.entities.AccountDeletionRequest;
+      const result = await resolveDeletionRequest(Request, actor, body);
+      return Response.json({ success: true, ...result });
     }
 
     if (action === 'create') {
