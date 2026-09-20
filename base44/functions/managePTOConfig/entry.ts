@@ -107,29 +107,133 @@ async function createPolicy(Policy: any, data: any) {
   throw new Error('PTO policy create outcome could not be verified.');
 }
 
-async function updatePolicy(Policy: any, body: any) {
+async function updatePolicy(Policy: any, Audit: any, body: any, admin: any) {
   const id = String(body?.id || '').trim();
   const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
-  if (!id || !expectedUpdatedDate) {
-    throw Object.assign(new Error('PTO policy version is required.'), { status: 400 });
+  const requestId = String(body?.request_id || '').trim();
+  if (!id || !expectedUpdatedDate || requestId.length < 8 || requestId.length > 128) {
+    throw Object.assign(new Error('PTO policy version and a valid update request id are required.'), { status: 400 });
   }
-  const current = await Policy.get(id).catch(() => null);
+
+  const nextFields = body?.next_fields && typeof body.next_fields === 'object' ? body.next_fields : {};
+  const payloadHash = await sha256Hex({ id, expected_updated_date: expectedUpdatedDate, next_fields: nextFields });
+  let audit = await uniqueRow(Audit, { action: 'pto_policy_update', request_id: requestId }, 'PTO policy update audit');
+  if (audit?.id) {
+    const priorHash = String(audit.details?.payload_hash || '');
+    if (priorHash && priorHash !== payloadHash) {
+      throw Object.assign(new Error('This PTO policy update request id is already bound to different settings.'), { status: 409 });
+    }
+    if (audit.outcome === 'blocked') {
+      throw Object.assign(new Error('This PTO policy update request was previously blocked. Reload before trying again.'), { status: 409 });
+    }
+  }
+
+  let current = await Policy.get(id).catch(() => null);
   if (!current?.id) throw Object.assign(new Error('PTO policy no longer exists.'), { status: 404 });
+
+  let cleaned: any = null;
+  if (audit?.details?.desired_policy) {
+    cleaned = cleanPolicy(audit.details.desired_policy);
+  } else if (String(current.updated_date || '') === expectedUpdatedDate) {
+    cleaned = cleanPolicy({ ...current, ...nextFields });
+  }
+
   if (String(current.updated_date || '') !== expectedUpdatedDate) {
+    if (audit?.id && cleaned && fieldsMatch(current, cleaned)) {
+      if (audit.outcome === 'pending') {
+        const finalized = await Audit.updateMany(
+          { id: audit.id, outcome: 'pending', request_id: requestId },
+          { $set: {
+            outcome: 'recovered',
+            server_timestamp: new Date().toISOString(),
+            details: { ...(audit.details || {}), payload_hash: payloadHash, policy_id: id, recovered_after_policy_save: true },
+          } },
+        );
+        if (!finalized || finalized.updated !== 1) {
+          const fresh = await Audit.get(audit.id).catch(() => null);
+          if (!fresh || !['confirmed', 'recovered'].includes(String(fresh.outcome || ''))) {
+            throw Object.assign(new Error('The PTO policy update was saved but its audit is still being finalized. Retry the same update.'), { status: 409, retry_same_request: true });
+          }
+          audit = fresh;
+        }
+      } else if (!['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+        throw Object.assign(new Error('The PTO policy update audit is not in a recoverable state.'), { status: 409 });
+      }
+      return { record: current, audit_id: audit.id, reused: true };
+    }
+    if (audit?.id && ['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy update audit is complete but the policy no longer matches that update. Reload before continuing.'), { status: 409 });
+    }
     throw Object.assign(new Error('PTO policy changed in another session. Reload before saving.'), { status: 409 });
   }
-  const cleaned = cleanPolicy({ ...current, ...(body?.next_fields || {}) });
+
+  if (audit?.id && ['confirmed', 'recovered'].includes(String(audit.outcome || ''))) {
+    throw Object.assign(new Error('This PTO policy update audit is complete but the policy is still at its previous version. Admin investigation is required.'), { status: 409 });
+  }
+  if (!cleaned) cleaned = cleanPolicy({ ...current, ...nextFields });
+
   const duplicates = nameMatches(await listPolicies(Policy), cleaned.name, id);
   if (duplicates.length) {
+    if (audit?.id && audit.outcome === 'pending') {
+      await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+    }
     throw Object.assign(new Error(`Another PTO policy named “${cleaned.name}” already exists.`), { status: 409 });
   }
+
+  if (!audit?.id) {
+    audit = await Audit.create({
+      action: 'pto_policy_update',
+      outcome: 'pending',
+      user_email: String(admin?.email || '').trim().toLowerCase(),
+      user_name: admin?.full_name || admin?.email || 'Admin',
+      actor_email: String(admin?.email || '').trim().toLowerCase(),
+      actor_role: 'admin',
+      authentication_method: 'admin_kiosk',
+      server_timestamp: new Date().toISOString(),
+      request_id: requestId,
+      details: {
+        payload_hash: payloadHash,
+        policy_id: id,
+        expected_updated_date: expectedUpdatedDate,
+        prior_policy: cleanPolicy(current),
+        desired_policy: cleaned,
+      },
+    });
+  }
+  if (!audit?.id) throw new Error('PTO policy update audit intent could not be persisted.');
+
   const result = await Policy.updateMany({ id, updated_date: expectedUpdatedDate }, { $set: cleaned });
   if (!result || result.updated !== 1) {
-    throw Object.assign(new Error('PTO policy changed in another session. Reload before saving.'), { status: 409 });
+    const freshPolicy = await Policy.get(id).catch(() => null);
+    if (freshPolicy?.id && fieldsMatch(freshPolicy, cleaned)) {
+      current = freshPolicy;
+    } else {
+      await Audit.updateMany({ id: audit.id, outcome: 'pending', request_id: requestId }, { $set: { outcome: 'blocked' } });
+      throw Object.assign(new Error('PTO policy changed in another session. Reload before saving.'), { status: 409 });
+    }
+  } else {
+    current = await Policy.get(id).catch(() => null);
   }
-  const saved = await Policy.get(id).catch(() => null);
-  if (!saved?.id || !fieldsMatch(saved, cleaned)) throw new Error('PTO policy update could not be verified.');
-  return saved;
+  if (!current?.id || !fieldsMatch(current, cleaned)) {
+    throw Object.assign(new Error('The PTO policy update could not be verified after save. Retry the same update.'), { status: 409, retry_same_request: true });
+  }
+
+  const finalized = await Audit.updateMany(
+    { id: audit.id, outcome: 'pending', request_id: requestId },
+    { $set: {
+      outcome: 'confirmed',
+      server_timestamp: new Date().toISOString(),
+      details: { ...(audit.details || {}), payload_hash: payloadHash, policy_id: id, updated: true },
+    } },
+  );
+  if (!finalized || finalized.updated !== 1) {
+    const fresh = await Audit.get(audit.id).catch(() => null);
+    if (!fresh || !['confirmed', 'recovered'].includes(String(fresh.outcome || ''))) {
+      throw Object.assign(new Error('The PTO policy was updated but audit finalization was interrupted. Retry the same update.'), { status: 409, retry_same_request: true });
+    }
+  }
+
+  return { record: current, audit_id: audit.id };
 }
 
 async function assignBalance(Balance: any, Policy: any, Authorized: any, Audit: any, body: any, admin: any) {
@@ -406,7 +510,7 @@ Deno.serve(async (req) => {
     const Audit = base44.asServiceRole.entities.TimeClockAudit;
 
     if (action === 'create') return Response.json(await createPolicy(Policy, body?.data));
-    if (action === 'update') return Response.json({ record: await updatePolicy(Policy, body) });
+    if (action === 'update') return Response.json(await updatePolicy(Policy, Audit, body, admin));
     if (action === 'delete') return Response.json(await deletePolicy(Policy, Balance, Audit, body, admin));
     if (action === 'assign_balance') return Response.json(await assignBalance(Balance, Policy, Authorized, Audit, body, admin));
     return Response.json({ error: 'Invalid PTO configuration action.' }, { status: 400 });
