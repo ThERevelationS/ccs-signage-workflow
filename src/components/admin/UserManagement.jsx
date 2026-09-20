@@ -123,6 +123,50 @@ export default function UserManagement() {
     setIsLoading(false);
   };
 
+  const loadDeletionRequests = async () => {
+    if (!sessionToken) return;
+    setDeletionRequestsLoading(true);
+    try {
+      const requests = await listAccountDeletionRequestsAdmin({ sessionToken });
+      setDeletionRequests(requests);
+    } catch (error) {
+      console.error("Error loading account deletion requests:", error);
+      setDeletionRequests([]);
+      setUserMutationError(error?.message || "Account deletion requests could not be loaded safely.");
+    }
+    setDeletionRequestsLoading(false);
+  };
+
+  const handleResolveDeletionRequest = async () => {
+    const request = deletionRequestConfirm?.request;
+    const resolution = deletionRequestConfirm?.resolution;
+    if (!request?.id || !resolution || deletionRequestSaving) return;
+
+    setDeletionRequestSaving(true);
+    setUserMutationError("");
+    try {
+      await resolveAccountDeletionRequestAdmin({
+        request,
+        resolution,
+        sessionToken,
+      });
+      setDeletionRequestConfirm(null);
+      await loadDeletionRequests();
+    } catch (error) {
+      console.error("Deletion request resolution blocked:", error);
+      setUserMutationError(error?.message || "The deletion request changed in another session. Reload before resolving it.");
+      setDeletionRequestConfirm(null);
+      await loadDeletionRequests();
+    } finally {
+      setDeletionRequestSaving(false);
+    }
+  };
+
+  const formatDeletionRequestDate = (value) => {
+    const date = new Date(value || "");
+    return Number.isNaN(date.getTime()) ? "Unknown date" : date.toLocaleString();
+  };
+
   const openEditUser = (user) => {
     setEditingUser(user);
     setFormData({
