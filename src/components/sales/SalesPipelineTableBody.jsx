@@ -30,7 +30,7 @@ const parseLocalDate = (dateString) => {
   return new Date(year, month - 1, day);
 };
 
-function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered }) {
+function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered, allowClear = true }) {
   const preventsFutureDate = field === "quote_date" || field === "date_estimate_sent" || field === "close_date";
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -49,7 +49,7 @@ function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDate
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        {value && (
+        {value && allowClear && (
           <div className="p-2 border-b">
             <Button size="sm" variant="outline" className="w-full text-xs"
               onClick={() => { setClearDateConfirm({ woId, field }); setOpenDatePopover(null); }}>
@@ -333,7 +333,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("close_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}>
-                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} allowClear={!["won", "lost"].includes(wo.sales_status)} />
                 </td>
               )}
               {isColumnVisible("probability") && (
