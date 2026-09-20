@@ -964,6 +964,136 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Account Deletion Impact Review */}
+      <Dialog open={!!deletionImpactRequest} onOpenChange={(open) => { if (!open) closeDeletionImpact(); }}>
+        <DialogContent className="clay-card border-none max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Account Deletion Impact: {deletionImpactRequest?.user_name || deletionImpactRequest?.user_email || "User"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+            Read-only review only. No account, payroll, estimate, work order, assignment, or company record is changed by this scan.
+          </div>
+
+          {deletionImpactLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : deletionImpactError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {deletionImpactError}
+            </div>
+          ) : deletionImpactReport ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-lg border bg-white/60 p-3">
+                  <div className="text-xs text-gray-500">Authorized account</div>
+                  <div className="font-semibold text-gray-800">
+                    {deletionImpactReport.target?.authorized_email_exists ? "Present" : "Missing / mismatch"}
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-white/60 p-3">
+                  <div className="text-xs text-gray-500">Base44 User identities</div>
+                  <div className="font-semibold text-gray-800">{deletionImpactReport.target?.base44_user_count ?? 0}</div>
+                </div>
+                <div className="rounded-lg border bg-white/60 p-3">
+                  <div className="text-xs text-gray-500">Workflow references</div>
+                  <div className="font-semibold text-gray-800">
+                    {Object.values(deletionImpactReport.assignments || {}).reduce((sum, count) => sum + Number(count || 0), 0)}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h5 className="text-sm font-semibold text-gray-800 mb-2">Safety blockers</h5>
+                {deletionImpactReport.blockers?.length ? (
+                  <div className="space-y-1">
+                    {deletionImpactReport.blockers.map((blocker) => (
+                      <div key={blocker} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        {blocker}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">No known blockers were found by the current scanner.</div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="rounded-lg border p-3">
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Payroll / historical records — preserve</h5>
+                  <div className="space-y-1 text-sm">
+                    {(deletionImpactReport.history || []).filter((item) => item.count > 0).map((item) => (
+                      <div key={item.entity} className="flex justify-between gap-3">
+                        <span>{formatImpactEntity(item.entity)}</span>
+                        <span className="font-medium">{item.count}</span>
+                      </div>
+                    ))}
+                    {!(deletionImpactReport.history || []).some((item) => item.count > 0) && (
+                      <div className="text-gray-500">None found.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border p-3">
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Account state — review for cleanup</h5>
+                  <div className="space-y-1 text-sm">
+                    {(deletionImpactReport.account_state || []).filter((item) => item.count > 0).map((item) => (
+                      <div key={item.entity} className="flex justify-between gap-3">
+                        <span>{formatImpactEntity(item.entity)}</span>
+                        <span className="font-medium">{item.count}</span>
+                      </div>
+                    ))}
+                    {!(deletionImpactReport.account_state || []).some((item) => item.count > 0) && (
+                      <div className="text-gray-500">None found.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border p-3">
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Estimator ownership — preserve or transfer</h5>
+                  <div className="space-y-1 text-sm">
+                    {(deletionImpactReport.ownership || []).filter((item) => item.count > 0).map((item) => (
+                      <div key={item.entity} className="flex justify-between gap-3">
+                        <span>{formatImpactEntity(item.entity)}</span>
+                        <span className="font-medium">{item.count}</span>
+                      </div>
+                    ))}
+                    {!(deletionImpactReport.ownership || []).some((item) => item.count > 0) && (
+                      <div className="text-gray-500">None found.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border p-3">
+                  <h5 className="text-sm font-semibold text-gray-800 mb-2">Live assignments / references</h5>
+                  <div className="space-y-1 text-sm">
+                    {Object.entries(deletionImpactReport.assignments || {}).map(([entity, count]) => (
+                      <div key={entity} className="flex justify-between gap-3">
+                        <span>{formatImpactEntity(entity)}</span>
+                        <span className="font-medium">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500">
+                This report intentionally separates historical records that should normally remain intact from account-state records that may later be eligible for cleanup. No cleanup is implemented in this phase.
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" onClick={closeDeletionImpact} disabled={deletionImpactLoading}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Account Deletion Request Resolution */}
       <AlertDialog
         open={!!deletionRequestConfirm}
