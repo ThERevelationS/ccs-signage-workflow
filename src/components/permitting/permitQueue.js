@@ -74,6 +74,8 @@ export function getPermitLineHandoffReadiness(line) {
   const feeAmount = line?.jurisdiction_fee_amount;
   const feePaidDate = asDateKey(line?.jurisdiction_fee_paid_date);
   const correctionStatus = String(line?.correction_status || "").trim().toLowerCase();
+  const correctionsReceivedDate = asDateKey(line?.corrections_received_date);
+  const resubmittedDate = asDateKey(line?.resubmitted_date);
   const submittedDate = asDateKey(line?.submitted_date);
   const approvalDate = asDateKey(line?.approval_date);
   const receivedDate = asDateKey(line?.permit_received_date);
@@ -132,6 +134,21 @@ export function getPermitLineHandoffReadiness(line) {
 
   if (lateLifecycle && ACTIVE_CORRECTION_STATUSES.has(correctionStatus)) {
     blockers.push(`${label} still has active corrections recorded.`);
+  }
+  if ((correctionStatus === "corrections_received" || correctionStatus === "working_corrections") && !correctionsReceivedDate) {
+    reviews.push(`${label} is in corrections but has no corrections received date.`);
+  }
+  if (correctionStatus === "resubmitted" && !resubmittedDate) {
+    reviews.push(`${label} is marked resubmitted but has no resubmitted date.`);
+  }
+  if (correctionStatus === "resubmitted" && !correctionsReceivedDate) {
+    reviews.push(`${label} is marked resubmitted but has no corrections received date.`);
+  }
+  if (submittedDate && correctionsReceivedDate && correctionsReceivedDate < submittedDate) {
+    reviews.push(`${label} has a corrections received date before its submitted date.`);
+  }
+  if (correctionsReceivedDate && resubmittedDate && resubmittedDate < correctionsReceivedDate) {
+    reviews.push(`${label} has a resubmitted date before its corrections received date.`);
   }
 
   if (closeoutStatus === "closed_out" && !closeoutDate) {
