@@ -26,6 +26,44 @@ export async function listAuthorizedUsersAdmin({ sessionToken } = {}) {
   return result.users;
 }
 
+export async function listAccountDeletionRequestsAdmin({ sessionToken } = {}) {
+  const result = await invokeAdminUsers({
+    action: "list_deletion_requests",
+    session_token: requireSessionToken(sessionToken),
+  });
+  if (!Array.isArray(result?.deletion_requests)) {
+    throw new Error("Account deletion requests could not be loaded safely.");
+  }
+  return result.deletion_requests;
+}
+
+export async function resolveAccountDeletionRequestAdmin({
+  request,
+  resolution,
+  adminNotes = "",
+  sessionToken,
+} = {}) {
+  if (!request?.id || !request?.updated_date) {
+    throw new Error("Deletion request is missing its loaded version. Reload before resolving it.");
+  }
+  if (!["processed", "cancelled"].includes(resolution)) {
+    throw new Error("Deletion request resolution is invalid.");
+  }
+
+  const result = await invokeAdminUsers({
+    action: "resolve_deletion_request",
+    request_id: request.id,
+    expected_updated_date: request.updated_date,
+    resolution,
+    admin_notes: adminNotes,
+    session_token: requireSessionToken(sessionToken),
+  });
+  if (!result?.success || !result?.record?.id || result.record.status !== resolution) {
+    throw new Error("Deletion request resolution could not be verified.");
+  }
+  return result.record;
+}
+
 export async function createAuthorizedUserAdmin({ data, sessionToken } = {}) {
   const result = await invokeAdminUsers({
     action: "create",
