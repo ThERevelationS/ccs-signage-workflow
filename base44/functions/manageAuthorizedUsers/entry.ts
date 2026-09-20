@@ -142,6 +142,179 @@ async function ensureAnotherAdminExists(AuthorizedEmail: any, targetId: string) 
   }
 }
 
+const DELETION_HISTORY_ENTITIES = [
+  'TimeEntry',
+  'TimeClockAudit',
+  'TimeOffRequest',
+  'TimeClockBreak',
+  'TimeClockWorkPause',
+  'TimeClockCorrectionRequest',
+  'TimeClockLaborSegment',
+  'ImportJob',
+];
+
+const DELETION_ACCOUNT_STATE_ENTITIES = [
+  'TimeClockEmployeeState',
+  'TimeClockBadge',
+  'UserPTOBalance',
+  'UserCalendarSettings',
+  'UserCapacity',
+  'UserCredential',
+  'FleetDashboardPreference',
+];
+
+const DELETION_OWNER_ENTITIES = [
+  'AllInOneEstimate',
+  'BuilderProduct',
+  'BuilderPart',
+  'BuilderPartGroup',
+  'QuickProduct',
+  'PartTemplate',
+  'ProjectTemplate',
+  'EstimateClipboardItem',
+  'CustomerSummary',
+  'FoundationProject',
+  'ChannelLetterInstallation',
+  'VinylProject',
+  'CNCProject',
+  'LaserProject',
+  'MetalProject',
+  'MaintenanceProject',
+  'Project',
+  'BrickStoneProject',
+  'Report',
+  'SaveColor',
+];
+
+const WORK_ORDER_IDENTITY_KEYS = new Set([
+  'assigned_to',
+  'current_task_assigned_to',
+  'designer',
+  'surveyor',
+  'project_manager',
+  'estimator',
+  'sales_rep',
+  'created_by',
+  'uploaded_by',
+]);
+
+function identityValueMatches(value: unknown, identities: Set<string>): boolean {
+  if (Array.isArray(value)) return value.some((item) => identityValueMatches(item, identities));
+  if (value && typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some((item) => identityValueMatches(item, identities));
+  }
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized ? identities.has(normalized) : false;
+}
+
+function recordReferencesIdentity(value: unknown, identities: Set<string>, keys: Set<string>): boolean {
+  if (Array.isArray(value)) return value.some((item) => recordReferencesIdentity(item, identities, keys));
+  if (!value || typeof value !== 'object') return false;
+
+  return Object.entries(value as Record<string, unknown>).some(([key, child]) => {
+    if (keys.has(key) && identityValueMatches(child, identities)) return true;
+    return recordReferencesIdentity(child, identities, keys);
+  });
+}
+
+async function countEntityRows(base44: any, entityName: string, query: Record<string, unknown>) {
+  const entity = base44.asServiceRole.entities[entityName];
+  if (!entity) throw new Error(`${entityName} is unavailable for deletion impact review.`);
+  const rows = await loadAllEntityRows({
+    entity,
+    query,
+    sort: null,
+    label: `${entityName} deletion impact review`,
+  });
+  return rows.length;
+}
+
+async function countIdentityReferences(base44: any, entityName: string, identities: Set<string>, keys: Set<string>) {
+  const entity = base44.asServiceRole.entities[entityName];
+  if (!entity) throw new Error(`${entityName} is unavailable for deletion impact review.`);
+  const rows = await loadAllEntityRows({
+    entity,
+    sort: null,
+    label: `${entityName} identity reference review`,
+  });
+  return rows.filter((row: any) => recordReferencesIdentity(row, identities, keys)).length;
+}
+
+async function deletionImpactReport(base44: any, Request: any, requestId: string) {
+  if (!requestId) throw Object.assign(new Error('Deletion request identity is required.'), { status: 400 });
+  const request = await Request.get(requestId).catch(() => null);
+  if (!request?.id) throw Object.assign(new Error('Deletion request no longer exists.'), { status: 404 });
+
+  const email = cleanEmail(request.user_email);
+  const authorizedId = String(request.authorized_email_id || '').trim();
+  if (!email || !authorizedId) {
+    throw Object.assign(new Error('Deletion request identity is incomplete.'), { status: 409 });
+  }
+
+  const authorized = await base44.asServiceRole.entities.AuthorizedEmail.get(authorizedId).catch(() => null);
+  const authorizedMatches = !!authorized?.id && cleanEmail(authorized.email) === email;
+  const displayName = cleanText(authorized?.full_name || request.user_name, 500);
+  const identities = new Set([email, displayName.toLowerCase()].filter(Boolean));
+
+  const base44UsersRaw = await base44.asServiceRole.entities.User.filter({ email });
+  if (!Array.isArray(base44UsersRaw)) throw new Error('Base44 user identity lookup could not be verified.');
+  const base44Users = base44UsersRaw.filter((row: any) => cleanEmail(row?.email) === email);
+  const base44UserIds = [...new Set(base44Users.map((row: any) => String(row?.id || '').trim()).filter(Boolean))];
+
+  const history = await Promise.all(DELETION_HISTORY_ENTITIES.map(async (entity) => ({
+    entity,
+    count: await countEntityRows(base44, entity, { user_email: email }),
+  })));
+
+  const accountState = await Promise.all(DELETION_ACCOUNT_STATE_ENTITIES.map(async (entity) => ({
+    entity,
+    count: await countEntityRows(base44, entity, { user_email: email }),
+  })));
+
+  const ownership = base44UserIds.length
+    ? await Promise.all(DELETION_OWNER_ENTITIES.map(async (entity) => ({
+        entity,
+        count: await countEntityRows(base44, entity, { created_by_id: { $in: base44UserIds } }),
+      })))
+    : DELETION_OWNER_ENTITIES.map((entity) => ({ entity, count: 0 }));
+
+  const assignmentKeys = new Set([...WORK_ORDER_IDENTITY_KEYS]);
+  const [workOrders, generalTasks, calendarEvents] = await Promise.all([
+    countIdentityReferences(base44, 'WorkOrder', identities, assignmentKeys),
+    countIdentityReferences(base44, 'GeneralTask', identities, new Set(['assigned_to', 'created_by_name'])),
+    countIdentityReferences(base44, 'CalendarEvent', identities, new Set(['assigned_to', 'created_by'])),
+  ]);
+
+  const blockers: string[] = [];
+  if (!authorizedMatches) blockers.push('The AuthorizedEmail record no longer matches this request.');
+  if (base44Users.length > 1) blockers.push('Multiple Base44 User records share this email and must be reconciled before any identity removal.');
+  if (history.some((item) => item.count > 0)) blockers.push('Payroll/timekeeping history exists and must be preserved.');
+  if (ownership.some((item) => item.count > 0)) blockers.push('Base44-owned estimator records exist and must be preserved or explicitly transferred.');
+  if (workOrders + generalTasks + calendarEvents > 0) blockers.push('Live workflow/task/calendar references exist and need reassignment or archival treatment.');
+
+  return {
+    request: adminDeletionRequestView(request),
+    target: {
+      authorized_email_id: authorizedId,
+      authorized_email_exists: authorizedMatches,
+      email,
+      full_name: displayName || null,
+      base44_user_count: base44Users.length,
+      base44_user_ids: base44UserIds,
+    },
+    history,
+    account_state: accountState,
+    ownership,
+    assignments: {
+      WorkOrder: workOrders,
+      GeneralTask: generalTasks,
+      CalendarEvent: calendarEvents,
+    },
+    blockers,
+    read_only: true,
+  };
+}
+
 function adminDeletionRequestView(row: any) {
   return {
     id: row?.id,
