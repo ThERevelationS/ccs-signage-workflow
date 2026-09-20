@@ -62,7 +62,7 @@ export default function PermitClientGroup({
   const wo = group.work_order;
   const hasLines = group.lines.length > 0;
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
-  const progress = getPermitGroupProgress(group);
+  const progress = getPermitGroupProgress(group, today);
 
   // Est/Inv # — prefer corbridge_invoice_number, else est_inv_at
   const estInvNumber = wo?.corbridge_invoice_number || wo?.est_inv_at || "";
