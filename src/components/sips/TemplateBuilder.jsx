@@ -893,7 +893,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <datalist id={`users-${task.id}`}>
                   {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
                 </datalist>
-                <button onClick={() => deleteItemWithChange(item.id, null, task.id)} className="p-0.5 opacity-0 group-hover/task:opacity-100"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+                <button
+                  type="button"
+                  onClick={() => deleteItemWithChange(item.id, null, task.id)}
+                  className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/task:opacity-100 lg:focus-visible:opacity-100"
+                  title={`Delete task ${task.text}`}
+                  aria-label={`Delete task ${task.text}`}
+                >
+                  <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
+                </button>
               </div>
               {/* Subtasks */}
               {task.subtasks?.map((subtask) => (
@@ -905,7 +913,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   ) : (
                     <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
                   )}
-                  <button onClick={() => deleteItemWithChange(item.id, null, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/subtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                  <button
+                    type="button"
+                    onClick={() => deleteItemWithChange(item.id, null, task.id, subtask.id)}
+                    className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/subtask:opacity-100 lg:focus-visible:opacity-100"
+                    title={`Delete subtask ${subtask.text}`}
+                    aria-label={`Delete subtask ${subtask.text}`}
+                  >
+                    <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
+                  </button>
                 </div>
               ))}
               <Input placeholder="+ subtask" className="ml-4 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, null, task.id, e.target.value); e.target.value = ""; } }} />
@@ -956,7 +972,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <datalist id={`users-detail-${task.id}`}>
                         {users.map(u => <option key={u.email} value={u.full_name || u.email} />)}
                       </datalist>
-                      <button onClick={() => deleteItemWithChange(item.id, detail.id, task.id)} className="p-0.5 opacity-0 group-hover/dtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                      <button
+                        type="button"
+                        onClick={() => deleteItemWithChange(item.id, detail.id, task.id)}
+                        className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/dtask:opacity-100 lg:focus-visible:opacity-100"
+                        title={`Delete task ${task.text}`}
+                        aria-label={`Delete task ${task.text}`}
+                      >
+                        <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
+                      </button>
                     </div>
                     {/* Subtasks under detail tasks */}
                     {task.subtasks?.map((subtask) => (
@@ -968,7 +992,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         ) : (
                           <span className="flex-1 text-xs truncate cursor-pointer" onClick={() => setEditingItem(subtask.id)}>{subtask.text}</span>
                         )}
-                        <button onClick={() => deleteItemWithChange(item.id, detail.id, task.id, subtask.id)} className="p-0.5 opacity-0 group-hover/dsubtask:opacity-100"><Trash2 className="w-2 h-2 text-red-400" /></button>
+                        <button
+                          type="button"
+                          onClick={() => deleteItemWithChange(item.id, detail.id, task.id, subtask.id)}
+                          className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/dsubtask:opacity-100 lg:focus-visible:opacity-100"
+                          title={`Delete subtask ${subtask.text}`}
+                          aria-label={`Delete subtask ${subtask.text}`}
+                        >
+                          <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
+                        </button>
                       </div>
                     ))}
                     <Input placeholder="+ subtask" className="ml-3 h-4 text-xs" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} />
