@@ -920,6 +920,41 @@ export default function UserManagement() {
         </DialogContent>
       </Dialog>
 
+      {/* Account Deletion Request Resolution */}
+      <AlertDialog
+        open={!!deletionRequestConfirm}
+        onOpenChange={(open) => {
+          if (!open && !deletionRequestSaving) setDeletionRequestConfirm(null);
+        }}
+      >
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deletionRequestConfirm?.resolution === "cancelled" ? "Cancel deletion request?" : "Mark deletion request reviewed?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletionRequestConfirm?.resolution === "cancelled"
+                ? "This only cancels the pending review request. It does not remove the user's authorized account or delete company data."
+                : "This records that an administrator reviewed the request. It does not remove the user's authorized account or delete company data."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletionRequestSaving}>Back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResolveDeletionRequest}
+              disabled={deletionRequestSaving}
+              className={deletionRequestConfirm?.resolution === "cancelled" ? "bg-red-600 text-white" : ""}
+            >
+              {deletionRequestSaving
+                ? "Saving..."
+                : deletionRequestConfirm?.resolution === "cancelled"
+                  ? "Cancel Request"
+                  : "Mark Reviewed"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
