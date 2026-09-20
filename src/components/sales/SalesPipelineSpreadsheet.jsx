@@ -538,6 +538,40 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // Apply task assignment rules once against the complete proposed record.
     const ruleUpdates = applyRules(taskAssignmentRules, updatedWo);
     const proposedUpdates = { ...nextChanges, ...ruleUpdates };
+
+    const resultingSalesStatus = proposedUpdates.sales_status ?? currentWo.sales_status ?? "lead";
+    const resultingIsTerminal = ["won", "lost"].includes(resultingSalesStatus);
+    const todayStamp = format(new Date(), "yyyy-MM-dd");
+    const protectedDateFields = [
+      ["date_estimate_sent", "Quote sent date"],
+      ["quote_date", "Quote date"],
+      ["close_date", "Close date"],
+    ];
+    for (const [fieldName, fieldLabel] of protectedDateFields) {
+      if (!Object.prototype.hasOwnProperty.call(proposedUpdates, fieldName)) continue;
+      const nextDate = String(proposedUpdates[fieldName] || "").slice(0, 10);
+      if (nextDate && nextDate > todayStamp) {
+        setQuickEditError(`${fieldLabel} cannot be in the future.`);
+        return;
+      }
+    }
+    if (
+      resultingIsTerminal
+      && Object.prototype.hasOwnProperty.call(proposedUpdates, "close_date")
+      && !String(proposedUpdates.close_date || "").trim()
+    ) {
+      setQuickEditError("Won/Lost opportunities must keep a close date. Reopen the opportunity to clear it.");
+      return;
+    }
+    if (
+      resultingSalesStatus === "lost"
+      && Object.prototype.hasOwnProperty.call(proposedUpdates, "lost_reason")
+      && !String(proposedUpdates.lost_reason || "").trim()
+    ) {
+      setQuickEditError("Lost opportunities must keep a lost reason. Reopen or change the outcome instead of clearing it.");
+      return;
+    }
+
     const salesActivityChanged = Object.keys(proposedUpdates).some((changedField) =>
       SALES_ACTIVITY_FIELDS.has(changedField) && JSON.stringify(currentWo[changedField]) !== JSON.stringify(proposedUpdates[changedField])
     );
