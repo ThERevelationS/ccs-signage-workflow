@@ -54,6 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createAuthorizedUserAdmin,
   deleteAuthorizedUserAdmin,
+  getAccountDeletionImpactAdmin,
   listAccountDeletionRequestsAdmin,
   listAuthorizedUsersAdmin,
   resolveAccountDeletionRequestAdmin,
@@ -96,6 +97,10 @@ export default function UserManagement() {
   const [deletionRequestsLoading, setDeletionRequestsLoading] = useState(true);
   const [deletionRequestConfirm, setDeletionRequestConfirm] = useState(null);
   const [deletionRequestSaving, setDeletionRequestSaving] = useState(false);
+  const [deletionImpactRequest, setDeletionImpactRequest] = useState(null);
+  const [deletionImpactReport, setDeletionImpactReport] = useState(null);
+  const [deletionImpactLoading, setDeletionImpactLoading] = useState(false);
+  const [deletionImpactError, setDeletionImpactError] = useState("");
 
   useEffect(() => {
     if (sessionToken) {
@@ -136,6 +141,34 @@ export default function UserManagement() {
     }
     setDeletionRequestsLoading(false);
   };
+
+  const handleLoadDeletionImpact = async (request) => {
+    if (!request?.id || deletionImpactLoading) return;
+    setDeletionImpactRequest(request);
+    setDeletionImpactReport(null);
+    setDeletionImpactError("");
+    setDeletionImpactLoading(true);
+    try {
+      const impact = await getAccountDeletionImpactAdmin({ request, sessionToken });
+      setDeletionImpactReport(impact);
+    } catch (error) {
+      console.error("Deletion impact review failed:", error);
+      setDeletionImpactError(error?.message || "Account deletion impact could not be reviewed safely.");
+    } finally {
+      setDeletionImpactLoading(false);
+    }
+  };
+
+  const closeDeletionImpact = () => {
+    if (deletionImpactLoading) return;
+    setDeletionImpactRequest(null);
+    setDeletionImpactReport(null);
+    setDeletionImpactError("");
+  };
+
+  const formatImpactEntity = (name) => String(name || "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ");
 
   const handleResolveDeletionRequest = async () => {
     const request = deletionRequestConfirm?.request;
