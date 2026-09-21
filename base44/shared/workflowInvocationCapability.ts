@@ -2,7 +2,6 @@ const WORKFLOW_CAPABILITY_HASHES: Record<string, string> = {
   checkDeadlineReminders: '43ca6f538ae0db65f1b747ae3db37890701a811785f1c09b5d8521c9789b81dd',
   monitorJurisdictionChanges: 'fee4b26c6308b674be4ad27b240fdc5c5fdd38d1f882d4572527eec299ff4978',
   checkPermitFollowupReminders: '71384f0bc812c4d329561c9ae1f2b15cc2d19b5b0d34d1ec95536f53fc954ac7',
-  processCorebridgeEmails: '51d9aca8daa5a0fa7e0523e9fd4233ab8c970310bc2a3ca0059051391eb04838',
   backupToGoogleDrive: '3953829bffb28c3a58e5a3491c7c52f9987867fbbba426e64826c8243ad75463',
   auditJurisdictionAccuracy: 'bc0b14e3cc1212382f2aaf87bceef3a3c593a59c83f9bf68e0088384b806cac3',
   refreshJurisdiction: '3df7cc591cb73abbacc2bff993f53dfaa1e6eea116989ad7a6ed44e9b9125887',
