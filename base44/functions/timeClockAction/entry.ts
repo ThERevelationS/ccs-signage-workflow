@@ -2434,6 +2434,16 @@ Deno.serve(async (req) => {
       };
 
       if (action === 'time_off_request_create') {
+        const timeOffCreateLock = await claimTimeOffCreateLock(stateEntity, state.id, requestId);
+        if (!timeOffCreateLock?.acquired) {
+          return Response.json({
+            success: false,
+            ...(timeOffCreateLock?.retry_same_request === true ? { retry_same_request: true } : {}),
+            error: timeOffCreateLock?.error || 'Time Off request creation could not acquire its authoritative lock.',
+          }, { status: 409 });
+        }
+
+        try {
         const createPayloadHash = await payloadHash(requestedFields);
         const createClaimToken = crypto.randomUUID();
         const CREATE_CLAIM_STALE_MS = 30_000;
@@ -2648,6 +2658,18 @@ Deno.serve(async (req) => {
           audit_id: createAudit.id,
           reused: finalOutcome !== 'confirmed',
         });
+        } finally {
+          try {
+            await releaseTimeOffCreateLock(
+              stateEntity,
+              state.id,
+              requestId,
+              String(timeOffCreateLock.claim_token || ''),
+            );
+          } catch (error) {
+            console.error('Time Off create lock release failed; stale same-request recovery remains available:', error?.message || error);
+          }
+        }
       }
 
       const timeOffRequestId = String(body?.time_off_request_id || '').trim();
