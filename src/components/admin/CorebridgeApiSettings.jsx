@@ -80,7 +80,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
               <Badge className="bg-blue-100 text-blue-700">READ ONLY</Badge>
               {apiStatus && (
                 <Badge className={apiStatus.configured ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}>
-                  {apiStatus.configured ? "Credentials configured" : "Needs credentials"}
+                  {apiStatus.configured ? "Subscription key configured" : "Needs subscription key"}
                 </Badge>
               )}
             </div>
@@ -110,10 +110,9 @@ export default function CorebridgeApiSettings({ sessionToken }) {
 
         {apiStatus && !apiStatus.configured && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 space-y-1">
-            <div>Add both Base44 app secrets before live testing:</div>
+            <div>Add the Base44 app secret before live testing:</div>
             <div><code className="font-mono">COREBRIDGE_SUBSCRIPTION_KEY</code></div>
-            <div><code className="font-mono">COREBRIDGE_AUTHENTICATION_TOKEN</code></div>
-            <div className="text-xs mt-2">Do not paste either secret into source code, entities, browser fields, logs, or chat.</div>
+            <div className="text-xs mt-2">Do not paste the subscription key into source code, entities, browser fields, logs, or chat.</div>
           </div>
         )}
 
