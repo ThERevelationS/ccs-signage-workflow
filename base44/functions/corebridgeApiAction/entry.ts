@@ -4,7 +4,6 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 
 const SUBSCRIPTION_SECRET_NAME = 'COREBRIDGE_SUBSCRIPTION_KEY';
-const AUTHENTICATION_SECRET_NAME = 'COREBRIDGE_AUTHENTICATION_TOKEN';
 const API_VERSION = 'v3.0';
 
 const CAPABILITIES = [
@@ -78,7 +77,7 @@ function safeUpstreamError(status: number) {
   return `CoreBridge returned HTTP ${status}.`;
 }
 
-async function corebridgeGet(base44: any, actor: any, action: keyof typeof ROUTES, subscriptionKey: string, authenticationToken: string) {
+async function corebridgeGet(base44: any, actor: any, action: keyof typeof ROUTES, subscriptionKey: string) {
   const route = ROUTES[action];
   const url = buildUrl(route);
   const started = Date.now();
@@ -93,7 +92,6 @@ async function corebridgeGet(base44: any, actor: any, action: keyof typeof ROUTE
           Accept: 'application/json, text/plain;q=0.9, */*;q=0.1',
           'Cache-Control': 'no-cache',
           'Ocp-Apim-Subscription-Key': subscriptionKey,
-          'Authentication-Token': `Bearer ${authenticationToken}`,
         },
         signal: controller.signal,
       }, 0);
@@ -175,17 +173,15 @@ Deno.serve(async (req) => {
 
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const subscriptionKey = String(secrets.get(SUBSCRIPTION_SECRET_NAME) || '').trim();
-    const authenticationToken = String(secrets.get(AUTHENTICATION_SECRET_NAME) || '').trim();
-    const configured = !!subscriptionKey && !!authenticationToken;
+    const configured = !!subscriptionKey;
 
     if (action === 'status') {
       return Response.json({
         success: true,
         configured,
         subscription_key_configured: !!subscriptionKey,
-        authentication_token_configured: !!authenticationToken,
         read_only: true,
-        secret_names: [SUBSCRIPTION_SECRET_NAME, AUTHENTICATION_SECRET_NAME],
+        secret_name: SUBSCRIPTION_SECRET_NAME,
         api_version: API_VERSION,
         allowed_routes: Object.keys(ROUTES),
         capabilities: capabilitySummary(),
@@ -195,15 +191,15 @@ Deno.serve(async (req) => {
 
     if (!configured) {
       return Response.json({
-        error: `CoreBridge API is not configured. Add both ${SUBSCRIPTION_SECRET_NAME} and ${AUTHENTICATION_SECRET_NAME} app secrets before testing the connection.`,
+        error: `CoreBridge API is not configured. Add the ${SUBSCRIPTION_SECRET_NAME} app secret before testing the connection.`,
         configured: false,
       }, { status: 503 });
     }
 
     if (action === 'test_connection') {
       const [validate, apiStatus] = await Promise.all([
-        corebridgeGet(base44, actor, 'account_validate', subscriptionKey, authenticationToken),
-        corebridgeGet(base44, actor, 'status_api', subscriptionKey, authenticationToken),
+        corebridgeGet(base44, actor, 'account_validate', subscriptionKey),
+        corebridgeGet(base44, actor, 'status_api', subscriptionKey),
       ]);
       return Response.json({
         success: true,
@@ -216,7 +212,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'account_summary') {
-      const result = await corebridgeGet(base44, actor, 'account', subscriptionKey, authenticationToken);
+      const result = await corebridgeGet(base44, actor, 'account', subscriptionKey);
       return Response.json({
         success: true,
         configured: true,
@@ -230,7 +226,7 @@ Deno.serve(async (req) => {
       if (!requested || !requested.startsWith('status_') || !(requested in ROUTES)) {
         return Response.json({ error: 'Invalid CoreBridge status service.' }, { status: 400 });
       }
-      const result = await corebridgeGet(base44, actor, requested, subscriptionKey, authenticationToken);
+      const result = await corebridgeGet(base44, actor, requested, subscriptionKey);
       return Response.json({
         success: true,
         configured: true,
