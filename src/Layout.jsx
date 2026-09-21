@@ -37,7 +37,6 @@ import LoginGate from "@/components/auth/LoginGate";
 import GlobalSearch from "@/components/workflow/GlobalSearch";
 import AddTaskDialog from "@/components/workflow/AddTaskDialog";
 import { MultiPageContainer, useMultiPageView } from "@/components/layout/MultiPageView";
-import { base44 } from "@/api/base44Client";
 import { ImportProgressProvider } from "@/components/shared/ImportProgressContext";
 import { ResearchProgressProvider } from "@/components/permitting/ResearchProgressContext";
 import { MultiImportProvider } from "@/components/shared/MultiImportContext";
