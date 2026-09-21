@@ -78,6 +78,17 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "in_pipeline",
 ]);
 const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
+const CLOSEOUT_HISTORICAL_FIELDS = new Set([
+  "quote_date",
+  "date_estimate_sent",
+  "follow_up_date",
+  "expected_close_date",
+  "close_date",
+  "lost_reason",
+  "current_task_description",
+  "current_task_deadline",
+  "current_task_assigned_to",
+]);
 const STALE_ACTIVITY_DAYS = 14;
 const NEAR_CLOSE_DAYS = 14;
 const ARCHIVE_PAGE_SIZE = 250;
@@ -539,8 +550,23 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const ruleUpdates = applyRules(taskAssignmentRules, updatedWo);
     const proposedUpdates = { ...nextChanges, ...ruleUpdates };
 
-    const resultingSalesStatus = proposedUpdates.sales_status ?? currentWo.sales_status ?? "lead";
+    const currentSalesStatus = currentWo.sales_status ?? "lead";
+    const resultingSalesStatus = proposedUpdates.sales_status ?? currentSalesStatus;
+    const currentIsTerminal = ["won", "lost"].includes(currentSalesStatus);
     const resultingIsTerminal = ["won", "lost"].includes(resultingSalesStatus);
+    const salesStatusChanged = Object.prototype.hasOwnProperty.call(proposedUpdates, "sales_status")
+      && currentSalesStatus !== resultingSalesStatus;
+    if (currentIsTerminal && resultingIsTerminal && !salesStatusChanged) {
+      const changedHistoricalField = Array.from(CLOSEOUT_HISTORICAL_FIELDS).find((fieldName) =>
+        Object.prototype.hasOwnProperty.call(proposedUpdates, fieldName)
+        && JSON.stringify(currentWo[fieldName]) !== JSON.stringify(proposedUpdates[fieldName])
+      );
+      if (changedHistoricalField) {
+        setQuickEditError("Closed Won/Lost opportunities keep quote timing, follow-up, expected-close, closeout, and task-planning values as historical context. Reopen or change the outcome before editing those fields.");
+        return;
+      }
+    }
+
     const todayStamp = format(new Date(), "yyyy-MM-dd");
     const protectedDateFields = [
       ["date_estimate_sent", "Quote sent date"],
