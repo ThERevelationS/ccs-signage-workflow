@@ -170,12 +170,12 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("current_task_deadline") && (
                 <td className="px-1 py-0.5 border-r" style={{ backgroundColor: getDeadlineCellColor(wo.current_task_deadline) }} onContextMenu={(e) => handleContextMenu(e, wo, "current_task_deadline", "Deadline", wo.current_task_deadline)}>
-                  <DateCell woId={wo.id} field="current_task_deadline" value={wo.current_task_deadline} popoverKey={`deadline-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <DateCell woId={wo.id} field="current_task_deadline" value={wo.current_task_deadline} popoverKey={`deadline-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
                 </td>
               )}
               {isColumnVisible("current_task_assigned_to") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_assigned_to", "Task Assigned", wo.current_task_assigned_to)}>
-                  <Select value={wo.current_task_assigned_to || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)} disabled={!isRegistered}>
+                  <Select value={wo.current_task_assigned_to || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)} disabled={!isRegistered || !isOpen}>
                     <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.current_task_assigned_to || "-"}</SelectValue></SelectTrigger>
                     <SelectContent>
                       {wo.current_task_assigned_to && !users.some(u => u.full_name === wo.current_task_assigned_to && u.sales_roles?.includes("Task Assigned")) && <SelectItem key={wo.current_task_assigned_to} value={wo.current_task_assigned_to}>{wo.current_task_assigned_to}</SelectItem>}
@@ -241,7 +241,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("current_task_description") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_description", "Task Description", wo.current_task_description)}>
-                  <Select value={wo.current_task_description || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)} disabled={!isRegistered}>
+                  <Select value={wo.current_task_description || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)} disabled={!isRegistered || !isOpen}>
                     <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-" /></SelectTrigger>
                     <SelectContent>{taskDescriptions.map(desc => <SelectItem key={getTaskDescText(desc)} value={getTaskDescText(desc)}>{getTaskDescText(desc)}</SelectItem>)}</SelectContent>
                   </Select>
@@ -259,7 +259,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("date_estimate_sent") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_estimate_sent", "Estimate Sent", wo.date_estimate_sent)}>
-                  <DateCell woId={wo.id} field="date_estimate_sent" value={wo.date_estimate_sent} popoverKey={`estsent-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <DateCell woId={wo.id} field="date_estimate_sent" value={wo.date_estimate_sent} popoverKey={`estsent-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
                 </td>
               )}
               {isColumnVisible("date_order_created") && (
@@ -300,7 +300,7 @@ export default function SalesPipelineTableBody({
               {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
               {isColumnVisible("quote_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "quote_date", "Quote Date", wo.quote_date)}>
-                  <DateCell woId={wo.id} field="quote_date" value={wo.quote_date} popoverKey={`quote-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <DateCell woId={wo.id} field="quote_date" value={wo.quote_date} popoverKey={`quote-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
                 </td>
               )}
               {isColumnVisible("quote_age") && (
@@ -317,7 +317,7 @@ export default function SalesPipelineTableBody({
               {isColumnVisible("follow_up_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "follow_up_date", "Follow Up Date", wo.follow_up_date)}>
                   <div className="flex items-center gap-0.5">
-                    <div className="min-w-0 flex-1"><DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} /></div>
+                    <div className="min-w-0 flex-1"><DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} /></div>
                     {isRegistered && !["won", "lost"].includes(wo.sales_status) && <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50" title="Complete / log sales follow-up"><CheckCircle2 className="h-3.5 w-3.5" /></button>}
                   </div>
                 </td>
@@ -328,12 +328,12 @@ export default function SalesPipelineTableBody({
                   title={expectedCloseOverdue ? "Expected close is overdue. Review the forecast or resolve the opportunity." : expectedCloseNear ? "Expected close is within the next 14 days." : undefined}
                   onContextMenu={(e) => handleContextMenu(e, wo, "expected_close_date", "Expected Close Date", wo.expected_close_date)}
                 >
-                  <DateCell woId={wo.id} field="expected_close_date" value={wo.expected_close_date} popoverKey={`expectedclose-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
+                  <DateCell woId={wo.id} field="expected_close_date" value={wo.expected_close_date} popoverKey={`expectedclose-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
                 </td>
               )}
               {isColumnVisible("close_date") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}>
-                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} allowClear={!["won", "lost"].includes(wo.sales_status)} />
+                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} allowClear={isOpen} />
                 </td>
               )}
               {isColumnVisible("probability") && (
