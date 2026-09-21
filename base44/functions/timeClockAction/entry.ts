@@ -438,6 +438,112 @@ async function releaseTimeOffCreateLock(stateEntity: any, stateId: string, reque
   return released.updated === 1;
 }
 
+async function claimTimeOffCreateLock(stateEntity: any, stateId: string, requestId: string) {
+  const claimToken = crypto.randomUUID();
+  const staleMs = 30_000;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const current = await freshState(stateEntity, stateId);
+    const rawStatus = String(current.time_off_create_status || '');
+
+    if (!rawStatus) {
+      const initialized = await stateEntity.updateMany(
+        { id: current.id, updated_date: current.updated_date },
+        { $set: {
+          time_off_create_status: 'idle',
+          time_off_create_request_id: '',
+          time_off_create_claim_token: '',
+          time_off_create_started_at: null,
+        } },
+      );
+      if (!initialized || typeof initialized.updated !== 'number') throw new Error('Time Off create lock initialization could not be verified.');
+      continue;
+    }
+
+    if (rawStatus === 'idle') {
+      const startedAt = new Date().toISOString();
+      const claimed = await stateEntity.updateMany(
+        { id: current.id, updated_date: current.updated_date, time_off_create_status: 'idle' },
+        { $set: {
+          time_off_create_status: 'creating',
+          time_off_create_request_id: requestId,
+          time_off_create_claim_token: claimToken,
+          time_off_create_started_at: startedAt,
+        } },
+      );
+      if (!claimed || typeof claimed.updated !== 'number') throw new Error('Time Off create lock claim could not be verified.');
+      if (claimed.updated === 1) {
+        return { acquired: true, claim_token: claimToken, state: await freshState(stateEntity, stateId), recovered: false };
+      }
+      continue;
+    }
+
+    if (rawStatus !== 'creating') {
+      return { acquired: false, investigation: true, error: 'Time Off create lock is in an invalid state. Admin review is required.' };
+    }
+
+    const heldRequestId = String(current.time_off_create_request_id || '');
+    if (heldRequestId !== requestId) {
+      return { acquired: false, different_request: true, error: 'Another Time Off submission is still being processed. Finish or recover that request before starting a new one.' };
+    }
+
+    const startedMs = Date.parse(String(current.time_off_create_started_at || ''));
+    const ageMs = Number.isFinite(startedMs) ? Date.now() - startedMs : Number.POSITIVE_INFINITY;
+    if (ageMs < staleMs) {
+      return { acquired: false, retry_same_request: true, error: 'This Time Off submission is already being processed. Retry the same request after status refresh.' };
+    }
+
+    const recoveredAt = new Date().toISOString();
+    const recovered = await stateEntity.updateMany(
+      {
+        id: current.id,
+        updated_date: current.updated_date,
+        time_off_create_status: 'creating',
+        time_off_create_request_id: requestId,
+        time_off_create_claim_token: String(current.time_off_create_claim_token || ''),
+      },
+      { $set: {
+        time_off_create_claim_token: claimToken,
+        time_off_create_started_at: recoveredAt,
+      } },
+    );
+    if (!recovered || typeof recovered.updated !== 'number') throw new Error('Time Off create lock recovery could not be verified.');
+    if (recovered.updated === 1) {
+      return { acquired: true, claim_token: claimToken, state: await freshState(stateEntity, stateId), recovered: true };
+    }
+  }
+
+  return { acquired: false, retry_same_request: true, error: 'Time Off create lock changed concurrently. Retry the same request after status refresh.' };
+}
+
+async function releaseTimeOffCreateLock(stateEntity: any, stateId: string, requestId: string, claimToken: string) {
+  const current = await freshState(stateEntity, stateId).catch(() => null);
+  if (!current?.id) return false;
+  if (
+    String(current.time_off_create_status || '') !== 'creating' ||
+    String(current.time_off_create_request_id || '') !== requestId ||
+    String(current.time_off_create_claim_token || '') !== claimToken
+  ) return false;
+
+  const released = await stateEntity.updateMany(
+    {
+      id: current.id,
+      updated_date: current.updated_date,
+      time_off_create_status: 'creating',
+      time_off_create_request_id: requestId,
+      time_off_create_claim_token: claimToken,
+    },
+    { $set: {
+      time_off_create_status: 'idle',
+      time_off_create_request_id: '',
+      time_off_create_claim_token: '',
+      time_off_create_started_at: null,
+    } },
+  );
+  if (!released || typeof released.updated !== 'number') throw new Error('Time Off create lock release could not be verified.');
+  return released.updated === 1;
+}
+
 async function setState(stateEntity: any, state: any, expectedStatus: string, expectedRequestId: string | null, nextFields: any) {
   const query: any = {
     id: state.id,
