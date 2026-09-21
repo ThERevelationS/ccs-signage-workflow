@@ -135,6 +135,9 @@ export function getPermitLineHandoffReadiness(line, today = "") {
     reviews.push(`${label} was issued/received but the permit workflow line is still active.`);
   }
 
+  if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount < 0) {
+    reviews.push(`${label} has a negative jurisdiction fee amount.`);
+  }
   if (typeof feeAmount === "number" && Number.isFinite(feeAmount) && feeAmount > 0 && !feeStatus) {
     reviews.push(`${label} has an actual jurisdiction fee recorded but no payment status.`);
   }
