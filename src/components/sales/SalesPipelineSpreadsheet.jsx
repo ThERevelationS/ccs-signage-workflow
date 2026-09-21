@@ -566,6 +566,20 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         return;
       }
     }
+    if (!salesStatusChanged && !resultingIsTerminal && Object.prototype.hasOwnProperty.call(proposedUpdates, "close_date")) {
+      const nextCloseDate = String(proposedUpdates.close_date || "").trim();
+      if (nextCloseDate) {
+        setQuickEditError("Close date is outcome data and can only be set by marking the opportunity Won or Lost.");
+        return;
+      }
+    }
+    if (!salesStatusChanged && resultingSalesStatus !== "lost" && Object.prototype.hasOwnProperty.call(proposedUpdates, "lost_reason")) {
+      const nextLostReason = String(proposedUpdates.lost_reason || "").trim();
+      if (nextLostReason) {
+        setQuickEditError("Lost reason can only be set when marking the opportunity Lost.");
+        return;
+      }
+    }
 
     const todayStamp = format(new Date(), "yyyy-MM-dd");
     const protectedDateFields = [
