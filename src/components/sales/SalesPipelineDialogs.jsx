@@ -3,6 +3,18 @@ import { CellContextMenu } from "@/components/shared/CellContextMenu";
 import { ColumnHeaderContextMenu } from "@/components/shared/ColumnHeaderContextMenu";
 import DeadlineGradientDialog from "@/components/sales/DeadlineGradientDialog";
 
+const CLOSEOUT_HISTORICAL_FIELDS = new Set([
+  "quote_date",
+  "date_estimate_sent",
+  "follow_up_date",
+  "expected_close_date",
+  "close_date",
+  "lost_reason",
+  "current_task_description",
+  "current_task_deadline",
+  "current_task_assigned_to",
+]);
+
 export default function SalesPipelineDialogs({
   bulkDeleteConfirm, setBulkDeleteConfirm, selectedRows, confirmBulkDelete,
   clearDateConfirm, setClearDateConfirm, updateWorkOrder,
@@ -65,7 +77,7 @@ export default function SalesPipelineDialogs({
           onClear={() => clearCell(contextMenu.workOrder.id, contextMenu.fieldName)}
           isRegistered={isRegistered && !(
             ["won", "lost"].includes(contextMenu.workOrder?.sales_status)
-            && (contextMenu.fieldName === "close_date" || (contextMenu.workOrder?.sales_status === "lost" && contextMenu.fieldName === "lost_reason"))
+            && CLOSEOUT_HISTORICAL_FIELDS.has(contextMenu.fieldName)
           )}
         />
       )}
