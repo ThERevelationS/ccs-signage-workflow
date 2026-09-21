@@ -1,5 +1,4 @@
 {
-  "name": "CorebridgeApiAudit",
   "type": "object",
   "description": "Audit log for direct CoreBridge API gateway calls. Never stores subscription keys, authorization material, or response bodies.",
   "properties": {
@@ -61,5 +60,6 @@
         "role": "__corebridge_api_backend_only__"
       }
     }
-  }
+  },
+  "name": "CorebridgeApiAudit"
 }
