@@ -477,6 +477,7 @@ function PendingImportCard({ item, onApprove, onMerge, onReject, onRefresh, allW
 }
 
 export default function PendingImportsPanel({ onCountChange }) {
+  const { sessionToken } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [readError, setReadError] = useState("");
