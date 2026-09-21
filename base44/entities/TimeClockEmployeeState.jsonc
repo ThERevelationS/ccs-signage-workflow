@@ -117,6 +117,28 @@
     "labor_pending_work_order_id": {
       "type": "string",
       "description": "WorkOrder id bound to an in-progress Current Work start/change request"
+    },
+    "time_off_create_status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "creating"
+      ],
+      "default": "idle",
+      "description": "Backend-only serialization state for employee Time Off request creation"
+    },
+    "time_off_create_request_id": {
+      "type": "string",
+      "description": "Request id currently holding the employee Time Off create lock"
+    },
+    "time_off_create_claim_token": {
+      "type": "string",
+      "description": "Opaque backend claim token for the current Time Off create lock"
+    },
+    "time_off_create_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when the current Time Off create lock was claimed"
     }
   },
   "required": [
