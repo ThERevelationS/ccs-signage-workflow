@@ -45,7 +45,6 @@ import ResearchProgressBar from "@/components/permitting/ResearchProgressBar";
 import AnnouncementManager from "@/components/announcements/AnnouncementManager";
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
 
@@ -137,25 +136,6 @@ function LayoutContent({ children }) {
   // Multi-page view state
   const { additionalPages, addPage, removePage, clearPages, isInMultiView } = useMultiPageView();
   
-  // Pending imports count for nav badge
-  const [pendingImportCount, setPendingImportCount] = useState(0);
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const rows = await loadAllEntityRows({
-          entity: base44.entities.PendingImport,
-          query: { status: 'pending' },
-          sort: "created_date",
-          label: "Pending Import nav count",
-        });
-        setPendingImportCount(rows.length);
-      } catch {}
-    };
-    load();
-    const interval = setInterval(load, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
   // Detect mobile
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -618,9 +598,6 @@ function LayoutContent({ children }) {
                         {item.title}
                       </span>
                       {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                      {item.title === 'Sales Pipeline' && pendingImportCount > 0 && (
-                        <span className="ml-auto w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pendingImportCount}</span>
-                      )}
                       </Link>
                       );
                       })}
@@ -728,9 +705,6 @@ function LayoutContent({ children }) {
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
-                        {item.title === 'Sales Pipeline' && pendingImportCount > 0 && (
-                          <span className="w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">{pendingImportCount}</span>
-                        )}
                         </Link>
                         );
                         })}
