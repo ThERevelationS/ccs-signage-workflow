@@ -332,8 +332,12 @@ export default function SalesPipelineTableBody({
                 </td>
               )}
               {isColumnVisible("close_date") && (
-                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}>
-                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} allowClear={isOpen} />
+                <td
+                  className="px-1 py-0.5 border-r"
+                  title="Close date is set by the Won/Lost workflow. Active records with a stale close date can be cleared from the cell context menu."
+                  onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}
+                >
+                  <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={false} allowClear={false} />
                 </td>
               )}
               {isColumnVisible("probability") && (
