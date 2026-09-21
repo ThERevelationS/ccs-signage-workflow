@@ -34,6 +34,11 @@ import {
 } from "lucide-react";
 import { processCorebridgeEmails } from "@/functions/processCorebridgeEmails";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import {
+  getCorebridgeApiAccountSummary,
+  getCorebridgeApiStatus,
+  testCorebridgeApiConnection,
+} from "@/components/admin/corebridgeApiPersistence";
 
 const GlobalSettings = base44.entities.GlobalSettings;
 const CorebridgeLog = base44.entities.CorebridgeLog;
@@ -86,11 +91,65 @@ export default function CorebridgeAISettings({ sessionToken }) {
   const [logs, setLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [expandedLog, setExpandedLog] = useState(null);
+  const [apiStatus, setApiStatus] = useState(null);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [apiTestResult, setApiTestResult] = useState(null);
+  const [apiAccount, setApiAccount] = useState(null);
 
   useEffect(() => {
     loadSettings();
     loadLogs();
+    if (sessionToken) loadApiStatus();
   }, []);
+
+  const loadApiStatus = async () => {
+    if (!sessionToken) return;
+    setApiLoading(true);
+    setApiError("");
+    try {
+      const status = await getCorebridgeApiStatus({ sessionToken });
+      setApiStatus(status);
+    } catch (err) {
+      console.error("Error loading CoreBridge API status:", err);
+      setApiError(err?.message || "CoreBridge API status could not be loaded safely.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleApiTest = async () => {
+    if (!sessionToken || apiLoading) return;
+    setApiLoading(true);
+    setApiError("");
+    setApiTestResult(null);
+    try {
+      const result = await testCorebridgeApiConnection({ sessionToken });
+      setApiTestResult(result);
+      await loadApiStatus();
+    } catch (err) {
+      console.error("CoreBridge API connection test failed:", err);
+      setApiError(err?.message || "CoreBridge API connection test failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleApiAccount = async () => {
+    if (!sessionToken || apiLoading) return;
+    setApiLoading(true);
+    setApiError("");
+    setApiAccount(null);
+    try {
+      const result = await getCorebridgeApiAccountSummary({ sessionToken });
+      setApiAccount(result?.account || null);
+    } catch (err) {
+      console.error("CoreBridge API account lookup failed:", err);
+      setApiError(err?.message || "CoreBridge API account lookup failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
 
   const loadSettings = async () => {
     try {
