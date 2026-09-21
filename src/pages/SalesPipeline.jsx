@@ -8,7 +8,6 @@ import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, Br
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
-import PendingImportsPanel, { fetchPendingImportCount } from "@/components/sales/PendingImportsPanel";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
@@ -95,16 +94,7 @@ export default function SalesPipeline() {
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [canImportExport, setCanImportExport] = useState(false);
   const [showPendingImports, setShowPendingImports] = useState(false);
-  const [pendingTab, setPendingTab] = useState("imports"); // "imports" | "duplicates"
-  const [pendingCount, setPendingCount] = useState(0);
   const spreadsheetRef = useRef(null);
-
-  useEffect(() => {
-    const loadCount = async () => {
-      setPendingCount(await fetchPendingImportCount());
-    };
-    loadCount();
-  }, []);
 
   useEffect(() => {
     document.title = "Sales Pipeline - Workflow Manager";
@@ -180,18 +170,13 @@ export default function SalesPipeline() {
             <h1 className="whitespace-nowrap text-lg font-bold text-gray-800">Sales Pipeline</h1>
             <span className="sr-only">Manage leads and opportunities</span>
           </div>
-          {/* Pending Imports tab */}
+          {/* Duplicate cleanup */}
           <button
             onClick={() => setShowPendingImports(!showPendingImports)}
-            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-amber-200 bg-white text-amber-700 hover:bg-amber-50'}`}
+            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'}`}
           >
             <Inbox className="w-4 h-4" />
-            {showPendingImports ? '← Return' : 'Pending Imports / Duplicates'}
-            {!showPendingImports && pendingCount > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                {pendingCount}
-              </span>
-            )}
+            {showPendingImports ? '← Return' : 'Duplicate Cleanup'}
           </button>
 
           <div className="flex-1" />
