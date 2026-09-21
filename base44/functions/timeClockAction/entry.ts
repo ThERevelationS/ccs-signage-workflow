@@ -2329,24 +2329,76 @@ Deno.serve(async (req) => {
 
       if (action === 'time_off_request_create') {
         const createPayloadHash = await payloadHash(requestedFields);
-        const priorAudit = await uniqueRow(
+        const createClaimToken = crypto.randomUUID();
+        const CREATE_CLAIM_STALE_MS = 30_000;
+        let createAudit = await uniqueRow(
           auditEntity,
           { action: 'time_off_request_create', request_id: requestId, user_email: target.email },
           'Time-off request create audit',
         );
-        if (priorAudit?.id) {
-          const priorHash = String(priorAudit.details?.payload_hash || '');
-          if (priorHash && !constantTimeEqual(priorHash, createPayloadHash)) {
-            return Response.json({ success: false, error: 'This time-off request id is already bound to different request details.' }, { status: 409 });
+        let ownsCreateClaim = false;
+
+        if (!createAudit?.id) {
+          const intentTimestamp = new Date().toISOString();
+          try {
+            await auditEntity.create({
+              action: 'time_off_request_create',
+              outcome: 'pending',
+              user_email: target.email,
+              user_name: target.full_name || target.email,
+              actor_email: actorEmail,
+              actor_role: actor.role,
+              authentication_method: authenticationMethodFor(actor, target),
+              server_timestamp: intentTimestamp,
+              request_id: requestId,
+              reason,
+              details: {
+                payload_hash: createPayloadHash,
+                request_type: requestType,
+                start_date: startDate,
+                end_date: endDate,
+                hours_requested: hoursRequested,
+                requested_reason: reason,
+                create_claim_token: createClaimToken,
+              },
+            });
+          } catch (error) {
+            console.error('Time-off create audit intent write was ambiguous; verifying exact request:', error?.message || error);
           }
-          if (['confirmed', 'recovered'].includes(String(priorAudit.outcome || ''))) {
-            const priorId = String(priorAudit.details?.time_off_request_id || '');
-            const priorRecord = priorId ? await timeOffRequestEntity.get(priorId).catch(() => null) : null;
-            if (!priorRecord?.id || asEmail(priorRecord.user_email) !== target.email) {
-              return Response.json({ success: false, error: 'The time-off create audit is confirmed but its request record is missing. Admin investigation is required.' }, { status: 409 });
-            }
-            return Response.json({ success: true, request: priorRecord, audit_id: priorAudit.id, reused: true });
+
+          const intentRows = await auditEntity.filter({
+            action: 'time_off_request_create',
+            request_id: requestId,
+            user_email: target.email,
+          });
+          if (!Array.isArray(intentRows)) throw new Error('Time-off create audit intent lookup did not return a record list.');
+          if (intentRows.length > 1) {
+            return Response.json({ success: false, error: 'This time-off submission has multiple audit intents. No request was created by this attempt; admin investigation is required.' }, { status: 409 });
           }
+          if (intentRows.length !== 1) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The time-off audit intent could not be verified. Retry the same request.' }, { status: 409 });
+          }
+          createAudit = intentRows[0];
+          ownsCreateClaim = String(createAudit.details?.create_claim_token || '') === createClaimToken;
+        }
+
+        const priorHash = String(createAudit?.details?.payload_hash || '');
+        if (priorHash && !constantTimeEqual(priorHash, createPayloadHash)) {
+          return Response.json({ success: false, error: 'This time-off request id is already bound to different request details.' }, { status: 409 });
+        }
+        if (createAudit?.outcome === 'blocked') {
+          return Response.json({ success: false, error: 'This time-off request was previously blocked. Reload before submitting again.' }, { status: 409 });
+        }
+        if (['confirmed', 'recovered', 'reused'].includes(String(createAudit?.outcome || ''))) {
+          const priorId = String(createAudit.details?.time_off_request_id || '');
+          const priorRecord = priorId ? await timeOffRequestEntity.get(priorId).catch(() => null) : null;
+          if (!priorRecord?.id || asEmail(priorRecord.user_email) !== target.email) {
+            return Response.json({ success: false, error: 'The time-off create audit is complete but its request record is missing. Admin investigation is required.' }, { status: 409 });
+          }
+          return Response.json({ success: true, request: priorRecord, audit_id: createAudit.id, reused: true });
+        }
+        if (String(createAudit?.outcome || '') !== 'pending') {
+          return Response.json({ success: false, error: 'The time-off create audit is not in a recoverable state.' }, { status: 409 });
         }
 
         let saved = await uniqueRow(
@@ -2354,6 +2406,9 @@ Deno.serve(async (req) => {
           { user_email: target.email, last_request_id: requestId },
           'Time-off create request id',
         );
+        let createdNow = false;
+        let reusedExisting = false;
+
         if (saved?.id) {
           const storedHash = String(saved.last_request_payload_hash || '');
           if (storedHash && !constantTimeEqual(storedHash, createPayloadHash)) {
@@ -2369,63 +2424,124 @@ Deno.serve(async (req) => {
             archived_test_data: { $ne: true },
           });
           if (!Array.isArray(matching)) throw new Error('Pending time-off request lookup did not return a record list.');
-          if (matching.length > 1) return Response.json({ success: false, error: 'Multiple matching pending time-off requests already exist. Admin review is required before another is submitted.' }, { status: 409 });
+          if (matching.length > 1) {
+            await auditEntity.updateMany(
+              { id: createAudit.id, outcome: 'pending', request_id: requestId },
+              { $set: { outcome: 'blocked' } },
+            );
+            return Response.json({ success: false, error: 'Multiple matching pending time-off requests already exist. Admin review is required before another is submitted.' }, { status: 409 });
+          }
           if (matching.length === 1) {
             const existing = matching[0];
             if (
               Number(existing.hours_requested || 0) !== hoursRequested ||
               String(existing.reason || '') !== reason
             ) {
+              await auditEntity.updateMany(
+                { id: createAudit.id, outcome: 'pending', request_id: requestId },
+                { $set: { outcome: 'blocked' } },
+              );
               return Response.json({ success: false, error: 'A pending request already exists for these dates and type with different details. Edit that request instead.' }, { status: 409 });
             }
             saved = existing;
-          } else {
-            saved = await timeOffRequestEntity.create({
-              user_email: target.email,
-              user_name: target.full_name || target.email,
-              ...requestedFields,
-              status: 'pending',
-              last_request_id: requestId,
-              last_request_payload_hash: createPayloadHash,
-            });
-            if (!saved?.id) throw new Error('Time-off request could not be persisted.');
-            const requestRows = await timeOffRequestEntity.filter({ user_email: target.email, last_request_id: requestId });
-            if (!Array.isArray(requestRows) || requestRows.length !== 1 || requestRows[0]?.id !== saved.id) {
-              return Response.json({ success: false, error: 'Time-off request creation could not be verified uniquely. Admin review is required.' }, { status: 409 });
-            }
+            reusedExisting = true;
           }
         }
 
-        let createAudit: any = null;
-        try {
-          const ensured = await ensureUserActionAudit(auditEntity, {
-            action: 'time_off_request_create',
-            outcome: 'confirmed',
+        if (!saved?.id && !ownsCreateClaim) {
+          const claimTimestampMs = Date.parse(String(createAudit.server_timestamp || ''));
+          const claimAgeMs = Number.isFinite(claimTimestampMs) ? Date.now() - claimTimestampMs : 0;
+          if (!Number.isFinite(claimTimestampMs) || claimAgeMs < CREATE_CLAIM_STALE_MS) {
+            return Response.json({ success: false, retry_same_request: true, error: 'This time-off submission is already being processed. Retry the same request after status refresh.' }, { status: 409 });
+          }
+
+          const takeoverTimestamp = new Date().toISOString();
+          const takeoverDetails = {
+            ...(createAudit.details || {}),
+            payload_hash: createPayloadHash,
+            create_claim_token: createClaimToken,
+            claim_recovered_at: takeoverTimestamp,
+          };
+          const claimed = await auditEntity.updateMany(
+            {
+              id: createAudit.id,
+              outcome: 'pending',
+              request_id: requestId,
+              user_email: target.email,
+              server_timestamp: createAudit.server_timestamp,
+            },
+            { $set: { server_timestamp: takeoverTimestamp, details: takeoverDetails } },
+          );
+          if (!claimed || claimed.updated !== 1) {
+            return Response.json({ success: false, retry_same_request: true, error: 'Another session is recovering this time-off submission. Retry the same request after status refresh.' }, { status: 409 });
+          }
+          createAudit = await auditEntity.get(createAudit.id);
+          ownsCreateClaim = String(createAudit?.details?.create_claim_token || '') === createClaimToken;
+          if (!ownsCreateClaim) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The time-off submission recovery claim could not be verified. Retry the same request.' }, { status: 409 });
+          }
+        }
+
+        if (!saved?.id) {
+          saved = await timeOffRequestEntity.create({
             user_email: target.email,
             user_name: target.full_name || target.email,
-            actor_email: actorEmail,
-            actor_role: actor.role,
-            authentication_method: authenticationMethodFor(actor, target),
+            ...requestedFields,
+            status: 'pending',
+            last_request_id: requestId,
+            last_request_payload_hash: createPayloadHash,
+          });
+          if (!saved?.id) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The time-off request could not be verified after create. Retry the same request.' }, { status: 409 });
+          }
+          createdNow = true;
+          const requestRows = await timeOffRequestEntity.filter({ user_email: target.email, last_request_id: requestId });
+          if (!Array.isArray(requestRows) || requestRows.length !== 1 || requestRows[0]?.id !== saved.id) {
+            await auditEntity.updateMany(
+              { id: createAudit.id, outcome: 'pending', request_id: requestId },
+              { $set: { outcome: 'blocked' } },
+            );
+            return Response.json({ success: false, error: 'Time-off request creation could not be verified uniquely. Admin review is required.' }, { status: 409 });
+          }
+        }
+
+        const finalOutcome = reusedExisting ? 'reused' : createdNow ? 'confirmed' : 'recovered';
+        const finalized = await auditEntity.updateMany(
+          { id: createAudit.id, outcome: 'pending', request_id: requestId, user_email: target.email },
+          { $set: {
+            outcome: finalOutcome,
             server_timestamp: new Date().toISOString(),
-            request_id: requestId,
             reason,
             details: {
+              ...(createAudit.details || {}),
               payload_hash: createPayloadHash,
               time_off_request_id: saved.id,
               request_type: requestType,
               start_date: startDate,
               end_date: endDate,
               hours_requested: hoursRequested,
+              requested_reason: reason,
+              reused_existing: reusedExisting,
+              recovered_after_request_save: !createdNow && !reusedExisting,
             },
-          }, 'Time-off request create audit');
-          createAudit = ensured.audit;
-        } catch {
-          return Response.json({ success: false, retry_same_request: true, error: 'The time-off request was saved but its audit could not be confirmed. Retry the same request.' }, { status: 409 });
+          } },
+        );
+        if (!finalized || finalized.updated !== 1) {
+          const freshAudit = await auditEntity.get(createAudit.id).catch(() => null);
+          if (!freshAudit || !['confirmed', 'recovered', 'reused'].includes(String(freshAudit.outcome || ''))) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The time-off request was saved but its audit could not be finalized. Retry the same request.' }, { status: 409 });
+          }
+          createAudit = freshAudit;
+        } else {
+          createAudit = await auditEntity.get(createAudit.id).catch(() => createAudit);
         }
-        if (String(createAudit?.details?.payload_hash || '') && !constantTimeEqual(String(createAudit.details.payload_hash), createPayloadHash)) {
-          return Response.json({ success: false, error: 'The time-off request audit is bound to different request details. Admin investigation is required.' }, { status: 409 });
-        }
-        return Response.json({ success: true, request: saved, audit_id: createAudit.id, reused: Boolean(priorAudit?.id) });
+
+        return Response.json({
+          success: true,
+          request: saved,
+          audit_id: createAudit.id,
+          reused: finalOutcome !== 'confirmed',
+        });
       }
 
       const timeOffRequestId = String(body?.time_off_request_id || '').trim();
