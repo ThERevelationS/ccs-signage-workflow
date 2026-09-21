@@ -1,0 +1,65 @@
+{
+  "name": "CorebridgeApiAudit",
+  "type": "object",
+  "description": "Audit log for direct CoreBridge API gateway calls. Never stores subscription keys, authorization material, or response bodies.",
+  "properties": {
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "api_family": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string"
+    },
+    "http_status": {
+      "type": "number"
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "requested_at",
+    "actor_email",
+    "action",
+    "api_family",
+    "endpoint",
+    "success"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__corebridge_api_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__corebridge_api_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__corebridge_api_backend_only__"
+      }
+    }
+  }
+}
