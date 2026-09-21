@@ -71,7 +71,7 @@ import BackupManager from "../components/admin/BackupManager";
 import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
 import SalesPipelineDefaultSort from "@/components/admin/SalesPipelineDefaultSort";
 import ResourceAllocationView from "@/components/workflow/ResourceAllocationView";
-import CorebridgeAISettings from "@/components/admin/CorebridgeAISettings";
+import CorebridgeApiSettings from "@/components/admin/CorebridgeApiSettings";
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
@@ -953,7 +953,7 @@ export default function AdminSettings() {
                   </TabsTrigger>
                   <TabsTrigger value="corebridge" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <Bot className="w-4 h-4 mr-2" />
-                    CoreBridge AI
+                    CoreBridge API
                   </TabsTrigger>
                   <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <Users className="w-4 h-4 mr-2" />
@@ -1045,7 +1045,7 @@ export default function AdminSettings() {
                   </TabsContent>
 
               <TabsContent value="corebridge">
-                <CorebridgeAISettings sessionToken={sessionToken} />
+                <CorebridgeApiSettings sessionToken={sessionToken} />
               </TabsContent>
             </>
           )}
