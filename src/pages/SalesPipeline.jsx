@@ -93,7 +93,7 @@ export default function SalesPipeline() {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [canImportExport, setCanImportExport] = useState(false);
-  const [showPendingImports, setShowPendingImports] = useState(false);
+  const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -172,11 +172,11 @@ export default function SalesPipeline() {
           </div>
           {/* Duplicate cleanup */}
           <button
-            onClick={() => setShowPendingImports(!showPendingImports)}
-            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showPendingImports ? 'border-green-400 bg-green-50 text-green-800' : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'}`}
+            onClick={() => setShowDuplicateCleanup(!showDuplicateCleanup)}
+            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showDuplicateCleanup ? 'border-green-400 bg-green-50 text-green-800' : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'}`}
           >
             <Inbox className="w-4 h-4" />
-            {showPendingImports ? '← Return' : 'Duplicate Cleanup'}
+            {showDuplicateCleanup ? '← Return' : 'Duplicate Cleanup'}
           </button>
 
           <div className="flex-1" />
@@ -356,7 +356,7 @@ export default function SalesPipeline() {
           </div>
         </div>
 
-        {!showPendingImports && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
+        {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
           <div className="mb-1 space-y-1">
             <div className="flex gap-1.5 overflow-x-auto pb-0.5" title="Pipeline summary. Swipe or scroll horizontally on smaller screens.">
               <button type="button" title={`${Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} non-test · ${pipelineSummary.placeholderCount} test · ${pipelineSummary.assignedOwnerCount} owned · ${pipelineSummary.unassignedOwnerCount} unassigned`} onClick={() => applyAttentionFilter("all")} className="min-w-[150px] flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
@@ -448,7 +448,7 @@ export default function SalesPipeline() {
           </div>
         )}
 
-        {!showPendingImports && recordScope === "outcomes" && (
+        {!showDuplicateCleanup && recordScope === "outcomes" && (
           <div className="mb-3 space-y-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
               <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("all"); }} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
@@ -543,7 +543,7 @@ export default function SalesPipeline() {
           </div>
         )}
 
-        {showPendingImports ? (
+        {showDuplicateCleanup ? (
           <div className="clay-card p-4 overflow-auto flex flex-col" style={{ flex: 1, minHeight: 0 }}>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <Inbox className="w-5 h-5 text-orange-600 flex-shrink-0" />
