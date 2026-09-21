@@ -18,11 +18,15 @@ Total supplied operations: 763.
 
 ## Authentication
 
-The supplied OpenAPI definitions declare Azure API Management subscription-key authentication:
-- preferred header: `Ocp-Apim-Subscription-Key`
-- alternate query parameter: `subscription-key`
+CoreBridge Legacy v3 uses a generated token pair:
+- Azure API Management subscription key sent as `Ocp-Apim-Subscription-Key`
+- authentication token sent as `Authentication-Token: Bearer <token>`
 
-CCS must use the header form only. The key is stored only as the Base44 app secret `COREBRIDGE_SUBSCRIPTION_KEY`. It must never be stored in an entity, browser state, log, URL, source control, or returned to the client.
+CCS uses server-side headers only. Store the two values only as Base44 app secrets:
+- `COREBRIDGE_SUBSCRIPTION_KEY`
+- `COREBRIDGE_AUTHENTICATION_TOKEN`
+
+Neither secret may be stored in an entity, browser state, log, URL, source control, or returned to the client.
 
 ## Phase 0 gateway policy
 
