@@ -763,38 +763,59 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     
     return (
       <div className="relative">
-        <button type="button" data-dropdown-id={uniqueId} onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
-          className="h-6 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[100px]">
+        <button
+          type="button"
+          data-dropdown-id={uniqueId}
+          onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
+          className="h-11 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[100px] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-6"
+          aria-expanded={isOpen}
+          aria-label={`${detailId ? 'Detail' : 'Checklist item'} conditions`}
+        >
           <span className="truncate flex-1 text-left">{selectedNames.length === 0 ? "Condition" : selectedNames.length === 1 ? selectedNames[0] : `${selectedNames.length} selected`}</span>
-          <ChevronDown className="w-3 h-3 flex-shrink-0" />
+          <ChevronDown className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
         </button>
         {isOpen && ReactDOM.createPortal(
           <>
             <div className="fixed inset-0 z-[300]" onClick={() => setOpenDropdownId(null)} />
-            <div className="fixed z-[301] bg-white border rounded-lg shadow-2xl min-w-[240px] max-h-64 overflow-y-auto" 
-              style={{ 
+            <div
+              className="fixed z-[301] bg-white border rounded-lg shadow-2xl min-w-[240px] max-h-64 overflow-y-auto"
+              style={{
                 top: getButtonRect().bottom + 4,
                 left: getButtonRect().left
-              }}>
+              }}
+              role="group"
+              aria-label={`${detailId ? 'Detail' : 'Checklist item'} conditions`}
+            >
               <div className="p-2 border-b bg-gray-50 font-medium text-xs sticky top-0">Select Conditions</div>
               {[...dropdownConditions.filter(d => d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0)),
                 ...dropdownConditions.filter(d => !d.is_completed).sort((a, b) => (a.order || 0) - (b.order || 0))
               ].map(dd => (
-                <div key={dd.id} onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
-                  className={`flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}>
+                <button
+                  key={dd.id}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleCondition(dd.id); }}
+                  className={`w-full min-h-11 flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-left text-sm touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-400 ${dd.is_completed ? 'bg-green-50' : 'bg-yellow-50'}`}
+                  aria-pressed={currentIds.includes(dd.id)}
+                >
+                  <div
+                    className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${currentIds.includes(dd.id) ? 'bg-purple-500 border-purple-500' : 'border-gray-300'}`}
+                    aria-hidden="true"
+                  >
                     {currentIds.includes(dd.id) && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <span>{dd.name}</span>
                   <span className={`text-xs px-1 py-0.5 rounded ${dd.is_completed ? 'bg-green-200 text-green-700' : 'bg-yellow-200 text-yellow-700'}`}>
                     {dd.is_completed ? '✓' : 'C'}
                   </span>
-                </div>
+                </button>
               ))}
-              <div onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm text-purple-600 font-medium border-t sticky bottom-0 bg-white">
-                <Plus className="w-4 h-4" /><span>Add New Condition...</span>
-              </div>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowOtherPopup({ items, setItems, itemId: item.id, detailId }); setOpenDropdownId(null); }}
+                className="w-full min-h-11 flex items-center gap-2 px-3 py-2 hover:bg-purple-50 cursor-pointer text-left text-sm text-purple-600 font-medium border-t sticky bottom-0 bg-white touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-400"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" /><span>Add New Condition...</span>
+              </button>
             </div>
           </>,
           document.body
@@ -843,30 +864,59 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return (
     <div ref={provided.innerRef} {...provided.draggableProps} 
       className={`border rounded p-1.5 bg-white mb-1 ${expandedItems[item.id] ? 'ring-1 ring-blue-300' : ''}`}>
-      <div className="flex items-center gap-1">
-        <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
-        <button onClick={() => toggleItemExpanded(item.id)} className="p-0.5">
-          {expandedItems[item.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+      <div className="flex flex-wrap items-center gap-1 lg:flex-nowrap">
+        <div
+          {...provided.dragHandleProps}
+          className="h-11 w-11 shrink-0 cursor-grab flex items-center justify-center touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-auto lg:w-auto"
+          aria-label={`Drag to reorder checklist item ${item.text}`}
+          title={`Drag to reorder checklist item ${item.text}`}
+        >
+          <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
+        </div>
+        <button
+          type="button"
+          onClick={() => toggleItemExpanded(item.id)}
+          className="h-11 w-11 shrink-0 rounded flex items-center justify-center touch-manipulation hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-6 lg:w-6"
+          aria-expanded={Boolean(expandedItems[item.id])}
+          aria-label={`${expandedItems[item.id] ? 'Collapse' : 'Expand'} checklist item ${item.text}`}
+          title={`${expandedItems[item.id] ? 'Collapse' : 'Expand'} checklist item ${item.text}`}
+        >
+          {expandedItems[item.id] ? <ChevronDown className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /> : <ChevronRight className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />}
         </button>
         <span className="text-xs px-1 py-0.5 rounded bg-blue-100 text-blue-700">C</span>
         {editingItem === item.id ? (
           <Input value={item.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value })}
             onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-            autoFocus className="h-5 text-xs flex-1" />
+            autoFocus className="h-11 text-xs flex-1 lg:h-5" aria-label="Checklist item text" />
         ) : (
-          <span className="flex-1 text-xs font-medium truncate cursor-pointer" onClick={() => setEditingItem(item.id)}>{item.text}</span>
+          <button
+            type="button"
+            className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left text-xs font-medium touch-manipulation hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:min-h-0 lg:px-0"
+            onClick={() => setEditingItem(item.id)}
+            aria-label={`Edit checklist item ${item.text}`}
+            title={`Edit checklist item ${item.text}`}
+          >
+            {item.text}
+          </button>
         )}
         {renderConditionSelect(item, items, setItems, null, markChanged)}
-        <select 
-          value={item.approved_by || ""} 
+        <select
+          value={item.approved_by || ""}
           onChange={(e) => updateItemWithChange(item.id, { approved_by: e.target.value })}
-          className="h-5 text-xs px-1 border rounded bg-white"
+          className="h-11 max-w-[9rem] text-xs px-1 border rounded bg-white touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-5 lg:max-w-none"
+          aria-label={`Answered by for checklist item ${item.text}`}
         >
           <option value="">Answered by...</option>
           {users.map(u => <option key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</option>)}
         </select>
-        <button onClick={() => deleteItemWithChange(item.id)} className="p-0.5 hover:bg-red-50 rounded">
-          <Trash2 className="w-3 h-3 text-red-500" />
+        <button
+          type="button"
+          onClick={() => deleteItemWithChange(item.id)}
+          className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6"
+          aria-label={`Delete checklist item ${item.text}`}
+          title={`Delete checklist item ${item.text}`}
+        >
+          <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
         </button>
       </div>
       
@@ -932,24 +982,41 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           {/* Details */}
           {item.details?.map((detail) => (
             <div key={detail.id} className="bg-gray-50 p-1 rounded border">
-              <div className="flex items-center gap-1 text-xs">
+              <div className="flex flex-wrap items-center gap-1 text-xs lg:flex-nowrap">
                 <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">D</span>
                 {editingItem === detail.id ? (
                   <Input value={detail.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id)}
-                    onBlur={() => setEditingItem(null)} autoFocus className="h-4 text-xs flex-1" />
+                    onBlur={() => setEditingItem(null)} autoFocus className="h-11 text-xs flex-1 lg:h-4" aria-label="Detail text" />
                 ) : (
-                  <span className="flex-1 truncate cursor-pointer" onClick={() => setEditingItem(detail.id)}>{detail.text}</span>
+                  <button
+                    type="button"
+                    className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left touch-manipulation hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:min-h-0 lg:px-0"
+                    onClick={() => setEditingItem(detail.id)}
+                    aria-label={`Edit detail ${detail.text}`}
+                    title={`Edit detail ${detail.text}`}
+                  >
+                    {detail.text}
+                  </button>
                 )}
                 {renderConditionSelect(item, items, setItems, detail.id, markChanged)}
-                <select 
-                  value={detail.approved_by || ""} 
+                <select
+                  value={detail.approved_by || ""}
                   onChange={(e) => updateItemWithChange(item.id, { approved_by: e.target.value }, detail.id)}
-                  className="h-4 text-xs px-1 border rounded bg-white"
+                  className="h-11 max-w-[9rem] text-xs px-1 border rounded bg-white touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-4 lg:max-w-none"
+                  aria-label={`Answered by for detail ${detail.text}`}
                 >
                   <option value="">Answered...</option>
                   {users.map(u => <option key={u.email} value={u.full_name || u.email}>{u.full_name || u.email}</option>)}
                 </select>
-                <button onClick={() => deleteItemWithChange(item.id, detail.id)} className="p-0.5"><Trash2 className="w-2.5 h-2.5 text-red-400" /></button>
+                <button
+                  type="button"
+                  onClick={() => deleteItemWithChange(item.id, detail.id)}
+                  className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6"
+                  aria-label={`Delete detail ${detail.text}`}
+                  title={`Delete detail ${detail.text}`}
+                >
+                  <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
+                </button>
               </div>
               <div className="ml-4 mt-1 space-y-0.5">
                 {detail.tasks?.map((task) => (
