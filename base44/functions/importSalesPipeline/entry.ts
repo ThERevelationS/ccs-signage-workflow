@@ -132,10 +132,10 @@ async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
   }
 
   for (const names of chunk(weakClientNames, CLIENT_REGEX_CHUNK_SIZE)) {
-    const pattern = `^(?:${names.map(escapeRegex).join('|')})$`;
+    const pattern = normalizedAlternationRegex(names);
     addRows(await loadAllEntityRows({
       entity,
-      query: { client_name: { $regex: pattern, $options: 'i' }, is_rider: false, deleted: { $ne: true } },
+      query: { client_name: { $regex: pattern, $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
       sort: 'created_date',
       label: 'Sales import customer identities',
     }));
@@ -174,7 +174,7 @@ async function readIdentityMatches(entity: any, importRow: any) {
 
   const clientRows = await loadAllEntityRows({
     entity,
-    query: { client_name: { $regex: `^${escapeRegex(importRow.clientName)}$`, $options: 'i' }, is_rider: false, deleted: { $ne: true } },
+    query: { client_name: { $regex: normalizedExactRegex(importRow.clientName), $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
     sort: 'created_date',
     label: `Sales import customer identity ${importRow.clientName}`,
   });
