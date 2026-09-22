@@ -129,6 +129,12 @@ export default function PermitSpreadsheetRow({
   const isCompleted = isPermitLineEffectivelyComplete(lineItem);
   const steps = lineItem.steps || [];
 
+  useEffect(() => {
+    setJurisdictionMatches(null);
+    setJurisdictionPreviewError("");
+    setJurisdictionPreviewOpen(false);
+  }, [lineItem.locality_name, localityState]);
+
   // Follow-up highlighting
   const getFollowupStyle = () => {
     if (isCompleted) return {};
