@@ -873,6 +873,94 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
+  const saveCustomerReviewChoice = async ({
+    group,
+    action,
+    candidate = null,
+    rememberAlias = false,
+  } = {}) => {
+    if (reviewSaving || !group?.decision_key) return;
+    if (!config.observation_mode || config.global_enabled) {
+      setError("Customer-resolution review decisions are only allowed while observation mode is ON and global sync is OFF.");
+      return;
+    }
+
+    const profile = group.dataset === "sales" ? config.sales : group.dataset === "orders" ? config.orders : null;
+    const baseline = profile?.rollout_baseline;
+    if (!baseline?.captured_at || String(baseline.sheet_id || "") !== String(group.sheet_id || "")) {
+      setError("Capture the matching rollout baseline before saving customer-resolution decisions.");
+      return;
+    }
+
+    setReviewSaving(true);
+    setError("");
+    try {
+      const decidedAt = new Date().toISOString();
+      const decision = action === "use_existing_customer"
+        ? buildUseExistingCustomerDecision({
+          group,
+          customerId: candidate?.customer_id,
+          companyName: candidate?.company_name,
+          rememberAlias,
+          decidedAt,
+        })
+        : action === "create_new_customer"
+          ? buildCreateNewCustomerDecision({ group, decidedAt })
+          : null;
+      if (!decision) throw new Error("Choose a valid customer-resolution decision.");
+
+      const nextReview = setCustomerReviewDecision(customerReview, group.decision_key, decision);
+      const savedRecord = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: customerReviewRecord,
+        settingKey: CUSTOMER_REVIEW_SETTING_KEY,
+        nextValue: nextReview,
+        label: "Smartsheet customer-resolution review",
+      });
+      setCustomerReviewRecord(savedRecord);
+      setCustomerReview(mergeSmartsheetCustomerReview(savedRecord?.setting_value));
+      setApiMessage(
+        action === "create_new_customer"
+          ? `Review decision saved for ${group.source_name}: approved as a future new-Customer candidate. No Customer or business record was created.`
+          : `Review decision saved for ${group.source_name}: use ${candidate?.company_name}${rememberAlias ? " and plan this Smartsheet name as an alias" : ""}. No Customer was changed and no business record was created.`
+      );
+    } catch (err) {
+      console.error("Smartsheet customer-resolution review save blocked:", err);
+      setError(err?.message || "Customer-resolution review decision could not be saved safely.");
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  const clearCustomerReviewChoice = async (group) => {
+    if (reviewSaving || !group?.decision_key) return;
+    if (!config.observation_mode || config.global_enabled) {
+      setError("Customer-resolution review decisions are only allowed while observation mode is ON and global sync is OFF.");
+      return;
+    }
+
+    setReviewSaving(true);
+    setError("");
+    try {
+      const nextReview = clearCustomerReviewDecision(customerReview, group.decision_key);
+      const savedRecord = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: customerReviewRecord,
+        settingKey: CUSTOMER_REVIEW_SETTING_KEY,
+        nextValue: nextReview,
+        label: "Smartsheet customer-resolution review",
+      });
+      setCustomerReviewRecord(savedRecord);
+      setCustomerReview(mergeSmartsheetCustomerReview(savedRecord?.setting_value));
+      setApiMessage(`Customer-resolution review decision cleared for ${group.source_name}. No Customer or business record was changed.`);
+    } catch (err) {
+      console.error("Smartsheet customer-resolution review clear blocked:", err);
+      setError(err?.message || "Customer-resolution review decision could not be cleared safely.");
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
   useEffect(() => {
     load();
     loadApiStatus();
