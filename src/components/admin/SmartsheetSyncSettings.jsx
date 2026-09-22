@@ -21,11 +21,6 @@ import {
   mappingDirectionLabel,
   mappingTransformLabel,
 } from "@/components/admin/smartsheetMappingModel";
-import {
-  SMARTSHEET_MAPPING_BLUEPRINTS,
-  mappingDirectionLabel,
-  mappingTransformLabel,
-} from "@/components/admin/smartsheetMappingModel";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
@@ -67,35 +62,6 @@ function mergeConfig(saved = {}) {
     sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}) },
     orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}) },
   };
-}
-
-function MappingPlan({ title, rows }) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white/70 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <p className="mt-1 text-xs text-gray-500">Blueprint only. Actual Smartsheet column IDs are not bound until the live sheets are inspected.</p>
-        </div>
-        <Badge variant="outline" className="shrink-0">{rows.length} fields</Badge>
-      </div>
-      <div className="mt-3 max-h-80 overflow-y-auto divide-y rounded-lg border bg-white">
-        {rows.map((row) => (
-          <div key={row.field} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
-            <div className="min-w-0">
-              <div className="font-medium text-gray-800">{row.label}</div>
-              <div className="font-mono text-[10px] text-gray-500">{row.field}</div>
-              {row.suggestedNames?.length > 0 && (
-                <div className="mt-1 text-[10px] text-gray-500">Likely Smartsheet labels: {row.suggestedNames.join(", ")}</div>
-              )}
-            </div>
-            <Badge variant="outline" className="w-fit">{mappingDirectionLabel(row.direction)}</Badge>
-            <Badge variant="outline" className="w-fit">{mappingTransformLabel(row.transform)}</Badge>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function MappingPlan({ title, rows }) {
@@ -538,11 +504,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
       />
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <MappingPlan title="Sales Pipeline mapping blueprint" rows={SMARTSHEET_MAPPING_BLUEPRINTS.sales} />
-        <MappingPlan title="Order Form mapping blueprint" rows={SMARTSHEET_MAPPING_BLUEPRINTS.orders} />
-      </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <MappingPlan title="Sales Pipeline mapping blueprint" rows={SMARTSHEET_MAPPING_BLUEPRINTS.sales} />
