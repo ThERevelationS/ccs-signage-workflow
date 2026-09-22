@@ -68,6 +68,60 @@ export const SMARTSHEET_MAPPING_BLUEPRINTS = Object.freeze({
   orders: Object.freeze(orders.map((item) => Object.freeze({ ...item }))),
 });
 
+function normalizeColumnTitle(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function analyzeSmartsheetColumns(rows = [], columns = []) {
+  const safeColumns = Array.isArray(columns) ? columns : [];
+  const byNormalizedTitle = new Map();
+
+  for (const column of safeColumns) {
+    const key = normalizeColumnTitle(column?.title);
+    if (!key) continue;
+    const bucket = byNormalizedTitle.get(key) || [];
+    bucket.push(column);
+    byNormalizedTitle.set(key, bucket);
+  }
+
+  const mappedColumnIds = new Set();
+  const fields = (Array.isArray(rows) ? rows : []).map((row) => {
+    if (row?.direction === SMARTSHEET_MAPPING_DIRECTIONS.BASE44_ONLY) {
+      return { ...row, status: "protected", matches: [] };
+    }
+
+    const names = [...new Set([row?.label, ...(row?.suggestedNames || [])].map(normalizeColumnTitle).filter(Boolean))];
+    const matches = [];
+    const seenIds = new Set();
+
+    for (const name of names) {
+      for (const column of byNormalizedTitle.get(name) || []) {
+        const id = String(column?.id || "");
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        matches.push(column);
+      }
+    }
+
+    if (matches.length === 1) {
+      mappedColumnIds.add(String(matches[0].id));
+      return { ...row, status: "matched", matches };
+    }
+    if (matches.length > 1) {
+      return { ...row, status: "conflict", matches };
+    }
+    return { ...row, status: "missing", matches: [] };
+  });
+
+  const unmappedColumns = safeColumns.filter((column) => !mappedColumnIds.has(String(column?.id || "")));
+  const counts = fields.reduce((result, field) => {
+    result[field.status] = (result[field.status] || 0) + 1;
+    return result;
+  }, { matched: 0, missing: 0, conflict: 0, protected: 0 });
+
+  return { fields, unmappedColumns, counts };
+}
+
 export function mappingDirectionLabel(direction) {
   if (direction === "two_way") return "Two-way";
   if (direction === "base44_to_smartsheet") return "Base44 → Smartsheet";
