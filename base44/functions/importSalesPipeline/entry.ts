@@ -321,6 +321,11 @@ Deno.serve(async (req) => {
     const WorkOrder = base44.asServiceRole.entities.WorkOrder;
     const ImportJob = base44.asServiceRole.entities.ImportJob;
 
+    if (request.mode === 'apply') {
+      importJob = await getOwnedImportJob(ImportJob, request.importJobId, actorEmail);
+      await ensureNoOtherActiveImport(ImportJob, importJob?.id || '');
+    }
+
     const parseStarted = Date.now();
     const workbook = XLSX.read(request.bytes, { type: 'array', cellDates: true });
     const sheetName = workbook.SheetNames[0];
@@ -332,11 +337,25 @@ Deno.serve(async (req) => {
     const parseMs = Date.now() - parseStarted;
 
     if (rawRows.length === 0) {
+      const durationMs = Date.now() - startedAt;
+      if (importJob?.id) {
+        await ImportJob.update(importJob.id, {
+          status: 'completed',
+          phase: 'completed',
+          total_items: 0,
+          processed_items: 0,
+          current_item: 'Spreadsheet contains no data rows.',
+          completed_at: new Date().toISOString(),
+          duration_ms: durationMs,
+          result_message: 'Spreadsheet contains no data rows.',
+        });
+      }
       return Response.json({
         mode: request.mode,
         summary: { total: 0, create: 0, update: 0, unchanged: 0, conflict: 0, ambiguous: 0, invalid: 0 },
         issues: [],
-        timings: { parse_ms: parseMs, match_ms: 0, apply_ms: 0, total_ms: Date.now() - startedAt },
+        import_job_id: importJob?.id || '',
+        timings: { parse_ms: parseMs, match_ms: 0, apply_ms: 0, total_ms: durationMs },
       });
     }
 
@@ -368,11 +387,8 @@ Deno.serve(async (req) => {
 
     if (request.mode === 'preview') return Response.json(previewPayload);
 
-    const existingJob = await getOwnedImportJob(ImportJob, request.importJobId, actorEmail);
-    await ensureNoOtherActiveImport(ImportJob, existingJob?.id || '');
-
     const skippedItems = summary.conflict + summary.ambiguous + summary.invalid;
-    importJob = await createOrPrepareImportJob(ImportJob, existingJob, actorEmail, {
+    importJob = await createOrPrepareImportJob(ImportJob, importJob, actorEmail, {
       totalItems: summary.total,
       fileName: request.fileName,
       fileHash: fingerprint,
