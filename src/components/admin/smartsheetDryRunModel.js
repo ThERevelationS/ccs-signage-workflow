@@ -4,6 +4,7 @@ import {
   resolveCustomerCandidatesIndexed,
 } from "./smartsheetCustomerResolutionModel.js";
 import { buildSmartsheetRolloutPreview } from "./smartsheetRolloutModel.js";
+import { buildSmartsheetCreationReadiness } from "./smartsheetCreationReadinessModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -102,6 +103,7 @@ export function buildSmartsheetDryRunPreview({
   columnBindings = {},
   dataset = "",
   rolloutBaseline = null,
+  customerReviewState = null,
 } = {}) {
   const safeSheetId = String(sheetId || "");
   const directByRowId = new Map();
@@ -292,6 +294,14 @@ export function buildSmartsheetDryRunPreview({
     baseline: rolloutBaseline,
     sheetId: safeSheetId,
   });
+  const creationReadiness = buildSmartsheetCreationReadiness({
+    rows,
+    rolloutBaseline,
+    rolloutPreview,
+    dataset,
+    sheetId: safeSheetId,
+    customerReviewState,
+  });
 
   return {
     rows,
@@ -300,5 +310,6 @@ export function buildSmartsheetDryRunPreview({
     customerGroups,
     uniqueCustomerSummary,
     rolloutPreview,
+    creationReadiness,
   };
 }
