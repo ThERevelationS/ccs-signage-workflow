@@ -1,5 +1,6 @@
 import { buildSmartsheetDryRunPreview } from "../src/components/admin/smartsheetDryRunModel.js";
 import {
+  buildSmartsheetRolloutBaseline,
   buildSmartsheetRolloutPreview,
   classifySmartsheetRolloutRow,
 } from "../src/components/admin/smartsheetRolloutModel.js";
@@ -96,5 +97,95 @@ const orderRollout = buildSmartsheetRolloutPreview({
 assert(orderRollout.summary.historical_external === 2, "Existing Order Request proposals must stay historical/external at rollout.");
 assert(orderRollout.summary.manual_backfill_review === 0, "Order baseline rows should not silently become generic create candidates.");
 assert(orderRollout.auto_create_eligible === 0, "Existing Order Request rows must not automatically repopulate Base44.");
+
+const orderBaseline = buildSmartsheetRolloutBaseline({
+  sheetId: "4963691473987460",
+  sheetVersion: 44,
+  capturedAt: "2026-09-22T22:00:00.000Z",
+  rows: [
+    { row_id: "o1" },
+    { row_id: "o2" },
+  ],
+});
+assert(orderBaseline.row_count === 2, "Baseline must preserve the complete unique row-ID count.");
+assert(orderBaseline.sheet_version === 44, "Baseline must preserve the observed Smartsheet sheet version.");
+
+const orderAfterBaseline = buildSmartsheetRolloutPreview({
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  baseline: orderBaseline,
+  rows: [
+    {
+      status: "new_record",
+      row_id: "o1",
+      row_number: 10,
+      values: { customer_name: "Acme Signs", description: "Old order" },
+      customer_resolution: { outcome: "exact_company" },
+    },
+    {
+      status: "new_record",
+      row_id: "o2",
+      row_number: 11,
+      values: { customer_name: "Brand New Co", description: "Another old order" },
+      customer_resolution: { outcome: "new_customer" },
+    },
+    {
+      status: "new_record",
+      row_id: "o3",
+      row_number: 12,
+      values: { customer_name: "Later Co", description: "Added after rollout" },
+      customer_resolution: { outcome: "exact_company" },
+    },
+  ],
+});
+assert(orderAfterBaseline.baseline_state === "captured", "Matching sheet baseline must become authoritative for rollout classification.");
+assert(orderAfterBaseline.summary.historical_external === 2, "Rows present at baseline must remain historical/external.");
+assert(orderAfterBaseline.summary.post_baseline_new === 1, "Only unseen row IDs should classify as new after baseline.");
+assert(orderAfterBaseline.creation_review_eligible === 1, "A post-baseline row may enter creation review.");
+assert(orderAfterBaseline.auto_create_eligible === 0, "Post-baseline discovery must not itself perform or authorize automatic creation.");
+
+const wrongSheetBaseline = buildSmartsheetRolloutPreview({
+  dataset: "orders",
+  sheetId: "111",
+  baseline: orderBaseline,
+  rows: [{
+    status: "new_record",
+    row_id: "o3",
+    row_number: 12,
+    values: { customer_name: "Later Co", description: "Added after rollout" },
+  }],
+});
+assert(wrongSheetBaseline.baseline_state === "not_captured", "A baseline from a different sheet must never classify rows.");
+
+let duplicateBaselineBlocked = false;
+try {
+  buildSmartsheetRolloutBaseline({
+    sheetId: "4963691473987460",
+    capturedAt: "2026-09-22T22:00:00.000Z",
+    rows: [{ row_id: "dup" }, { row_id: "dup" }],
+  });
+} catch {
+  duplicateBaselineBlocked = true;
+}
+assert(duplicateBaselineBlocked, "Duplicate or incomplete row identities must block baseline capture.");
+
+const salesBaseline = buildSmartsheetRolloutBaseline({
+  sheetId: "8702703019812740",
+  capturedAt: "2026-09-22T22:00:00.000Z",
+  rows: [{ row_id: "s1" }, { row_id: "s2" }, { row_id: "s3" }, { row_id: "s4" }],
+});
+const salesPostBaseline = classifySmartsheetRolloutRow({
+  status: "new_record",
+  row_id: "s5",
+  row_number: 5,
+  values: {
+    client_name: "Later Sales Co",
+    current_task_description: "Lost",
+  },
+}, "sales", {
+  baseline: salesBaseline,
+  sheetId: "8702703019812740",
+});
+assert(salesPostBaseline.outcome === "post_baseline_new", "A row first seen after baseline must not be silently routed into legacy history from task text.");
 
 console.log("Smartsheet rollout regression validation: PASS");
