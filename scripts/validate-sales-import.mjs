@@ -42,6 +42,12 @@ assert(headers.warnings.length === 0, "Stable identity header should suppress fa
 assert(validateSalesImportHeaders(["Sales Status"]).errors.length === 1, "Missing Customer header must fail.");
 assert(validateSalesImportHeaders(["Customer", "Notes"]).warnings.length === 1, "Missing stable identity should warn.");
 
+const offsetRows = parseSalesImportRows(
+  [{ Customer: "Offset Co", "Est/Inv @": "77" }],
+  { todayStamp: today, rowNumberBase: 6 },
+);
+assert(offsetRows.validRows[0].rowNumber === 6, "Header-row offset must preserve real spreadsheet row numbers.");
+
 const duplicateRows = parseSalesImportRows([
   { Customer: "Acme", "Est/Inv @": "500" },
   { Customer: "Acme", "Est/Inv @": "500" },
