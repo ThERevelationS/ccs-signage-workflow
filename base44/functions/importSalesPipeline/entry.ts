@@ -430,6 +430,8 @@ Deno.serve(async (req) => {
     const actionable = plans.filter((plan) => ['create', 'update'].includes(plan.kind));
     const rowByNumber = new Map(parsed.validRows.map((row) => [row.rowNumber, row]));
     const results = { created: 0, updated: 0, failed: 0, conflicts: summary.conflict, ambiguous: summary.ambiguous, invalid: summary.invalid };
+    const returnChangedRecords = actionable.length <= 100;
+    const changedRecords: any[] = [];
     const runtimeIssues = [...issues];
     let cursor = 0;
     let processedActionable = 0;
@@ -475,13 +477,14 @@ Deno.serve(async (req) => {
       const importRow = rowByNumber.get(plan.rowNumber);
       try {
         if (plan.kind === 'update') {
-          await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
+          const saved = await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
             entity: WorkOrder,
             workOrderId: plan.recordId,
             expectedFields: expectedWorkOrderFields(plan.current, plan.nextFields),
             nextFields: plan.nextFields,
             label: `Sales Pipeline import row ${plan.rowNumber} ${plan.estInvAt || plan.clientName}`,
           }));
+          if (returnChangedRecords && saved?.id) changedRecords.push(saved);
           results.updated += 1;
           return;
         }
@@ -495,15 +498,17 @@ Deno.serve(async (req) => {
         }));
 
         if (createResult.status === 'created') {
+          if (returnChangedRecords && createResult.record?.id) changedRecords.push(createResult.record);
           results.created += 1;
         } else {
-          await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
+          const saved = await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
             entity: WorkOrder,
             workOrderId: createResult.record.id,
             expectedFields: expectedWorkOrderFields(createResult.record, plan.nextFields),
             nextFields: plan.nextFields,
             label: `Sales Pipeline recovered import row ${plan.rowNumber}`,
           }));
+          if (returnChangedRecords && saved?.id) changedRecords.push(saved);
           results.updated += 1;
         }
       } catch (error) {
@@ -621,6 +626,8 @@ Deno.serve(async (req) => {
       invalid: results.invalid,
       skipped,
       issues: runtimeIssues,
+      changed_records: returnChangedRecords ? changedRecords : [],
+      changed_records_complete: returnChangedRecords,
       timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: applyMs, total_ms: durationMs },
     });
   } catch (error) {
