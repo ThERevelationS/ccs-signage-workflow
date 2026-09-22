@@ -572,24 +572,23 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const salesColumnIds = Object.values(salesBinding.column_bindings).map((binding) => binding.column_id);
       const orderColumnIds = Object.values(orderBinding.column_bindings).map((binding) => binding.column_id);
 
-      const [salesSheet, orderSheet, salesRows, orderRows] = await Promise.all([
-        getSmartsheetRows({
+      const [salesSheet, orderSheet, salesRows, orderRows, customers] = await Promise.all([
+        getAllSmartsheetRows({
           sessionToken,
           sheetId: salesBinding.smartsheet_sheet_id,
           columnIds: salesColumnIds,
-          page: 1,
           pageSize: 200,
+          maxRows: 10000,
         }),
-        getSmartsheetRows({
+        getAllSmartsheetRows({
           sessionToken,
           sheetId: orderBinding.smartsheet_sheet_id,
           columnIds: orderColumnIds,
-          page: 1,
           pageSize: 200,
+          maxRows: 10000,
         }),
         loadAllEntityRows({
           entity: base44.entities.WorkOrder,
-          query: { in_pipeline: true },
           sort: "-updated_date",
           pageSize: 500,
           maxRows: 20000,
@@ -602,12 +601,20 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           maxRows: 20000,
           label: "Smartsheet Order dry-run records",
         }),
+        loadAllEntityRows({
+          entity: base44.entities.Customer,
+          sort: "company_name",
+          pageSize: 500,
+          maxRows: 50000,
+          label: "Smartsheet customer-resolution catalog",
+        }),
       ]);
 
       const salesPreview = buildSmartsheetDryRunPreview({
         sheetId: salesBinding.smartsheet_sheet_id,
         smartsheetRows: salesSheet.rows,
         base44Rows: salesRows,
+        customers,
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales,
         columnBindings: salesBinding.column_bindings,
         dataset: "sales",
@@ -616,6 +623,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         sheetId: orderBinding.smartsheet_sheet_id,
         smartsheetRows: orderSheet.rows,
         base44Rows: orderRows,
+        customers,
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.orders,
         columnBindings: orderBinding.column_bindings,
         dataset: "orders",
@@ -626,7 +634,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         orders: { ...orderSheet, preview: orderPreview },
       });
       setApiMessage(
-        `Read-only row dry run complete: ${salesSheet.returned_row_count || 0} Workflow rows and ${orderSheet.returned_row_count || 0} Order Request rows inspected. No links or business records were changed.`
+        `Complete read-only dry run: ${Number(salesSheet.returned_row_count || 0).toLocaleString()} Workflow rows, ${Number(orderSheet.returned_row_count || 0).toLocaleString()} Order Request rows, and ${customers.length.toLocaleString()} Base44 Customers inspected. No links or business records were changed.`
       );
     } catch (err) {
       setApiMessage(err?.message || "Smartsheet row dry run failed.");
@@ -879,8 +887,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                       Stable links are compared directly. Legacy/exact matches are candidates only and are never linked automatically.
                     </div>
                   </div>
-                  <DryRunPreviewCard title="Workflow row preview" preview={dryRunPreview.sales} />
-                  <DryRunPreviewCard title="Order Request row preview" preview={dryRunPreview.orders} />
+                  <DryRunPreviewCard title="Workflow row preview" preview={dryRunPreview.sales} newRecordLabel="WorkOrders" />
+                  <DryRunPreviewCard title="Order Request row preview" preview={dryRunPreview.orders} newRecordLabel="Orders" />
                 </div>
               )}
             </div>
