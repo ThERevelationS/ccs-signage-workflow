@@ -23,16 +23,69 @@ function rowLabel(row, dataset) {
   return cleanText(row?.values?.customer_name || row?.values?.description || row?.base44_label);
 }
 
-export function classifySmartsheetRolloutRow(row, dataset) {
+function normalizedBaseline(baseline, sheetId) {
+  if (!baseline || String(baseline.sheet_id || "") !== String(sheetId || "")) return null;
+  const rowIds = Array.isArray(baseline.row_ids)
+    ? baseline.row_ids.map((value) => String(value || "")).filter(Boolean)
+    : [];
+  if (!baseline.captured_at || !rowIds.length) return null;
+  return {
+    ...baseline,
+    row_ids: rowIds,
+    row_id_set: new Set(rowIds),
+  };
+}
+
+export function buildSmartsheetRolloutBaseline({
+  sheetId,
+  sheetVersion = null,
+  rows = [],
+  capturedAt,
+} = {}) {
+  const safeSheetId = String(sheetId || "").trim();
+  const safeCapturedAt = String(capturedAt || "").trim();
+  const rowIds = [...new Set((rows || []).map((row) => String(row?.row_id || row?.id || "").trim()).filter(Boolean))];
+
+  if (!/^\d+$/.test(safeSheetId)) throw new Error("A numeric Smartsheet sheet ID is required to capture a rollout baseline.");
+  if (!safeCapturedAt) throw new Error("A baseline capture timestamp is required.");
+  if (!rowIds.length) throw new Error("A complete non-empty Smartsheet row scan is required before capturing a rollout baseline.");
+
+  return {
+    version: 1,
+    sheet_id: safeSheetId,
+    sheet_version: sheetVersion ?? null,
+    captured_at: safeCapturedAt,
+    row_count: rowIds.length,
+    row_ids: rowIds,
+  };
+}
+
+export function classifySmartsheetRolloutRow(row, dataset, { baseline = null, sheetId = "" } = {}) {
   if (row?.status !== "new_record") return null;
 
+  const safeBaseline = normalizedBaseline(baseline, sheetId);
+  const rowId = String(row?.row_id || "");
+  const existedAtBaseline = Boolean(safeBaseline?.row_id_set.has(rowId));
+
   const base = {
-    row_id: String(row?.row_id || ""),
+    row_id: rowId,
     row_number: Number(row?.row_number || 0) || null,
     label: rowLabel(row, dataset) || "Unnamed row",
     customer_outcome: row?.customer_resolution?.outcome || "",
     auto_create_eligible: false,
+    baseline_state: safeBaseline ? (existedAtBaseline ? "preexisting" : "post_baseline") : "not_captured",
   };
+
+  if (safeBaseline && !existedAtBaseline) {
+    return {
+      ...base,
+      outcome: "post_baseline_new",
+      creation_review_eligible: true,
+      reason: dataset === "orders"
+        ? "Row was not present in the captured Order Request baseline. It may enter controlled Base44 Order creation review after Customer resolution and rollout gates pass."
+        : "Row was not present in the captured Workflow baseline. Treat it as a new post-rollout Sales candidate, still subject to Customer resolution and explicit creation review.",
+    };
+  }
 
   if (dataset === "orders") {
     return {
@@ -68,9 +121,15 @@ export function classifySmartsheetRolloutRow(row, dataset) {
   };
 }
 
-export function buildSmartsheetRolloutPreview({ rows = [], dataset = "" } = {}) {
+export function buildSmartsheetRolloutPreview({
+  rows = [],
+  dataset = "",
+  baseline = null,
+  sheetId = "",
+} = {}) {
+  const safeBaseline = normalizedBaseline(baseline, sheetId);
   const classifications = (rows || [])
-    .map((row) => classifySmartsheetRolloutRow(row, dataset))
+    .map((row) => classifySmartsheetRolloutRow(row, dataset, { baseline: safeBaseline, sheetId }))
     .filter(Boolean);
 
   const summary = classifications.reduce((result, item) => {
@@ -82,15 +141,23 @@ export function buildSmartsheetRolloutPreview({ rows = [], dataset = "" } = {}) 
     legacy_terminal: 0,
     manual_backfill_review: 0,
     auto_create_eligible: 0,
+    post_baseline_new: 0,
   });
 
   return {
-    baseline_state: "not_captured",
+    baseline_state: safeBaseline ? "captured" : "not_captured",
+    baseline_captured_at: safeBaseline?.captured_at || "",
+    baseline_row_count: Number(safeBaseline?.row_count || safeBaseline?.row_ids?.length || 0),
     auto_create_eligible: 0,
+    creation_review_eligible: Number(summary.post_baseline_new || 0),
     summary,
     classifications,
     policy: dataset === "orders"
-      ? "Current Order Request rows are treated as pre-rollout historical/external. A later explicit baseline capture may make only rows first seen after that baseline eligible for relational Base44 Order creation."
-      : "Current Workflow rows are never bulk-created. Exact terminal task text can route a row to legacy/history review; all other pre-rollout rows require explicit manual backfill review. A terminal task signal does not create authoritative modern Won/Lost history.",
+      ? (safeBaseline
+        ? "Rows captured in the Order Request baseline remain historical/external unless explicitly backfilled. Only row IDs first seen after the baseline can enter controlled Base44 Order creation review."
+        : "Current Order Request rows are treated as pre-rollout historical/external. Capture a baseline before any creation rollout so only rows first seen afterward can enter relational Base44 Order creation review.")
+      : (safeBaseline
+        ? "Workflow rows captured in the baseline remain legacy/manual-review candidates. Rows first seen afterward are new Sales candidates, but Customer resolution and explicit creation review still apply. Terminal task text never creates authoritative modern Won/Lost history."
+        : "Current Workflow rows are never bulk-created. Exact terminal task text can route a row to legacy/history review; all other pre-rollout rows require explicit manual backfill review. Capture a baseline before future new-row creation is considered."),
   };
 }
