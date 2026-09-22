@@ -424,6 +424,9 @@ Deno.serve(async (req) => {
           invalid_items: 0,
           completed_at: new Date().toISOString(),
           duration_ms: durationMs,
+          parse_ms: parseMs,
+          match_ms: matchMs,
+          apply_ms: 0,
           result_message: message,
           current_item: message,
         });
@@ -596,6 +599,9 @@ Deno.serve(async (req) => {
         invalid_items: results.invalid,
         completed_at: new Date().toISOString(),
         duration_ms: durationMs,
+        parse_ms: parseMs,
+        match_ms: matchMs,
+        apply_ms: applyMs,
         result_message: message,
       });
       return Response.json({
@@ -633,6 +639,9 @@ Deno.serve(async (req) => {
       invalid_items: results.invalid,
       completed_at: new Date().toISOString(),
       duration_ms: durationMs,
+      parse_ms: parseMs,
+      match_ms: matchMs,
+      apply_ms: applyMs,
       result_message: resultMessage,
       error_message: results.failed ? `${results.failed} row(s) failed during apply.` : '',
     });
