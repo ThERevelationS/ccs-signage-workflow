@@ -74,6 +74,23 @@
       "type": "number",
       "description": "Row number for display order"
     },
+    "smartsheet_sheet_id": {
+      "type": "string",
+      "description": "Stable Smartsheet sheet identity for the linked mirror record. Never derived from row or column position."
+    },
+    "smartsheet_row_id": {
+      "type": "string",
+      "description": "Stable Smartsheet row identity for the linked mirror record. Used instead of visible row position, customer name, or sorting."
+    },
+    "smartsheet_last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last fully verified Smartsheet synchronization for this Order."
+    },
+    "smartsheet_sync_snapshot": {
+      "type": "object",
+      "description": "Last successfully synchronized mapped values used for three-way Smartsheet/Base44 conflict detection."
+    },
     "deleted": {
       "type": "boolean",
       "default": false,
