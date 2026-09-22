@@ -249,6 +249,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [apiMessage, setApiMessage] = useState("");
   const [availableSheets, setAvailableSheets] = useState([]);
   const [columnPreview, setColumnPreview] = useState(null);
+  const [liveMappingAnalysis, setLiveMappingAnalysis] = useState(null);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -315,6 +316,78 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       setApiMessage(`Discovered ${Number(result.total_accessible_sheets || 0).toLocaleString()} accessible Smartsheet sheet${Number(result.total_accessible_sheets || 0) === 1 ? "" : "s"}. No data was changed.`);
     } catch (err) {
       setApiMessage(err?.message || "Smartsheet sheet discovery failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const analyzeLiveMappings = async () => {
+    if (!sessionToken || apiLoading) return;
+    setApiLoading(true);
+    setApiMessage("");
+    setLiveMappingAnalysis(null);
+    try {
+      await testSmartsheetConnection({ sessionToken });
+      const discovery = await listSmartsheetSheets({ sessionToken });
+      const sheets = Array.isArray(discovery.sheets) ? discovery.sheets : [];
+      setAvailableSheets(sheets);
+
+      const profiles = [
+        {
+          key: "sales",
+          title: "Sales Pipeline ↔ Workflow",
+          expectedName: config.sales.smartsheet_sheet_name || "Workflow",
+          expectedId: String(config.sales.smartsheet_sheet_id || "").trim(),
+          blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales,
+        },
+        {
+          key: "orders",
+          title: "Order Form ↔ Order Request",
+          expectedName: config.orders.smartsheet_sheet_name || "Order Request",
+          expectedId: String(config.orders.smartsheet_sheet_id || "").trim(),
+          blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.orders,
+        },
+      ];
+
+      const results = {};
+      for (const profile of profiles) {
+        const normalizedExpectedName = String(profile.expectedName || "").trim().toLowerCase();
+        const sheetMatches = profile.expectedId
+          ? sheets.filter((sheet) => String(sheet.id) === profile.expectedId)
+          : sheets.filter((sheet) => String(sheet.name || "").trim().toLowerCase() === normalizedExpectedName);
+
+        if (sheetMatches.length !== 1) {
+          results[profile.key] = {
+            status: sheetMatches.length > 1 ? "ambiguous_sheet" : "missing_sheet",
+            expectedName: profile.expectedName,
+            expectedId: profile.expectedId,
+            sheetMatches,
+          };
+          continue;
+        }
+
+        const sheet = sheetMatches[0];
+        const columnsResult = await getSmartsheetColumns({ sessionToken, sheetId: sheet.id });
+        const columns = Array.isArray(columnsResult.columns) ? columnsResult.columns : [];
+        results[profile.key] = {
+          status: "ready",
+          title: profile.title,
+          sheet,
+          analysis: analyzeSmartsheetColumns(profile.blueprint, columns),
+        };
+      }
+
+      setLiveMappingAnalysis(results);
+      const readyResults = Object.values(results).filter((result) => result.status === "ready");
+      const matched = readyResults.reduce((sum, result) => sum + result.analysis.counts.matched, 0);
+      const missing = readyResults.reduce((sum, result) => sum + result.analysis.counts.missing, 0);
+      const conflicts = readyResults.reduce((sum, result) => sum + result.analysis.counts.conflict, 0);
+      const unresolvedSheets = Object.values(results).length - readyResults.length;
+      setApiMessage(
+        `Read-only live mapping analysis complete: ${matched} exact field matches, ${missing} missing field matches, ${conflicts} field conflicts, ${unresolvedSheets} unresolved target sheet${unresolvedSheets === 1 ? "" : "s"}. No settings or business data were changed.`
+      );
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet live mapping analysis failed.");
     } finally {
       setApiLoading(false);
     }
@@ -445,6 +518,9 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               <Button type="button" size="sm" variant="outline" onClick={discoverSheets} disabled={apiLoading || !apiStatus?.configured}>
                 Discover Sheets
               </Button>
+              <Button type="button" size="sm" variant="outline" onClick={analyzeLiveMappings} disabled={apiLoading || !apiStatus?.configured}>
+                Analyze Live Mapping
+              </Button>
             </div>
           </div>
 
@@ -517,6 +593,14 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {liveMappingAnalysis && (
+            <div className="space-y-3">
+              <div className="text-xs font-semibold">Live mapping proposal — read only</div>
+              <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />
+              <LiveMappingAnalysisCard title="Order Form ↔ Order Request" result={liveMappingAnalysis.orders} />
             </div>
           )}
         </div>
