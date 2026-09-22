@@ -355,6 +355,19 @@
       "type": "boolean",
       "default": false
     },
+    "sales_import_source_id": {
+      "type": "string",
+      "description": "Stable external source row identity used by repeat Sales Pipeline spreadsheet imports."
+    },
+    "sales_import_last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last successful Sales Pipeline spreadsheet sync for this WorkOrder."
+    },
+    "sales_import_snapshot": {
+      "type": "object",
+      "description": "Last imported values for spreadsheet-owned Sales fields, used to detect stale spreadsheet overwrites."
+    },
     "sales_status": {
       "type": "string",
       "enum": [
