@@ -1961,7 +1961,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // Pre-compute sort keys for performance
     const key = sortConfig.key;
     const isDateField = key.includes('date') || key === 'current_task_deadline';
-    const isNumberField = key === 'estimate_amount' || key === 'probability';
+    const isNumberField = key === 'estimate_amount';
     const dir = sortConfig.direction === 'asc' ? 1 : -1;
     
     return result.sort((a, b) => {
