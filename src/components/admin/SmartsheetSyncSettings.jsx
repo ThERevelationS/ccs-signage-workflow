@@ -53,7 +53,7 @@ function mergeConfig(saved = {}) {
   };
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, disabled }) {
+function IntegrationCard({ title, subtitle, value, onChange }) {
   const patch = (next) => onChange({ ...value, ...next });
   return (
     <div className="rounded-xl border border-gray-200 bg-white/70 p-4 space-y-4">
@@ -73,7 +73,6 @@ function IntegrationCard({ title, subtitle, value, onChange, disabled }) {
           <Input
             value={value.smartsheet_sheet_name || ""}
             onChange={(e) => patch({ smartsheet_sheet_name: e.target.value })}
-            disabled={disabled}
             className="mt-1"
           />
         </div>
@@ -82,7 +81,6 @@ function IntegrationCard({ title, subtitle, value, onChange, disabled }) {
           <Input
             value={value.smartsheet_sheet_id || ""}
             onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
-            disabled={disabled}
             placeholder="Discovered from API later"
             className="mt-1"
           />
@@ -103,7 +101,7 @@ function IntegrationCard({ title, subtitle, value, onChange, disabled }) {
               <div className="text-sm font-medium text-gray-800">{label}</div>
               <div className="text-[11px] text-gray-500">{help}</div>
             </div>
-            <Switch checked={Boolean(value[key])} onCheckedChange={(checked) => patch({ [key]: checked })} disabled={disabled} />
+            <Switch checked={Boolean(value[key])} onCheckedChange={(checked) => patch({ [key]: checked })} />
           </div>
         ))}
       </div>
@@ -282,7 +280,6 @@ export default function SmartsheetSyncSettings() {
         subtitle="WorkOrder Sales records will map to the Smartsheet Workflow sheet by stable IDs and approved field translations."
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
-        disabled={!config.global_enabled}
       />
 
       <IntegrationCard
@@ -290,7 +287,6 @@ export default function SmartsheetSyncSettings() {
         subtitle="Order records will map to the Smartsheet Order Request sheet, including controlled customer/work-order relationship setup."
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
-        disabled={!config.global_enabled}
       />
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
