@@ -44,11 +44,16 @@ export function buildSmartsheetRolloutBaseline({
 } = {}) {
   const safeSheetId = String(sheetId || "").trim();
   const safeCapturedAt = String(capturedAt || "").trim();
-  const rowIds = [...new Set((rows || []).map((row) => String(row?.row_id || row?.id || "").trim()).filter(Boolean))];
+  const sourceRows = Array.isArray(rows) ? rows : [];
+  const rawRowIds = sourceRows.map((row) => String(row?.row_id || row?.id || "").trim()).filter(Boolean);
+  const rowIds = [...new Set(rawRowIds)];
 
   if (!/^\d+$/.test(safeSheetId)) throw new Error("A numeric Smartsheet sheet ID is required to capture a rollout baseline.");
   if (!safeCapturedAt) throw new Error("A baseline capture timestamp is required.");
   if (!rowIds.length) throw new Error("A complete non-empty Smartsheet row scan is required before capturing a rollout baseline.");
+  if (rawRowIds.length !== sourceRows.length || rowIds.length !== rawRowIds.length) {
+    throw new Error("Every baseline row must have one unique permanent Smartsheet row ID.");
+  }
 
   return {
     version: 1,
