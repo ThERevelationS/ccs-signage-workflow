@@ -302,23 +302,74 @@ export function buildSmartsheetControlledCreationProposals({
   };
 }
 
-// Cross-sheet collision is a review warning, not an implicit Customer merge.
+// One conflict per normalized name avoids a cartesian explosion when many rows share a Customer.
 export function findSmartsheetCrossSheetCustomerConflicts(salesProposals, orderProposals) {
   if (salesProposals?.state !== "ready" || orderProposals?.state !== "ready") return [];
-  const sales = (salesProposals.rows || []).filter((row) => row.data_ready && row.customer);
-  const orders = (orderProposals.rows || []).filter((row) => row.data_ready && row.customer);
-  const conflicts = [];
-  for (const left of sales) {
-    for (const right of orders) {
-      if (!left.customer.normalized_name || left.customer.normalized_name !== right.customer.normalized_name) continue;
-      if (left.customer.kind !== "new_customer" && right.customer.kind !== "new_customer") continue;
-      conflicts.push({
-        sales_row_id: left.row_id,
-        order_row_id: right.row_id,
-        customer_name: left.customer.source_name,
-        reason: "A new Customer is proposed on one sheet while the same normalized name appears on the other. Reconcile both review decisions before future creation.",
-      });
+  const byName = (proposal) => {
+    const groups = new Map();
+    for (const row of proposal.rows || []) {
+      if (!row.data_ready || !row.customer?.normalized_name) continue;
+      const name = row.customer.normalized_name;
+      const group = groups.get(name) || { rows: [], has_new: false };
+      group.rows.push(row);
+      group.has_new ||= row.customer.kind === "new_customer";
+      groups.set(name, group);
     }
+    return groups;
+  };
+  const sales = byName(salesProposals);
+  const orders = byName(orderProposals);
+  const conflicts = [];
+  for (const [name, left] of sales) {
+    const right = orders.get(name);
+    if (!right || (!left.has_new && !right.has_new)) continue;
+    conflicts.push({
+      normalized_name: name,
+      customer_name: left.rows[0].customer.source_name,
+      sales_row_ids: left.rows.map((row) => row.row_id),
+      order_row_ids: right.rows.map((row) => row.row_id),
+      reason: "A new Customer is proposed on one sheet while the same normalized name appears on the other. Reconcile both review decisions before future creation.",
+    });
   }
   return conflicts;
+}
+
+export function blockSmartsheetCrossSheetCustomerConflicts(salesProposals, orderProposals) {
+  const conflicts = findSmartsheetCrossSheetCustomerConflicts(salesProposals, orderProposals);
+  const blockedSales = new Map();
+  const blockedOrders = new Map();
+  for (const conflict of conflicts) {
+    for (const rowId of conflict.sales_row_ids) blockedSales.set(rowId, conflict);
+    for (const rowId of conflict.order_row_ids) blockedOrders.set(rowId, conflict);
+  }
+
+  const apply = (proposal, blocked) => {
+    if (proposal?.state !== "ready") return proposal;
+    const rows = proposal.rows.map((row) => {
+      const conflict = blocked.get(row.row_id);
+      if (!conflict) return row;
+      return {
+        ...row,
+        proposal_ready: false,
+        blockers: [...row.blockers, problem("cross_sheet_customer_collision", "Cross-sheet Customer collision", conflict.reason)],
+      };
+    });
+    return {
+      ...proposal,
+      rows,
+      summary: {
+        ...proposal.summary,
+        proposal_ready: rows.filter((row) => row.proposal_ready).length,
+        blocked: rows.filter((row) => !row.proposal_ready).length,
+        new_customer_groups: new Set(rows
+          .filter((row) => row.proposal_ready && row.customer?.kind === "new_customer")
+          .map((row) => row.customer.key)).size,
+      },
+    };
+  };
+  return {
+    sales: apply(salesProposals, blockedSales),
+    orders: apply(orderProposals, blockedOrders),
+    conflicts,
+  };
 }
