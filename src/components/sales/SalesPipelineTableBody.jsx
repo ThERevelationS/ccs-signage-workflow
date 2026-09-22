@@ -31,7 +31,7 @@ const parseLocalDate = (dateString) => {
 };
 
 function DateCell({ woId, field, value, popoverKey, openDatePopover, setOpenDatePopover, setClearDateConfirm, updateWorkOrder, isRegistered, allowClear = true }) {
-  const preventsFutureDate = field === "quote_date" || field === "date_estimate_sent" || field === "close_date";
+  const preventsFutureDate = field === "date_estimate_sent" || field === "close_date";
   const today = new Date();
   today.setHours(23, 59, 59, 999);
   const displayDate = () => {
@@ -298,18 +298,13 @@ export default function SalesPipelineTableBody({
               {isColumnVisible("days_ord_prm") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
               {isColumnVisible("days_prm_app") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
               {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
-              {isColumnVisible("quote_date") && (
-                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "quote_date", "Quote Date", wo.quote_date)}>
-                  <DateCell woId={wo.id} field="quote_date" value={wo.quote_date} popoverKey={`quote-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
-                </td>
-              )}
               {isColumnVisible("quote_age") && (
                 <td className="px-1 py-0.5 border-r text-center">
                   {quoteAging.awaitingResponse ? (
                     quoteAging.tracked ? (
-                      <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since ${wo.date_estimate_sent ? "explicit estimate-sent date" : "explicit quote issue date"} (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
+                      <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since explicit estimate-sent date (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
                     ) : (
-                      <span className="text-[11px] font-medium text-amber-600" title="Quoted/Follow Up opportunity has neither an explicit estimate-sent date nor quote issue date.">Missing</span>
+                      <span className="text-[11px] font-medium text-amber-600" title="Quoted/Follow Up opportunity has no explicit estimate-sent date.">Missing</span>
                     )
                   ) : <span className="text-[11px] text-gray-300">—</span>}
                 </td>
@@ -338,11 +333,6 @@ export default function SalesPipelineTableBody({
                   onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}
                 >
                   <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={false} allowClear={false} />
-                </td>
-              )}
-              {isColumnVisible("probability") && (
-                <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "probability", "Probability", wo.probability)}>
-                  <Input type="number" value={wo.probability ?? ""} onChange={(e) => updateWorkOrder(wo.id, "probability", parseInt(e.target.value) || 0)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="0" min="0" max="100" disabled={!isRegistered} />
                 </td>
               )}
               {isColumnVisible("start_date") && (
