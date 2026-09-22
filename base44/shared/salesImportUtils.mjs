@@ -187,13 +187,14 @@ export function validateSalesImportHeaders(headers = []) {
   return { errors, warnings };
 }
 
-export function parseSalesImportRows(rows = [], { todayStamp = "" } = {}) {
+export function parseSalesImportRows(rows = [], { todayStamp = "", rowNumberBase = 2 } = {}) {
   const parsedRows = [];
   const invalidRows = [];
   const seenHeaders = new Set();
+  const safeRowNumberBase = Number.isInteger(Number(rowNumberBase)) && Number(rowNumberBase) >= 1 ? Number(rowNumberBase) : 2;
 
   rows.forEach((rawRow, index) => {
-    const rowNumber = index + 2;
+    const rowNumber = index + safeRowNumberBase;
     const lookup = buildHeaderLookup(rawRow);
     for (const key of Object.keys(rawRow || {})) seenHeaders.add(normalizeHeader(key));
 
