@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,10 +54,11 @@ export default function PermittingRepository({ embedded = false, focusJurisdicti
   const [repositoryNotice, setRepositoryNotice] = useState(null);
 
   useEffect(() => {
+    if (!embedded) return undefined;
     loadJurisdictions();
     const interval = setInterval(loadJurisdictions, 300000);
     return () => clearInterval(interval);
-  }, []);
+  }, [embedded]);
 
   useEffect(() => {
     const name = String(focusJurisdiction?.name || "").trim();
@@ -278,6 +281,10 @@ export default function PermittingRepository({ embedded = false, focusJurisdicti
 
     setAiDiscoverLoading(false);
   };
+
+  if (!embedded) {
+    return <Navigate to={`${createPageUrl("Permitting")}?view=jurisdictions`} replace />;
+  }
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
