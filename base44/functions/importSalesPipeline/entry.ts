@@ -433,10 +433,45 @@ Deno.serve(async (req) => {
     const runtimeIssues = [...issues];
     let cursor = 0;
     let processedActionable = 0;
+    let cancelled = false;
+    let lastControlCheckAt = 0;
+    let cachedControlStatus = 'running';
+    let controlReadPromise: Promise<string> | null = null;
     const progressEvery = Math.max(5, Math.ceil(Math.max(1, actionable.length) / 40));
     const applyStarted = Date.now();
 
+    const readControlStatus = async (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastControlCheckAt < 750) return cachedControlStatus;
+      if (!controlReadPromise) {
+        controlReadPromise = ImportJob.get(importJob.id)
+          .then((job: any) => {
+            cachedControlStatus = String(job?.status || 'running');
+            lastControlCheckAt = Date.now();
+            return cachedControlStatus;
+          })
+          .finally(() => {
+            controlReadPromise = null;
+          });
+      }
+      return controlReadPromise;
+    };
+
+    const waitForImportPermission = async () => {
+      let status = await readControlStatus();
+      while (status === 'paused') {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        status = await readControlStatus(true);
+      }
+      if (status === 'cancelled') {
+        cancelled = true;
+        return false;
+      }
+      return true;
+    };
+
     const processPlan = async (plan: any) => {
+      if (!(await waitForImportPermission())) return;
       const importRow = rowByNumber.get(plan.rowNumber);
       try {
         if (plan.kind === 'update') {
@@ -504,6 +539,7 @@ Deno.serve(async (req) => {
 
     const workers = Array.from({ length: Math.min(WORKER_COUNT, Math.max(1, actionable.length)) }, async () => {
       while (true) {
+        if (cancelled) return;
         const index = cursor;
         cursor += 1;
         if (index >= actionable.length) return;
@@ -513,6 +549,43 @@ Deno.serve(async (req) => {
     await Promise.all(workers);
 
     const applyMs = Date.now() - applyStarted;
+    if (cancelled) {
+      const durationMs = Date.now() - startedAt;
+      const processed = summary.unchanged + skippedItems + processedActionable;
+      const message = `Import cancelled after ${Math.min(summary.total, processed)} of ${summary.total} rows. Completed writes were preserved; unprocessed rows were not touched.`;
+      await ImportJob.update(importJob.id, {
+        status: 'cancelled',
+        phase: 'cancelled',
+        processed_items: Math.min(summary.total, processed),
+        current_item: message,
+        created_items: results.created,
+        updated_items: results.updated,
+        unchanged_items: summary.unchanged,
+        skipped_items: results.conflicts + results.ambiguous + results.invalid + results.failed,
+        conflict_items: results.conflicts,
+        ambiguous_items: results.ambiguous,
+        invalid_items: results.invalid,
+        completed_at: new Date().toISOString(),
+        duration_ms: durationMs,
+        result_message: message,
+      });
+      return Response.json({
+        ...previewPayload,
+        mode: 'apply',
+        cancelled: true,
+        import_job_id: importJob.id,
+        created: results.created,
+        updated: results.updated,
+        unchanged: summary.unchanged,
+        failed: results.failed,
+        conflicts: results.conflicts,
+        ambiguous: results.ambiguous,
+        invalid: results.invalid,
+        skipped: results.conflicts + results.ambiguous + results.invalid + results.failed,
+        issues: runtimeIssues,
+        timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: applyMs, total_ms: durationMs },
+      });
+    }
     const durationMs = Date.now() - startedAt;
     const skipped = results.conflicts + results.ambiguous + results.invalid + results.failed;
     const resultMessage = `${results.created} created, ${results.updated} updated, ${summary.unchanged} unchanged${skipped ? `, ${skipped} need review` : ''}.`;
