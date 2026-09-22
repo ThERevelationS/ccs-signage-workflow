@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -340,6 +340,8 @@ export default function SalesPipeline() {
                   size="sm" 
                   className="h-8 px-2"
                   variant="ghost"
+                  title="Import Sales Pipeline"
+                  aria-label="Import Sales Pipeline"
                 >
                   <Upload className="w-3 h-3" />
                 </Button>
@@ -348,8 +350,20 @@ export default function SalesPipeline() {
                   size="sm" 
                   className="h-8 px-2"
                   variant="ghost"
+                  title="Export Sales Pipeline"
+                  aria-label="Export Sales Pipeline"
                 >
                   <Download className="w-3 h-3" />
+                </Button>
+                <Button
+                  onClick={() => spreadsheetRef.current?.openImportHistory()}
+                  size="sm"
+                  className="h-8 px-2"
+                  variant="ghost"
+                  title="Sales import history"
+                  aria-label="Sales import history"
+                >
+                  <History className="w-3 h-3" />
                 </Button>
               </div>
             )}
