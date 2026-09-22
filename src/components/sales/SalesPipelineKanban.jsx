@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getActionableSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 
 const STATUS_COLUMNS = [
@@ -51,7 +51,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
       <div className="flex h-full min-h-0 gap-3 overflow-x-auto overflow-y-hidden px-1 pb-2">
         {STATUS_COLUMNS.map((status) => {
           const items = workOrders.filter((workOrder) => (workOrder.sales_status || "lead") === status.value);
-          const value = items.reduce((sum, workOrder) => sum + (Number(workOrder.quoted_amount ?? workOrder.estimate_amount ?? 0) || 0), 0);
+          const value = items.reduce((sum, workOrder) => sum + (Number(workOrder.estimate_amount ?? 0) || 0), 0);
           return (
             <section
               key={status.value}
@@ -90,7 +90,6 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                   const attentionItems = getActionableSalesAttentionItems(workOrder, today);
                   const attentionKeys = new Set(attentionItems.map((item) => item.key));
                   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
-                  const suggestedProbability = getSuggestedProbabilityForStatus(workOrder.sales_status || "lead");
                   return (
                     <article
                       key={workOrder.id}
@@ -115,7 +114,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       </button>
 
                       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
-                        <span className="font-medium text-gray-700">{money(workOrder.quoted_amount ?? workOrder.estimate_amount)}</span>
+                        <span className="font-medium text-gray-700">{money(workOrder.estimate_amount)}</span>
                         <span className="truncate">{workOrder.sales_rep || "Unassigned"}</span>
                       </div>
                       {attentionItems.length > 0 && (
@@ -125,7 +124,6 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           {isRegistered && (
                             <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-amber-200 pt-2" onClick={(event) => event.stopPropagation()}>
                               {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "sales_rep", currentSalesOwnerLabel)} className="rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100">Assign to me</button>}
-                              {attentionKeys.has("probability_missing") && suggestedProbability != null && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "probability", suggestedProbability)} className="rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100">Set {suggestedProbability}%</button>}
                               {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
                                 <Select onValueChange={(value) => onUpdateWorkOrder?.(workOrder.id, "lead_source", value)}>
                                   <SelectTrigger className="h-6 w-[108px] border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
@@ -135,9 +133,6 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                             </div>
                           )}
                         </div>
-                      )}
-                      {typeof workOrder.probability === "number" && Number.isFinite(workOrder.probability) && (
-                        <div className="mt-1 text-xs text-gray-500">Probability <span className="font-semibold text-gray-700">{workOrder.probability}%</span></div>
                       )}
                       {stageAging.tracked ? (
                         <div className={`mt-1 text-xs ${stageAging.aged ? "font-semibold text-rose-700" : "text-gray-500"}`}>Stage age {stageAging.ageDays}d{workOrder.sales_status === "on_hold" ? " · on hold" : stageAging.aged ? " · aged" : ""}</div>
