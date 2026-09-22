@@ -77,6 +77,7 @@ export default function Permitting() {
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
   const [activeView, setActiveView] = useState("work");
+  const [jurisdictionFocus, setJurisdictionFocus] = useState(null);
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
@@ -776,6 +777,13 @@ export default function Permitting() {
   };
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
+  const openJurisdictionKnowledge = useCallback((localityId, localityName = "") => {
+    const locality = localities.find((row) => row.id === localityId);
+    const name = String(locality?.name || localityName || "").trim();
+    if (!name) return;
+    setJurisdictionFocus({ name, state: locality?.state || "" });
+    setActiveView("jurisdictions");
+  }, [localities]);
 
   if (isLoading) {
     return (
@@ -824,6 +832,7 @@ export default function Permitting() {
                 onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
                 onOpenWorkOrder={openWorkOrder}
                 onShowLocalityInfo={setLocalityInfoId}
+                onShowJurisdictionInfo={openJurisdictionKnowledge}
                 onDeleteLine={deleteLineItem}
                 onUpdateWorkOrderField={updateWorkOrderField}
                 onWorkNotesChanged={() => loadData(false)}
@@ -858,7 +867,7 @@ export default function Permitting() {
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <PermittingRepository embedded />
+          <PermittingRepository embedded focusJurisdiction={jurisdictionFocus} />
         </div>
       </div>
     );
@@ -938,7 +947,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setActiveView("jurisdictions")}
+                onClick={() => { setJurisdictionFocus(null); setActiveView("jurisdictions"); }}
                 className="gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
                 title="Browse and manage reusable jurisdiction permitting knowledge without leaving Permitting"
               >
