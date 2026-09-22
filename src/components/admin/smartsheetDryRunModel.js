@@ -101,6 +101,7 @@ export function buildSmartsheetDryRunPreview({
   blueprint = [],
   columnBindings = {},
   dataset = "",
+  rolloutBaseline = null,
 } = {}) {
   const safeSheetId = String(sheetId || "");
   const directByRowId = new Map();
@@ -285,7 +286,12 @@ export function buildSmartsheetDryRunPreview({
     needs_name: 0,
   });
 
-  const rolloutPreview = buildSmartsheetRolloutPreview({ rows, dataset });
+  const rolloutPreview = buildSmartsheetRolloutPreview({
+    rows,
+    dataset,
+    baseline: rolloutBaseline,
+    sheetId: safeSheetId,
+  });
 
   return {
     rows,
