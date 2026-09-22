@@ -143,7 +143,7 @@ export default function SmartsheetControlledCreationProposalsCard({
                   </div>
                 )}
                 {(crossByRowId.get(row.row_id) || []).map((conflict, index) => (
-                  <div key={`${conflict.sales_row_id}-${conflict.order_row_id}-${index}`} className="rounded-md border border-red-200 bg-red-50 p-2 text-[11px] text-red-900">
+                  <div key={`${conflict.normalized_name}-${index}`} className="rounded-md border border-red-200 bg-red-50 p-2 text-[11px] text-red-900">
                     Cross-sheet Customer collision: Workflow row IDs {(conflict.sales_row_ids || []).slice(0, 5).join(", ")}
                     {" "}and Order Request row IDs {(conflict.order_row_ids || []).slice(0, 5).join(", ")}.
                     {" "}{conflict.reason}
