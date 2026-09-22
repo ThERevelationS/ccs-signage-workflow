@@ -26,14 +26,13 @@ const roundTrip = parseOne({
   "Sales Status": "Follow Up",
   "Est/Inv @": " 12345 ",
   "Estimate Amount": "$12,450.50",
-  Probability: "70%",
   "Date Estimate Sent to Customer": "9/20/2026",
   Notes: "Lobby sign",
 });
 assert(roundTrip.incoming.sales_status === "follow_up", "Sales Status round-trip mapping failed.");
 assert(roundTrip.incoming.est_inv_at === "12345", "Est/Inv trimming failed.");
 assert(roundTrip.incoming.estimate_amount === 12450.5, "Currency parsing failed.");
-assert(roundTrip.incoming.probability === 70, "Probability parsing failed.");
+assert(roundTrip.incoming.probability === undefined, "Retired Probability field must not be imported.");
 assert(roundTrip.incoming.date_estimate_sent === "2026-09-20", "Date parsing failed.");
 
 const headers = validateSalesImportHeaders(["Customer", "Sales Status", "Est/Inv @"]);
