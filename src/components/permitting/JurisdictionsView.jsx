@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +37,7 @@ async function pollResearchRequest(id) {
   return permittingProxy('poll', { id });
 }
 
-export default function PermittingRepository({ embedded = false, focusJurisdiction = null }) {
+export default function JurisdictionsView({ focusJurisdiction = null }) {
   const { currentUser } = useAuth();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,11 +52,10 @@ export default function PermittingRepository({ embedded = false, focusJurisdicti
   const [repositoryNotice, setRepositoryNotice] = useState(null);
 
   useEffect(() => {
-    if (!embedded) return undefined;
     loadJurisdictions();
     const interval = setInterval(loadJurisdictions, 300000);
     return () => clearInterval(interval);
-  }, [embedded]);
+  }, []);
 
   useEffect(() => {
     const name = String(focusJurisdiction?.name || "").trim();
@@ -282,10 +279,6 @@ export default function PermittingRepository({ embedded = false, focusJurisdicti
     setAiDiscoverLoading(false);
   };
 
-  if (!embedded) {
-    return <Navigate to={`${createPageUrl("Permitting")}?view=jurisdictions`} replace />;
-  }
-
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
   const duplicateMap = new Map();
@@ -313,14 +306,14 @@ export default function PermittingRepository({ embedded = false, focusJurisdicti
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
   return (
-    <div className={`flex bg-gray-50 overflow-hidden ${embedded ? "h-full min-h-0" : "h-screen"}`}>
+    <div className="flex h-full min-h-0 overflow-hidden bg-gray-50">
       <div className="flex flex-col w-full" style={{ maxWidth: selectedJurisdiction ? '420px' : '100%', minWidth: '320px', transition: 'max-width 0.3s' }}>
         <div className="bg-white border-b px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-purple-600" />
-                {embedded ? "Jurisdictions" : "Permitting Repository"}
+                Jurisdictions
               </h1>
               <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions · {totalDocs} documents</p>
               <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
