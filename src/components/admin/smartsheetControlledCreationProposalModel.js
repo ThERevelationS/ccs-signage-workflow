@@ -206,6 +206,18 @@ export function buildSmartsheetControlledCreationProposals({
       const customerField = dataset === "sales" ? "client_name" : "customer_name";
       payload[customerField] = identity.company_name;
       if (identity.kind === "existing_customer") payload.customer_id = identity.customer_id;
+      const customerAudit = fieldAudit.find((field) => field.field === customerField);
+      if (customerAudit) customerAudit.proposed_value = identity.company_name;
+    }
+
+    // Recheck the actual payload independently of the earlier readiness gate.
+    const required = dataset === "sales"
+      ? ["client_name", "title"]
+      : ["customer_name", "request_type", "description"];
+    for (const field of required) {
+      if (!text(payload[field])) {
+        blockers.push(problem("proposed_required_field_missing", `Proposed ${field} is missing`, "A required value must be present in the actual proposed record."));
+      }
     }
 
     // A post-baseline terminal task is not evidence of an authoritative modern outcome.
