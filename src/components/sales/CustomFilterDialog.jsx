@@ -893,7 +893,6 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                column.id.includes("date") && !column.id.includes("days") ? "1/1" : 
                                column.id.includes("amount") ? "$5k" : 
                                column.id.includes("days") ? "7" : 
-                               column.id === "probability" ? "75%" :
                                "-"}
                             </td>
                           ))}
