@@ -491,8 +491,11 @@ function IntegrationCard({ title, subtitle, value, onChange }) {
 export default function SmartsheetSyncSettings({ sessionToken }) {
   const [record, setRecord] = useState(null);
   const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [customerReviewRecord, setCustomerReviewRecord] = useState(null);
+  const [customerReview, setCustomerReview] = useState(DEFAULT_SMARTSHEET_CUSTOMER_REVIEW);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [reviewSaving, setReviewSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [apiStatus, setApiStatus] = useState(null);
@@ -523,13 +526,22 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setLoading(true);
     setError("");
     try {
-      const loaded = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
-        settingKey: SETTING_KEY,
-        label: "Smartsheet sync configuration",
-      });
+      const [loaded, loadedReview] = await Promise.all([
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: SETTING_KEY,
+          label: "Smartsheet sync configuration",
+        }),
+        loadSingleGlobalSetting({
+          entity: base44.entities.GlobalSettings,
+          settingKey: CUSTOMER_REVIEW_SETTING_KEY,
+          label: "Smartsheet customer-resolution review",
+        }),
+      ]);
       setRecord(loaded);
       setConfig(mergeConfig(loaded?.setting_value));
+      setCustomerReviewRecord(loadedReview);
+      setCustomerReview(mergeSmartsheetCustomerReview(loadedReview?.setting_value));
     } catch (err) {
       console.error("Smartsheet sync settings could not be loaded:", err);
       setError(err?.message || "Smartsheet sync settings could not be loaded safely.");
