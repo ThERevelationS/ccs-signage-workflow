@@ -26,6 +26,12 @@ import {
 } from "@/components/admin/smartsheetMappingModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
+import { buildSmartsheetCreationReadiness } from "@/components/admin/smartsheetCreationReadinessModel";
+import {
+  blockSmartsheetCrossSheetCustomerConflicts,
+  buildSmartsheetControlledCreationProposals,
+} from "@/components/admin/smartsheetControlledCreationProposalModel";
+import SmartsheetControlledCreationProposalsCard from "@/components/admin/SmartsheetControlledCreationProposalsCard";
 import { buildSmartsheetRolloutBaseline } from "@/components/admin/smartsheetRolloutModel";
 import {
   buildCreateNewCustomerDecision,
@@ -412,6 +418,9 @@ function DryRunPreviewCard({
   onSaveCustomerReview,
   onClearCustomerReview,
   reviewSaving,
+  reviewedCreationReadiness,
+  creationProposals,
+  crossSheetConflicts = [],
 }) {
   if (!preview) return null;
   const summary = preview.preview?.summary || {};
@@ -421,7 +430,7 @@ function DryRunPreviewCard({
   const rolloutPreview = preview.preview?.rolloutPreview || null;
   const rolloutSummary = rolloutPreview?.summary || {};
   const rolloutRows = rolloutPreview?.classifications || [];
-  const creationReadiness = preview.preview?.creationReadiness || null;
+  const creationReadiness = reviewedCreationReadiness || preview.preview?.creationReadiness || null;
   const readinessSummary = creationReadiness?.summary || {};
   const readinessRows = creationReadiness?.rows || [];
 
@@ -591,6 +600,11 @@ function DryRunPreviewCard({
         onSaveChoice={onSaveCustomerReview}
         onClearChoice={onClearCustomerReview}
         saving={reviewSaving}
+      />
+      <SmartsheetControlledCreationProposalsCard
+        proposals={creationProposals}
+        dataset={dataset}
+        crossSheetConflicts={crossSheetConflicts}
       />
 
       {customerGroups.length > 0 && (
