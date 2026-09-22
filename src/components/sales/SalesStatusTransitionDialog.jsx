@@ -43,7 +43,6 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   const reopening = ["won", "lost"].includes(currentStatus) && !closing;
   const isLost = nextStatus === "lost";
   const finalReason = lostReason === "Other" ? otherReason.trim() : lostReason.trim();
-  const todayStamp = format(new Date(), "yyyy-MM-dd");
   const canConfirm = !isLost || Boolean(finalReason);
 
   const title = closing
