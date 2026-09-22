@@ -171,6 +171,22 @@ function parseField(definition, rawValue) {
   return { value: normalizeText(rawValue) };
 }
 
+export function validateSalesImportHeaders(headers = []) {
+  const normalized = new Set(headers.map(normalizeHeader).filter(Boolean));
+  const customerDef = FIELD_DEFINITIONS.find((definition) => definition.field === "client_name");
+  const identityDefs = FIELD_DEFINITIONS.filter((definition) => ["sales_import_source_id", "est_inv_at"].includes(definition.field));
+  const hasAlias = (definition) => definition.aliases.some((alias) => normalized.has(normalizeHeader(alias)));
+  const errors = [];
+  const warnings = [];
+  if (!customerDef || !hasAlias(customerDef)) {
+    errors.push(`Missing Customer column. Accepted headers: ${(customerDef?.aliases || []).join(", ")}.`);
+  }
+  if (!identityDefs.some(hasAlias)) {
+    warnings.push("No Smartsheet Row ID or Est/Inv identity column was found. Matching will fall back to Customer + Notes and ambiguous customers will be skipped.");
+  }
+  return { errors, warnings };
+}
+
 export function parseSalesImportRows(rows = [], { todayStamp = "" } = {}) {
   const parsedRows = [];
   const invalidRows = [];
