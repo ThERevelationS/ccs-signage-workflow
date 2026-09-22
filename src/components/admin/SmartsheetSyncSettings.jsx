@@ -260,9 +260,12 @@ function IntegrationCard({ title, subtitle, value, onChange }) {
           <h3 className="font-semibold text-gray-900">{title}</h3>
           <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
         </div>
-        <Badge className={value.mirror_enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
-          {value.mirror_enabled ? "Mirror armed" : "Mirror off"}
-        </Badge>
+        <div className="flex flex-wrap gap-1">
+          <Badge className={value.mirror_enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
+            {value.mirror_enabled ? "Mirror armed" : "Mirror off"}
+          </Badge>
+          <Badge variant="outline">{Object.keys(value.column_bindings || {}).length} column IDs bound</Badge>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -808,9 +811,49 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
 
           {liveMappingAnalysis && (
             <div className="space-y-3">
-              <div className="text-xs font-semibold">Live mapping proposal — read only</div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-xs font-semibold">Live mapping proposal — read only</div>
+                  <div className="mt-1 text-[11px] text-gray-600">
+                    Permanent binding is blocked unless both sheets have zero missing fields and zero conflicts.
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={previewLiveRows}
+                    disabled={apiLoading || !liveMappingsReadyToBind}
+                  >
+                    {apiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                    Preview Rows
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={bindVerifiedMappings}
+                    disabled={saving || !liveMappingsReadyToBind || !config.observation_mode || config.global_enabled}
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                    Bind Verified IDs
+                  </Button>
+                </div>
+              </div>
               <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />
               <LiveMappingAnalysisCard title="Order Form ↔ Order Request" result={liveMappingAnalysis.orders} />
+              {dryRunPreview && (
+                <div className="space-y-3 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
+                  <div>
+                    <div className="text-xs font-semibold text-violet-900">Observation-only row dry run</div>
+                    <div className="mt-1 text-[11px] text-violet-800">
+                      Stable links are compared directly. Legacy/exact matches are candidates only and are never linked automatically.
+                    </div>
+                  </div>
+                  <DryRunPreviewCard title="Workflow row preview" preview={dryRunPreview.sales} />
+                  <DryRunPreviewCard title="Order Request row preview" preview={dryRunPreview.orders} />
+                </div>
+              )}
             </div>
           )}
         </div>
