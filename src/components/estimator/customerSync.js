@@ -187,15 +187,13 @@ export const syncEstimateToPipeline = async (estimate, customer, { previousEstim
     sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: estimate.quote_total || 0,
-    quoted_amount: estimate.quote_total || 0,
-    quote_date: firstNonBlank(estimate.quote_issue_date, existing?.quote_date),
     install_location: firstNonBlank(estimate.site_address, existing?.install_location),
     ...lifecycleDates,
   };
 
   const salesActivityFields = [
-    "sales_status", "sales_rep", "estimator", "estimate_amount", "quoted_amount",
-    "quote_date", "date_estimate_sent", "date_order_created", "contact_name",
+    "sales_status", "sales_rep", "estimator", "estimate_amount",
+    "date_estimate_sent", "date_order_created", "contact_name",
     "contact_email", "contact_phone", "title", "client_name", "install_location",
   ];
   const salesActivityChanged = !existing || salesActivityFields.some((field) =>
