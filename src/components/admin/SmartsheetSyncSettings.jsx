@@ -12,6 +12,7 @@ import {
 } from "@/components/shared/globalSettingsPersistence";
 import {
   getSmartsheetColumns,
+  getSmartsheetRows,
   getSmartsheetSyncStatus,
   listSmartsheetSheets,
   testSmartsheetConnection,
@@ -19,15 +20,18 @@ import {
 import {
   SMARTSHEET_MAPPING_BLUEPRINTS,
   analyzeSmartsheetColumns,
+  buildVerifiedSmartsheetBinding,
   mappingDirectionLabel,
   mappingTransformLabel,
 } from "@/components/admin/smartsheetMappingModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
+import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
 const DEFAULT_CONFIG = {
-  schema_version: 1,
+  schema_version: 2,
   global_enabled: false,
   observation_mode: true,
   backup_before_write: true,
@@ -37,6 +41,8 @@ const DEFAULT_CONFIG = {
     label: "Sales Pipeline",
     smartsheet_sheet_name: "Workflow",
     smartsheet_sheet_id: "",
+    column_bindings: {},
+    bindings_verified_at: "",
     mirror_enabled: false,
     importer_enabled: false,
     pull_enabled: false,
@@ -48,6 +54,8 @@ const DEFAULT_CONFIG = {
     label: "Order Form",
     smartsheet_sheet_name: "Order Request",
     smartsheet_sheet_id: "",
+    column_bindings: {},
+    bindings_verified_at: "",
     mirror_enabled: false,
     importer_enabled: false,
     pull_enabled: false,
