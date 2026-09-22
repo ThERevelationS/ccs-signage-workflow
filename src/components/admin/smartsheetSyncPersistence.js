@@ -40,3 +40,12 @@ export async function listSmartsheetSheets({ sessionToken } = {}) {
 export async function getSmartsheetColumns({ sessionToken, sheetId } = {}) {
   return invokeSmartsheet("sheet_columns", sessionToken, { sheet_id: String(sheetId || "").trim() });
 }
+
+export async function getSmartsheetRows({ sessionToken, sheetId, columnIds = [], page = 1, pageSize = 100 } = {}) {
+  return invokeSmartsheet("sheet_rows", sessionToken, {
+    sheet_id: String(sheetId || "").trim(),
+    column_ids: Array.isArray(columnIds) ? columnIds.map((id) => String(id || "").trim()).filter(Boolean) : [],
+    page: Math.max(1, Number(page) || 1),
+    page_size: Math.max(1, Math.min(200, Number(pageSize) || 100)),
+  });
+}
