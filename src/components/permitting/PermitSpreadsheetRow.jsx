@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { base44 } from "@/api/base44Client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,9 +16,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
-import { Info, MapPin, Trash2, UserRoundPlus } from "lucide-react";
+import { ExternalLink, Info, Loader2, MapPin, ShieldAlert, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
+import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
+import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -105,6 +109,7 @@ export default function PermitSpreadsheetRow({
   onUpdateField,
   onShowLocalityInfo,
   onShowJurisdictionInfo,
+  localityState,
   onDeleteLine,
   isRegistered,
   users,
@@ -113,6 +118,10 @@ export default function PermitSpreadsheetRow({
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [jurisdictionPreviewOpen, setJurisdictionPreviewOpen] = useState(false);
+  const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
+  const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
+  const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
   const headerScrollRef = useRef(null);
   const dataScrollRef = useRef(null);
   const syncingScrollRef = useRef(false);
@@ -143,6 +152,32 @@ export default function PermitSpreadsheetRow({
   if (currentUserOwnerLabel && !ownerOptions.includes(currentUserOwnerLabel)) ownerOptions.unshift(currentUserOwnerLabel);
   if (lineItem.assigned_to && !ownerOptions.includes(lineItem.assigned_to)) ownerOptions.unshift(lineItem.assigned_to);
   const canAssignToMe = isRegistered && !isCompleted && !String(lineItem.assigned_to || "").trim() && !!currentUserOwnerLabel;
+
+  const loadJurisdictionPreview = async () => {
+    if (jurisdictionMatches !== null || jurisdictionPreviewLoading || !lineItem.locality_name) return;
+    setJurisdictionPreviewLoading(true);
+    setJurisdictionPreviewError("");
+    try {
+      const rows = await loadAllEntityRows({
+        entity: base44.entities.JurisdictionProfile,
+        sort: "name",
+        label: `Jurisdiction preview ${lineItem.locality_name}`,
+      });
+      const normalizedName = normalizePermitJurisdictionName(lineItem.locality_name);
+      const normalizedState = String(localityState || "").trim().toLowerCase();
+      const matches = (Array.isArray(rows) ? rows : []).filter((jurisdiction) => {
+        if (normalizePermitJurisdictionName(jurisdiction?.name) !== normalizedName) return false;
+        if (!normalizedState) return true;
+        return String(jurisdiction?.state || "").trim().toLowerCase() === normalizedState;
+      });
+      setJurisdictionMatches(matches);
+    } catch (error) {
+      console.error("Could not load jurisdiction knowledge preview:", error);
+      setJurisdictionPreviewError("Jurisdiction knowledge could not be loaded. Open the full Jurisdictions view to retry.");
+    } finally {
+      setJurisdictionPreviewLoading(false);
+    }
+  };
 
   const syncHorizontalScroll = (sourceRef, targetRef) => {
     if (syncingScrollRef.current) return;
@@ -246,15 +281,71 @@ export default function PermitSpreadsheetRow({
                 </button>
               )}
               {lineItem.locality_name && onShowJurisdictionInfo && (
-                <button
-                  type="button"
-                  onClick={() => onShowJurisdictionInfo(lineItem.locality_id, lineItem.locality_name)}
-                  className="h-6 w-6 flex items-center justify-center rounded-md bg-purple-50 hover:bg-purple-100 border border-purple-200 flex-shrink-0"
-                  title="Open jurisdiction knowledge"
-                  aria-label={`Open jurisdiction knowledge for ${localityLabel}`}
+                <Popover
+                  open={jurisdictionPreviewOpen}
+                  onOpenChange={(open) => {
+                    setJurisdictionPreviewOpen(open);
+                    if (open) loadJurisdictionPreview();
+                  }}
                 >
-                  <MapPin className="w-3.5 h-3.5 text-purple-700" />
-                </button>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-6 w-6 flex items-center justify-center rounded-md bg-purple-50 hover:bg-purple-100 border border-purple-200 flex-shrink-0"
+                      title="Preview jurisdiction knowledge"
+                      aria-label={`Preview jurisdiction knowledge for ${localityLabel}`}
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-purple-700" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[320px] p-3 text-xs">
+                    <div className="font-semibold text-gray-900">Jurisdiction knowledge</div>
+                    <div className="mt-0.5 text-[11px] text-gray-500">{localityLabel}{localityState ? `, ${localityState}` : ""}</div>
+
+                    {jurisdictionPreviewLoading ? (
+                      <div className="mt-3 flex items-center gap-2 text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Loading reference data…
+                      </div>
+                    ) : jurisdictionPreviewError ? (
+                      <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-amber-800">{jurisdictionPreviewError}</div>
+                    ) : jurisdictionMatches?.length === 1 ? (() => {
+                      const jurisdiction = jurisdictionMatches[0];
+                      const trust = assessJurisdictionTrust(jurisdiction, 1);
+                      const documentCount = Array.isArray(jurisdiction.documents) ? jurisdiction.documents.length : 0;
+                      return (
+                        <div className="mt-3 space-y-2">
+                          <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
+                            <ShieldAlert className="h-3 w-3" /> {trust.label}
+                          </div>
+                          {jurisdiction.ai_summary && <div className="line-clamp-3 text-gray-600">{jurisdiction.ai_summary}</div>}
+                          <div className="text-[11px] text-gray-500">{documentCount} source document{documentCount === 1 ? "" : "s"} stored</div>
+                          {jurisdiction.permitting_url && (
+                            <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
+                              <ExternalLink className="h-3 w-3" /> Official permitting page
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })() : jurisdictionMatches?.length > 1 ? (
+                      <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-2 text-amber-800">
+                        {jurisdictionMatches.length} repository profiles match this locality. Open the full Jurisdictions view to review the duplicates; no profile was chosen automatically.
+                      </div>
+                    ) : jurisdictionMatches ? (
+                      <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-2 text-slate-600">No repository profile exactly matches this configured locality.</div>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setJurisdictionPreviewOpen(false);
+                        onShowJurisdictionInfo(lineItem.locality_id, lineItem.locality_name);
+                      }}
+                      className="mt-3 inline-flex min-h-8 w-full items-center justify-center gap-1 rounded-md border border-purple-200 bg-purple-50 px-3 font-semibold text-purple-800 hover:bg-purple-100"
+                    >
+                      <MapPin className="h-3.5 w-3.5" /> Open full Jurisdictions
+                    </button>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
