@@ -35,6 +35,7 @@ export default function PermitClientGroup({
   onSelectLocalityForWorkOrder,
   onOpenWorkOrder,
   onShowLocalityInfo,
+  onShowJurisdictionInfo,
   onDeleteLine,
   onUpdateWorkOrderField,
   onWorkNotesChanged,
@@ -316,6 +317,7 @@ export default function PermitClientGroup({
                     onUpdateStep={onUpdateStep}
                     onUpdateField={onUpdateField}
                     onShowLocalityInfo={onShowLocalityInfo}
+                    onShowJurisdictionInfo={onShowJurisdictionInfo}
                     onDeleteLine={onDeleteLine}
                     isRegistered={isRegistered}
                     users={users}
