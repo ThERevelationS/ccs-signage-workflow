@@ -13,6 +13,7 @@ export default function SalesImportPreviewDialog({
   open,
   preview,
   file,
+  analyzing,
   applying,
   error,
   onClose,
@@ -20,8 +21,17 @@ export default function SalesImportPreviewDialog({
   onDownloadIssues,
 }) {
   if (!open) return null;
-  const summary = preview?.summary || {};
-  const issues = preview?.issues || [];
+  const appliedResult = preview?.appliedResult || null;
+  const summary = appliedResult ? {
+    total: preview?.summary?.total || 0,
+    create: appliedResult.created || 0,
+    update: appliedResult.updated || 0,
+    unchanged: appliedResult.unchanged || 0,
+    conflict: appliedResult.conflicts || 0,
+    ambiguous: appliedResult.ambiguous || 0,
+    invalid: appliedResult.invalid || 0,
+  } : (preview?.summary || {});
+  const issues = appliedResult?.issues || preview?.issues || [];
   const warnings = preview?.warnings || [];
   const changes = preview?.sample_changes || [];
   const blockingCount = Number(summary.invalid || 0) + Number(summary.ambiguous || 0) + Number(summary.conflict || 0);
@@ -37,12 +47,19 @@ export default function SalesImportPreviewDialog({
               Sales Pipeline import preflight
             </DialogTitle>
             <div className="mt-1 text-xs text-gray-500">
-              {file?.name || preview?.file_name || "Spreadsheet"} · No WorkOrders have been changed yet.
+              {file?.name || preview?.file_name || "Spreadsheet"} · {appliedResult ? "Import run complete." : analyzing ? "Analyzing without changing WorkOrders..." : "No WorkOrders have been changed yet."}
             </div>
           </DialogHeader>
 
           <div className="space-y-4 p-4 sm:p-5">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+            {analyzing && (
+              <div className="flex min-h-40 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/50 p-6 text-sm text-blue-800">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Validating columns, matching WorkOrders, and calculating changes...
+              </div>
+            )}
+
+            {!analyzing && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
               <Metric label="Rows" value={summary.total} />
               <Metric label="New" value={summary.create} tone="text-green-700" />
               <Metric label="Changed" value={summary.update} tone="text-blue-700" />
@@ -50,9 +67,9 @@ export default function SalesImportPreviewDialog({
               <Metric label="Conflicts" value={summary.conflict} tone="text-amber-700" />
               <Metric label="Ambiguous" value={summary.ambiguous} tone="text-orange-700" />
               <Metric label="Invalid" value={summary.invalid} tone="text-red-700" />
-            </div>
+            </div>}
 
-            {blockingCount > 0 ? (
+            {!analyzing && (blockingCount > 0 ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -66,9 +83,9 @@ export default function SalesImportPreviewDialog({
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
                 <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /><span className="font-semibold">Preflight found no blocking row issues.</span></div>
               </div>
-            )}
+            ))}
 
-            {issues.length > 0 && (
+            {!analyzing && issues.length > 0 && (
               <section>
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
@@ -98,7 +115,7 @@ export default function SalesImportPreviewDialog({
               </section>
             )}
 
-            {changes.length > 0 && (
+            {!analyzing && !appliedResult && changes.length > 0 && (
               <section>
                 <div className="mb-2 text-sm font-semibold text-gray-900">Sample changes</div>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -115,7 +132,7 @@ export default function SalesImportPreviewDialog({
               </section>
             )}
 
-            {warnings.length > 0 && (
+            {!analyzing && !appliedResult && warnings.length > 0 && (
               <section className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-xs font-semibold text-slate-700">Matching warnings</div>
                 <div className="mt-1 space-y-1 text-[11px] text-slate-600">
@@ -128,11 +145,13 @@ export default function SalesImportPreviewDialog({
             {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
             <div className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={applying} onClick={onClose}>Cancel</Button>
-              <Button type="button" className="h-11 sm:h-9" disabled={applying || changedCount === 0} onClick={onApply}>
-                {applying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {changedCount === 0 ? "Nothing to change" : `Import ${changedCount} changed row${changedCount === 1 ? "" : "s"}`}
-              </Button>
+              <Button type="button" variant="outline" className="h-11 sm:h-9" disabled={applying || analyzing} onClick={onClose}>{appliedResult ? "Close" : "Cancel"}</Button>
+              {!appliedResult && !analyzing && (
+                <Button type="button" className="h-11 sm:h-9" disabled={applying || changedCount === 0} onClick={onApply}>
+                  {applying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {changedCount === 0 ? "Nothing to change" : `Import ${changedCount} changed row${changedCount === 1 ? "" : "s"}`}
+                </Button>
+              )}
             </div>
           </div>
         </div>
