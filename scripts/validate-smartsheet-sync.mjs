@@ -11,6 +11,7 @@ import {
   customerReviewDecisionKey,
   setCustomerReviewDecision,
 } from "../src/components/admin/smartsheetCustomerResolutionReviewModel.js";
+import { buildSmartsheetCreationReadiness } from "../src/components/admin/smartsheetCreationReadinessModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -304,5 +305,155 @@ const newDecision = buildCreateNewCustomerDecision({
 });
 assert(newDecision.action === "create_new_customer", "New-Customer approval must remain an explicit review decision.");
 assert(newDecision.proposed_company_name === "Fresh Customer", "New-Customer review must preserve the original Smartsheet name.");
+
+const readinessBaseline = buildSmartsheetRolloutBaseline({
+  sheetId: "4963691473987460",
+  capturedAt: "2026-09-22T23:00:00.000Z",
+  rows: [{ row_id: "base-order" }],
+});
+const readinessRows = [
+  {
+    status: "new_record",
+    row_id: "ready-1",
+    row_number: 31,
+    values: { customer_name: "Acme Old", request_type: "Vinyl", description: "Print vinyl" },
+    customer_resolution: {
+      outcome: "exact_alias",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 99,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 99, reasons: ["exact approved alias"] }],
+    },
+  },
+  {
+    status: "new_record",
+    row_id: "customer-blocked",
+    row_number: 32,
+    values: { customer_name: "Needs Decision Co", request_type: "Supplies", description: "Tape" },
+    customer_resolution: {
+      outcome: "new_customer",
+      recommended_customer_id: "",
+      recommended_company_name: "",
+      recommended_score: 0,
+      candidates: [],
+      reason: "No plausible existing Base44 Customer was found.",
+    },
+  },
+  {
+    status: "new_record",
+    row_id: "field-blocked",
+    row_number: 33,
+    values: { customer_name: "Acme Old", request_type: "Vinyl", description: "" },
+    customer_resolution: {
+      outcome: "exact_alias",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 99,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 99, reasons: ["exact approved alias"] }],
+    },
+  },
+  {
+    status: "candidate",
+    row_id: "candidate-blocked",
+    row_number: 34,
+    candidate_count: 1,
+    values: { customer_name: "Acme Signs", request_type: "Other", description: "Existing-looking row" },
+  },
+  {
+    status: "new_record",
+    row_id: "invalid-type",
+    row_number: 35,
+    values: { customer_name: "Acme Old", request_type: "Hardware", description: "Fasteners" },
+    customer_resolution: {
+      outcome: "exact_alias",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 99,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 99, reasons: ["exact approved alias"] }],
+    },
+  },
+];
+const readinessRollout = buildSmartsheetRolloutPreview({
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  baseline: readinessBaseline,
+  rows: readinessRows,
+});
+const readiness = buildSmartsheetCreationReadiness({
+  rows: readinessRows,
+  rolloutBaseline: readinessBaseline,
+  rolloutPreview: readinessRollout,
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  customerReviewState: { schema_version: 1, decisions: {} },
+});
+assert(readiness.summary.post_baseline_rows === 5, "All row IDs absent from the baseline must be inspected by creation readiness.");
+assert(readiness.summary.ready_for_controlled_create_review === 1, "Only the fully resolved, schema-complete row should be data-ready.");
+assert(readiness.summary.blocked_customer === 1, "Unresolved post-baseline Customer must block future creation.");
+assert(readiness.summary.blocked_required_fields === 2, "Missing Description and invalid Request Type must block future creation.");
+assert(readiness.summary.blocked_existing_record === 1, "A post-baseline existing-record candidate must block duplicate creation.");
+assert(readiness.automatic_creates === 0, "Readiness must never authorize automatic creation.");
+
+const newCustomerReviewKey = customerReviewDecisionKey({
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  normalizedName: "Needs Decision Co",
+});
+const approvedNewState = setCustomerReviewDecision(
+  { schema_version: 1, decisions: {} },
+  newCustomerReviewKey,
+  {
+    action: "create_new_customer",
+    dataset: "orders",
+    sheet_id: "4963691473987460",
+    normalized_name: "needs decision co",
+    source_name: "Needs Decision Co",
+    proposed_company_name: "Needs Decision Co",
+    decided_at: "2026-09-22T23:01:00.000Z",
+  },
+);
+const readinessAfterCustomerDecision = buildSmartsheetCreationReadiness({
+  rows: readinessRows,
+  rolloutBaseline: readinessBaseline,
+  rolloutPreview: readinessRollout,
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  customerReviewState: approvedNewState,
+});
+assert(readinessAfterCustomerDecision.summary.ready_for_controlled_create_review === 2, "An explicit new-Customer review decision may clear only the Customer blocker.");
+assert(readinessAfterCustomerDecision.automatic_creates === 0, "Even data-ready rows must remain non-automatic.");
+
+const salesReadinessBaseline = buildSmartsheetRolloutBaseline({
+  sheetId: "8702703019812740",
+  capturedAt: "2026-09-22T23:02:00.000Z",
+  rows: [{ row_id: "base-sales" }],
+});
+const salesReadinessRows = [{
+  status: "new_record",
+  row_id: "sales-missing-title",
+  row_number: 40,
+  values: { client_name: "Acme Old", title: "" },
+  customer_resolution: {
+    outcome: "exact_alias",
+    recommended_customer_id: "customer-1",
+    recommended_company_name: "Acme Signs",
+    recommended_score: 99,
+    candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 99, reasons: ["exact approved alias"] }],
+  },
+}];
+const salesReadinessRollout = buildSmartsheetRolloutPreview({
+  dataset: "sales",
+  sheetId: "8702703019812740",
+  baseline: salesReadinessBaseline,
+  rows: salesReadinessRows,
+});
+const salesReadiness = buildSmartsheetCreationReadiness({
+  rows: salesReadinessRows,
+  rolloutBaseline: salesReadinessBaseline,
+  rolloutPreview: salesReadinessRollout,
+  dataset: "sales",
+  sheetId: "8702703019812740",
+});
+assert(salesReadiness.summary.blocked_required_fields === 1, "WorkOrder Job Description is a real schema-required creation field.");
 
 console.log("Smartsheet rollout regression validation: PASS");
