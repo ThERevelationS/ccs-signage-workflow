@@ -3,10 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, Settings, Search, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, UserRoundCheck, X } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
+import PermittingRepository from "@/pages/PermittingRepository";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -75,6 +76,7 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
+  const [activeView, setActiveView] = useState("work");
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
@@ -842,6 +844,26 @@ export default function Permitting() {
     );
   };
 
+  if (activeView === "jurisdictions") {
+    return (
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
+        <div className="border-b bg-white px-3 py-2 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setActiveView("work")}>
+              Permit Work
+            </Button>
+            <Button type="button" size="sm" className="gap-1 bg-purple-600 hover:bg-purple-700" aria-pressed="true">
+              <MapPin className="h-4 w-4" /> Jurisdictions
+            </Button>
+          </div>
+        </div>
+        <div className="min-h-0 flex-1">
+          <PermittingRepository embedded />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full overflow-auto p-3 sm:p-6">
       <div className="w-full">
@@ -911,6 +933,16 @@ export default function Permitting() {
               >
                 {allVisibleGroupsCollapsed ? <ChevronsDown className="w-4 h-4" /> : <ChevronsUp className="w-4 h-4" />}
                 {allVisibleGroupsCollapsed ? "Expand jobs" : "Collapse jobs"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveView("jurisdictions")}
+                className="gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
+                title="Browse and manage reusable jurisdiction permitting knowledge without leaving Permitting"
+              >
+                <MapPin className="w-4 h-4" /> Jurisdictions
               </Button>
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
