@@ -16,6 +16,20 @@ function sameValue(a, b) {
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b));
 }
 
+function isEntityNotFoundError(error) {
+  const status = Number(error?.status || error?.response?.status || error?.response?.statusCode || error?.data?.status || 0);
+  if (status === 404) return true;
+  const message = String(
+    error?.message ||
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.data?.message ||
+    error?.data?.error ||
+    ""
+  ).toLowerCase();
+  return message.includes("not found") || message.includes("does not exist");
+}
+
 export function expectedBuilderEntityFields(record = {}, nextFields = {}) {
   return Object.fromEntries(
     Object.keys(nextFields || {}).map((field) => [field, record?.[field]])
@@ -119,6 +133,9 @@ export async function deleteBuilderEntityIfUnchanged({
     try {
       current = await entity.get(id);
     } catch (verificationError) {
+      if (isEntityNotFoundError(verificationError)) {
+        return { deleted: true, convergedAfterResponseLoss: true };
+      }
       throw new Error(
         `${label} delete returned an error and its outcome could not be verified. ` +
         `Do not retry blindly; reload before continuing. ${verificationError?.message || ""}`.trim()
@@ -138,6 +155,9 @@ export async function deleteBuilderEntityIfUnchanged({
   try {
     current = await entity.get(id);
   } catch (verificationError) {
+    if (isEntityNotFoundError(verificationError)) {
+      return { deleted: true, alreadyDeleted: true };
+    }
     throw new Error(
       `${label} deletion matched no current version and the record could not be re-read. ` +
       `Do not retry blindly; reload before continuing. ${verificationError?.message || ""}`.trim()
