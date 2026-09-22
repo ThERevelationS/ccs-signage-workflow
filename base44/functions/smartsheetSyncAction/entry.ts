@@ -97,6 +97,38 @@ function normalizeColumns(body: any) {
   })).filter((column: any) => column.id && column.title);
 }
 
+function normalizeCellPayload(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') return cleanText(value, 4000);
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  try {
+    return cleanText(JSON.stringify(value), 4000);
+  } catch {
+    return cleanText(value, 4000);
+  }
+}
+
+function normalizeSheetRows(body: any) {
+  const rows = Array.isArray(body?.rows) ? body.rows : [];
+  return rows.map((row: any) => ({
+    id: String(row?.id ?? ''),
+    row_number: Number(row?.rowNumber || 0) || null,
+    parent_id: row?.parentId ? String(row.parentId) : '',
+    modified_at: cleanText(row?.modifiedAt, 80),
+    cells: (Array.isArray(row?.cells) ? row.cells : []).map((cell: any) => ({
+      column_id: String(cell?.columnId ?? ''),
+      value: normalizeCellPayload(cell?.value),
+      display_value: cleanText(cell?.displayValue, 4000),
+    })).filter((cell: any) => cell.column_id),
+  })).filter((row: any) => row.id);
+}
+
+function numericIdList(value: unknown, maxItems = 100) {
+  const source = Array.isArray(value) ? value : [];
+  const ids = [...new Set(source.map((item) => cleanText(item, 40)).filter((item) => /^\d+$/.test(item)))];
+  return ids.slice(0, maxItems);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -117,7 +149,7 @@ Deno.serve(async (req) => {
         read_only: true,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows'],
         write_actions_available: false,
       });
     }
@@ -166,6 +198,39 @@ Deno.serve(async (req) => {
         read_only: true,
         sheet_id: sheetId,
         columns,
+      });
+    }
+
+    if (action === 'sheet_rows') {
+      const sheetId = cleanText(body?.sheet_id, 40);
+      if (!/^\d+$/.test(sheetId)) {
+        return Response.json({ success: false, error: 'A numeric Smartsheet sheet ID is required.' }, { status: 400 });
+      }
+      const columnIds = numericIdList(body?.column_ids, 100);
+      if (!columnIds.length) {
+        return Response.json({ success: false, error: 'At least one verified numeric Smartsheet column ID is required.' }, { status: 400 });
+      }
+      const page = Math.max(1, Math.min(100000, Number(body?.page) || 1));
+      const pageSize = Math.max(1, Math.min(200, Number(body?.page_size) || 100));
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        columnIds: columnIds.join(','),
+        exclude: 'nonexistentCells',
+      });
+      const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+      const rows = normalizeSheetRows(result.body);
+      return Response.json({
+        success: true,
+        configured: true,
+        read_only: true,
+        sheet_id: sheetId,
+        sheet_version: Number(result.body?.version || 0) || null,
+        total_row_count: Number(result.body?.totalRowCount || rows.length),
+        page_number: Number(result.body?.pageNumber || page),
+        page_size: Number(result.body?.pageSize || pageSize),
+        returned_row_count: rows.length,
+        rows,
       });
     }
 
