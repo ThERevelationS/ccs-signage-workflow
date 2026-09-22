@@ -273,8 +273,55 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
         )}
 
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-          The API credential is intentionally not stored here. Live API access will use a server-side Base44 secret. No Smartsheet network calls exist in this settings chunk.
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="font-semibold">Smartsheet API connection</div>
+              <div className="mt-1 text-xs">
+                Credential: {apiStatus?.configured ? "configured securely on the server" : "not configured"}.
+                {" "}The token is never stored in this settings record or returned to the browser.
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={loadApiStatus} disabled={apiLoading || !sessionToken}>
+                {apiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                <span className="ml-2">API Status</span>
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={testApi} disabled={apiLoading || !apiStatus?.configured}>
+                Test Read Only
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={discoverSheets} disabled={apiLoading || !apiStatus?.configured}>
+                Discover Sheets
+              </Button>
+            </div>
+          </div>
+
+          {!apiStatus?.configured && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+              Add the rotated token as the Base44 app secret <code className="font-mono">SMARTSHEET_API_TOKEN</code>. Do not place it in source code or GlobalSettings.
+            </div>
+          )}
+
+          {apiMessage && <div className="text-xs">{apiMessage}</div>}
+
+          {availableSheets.length > 0 && (
+            <div className="rounded-md border border-blue-200 bg-white/70 p-2">
+              <div className="text-xs font-semibold mb-2">Accessible sheets — review only</div>
+              <div className="max-h-52 overflow-y-auto divide-y">
+                {availableSheets.map((sheet) => (
+                  <div key={sheet.id} className="flex items-center justify-between gap-3 py-2 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{sheet.name}</div>
+                      <div className="text-gray-500">ID {sheet.id}{sheet.access_level ? ` • ${sheet.access_level}` : ""}</div>
+                    </div>
+                    {(sheet.name === "Workflow" || sheet.name === "Order Request") && (
+                      <Badge className="bg-green-100 text-green-700 shrink-0">Expected sheet</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
