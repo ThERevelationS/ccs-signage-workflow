@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,7 @@ export default function Permitting() {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState(() => new Set());
   const [workOrderEditError, setWorkOrderEditError] = useState("");
   const [permitLineEditError, setPermitLineEditError] = useState("");
-  const [activeView, setActiveView] = useState("work");
+  const [activeView, setActiveView] = useState(() => new URLSearchParams(window.location.search).get("view") === "jurisdictions" ? "jurisdictions" : "work");
   const [jurisdictionFocus, setJurisdictionFocus] = useState(null);
   const lineItemBaselinesRef = useRef(new Map());
   const lineItemMutationQueuesRef = useRef(new Map());
@@ -784,6 +785,15 @@ export default function Permitting() {
     setJurisdictionFocus(focus);
     setActiveView("jurisdictions");
   }, []);
+  const returnToPermitWork = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") === "jurisdictions") {
+      params.delete("view");
+      const query = params.toString();
+      window.history.replaceState(window.history.state, "", `${createPageUrl("Permitting")}${query ? `?${query}` : ""}`);
+    }
+    setActiveView("work");
+  }, []);
   const openJurisdictionKnowledge = useCallback((localityId, localityName = "") => {
     const locality = localities.find((row) => row.id === localityId);
     const name = String(locality?.name || localityName || "").trim();
@@ -872,7 +882,7 @@ export default function Permitting() {
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
         <div className="border-b bg-white px-3 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setActiveView("work")} className="gap-1">
+            <Button type="button" size="sm" variant="outline" onClick={returnToPermitWork} className="gap-1">
               <ArrowLeft className="h-4 w-4" /> Back to Permit Work
             </Button>
             <Button type="button" size="sm" className="gap-1 bg-purple-600 hover:bg-purple-700" aria-pressed="true">
