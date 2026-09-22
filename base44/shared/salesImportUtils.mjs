@@ -426,7 +426,17 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
   const localConflicts = [];
 
   const proposed = {};
-  if (!sameValue(current.client_name, importRow.clientName)) proposed.client_name = importRow.clientName;
+  if (!sameValue(current.client_name, importRow.clientName)) {
+    if (
+      Object.prototype.hasOwnProperty.call(previousSnapshot, "client_name")
+      && !sameValue(current.client_name, previousSnapshot.client_name)
+      && !sameValue(importRow.clientName, current.client_name)
+    ) {
+      localConflicts.push("client_name");
+    } else {
+      proposed.client_name = importRow.clientName;
+    }
+  }
 
   for (const field of importedFields) {
     const desired = incoming[field];
