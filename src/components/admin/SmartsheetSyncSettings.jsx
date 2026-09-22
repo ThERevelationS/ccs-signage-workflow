@@ -22,7 +22,6 @@ import {
   mappingTransformLabel,
 } from "@/components/admin/smartsheetMappingModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
-import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
