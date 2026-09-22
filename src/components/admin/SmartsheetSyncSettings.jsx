@@ -1472,8 +1472,26 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                       Stable links are compared directly. Legacy/exact matches are candidates only and are never linked automatically.
                     </div>
                   </div>
-                  <DryRunPreviewCard title="Workflow row preview" preview={dryRunPreview.sales} newRecordLabel="WorkOrders" />
-                  <DryRunPreviewCard title="Order Request row preview" preview={dryRunPreview.orders} newRecordLabel="Orders" />
+                  <DryRunPreviewCard
+                    title="Workflow row preview"
+                    preview={dryRunPreview.sales}
+                    newRecordLabel="WorkOrders"
+                    dataset="sales"
+                    reviewState={customerReview}
+                    onSaveCustomerReview={saveCustomerReviewChoice}
+                    onClearCustomerReview={clearCustomerReviewChoice}
+                    reviewSaving={reviewSaving}
+                  />
+                  <DryRunPreviewCard
+                    title="Order Request row preview"
+                    preview={dryRunPreview.orders}
+                    newRecordLabel="Orders"
+                    dataset="orders"
+                    reviewState={customerReview}
+                    onSaveCustomerReview={saveCustomerReviewChoice}
+                    onClearCustomerReview={clearCustomerReviewChoice}
+                    reviewSaving={reviewSaving}
+                  />
                 </div>
               )}
             </div>
