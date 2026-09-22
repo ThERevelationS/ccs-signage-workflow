@@ -15,6 +15,7 @@ import {
 } from "@/components/permitting/jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { assessJurisdictionTrust } from "@/components/permitting/jurisdictionTrust";
+import { normalizePermitJurisdictionName } from "@/components/permitting/jurisdictionPermitBridge";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const JurisdictionProfile = base44.entities.JurisdictionProfile;
@@ -36,7 +37,7 @@ async function pollResearchRequest(id) {
   return permittingProxy('poll', { id });
 }
 
-export default function PermittingRepository({ embedded = false }) {
+export default function PermittingRepository({ embedded = false, focusJurisdiction = null }) {
   const { currentUser } = useAuth();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,21 @@ export default function PermittingRepository({ embedded = false }) {
     const interval = setInterval(loadJurisdictions, 300000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const name = String(focusJurisdiction?.name || "").trim();
+    if (!name) return;
+    setSearchTerm(name);
+
+    const normalizedName = normalizePermitJurisdictionName(name);
+    const normalizedState = String(focusJurisdiction?.state || "").trim().toLowerCase();
+    const matches = jurisdictions.filter((jurisdiction) => {
+      if (normalizePermitJurisdictionName(jurisdiction?.name) !== normalizedName) return false;
+      if (!normalizedState) return true;
+      return String(jurisdiction?.state || "").trim().toLowerCase() === normalizedState;
+    });
+    setSelectedJurisdiction(matches.length === 1 ? matches[0] : null);
+  }, [focusJurisdiction?.name, focusJurisdiction?.state, jurisdictions]);
 
   const loadJurisdictions = async () => {
     try {
