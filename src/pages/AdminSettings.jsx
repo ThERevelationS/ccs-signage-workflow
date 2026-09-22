@@ -1054,7 +1054,7 @@ export default function AdminSettings() {
               </TabsContent>
 
               <TabsContent value="smartsheet">
-                <SmartsheetSyncSettings />
+                <SmartsheetSyncSettings sessionToken={sessionToken} />
               </TabsContent>
             </>
           )}
