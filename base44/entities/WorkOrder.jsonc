@@ -479,9 +479,6 @@
       "type": "string",
       "format": "date"
     },
-    "quoted_amount": {
-      "type": "number"
-    },
     "actual_cost": {
       "type": "number"
     },
@@ -502,10 +499,6 @@
     },
     "additional_contact": {
       "type": "string"
-    },
-    "quote_date": {
-      "type": "string",
-      "format": "date"
     },
     "follow_up_date": {
       "type": "string",
@@ -542,9 +535,6 @@
     "lost_reason": {
       "type": "string",
       "description": "Sales reason captured when an opportunity is marked Lost. Preserved in change history when reopened."
-    },
-    "probability": {
-      "type": "number"
     },
     "project_type": {
       "type": "string"
