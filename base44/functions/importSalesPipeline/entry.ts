@@ -7,6 +7,7 @@ import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersist
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import {
   parseSalesImportRows,
+  validateSalesImportHeaders,
   buildExistingImportIndexes,
   resolveSalesImportMatch,
   buildSalesImportPlan,
@@ -334,6 +335,10 @@ Deno.serve(async (req) => {
     const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
     const todayStamp = format(new Date(), 'yyyy-MM-dd');
     const parsed = parseSalesImportRows(rawRows, { todayStamp });
+    const headerValidation = validateSalesImportHeaders(parsed.headers);
+    if (headerValidation.errors.length) {
+      throw Object.assign(new Error(headerValidation.errors.join(" ")), { status: 400 });
+    }
     const parseMs = Date.now() - parseStarted;
 
     if (rawRows.length === 0) {
@@ -375,7 +380,10 @@ Deno.serve(async (req) => {
       file_hash: fingerprint,
       summary,
       issues,
-      warnings: parsed.validRows.flatMap((row) => (row.warnings || []).map((message: string) => ({ row: row.rowNumber, customer: row.clientName, message }))).slice(0, 100),
+      warnings: [
+        ...headerValidation.warnings.map((message: string) => ({ row: "", customer: "", message })),
+        ...parsed.validRows.flatMap((row) => (row.warnings || []).map((message: string) => ({ row: row.rowNumber, customer: row.clientName, message }))),
+      ].slice(0, 100),
       sample_changes: plans.filter((plan) => ['create', 'update'].includes(plan.kind)).slice(0, 50).map((plan) => ({
         row: plan.rowNumber,
         customer: plan.clientName,
