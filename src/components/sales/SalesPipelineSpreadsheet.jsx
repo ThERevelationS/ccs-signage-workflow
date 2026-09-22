@@ -63,9 +63,6 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "sales_rep",
   "lead_source",
   "estimate_amount",
-  "quoted_amount",
-  "probability",
-  "quote_date",
   "date_estimate_sent",
   "follow_up_date",
   "sales_last_follow_up_completed_at",
@@ -80,7 +77,6 @@ const SALES_ACTIVITY_FIELDS = new Set([
 ]);
 const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
 const CLOSEOUT_HISTORICAL_FIELDS = new Set([
-  "quote_date",
   "date_estimate_sent",
   "follow_up_date",
   "expected_close_date",
@@ -136,7 +132,6 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   if (attentionFilter === "needs_attention") return isOperational && hasSalesAttention(workOrder, parseLocalDate(todayStamp));
   if (attentionFilter === "placeholder") return isOperational && isLikelySalesPlaceholder(workOrder);
   if (attentionFilter === "no_next_action") return isOperational && !followUp && !workOrder?.current_task_deadline;
-  if (attentionFilter === "probability_missing") return isOperational && !(typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability));
   if (attentionFilter === "near_close") return isOperational && workOrder?.expected_close_date >= todayStamp && workOrder?.expected_close_date <= nearCloseStamp;
   if (attentionFilter === "close_overdue") return isOperational && workOrder?.expected_close_date && workOrder.expected_close_date < todayStamp;
   if (attentionFilter === "stale") {
@@ -590,7 +585,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const todayStamp = format(new Date(), "yyyy-MM-dd");
     const protectedDateFields = [
       ["date_estimate_sent", "Quote sent date"],
-      ["quote_date", "Quote date"],
       ["close_date", "Close date"],
     ];
     for (const [fieldName, fieldLabel] of protectedDateFields) {
@@ -1230,18 +1224,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Smartsheet Row ID": str(wo.sales_import_source_id), "Sales Rep": str(wo.sales_rep),
       "Current Task Deadline": str(wo.current_task_deadline), "Current Task Assigned to": str(wo.current_task_assigned_to),
       "Designer": str(wo.designer), "Project Manager": str(wo.project_manager), "Estimator": str(wo.estimator),
-      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount), "Quoted Amount": num(wo.quoted_amount),
+      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount),
       "Current Task Description": str(wo.current_task_description), "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
       "Site Survey": str(wo.site_survey_date), "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
       "Date Order Created": str(wo.date_order_created), "Project Install Date": str(wo.project_install_date),
       "Permit Submitted": str(wo.permit_submitted_date), "Notes": str(wo.title),
       "Date Permit Receipt Confirmed": str(wo.permit_receipt_confirmed_date), "Permit Number": str(wo.permit_number),
       "Date Permit Approved/Received": str(wo.permit_approved_date),
-      "Quote Date": str(wo.quote_date), "Follow Up Date": str(wo.follow_up_date), "Last Follow Up Completed": str(wo.sales_last_follow_up_completed_at),
+      "Follow Up Date": str(wo.follow_up_date), "Last Follow Up Completed": str(wo.sales_last_follow_up_completed_at),
       "Last Follow Up Outcome": str(wo.sales_last_follow_up_outcome), "Stage Changed At": str(wo.sales_stage_changed_at),
       "Stage Age Days": num(getStageAgeDays(wo, new Date())), "Quote Age Days": num(getQuoteAgeDays(wo, new Date())),
       "Expected Close Date": str(wo.expected_close_date), "Close Date": str(wo.close_date),
-      "Lost Reason": str(wo.lost_reason), "Probability": num(wo.probability), "Project Type": str(wo.project_type),
+      "Lost Reason": str(wo.lost_reason), "Project Type": str(wo.project_type),
       "Days from Initial Request to today": num(calculateDays(wo.date_initial_contact)),
       "Days Est. Sent from Date Requested": num(calculateDays(wo.date_initial_contact, wo.date_estimate_sent)),
       "Days from Est. Sent to Date Order Created": num(calculateDays(wo.date_estimate_sent, wo.date_order_created)),
@@ -1648,12 +1642,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         summary.trackedActivityCount += 1;
         if (activityTime <= staleCutoffTime) summary.staleCount += 1;
       }
-      if (typeof wo.probability === "number" && Number.isFinite(wo.probability)) {
-        summary.ratedProbabilityCount += 1;
-        summary.weightedValue += value * (wo.probability / 100);
-      } else {
-        summary.unratedProbabilityCount += 1;
-      }
       return summary;
     }, {
       openCount: 0,
@@ -1694,9 +1682,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       staleCount: 0,
       trackedActivityCount: 0,
       untrackedActivityCount: 0,
-      ratedProbabilityCount: 0,
-      unratedProbabilityCount: 0,
-      weightedValue: 0,
       sourceCoverageCount: 0,
       sourceMissingCount: 0,
       sourceBreakdown: [],
