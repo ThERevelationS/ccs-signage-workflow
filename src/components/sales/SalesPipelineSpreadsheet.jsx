@@ -761,7 +761,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setFollowUpCompletion(null);
   };
 
-  const confirmSalesStatusTransition = ({ lostReason = "", closeDate = "" } = {}) => {
+  const confirmSalesStatusTransition = ({ lostReason = "" } = {}) => {
     if (!statusTransition?.workOrder?.id) return;
     const current = workOrders.find((row) => row.id === statusTransition.workOrder.id) || statusTransition.workOrder;
     const nextStatus = statusTransition.nextStatus;
@@ -773,7 +773,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (closing) {
       changes = {
         ...changes,
-        close_date: closeDate || current.close_date || today,
+        close_date: today,
         follow_up_date: "",
         lost_reason: nextStatus === "lost" ? lostReason : "",
       };
