@@ -3,6 +3,7 @@ import {
   normalizeCustomerText,
   resolveCustomerCandidatesIndexed,
 } from "./smartsheetCustomerResolutionModel.js";
+import { buildSmartsheetRolloutPreview } from "./smartsheetRolloutModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -284,5 +285,14 @@ export function buildSmartsheetDryRunPreview({
     needs_name: 0,
   });
 
-  return { rows, summary, customerSummary, customerGroups, uniqueCustomerSummary };
+  const rolloutPreview = buildSmartsheetRolloutPreview({ rows, dataset });
+
+  return {
+    rows,
+    summary,
+    customerSummary,
+    customerGroups,
+    uniqueCustomerSummary,
+    rolloutPreview,
+  };
 }
