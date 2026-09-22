@@ -18,6 +18,7 @@ import {
 } from "@/components/admin/smartsheetSyncPersistence";
 import {
   SMARTSHEET_MAPPING_BLUEPRINTS,
+  analyzeSmartsheetColumns,
   mappingDirectionLabel,
   mappingTransformLabel,
 } from "@/components/admin/smartsheetMappingModel";
@@ -90,6 +91,88 @@ function MappingPlan({ title, rows }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function LiveMappingAnalysisCard({ title, result }) {
+  if (!result) return null;
+
+  if (result.status !== "ready") {
+    const message = result.status === "ambiguous_sheet"
+      ? `Multiple accessible sheets match "${result.expectedName}". Review them before choosing one.`
+      : `No accessible sheet exactly matches "${result.expectedName}".`;
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        <div className="font-semibold">{title}</div>
+        <div className="mt-1">{message}</div>
+        {result.sheetMatches?.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {result.sheetMatches.map((sheet) => <div key={sheet.id}>{sheet.name} — ID {sheet.id}</div>)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const { sheet, analysis } = result;
+  return (
+    <div className="rounded-lg border border-blue-200 bg-white/80 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{title}</div>
+          <div className="mt-1 text-[11px] text-gray-500">{sheet.name} • Sheet ID {sheet.id}</div>
+        </div>
+        <div className="flex flex-wrap gap-1 text-[11px]">
+          <Badge className="bg-green-100 text-green-700">{analysis.counts.matched} matched</Badge>
+          <Badge className="bg-amber-100 text-amber-800">{analysis.counts.missing} missing</Badge>
+          <Badge className="bg-red-100 text-red-700">{analysis.counts.conflict} conflicts</Badge>
+          <Badge variant="outline">{analysis.counts.protected} protected</Badge>
+        </div>
+      </div>
+
+      <div className="mt-3 max-h-96 overflow-y-auto divide-y rounded-md border bg-white">
+        {analysis.fields.map((field) => {
+          const column = field.matches?.[0];
+          const statusClass = field.status === "matched"
+            ? "bg-green-100 text-green-700"
+            : field.status === "conflict"
+              ? "bg-red-100 text-red-700"
+              : field.status === "missing"
+                ? "bg-amber-100 text-amber-800"
+                : "bg-gray-100 text-gray-700";
+          return (
+            <div key={field.field} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
+              <div className="min-w-0">
+                <div className="font-medium text-gray-800">{field.label}</div>
+                <div className="font-mono text-[10px] text-gray-500">{field.field}</div>
+              </div>
+              <div className="min-w-0 text-gray-600">
+                {field.status === "matched" && column ? (
+                  <>
+                    <div className="font-medium truncate">{column.title}</div>
+                    <div className="text-[10px]">Column ID {column.id} • {column.type || "UNKNOWN"}</div>
+                  </>
+                ) : field.status === "conflict" ? (
+                  <div>{field.matches.map((match) => `${match.title} (ID ${match.id})`).join(", ")}</div>
+                ) : field.status === "protected" ? (
+                  <div>Base44 only — no Smartsheet binding</div>
+                ) : (
+                  <div>No exact approved column-name match</div>
+                )}
+              </div>
+              <Badge className={statusClass}>{field.status}</Badge>
+            </div>
+          );
+        })}
+      </div>
+
+      {analysis.unmappedColumns.length > 0 && (
+        <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-2 text-[11px] text-gray-600">
+          <span className="font-semibold">Unmapped Smartsheet columns:</span>{" "}
+          {analysis.unmappedColumns.map((column) => `${column.title} (ID ${column.id})`).join(", ")}
+        </div>
+      )}
     </div>
   );
 }
