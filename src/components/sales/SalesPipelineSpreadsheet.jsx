@@ -1545,7 +1545,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const operational = scopedWorkOrders.filter(isCurrentPipelineOpportunity);
     const summary = operational.reduce((summary, wo) => {
       const followUp = wo.follow_up_date || "";
-      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      const value = Number(wo.estimate_amount ?? 0) || 0;
       summary.openCount += 1;
       summary.openValue += value;
       const source = String(wo.lead_source || "").trim();
@@ -1735,7 +1735,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const stageMix = new Map();
     const quoteOwnerMix = new Map();
     operational.forEach((wo) => {
-      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      const value = Number(wo.estimate_amount ?? 0) || 0;
       const followUp = wo.follow_up_date || "";
       const ownerLabel = String(wo.sales_rep || "").trim() || "Unassigned";
       const ownerKey = normalizeOwnerIdentity(ownerLabel) || "__unassigned__";
@@ -1811,7 +1811,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
     const lostReasons = new Map();
     reportingOutcomes.forEach((wo) => {
-      const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+      const value = Number(wo.estimate_amount ?? 0) || 0;
       summary.closedValue += value;
       if (wo.sales_status === "won") {
         summary.wonCount += 1;
@@ -1836,7 +1836,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         const label = String(wo[field] || "").trim() || fallbackLabel;
         const key = label.toLowerCase();
         const row = grouped.get(key) || { label, total: 0, won: 0, lost: 0, closedValue: 0, wonValue: 0, winRate: null };
-        const value = Number(wo.quoted_amount ?? wo.estimate_amount ?? 0) || 0;
+        const value = Number(wo.estimate_amount ?? 0) || 0;
         row.total += 1;
         row.closedValue += value;
         if (wo.sales_status === "won") {
@@ -1950,8 +1950,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         return [...result].sort((a, b) => {
           const scoreDiff = getSalesAttentionScore(b, parseLocalDate(todayStamp)) - getSalesAttentionScore(a, parseLocalDate(todayStamp));
           if (scoreDiff !== 0) return scoreDiff;
-          const aValue = Number(a.quoted_amount ?? a.estimate_amount ?? 0) || 0;
-          const bValue = Number(b.quoted_amount ?? b.estimate_amount ?? 0) || 0;
+          const aValue = Number(a.estimate_amount ?? 0) || 0;
+          const bValue = Number(b.estimate_amount ?? 0) || 0;
           return bValue - aValue;
         });
       }
@@ -2605,9 +2605,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {isColumnVisible("days_ord_prm") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>}
               {isColumnVisible("days_prm_app") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>}
               {isColumnVisible("days_ord_ins") && <th className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>}
-              {isColumnVisible("quote_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'quote_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('quote_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'quote_date', 'Quote Date')}>
-                <div className="flex items-center gap-1">Quote {getSortIcon('quote_date')}</div>
-              </th>}
               {isColumnVisible("quote_age") && <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since explicit estimate-sent date; otherwise explicit quote issue date. Missing means neither trustworthy date is available.">Quote Age</th>}
               {isColumnVisible("follow_up_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
                 <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
@@ -2617,9 +2614,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               </th>}
               {isColumnVisible("close_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'close_date', 'Close Date')}>
                 <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
-              </th>}
-              {isColumnVisible("probability") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'probability' ? 'bg-blue-100' : ''}`} style={{ minWidth: '60px' }} onClick={() => handleSort('probability')} onContextMenu={(e) => handleHeaderContextMenu(e, 'probability', 'Probability')}>
-                <div className="flex items-center gap-1">Prob {getSortIcon('probability')}</div>
               </th>}
               {isColumnVisible("start_date") && <th className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'start_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('start_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'start_date', 'Start Date')}>
                 <div className="flex items-center gap-1">Start {getSortIcon('start_date')}</div>
