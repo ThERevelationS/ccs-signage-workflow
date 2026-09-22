@@ -101,6 +101,18 @@
       "type": "number",
       "description": "Total server processing time in milliseconds."
     },
+    "parse_ms": {
+      "type": "number",
+      "description": "Spreadsheet parsing and validation time in milliseconds."
+    },
+    "match_ms": {
+      "type": "number",
+      "description": "WorkOrder preload, identity matching, and change-plan time in milliseconds."
+    },
+    "apply_ms": {
+      "type": "number",
+      "description": "WorkOrder write and verification time in milliseconds."
+    },
     "result_message": {
       "type": "string",
       "description": "Compact human-readable import result summary."
