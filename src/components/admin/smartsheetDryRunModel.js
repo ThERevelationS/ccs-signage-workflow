@@ -1,5 +1,6 @@
 import {
   buildCustomerResolutionIndex,
+  normalizeCustomerText,
   resolveCustomerCandidatesIndexed,
 } from "./smartsheetCustomerResolutionModel.js";
 
@@ -229,5 +230,59 @@ export function buildSmartsheetDryRunPreview({
     needs_name: 0,
   });
 
-  return { rows, summary, customerSummary };
+  const customerGroupMap = new Map();
+  for (const row of rows) {
+    if (row.status !== "new_record" || !row.customer_resolution) continue;
+    const rawName = dataset === "sales" ? row.values?.client_name : row.values?.customer_name;
+    const normalizedName = normalizeCustomerText(rawName);
+    const groupKey = normalizedName || "__missing_customer_name__";
+    const existing = customerGroupMap.get(groupKey) || {
+      key: groupKey,
+      display_name: normalizeWhitespace(rawName) || "Missing customer name",
+      normalized_name: normalizedName,
+      row_count: 0,
+      row_numbers: [],
+      outcome: row.customer_resolution.outcome,
+      reason: row.customer_resolution.reason || "",
+      recommended_customer_id: row.customer_resolution.recommended_customer_id || "",
+      recommended_company_name: row.customer_resolution.recommended_company_name || "",
+      recommended_score: Number(row.customer_resolution.recommended_score || 0),
+      candidates: row.customer_resolution.candidates || [],
+    };
+    existing.row_count += 1;
+    if (existing.row_numbers.length < 20 && row.row_number) existing.row_numbers.push(row.row_number);
+    customerGroupMap.set(groupKey, existing);
+  }
+
+  const customerGroups = [...customerGroupMap.values()].sort((left, right) => {
+    const priority = {
+      ambiguous: 0,
+      strong_review: 1,
+      close_review: 2,
+      new_customer: 3,
+      needs_name: 4,
+      exact_alias: 5,
+      exact_company: 6,
+    };
+    return (priority[left.outcome] ?? 99) - (priority[right.outcome] ?? 99)
+      || right.row_count - left.row_count
+      || left.display_name.localeCompare(right.display_name);
+  });
+
+  const uniqueCustomerSummary = customerGroups.reduce((result, group) => {
+    result.total_unique += 1;
+    result[group.outcome] = (result[group.outcome] || 0) + 1;
+    return result;
+  }, {
+    total_unique: 0,
+    exact_company: 0,
+    exact_alias: 0,
+    strong_review: 0,
+    close_review: 0,
+    ambiguous: 0,
+    new_customer: 0,
+    needs_name: 0,
+  });
+
+  return { rows, summary, customerSummary, customerGroups, uniqueCustomerSummary };
 }
