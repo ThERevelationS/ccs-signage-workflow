@@ -185,6 +185,72 @@ function LiveMappingAnalysisCard({ title, result }) {
   );
 }
 
+function DryRunPreviewCard({ title, preview }) {
+  if (!preview) return null;
+  const summary = preview.preview?.summary || {};
+  const pageComplete = Number(preview.returned_row_count || 0) >= Number(preview.total_row_count || 0);
+
+  return (
+    <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{title}</div>
+          <div className="mt-1 text-[11px] text-gray-500">
+            Read-only page {preview.page_number || 1}: {preview.returned_row_count || 0} of {preview.total_row_count || 0} Smartsheet rows
+            {pageComplete ? "" : " • first page only"}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 text-[11px]">
+          <Badge className="bg-green-100 text-green-700">{summary.linked_same || 0} linked same</Badge>
+          <Badge className="bg-amber-100 text-amber-800">{summary.linked_different || 0} linked different</Badge>
+          <Badge className="bg-blue-100 text-blue-700">{summary.candidate || 0} candidates</Badge>
+          <Badge className="bg-red-100 text-red-700">{summary.ambiguous || 0} ambiguous</Badge>
+          <Badge variant="outline">{summary.unlinked || 0} unlinked</Badge>
+        </div>
+      </div>
+
+      <div className="mt-3 max-h-80 overflow-y-auto divide-y rounded-md border bg-white">
+        {(preview.preview?.rows || []).slice(0, 50).map((row) => (
+          <div key={row.row_id} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[90px_minmax(0,1fr)_auto] sm:items-center">
+            <div className="text-gray-500">
+              <div>Row {row.row_number || "—"}</div>
+              <div className="font-mono text-[9px] truncate" title={row.row_id}>{row.row_id}</div>
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium text-gray-800 truncate">
+                {row.base44_label || row.values?.customer_name || row.values?.client_name || row.values?.description || "Unlinked Smartsheet row"}
+              </div>
+              <div className="text-[10px] text-gray-500">
+                {row.match_method === "stable_id"
+                  ? "Stable Smartsheet row ID link"
+                  : row.match_method === "legacy_source_id"
+                    ? "Legacy Sales source-ID candidate"
+                    : row.match_method === "exact_composite"
+                      ? "Exact composite candidate"
+                      : row.match_method === "ambiguous"
+                        ? `${row.candidate_count} possible Base44 matches — review required`
+                        : "No Base44 match selected"}
+                {row.differences?.length ? ` • ${row.differences.length} mapped difference${row.differences.length === 1 ? "" : "s"}` : ""}
+              </div>
+              {row.differences?.length > 0 && (
+                <div className="mt-1 text-[10px] text-amber-700">
+                  Differences: {row.differences.slice(0, 5).map((difference) => difference.label).join(", ")}
+                  {row.differences.length > 5 ? ` +${row.differences.length - 5} more` : ""}
+                </div>
+              )}
+            </div>
+            <Badge variant="outline" className="w-fit">{row.status.replaceAll("_", " ")}</Badge>
+          </div>
+        ))}
+      </div>
+
+      {(preview.preview?.rows || []).length > 50 && (
+        <div className="mt-2 text-[11px] text-gray-500">Showing the first 50 preview rows only.</div>
+      )}
+    </div>
+  );
+}
+
 function IntegrationCard({ title, subtitle, value, onChange }) {
   const patch = (next) => onChange({ ...value, ...next });
   return (
