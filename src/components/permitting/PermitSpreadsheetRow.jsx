@@ -21,7 +21,7 @@ import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { normalizePermitJurisdictionName } from "./jurisdictionPermitBridge";
-import { assessJurisdictionTrust } from "./jurisdictionTrust";
+import { assessJurisdictionTrust, isJurisdictionPlaceholder } from "./jurisdictionTrust";
 
 const parseLocalDate = (dateString) => {
   if (!dateString) return undefined;
@@ -304,7 +304,7 @@ export default function PermitSpreadsheetRow({
                       <MapPin className="w-3.5 h-3.5 text-purple-700" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" className="w-[320px] p-3 text-xs">
+                  <PopoverContent align="start" className="w-[360px] max-w-[calc(100vw-2rem)] p-3 text-xs">
                     <div className="font-semibold text-gray-900">Jurisdiction knowledge</div>
                     <div className="mt-0.5 text-[11px] text-gray-500">{localityLabel}{localityState ? `, ${localityState}` : ""}</div>
 
@@ -318,12 +318,55 @@ export default function PermitSpreadsheetRow({
                       const jurisdiction = jurisdictionMatches[0];
                       const trust = assessJurisdictionTrust(jurisdiction, 1);
                       const documentCount = Array.isArray(jurisdiction.documents) ? jurisdiction.documents.length : 0;
+                      const contact = jurisdiction.contact_info || {};
+                      const requirements = jurisdiction.permit_requirements || {};
+                      const usableText = (value) => {
+                        const text = String(value ?? "").trim();
+                        return text && !isJurisdictionPlaceholder(text) ? text : "";
+                      };
+                      const department = usableText(contact.department);
+                      const phone = usableText(contact.phone);
+                      const email = usableText(contact.email);
+                      const address = usableText(contact.address);
+                      const feeRange = usableText(requirements.fee_range);
+                      const processingTime = usableText(requirements.processing_time);
+                      const maxArea = usableText(requirements.max_sign_area_sqft);
+                      const maxHeight = usableText(requirements.max_height_ft);
+                      const hasVerifiedDetails = trust.key === "verified" && (department || phone || email || address || requirements.requires_permit !== undefined || feeRange || processingTime || maxArea || maxHeight);
                       return (
                         <div className="mt-3 space-y-2">
                           <div className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${trust.className}`} title={trust.description}>
                             <ShieldAlert className="h-3 w-3" /> {trust.label}
                           </div>
                           {jurisdiction.ai_summary && <div className="line-clamp-3 text-gray-600">{jurisdiction.ai_summary}</div>}
+
+                          {hasVerifiedDetails ? (
+                            <div className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5">
+                              <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">Verified reference details</div>
+                              {(department || phone || email || address) && (
+                                <div className="space-y-1 text-[11px] text-gray-700">
+                                  {department && <div><span className="font-semibold">Dept:</span> {department}</div>}
+                                  {phone && <div><span className="font-semibold">Phone:</span> <a href={`tel:${phone}`} className="text-blue-700 hover:underline">{phone}</a></div>}
+                                  {email && <div><span className="font-semibold">Email:</span> <a href={`mailto:${email}`} className="break-all text-blue-700 hover:underline">{email}</a></div>}
+                                  {address && <div><span className="font-semibold">Address:</span> {address}</div>}
+                                </div>
+                              )}
+                              {(requirements.requires_permit !== undefined || feeRange || processingTime || maxArea || maxHeight) && (
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-emerald-200 pt-2 text-[11px] text-gray-700">
+                                  {requirements.requires_permit !== undefined && <div className="col-span-2"><span className="font-semibold">Permit required:</span> {requirements.requires_permit ? "Yes" : "No"}</div>}
+                                  {feeRange && <div><span className="font-semibold">Typical fees:</span> {feeRange}</div>}
+                                  {processingTime && <div><span className="font-semibold">Processing:</span> {processingTime}</div>}
+                                  {maxArea && <div><span className="font-semibold">Max area:</span> {maxArea} sq ft</div>}
+                                  {maxHeight && <div><span className="font-semibold">Max height:</span> {maxHeight} ft</div>}
+                                </div>
+                              )}
+                            </div>
+                          ) : trust.key !== "verified" ? (
+                            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-800">
+                              Contact and requirement details are kept in the full Jurisdictions view until staff verification is current.
+                            </div>
+                          ) : null}
+
                           <div className="text-[11px] text-gray-500">{documentCount} source document{documentCount === 1 ? "" : "s"} stored</div>
                           {jurisdiction.permitting_url && (
                             <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline">
