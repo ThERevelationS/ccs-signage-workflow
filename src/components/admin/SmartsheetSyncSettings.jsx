@@ -191,6 +191,9 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
   const customerSummary = preview.preview?.customerSummary || {};
   const uniqueCustomerSummary = preview.preview?.uniqueCustomerSummary || {};
   const customerGroups = preview.preview?.customerGroups || [];
+  const rolloutPreview = preview.preview?.rolloutPreview || null;
+  const rolloutSummary = rolloutPreview?.summary || {};
+  const rolloutRows = rolloutPreview?.classifications || [];
 
   return (
     <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
@@ -211,6 +214,54 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
           <Badge variant="outline">{summary.empty || 0} empty</Badge>
         </div>
       </div>
+
+      {rolloutPreview && (summary.new_record || 0) > 0 && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/70 p-2 text-[11px] text-amber-950">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="mr-1 font-semibold">Pre-rollout creation gate:</span>
+            <Badge variant="outline">{rolloutSummary.proposed_new_records || 0} preexisting proposed records</Badge>
+            {rolloutSummary.historical_external > 0 && (
+              <Badge className="bg-gray-100 text-gray-700">{rolloutSummary.historical_external} historical/external</Badge>
+            )}
+            {rolloutSummary.legacy_terminal > 0 && (
+              <Badge className="bg-slate-100 text-slate-700">{rolloutSummary.legacy_terminal} terminal-history signals</Badge>
+            )}
+            {rolloutSummary.manual_backfill_review > 0 && (
+              <Badge className="bg-amber-100 text-amber-800">{rolloutSummary.manual_backfill_review} manual backfill review</Badge>
+            )}
+            <Badge className="bg-red-100 text-red-700">{rolloutPreview.auto_create_eligible || 0} auto-create eligible</Badge>
+          </div>
+          <div className="mt-1 text-[10px] text-amber-900">{rolloutPreview.policy}</div>
+          {rolloutRows.length > 0 && (
+            <div className="mt-2 max-h-56 overflow-y-auto divide-y rounded border border-amber-200 bg-white/80">
+              {rolloutRows.slice(0, 100).map((item) => {
+                const outcomeLabel = item.outcome === "historical_external"
+                  ? "historical / external"
+                  : item.outcome === "legacy_terminal"
+                    ? "legacy terminal"
+                    : "manual review";
+                return (
+                  <div key={item.row_id} className="grid grid-cols-1 gap-1 px-2 py-1.5 sm:grid-cols-[75px_minmax(0,1fr)_auto] sm:items-center">
+                    <div className="text-gray-500">Row {item.row_number || "—"}</div>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-gray-800">{item.label}</div>
+                      <div className="truncate text-[10px] text-gray-500">
+                        {item.task_text ? `Task: ${item.task_text} • ` : ""}{item.reason}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="w-fit">{outcomeLabel}</Badge>
+                  </div>
+                );
+              })}
+              {rolloutRows.length > 100 && (
+                <div className="px-2 py-1.5 text-[10px] text-gray-500">
+                  Showing the first 100 of {rolloutRows.length.toLocaleString()} pre-rollout rows. Summary counts include all rows.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {(summary.new_record || 0) > 0 && (
         <div className="mt-3 space-y-2 rounded-md border border-blue-100 bg-blue-50/60 p-2 text-[11px]">
