@@ -33,9 +33,6 @@ const SALES_HISTORY_FIELDS = new Set([
   "sales_rep",
   "lead_source",
   "estimate_amount",
-  "quoted_amount",
-  "probability",
-  "quote_date",
   "date_estimate_sent",
   "follow_up_date",
   "sales_last_follow_up_completed_at",
@@ -53,10 +50,7 @@ const FIELD_LABELS = {
   sales_status: "Sales status",
   sales_rep: "Sales owner",
   lead_source: "Lead source",
-  estimate_amount: "Estimate value",
-  quoted_amount: "Quoted value",
-  probability: "Probability",
-  quote_date: "Quote date",
+  estimate_amount: "Estimate Amount",
   date_estimate_sent: "Estimate sent",
   follow_up_date: "Follow-up date",
   sales_last_follow_up_completed_at: "Follow-up completed",
@@ -89,8 +83,7 @@ const fileMeta = (file) => {
 const displayValue = (field, value) => {
   if (field === "in_pipeline") return value === true || value === "true" ? "Current Pipeline" : "Not Current Pipeline";
   if (value === undefined || value === null || value === "") return "—";
-  if (["estimate_amount", "quoted_amount"].includes(field)) return money(value);
-  if (field === "probability") return `${value}%`;
+  if (field === "estimate_amount") return money(value);
   if (field === "sales_last_follow_up_completed_at") {
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? String(value) : format(parsed, "MMM d, yyyy h:mm a");
@@ -104,7 +97,6 @@ const historyTitle = (entry) => {
   if (entry.field_name === "sales_last_follow_up_outcome") return "Follow-up outcome recorded";
   if (entry.field_name === "sales_status") return "Sales status changed";
   if (entry.field_name === "date_estimate_sent") return "Quote sent date changed";
-  if (entry.field_name === "quote_date") return "Quote issue date changed";
   if (entry.field_name === "follow_up_date") return "Follow-up schedule changed";
   if (entry.field_name === "in_pipeline") return "Current Pipeline membership changed";
   return `${FIELD_LABELS[entry.field_name] || entry.field_name} changed`;
