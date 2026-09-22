@@ -10,6 +10,11 @@ import {
   loadSingleGlobalSetting,
   saveGlobalSettingValueIfUnchanged,
 } from "@/components/shared/globalSettingsPersistence";
+import {
+  getSmartsheetSyncStatus,
+  listSmartsheetSheets,
+  testSmartsheetConnection,
+} from "@/components/admin/smartsheetSyncPersistence";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
@@ -113,13 +118,17 @@ function IntegrationCard({ title, subtitle, value, onChange }) {
   );
 }
 
-export default function SmartsheetSyncSettings() {
+export default function SmartsheetSyncSettings({ sessionToken }) {
   const [record, setRecord] = useState(null);
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [apiStatus, setApiStatus] = useState(null);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [apiMessage, setApiMessage] = useState("");
+  const [availableSheets, setAvailableSheets] = useState([]);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -147,7 +156,54 @@ export default function SmartsheetSyncSettings() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadApiStatus = async () => {
+    if (!sessionToken) return;
+    setApiLoading(true);
+    setApiMessage("");
+    try {
+      const status = await getSmartsheetSyncStatus({ sessionToken });
+      setApiStatus(status);
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet API status could not be loaded.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const testApi = async () => {
+    if (!sessionToken || apiLoading) return;
+    setApiLoading(true);
+    setApiMessage("");
+    try {
+      const result = await testSmartsheetConnection({ sessionToken });
+      setApiMessage(`Read-only connection verified. ${Number(result.total_accessible_sheets || 0).toLocaleString()} accessible sheet${Number(result.total_accessible_sheets || 0) === 1 ? "" : "s"}.`);
+      await loadApiStatus();
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet connection test failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const discoverSheets = async () => {
+    if (!sessionToken || apiLoading) return;
+    setApiLoading(true);
+    setApiMessage("");
+    try {
+      const result = await listSmartsheetSheets({ sessionToken });
+      setAvailableSheets(Array.isArray(result.sheets) ? result.sheets : []);
+      setApiMessage(`Discovered ${Number(result.total_accessible_sheets || 0).toLocaleString()} accessible Smartsheet sheet${Number(result.total_accessible_sheets || 0) === 1 ? "" : "s"}. No data was changed.`);
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet sheet discovery failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    loadApiStatus();
+  }, [sessionToken]);
 
   const save = async () => {
     if (saving) return;
