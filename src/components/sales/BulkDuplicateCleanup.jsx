@@ -16,7 +16,6 @@ function scoreRecord(wo) {
   if (wo.title && wo.title !== wo.client_name) score += 5;
   if (wo.description) score += 3;
   if (wo.estimate_amount) score += 4;
-  if (wo.estimate_amount) score += 4;
   if (wo.contact_name) score += 3;
   if (wo.contact_email) score += 3;
   if (wo.contact_phone) score += 2;
