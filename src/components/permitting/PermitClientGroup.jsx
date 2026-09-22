@@ -318,6 +318,7 @@ export default function PermitClientGroup({
                     onUpdateField={onUpdateField}
                     onShowLocalityInfo={onShowLocalityInfo}
                     onShowJurisdictionInfo={onShowJurisdictionInfo}
+                    localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
                     onDeleteLine={onDeleteLine}
                     isRegistered={isRegistered}
                     users={users}
