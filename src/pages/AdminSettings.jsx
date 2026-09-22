@@ -72,6 +72,7 @@ import OvertimeRulesManager from "../components/admin/OvertimeRulesManager";
 import SalesPipelineDefaultSort from "@/components/admin/SalesPipelineDefaultSort";
 import ResourceAllocationView from "@/components/workflow/ResourceAllocationView";
 import CorebridgeApiSettings from "@/components/admin/CorebridgeApiSettings";
+import SmartsheetSyncSettings from "@/components/admin/SmartsheetSyncSettings";
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
@@ -955,6 +956,10 @@ export default function AdminSettings() {
                     <Bot className="w-4 h-4 mr-2" />
                     CoreBridge API
                   </TabsTrigger>
+                  <TabsTrigger value="smartsheet" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <GitBranch className="w-4 h-4 mr-2" />
+                    Smartsheet Sync
+                  </TabsTrigger>
                   <TabsTrigger value="resources" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <Users className="w-4 h-4 mr-2" />
                     Resources
@@ -1046,6 +1051,10 @@ export default function AdminSettings() {
 
               <TabsContent value="corebridge">
                 <CorebridgeApiSettings sessionToken={sessionToken} />
+              </TabsContent>
+
+              <TabsContent value="smartsheet">
+                <SmartsheetSyncSettings />
               </TabsContent>
             </>
           )}
