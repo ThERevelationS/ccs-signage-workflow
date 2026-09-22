@@ -30,6 +30,7 @@ export default function SalesImportPreviewDialog({
     conflict: appliedResult.conflicts || 0,
     ambiguous: appliedResult.ambiguous || 0,
     invalid: appliedResult.invalid || 0,
+    baseline: preview?.summary?.baseline || 0,
   } : (preview?.summary || {});
   const issues = appliedResult?.issues || preview?.issues || [];
   const warnings = preview?.warnings || [];
@@ -59,7 +60,7 @@ export default function SalesImportPreviewDialog({
               </div>
             )}
 
-            {!analyzing && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+            {!analyzing && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
               <Metric label="Rows" value={summary.total} />
               <Metric label="New" value={summary.create} tone="text-green-700" />
               <Metric label="Changed" value={summary.update} tone="text-blue-700" />
@@ -67,7 +68,15 @@ export default function SalesImportPreviewDialog({
               <Metric label="Conflicts" value={summary.conflict} tone="text-amber-700" />
               <Metric label="Ambiguous" value={summary.ambiguous} tone="text-orange-700" />
               <Metric label="Invalid" value={summary.invalid} tone="text-red-700" />
+              <Metric label="First Sync" value={summary.baseline} tone="text-violet-700" />
             </div>}
+
+            {!analyzing && Number(summary.baseline || 0) > 0 && !appliedResult && (
+              <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900">
+                <div className="font-semibold">{Number(summary.baseline).toLocaleString()} existing record{Number(summary.baseline) === 1 ? " has" : "s have"} no previous import baseline.</div>
+                <div className="mt-1 text-xs text-violet-800">For these first-sync matches, spreadsheet differences are treated as the initial source values after you confirm this preflight. Future imports can then detect Base44 edits made since the last sync.</div>
+              </div>
+            )}
 
             {!analyzing && (blockingCount > 0 ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
@@ -140,6 +149,12 @@ export default function SalesImportPreviewDialog({
                   {warnings.length > 8 && <div>+{warnings.length - 8} more</div>}
                 </div>
               </section>
+            )}
+
+            {!analyzing && !appliedResult && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-600">
+                Blank spreadsheet cells leave existing Base44 values unchanged. Missing rows never delete or close WorkOrders. Ambiguous/conflicting rows are skipped instead of guessed.
+              </div>
             )}
 
             {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
