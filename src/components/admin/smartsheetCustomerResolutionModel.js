@@ -181,6 +181,102 @@ function evaluateOne(incoming = {}, customer = {}) {
   };
 }
 
+function addIndexValue(map, key, customer) {
+  if (!key || !customer?.id) return;
+  const bucket = map.get(key) || [];
+  if (!bucket.some((item) => item.id === customer.id)) bucket.push(customer);
+  map.set(key, bucket);
+}
+
+function uniqueCustomers(rows = []) {
+  const byId = new Map();
+  for (const row of rows) {
+    if (row?.id) byId.set(row.id, row);
+  }
+  return [...byId.values()];
+}
+
+export function buildCustomerResolutionIndex(customers = []) {
+  const index = {
+    exactName: new Map(),
+    exactAlias: new Map(),
+    comparableName: new Map(),
+    email: new Map(),
+    phone: new Map(),
+    prefix: new Map(),
+    token: new Map(),
+  };
+
+  for (const customer of customers || []) {
+    if (!customer?.id || !customer?.company_name) continue;
+    const exactName = normalizeCustomerText(customer.company_name);
+    const comparableName = normalizeComparableCompanyName(customer.company_name);
+    addIndexValue(index.exactName, exactName, customer);
+    addIndexValue(index.comparableName, comparableName, customer);
+
+    for (const alias of Array.isArray(customer.legacy_client_names) ? customer.legacy_client_names : []) {
+      addIndexValue(index.exactAlias, normalizeCustomerText(alias), customer);
+      addIndexValue(index.comparableName, normalizeComparableCompanyName(alias), customer);
+    }
+    for (const email of customerEmails(customer)) addIndexValue(index.email, email, customer);
+    for (const phone of customerPhones(customer)) addIndexValue(index.phone, phone, customer);
+
+    const compact = comparableName.replace(/\s+/g, "");
+    if (compact.length >= 3) addIndexValue(index.prefix, compact.slice(0, 3), customer);
+    for (const token of comparableName.split(" ").filter((value) => value.length >= 3)) {
+      addIndexValue(index.token, token, customer);
+    }
+  }
+
+  return index;
+}
+
+export function resolveCustomerCandidatesIndexed(incoming = {}, index) {
+  if (!index) return resolveCustomerCandidates(incoming, []);
+
+  const incomingName = normalizeCustomerText(incoming.company_name || incoming.customer_name);
+  if (!incomingName) {
+    return {
+      outcome: "needs_name",
+      recommended: null,
+      candidates: [],
+      reason: "Incoming row has no usable customer name.",
+    };
+  }
+
+  const exactRows = uniqueCustomers([
+    ...(index.exactName.get(incomingName) || []),
+    ...(index.exactAlias.get(incomingName) || []),
+  ]);
+  if (exactRows.length) return resolveCustomerCandidates(incoming, exactRows);
+
+  const comparableName = normalizeComparableCompanyName(incoming.company_name || incoming.customer_name);
+  const incomingEmail = normalizeEmail(incoming.email || incoming.contact_email || incoming.requestor_email);
+  const incomingPhone = normalizePhone(incoming.phone || incoming.company_phone || incoming.contact_phone);
+  const compact = comparableName.replace(/\s+/g, "");
+  const candidateRows = [
+    ...(index.comparableName.get(comparableName) || []),
+    ...(incomingEmail ? (index.email.get(incomingEmail) || []) : []),
+    ...(incomingPhone.length >= 7 ? (index.phone.get(incomingPhone) || []) : []),
+    ...(compact.length >= 3 ? (index.prefix.get(compact.slice(0, 3)) || []) : []),
+  ];
+  for (const token of comparableName.split(" ").filter((value) => value.length >= 3)) {
+    candidateRows.push(...(index.token.get(token) || []));
+  }
+
+  const candidates = uniqueCustomers(candidateRows);
+  if (!candidates.length) {
+    return {
+      outcome: "new_customer",
+      recommended: null,
+      candidates: [],
+      reason: "No plausible existing Base44 Customer was found.",
+    };
+  }
+
+  return resolveCustomerCandidates(incoming, candidates);
+}
+
 export function resolveCustomerCandidates(incoming = {}, customers = []) {
   const incomingName = normalizeCustomerText(incoming.company_name || incoming.customer_name);
   if (!incomingName) {
