@@ -4,7 +4,6 @@ import { ColumnHeaderContextMenu } from "@/components/shared/ColumnHeaderContext
 import DeadlineGradientDialog from "@/components/sales/DeadlineGradientDialog";
 
 const CLOSEOUT_HISTORICAL_FIELDS = new Set([
-  "quote_date",
   "date_estimate_sent",
   "follow_up_date",
   "expected_close_date",
