@@ -60,6 +60,7 @@ const existing = {
   sales_import_snapshot: {
     client_name: "Acme Signs",
     title: "Lobby sign",
+    est_inv_at: "12345",
     estimate_amount: 12000,
     lead_source: "Referral",
     sales_status: "follow_up",
