@@ -1,13 +1,44 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2, PauseCircle, PlayCircle, XCircle } from "lucide-react";
 
 const ImportProgressContext = createContext(null);
-
-// Key used for localStorage to persist import state across page navigation
 const STORAGE_KEY = "activeImportProgress";
+const EMPTY_STATE = {
+  show: false,
+  current: 0,
+  total: 0,
+  currentItem: "",
+  paused: false,
+  status: "",
+  phase: "",
+  userEmail: null,
+  startedAt: null,
+  importJobId: null,
+  created: 0,
+  updated: 0,
+  unchanged: 0,
+  skipped: 0,
+};
+
+const stateFromJob = (job, currentUserEmail) => ({
+  show: true,
+  current: Number(job?.processed_items || 0),
+  total: Number(job?.total_items || 0),
+  currentItem: job?.current_item || job?.result_message || "Importing...",
+  paused: job?.status === "paused",
+  status: job?.status || "running",
+  phase: job?.phase || "",
+  userEmail: currentUserEmail,
+  startedAt: Date.parse(job?.started_at || "") || Date.now(),
+  importJobId: job?.id || null,
+  created: Number(job?.created_items || 0),
+  updated: Number(job?.updated_items || 0),
+  unchanged: Number(job?.unchanged_items || 0),
+  skipped: Number(job?.skipped_items || 0),
+});
 
 export function ImportProgressProvider({ children, currentUserEmail }) {
   const [importState, setImportState] = useState(() => {
@@ -15,188 +46,249 @@ export function ImportProgressProvider({ children, currentUserEmail }) {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Only restore if it's for the current user and not older than 30 minutes
         if (
-          parsed.userEmail === currentUserEmail &&
-          parsed.show &&
-          Date.now() - (parsed.startedAt || 0) < 30 * 60 * 1000
-        ) {
-          return parsed;
-        }
+          parsed.userEmail === currentUserEmail
+          && parsed.show
+          && Date.now() - (parsed.startedAt || 0) < 30 * 60 * 1000
+        ) return { ...EMPTY_STATE, ...parsed };
       }
     } catch {}
-    return { show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null };
+    return EMPTY_STATE;
   });
 
   const cancelRef = useRef({ cancelled: false, paused: false });
-  const importJobIdRef = useRef(null);
+  const importJobIdRef = useRef(importState.importJobId || null);
+  const terminalHideTimerRef = useRef(null);
 
-  // Restore active import from database on mount
+  const syncJob = (job) => {
+    if (!job?.id) return;
+    importJobIdRef.current = job.id;
+    setImportState(stateFromJob(job, currentUserEmail));
+  };
+
   useEffect(() => {
+    let mounted = true;
     const restoreActiveImport = async () => {
-      if (!currentUserEmail) return;
+      if (!currentUserEmail || importJobIdRef.current) return;
       try {
         const activeJobs = await base44.entities.ImportJob.filter({
           user_email: currentUserEmail,
-          status: { $in: ["running", "paused"] }
-        });
-        if (activeJobs.length > 0) {
-          const job = activeJobs[0];
-          importJobIdRef.current = job.id;
-          setImportState({
-            show: true,
-            current: job.processed_items || 0,
-            total: job.total_items || 0,
-            currentItem: job.current_item || "Restoring import...",
-            paused: job.status === "paused",
-            userEmail: currentUserEmail,
-            startedAt: new Date(job.started_at).getTime(),
-            importJobId: job.id
-          });
-        }
+          status: { $in: ["running", "paused"] },
+        }, "-started_at", 5);
+        if (!mounted || activeJobs.length === 0) return;
+        syncJob(activeJobs[0]);
       } catch (err) {
         console.error("Failed to restore import job:", err);
       }
     };
     restoreActiveImport();
+    return () => { mounted = false; };
   }, [currentUserEmail]);
 
-  // Sync to localStorage whenever state changes
   useEffect(() => {
-    if (importState.show) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(importState));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    if (!importState.show || !importState.importJobId) return undefined;
+    let mounted = true;
+    let polling = false;
+
+    const poll = async () => {
+      if (polling) return;
+      polling = true;
+      try {
+        const job = await base44.entities.ImportJob.get(importState.importJobId);
+        if (!mounted || !job?.id) return;
+        syncJob(job);
+
+        if (["completed", "failed", "cancelled"].includes(job.status)) {
+          if (terminalHideTimerRef.current) clearTimeout(terminalHideTimerRef.current);
+          terminalHideTimerRef.current = setTimeout(() => {
+            importJobIdRef.current = null;
+            setImportState(EMPTY_STATE);
+            localStorage.removeItem(STORAGE_KEY);
+          }, 8000);
+        }
+      } catch (err) {
+        if (mounted) console.error("Failed to refresh import progress:", err);
+      } finally {
+        polling = false;
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 1000);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, [importState.show, importState.importJobId, currentUserEmail]);
+
+  useEffect(() => {
+    if (importState.show) localStorage.setItem(STORAGE_KEY, JSON.stringify(importState));
+    else localStorage.removeItem(STORAGE_KEY);
   }, [importState]);
 
-  const startImport = async (total, userEmail, importType = "sales_pipeline") => {
+  useEffect(() => () => {
+    if (terminalHideTimerRef.current) clearTimeout(terminalHideTimerRef.current);
+  }, []);
+
+  const startImport = async (total, userEmail, importType = "sales_pipeline", metadata = {}) => {
     cancelRef.current = { cancelled: false, paused: false };
-    try {
-      const job = await base44.entities.ImportJob.create({
-        user_email: userEmail,
-        import_type: importType,
-        total_items: total,
-        processed_items: 0,
-        current_item: "Starting...",
-        started_at: new Date().toISOString()
-      });
-      importJobIdRef.current = job.id;
-      const newState = { show: true, current: 0, total, currentItem: "Starting...", paused: false, userEmail, startedAt: Date.now(), importJobId: job.id };
-      setImportState(newState);
-    } catch (err) {
-      console.error("Failed to create import job:", err);
-    }
-    return cancelRef;
+    const job = await base44.entities.ImportJob.create({
+      user_email: userEmail,
+      import_type: importType,
+      total_items: total,
+      processed_items: 0,
+      current_item: "Starting...",
+      phase: "starting",
+      started_at: new Date().toISOString(),
+      file_name: metadata.fileName || "",
+      file_hash: metadata.fileHash || "",
+      file_size_bytes: Number(metadata.fileSizeBytes || 0),
+    });
+    syncJob(job);
+    return { importJobId: job.id, cancelRef };
   };
 
   const updateProgress = async (current, total, currentItem) => {
-    setImportState(prev => ({ ...prev, current, total, currentItem }));
-    if (importJobIdRef.current) {
-      try {
-        await base44.entities.ImportJob.update(importJobIdRef.current, {
-          processed_items: current,
-          current_item: currentItem
-        });
-      } catch (err) {
-        console.error("Failed to update import job:", err);
-      }
+    setImportState((prev) => ({ ...prev, current, total, currentItem }));
+    if (!importJobIdRef.current) return;
+    try {
+      await base44.entities.ImportJob.update(importJobIdRef.current, {
+        processed_items: current,
+        current_item: currentItem,
+      });
+    } catch (err) {
+      console.error("Failed to update import job:", err);
     }
   };
 
   const completeImport = async () => {
-    setImportState(prev => ({ ...prev, currentItem: "Import complete!", current: prev.total }));
-    if (importJobIdRef.current) {
-      try {
-        await base44.entities.ImportJob.update(importJobIdRef.current, {
-          status: "completed",
-          processed_items: importState.total,
-          completed_at: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error("Failed to mark import as complete:", err);
-      }
+    if (!importJobIdRef.current) return;
+    try {
+      const job = await base44.entities.ImportJob.get(importJobIdRef.current);
+      if (job?.id) syncJob(job);
+    } catch (err) {
+      console.error("Failed to refresh completed import:", err);
     }
-    setTimeout(() => {
-      setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null });
-      importJobIdRef.current = null;
-      localStorage.removeItem(STORAGE_KEY);
-    }, 2000);
   };
 
   const cancelImport = async () => {
     cancelRef.current.cancelled = true;
-    if (importJobIdRef.current) {
-      try {
-        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "cancelled" });
-      } catch (err) {
-        console.error("Failed to cancel import job:", err);
-      }
+    if (!importJobIdRef.current) return;
+    setImportState((prev) => ({ ...prev, currentItem: "Cancellation requested...", status: "cancelled" }));
+    try {
+      await base44.entities.ImportJob.update(importJobIdRef.current, {
+        status: "cancelled",
+        phase: "cancelling",
+        current_item: "Cancellation requested...",
+      });
+    } catch (err) {
+      console.error("Failed to cancel import job:", err);
     }
-    setImportState({ show: false, current: 0, total: 0, currentItem: "", paused: false, userEmail: null, startedAt: null, importJobId: null });
-    importJobIdRef.current = null;
-    localStorage.removeItem(STORAGE_KEY);
   };
 
   const pauseImport = async () => {
     cancelRef.current.paused = true;
-    setImportState(prev => ({ ...prev, paused: true }));
-    if (importJobIdRef.current) {
-      try {
-        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "paused" });
-      } catch (err) {
-        console.error("Failed to pause import job:", err);
-      }
+    if (!importJobIdRef.current) return;
+    setImportState((prev) => ({ ...prev, paused: true, status: "paused", currentItem: "Pausing safely between rows..." }));
+    try {
+      await base44.entities.ImportJob.update(importJobIdRef.current, {
+        status: "paused",
+        phase: "paused",
+        current_item: "Paused safely between rows.",
+      });
+    } catch (err) {
+      console.error("Failed to pause import job:", err);
     }
   };
 
   const resumeImport = async () => {
     cancelRef.current.paused = false;
-    setImportState(prev => ({ ...prev, paused: false }));
-    if (importJobIdRef.current) {
-      try {
-        await base44.entities.ImportJob.update(importJobIdRef.current, { status: "running" });
-      } catch (err) {
-        console.error("Failed to resume import job:", err);
-      }
+    if (!importJobIdRef.current) return;
+    setImportState((prev) => ({ ...prev, paused: false, status: "running", currentItem: "Resuming import..." }));
+    try {
+      await base44.entities.ImportJob.update(importJobIdRef.current, {
+        status: "running",
+        phase: "applying",
+        current_item: "Resuming import...",
+      });
+    } catch (err) {
+      console.error("Failed to resume import job:", err);
     }
   };
 
   const isMyImport = importState.show && importState.userEmail === currentUserEmail;
+  const terminal = ["completed", "failed", "cancelled"].includes(importState.status);
 
   return (
-    <ImportProgressContext.Provider value={{ importState, startImport, updateProgress, completeImport, cancelImport, pauseImport, resumeImport, cancelRef, isMyImport }}>
+    <ImportProgressContext.Provider value={{
+      importState,
+      startImport,
+      updateProgress,
+      completeImport,
+      cancelImport,
+      pauseImport,
+      resumeImport,
+      cancelRef,
+      isMyImport,
+    }}>
       {children}
       {isMyImport && (
-        <div className="fixed bottom-20 right-4 z-[9999] w-80 clay-card p-4 shadow-xl">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              {importState.current >= importState.total && importState.total > 0 ? (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+        <div className="fixed bottom-20 right-4 z-[9999] w-[22rem] max-w-[calc(100vw-2rem)] rounded-xl border border-blue-200 bg-white p-4 shadow-xl">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              {importState.status === "failed" || importState.status === "cancelled" ? (
+                <XCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
+              ) : importState.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-500" />
+              ) : importState.paused ? (
+                <PauseCircle className="h-5 w-5 flex-shrink-0 text-amber-500" />
               ) : (
-                <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-blue-600" />
               )}
-              <span className="text-sm font-medium">
-                {importState.paused ? "Import Paused" : 
-                 importState.current >= importState.total && importState.total > 0 ? "Import Complete!" : "Importing..."}
-              </span>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-gray-900">
+                  {importState.status === "completed"
+                    ? "Import complete"
+                    : importState.status === "failed"
+                      ? "Import failed"
+                      : importState.status === "cancelled"
+                        ? "Import cancelled"
+                        : importState.paused
+                          ? "Import paused"
+                          : "Importing Sales Pipeline"}
+                </div>
+                {importState.phase && <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{importState.phase}</div>}
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">{importState.current} / {importState.total}</span>
-            </div>
+            <span className="flex-shrink-0 text-xs text-gray-500">{importState.current} / {importState.total}</span>
           </div>
-          {importState.currentItem && (
-            <p className="text-xs text-gray-500 mb-2 truncate">{importState.currentItem}</p>
+
+          <Progress value={importState.total > 0 ? (importState.current / importState.total) * 100 : 0} className="mb-2 h-2" />
+          <p className="mb-2 line-clamp-2 text-xs text-gray-600">{importState.currentItem || "Working..."}</p>
+
+          {(importState.created || importState.updated || importState.unchanged || importState.skipped) ? (
+            <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600">
+              <span><strong className="text-green-700">{importState.created}</strong> new</span>
+              <span><strong className="text-blue-700">{importState.updated}</strong> changed</span>
+              <span><strong>{importState.unchanged}</strong> unchanged</span>
+              {importState.skipped > 0 && <span><strong className="text-amber-700">{importState.skipped}</strong> review</span>}
+            </div>
+          ) : null}
+
+          {!terminal && (
+            <div className="flex gap-2">
+              {importState.paused ? (
+                <Button size="sm" onClick={resumeImport} className="h-10 flex-1">
+                  <PlayCircle className="mr-1.5 h-4 w-4" />Resume
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={pauseImport} className="h-10 flex-1">
+                  <PauseCircle className="mr-1.5 h-4 w-4" />Pause
+                </Button>
+              )}
+              <Button size="sm" variant="destructive" onClick={cancelImport} className="h-10 flex-1">Stop safely</Button>
+            </div>
           )}
-          <Progress value={importState.total > 0 ? (importState.current / importState.total) * 100 : 0} className="h-2 mb-2" />
-          <div className="flex gap-2">
-            {importState.paused ? (
-              <Button size="sm" onClick={resumeImport} className="h-6 px-2 flex-1">Resume</Button>
-            ) : (
-              <Button size="sm" variant="outline" onClick={pauseImport} className="h-6 px-2 flex-1">Pause</Button>
-            )}
-            <Button size="sm" variant="destructive" onClick={cancelImport} className="h-6 px-2 flex-1">Stop</Button>
-          </div>
         </div>
       )}
     </ImportProgressContext.Provider>
