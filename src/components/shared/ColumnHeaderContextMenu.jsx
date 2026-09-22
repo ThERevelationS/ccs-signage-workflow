@@ -50,11 +50,11 @@ const getColumnType = (fieldName) => {
     'current_task_deadline', 'date_initial_contact', 'site_survey_date',
     'date_estimate_sent', 'date_order_created', 'project_install_date',
     'permit_submitted_date', 'permit_receipt_confirmed_date', 'permit_approved_date',
-    'quote_date', 'follow_up_date', 'close_date', 'start_date', 'due_date'
+    'follow_up_date', 'close_date', 'start_date', 'due_date'
   ];
   
   const numberFields = [
-    'estimate_amount', 'quoted_amount', 'actual_cost', 'probability',
+    'estimate_amount', 'actual_cost',
     'quantity', 'budget_less_than', 'row_number', 'priority'
   ];
   
