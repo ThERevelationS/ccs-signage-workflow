@@ -2647,6 +2647,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       {renderOpportunityDialogs()}
 
+      <SalesImportPreviewDialog
+        open={Boolean(importFile || importPreview || importError || importPreflightBusy)}
+        preview={importPreview}
+        file={importFile}
+        analyzing={importPreflightBusy}
+        applying={importApplyBusy}
+        error={importError}
+        onClose={closeImportPreview}
+        onApply={applyImportPreview}
+        onDownloadIssues={downloadImportIssues}
+      />
+
       {showForm && (
         <WorkOrderForm
           key={duplicateData?.id || 'new'}
