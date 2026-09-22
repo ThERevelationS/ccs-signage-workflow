@@ -109,7 +109,6 @@ const TRIGGER_TYPES = [
   { value: "work_order_description_changed", label: "Description Changed", category: "Work Orders" },
   { value: "work_order_title_changed", label: "Title Changed", category: "Work Orders" },
   { value: "work_order_estimate_changed", label: "Estimate Amount Changed", category: "Work Orders" },
-  { value: "work_order_quoted_amount_changed", label: "Quoted Amount Changed", category: "Work Orders" },
   { value: "work_order_contact_changed", label: "Contact Info Changed", category: "Work Orders" },
   { value: "work_order_install_location_changed", label: "Install Location Changed", category: "Work Orders" },
   { value: "work_order_permit_number_set", label: "Permit Number Set", category: "Work Orders" },
@@ -174,9 +173,7 @@ const TRIGGER_TYPES = [
   { value: "sales_follow_up_date_approaching", label: "Follow-Up Date Approaching", category: "Sales Pipeline" },
   { value: "sales_follow_up_date_passed", label: "Follow-Up Date Passed", category: "Sales Pipeline" },
   { value: "sales_close_date_approaching", label: "Close Date Approaching", category: "Sales Pipeline" },
-  { value: "sales_quote_date_set", label: "Quote Date Set", category: "Sales Pipeline" },
   { value: "sales_rep_changed", label: "Sales Rep Changed", category: "Sales Pipeline" },
-  { value: "sales_probability_changed", label: "Probability % Changed", category: "Sales Pipeline" },
   { value: "sales_in_pipeline_toggled", label: "Added / Removed from Pipeline", category: "Sales Pipeline" },
 
   // ── Pending Imports ──
