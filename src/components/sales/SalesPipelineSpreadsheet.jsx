@@ -1227,9 +1227,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const num = (val) => (typeof val === 'number' && !isNaN(val) ? val : (val == null || val === "" ? null : Number(val) || null));
     const exportData = filteredWorkOrders.map(wo => ({
       "Customer": str(wo.client_name), "Sales Status": str(wo.sales_status), "Source": str(wo.lead_source),
+      "Smartsheet Row ID": str(wo.sales_import_source_id), "Sales Rep": str(wo.sales_rep),
       "Current Task Deadline": str(wo.current_task_deadline), "Current Task Assigned to": str(wo.current_task_assigned_to),
       "Designer": str(wo.designer), "Project Manager": str(wo.project_manager), "Estimator": str(wo.estimator),
-      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount),
+      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount), "Quoted Amount": num(wo.quoted_amount),
       "Current Task Description": str(wo.current_task_description), "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
       "Site Survey": str(wo.site_survey_date), "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
       "Date Order Created": str(wo.date_order_created), "Project Install Date": str(wo.project_install_date),
