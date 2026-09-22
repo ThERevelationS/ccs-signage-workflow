@@ -29,10 +29,12 @@ export default function SmartsheetControlledCreationProposalsCard({
   const rows = proposals.rows || [];
   const crossByRowId = new Map();
   for (const collision of crossSheetConflicts) {
-    const rowId = dataset === "sales" ? collision.sales_row_id : collision.order_row_id;
-    const matches = crossByRowId.get(rowId) || [];
-    matches.push(collision);
-    crossByRowId.set(rowId, matches);
+    const rowIds = dataset === "sales" ? collision.sales_row_ids : collision.order_row_ids;
+    for (const rowId of rowIds || []) {
+      const matches = crossByRowId.get(rowId) || [];
+      matches.push(collision);
+      crossByRowId.set(rowId, matches);
+    }
   }
 
   const customerGroups = new Map();
@@ -142,8 +144,9 @@ export default function SmartsheetControlledCreationProposalsCard({
                 )}
                 {(crossByRowId.get(row.row_id) || []).map((conflict, index) => (
                   <div key={`${conflict.sales_row_id}-${conflict.order_row_id}-${index}`} className="rounded-md border border-red-200 bg-red-50 p-2 text-[11px] text-red-900">
-                    Cross-sheet Customer collision: Workflow row {conflict.sales_row_id} and Order Request row {conflict.order_row_id}.
-                    {conflict.reason}
+                    Cross-sheet Customer collision: Workflow row IDs {(conflict.sales_row_ids || []).slice(0, 5).join(", ")}
+                    {" "}and Order Request row IDs {(conflict.order_row_ids || []).slice(0, 5).join(", ")}.
+                    {" "}{conflict.reason}
                   </div>
                 ))}
                 {row.customer?.kind === "new_customer" && (
