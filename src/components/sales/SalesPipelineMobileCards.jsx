@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getActionableSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 
 const SALES_STATUSES = [
@@ -48,7 +48,6 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const attentionItems = getActionableSalesAttentionItems(wo, today);
         const attentionKeys = new Set(attentionItems.map((item) => item.key));
         const likelyPlaceholder = isLikelySalesPlaceholder(wo);
-        const suggestedProbability = getSuggestedProbabilityForStatus(wo.sales_status || "lead");
         return (
           <div
             key={wo.id}
@@ -91,9 +90,6 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                     {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && (
                       <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "sales_rep", currentSalesOwnerLabel)} className="min-h-[44px] rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Assign to me</button>
                     )}
-                    {attentionKeys.has("probability_missing") && suggestedProbability != null && (
-                      <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "probability", suggestedProbability)} className="min-h-[44px] rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-900 active:bg-amber-100">Set {suggestedProbability}%</button>
-                    )}
                     {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
                       <Select onValueChange={(value) => onUpdateWorkOrder?.(wo.id, "lead_source", value)}>
                         <SelectTrigger className="h-11 w-[132px] rounded-full border-amber-300 bg-white px-3 text-[11px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
@@ -109,9 +105,6 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
               {wo.sales_rep && <span>Rep: <span className="text-gray-700">{wo.sales_rep}</span></span>}
               {wo.estimate_amount != null && (
                 <span>Est: <span className="text-gray-700">${wo.estimate_amount.toLocaleString()}</span></span>
-              )}
-              {typeof wo.probability === "number" && Number.isFinite(wo.probability) && (
-                <span>Probability: <span className="text-gray-700">{wo.probability}%</span></span>
               )}
               {stageAging.tracked ? (
                 <span className={stageAging.aged ? "font-semibold text-rose-700" : ""}>Stage age: <span>{stageAging.ageDays}d{wo.sales_status === "on_hold" ? " · on hold" : stageAging.aged ? " · aged" : ""}</span></span>
