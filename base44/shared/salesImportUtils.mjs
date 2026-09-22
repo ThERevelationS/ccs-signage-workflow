@@ -368,7 +368,7 @@ function snapshotValues(record, fields) {
   return out;
 }
 
-export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toISOString() } = {}) {
+export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toISOString(), allowLegacyAdoption = false } = {}) {
   if (match.kind === "ambiguous") {
     return {
       kind: "ambiguous",
@@ -421,6 +421,7 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
   }
 
   const current = match.record;
+  const requiresLegacyAdoption = current.in_pipeline !== true;
   const previousSnapshot = current.sales_import_snapshot && typeof current.sales_import_snapshot === "object" && !Array.isArray(current.sales_import_snapshot)
     ? current.sales_import_snapshot
     : {};
@@ -495,8 +496,8 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
 
   if (statusChanged) {
     proposed.sales_stage_changed_at = nowIso;
-    proposed.in_pipeline = true;
-  } else if (suppliedFields.has("sales_status") && current.in_pipeline !== true) {
+  }
+  if (requiresLegacyAdoption && allowLegacyAdoption) {
     proposed.in_pipeline = true;
   }
 
@@ -516,6 +517,21 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
   if (importRow.sourceId && !sameValue(current.sales_import_source_id, importRow.sourceId)) proposed.sales_import_source_id = importRow.sourceId;
 
   const changedFields = Object.keys(proposed).filter((field) => !sameValue(current[field], proposed[field]));
+  if (requiresLegacyAdoption && !allowLegacyAdoption) {
+    const adoptionFields = { ...Object.fromEntries(changedFields.map((field) => [field, proposed[field]])), in_pipeline: true };
+    return {
+      kind: "adoption",
+      rowNumber: importRow.rowNumber,
+      clientName: importRow.clientName,
+      estInvAt: importRow.estInvAt,
+      recordId: current.id,
+      current,
+      nextFields: adoptionFields,
+      matchType: match.matchType,
+      firstSync,
+      reason: "Existing WorkOrder is not a modern Sales record. Explicit adoption is required before setting in_pipeline:true.",
+    };
+  }
   if (changedFields.length === 0 || (changedFields.length === 1 && changedFields[0] === "sales_import_last_synced_at")) {
     return { kind: "unchanged", rowNumber: importRow.rowNumber, clientName: importRow.clientName, recordId: current.id, matchType: match.matchType, firstSync };
   }
@@ -542,6 +558,7 @@ export function summarizeSalesImportPlans(plans = [], invalidRows = []) {
     conflict: 0,
     ambiguous: 0,
     invalid: invalidRows.length,
+    adoption: 0,
     baseline: 0,
   };
   plans.forEach((plan) => {
