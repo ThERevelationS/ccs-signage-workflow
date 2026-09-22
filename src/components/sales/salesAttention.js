@@ -19,14 +19,6 @@ const DEFINITIONS = {
     actionable: true,
     priority: 40,
   },
-  probability_missing: {
-    key: "probability_missing",
-    label: "Probability missing",
-    shortLabel: "Probability",
-    detail: "Enter an explicit probability so weighted pipeline reporting can include this opportunity.",
-    actionable: true,
-    priority: 20,
-  },
   source_missing: {
     key: "source_missing",
     label: "Lead source missing",
@@ -53,13 +45,6 @@ const DEFINITIONS = {
   },
 };
 
-const SUGGESTED_PROBABILITY_BY_STATUS = {
-  lead: 10,
-  quoted: 50,
-  follow_up: 70,
-  on_hold: 25,
-};
-
 export const getSalesAttentionItems = (workOrder, today = new Date()) => {
   if (!isCurrentPipelineOpportunity(workOrder)) return [];
 
@@ -68,7 +53,6 @@ export const getSalesAttentionItems = (workOrder, today = new Date()) => {
 
   if (!workOrder.follow_up_date && !workOrder.current_task_deadline) add("next_action");
   if (!String(workOrder.sales_rep || "").trim()) add("owner_missing");
-  if (!(typeof workOrder.probability === "number" && Number.isFinite(workOrder.probability))) add("probability_missing");
   if (!String(workOrder.lead_source || "").trim()) add("source_missing");
 
   const quoteAging = getQuoteAgingState(workOrder, today);
@@ -89,4 +73,3 @@ export const hasSalesAttention = (workOrder, today = new Date()) =>
 export const getSalesAttentionScore = (workOrder, today = new Date()) =>
   getActionableSalesAttentionItems(workOrder, today).reduce((total, item) => total + (item.priority || 0), 0);
 
-export const getSuggestedProbabilityForStatus = (status) => SUGGESTED_PROBABILITY_BY_STATUS[status] ?? null;
