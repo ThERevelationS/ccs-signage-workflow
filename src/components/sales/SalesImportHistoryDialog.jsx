@@ -107,6 +107,9 @@ export default function SalesImportHistoryDialog({ open, onClose }) {
                       )}
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
                         <span>Rows {Number(job.total_items || 0).toLocaleString()}</span>
+                        {Number(job.parse_ms || 0) > 0 && <span>Parse {durationLabel(job.parse_ms)}</span>}
+                        {Number(job.match_ms || 0) > 0 && <span>Match {durationLabel(job.match_ms)}</span>}
+                        {Number(job.apply_ms || 0) > 0 && <span>Apply {durationLabel(job.apply_ms)}</span>}
                         {job.conflict_items > 0 && <span>{job.conflict_items} conflict</span>}
                         {job.ambiguous_items > 0 && <span>{job.ambiguous_items} ambiguous</span>}
                         {job.invalid_items > 0 && <span>{job.invalid_items} invalid</span>}
