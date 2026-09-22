@@ -44,9 +44,6 @@ const EMPTY_PIPELINE_SUMMARY = {
   staleCount: 0,
   trackedActivityCount: 0,
   untrackedActivityCount: 0,
-  ratedProbabilityCount: 0,
-  unratedProbabilityCount: 0,
-  weightedValue: 0,
   sourceCoverageCount: 0,
   sourceMissingCount: 0,
   sourceBreakdown: [],
@@ -379,16 +376,10 @@ export default function SalesPipeline() {
                   <span className="shrink-0 text-base font-bold leading-none text-slate-900">{pipelineSummary.openCount}</span>
                 </div>
               </button>
-              <button type="button" title={`Quoted value when available, otherwise estimate. ${formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} non-test · ${formatPipelineValue(pipelineSummary.placeholderValue)} test.`} onClick={() => applyAttentionFilter("all")} className="min-w-[150px] flex-1 rounded-md border border-emerald-200 bg-emerald-50/60 px-2 py-1 text-left shadow-sm transition hover:border-emerald-300">
+              <button type="button" title={`Estimate Amount total. ${formatPipelineValue(Math.max(0, pipelineSummary.openValue - pipelineSummary.placeholderValue))} non-test · ${formatPipelineValue(pipelineSummary.placeholderValue)} test.`} onClick={() => applyAttentionFilter("all")} className="min-w-[150px] flex-1 rounded-md border border-emerald-200 bg-emerald-50/60 px-2 py-1 text-left shadow-sm transition hover:border-emerald-300">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-emerald-700">Open Pipeline Value</span>
                   <span className="shrink-0 text-base font-bold leading-none text-emerald-900">{formatPipelineValue(pipelineSummary.openValue)}</span>
-                </div>
-              </button>
-              <button type="button" title={`${pipelineSummary.ratedProbabilityCount}/${pipelineSummary.openCount} opportunities have explicit probability${pipelineSummary.unratedProbabilityCount > 0 ? " · click to review missing probability" : ""}.`} onClick={() => applyAttentionFilter(pipelineSummary.unratedProbabilityCount > 0 ? "probability_missing" : "all")} className={`min-w-[150px] flex-1 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "probability_missing" ? "border-sky-400 bg-sky-50" : "border-sky-200 bg-white hover:border-sky-300"}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-sky-700">Weighted Pipeline</span>
-                  <span className="shrink-0 text-base font-bold leading-none text-sky-900">{formatPipelineValue(pipelineSummary.weightedValue)}</span>
                 </div>
               </button>
               <button type="button" title={`${pipelineSummary.overdueCount} overdue · ${pipelineSummary.dueTodayCount} due today`} onClick={() => applyAttentionFilter("due")} className={`min-w-[150px] flex-1 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "due" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
@@ -431,7 +422,6 @@ export default function SalesPipeline() {
               </button>
               <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={attentionChipClass("no_next_action")}>Next Action {pipelineSummary.noNextActionCount > 0 ? `(${pipelineSummary.noNextActionCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("probability_missing")} className={attentionChipClass("probability_missing")}>Probability {pipelineSummary.unratedProbabilityCount > 0 ? `(${pipelineSummary.unratedProbabilityCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
               <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
