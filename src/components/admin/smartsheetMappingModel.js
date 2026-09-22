@@ -119,6 +119,34 @@ export function analyzeSmartsheetColumns(rows = [], columns = []) {
   return { fields, unmappedColumns, counts };
 }
 
+export function buildVerifiedSmartsheetBinding(result) {
+  if (result?.status !== "ready" || !result?.sheet?.id || !result?.analysis) {
+    throw new Error("A completed live mapping analysis is required before binding Smartsheet IDs.");
+  }
+
+  const counts = result.analysis.counts || {};
+  if (Number(counts.missing || 0) > 0 || Number(counts.conflict || 0) > 0) {
+    throw new Error("All non-protected fields must resolve uniquely before Smartsheet IDs can be bound.");
+  }
+
+  const columnBindings = {};
+  for (const field of result.analysis.fields || []) {
+    if (field?.status !== "matched" || !field?.field || field?.matches?.length !== 1) continue;
+    const column = field.matches[0];
+    columnBindings[field.field] = {
+      column_id: String(column.id),
+      column_title: String(column.title || ""),
+      column_type: String(column.type || ""),
+    };
+  }
+
+  return {
+    smartsheet_sheet_id: String(result.sheet.id),
+    smartsheet_sheet_name: String(result.sheet.name || ""),
+    column_bindings: columnBindings,
+  };
+}
+
 export function mappingDirectionLabel(direction) {
   if (direction === "two_way") return "Two-way";
   if (direction === "base44_to_smartsheet") return "Base44 → Smartsheet";
