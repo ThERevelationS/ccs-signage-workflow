@@ -101,8 +101,6 @@ export function buildConvertedWorkOrderFields({ estimate = {}, pricing = {}, exi
     sales_rep: firstNonBlank(estimate.salesperson, existing?.sales_rep),
     estimator: firstNonBlank(estimate.salesperson, existing?.estimator),
     estimate_amount: num(pricing.quoteTotal),
-    quoted_amount: num(pricing.quoteTotal),
-    quote_date: firstNonBlank(estimate.quote_issue_date, existing?.quote_date),
     date_order_created: firstNonBlank(existing?.date_order_created, conversionDate),
     corbridge_invoice_number: firstNonBlank(estimate.estimate_number, existing?.corbridge_invoice_number),
     project_install_date: firstNonBlank(estimate.target_install_date, existing?.project_install_date),
