@@ -36,7 +36,7 @@ async function pollResearchRequest(id) {
   return permittingProxy('poll', { id });
 }
 
-export default function PermittingRepository() {
+export default function PermittingRepository({ embedded = false }) {
   const { currentUser } = useAuth();
   const [jurisdictions, setJurisdictions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -290,14 +290,14 @@ export default function PermittingRepository() {
   const totalDocs = jurisdictions.reduce((sum, j) => sum + (j.documents?.length || 0), 0);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className={`flex bg-gray-50 overflow-hidden ${embedded ? "h-full min-h-0" : "h-screen"}`}>
       <div className="flex flex-col w-full" style={{ maxWidth: selectedJurisdiction ? '420px' : '100%', minWidth: '320px', transition: 'max-width 0.3s' }}>
         <div className="bg-white border-b px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-purple-600" />
-                Permitting Repository
+                {embedded ? "Jurisdictions" : "Permitting Repository"}
               </h1>
               <p className="text-xs text-gray-500">{jurisdictions.length} jurisdictions · {totalDocs} documents</p>
               <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px]">
