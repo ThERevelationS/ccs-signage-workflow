@@ -1,3 +1,8 @@
+import {
+  buildCustomerResolutionIndex,
+  resolveCustomerCandidatesIndexed,
+} from "@/components/admin/smartsheetCustomerResolutionModel";
+
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
 }
@@ -65,10 +70,32 @@ function compareMappedFields({ rowValues, record, blueprint, columnBindings }) {
   return differences;
 }
 
+function hasMeaningfulMappedValue(rowValues = {}) {
+  return Object.values(rowValues).some((value) => normalizeWhitespace(value) !== "");
+}
+
+function summarizeCustomerResolution(resolution) {
+  if (!resolution) return null;
+  return {
+    outcome: resolution.outcome || "unknown",
+    reason: resolution.reason || "",
+    recommended_customer_id: resolution.recommended?.customer?.id || "",
+    recommended_company_name: resolution.recommended?.customer?.company_name || "",
+    recommended_score: Number(resolution.recommended?.score || 0),
+    candidates: (resolution.candidates || []).slice(0, 5).map((candidate) => ({
+      customer_id: candidate.customer?.id || "",
+      company_name: candidate.customer?.company_name || "",
+      score: Number(candidate.score || 0),
+      reasons: Array.isArray(candidate.reasons) ? candidate.reasons : [],
+    })),
+  };
+}
+
 export function buildSmartsheetDryRunPreview({
   sheetId,
   smartsheetRows = [],
   base44Rows = [],
+  customers = [],
   blueprint = [],
   columnBindings = {},
   dataset = "",
@@ -80,6 +107,7 @@ export function buildSmartsheetDryRunPreview({
     ? ["client_name", "title"]
     : ["customer_name", "description", "request_type"];
   const exactCandidates = new Map();
+  const customerIndex = buildCustomerResolutionIndex(customers);
 
   for (const record of base44Rows || []) {
     if (record?.deleted === true) continue;
@@ -139,13 +167,25 @@ export function buildSmartsheetDryRunPreview({
       ? compareMappedFields({ rowValues, record: matchedRecord, blueprint, columnBindings })
       : [];
 
+    const meaningful = hasMeaningfulMappedValue(rowValues);
+    const incomingCustomerName = dataset === "sales"
+      ? rowValues.client_name
+      : rowValues.customer_name;
+    const customerResolution = !matchedRecord && matchMethod !== "ambiguous" && meaningful
+      ? summarizeCustomerResolution(resolveCustomerCandidatesIndexed({
+        company_name: incomingCustomerName,
+      }, customerIndex))
+      : null;
+
     const status = matchMethod === "stable_id"
       ? (differences.length ? "linked_different" : "linked_same")
       : matchMethod === "ambiguous"
         ? "ambiguous"
         : matchedRecord
           ? "candidate"
-          : "unlinked";
+          : meaningful
+            ? "new_record"
+            : "empty";
 
     return {
       row_id: rowId,
@@ -158,6 +198,7 @@ export function buildSmartsheetDryRunPreview({
         : (matchedRecord?.customer_name || matchedRecord?.description || ""),
       candidate_count: matchMethod === "ambiguous" ? candidates.length : matchedRecord ? 1 : 0,
       differences,
+      customer_resolution: customerResolution,
       values: rowValues,
     };
   });
@@ -170,8 +211,23 @@ export function buildSmartsheetDryRunPreview({
     linked_different: 0,
     candidate: 0,
     ambiguous: 0,
-    unlinked: 0,
+    new_record: 0,
+    empty: 0,
   });
 
-  return { rows, summary };
+  const customerSummary = rows.reduce((result, row) => {
+    const outcome = row.customer_resolution?.outcome;
+    if (outcome) result[outcome] = (result[outcome] || 0) + 1;
+    return result;
+  }, {
+    exact_company: 0,
+    exact_alias: 0,
+    strong_review: 0,
+    close_review: 0,
+    ambiguous: 0,
+    new_customer: 0,
+    needs_name: 0,
+  });
+
+  return { rows, summary, customerSummary };
 }
