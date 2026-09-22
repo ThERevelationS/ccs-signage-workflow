@@ -410,6 +410,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setApiLoading(true);
     setApiMessage("");
     setLiveMappingAnalysis(null);
+    setDryRunPreview(null);
     try {
       await testSmartsheetConnection({ sessionToken });
       const discovery = await listSmartsheetSheets({ sessionToken });
@@ -472,6 +473,131 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       );
     } catch (err) {
       setApiMessage(err?.message || "Smartsheet live mapping analysis failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const bindVerifiedMappings = async () => {
+    if (!liveMappingsReadyToBind || saving) return;
+    if (!config.observation_mode || config.global_enabled) {
+      setError("Verified ID binding is only allowed while observation mode is ON and the global sync switch is OFF.");
+      return;
+    }
+
+    setSaving(true);
+    setSaved(false);
+    setError("");
+    try {
+      const verifiedAt = new Date().toISOString();
+      const salesBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.sales);
+      const orderBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.orders);
+      const nextConfig = mergeConfig({
+        ...config,
+        schema_version: 2,
+        sales: {
+          ...config.sales,
+          ...salesBinding,
+          bindings_verified_at: verifiedAt,
+        },
+        orders: {
+          ...config.orders,
+          ...orderBinding,
+          bindings_verified_at: verifiedAt,
+        },
+      });
+      const savedRecord = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: record,
+        settingKey: SETTING_KEY,
+        nextValue: nextConfig,
+        label: "Verified Smartsheet ID bindings",
+      });
+      setRecord(savedRecord);
+      setConfig(mergeConfig(savedRecord?.setting_value));
+      setSaved(true);
+      setApiMessage(
+        `Verified permanent IDs saved in observation mode: ${Object.keys(salesBinding.column_bindings).length} Workflow columns and ${Object.keys(orderBinding.column_bindings).length} Order Request columns. No business data was changed.`
+      );
+      setTimeout(() => setSaved(false), 1800);
+    } catch (err) {
+      console.error("Verified Smartsheet binding save blocked:", err);
+      setError(err?.message || "Verified Smartsheet bindings could not be saved safely.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const previewLiveRows = async () => {
+    if (!sessionToken || apiLoading || !liveMappingsReadyToBind) return;
+    setApiLoading(true);
+    setApiMessage("");
+    setDryRunPreview(null);
+    try {
+      const salesBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.sales);
+      const orderBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.orders);
+      const salesColumnIds = Object.values(salesBinding.column_bindings).map((binding) => binding.column_id);
+      const orderColumnIds = Object.values(orderBinding.column_bindings).map((binding) => binding.column_id);
+
+      const [salesSheet, orderSheet, salesRows, orderRows] = await Promise.all([
+        getSmartsheetRows({
+          sessionToken,
+          sheetId: salesBinding.smartsheet_sheet_id,
+          columnIds: salesColumnIds,
+          page: 1,
+          pageSize: 200,
+        }),
+        getSmartsheetRows({
+          sessionToken,
+          sheetId: orderBinding.smartsheet_sheet_id,
+          columnIds: orderColumnIds,
+          page: 1,
+          pageSize: 200,
+        }),
+        loadAllEntityRows({
+          entity: base44.entities.WorkOrder,
+          query: { in_pipeline: true },
+          sort: "-updated_date",
+          pageSize: 500,
+          maxRows: 20000,
+          label: "Smartsheet Sales dry-run WorkOrders",
+        }),
+        loadAllEntityRows({
+          entity: base44.entities.Order,
+          query: { deleted: false },
+          sort: "-updated_date",
+          pageSize: 500,
+          maxRows: 20000,
+          label: "Smartsheet Order dry-run records",
+        }),
+      ]);
+
+      const salesPreview = buildSmartsheetDryRunPreview({
+        sheetId: salesBinding.smartsheet_sheet_id,
+        smartsheetRows: salesSheet.rows,
+        base44Rows: salesRows,
+        blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales,
+        columnBindings: salesBinding.column_bindings,
+        dataset: "sales",
+      });
+      const orderPreview = buildSmartsheetDryRunPreview({
+        sheetId: orderBinding.smartsheet_sheet_id,
+        smartsheetRows: orderSheet.rows,
+        base44Rows: orderRows,
+        blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.orders,
+        columnBindings: orderBinding.column_bindings,
+        dataset: "orders",
+      });
+
+      setDryRunPreview({
+        sales: { ...salesSheet, preview: salesPreview },
+        orders: { ...orderSheet, preview: orderPreview },
+      });
+      setApiMessage(
+        `Read-only row dry run complete: ${salesSheet.returned_row_count || 0} Workflow rows and ${orderSheet.returned_row_count || 0} Order Request rows inspected. No links or business records were changed.`
+      );
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet row dry run failed.");
     } finally {
       setApiLoading(false);
     }
