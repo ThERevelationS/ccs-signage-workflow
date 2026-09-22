@@ -5,7 +5,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -160,6 +160,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/ResetPassword" element={<NewUserSetup />} />
+      <Route path="/PermittingRepository" element={<Navigate to="/Permitting?view=jurisdictions" replace />} />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
         <Route
           key={name}
@@ -184,7 +185,7 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      {Object.entries(Pages).map(([path, Page]) => (
+      {Object.entries(Pages).filter(([path]) => path !== "PermittingRepository").map(([path, Page]) => (
         <Route
           key={path}
           path={`/${path}`}
