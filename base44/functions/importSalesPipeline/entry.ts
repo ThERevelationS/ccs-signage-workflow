@@ -131,6 +131,40 @@ async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
     addRows(invoiceRows);
   }
 
+  let loadedIndexes = buildExistingImportIndexes(Array.from(found.values()));
+  const unresolvedSourceIds = sourceIds.filter((id) => !(loadedIndexes.sourceIds.get(normalizeIdentity(id)) || []).length);
+  for (const ids of chunk(unresolvedSourceIds, CLIENT_REGEX_CHUNK_SIZE)) {
+    const pattern = normalizedAlternationRegex(ids);
+    addRows(await loadAllEntityRows({
+      entity,
+      query: { sales_import_source_id: { $regex: pattern, $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'Sales import normalized source identities',
+    }));
+  }
+
+  loadedIndexes = buildExistingImportIndexes(Array.from(found.values()));
+  const unresolvedEstInv = estInvValues.filter((id) => !(loadedIndexes.estInv.get(normalizeIdentity(id)) || []).length);
+  for (const ids of chunk(unresolvedEstInv, CLIENT_REGEX_CHUNK_SIZE)) {
+    const pattern = normalizedAlternationRegex(ids);
+    const [estimateRows, invoiceRows] = await Promise.all([
+      loadAllEntityRows({
+        entity,
+        query: { est_inv_at: { $regex: pattern, $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: 'Sales import normalized estimate identities',
+      }),
+      loadAllEntityRows({
+        entity,
+        query: { corbridge_invoice_number: { $regex: pattern, $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: 'Sales import normalized invoice identities',
+      }),
+    ]);
+    addRows(estimateRows);
+    addRows(invoiceRows);
+  }
+
   for (const names of chunk(weakClientNames, CLIENT_REGEX_CHUNK_SIZE)) {
     const pattern = normalizedAlternationRegex(names);
     addRows(await loadAllEntityRows({
