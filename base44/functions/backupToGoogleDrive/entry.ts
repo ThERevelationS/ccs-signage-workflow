@@ -431,7 +431,6 @@ Deno.serve(async (req) => {
           project_manager: wo.project_manager,
           estimator: wo.estimator,
           estimate_amount: wo.estimate_amount,
-          quoted_amount: wo.quoted_amount,
           contact_name: wo.contact_name,
           contact_email: wo.contact_email,
           contact_phone: wo.contact_phone,
