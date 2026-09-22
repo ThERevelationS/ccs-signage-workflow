@@ -998,6 +998,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         columnBindings: salesBinding.column_bindings,
         dataset: "sales",
         rolloutBaseline: config.sales.rollout_baseline,
+        customerReviewState: customerReview,
       });
       const orderPreview = buildSmartsheetDryRunPreview({
         sheetId: orderBinding.smartsheet_sheet_id,
@@ -1008,6 +1009,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         columnBindings: orderBinding.column_bindings,
         dataset: "orders",
         rolloutBaseline: config.orders.rollout_baseline,
+        customerReviewState: customerReview,
       });
 
       setDryRunPreview({
