@@ -11,8 +11,8 @@ import {
   saveGlobalSettingValueIfUnchanged,
 } from "@/components/shared/globalSettingsPersistence";
 import {
+  getAllSmartsheetRows,
   getSmartsheetColumns,
-  getSmartsheetRows,
   getSmartsheetSyncStatus,
   listSmartsheetSheets,
   testSmartsheetConnection,
@@ -185,10 +185,10 @@ function LiveMappingAnalysisCard({ title, result }) {
   );
 }
 
-function DryRunPreviewCard({ title, preview }) {
+function DryRunPreviewCard({ title, preview, newRecordLabel }) {
   if (!preview) return null;
   const summary = preview.preview?.summary || {};
-  const pageComplete = Number(preview.returned_row_count || 0) >= Number(preview.total_row_count || 0);
+  const customerSummary = preview.preview?.customerSummary || {};
 
   return (
     <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
@@ -196,21 +196,34 @@ function DryRunPreviewCard({ title, preview }) {
         <div>
           <div className="text-sm font-semibold text-gray-900">{title}</div>
           <div className="mt-1 text-[11px] text-gray-500">
-            Read-only page {preview.page_number || 1}: {preview.returned_row_count || 0} of {preview.total_row_count || 0} Smartsheet rows
-            {pageComplete ? "" : " • first page only"}
+            Complete read-only scan: {Number(preview.returned_row_count || 0).toLocaleString()} of {Number(preview.total_row_count || 0).toLocaleString()} Smartsheet rows
+            {preview.pages_loaded ? ` • ${preview.pages_loaded} API page${preview.pages_loaded === 1 ? "" : "s"}` : ""}
           </div>
         </div>
         <div className="flex flex-wrap gap-1 text-[11px]">
           <Badge className="bg-green-100 text-green-700">{summary.linked_same || 0} linked same</Badge>
           <Badge className="bg-amber-100 text-amber-800">{summary.linked_different || 0} linked different</Badge>
-          <Badge className="bg-blue-100 text-blue-700">{summary.candidate || 0} candidates</Badge>
-          <Badge className="bg-red-100 text-red-700">{summary.ambiguous || 0} ambiguous</Badge>
-          <Badge variant="outline">{summary.unlinked || 0} unlinked</Badge>
+          <Badge className="bg-blue-100 text-blue-700">{summary.candidate || 0} existing-record candidates</Badge>
+          <Badge className="bg-red-100 text-red-700">{summary.ambiguous || 0} record ambiguous</Badge>
+          <Badge className="bg-violet-100 text-violet-800">{summary.new_record || 0} new {newRecordLabel || "records"}</Badge>
+          <Badge variant="outline">{summary.empty || 0} empty</Badge>
         </div>
       </div>
 
-      <div className="mt-3 max-h-80 overflow-y-auto divide-y rounded-md border bg-white">
-        {(preview.preview?.rows || []).slice(0, 50).map((row) => (
+      {(summary.new_record || 0) > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1 rounded-md border border-blue-100 bg-blue-50/60 p-2 text-[11px]">
+          <span className="mr-1 font-semibold text-blue-900">Customer resolution:</span>
+          <Badge className="bg-green-100 text-green-700">{customerSummary.exact_company || 0} exact</Badge>
+          <Badge className="bg-green-100 text-green-700">{customerSummary.exact_alias || 0} approved alias</Badge>
+          <Badge className="bg-amber-100 text-amber-800">{(customerSummary.strong_review || 0) + (customerSummary.close_review || 0)} review</Badge>
+          <Badge className="bg-red-100 text-red-700">{customerSummary.ambiguous || 0} ambiguous</Badge>
+          <Badge className="bg-violet-100 text-violet-800">{customerSummary.new_customer || 0} new-client proposals</Badge>
+          <Badge variant="outline">{customerSummary.needs_name || 0} missing customer name</Badge>
+        </div>
+      )}
+
+      <div className="mt-3 max-h-96 overflow-y-auto divide-y rounded-md border bg-white">
+        {(preview.preview?.rows || []).slice(0, 100).map((row) => (
           <div key={row.row_id} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[90px_minmax(0,1fr)_auto] sm:items-center">
             <div className="text-gray-500">
               <div>Row {row.row_number || "—"}</div>
@@ -226,12 +239,29 @@ function DryRunPreviewCard({ title, preview }) {
                   : row.match_method === "legacy_source_id"
                     ? "Legacy Sales source-ID candidate"
                     : row.match_method === "exact_composite"
-                      ? "Exact composite candidate"
+                      ? "Exact composite existing-record candidate"
                       : row.match_method === "ambiguous"
-                        ? `${row.candidate_count} possible Base44 matches — review required`
-                        : "No Base44 match selected"}
+                        ? `${row.candidate_count} possible Base44 records — review required`
+                        : row.status === "new_record"
+                          ? `Proposed new Base44 ${newRecordLabel || "record"}`
+                          : "No Base44 record selected"}
                 {row.differences?.length ? ` • ${row.differences.length} mapped difference${row.differences.length === 1 ? "" : "s"}` : ""}
               </div>
+              {row.customer_resolution && (
+                <div className={`mt-1 text-[10px] ${["exact_company", "exact_alias"].includes(row.customer_resolution.outcome) ? "text-green-700" : ["strong_review", "close_review"].includes(row.customer_resolution.outcome) ? "text-amber-700" : row.customer_resolution.outcome === "ambiguous" ? "text-red-700" : "text-violet-700"}`}>
+                  Customer: {row.customer_resolution.outcome === "exact_company"
+                    ? `exact Base44 match → ${row.customer_resolution.recommended_company_name}`
+                    : row.customer_resolution.outcome === "exact_alias"
+                      ? `approved alias → ${row.customer_resolution.recommended_company_name}`
+                      : ["strong_review", "close_review"].includes(row.customer_resolution.outcome)
+                        ? `review ${row.customer_resolution.recommended_company_name || "candidate"}${row.customer_resolution.recommended_score ? ` (score ${row.customer_resolution.recommended_score})` : ""}`
+                        : row.customer_resolution.outcome === "ambiguous"
+                          ? `${row.customer_resolution.candidates?.length || 0} plausible customers — explicit selection required`
+                          : row.customer_resolution.outcome === "new_customer"
+                            ? "no plausible existing Customer — new-client proposal"
+                            : "customer name is missing"}
+                </div>
+              )}
               {row.differences?.length > 0 && (
                 <div className="mt-1 text-[10px] text-amber-700">
                   Differences: {row.differences.slice(0, 5).map((difference) => difference.label).join(", ")}
@@ -244,8 +274,8 @@ function DryRunPreviewCard({ title, preview }) {
         ))}
       </div>
 
-      {(preview.preview?.rows || []).length > 50 && (
-        <div className="mt-2 text-[11px] text-gray-500">Showing the first 50 preview rows only.</div>
+      {(preview.preview?.rows || []).length > 100 && (
+        <div className="mt-2 text-[11px] text-gray-500">Summary covers every row; showing the first 100 rows in this panel.</div>
       )}
     </div>
   );
