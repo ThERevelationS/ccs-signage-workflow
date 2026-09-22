@@ -44,6 +44,40 @@ const normalizedAlternationRegex = (values: string[]) => {
   return parts.length ? `^\\s*(?:${parts.join('|')})\\s*$` : '^$';
 };
 
+function selectImportWorksheet(workbook: any) {
+  const candidates: any[] = [];
+  for (const sheetName of workbook?.SheetNames || []) {
+    const sheet = workbook?.Sheets?.[sheetName];
+    const ref = String(sheet?.['!ref'] || '').trim();
+    if (!sheet || !ref) continue;
+    const range = XLSX.utils.decode_range(ref);
+    const lastHeaderRow = Math.min(range.e.r, range.s.r + 9);
+    for (let row = range.s.r; row <= lastHeaderRow; row += 1) {
+      const headers: string[] = [];
+      for (let col = range.s.c; col <= range.e.c; col += 1) {
+        const cell = sheet[XLSX.utils.encode_cell({ r: row, c: col })];
+        headers.push(asText(cell?.v ?? cell?.w));
+      }
+      const validation = validateSalesImportHeaders(headers);
+      if (validation.errors.length === 0) {
+        candidates.push({ sheetName, sheet, headerRow: row, warnings: validation.warnings });
+        break;
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    const sheetNames = (workbook?.SheetNames || []).join(', ') || 'none';
+    throw Object.assign(new Error(`No worksheet with a recognized Customer header was found in the first 10 rows. Worksheets: ${sheetNames}.`), { status: 400 });
+  }
+
+  return {
+    ...candidates[0],
+    multipleCandidates: candidates.length > 1,
+    candidateNames: candidates.map((candidate) => candidate.sheetName),
+  };
+}
+
 async function sha256Hex(value: string) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
