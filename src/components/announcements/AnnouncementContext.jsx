@@ -82,7 +82,10 @@ export function AnnouncementProvider({ children, currentPageName }) {
             if (!currentUser?.email || !ann.target_users.includes(currentUser.email)) return false;
           }
           if (ann.display_pages && ann.display_pages.length > 0) {
-            if (!currentPageName || !ann.display_pages.includes(currentPageName)) return false;
+            const pageTargets = currentPageName === "Permitting"
+              ? [...ann.display_pages, ...(ann.display_pages.includes("PermittingRepository") ? ["Permitting"] : [])]
+              : ann.display_pages;
+            if (!currentPageName || !pageTargets.includes(currentPageName)) return false;
           }
           return true;
         });
