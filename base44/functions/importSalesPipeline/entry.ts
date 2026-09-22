@@ -90,6 +90,7 @@ async function parseRequest(req: Request) {
   let mode = 'apply';
   let importJobId = '';
   let force = false;
+  let adoptLegacy = false;
   let fileName = 'sales-pipeline.xlsx';
   let fileSizeBytes = 0;
   let bytes: Uint8Array | null = null;
@@ -100,6 +101,7 @@ async function parseRequest(req: Request) {
     mode = asText(form.get('mode')) || 'apply';
     importJobId = asText(form.get('import_job_id'));
     force = asText(form.get('force')).toLowerCase() === 'true';
+    adoptLegacy = asText(form.get('adopt_legacy')).toLowerCase() === 'true';
     const file = form.get('file');
     if (!(file instanceof File)) throw Object.assign(new Error('No spreadsheet file provided'), { status: 400 });
     fileName = file.name || fileName;
@@ -112,6 +114,7 @@ async function parseRequest(req: Request) {
     mode = asText(body?.mode) || 'apply';
     importJobId = asText(body?.import_job_id);
     force = body?.force === true;
+    adoptLegacy = body?.adopt_legacy === true;
     fileName = asText(body?.file_name) || fileName;
     if (!body?.fileData) throw Object.assign(new Error('No spreadsheet file provided'), { status: 400 });
     const binary = atob(body.fileData);
@@ -122,7 +125,7 @@ async function parseRequest(req: Request) {
   }
 
   if (!['preview', 'apply'].includes(mode)) throw Object.assign(new Error('Import mode must be preview or apply.'), { status: 400 });
-  return { sessionToken, mode, importJobId, force, fileName, fileSizeBytes, bytes: bytes! };
+  return { sessionToken, mode, importJobId, force, adoptLegacy, fileName, fileSizeBytes, bytes: bytes! };
 }
 
 async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
@@ -448,7 +451,7 @@ Deno.serve(async (req) => {
     const relevantOrders = await loadRelevantWorkOrders(WorkOrder, parsed.validRows);
     const indexes = buildExistingImportIndexes(relevantOrders);
     const nowIso = new Date().toISOString();
-    const plans = parsed.validRows.map((row) => buildSalesImportPlan(row, resolveSalesImportMatch(row, indexes), { nowIso }));
+    const plans = parsed.validRows.map((row) => buildSalesImportPlan(row, resolveSalesImportMatch(row, indexes), { nowIso, allowLegacyAdoption: request.mode === 'apply' && request.adoptLegacy }));
     const summary = summarizeSalesImportPlans(plans, parsed.invalidRows);
     const issues = issueRows(parsed.invalidRows, plans);
     const fingerprint = await sha256Hex(stableImportFingerprintPayload(parsed.validRows, parsed.invalidRows));
