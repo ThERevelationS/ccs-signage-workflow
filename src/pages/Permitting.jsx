@@ -8,7 +8,7 @@ import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Se
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
-import PermittingRepository from "@/pages/PermittingRepository";
+import JurisdictionsView from "@/components/permitting/JurisdictionsView";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -894,7 +894,7 @@ export default function Permitting() {
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <PermittingRepository embedded focusJurisdiction={jurisdictionFocus} />
+          <JurisdictionsView focusJurisdiction={jurisdictionFocus} />
         </div>
       </div>
     );
