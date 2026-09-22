@@ -4,6 +4,13 @@ import {
   buildSmartsheetRolloutPreview,
   classifySmartsheetRolloutRow,
 } from "../src/components/admin/smartsheetRolloutModel.js";
+import {
+  buildCreateNewCustomerDecision,
+  buildCustomerResolutionReviewGroups,
+  buildUseExistingCustomerDecision,
+  customerReviewDecisionKey,
+  setCustomerReviewDecision,
+} from "../src/components/admin/smartsheetCustomerResolutionReviewModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -187,5 +194,115 @@ const salesPostBaseline = classifySmartsheetRolloutRow({
   sheetId: "8702703019812740",
 });
 assert(salesPostBaseline.outcome === "post_baseline_new", "A row first seen after baseline must not be silently routed into legacy history from task text.");
+
+const reviewRollout = {
+  baseline_state: "captured",
+  classifications: [
+    { row_id: "r-old", outcome: "historical_external" },
+    { row_id: "r1", outcome: "post_baseline_new" },
+    { row_id: "r2", outcome: "post_baseline_new" },
+    { row_id: "r3", outcome: "post_baseline_new" },
+  ],
+};
+const reviewRows = [
+  {
+    status: "new_record",
+    row_id: "r-old",
+    row_number: 20,
+    values: { customer_name: "Historical Co" },
+    customer_resolution: { outcome: "new_customer", reason: "No plausible existing Base44 Customer was found." },
+  },
+  {
+    status: "new_record",
+    row_id: "r1",
+    row_number: 21,
+    values: { customer_name: "Acme Old" },
+    customer_resolution: {
+      outcome: "exact_alias",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 99,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 99, reasons: ["exact approved alias"] }],
+    },
+  },
+  {
+    status: "new_record",
+    row_id: "r2",
+    row_number: 22,
+    values: { customer_name: "Acme Signz" },
+    customer_resolution: {
+      outcome: "close_review",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 88,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 88, reasons: ["very similar company name"] }],
+    },
+  },
+  {
+    status: "new_record",
+    row_id: "r3",
+    row_number: 23,
+    values: { customer_name: "Acme Signz" },
+    customer_resolution: {
+      outcome: "close_review",
+      recommended_customer_id: "customer-1",
+      recommended_company_name: "Acme Signs",
+      recommended_score: 88,
+      candidates: [{ customer_id: "customer-1", company_name: "Acme Signs", score: 88, reasons: ["very similar company name"] }],
+    },
+  },
+];
+
+const unresolvedReview = buildCustomerResolutionReviewGroups({
+  rows: reviewRows,
+  rolloutPreview: reviewRollout,
+  dataset: "orders",
+  sheetId: "4963691473987460",
+});
+assert(unresolvedReview.summary.total_unique === 2, "Only post-baseline names should enter the customer review queue.");
+assert(unresolvedReview.summary.exact_existing === 1, "Exact company/alias matches should resolve without a manual review decision.");
+assert(unresolvedReview.summary.needs_decision === 1, "Close/ambiguous/new customer names should require an explicit decision.");
+const typoGroup = unresolvedReview.groups.find((group) => group.normalized_name === "acme signz");
+assert(typoGroup?.row_count === 2, "Repeated post-baseline customer names must collapse to one review decision.");
+
+const existingDecision = buildUseExistingCustomerDecision({
+  group: typoGroup,
+  customerId: "customer-1",
+  companyName: "Acme Signs",
+  rememberAlias: true,
+  decidedAt: "2026-09-22T22:30:00.000Z",
+});
+assert(existingDecision.remember_alias === true, "A differently spelled approved existing match should preserve planned-alias intent.");
+
+const typoDecisionKey = customerReviewDecisionKey({
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  normalizedName: typoGroup.normalized_name,
+});
+const reviewedState = setCustomerReviewDecision({ schema_version: 1, decisions: {} }, typoDecisionKey, existingDecision);
+const decidedReview = buildCustomerResolutionReviewGroups({
+  rows: reviewRows,
+  rolloutPreview: reviewRollout,
+  dataset: "orders",
+  sheetId: "4963691473987460",
+  reviewState: reviewedState,
+});
+assert(decidedReview.summary.needs_decision === 0, "A saved existing-Customer review decision should resolve the grouped name.");
+assert(decidedReview.summary.decided_existing === 1, "Existing-Customer decisions must be counted separately.");
+assert(decidedReview.groups.find((group) => group.normalized_name === "acme signz")?.decision?.customer_id === "customer-1", "Saved customer choice must be restored by stable review key.");
+
+const newOnlyGroup = {
+  key: "fresh customer",
+  dataset: "orders",
+  sheet_id: "4963691473987460",
+  source_name: "Fresh Customer",
+  normalized_name: "fresh customer",
+};
+const newDecision = buildCreateNewCustomerDecision({
+  group: newOnlyGroup,
+  decidedAt: "2026-09-22T22:31:00.000Z",
+});
+assert(newDecision.action === "create_new_customer", "New-Customer approval must remain an explicit review decision.");
+assert(newDecision.proposed_company_name === "Fresh Customer", "New-Customer review must preserve the original Smartsheet name.");
 
 console.log("Smartsheet rollout regression validation: PASS");
