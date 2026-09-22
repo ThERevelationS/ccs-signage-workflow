@@ -423,6 +423,7 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
   const previousSnapshot = current.sales_import_snapshot && typeof current.sales_import_snapshot === "object" && !Array.isArray(current.sales_import_snapshot)
     ? current.sales_import_snapshot
     : {};
+  const firstSync = Object.keys(previousSnapshot).length === 0;
   const localConflicts = [];
 
   const proposed = {};
@@ -515,7 +516,7 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
 
   const changedFields = Object.keys(proposed).filter((field) => !sameValue(current[field], proposed[field]));
   if (changedFields.length === 0 || (changedFields.length === 1 && changedFields[0] === "sales_import_last_synced_at")) {
-    return { kind: "unchanged", rowNumber: importRow.rowNumber, clientName: importRow.clientName, recordId: current.id, matchType: match.matchType };
+    return { kind: "unchanged", rowNumber: importRow.rowNumber, clientName: importRow.clientName, recordId: current.id, matchType: match.matchType, firstSync };
   }
 
   return {
@@ -527,6 +528,7 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
     current,
     nextFields: Object.fromEntries(changedFields.map((field) => [field, proposed[field]])),
     matchType: match.matchType,
+    firstSync,
   };
 }
 
@@ -539,9 +541,11 @@ export function summarizeSalesImportPlans(plans = [], invalidRows = []) {
     conflict: 0,
     ambiguous: 0,
     invalid: invalidRows.length,
+    baseline: 0,
   };
   plans.forEach((plan) => {
     if (Object.prototype.hasOwnProperty.call(summary, plan.kind)) summary[plan.kind] += 1;
+    if (plan.firstSync === true) summary.baseline += 1;
   });
   return summary;
 }
