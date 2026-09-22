@@ -9,6 +9,7 @@ import {
   parseSalesImportRows,
   validateSalesImportHeaders,
   buildExistingImportIndexes,
+  normalizeIdentity,
   resolveSalesImportMatch,
   buildSalesImportPlan,
   summarizeSalesImportPlans,
@@ -29,6 +30,19 @@ const chunk = <T,>(items: T[], size: number) => {
 };
 const uniqueStrings = (values: unknown[]) => Array.from(new Set(values.map(asText).filter(Boolean)));
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const normalizedExactRegex = (value: unknown) => {
+  const text = asText(value).replace(/\s+/g, ' ');
+  if (!text) return '^$';
+  return `^\\s*${escapeRegex(text).replace(/ /g, '\\s+')}\\s*$`;
+};
+const normalizedAlternationRegex = (values: string[]) => {
+  const parts = values.map((value) => {
+    const text = asText(value).replace(/\s+/g, ' ');
+    return escapeRegex(text).replace(/ /g, '\\s+');
+  }).filter(Boolean);
+  return parts.length ? `^\\s*(?:${parts.join('|')})\\s*$` : '^$';
+};
 
 async function sha256Hex(value: string) {
   const bytes = new TextEncoder().encode(value);
@@ -92,7 +106,7 @@ async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
   for (const ids of chunk(sourceIds, READ_CHUNK_SIZE)) {
     addRows(await loadAllEntityRows({
       entity,
-      query: { sales_import_source_id: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+      query: { sales_import_source_id: { $in: ids }, is_rider: { $ne: true }, deleted: { $ne: true } },
       sort: 'created_date',
       label: 'Sales import source identities',
     }));
@@ -102,13 +116,13 @@ async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
     const [estimateRows, invoiceRows] = await Promise.all([
       loadAllEntityRows({
         entity,
-        query: { est_inv_at: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+        query: { est_inv_at: { $in: ids }, is_rider: { $ne: true }, deleted: { $ne: true } },
         sort: 'created_date',
         label: 'Sales import estimate identities',
       }),
       loadAllEntityRows({
         entity,
-        query: { corbridge_invoice_number: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+        query: { corbridge_invoice_number: { $in: ids }, is_rider: { $ne: true }, deleted: { $ne: true } },
         sort: 'created_date',
         label: 'Sales import invoice identities',
       }),
@@ -134,7 +148,7 @@ async function readIdentityMatches(entity: any, importRow: any) {
   if (importRow.sourceId) {
     return loadAllEntityRows({
       entity,
-      query: { sales_import_source_id: importRow.sourceId, is_rider: false, deleted: { $ne: true } },
+      query: { sales_import_source_id: { $regex: normalizedExactRegex(importRow.sourceId), $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
       sort: 'created_date',
       label: `Sales import source identity ${importRow.sourceId}`,
     });
@@ -144,13 +158,13 @@ async function readIdentityMatches(entity: any, importRow: any) {
     const [estimateRows, invoiceRows] = await Promise.all([
       loadAllEntityRows({
         entity,
-        query: { est_inv_at: importRow.estInvAt, is_rider: false, deleted: { $ne: true } },
+        query: { est_inv_at: { $regex: normalizedExactRegex(importRow.estInvAt), $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
         sort: 'created_date',
         label: `Sales import estimate identity ${importRow.estInvAt}`,
       }),
       loadAllEntityRows({
         entity,
-        query: { corbridge_invoice_number: importRow.estInvAt, is_rider: false, deleted: { $ne: true } },
+        query: { corbridge_invoice_number: { $regex: normalizedExactRegex(importRow.estInvAt), $options: 'i' }, is_rider: { $ne: true }, deleted: { $ne: true } },
         sort: 'created_date',
         label: `Sales import invoice identity ${importRow.estInvAt}`,
       }),
