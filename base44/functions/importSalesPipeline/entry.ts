@@ -411,12 +411,10 @@ Deno.serve(async (req) => {
 
     const parseStarted = Date.now();
     const workbook = XLSX.read(request.bytes, { type: 'array', cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) throw Object.assign(new Error('Spreadsheet has no worksheets.'), { status: 400 });
-    const sheet = workbook.Sheets[sheetName];
-    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const selectedSheet = selectImportWorksheet(workbook);
+    const rawRows = XLSX.utils.sheet_to_json(selectedSheet.sheet, { defval: '', range: selectedSheet.headerRow, blankrows: false });
     const todayStamp = format(new Date(), 'yyyy-MM-dd');
-    const parsed = parseSalesImportRows(rawRows, { todayStamp });
+    const parsed = parseSalesImportRows(rawRows, { todayStamp, rowNumberBase: selectedSheet.headerRow + 2 });
     const headerValidation = validateSalesImportHeaders(parsed.headers);
     if (headerValidation.errors.length) {
       throw Object.assign(new Error(headerValidation.errors.join(" ")), { status: 400 });
@@ -460,9 +458,12 @@ Deno.serve(async (req) => {
       mode: request.mode,
       file_name: request.fileName,
       file_hash: fingerprint,
+      sheet_name: selectedSheet.sheetName,
+      header_row: selectedSheet.headerRow + 1,
       summary,
       issues,
       warnings: [
+        ...(selectedSheet.multipleCandidates ? [{ row: "", customer: "", message: `Multiple worksheets looked importable (${selectedSheet.candidateNames.join(', ')}). Using ${selectedSheet.sheetName}.` }] : []),
         ...headerValidation.warnings.map((message: string) => ({ row: "", customer: "", message })),
         ...parsed.validRows.flatMap((row) => (row.warnings || []).map((message: string) => ({ row: row.rowNumber, customer: row.clientName, message }))),
       ].slice(0, 100),
