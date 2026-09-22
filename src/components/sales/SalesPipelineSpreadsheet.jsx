@@ -39,6 +39,7 @@ import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpComplet
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
+import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
 import { useImportProgress } from "@/components/shared/ImportProgressContext";
 import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
@@ -195,6 +196,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [importPreflightBusy, setImportPreflightBusy] = useState(false);
   const [importApplyBusy, setImportApplyBusy] = useState(false);
   const [importError, setImportError] = useState("");
+  const [showImportHistory, setShowImportHistory] = useState(false);
   const { startImport: startTrackedImport, completeImport: refreshTrackedImport } = useImportProgress();
   const [showForm, setShowForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null); // For duplicating a client
@@ -1373,6 +1375,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     addNewRow,
     exportToExcel,
     importFromExcel: () => fileInputRef.current?.click(),
+    openImportHistory: () => setShowImportHistory(true),
     handleCreateFromForm
   }));
 
@@ -2646,6 +2649,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           </div>
 
       {renderOpportunityDialogs()}
+
+      <SalesImportHistoryDialog open={showImportHistory} onClose={() => setShowImportHistory(false)} />
 
       <SalesImportPreviewDialog
         open={Boolean(importFile || importPreview || importError || importPreflightBusy)}
