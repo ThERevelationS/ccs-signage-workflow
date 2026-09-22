@@ -221,8 +221,13 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
       {rolloutPreview && (summary.new_record || 0) > 0 && (
         <div className="mt-3 rounded-md border border-amber-200 bg-amber-50/70 p-2 text-[11px] text-amber-950">
           <div className="flex flex-wrap items-center gap-1">
-            <span className="mr-1 font-semibold">Pre-rollout creation gate:</span>
-            <Badge variant="outline">{rolloutSummary.proposed_new_records || 0} preexisting proposed records</Badge>
+            <span className="mr-1 font-semibold">Rollout creation gate:</span>
+            <Badge variant="outline">{rolloutSummary.proposed_new_records || 0} unlinked proposed records</Badge>
+            {rolloutPreview.baseline_state === "captured" && (
+              <Badge className="bg-blue-100 text-blue-700">
+                baseline {Number(rolloutPreview.baseline_row_count || 0).toLocaleString()} rows
+              </Badge>
+            )}
             {rolloutSummary.historical_external > 0 && (
               <Badge className="bg-gray-100 text-gray-700">{rolloutSummary.historical_external} historical/external</Badge>
             )}
@@ -232,7 +237,10 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
             {rolloutSummary.manual_backfill_review > 0 && (
               <Badge className="bg-amber-100 text-amber-800">{rolloutSummary.manual_backfill_review} manual backfill review</Badge>
             )}
-            <Badge className="bg-red-100 text-red-700">{rolloutPreview.auto_create_eligible || 0} auto-create eligible</Badge>
+            {rolloutSummary.post_baseline_new > 0 && (
+              <Badge className="bg-blue-100 text-blue-700">{rolloutSummary.post_baseline_new} new after baseline</Badge>
+            )}
+            <Badge className="bg-red-100 text-red-700">{rolloutPreview.auto_create_eligible || 0} automatic creates</Badge>
           </div>
           <div className="mt-1 text-[10px] text-amber-900">{rolloutPreview.policy}</div>
           {rolloutRows.length > 0 && (
@@ -242,7 +250,9 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
                   ? "historical / external"
                   : item.outcome === "legacy_terminal"
                     ? "legacy terminal"
-                    : "manual review";
+                    : item.outcome === "post_baseline_new"
+                      ? "new after baseline"
+                      : "manual review";
                 return (
                   <div key={item.row_id} className="grid grid-cols-1 gap-1 px-2 py-1.5 sm:grid-cols-[75px_minmax(0,1fr)_auto] sm:items-center">
                     <div className="text-gray-500">Row {item.row_number || "—"}</div>
@@ -258,7 +268,7 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
               })}
               {rolloutRows.length > 100 && (
                 <div className="px-2 py-1.5 text-[10px] text-gray-500">
-                  Showing the first 100 of {rolloutRows.length.toLocaleString()} pre-rollout rows. Summary counts include all rows.
+                  Showing the first 100 of {rolloutRows.length.toLocaleString()} rollout-classified rows. Summary counts include all rows.
                 </div>
               )}
             </div>
@@ -651,7 +661,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const orderBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.orders);
       const nextConfig = mergeConfig({
         ...config,
-        schema_version: 2,
+        schema_version: 3,
         sales: {
           ...config.sales,
           ...salesBinding,
