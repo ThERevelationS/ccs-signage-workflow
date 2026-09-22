@@ -12,7 +12,7 @@ import { AlertTriangle, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, 
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
-import { getActionableSalesAttentionItems, getSalesAttentionItems, getSuggestedProbabilityForStatus } from "@/components/sales/salesAttention";
+import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
@@ -159,12 +159,9 @@ export default function SalesOpportunityDialog({
     return () => { active = false; };
   }, [workOrder?.id, workOrder?.updated_date]);
 
-  const value = Number(workOrder?.quoted_amount ?? workOrder?.estimate_amount ?? 0) || 0;
+  const value = Number(workOrder?.estimate_amount ?? 0) || 0;
   const statusLabel = SALES_STATUSES.find((status) => status.value === workOrder?.sales_status)?.label || "Lead";
   const closeout = ["won", "lost"].includes(workOrder?.sales_status);
-  const probabilityIsSet = typeof workOrder?.probability === "number" && Number.isFinite(workOrder.probability);
-  const suggestedProbability = getSuggestedProbabilityForStatus(workOrder?.sales_status || "lead");
-  const weightedContribution = probabilityIsSet ? value * (workOrder.probability / 100) : null;
   const stageAging = getStageAgingState(workOrder);
   const quoteAging = getQuoteAgingState(workOrder);
   const allAttentionItems = getSalesAttentionItems(workOrder);
@@ -305,7 +302,6 @@ export default function SalesOpportunityDialog({
               {isRegistered && !closeout && attentionItems.length > 0 && (
                 <div className="mt-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain border-t border-amber-200 pt-3 sm:flex-wrap sm:overflow-visible" aria-label="Opportunity attention quick actions">
                   {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ sales_rep: currentSalesOwnerLabel })}>Assign to me</Button>}
-                  {attentionKeys.has("probability_missing") && suggestedProbability != null && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ probability: suggestedProbability })}>Set {suggestedProbability}% probability</Button>}
                   {attentionKeys.has("next_action") && <span className="shrink-0 text-xs font-medium text-amber-900">Schedule follow-up:</span>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(1) })}>Tomorrow</Button>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
@@ -317,11 +313,11 @@ export default function SalesOpportunityDialog({
             </section>
           )}
 
-          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-xl border bg-white p-3">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500"><CircleDollarSign className="h-4 w-4" />Opportunity Value</div>
               <div className="mt-2 text-2xl font-bold text-gray-900">{money(value)}</div>
-              <div className="mt-1 text-xs text-gray-500">{workOrder.quoted_amount != null ? "Quoted value" : "Estimate value"}</div>
+              <div className="mt-1 text-xs text-gray-500">Estimate Amount</div>
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("stage_timing_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Status</Label>
@@ -335,22 +331,6 @@ export default function SalesOpportunityDialog({
                 <div className="mt-2 text-xs text-gray-400">Stage age begins tracking after the next verified stage change.</div>
               ) : (
                 <div className="mt-2 text-xs text-gray-400">Stage timing is not treated as authoritative for this non-current record.</div>
-              )}
-            </div>
-            <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("probability_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
-              <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Probability</Label>
-              <div className="mt-2 flex items-center gap-2">
-                <Input type="number" min="0" max="100" value={workOrder.probability ?? ""} disabled={!isRegistered} onChange={(event) => update({ probability: Math.max(0, Math.min(100, Number(event.target.value) || 0)) })} className="h-9" />
-                <span className="text-sm text-gray-500">%</span>
-              </div>
-              {probabilityIsSet ? (
-                <div className="mt-2 text-xs text-gray-500">Weighted contribution: <span className="font-semibold text-gray-700">{money(weightedContribution)}</span></div>
-              ) : suggestedProbability != null && !closeout ? (
-                <button type="button" disabled={!isRegistered} onClick={() => update({ probability: suggestedProbability })} className="mt-2 text-left text-xs font-medium text-blue-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400">
-                  Suggested starting point for {statusLabel}: {suggestedProbability}% · Apply
-                </button>
-              ) : (
-                <div className="mt-2 text-xs text-gray-400">No probability set.</div>
               )}
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("owner_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
@@ -475,10 +455,9 @@ export default function SalesOpportunityDialog({
                     {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-11 px-3 text-xs sm:h-9" onClick={() => update({ date_estimate_sent: todayStamp })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (
-                    quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}{workOrder.date_estimate_sent ? "" : " · using quote issue date"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
+                    quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
                   ) : null}
                 </div>
-                <div><div className="text-xs text-gray-400">Quote issue date</div><div className="font-medium text-gray-800">{workOrder.quote_date || "—"}</div></div>
                 <div>
                   <div className="text-xs text-gray-400">{closeout ? "Expected close (planned)" : "Expected close"}</div>
                   <div className={`font-medium ${expectedCloseOverdue ? "text-rose-700" : expectedCloseNear ? "text-cyan-700" : "text-gray-800"}`}>
