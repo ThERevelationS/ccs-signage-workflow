@@ -225,7 +225,6 @@ export default function SalesPipelineInsights({ summary }) {
               <CoverageRow label="Not flagged as test placeholder" covered={notFlaggedCount} total={openCount} note="Exact Test/asdf names only. Raw reporting still includes flagged records until explicit cleanup." />
               <CoverageRow label="Sales owner" covered={summary?.assignedOwnerCount || 0} total={openCount} note="Needed for fair salesperson workload and performance reporting." />
               <CoverageRow label="Lead source" covered={summary?.sourceCoverageCount || 0} total={openCount} note="Needed for source conversion and source-value reporting." />
-              <CoverageRow label="Probability" covered={summary?.ratedProbabilityCount || 0} total={openCount} note="Needed for complete weighted pipeline forecasting." />
               <CoverageRow label="Verified sales activity" covered={summary?.trackedActivityCount || 0} total={openCount} note="Needed for trustworthy stale-opportunity reporting." />
               <CoverageRow label="Stage-change timing" covered={summary?.stageAgeCoverageCount || 0} total={openCount} note="Days-in-stage is withheld until this tracking has meaningful coverage." />
               <CoverageRow label="Quote sent timing" covered={summary?.quoteTimingCoverageCount || 0} total={summary?.quoteAwaitingResponseCount || 0} note="Needed for trustworthy quote-age and quote-response follow-up reporting." />
