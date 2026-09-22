@@ -5,263 +5,568 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { createWorkOrderWithRecovery } from '../../shared/workOrderCreatePersistence.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import {
+  parseSalesImportRows,
+  buildExistingImportIndexes,
+  resolveSalesImportMatch,
+  buildSalesImportPlan,
+  summarizeSalesImportPlans,
+  stableImportFingerprintPayload,
+} from '../../shared/salesImportUtils.mjs';
+
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
+const READ_CHUNK_SIZE = 100;
+const CLIENT_REGEX_CHUNK_SIZE = 30;
+const WORKER_COUNT = 4;
+const ACTIVE_JOB_STALE_MS = 30 * 60 * 1000;
+
+const asText = (value: unknown) => String(value ?? '').trim();
+const chunk = <T,>(items: T[], size: number) => {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+};
+const uniqueStrings = (values: unknown[]) => Array.from(new Set(values.map(asText).filter(Boolean)));
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+async function sha256Hex(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function parseRequest(req: Request) {
+  const contentType = req.headers.get('content-type') || '';
+  let sessionToken = '';
+  let mode = 'apply';
+  let importJobId = '';
+  let force = false;
+  let fileName = 'sales-pipeline.xlsx';
+  let fileSizeBytes = 0;
+  let bytes: Uint8Array | null = null;
+
+  if (contentType.includes('multipart/form-data')) {
+    const form = await req.formData();
+    sessionToken = asText(form.get('session_token'));
+    mode = asText(form.get('mode')) || 'apply';
+    importJobId = asText(form.get('import_job_id'));
+    force = asText(form.get('force')).toLowerCase() === 'true';
+    const file = form.get('file');
+    if (!(file instanceof File)) throw Object.assign(new Error('No spreadsheet file provided'), { status: 400 });
+    fileName = file.name || fileName;
+    fileSizeBytes = file.size || 0;
+    if (fileSizeBytes > MAX_FILE_BYTES) throw Object.assign(new Error('Spreadsheet is larger than the 15 MB import safety limit.'), { status: 413 });
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } else {
+    const body = await req.json().catch(() => ({}));
+    sessionToken = asText(body?.session_token);
+    mode = asText(body?.mode) || 'apply';
+    importJobId = asText(body?.import_job_id);
+    force = body?.force === true;
+    fileName = asText(body?.file_name) || fileName;
+    if (!body?.fileData) throw Object.assign(new Error('No spreadsheet file provided'), { status: 400 });
+    const binary = atob(body.fileData);
+    fileSizeBytes = binary.length;
+    if (fileSizeBytes > MAX_FILE_BYTES) throw Object.assign(new Error('Spreadsheet is larger than the 15 MB import safety limit.'), { status: 413 });
+    bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  }
+
+  if (!['preview', 'apply'].includes(mode)) throw Object.assign(new Error('Import mode must be preview or apply.'), { status: 400 });
+  return { sessionToken, mode, importJobId, force, fileName, fileSizeBytes, bytes: bytes! };
+}
+
+async function loadRelevantWorkOrders(entity: any, validRows: any[]) {
+  const found = new Map<string, any>();
+  const addRows = (rows: any[]) => rows.forEach((row) => {
+    if (row?.id) found.set(String(row.id), row);
+  });
+
+  const sourceIds = uniqueStrings(validRows.map((row) => row.sourceId));
+  const estInvValues = uniqueStrings(validRows.map((row) => row.estInvAt));
+  const weakClientNames = uniqueStrings(validRows
+    .filter((row) => !row.sourceId && !row.estInvAt)
+    .map((row) => row.clientName));
+
+  for (const ids of chunk(sourceIds, READ_CHUNK_SIZE)) {
+    addRows(await loadAllEntityRows({
+      entity,
+      query: { sales_import_source_id: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'Sales import source identities',
+    }));
+  }
+
+  for (const ids of chunk(estInvValues, READ_CHUNK_SIZE)) {
+    const [estimateRows, invoiceRows] = await Promise.all([
+      loadAllEntityRows({
+        entity,
+        query: { est_inv_at: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: 'Sales import estimate identities',
+      }),
+      loadAllEntityRows({
+        entity,
+        query: { corbridge_invoice_number: { $in: ids }, is_rider: false, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: 'Sales import invoice identities',
+      }),
+    ]);
+    addRows(estimateRows);
+    addRows(invoiceRows);
+  }
+
+  for (const names of chunk(weakClientNames, CLIENT_REGEX_CHUNK_SIZE)) {
+    const pattern = `^(?:${names.map(escapeRegex).join('|')})$`;
+    addRows(await loadAllEntityRows({
+      entity,
+      query: { client_name: { $regex: pattern, $options: 'i' }, is_rider: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: 'Sales import customer identities',
+    }));
+  }
+
+  return Array.from(found.values());
+}
+
+async function readIdentityMatches(entity: any, importRow: any) {
+  if (importRow.sourceId) {
+    return loadAllEntityRows({
+      entity,
+      query: { sales_import_source_id: importRow.sourceId, is_rider: false, deleted: { $ne: true } },
+      sort: 'created_date',
+      label: `Sales import source identity ${importRow.sourceId}`,
+    });
+  }
+
+  if (importRow.estInvAt) {
+    const [estimateRows, invoiceRows] = await Promise.all([
+      loadAllEntityRows({
+        entity,
+        query: { est_inv_at: importRow.estInvAt, is_rider: false, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: `Sales import estimate identity ${importRow.estInvAt}`,
+      }),
+      loadAllEntityRows({
+        entity,
+        query: { corbridge_invoice_number: importRow.estInvAt, is_rider: false, deleted: { $ne: true } },
+        sort: 'created_date',
+        label: `Sales import invoice identity ${importRow.estInvAt}`,
+      }),
+    ]);
+    return [...estimateRows, ...invoiceRows];
+  }
+
+  const clientRows = await loadAllEntityRows({
+    entity,
+    query: { client_name: { $regex: `^${escapeRegex(importRow.clientName)}$`, $options: 'i' }, is_rider: false, deleted: { $ne: true } },
+    sort: 'created_date',
+    label: `Sales import customer identity ${importRow.clientName}`,
+  });
+  const titleKey = String(importRow.identity?.titleKey || '');
+  return clientRows.filter((row) => String(row?.title || row?.client_name || '').trim().toLowerCase().replace(/\s+/g, ' ') === titleKey);
+}
+
+async function getOwnedImportJob(ImportJob: any, importJobId: string, actorEmail: string) {
+  if (!importJobId) return null;
+  const job = await ImportJob.get(importJobId);
+  if (!job?.id || asText(job.user_email).toLowerCase() !== actorEmail) {
+    throw Object.assign(new Error('Import job does not belong to the current user.'), { status: 403 });
+  }
+  return job;
+}
+
+async function ensureNoOtherActiveImport(ImportJob: any, currentJobId: string) {
+  const active = await ImportJob.filter({
+    import_type: 'sales_pipeline',
+    status: { $in: ['running', 'paused'] },
+  }, '-started_at', 20);
+  const now = Date.now();
+  for (const job of active || []) {
+    if (!job?.id || String(job.id) === String(currentJobId)) continue;
+    const started = Date.parse(String(job.started_at || ''));
+    if (Number.isFinite(started) && now - started > ACTIVE_JOB_STALE_MS) {
+      await ImportJob.update(job.id, {
+        status: 'failed',
+        completed_at: new Date().toISOString(),
+        phase: 'failed',
+        error_message: 'Import job expired after 30 minutes without completion.',
+      }).catch(() => null);
+      continue;
+    }
+    throw Object.assign(new Error('Another Sales Pipeline import is already running. Finish or stop it before starting another.'), { status: 409 });
+  }
+}
+
+async function createOrPrepareImportJob(ImportJob: any, existingJob: any, actorEmail: string, data: any) {
+  if (existingJob?.id) {
+    return ImportJob.update(existingJob.id, {
+      status: 'running',
+      total_items: data.totalItems,
+      processed_items: 0,
+      current_item: 'Validating spreadsheet...',
+      phase: 'validating',
+      started_at: existingJob.started_at || new Date().toISOString(),
+      completed_at: '',
+      error_message: '',
+      file_name: data.fileName,
+      file_hash: data.fileHash,
+      file_size_bytes: data.fileSizeBytes,
+      created_items: 0,
+      updated_items: 0,
+      unchanged_items: data.unchangedItems || 0,
+      skipped_items: data.skippedItems || 0,
+      conflict_items: data.conflictItems || 0,
+      ambiguous_items: data.ambiguousItems || 0,
+      invalid_items: data.invalidItems || 0,
+      duration_ms: 0,
+      result_message: '',
+    });
+  }
+  return ImportJob.create({
+    user_email: actorEmail,
+    import_type: 'sales_pipeline',
+    status: 'running',
+    total_items: data.totalItems,
+    processed_items: 0,
+    current_item: 'Validating spreadsheet...',
+    phase: 'validating',
+    started_at: new Date().toISOString(),
+    file_name: data.fileName,
+    file_hash: data.fileHash,
+    file_size_bytes: data.fileSizeBytes,
+    created_items: 0,
+    updated_items: 0,
+    unchanged_items: data.unchangedItems || 0,
+    skipped_items: data.skippedItems || 0,
+    conflict_items: data.conflictItems || 0,
+    ambiguous_items: data.ambiguousItems || 0,
+    invalid_items: data.invalidItems || 0,
+  });
+}
+
+async function completedDuplicateJob(ImportJob: any, fileHash: string, currentJobId: string) {
+  if (!fileHash) return null;
+  const matches = await ImportJob.filter({
+    import_type: 'sales_pipeline',
+    status: 'completed',
+    file_hash: fileHash,
+  }, '-completed_at', 10);
+  return (matches || []).find((job: any) =>
+    String(job?.id || '') !== String(currentJobId || '')
+    && Number(job?.conflict_items || 0) === 0
+    && Number(job?.ambiguous_items || 0) === 0
+    && Number(job?.invalid_items || 0) === 0
+  ) || null;
+}
+
+function issueRows(parsedInvalidRows: any[], plans: any[]) {
+  const invalid = parsedInvalidRows.map((row) => ({
+    row: row.rowNumber,
+    customer: row.clientName || '',
+    type: 'invalid',
+    message: (row.errors || []).join('; '),
+  }));
+  const planned = plans
+    .filter((plan) => ['invalid', 'conflict', 'ambiguous'].includes(plan.kind))
+    .map((plan) => ({
+      row: plan.rowNumber,
+      customer: plan.clientName || '',
+      est_inv_at: plan.estInvAt || '',
+      type: plan.kind,
+      message: plan.reason || plan.kind,
+      fields: plan.fields || [],
+      match_ids: plan.matchIds || [],
+    }));
+  return [...invalid, ...planned];
+}
+
+async function runWithBackoff<T>(work: () => Promise<T>, attempts = 3) {
+  let lastError: any = null;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      const status = Number(error?.status || error?.response?.status || 0);
+      const retryable = status === 429 || status === 503 || /rate|timeout|temporar/i.test(String(error?.message || ''));
+      if (!retryable || attempt === attempts - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (2 ** attempt)));
+    }
+  }
+  throw lastError;
+}
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
+  const startedAt = Date.now();
+  let actor: any = null;
+  let importJob: any = null;
+
   try {
-  const contentType = req.headers.get('content-type') || '';
-  let formData = null;
-  let body = null;
-  let sessionToken = '';
+    const request = await parseRequest(req);
 
-  if (contentType.includes('multipart/form-data')) {
-    formData = await req.formData();
-    sessionToken = String(formData.get('session_token') || '').trim();
-  } else {
-    body = await req.json().catch(() => ({}));
-    sessionToken = String(body?.session_token || '').trim();
-  }
-
-  let actor;
-  try {
-    actor = await authenticateSignShopSession(base44, sessionToken);
-  } catch (error) {
-    const status = Number(error?.status || 401);
-    const safeStatus = [401, 409, 503].includes(status) ? status : 401;
-    return Response.json({ error: safeStatus === 503 ? 'Session authentication is unavailable' : 'Unauthorized' }, { status: safeStatus });
-  }
-
-  const canImport = actor?.role === 'admin' || actor?.can_import_export === true;
-  if (!canImport) return Response.json({ error: 'Sales Pipeline import permission is required.' }, { status: 403 });
-
-  let workbook;
-  if (formData) {
-    const file = formData.get('file');
-    if (!file) return Response.json({ error: 'No file provided' }, { status: 400 });
-    const arrayBuffer = await file.arrayBuffer();
-    const data = new Uint8Array(arrayBuffer);
-    workbook = XLSX.read(data, { type: 'array', cellDates: true });
-  } else {
-    if (!body?.fileData) return Response.json({ error: 'No file provided' }, { status: 400 });
-    const binaryStr = atob(body.fileData);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-    workbook = XLSX.read(bytes, { type: 'array', cellDates: true });
-  }
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-  const normalizeDate = (val) => {
-    if (!val) return '';
-    if (val instanceof Date) return isNaN(val.getTime()) ? '' : format(val, 'yyyy-MM-dd');
-    return String(val);
-  };
-
-  const validRows = rows.map(row => {
-    const clientName = row['Customer'] || row['client_name'] || '';
-    if (!clientName) return null;
-    const estInvAt = row['Est/Inv @'] || row['est_inv_at'] || '';
-    return {
-      clientName,
-      estInvAt,
-      client_name: clientName,
-      lead_source: row['Source'] || row['lead_source'] || '',
-      current_task_deadline: normalizeDate(row['Current Task Deadline'] || row['current_task_deadline']),
-      current_task_assigned_to: row['Current Task Assigned to'] || row['current_task_assigned_to'] || '',
-      designer: row['Designer'] || row['designer'] || '',
-      project_manager: row['Project Manager'] || row['project_manager'] || '',
-      estimator: row['Estimator'] || row['estimator'] || '',
-      est_inv_at: estInvAt,
-      estimate_amount: parseFloat(row['Estimate Amount'] || row['estimate_amount']) || null,
-      current_task_description: row['Current Task Description'] || row['current_task_description'] || '',
-      date_initial_contact: normalizeDate(row['Date Est. Requested/Initial Contact'] || row['date_initial_contact']),
-      site_survey_date: normalizeDate(row['Site Survey'] || row['site_survey_date']),
-      date_estimate_sent: normalizeDate(row['Date Estimate Sent to Customer'] || row['date_estimate_sent']),
-      date_order_created: normalizeDate(row['Date Order Created'] || row['date_order_created']),
-      project_install_date: normalizeDate(row['Project Install Date'] || row['project_install_date']),
-      permit_submitted_date: normalizeDate(row['Permit Submitted'] || row['permit_submitted_date']),
-      title: row['Notes'] || row['title'] || clientName,
-      permit_receipt_confirmed_date: normalizeDate(row['Date Permit Receipt Confirmed'] || row['permit_receipt_confirmed_date']),
-      permit_number: row['Permit Number'] || row['permit_number'] || '',
-      permit_approved_date: normalizeDate(row['Date Permit Approved/Received'] || row['permit_approved_date']),
-      expected_close_date: normalizeDate(row['Expected Close Date'] || row['expected_close_date']),
-      sales_status: row['sales_status'] || 'lead',
-      in_pipeline: false,
-    };
-  }).filter(Boolean);
-
-  if (validRows.length === 0) {
-    return Response.json({ created: 0, updated: 0, failed: 0, total: 0 });
-  }
-
-  // Load the complete existing Work Order set for deduplication. If this
-  // verification fails, abort before any import writes rather than treating
-  // an unreadable catalog as empty and creating duplicates.
-  let existingOrders = [];
-  try {
-    existingOrders = await loadAllEntityRows({
-      entity: base44.asServiceRole.entities.WorkOrder,
-      query: { is_rider: false, deleted: { $ne: true } },
-      sort: 'created_date',
-      label: 'Sales Pipeline import Work Orders',
-    });
-  } catch (error) {
-    console.error('importSalesPipeline existing WorkOrder verification failed:', error?.message || error);
-    return Response.json({ error: 'Existing Work Orders could not be verified before import.' }, { status: 500 });
-  }
-
-  const byEstInv = new Map();
-  // Map from normalized client_name to array of work orders (same client can have multiple jobs)
-  const byClientName = new Map();
-  for (const wo of existingOrders) {
-    if (wo.est_inv_at) byEstInv.set(wo.est_inv_at, wo);
-    if (wo.corbridge_invoice_number) byEstInv.set(wo.corbridge_invoice_number, wo);
-    if (wo.client_name) {
-      const key = wo.client_name.toLowerCase().trim();
-      if (!byClientName.has(key)) byClientName.set(key, []);
-      byClientName.get(key).push(wo);
+    try {
+      actor = await authenticateSignShopSession(base44, request.sessionToken);
+    } catch (error) {
+      const status = Number(error?.status || 401);
+      const safeStatus = [401, 409, 503].includes(status) ? status : 401;
+      return Response.json({ error: safeStatus === 503 ? 'Session authentication is unavailable' : 'Unauthorized' }, { status: safeStatus });
     }
-  }
 
-  // Find existing WO that matches this import row (same client + similar title/description, or same est_inv)
-  function findMatchingWorkOrder(clientName, estInvAt, title) {
-    // 1. Exact est/inv match is always definitive
-    if (estInvAt && byEstInv.has(estInvAt)) return byEstInv.get(estInvAt);
-    
-    // 2. Same client name — check if there's already a record with the same or very similar title
-    const key = (clientName || '').toLowerCase().trim();
-    const existing = byClientName.get(key);
-    if (!existing || existing.length === 0) return null;
-    
-    const normTitle = (title || '').toLowerCase().trim();
-    
-    // If the import row's title is just the client name (no real title), match the first record with no distinguishing title
-    if (!normTitle || normTitle === key) {
-      const bareRecord = existing.find(wo => {
-        const woTitle = (wo.title || '').toLowerCase().trim();
-        return !woTitle || woTitle === key;
+    const canImport = actor?.role === 'admin' || actor?.can_import_export === true;
+    if (!canImport) return Response.json({ error: 'Sales Pipeline import permission is required.' }, { status: 403 });
+
+    const actorEmail = asText(actor?.email).toLowerCase();
+    const WorkOrder = base44.asServiceRole.entities.WorkOrder;
+    const ImportJob = base44.asServiceRole.entities.ImportJob;
+
+    const parseStarted = Date.now();
+    const workbook = XLSX.read(request.bytes, { type: 'array', cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) throw Object.assign(new Error('Spreadsheet has no worksheets.'), { status: 400 });
+    const sheet = workbook.Sheets[sheetName];
+    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    const todayStamp = format(new Date(), 'yyyy-MM-dd');
+    const parsed = parseSalesImportRows(rawRows, { todayStamp });
+    const parseMs = Date.now() - parseStarted;
+
+    if (rawRows.length === 0) {
+      return Response.json({
+        mode: request.mode,
+        summary: { total: 0, create: 0, update: 0, unchanged: 0, conflict: 0, ambiguous: 0, invalid: 0 },
+        issues: [],
+        timings: { parse_ms: parseMs, match_ms: 0, apply_ms: 0, total_ms: Date.now() - startedAt },
       });
-      return bareRecord || null;
-    }
-    
-    // If the import row has a real title, only match if an existing record has the same title
-    const titleMatch = existing.find(wo => {
-      const woTitle = (wo.title || '').toLowerCase().trim();
-      return woTitle === normTitle;
-    });
-    return titleMatch || null;
-  }
-
-  const readImportIdentityMatches = async (clientName, estInvAt, title) => {
-    const entity = base44.asServiceRole.entities.WorkOrder;
-    if (estInvAt) {
-      const [estimateRows, invoiceRows] = await Promise.all([
-        loadAllEntityRows({
-          entity,
-          query: { est_inv_at: estInvAt, is_rider: false, deleted: { $ne: true } },
-          sort: 'created_date',
-          label: `Sales Pipeline ${estInvAt} estimate identity`,
-        }),
-        loadAllEntityRows({
-          entity,
-          query: { corbridge_invoice_number: estInvAt, is_rider: false, deleted: { $ne: true } },
-          sort: 'created_date',
-          label: `Sales Pipeline ${estInvAt} invoice identity`,
-        }),
-      ]);
-      return [...estimateRows, ...invoiceRows];
     }
 
-    const clientRows = await loadAllEntityRows({
-      entity,
-      query: { client_name: clientName, is_rider: false, deleted: { $ne: true } },
-      sort: 'created_date',
-      label: `Sales Pipeline ${clientName} identity`,
+    const matchStarted = Date.now();
+    const relevantOrders = await loadRelevantWorkOrders(WorkOrder, parsed.validRows);
+    const indexes = buildExistingImportIndexes(relevantOrders);
+    const nowIso = new Date().toISOString();
+    const plans = parsed.validRows.map((row) => buildSalesImportPlan(row, resolveSalesImportMatch(row, indexes), { nowIso }));
+    const summary = summarizeSalesImportPlans(plans, parsed.invalidRows);
+    const issues = issueRows(parsed.invalidRows, plans);
+    const fingerprint = await sha256Hex(stableImportFingerprintPayload(parsed.validRows, parsed.invalidRows));
+    const matchMs = Date.now() - matchStarted;
+
+    const previewPayload = {
+      mode: request.mode,
+      file_name: request.fileName,
+      file_hash: fingerprint,
+      summary,
+      issues,
+      warnings: parsed.validRows.flatMap((row) => (row.warnings || []).map((message: string) => ({ row: row.rowNumber, customer: row.clientName, message }))).slice(0, 100),
+      sample_changes: plans.filter((plan) => ['create', 'update'].includes(plan.kind)).slice(0, 50).map((plan) => ({
+        row: plan.rowNumber,
+        customer: plan.clientName,
+        action: plan.kind,
+        fields: plan.kind === 'update' ? Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')) : Object.keys(plan.nextFields || {}).filter((field) => !field.startsWith('sales_import_')),
+      })),
+      timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: 0, total_ms: Date.now() - startedAt },
+    };
+
+    if (request.mode === 'preview') return Response.json(previewPayload);
+
+    const existingJob = await getOwnedImportJob(ImportJob, request.importJobId, actorEmail);
+    await ensureNoOtherActiveImport(ImportJob, existingJob?.id || '');
+
+    const skippedItems = summary.conflict + summary.ambiguous + summary.invalid;
+    importJob = await createOrPrepareImportJob(ImportJob, existingJob, actorEmail, {
+      totalItems: summary.total,
+      fileName: request.fileName,
+      fileHash: fingerprint,
+      fileSizeBytes: request.fileSizeBytes,
+      unchangedItems: summary.unchanged,
+      skippedItems,
+      conflictItems: summary.conflict,
+      ambiguousItems: summary.ambiguous,
+      invalidItems: summary.invalid,
     });
-    const key = (clientName || '').toLowerCase().trim();
-    const normTitle = (title || '').toLowerCase().trim();
-    return clientRows.filter((wo) => {
-      if ((wo.client_name || '').toLowerCase().trim() !== key) return false;
-      const woTitle = (wo.title || '').toLowerCase().trim();
-      if (!normTitle || normTitle === key) return !woTitle || woTitle === key;
-      return woTitle === normTitle;
-    });
-  };
 
-  const indexWorkOrder = (wo) => {
-    if (wo?.est_inv_at) byEstInv.set(wo.est_inv_at, wo);
-    if (wo?.corbridge_invoice_number) byEstInv.set(wo.corbridge_invoice_number, wo);
-    if (wo?.client_name) {
-      const key = wo.client_name.toLowerCase().trim();
-      if (!byClientName.has(key)) byClientName.set(key, []);
-      const rows = byClientName.get(key);
-      const existingIndex = rows.findIndex((row) => row.id === wo.id);
-      if (existingIndex >= 0) rows[existingIndex] = wo;
-      else rows.push(wo);
-    }
-  };
-
-  let created = 0, updated = 0, failed = 0, conflicts = 0;
-  const BATCH_SIZE = 5;
-  const BATCH_DELAY_MS = 300;
-
-  // Process each five-row batch in source order instead of creating rows in parallel.
-  // This preserves the import's existing last-row-wins behavior while preventing two
-  // identical rows in the same spreadsheet batch from racing each other into duplicates.
-  for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-    const batch = validRows.slice(i, i + BATCH_SIZE);
-    for (const woData of batch) {
-      const { clientName, estInvAt, ...rest } = woData;
-      try {
-        const existing = findMatchingWorkOrder(clientName, estInvAt, rest.title);
-
-        if (existing) {
-          const saved = await replaceWorkOrderFieldsIfUnchanged({
-            entity: base44.asServiceRole.entities.WorkOrder,
-            workOrderId: existing.id,
-            expectedFields: expectedWorkOrderFields(existing, rest),
-            nextFields: rest,
-            label: `Sales Pipeline import ${estInvAt || clientName}`,
-          });
-          Object.assign(existing, saved);
-          indexWorkOrder(existing);
-          updated++;
-        } else {
-          const createResult = await createWorkOrderWithRecovery({
-            entity: base44.asServiceRole.entities.WorkOrder,
-            data: rest,
-            readMatches: () => readImportIdentityMatches(clientName, estInvAt, rest.title),
-            label: `Sales Pipeline import ${estInvAt || `${clientName} - ${rest.title}`}`,
-          });
-          const saved = await replaceWorkOrderFieldsIfUnchanged({
-            entity: base44.asServiceRole.entities.WorkOrder,
-            workOrderId: createResult.record.id,
-            expectedFields: expectedWorkOrderFields(createResult.record, rest),
-            nextFields: rest,
-            label: `Sales Pipeline import ${estInvAt || clientName}`,
-          });
-          indexWorkOrder(saved);
-          if (createResult.status === 'reused') updated++;
-          else created++;
-        }
-      } catch (err) {
-        console.error('Row import error:', err.message);
-        if (err?.code === 'WORK_ORDER_FIELD_CONFLICT' || err?.code === 'WORK_ORDER_CREATE_AMBIGUOUS') conflicts++;
-        failed++;
+    if (!request.force) {
+      const duplicate = await completedDuplicateJob(ImportJob, fingerprint, importJob.id);
+      if (duplicate) {
+        const durationMs = Date.now() - startedAt;
+        const message = `Exact spreadsheet already imported successfully. No WorkOrders were rewritten.`;
+        await ImportJob.update(importJob.id, {
+          status: 'completed',
+          phase: 'completed',
+          processed_items: summary.total,
+          unchanged_items: summary.total,
+          skipped_items: 0,
+          conflict_items: 0,
+          ambiguous_items: 0,
+          invalid_items: 0,
+          completed_at: new Date().toISOString(),
+          duration_ms: durationMs,
+          result_message: message,
+          current_item: message,
+        });
+        return Response.json({
+          ...previewPayload,
+          mode: 'apply',
+          duplicate_file: true,
+          duplicate_of_import_job_id: duplicate.id,
+          created: 0,
+          updated: 0,
+          unchanged: summary.total,
+          failed: 0,
+          conflicts: 0,
+          ambiguous: 0,
+          invalid: 0,
+          skipped: 0,
+          import_job_id: importJob.id,
+          timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: 0, total_ms: durationMs },
+        });
       }
     }
-    if (i + BATCH_SIZE < validRows.length) {
-      await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
-    }
-  }
 
-  return Response.json({ created, updated, failed, conflicts, total: validRows.length });
+    await ImportJob.update(importJob.id, {
+      phase: 'applying',
+      current_item: `Applying ${summary.create + summary.update} changed row(s)...`,
+    });
+
+    const actionable = plans.filter((plan) => ['create', 'update'].includes(plan.kind));
+    const rowByNumber = new Map(parsed.validRows.map((row) => [row.rowNumber, row]));
+    const results = { created: 0, updated: 0, failed: 0, conflicts: summary.conflict, ambiguous: summary.ambiguous, invalid: summary.invalid };
+    const runtimeIssues = [...issues];
+    let cursor = 0;
+    let processedActionable = 0;
+    const progressEvery = Math.max(5, Math.ceil(Math.max(1, actionable.length) / 40));
+    const applyStarted = Date.now();
+
+    const processPlan = async (plan: any) => {
+      const importRow = rowByNumber.get(plan.rowNumber);
+      try {
+        if (plan.kind === 'update') {
+          await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
+            entity: WorkOrder,
+            workOrderId: plan.recordId,
+            expectedFields: expectedWorkOrderFields(plan.current, plan.nextFields),
+            nextFields: plan.nextFields,
+            label: `Sales Pipeline import row ${plan.rowNumber} ${plan.estInvAt || plan.clientName}`,
+          }));
+          results.updated += 1;
+          return;
+        }
+
+        const createResult = await runWithBackoff(() => createWorkOrderWithRecovery({
+          entity: WorkOrder,
+          data: plan.nextFields,
+          readMatches: () => readIdentityMatches(WorkOrder, importRow),
+          label: `Sales Pipeline import row ${plan.rowNumber} ${plan.estInvAt || plan.clientName}`,
+          settleMs: 25,
+        }));
+
+        if (createResult.status === 'created') {
+          results.created += 1;
+        } else {
+          await runWithBackoff(() => replaceWorkOrderFieldsIfUnchanged({
+            entity: WorkOrder,
+            workOrderId: createResult.record.id,
+            expectedFields: expectedWorkOrderFields(createResult.record, plan.nextFields),
+            nextFields: plan.nextFields,
+            label: `Sales Pipeline recovered import row ${plan.rowNumber}`,
+          }));
+          results.updated += 1;
+        }
+      } catch (error) {
+        const code = String(error?.code || '');
+        const conflict = code === 'WORK_ORDER_FIELD_CONFLICT' || code === 'WORK_ORDER_CREATE_AMBIGUOUS';
+        if (conflict) results.conflicts += 1;
+        else results.failed += 1;
+        runtimeIssues.push({
+          row: plan.rowNumber,
+          customer: plan.clientName || '',
+          est_inv_at: plan.estInvAt || '',
+          type: conflict ? 'conflict' : 'failed',
+          message: String(error?.message || 'Row could not be imported.'),
+        });
+      } finally {
+        processedActionable += 1;
+        const processed = summary.unchanged + skippedItems + processedActionable;
+        if (processedActionable % progressEvery === 0 || processedActionable === actionable.length) {
+          await ImportJob.update(importJob.id, {
+            processed_items: Math.min(summary.total, processed),
+            current_item: `Processed ${Math.min(summary.total, processed)} of ${summary.total}`,
+            created_items: results.created,
+            updated_items: results.updated,
+            unchanged_items: summary.unchanged,
+            skipped_items: results.conflicts + results.ambiguous + results.invalid + results.failed,
+            conflict_items: results.conflicts,
+            ambiguous_items: results.ambiguous,
+            invalid_items: results.invalid,
+          }).catch(() => null);
+        }
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(WORKER_COUNT, Math.max(1, actionable.length)) }, async () => {
+      while (true) {
+        const index = cursor;
+        cursor += 1;
+        if (index >= actionable.length) return;
+        await processPlan(actionable[index]);
+      }
+    });
+    await Promise.all(workers);
+
+    const applyMs = Date.now() - applyStarted;
+    const durationMs = Date.now() - startedAt;
+    const skipped = results.conflicts + results.ambiguous + results.invalid + results.failed;
+    const resultMessage = `${results.created} created, ${results.updated} updated, ${summary.unchanged} unchanged${skipped ? `, ${skipped} need review` : ''}.`;
+
+    await ImportJob.update(importJob.id, {
+      status: results.failed > 0 && results.created + results.updated === 0 ? 'failed' : 'completed',
+      phase: 'completed',
+      processed_items: summary.total,
+      current_item: resultMessage,
+      created_items: results.created,
+      updated_items: results.updated,
+      unchanged_items: summary.unchanged,
+      skipped_items: skipped,
+      conflict_items: results.conflicts,
+      ambiguous_items: results.ambiguous,
+      invalid_items: results.invalid,
+      completed_at: new Date().toISOString(),
+      duration_ms: durationMs,
+      result_message: resultMessage,
+      error_message: results.failed ? `${results.failed} row(s) failed during apply.` : '',
+    });
+
+    return Response.json({
+      ...previewPayload,
+      mode: 'apply',
+      import_job_id: importJob.id,
+      created: results.created,
+      updated: results.updated,
+      unchanged: summary.unchanged,
+      failed: results.failed,
+      conflicts: results.conflicts,
+      ambiguous: results.ambiguous,
+      invalid: results.invalid,
+      skipped,
+      issues: runtimeIssues,
+      timings: { parse_ms: parseMs, match_ms: matchMs, apply_ms: applyMs, total_ms: durationMs },
+    });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 403, 413].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 413].includes(status) ? status : 500;
+    const safeMessage = safeStatus === 500 ? 'Sales Pipeline import could not be completed safely' : String(error?.message || 'Import failed');
+
+    if (importJob?.id) {
+      await base44.asServiceRole.entities.ImportJob.update(importJob.id, {
+        status: 'failed',
+        phase: 'failed',
+        completed_at: new Date().toISOString(),
+        duration_ms: Date.now() - startedAt,
+        error_message: safeMessage,
+        current_item: safeMessage,
+      }).catch(() => null);
+    }
+
     console.error('importSalesPipeline error:', error?.message || error);
-    return Response.json({
-      error: safeStatus === 500 ? 'Sales Pipeline import could not be completed safely' : error.message,
-    }, { status: safeStatus });
+    return Response.json({ error: safeMessage }, { status: safeStatus });
   }
 });
