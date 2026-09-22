@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { base44 } from "@/api/base44Client";
-import { importSalesPipeline } from "@/functions/importSalesPipeline";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,8 @@ import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitio
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
-import { useMultiImport } from "@/components/shared/MultiImportContext";
+import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
+import { useImportProgress } from "@/components/shared/ImportProgressContext";
 import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
@@ -190,8 +190,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [quickEditError, setQuickEditError] = useState("");
   const [destructiveActionError, setDestructiveActionError] = useState("");
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
-  const importStateRef = useRef({ paused: false, cancelled: false });
-  const { startImport: startMultiImport, updateImport, finishImport } = useMultiImport();
+  const [importPreview, setImportPreview] = useState(null);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreflightBusy, setImportPreflightBusy] = useState(false);
+  const [importApplyBusy, setImportApplyBusy] = useState(false);
+  const [importError, setImportError] = useState("");
+  const { startImport: startTrackedImport, completeImport: refreshTrackedImport } = useImportProgress();
   const [showForm, setShowForm] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null); // For duplicating a client
   const [clearDateConfirm, setClearDateConfirm] = useState(null);
