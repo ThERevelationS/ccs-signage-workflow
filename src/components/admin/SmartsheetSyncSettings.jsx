@@ -421,6 +421,9 @@ function DryRunPreviewCard({
   const rolloutPreview = preview.preview?.rolloutPreview || null;
   const rolloutSummary = rolloutPreview?.summary || {};
   const rolloutRows = rolloutPreview?.classifications || [];
+  const creationReadiness = preview.preview?.creationReadiness || null;
+  const readinessSummary = creationReadiness?.summary || {};
+  const readinessRows = creationReadiness?.rows || [];
 
   return (
     <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
@@ -493,6 +496,63 @@ function DryRunPreviewCard({
               {rolloutRows.length > 100 && (
                 <div className="px-2 py-1.5 text-[10px] text-gray-500">
                   Showing the first 100 of {rolloutRows.length.toLocaleString()} rollout-classified rows. Summary counts include all rows.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {creationReadiness?.state === "ready" && (
+        <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50/60 p-2 text-[11px] text-emerald-950">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="mr-1 font-semibold">Future creation readiness:</span>
+            <Badge variant="outline">{readinessSummary.post_baseline_rows || 0} post-baseline rows</Badge>
+            <Badge className="bg-green-100 text-green-700">{readinessSummary.ready_for_controlled_create_review || 0} data-ready</Badge>
+            {readinessSummary.blocked_customer > 0 && (
+              <Badge className="bg-amber-100 text-amber-800">{readinessSummary.blocked_customer} customer blocked</Badge>
+            )}
+            {readinessSummary.blocked_required_fields > 0 && (
+              <Badge className="bg-amber-100 text-amber-800">{readinessSummary.blocked_required_fields} required-data blocked</Badge>
+            )}
+            {readinessSummary.blocked_existing_record > 0 && (
+              <Badge className="bg-red-100 text-red-700">{readinessSummary.blocked_existing_record} existing-record blocked</Badge>
+            )}
+            {readinessSummary.blocked_empty > 0 && (
+              <Badge variant="outline">{readinessSummary.blocked_empty} empty</Badge>
+            )}
+            <Badge className="bg-red-100 text-red-700">{creationReadiness.automatic_creates || 0} automatic creates</Badge>
+          </div>
+          <div className="mt-1 text-[10px] text-emerald-900">
+            “Data-ready” means required schema fields and Customer resolution are complete enough for a later controlled create review. It does not authorize or perform creation.
+          </div>
+          {readinessRows.length > 0 && (
+            <div className="mt-2 max-h-64 overflow-y-auto divide-y rounded border border-emerald-200 bg-white/80">
+              {readinessRows.slice(0, 100).map((item) => (
+                <div key={item.row_id} className="grid grid-cols-1 gap-1 px-2 py-2 sm:grid-cols-[75px_minmax(0,1fr)_auto] sm:items-start">
+                  <div className="text-gray-500">Row {item.row_number || "—"}</div>
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-gray-800">{item.label}</div>
+                    {item.ready_for_controlled_create_review ? (
+                      <div className="text-[10px] text-green-700">
+                        Required data present • Customer {item.customer?.state === "approved_new_customer" ? "approved as new" : item.customer?.company_name || "resolved"}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-amber-800">
+                        {item.blockers.map((entry) => entry.label).join(" • ")}
+                      </div>
+                    )}
+                  </div>
+                  <Badge
+                    className={item.ready_for_controlled_create_review ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-800"}
+                  >
+                    {item.ready_for_controlled_create_review ? "data-ready" : "blocked"}
+                  </Badge>
+                </div>
+              ))}
+              {readinessRows.length > 100 && (
+                <div className="px-2 py-1.5 text-[10px] text-gray-500">
+                  Showing the first 100 of {readinessRows.length.toLocaleString()} post-baseline rows. Summary counts include all rows.
                 </div>
               )}
             </div>
