@@ -1,7 +1,7 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line 
+  ResponsiveContainer, PieChart, Pie, Cell 
 } from "recharts";
 import { DollarSign, TrendingUp, Clock, Users } from "lucide-react";
 import { differenceInDays } from "date-fns";
