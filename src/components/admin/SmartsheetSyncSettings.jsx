@@ -11,6 +11,7 @@ import {
   saveGlobalSettingValueIfUnchanged,
 } from "@/components/shared/globalSettingsPersistence";
 import {
+  getSmartsheetColumns,
   getSmartsheetSyncStatus,
   listSmartsheetSheets,
   testSmartsheetConnection,
@@ -129,6 +130,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [apiLoading, setApiLoading] = useState(false);
   const [apiMessage, setApiMessage] = useState("");
   const [availableSheets, setAvailableSheets] = useState([]);
+  const [columnPreview, setColumnPreview] = useState(null);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -204,6 +206,38 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     load();
     loadApiStatus();
   }, [sessionToken]);
+
+  const inspectSheetColumns = async (sheet) => {
+    if (!sessionToken || apiLoading || !sheet?.id) return;
+    setApiLoading(true);
+    setApiMessage("");
+    try {
+      const result = await getSmartsheetColumns({ sessionToken, sheetId: sheet.id });
+      setColumnPreview({
+        sheetId: String(sheet.id),
+        sheetName: sheet.name || String(sheet.id),
+        columns: Array.isArray(result.columns) ? result.columns : [],
+      });
+      setApiMessage(`Loaded ${Number(result.columns?.length || 0).toLocaleString()} columns from ${sheet.name || sheet.id}. Read only; no data changed.`);
+    } catch (err) {
+      setApiMessage(err?.message || "Smartsheet column discovery failed.");
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const assignSheet = (profileKey, sheet) => {
+    if (!sheet?.id) return;
+    setConfig((current) => ({
+      ...current,
+      [profileKey]: {
+        ...current[profileKey],
+        smartsheet_sheet_id: String(sheet.id),
+        smartsheet_sheet_name: sheet.name || current[profileKey]?.smartsheet_sheet_name || "",
+      },
+    }));
+    setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. Save Settings to persist this assignment.`);
+  };
 
   const save = async () => {
     if (saving) return;
