@@ -90,7 +90,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogCancel className="h-11 sm:h-9" onClick={() => onClose?.()}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={!canConfirm}
-            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "", closeDate: closing ? todayStamp : "" })}
+            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "" })}
             className={isLost ? "h-11 bg-red-600 hover:bg-red-700 sm:h-9" : "h-11 sm:h-9"}
           >
             {closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
