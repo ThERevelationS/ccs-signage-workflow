@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, UserRoundCheck, X } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
@@ -82,6 +82,8 @@ export default function Permitting() {
   const lineItemMutationQueuesRef = useRef(new Map());
   const lineItemMutationCountRef = useRef(0);
   const localityCreateInFlightRef = useRef(new Set());
+  const workScrollRef = useRef(null);
+  const workScrollTopRef = useRef(0);
 
   useEffect(() => {
     document.title = "Permitting - Workflow Manager";
@@ -777,13 +779,25 @@ export default function Permitting() {
   };
 
   const localityForInfo = localities.find(l => l.id === localityInfoId);
+  const openJurisdictions = useCallback((focus = null) => {
+    workScrollTopRef.current = workScrollRef.current?.scrollTop || 0;
+    setJurisdictionFocus(focus);
+    setActiveView("jurisdictions");
+  }, []);
   const openJurisdictionKnowledge = useCallback((localityId, localityName = "") => {
     const locality = localities.find((row) => row.id === localityId);
     const name = String(locality?.name || localityName || "").trim();
     if (!name) return;
-    setJurisdictionFocus({ name, state: locality?.state || "" });
-    setActiveView("jurisdictions");
-  }, [localities]);
+    openJurisdictions({ name, state: locality?.state || "" });
+  }, [localities, openJurisdictions]);
+
+  useEffect(() => {
+    if (activeView !== "work") return undefined;
+    const frame = requestAnimationFrame(() => {
+      if (workScrollRef.current) workScrollRef.current.scrollTop = workScrollTopRef.current;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeView]);
 
   if (isLoading) {
     return (
@@ -858,12 +872,15 @@ export default function Permitting() {
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50">
         <div className="border-b bg-white px-3 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setActiveView("work")}>
-              Permit Work
+            <Button type="button" size="sm" variant="outline" onClick={() => setActiveView("work")} className="gap-1">
+              <ArrowLeft className="h-4 w-4" /> Back to Permit Work
             </Button>
             <Button type="button" size="sm" className="gap-1 bg-purple-600 hover:bg-purple-700" aria-pressed="true">
               <MapPin className="h-4 w-4" /> Jurisdictions
             </Button>
+            {jurisdictionFocus?.name && (
+              <span className="text-xs text-gray-500">Viewing knowledge for <span className="font-semibold text-gray-700">{jurisdictionFocus.name}</span></span>
+            )}
           </div>
         </div>
         <div className="min-h-0 flex-1">
@@ -874,7 +891,7 @@ export default function Permitting() {
   }
 
   return (
-    <div className="h-full overflow-auto p-3 sm:p-6">
+    <div ref={workScrollRef} className="h-full overflow-auto p-3 sm:p-6">
       <div className="w-full">
         {/* Header */}
         <div className="clay-card p-4 mb-3">
@@ -947,7 +964,7 @@ export default function Permitting() {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => { setJurisdictionFocus(null); setActiveView("jurisdictions"); }}
+                onClick={() => openJurisdictions(null)}
                 className="gap-1 border-purple-200 text-purple-800 hover:bg-purple-50"
                 title="Browse and manage reusable jurisdiction permitting knowledge without leaving Permitting"
               >
