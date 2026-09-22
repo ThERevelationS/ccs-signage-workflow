@@ -92,6 +92,16 @@ const firstSyncPlan = buildSalesImportPlan(
 assert(firstSyncPlan.firstSync === true, "Existing records without an import snapshot must be labeled first sync.");
 assert(summarizeSalesImportPlans([firstSyncPlan], []).baseline === 1, "First-sync summary count failed.");
 
+const legacyExisting = { ...existing, id: "wo-legacy", in_pipeline: false };
+const legacyRow = parseOne({ Customer: "Acme Signs", "Est/Inv @": "12345", "Sales Status": "Lead" });
+const legacyPlan = buildSalesImportPlan(
+  legacyRow,
+  resolveSalesImportMatch(legacyRow, buildExistingImportIndexes([legacyExisting])),
+  { nowIso: "2026-09-22T13:00:00.000Z" },
+);
+assert(legacyPlan.kind === "adoption", "Legacy WorkOrders must not be promoted into the modern Sales pipeline implicitly.");
+assert(summarizeSalesImportPlans([legacyPlan], []).adoption === 1, "Legacy adoption summary count failed.");
+
 const blankPreserves = parseOne({
   Customer: "Acme Signs",
   "Est/Inv @": "12345",
