@@ -29,12 +29,10 @@ export const LOST_REASONS = [
 export default function SalesStatusTransitionDialog({ transition, onClose, onConfirm }) {
   const [lostReason, setLostReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
-  const [closeDate, setCloseDate] = useState("");
 
   useEffect(() => {
     setLostReason(transition?.workOrder?.lost_reason || "");
     setOtherReason("");
-    setCloseDate(transition?.workOrder?.close_date || format(new Date(), "yyyy-MM-dd"));
   }, [transition?.workOrder?.id, transition?.nextStatus]);
 
   if (!transition) return null;
@@ -46,8 +44,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
   const isLost = nextStatus === "lost";
   const finalReason = lostReason === "Other" ? otherReason.trim() : lostReason.trim();
   const todayStamp = format(new Date(), "yyyy-MM-dd");
-  const closeDateIsValid = !closing || (Boolean(closeDate) && closeDate <= todayStamp);
-  const canConfirm = closeDateIsValid && (!isLost || Boolean(finalReason));
+  const canConfirm = !isLost || Boolean(finalReason);
 
   const title = closing
     ? `Mark this opportunity ${nextStatus === "won" ? "Won" : "Lost"}?`
@@ -62,20 +59,12 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
             {closing
-              ? `${workOrder?.client_name || "This opportunity"} will be closed using the date below. Follow-up scheduling will be cleared, while expected-close and task-planning values stay preserved as historical sales context.`
+              ? `${workOrder?.client_name || "This opportunity"} will be closed today. Close date fills automatically, follow-up scheduling will be cleared, and expected-close/task-planning values stay preserved as historical sales context.`
               : reopening
                 ? `The current close date and lost reason will be cleared from the live opportunity. Their previous values remain in sales change history. Review the preserved expected-close/task plan and schedule a new follow-up after reopening.`
                 : `${workOrder?.client_name || "This opportunity"} will move to the selected sales stage.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
-
-        {closing && (
-          <div className="space-y-1.5 py-1">
-            <Label>Close date <span className="text-red-600">*</span></Label>
-            <Input type="date" value={closeDate} max={todayStamp} onChange={(event) => setCloseDate(event.target.value)} className="h-11 sm:h-9" />
-            {closeDate && closeDate > todayStamp && <p className="text-xs text-red-600">Close date cannot be in the future.</p>}
-          </div>
-        )}
 
         {isLost && (
           <div className="space-y-3 py-1">
@@ -101,7 +90,7 @@ export default function SalesStatusTransitionDialog({ transition, onClose, onCon
           <AlertDialogCancel className="h-11 sm:h-9" onClick={() => onClose?.()}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={!canConfirm}
-            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "", closeDate: closing ? closeDate : "" })}
+            onClick={() => onConfirm?.({ lostReason: isLost ? finalReason : "", closeDate: closing ? todayStamp : "" })}
             className={isLost ? "h-11 bg-red-600 hover:bg-red-700 sm:h-9" : "h-11 sm:h-9"}
           >
             {closing ? `Mark ${nextStatus === "won" ? "Won" : "Lost"}` : reopening ? "Reopen Opportunity" : "Move Opportunity"}
