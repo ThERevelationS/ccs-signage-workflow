@@ -189,6 +189,8 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
   if (!preview) return null;
   const summary = preview.preview?.summary || {};
   const customerSummary = preview.preview?.customerSummary || {};
+  const uniqueCustomerSummary = preview.preview?.uniqueCustomerSummary || {};
+  const customerGroups = preview.preview?.customerGroups || [];
 
   return (
     <div className="rounded-lg border border-violet-200 bg-white/80 p-3">
@@ -211,14 +213,82 @@ function DryRunPreviewCard({ title, preview, newRecordLabel }) {
       </div>
 
       {(summary.new_record || 0) > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1 rounded-md border border-blue-100 bg-blue-50/60 p-2 text-[11px]">
-          <span className="mr-1 font-semibold text-blue-900">Customer resolution:</span>
-          <Badge className="bg-green-100 text-green-700">{customerSummary.exact_company || 0} exact</Badge>
-          <Badge className="bg-green-100 text-green-700">{customerSummary.exact_alias || 0} approved alias</Badge>
-          <Badge className="bg-amber-100 text-amber-800">{(customerSummary.strong_review || 0) + (customerSummary.close_review || 0)} review</Badge>
-          <Badge className="bg-red-100 text-red-700">{customerSummary.ambiguous || 0} ambiguous</Badge>
-          <Badge className="bg-violet-100 text-violet-800">{customerSummary.new_customer || 0} new-client proposals</Badge>
-          <Badge variant="outline">{customerSummary.needs_name || 0} missing customer name</Badge>
+        <div className="mt-3 space-y-2 rounded-md border border-blue-100 bg-blue-50/60 p-2 text-[11px]">
+          <div className="flex flex-wrap gap-1">
+            <span className="mr-1 font-semibold text-blue-900">Row-level customer resolution:</span>
+            <Badge className="bg-green-100 text-green-700">{customerSummary.exact_company || 0} exact</Badge>
+            <Badge className="bg-green-100 text-green-700">{customerSummary.exact_alias || 0} approved alias</Badge>
+            <Badge className="bg-amber-100 text-amber-800">{(customerSummary.strong_review || 0) + (customerSummary.close_review || 0)} review</Badge>
+            <Badge className="bg-red-100 text-red-700">{customerSummary.ambiguous || 0} ambiguous</Badge>
+            <Badge className="bg-violet-100 text-violet-800">{customerSummary.new_customer || 0} new-client proposals</Badge>
+            <Badge variant="outline">{customerSummary.needs_name || 0} missing customer name</Badge>
+          </div>
+          <div className="flex flex-wrap gap-1 border-t border-blue-100 pt-2">
+            <span className="mr-1 font-semibold text-blue-900">Unique Smartsheet customer names:</span>
+            <Badge variant="outline">{uniqueCustomerSummary.total_unique || 0} total</Badge>
+            <Badge className="bg-green-100 text-green-700">{uniqueCustomerSummary.exact_company || 0} exact</Badge>
+            <Badge className="bg-green-100 text-green-700">{uniqueCustomerSummary.exact_alias || 0} approved alias</Badge>
+            <Badge className="bg-amber-100 text-amber-800">{(uniqueCustomerSummary.strong_review || 0) + (uniqueCustomerSummary.close_review || 0)} review</Badge>
+            <Badge className="bg-red-100 text-red-700">{uniqueCustomerSummary.ambiguous || 0} ambiguous</Badge>
+            <Badge className="bg-violet-100 text-violet-800">{uniqueCustomerSummary.new_customer || 0} new-client proposals</Badge>
+            <Badge variant="outline">{uniqueCustomerSummary.needs_name || 0} missing name</Badge>
+          </div>
+        </div>
+      )}
+
+      {customerGroups.length > 0 && (
+        <div className="mt-3 rounded-md border border-gray-200 bg-white">
+          <div className="border-b bg-gray-50 px-3 py-2">
+            <div className="text-xs font-semibold text-gray-800">Deduplicated customer-resolution queue</div>
+            <div className="mt-0.5 text-[10px] text-gray-500">
+              One normalized Smartsheet customer name per row below. Row counts show how many proposed {newRecordLabel || "records"} would reuse that decision.
+            </div>
+          </div>
+          <div className="max-h-80 overflow-y-auto divide-y">
+            {customerGroups.slice(0, 100).map((group) => {
+              const outcomeClass = ["exact_company", "exact_alias"].includes(group.outcome)
+                ? "bg-green-100 text-green-700"
+                : ["strong_review", "close_review"].includes(group.outcome)
+                  ? "bg-amber-100 text-amber-800"
+                  : group.outcome === "ambiguous"
+                    ? "bg-red-100 text-red-700"
+                    : group.outcome === "new_customer"
+                      ? "bg-violet-100 text-violet-800"
+                      : "bg-gray-100 text-gray-700";
+              const outcomeLabel = group.outcome === "exact_company"
+                ? "exact customer"
+                : group.outcome === "exact_alias"
+                  ? "approved alias"
+                  : group.outcome === "strong_review"
+                    ? "strong review"
+                    : group.outcome === "close_review"
+                      ? "review"
+                      : group.outcome === "ambiguous"
+                        ? "ambiguous"
+                        : group.outcome === "new_customer"
+                          ? "new client"
+                          : "missing name";
+              return (
+                <div key={group.key} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-800">{group.display_name}</div>
+                    <div className="mt-0.5 text-[10px] text-gray-500">
+                      {group.row_count.toLocaleString()} Smartsheet row{group.row_count === 1 ? "" : "s"}
+                      {group.recommended_company_name ? ` • proposed Base44 Customer: ${group.recommended_company_name}` : ""}
+                      {group.recommended_score ? ` • score ${group.recommended_score}` : ""}
+                    </div>
+                    {group.reason && <div className="mt-0.5 text-[10px] text-gray-500">{group.reason}</div>}
+                  </div>
+                  <Badge className={outcomeClass}>{outcomeLabel}</Badge>
+                </div>
+              );
+            })}
+          </div>
+          {customerGroups.length > 100 && (
+            <div className="border-t bg-gray-50 px-3 py-2 text-[10px] text-gray-500">
+              Showing the first 100 of {customerGroups.length.toLocaleString()} unique customer names. Summary counts include all names.
+            </div>
+          )}
         </div>
       )}
 
