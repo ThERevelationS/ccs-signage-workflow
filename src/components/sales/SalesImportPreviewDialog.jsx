@@ -48,7 +48,7 @@ export default function SalesImportPreviewDialog({
               Sales Pipeline import preflight
             </DialogTitle>
             <div className="mt-1 text-xs text-gray-500">
-              {file?.name || preview?.file_name || "Spreadsheet"} · {appliedResult ? "Import run complete." : analyzing ? "Analyzing without changing WorkOrders..." : "No WorkOrders have been changed yet."}
+              {file?.name || preview?.file_name || "Spreadsheet"}{preview?.sheet_name ? ` · Sheet: ${preview.sheet_name}${preview?.header_row ? ` · Header row ${preview.header_row}` : ""}` : ""} · {appliedResult ? "Import run complete." : analyzing ? "Analyzing without changing WorkOrders..." : "No WorkOrders have been changed yet."}
             </div>
           </DialogHeader>
 
