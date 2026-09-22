@@ -324,6 +324,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [availableSheets, setAvailableSheets] = useState([]);
   const [columnPreview, setColumnPreview] = useState(null);
   const [liveMappingAnalysis, setLiveMappingAnalysis] = useState(null);
+  const [dryRunPreview, setDryRunPreview] = useState(null);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -331,6 +332,15 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     ((config.sales.mirror_enabled && (config.sales.pull_enabled || config.sales.push_enabled)) ||
       (config.orders.mirror_enabled && (config.orders.pull_enabled || config.orders.push_enabled)))
   ), [config]);
+
+  const liveMappingsReadyToBind = useMemo(() => {
+    const results = [liveMappingAnalysis?.sales, liveMappingAnalysis?.orders];
+    return results.every((result) =>
+      result?.status === "ready"
+      && Number(result.analysis?.counts?.missing || 0) === 0
+      && Number(result.analysis?.counts?.conflict || 0) === 0
+    );
+  }, [liveMappingAnalysis]);
 
   const load = async () => {
     setLoading(true);
