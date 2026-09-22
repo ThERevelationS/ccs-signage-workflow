@@ -524,6 +524,15 @@ function DryRunPreviewCard({
         </div>
       )}
 
+      <CustomerResolutionReviewQueue
+        preview={preview}
+        dataset={dataset}
+        reviewState={reviewState}
+        onSaveChoice={onSaveCustomerReview}
+        onClearChoice={onClearCustomerReview}
+        saving={reviewSaving}
+      />
+
       {customerGroups.length > 0 && (
         <div className="mt-3 rounded-md border border-gray-200 bg-white">
           <div className="border-b bg-gray-50 px-3 py-2">
