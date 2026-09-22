@@ -819,6 +819,41 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     );
   }, [liveMappingAnalysis]);
 
+  // Recalculate from the read-only row snapshot whenever a Customer review decision changes.
+  // Stored previews are never a creation authorization and contain no live write callback.
+  const controlledCreationReview = useMemo(() => {
+    if (!dryRunPreview) return null;
+    const build = (dataset) => {
+      const snapshot = dryRunPreview[dataset];
+      const creationReadiness = buildSmartsheetCreationReadiness({
+        rows: snapshot?.preview?.rows || [],
+        rolloutBaseline: config[dataset].rollout_baseline,
+        rolloutPreview: snapshot?.preview?.rolloutPreview,
+        dataset,
+        sheetId: snapshot?.sheet_id,
+        customerReviewState: customerReview,
+      });
+      const proposals = buildSmartsheetControlledCreationProposals({
+        rows: snapshot?.preview?.rows || [],
+        creationReadiness,
+        dataset,
+        sheetId: snapshot?.sheet_id,
+        customers: dryRunPreview.customer_catalog || [],
+        blueprint: SMARTSHEET_MAPPING_BLUEPRINTS[dataset],
+        columnBindings: snapshot?.column_bindings || {},
+      });
+      return { creationReadiness, proposals };
+    };
+    const sales = build("sales");
+    const orders = build("orders");
+    const checked = blockSmartsheetCrossSheetCustomerConflicts(sales.proposals, orders.proposals);
+    return {
+      sales: { creationReadiness: sales.creationReadiness, proposals: checked.sales },
+      orders: { creationReadiness: orders.creationReadiness, proposals: checked.orders },
+      conflicts: checked.conflicts,
+    };
+  }, [dryRunPreview, config.sales.rollout_baseline, config.orders.rollout_baseline, customerReview]);
+
   const load = async () => {
     setLoading(true);
     setError("");
@@ -1087,8 +1122,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       });
 
       setDryRunPreview({
-        sales: { ...salesSheet, preview: salesPreview },
-        orders: { ...orderSheet, preview: orderPreview },
+        sales: { ...salesSheet, preview: salesPreview, column_bindings: salesBinding.column_bindings },
+        orders: { ...orderSheet, preview: orderPreview, column_bindings: orderBinding.column_bindings },
+        customer_catalog: customers.map((customer) => ({
+          id: customer.id,
+          company_name: customer.company_name,
+          legacy_client_names: customer.legacy_client_names || [],
+        })),
       });
       setApiMessage(
         `Complete read-only dry run: ${Number(salesSheet.returned_row_count || 0).toLocaleString()} Workflow rows, ${Number(orderSheet.returned_row_count || 0).toLocaleString()} Order Request rows, and ${customers.length.toLocaleString()} Base44 Customers inspected. No links or business records were changed.`
@@ -1557,6 +1597,9 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     onSaveCustomerReview={saveCustomerReviewChoice}
                     onClearCustomerReview={clearCustomerReviewChoice}
                     reviewSaving={reviewSaving}
+                    reviewedCreationReadiness={controlledCreationReview?.sales?.creationReadiness}
+                    creationProposals={controlledCreationReview?.sales?.proposals}
+                    crossSheetConflicts={controlledCreationReview?.conflicts}
                   />
                   <DryRunPreviewCard
                     title="Order Request row preview"
@@ -1567,6 +1610,9 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     onSaveCustomerReview={saveCustomerReviewChoice}
                     onClearCustomerReview={clearCustomerReviewChoice}
                     reviewSaving={reviewSaving}
+                    reviewedCreationReadiness={controlledCreationReview?.orders?.creationReadiness}
+                    creationProposals={controlledCreationReview?.orders?.proposals}
+                    crossSheetConflicts={controlledCreationReview?.conflicts}
                   />
                 </div>
               )}
