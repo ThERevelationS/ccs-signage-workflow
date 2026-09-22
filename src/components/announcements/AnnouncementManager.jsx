@@ -33,7 +33,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const ALL_PAGES = [
   "MyWorkflow", "MainWorkflow", "SalesPipeline", "Estimating", "Permitting",
   "Design", "Production", "Fabrication", "InstallationDeliver", "OrderForm",
-  "PermittingRepository", "SIPs", "MondayMorningMeeting", "Financials",
+  "SIPs", "MondayMorningMeeting", "Financials",
   "WorkOrderCalendar", "TimeClock"
 ];
 
@@ -266,7 +266,7 @@ export default function AnnouncementManager({ isOpen, onClose, sessionToken }) {
       image_url: ann.image_url || "",
       sound_type: ann.sound_type || "chime",
       custom_sound_url: ann.custom_sound_url || "",
-      display_pages: ann.display_pages || [],
+      display_pages: [...new Set((ann.display_pages || []).map((page) => page === "PermittingRepository" ? "Permitting" : page))],
       target_users: ann.target_users || [],
       duration_seconds: ann.duration_seconds ?? 10,
       priority: ann.priority || "normal",
