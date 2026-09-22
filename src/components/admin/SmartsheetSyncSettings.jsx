@@ -567,7 +567,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         }),
         loadAllEntityRows({
           entity: base44.entities.Order,
-          query: { deleted: false },
           sort: "-updated_date",
           pageSize: 500,
           maxRows: 20000,
