@@ -342,15 +342,60 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             <div className="rounded-md border border-blue-200 bg-white/70 p-2">
               <div className="text-xs font-semibold mb-2">Accessible sheets — review only</div>
               <div className="max-h-52 overflow-y-auto divide-y">
-                {availableSheets.map((sheet) => (
-                  <div key={sheet.id} className="flex items-center justify-between gap-3 py-2 text-xs">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{sheet.name}</div>
-                      <div className="text-gray-500">ID {sheet.id}{sheet.access_level ? ` • ${sheet.access_level}` : ""}</div>
+                {availableSheets.map((sheet) => {
+                  const isWorkflow = sheet.name === "Workflow";
+                  const isOrderRequest = sheet.name === "Order Request";
+                  return (
+                    <div key={sheet.id} className="flex flex-col gap-2 py-2 text-xs sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{sheet.name}</div>
+                        <div className="text-gray-500">ID {sheet.id}{sheet.access_level ? ` • ${sheet.access_level}` : ""}</div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(isWorkflow || isOrderRequest) && (
+                          <Badge className="bg-green-100 text-green-700 shrink-0">Expected sheet</Badge>
+                        )}
+                        <Button type="button" size="sm" variant="outline" onClick={() => inspectSheetColumns(sheet)} disabled={apiLoading}>
+                          Inspect columns
+                        </Button>
+                        {isWorkflow && (
+                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("sales", sheet)}>
+                            Use for Sales
+                          </Button>
+                        )}
+                        {isOrderRequest && (
+                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("orders", sheet)}>
+                            Use for Orders
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    {(sheet.name === "Workflow" || sheet.name === "Order Request") && (
-                      <Badge className="bg-green-100 text-green-700 shrink-0">Expected sheet</Badge>
-                    )}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {columnPreview && (
+            <div className="rounded-md border border-blue-200 bg-white/70 p-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-semibold">
+                  {columnPreview.sheetName} columns
+                </div>
+                <div className="text-[11px] text-gray-500">Sheet ID {columnPreview.sheetId}</div>
+              </div>
+              <div className="mt-2 max-h-64 overflow-y-auto divide-y">
+                {columnPreview.columns.length === 0 ? (
+                  <div className="py-3 text-xs text-gray-500">No columns returned.</div>
+                ) : columnPreview.columns.map((column) => (
+                  <div key={column.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{column.title}</div>
+                      <div className="text-gray-500">
+                        Column ID {column.id}{column.primary ? " • Primary" : ""}{column.system_column_type ? ` • ${column.system_column_type}` : ""}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="shrink-0">{column.type || "UNKNOWN"}</Badge>
                   </div>
                 ))}
               </div>
