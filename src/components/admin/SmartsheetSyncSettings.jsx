@@ -26,12 +26,13 @@ import {
 } from "@/components/admin/smartsheetMappingModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
+import { buildSmartsheetRolloutBaseline } from "@/components/admin/smartsheetRolloutModel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
 const DEFAULT_CONFIG = {
-  schema_version: 2,
+  schema_version: 3,
   global_enabled: false,
   observation_mode: true,
   backup_before_write: true,
@@ -43,6 +44,7 @@ const DEFAULT_CONFIG = {
     smartsheet_sheet_id: "",
     column_bindings: {},
     bindings_verified_at: "",
+    rollout_baseline: null,
     mirror_enabled: false,
     importer_enabled: false,
     pull_enabled: false,
@@ -56,6 +58,7 @@ const DEFAULT_CONFIG = {
     smartsheet_sheet_id: "",
     column_bindings: {},
     bindings_verified_at: "",
+    rollout_baseline: null,
     mirror_enabled: false,
     importer_enabled: false,
     pull_enabled: false,
@@ -739,6 +742,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales,
         columnBindings: salesBinding.column_bindings,
         dataset: "sales",
+        rolloutBaseline: config.sales.rollout_baseline,
       });
       const orderPreview = buildSmartsheetDryRunPreview({
         sheetId: orderBinding.smartsheet_sheet_id,
@@ -748,6 +752,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.orders,
         columnBindings: orderBinding.column_bindings,
         dataset: "orders",
+        rolloutBaseline: config.orders.rollout_baseline,
       });
 
       setDryRunPreview({
