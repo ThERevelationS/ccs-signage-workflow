@@ -15,7 +15,7 @@ const toLocalDay = (value) => {
   return isNaN(parsed.getTime()) ? null : parsed;
 };
 
-export const getQuoteSentDate = (workOrder) => workOrder?.date_estimate_sent || workOrder?.quote_date || "";
+export const getQuoteSentDate = (workOrder) => workOrder?.date_estimate_sent || "";
 
 export const isQuoteAwaitingResponse = (workOrder) => ["quoted", "follow_up"].includes(workOrder?.sales_status);
 
