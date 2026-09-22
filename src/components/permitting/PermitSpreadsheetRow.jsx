@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, differenceInDays } from "date-fns";
-import { Info, Trash2, UserRoundPlus } from "lucide-react";
+import { Info, MapPin, Trash2, UserRoundPlus } from "lucide-react";
 import PermitLineLifecycleDetails from "./PermitLineLifecycleDetails";
 import { isPermitLineEffectivelyComplete } from "./permitQueue";
 
@@ -104,6 +104,7 @@ export default function PermitSpreadsheetRow({
   onUpdateStep,
   onUpdateField,
   onShowLocalityInfo,
+  onShowJurisdictionInfo,
   onDeleteLine,
   isRegistered,
   users,
@@ -238,9 +239,21 @@ export default function PermitSpreadsheetRow({
                 <button
                   onClick={() => onShowLocalityInfo(lineItem.locality_id)}
                   className="h-6 w-6 flex items-center justify-center rounded-md bg-blue-50 hover:bg-blue-100 border border-blue-200 flex-shrink-0"
-                  title="View locality info"
+                  title="View configured tracker locality"
+                  aria-label={`View configured tracker locality for ${localityLabel}`}
                 >
                   <Info className="w-4 h-4 text-blue-600" />
+                </button>
+              )}
+              {lineItem.locality_name && onShowJurisdictionInfo && (
+                <button
+                  type="button"
+                  onClick={() => onShowJurisdictionInfo(lineItem.locality_id, lineItem.locality_name)}
+                  className="h-6 w-6 flex items-center justify-center rounded-md bg-purple-50 hover:bg-purple-100 border border-purple-200 flex-shrink-0"
+                  title="Open jurisdiction knowledge"
+                  aria-label={`Open jurisdiction knowledge for ${localityLabel}`}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-purple-700" />
                 </button>
               )}
             </div>
