@@ -1,7 +1,7 @@
 import {
   buildCustomerResolutionIndex,
   resolveCustomerCandidatesIndexed,
-} from "@/components/admin/smartsheetCustomerResolutionModel";
+} from "./smartsheetCustomerResolutionModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
