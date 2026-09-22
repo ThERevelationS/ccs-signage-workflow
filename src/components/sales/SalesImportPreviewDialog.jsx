@@ -30,12 +30,13 @@ export default function SalesImportPreviewDialog({
     conflict: appliedResult.conflicts || 0,
     ambiguous: appliedResult.ambiguous || 0,
     invalid: appliedResult.invalid || 0,
+    adoption: appliedResult.adoption || preview?.summary?.adoption || 0,
     baseline: preview?.summary?.baseline || 0,
   } : (preview?.summary || {});
   const issues = appliedResult?.issues || preview?.issues || [];
   const warnings = preview?.warnings || [];
   const changes = preview?.sample_changes || [];
-  const blockingCount = Number(summary.invalid || 0) + Number(summary.ambiguous || 0) + Number(summary.conflict || 0);
+  const blockingCount = Number(summary.invalid || 0) + Number(summary.ambiguous || 0) + Number(summary.conflict || 0) + Number(summary.adoption || 0);
   const changedCount = Number(summary.create || 0) + Number(summary.update || 0);
 
   return (
@@ -60,7 +61,7 @@ export default function SalesImportPreviewDialog({
               </div>
             )}
 
-            {!analyzing && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            {!analyzing && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-9">
               <Metric label="Rows" value={summary.total} />
               <Metric label="New" value={summary.create} tone="text-green-700" />
               <Metric label="Changed" value={summary.update} tone="text-blue-700" />
@@ -68,6 +69,7 @@ export default function SalesImportPreviewDialog({
               <Metric label="Conflicts" value={summary.conflict} tone="text-amber-700" />
               <Metric label="Ambiguous" value={summary.ambiguous} tone="text-orange-700" />
               <Metric label="Invalid" value={summary.invalid} tone="text-red-700" />
+              <Metric label="Legacy Match" value={summary.adoption} tone="text-fuchsia-700" />
               <Metric label="First Sync" value={summary.baseline} tone="text-violet-700" />
             </div>}
 
@@ -84,7 +86,7 @@ export default function SalesImportPreviewDialog({
                   <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <div>
                     <div className="font-semibold">{blockingCount} row{blockingCount === 1 ? "" : "s"} need review.</div>
-                    <div className="mt-1 text-xs text-amber-800">Those rows will be skipped. Safe rows can still import without guessing or overwriting ambiguous records.</div>
+                    <div className="mt-1 text-xs text-amber-800">Those rows will be skipped. Legacy matches are not promoted into the modern pipeline automatically; safe rows can still import without guessing or overwriting ambiguous records.</div>
                   </div>
                 </div>
               </div>
