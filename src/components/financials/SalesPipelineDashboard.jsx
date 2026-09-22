@@ -48,17 +48,14 @@ export default function SalesPipelineDashboard({ workOrders = [] }) {
     }));
   }, [workOrders]);
 
-  // 2. Sales forecast (probability * estimate amount)
+  // 2. Open pipeline value from the explicit Estimate Amount only.
   const salesForecast = useMemo(() => {
-    let weightedTotal = 0;
     let totalPipeline = 0;
     let activeDeals = 0;
     
     workOrders.forEach(wo => {
       if (wo.sales_status !== 'lost' && wo.sales_status !== 'won') {
         const amount = wo.estimate_amount || 0;
-        const probability = (wo.probability || 50) / 100;
-        weightedTotal += amount * probability;
         totalPipeline += amount;
         if (amount > 0) activeDeals++;
       }
@@ -69,7 +66,6 @@ export default function SalesPipelineDashboard({ workOrders = [] }) {
       .reduce((sum, wo) => sum + (wo.estimate_amount || 0), 0);
     
     return {
-      weighted: weightedTotal,
       pipeline: totalPipeline,
       won: wonTotal,
       activeDeals
@@ -175,8 +171,8 @@ export default function SalesPipelineDashboard({ workOrders = [] }) {
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Weighted Forecast</p>
-              <p className="text-xl font-bold text-gray-800">{formatCurrency(salesForecast.weighted)}</p>
+              <p className="text-xs text-gray-500">Open Pipeline</p>
+              <p className="text-xl font-bold text-gray-800">{formatCurrency(salesForecast.pipeline)}</p>
               <p className="text-xs text-gray-500">{salesForecast.activeDeals} active deals</p>
             </div>
           </div>
