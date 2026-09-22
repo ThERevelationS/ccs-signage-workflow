@@ -27,9 +27,19 @@ import {
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
 import { buildSmartsheetRolloutBaseline } from "@/components/admin/smartsheetRolloutModel";
+import {
+  buildCreateNewCustomerDecision,
+  buildCustomerResolutionReviewGroups,
+  buildUseExistingCustomerDecision,
+  clearCustomerReviewDecision,
+  DEFAULT_SMARTSHEET_CUSTOMER_REVIEW,
+  mergeSmartsheetCustomerReview,
+  setCustomerReviewDecision,
+} from "@/components/admin/smartsheetCustomerResolutionReviewModel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const SETTING_KEY = "smartsheetSyncConfig";
+const CUSTOMER_REVIEW_SETTING_KEY = "smartsheetCustomerResolutionReview";
 
 const DEFAULT_CONFIG = {
   schema_version: 3,
