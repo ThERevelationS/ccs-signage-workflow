@@ -1256,33 +1256,101 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setTimeout(() => setExportProgress({ show: false, progress: 0 }), 1000);
   };
 
+  const invokeSalesImport = async (file, mode, importJobId = "") => {
+    const response = await base44.functions.invoke("importSalesPipeline", {
+      file,
+      session_token: sessionToken,
+      mode,
+      import_job_id: importJobId,
+    });
+    return response?.data || {};
+  };
+
   const importFromExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-
-    const importId = startMultiImport(file.name);
-    const processingTimeout = setTimeout(() => {
-      updateImport(importId, { message: 'Processing rows on server...' });
-    }, 1500);
+    setImportFile(file);
+    setImportPreview(null);
+    setImportError("");
+    setImportPreflightBusy(true);
 
     try {
-      const fileData = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(btoa(e.target.result));
-        reader.onerror = reject;
-        reader.readAsBinaryString(file);
-      });
-      const res = await importSalesPipeline({ fileData, session_token: sessionToken });
-      clearTimeout(processingTimeout);
-      const result = res.data;
-      finishImport(importId, `${result.created} created, ${result.updated} updated${result.failed ? `, ${result.failed} failed` : ''}`);
-      await loadWorkOrders(false);
+      const preview = await invokeSalesImport(file, "preview");
+      setImportPreview(preview);
     } catch (err) {
-      clearTimeout(processingTimeout);
-      console.error("Import failed:", err);
-      finishImport(importId, 'Import failed. Please try again.', true);
+      console.error("Import preflight failed:", err);
+      setImportError(err?.response?.data?.error || err?.message || "The spreadsheet could not be analyzed safely.");
+    } finally {
+      setImportPreflightBusy(false);
     }
+  };
+
+  const closeImportPreview = () => {
+    if (importApplyBusy) return;
+    setImportPreview(null);
+    setImportFile(null);
+    setImportError("");
+  };
+
+  const applyImportPreview = async () => {
+    if (!importFile || !importPreview?.summary || importApplyBusy) return;
+    setImportApplyBusy(true);
+    setImportError("");
+
+    try {
+      const tracker = await startTrackedImport(
+        Number(importPreview.summary.total || 0),
+        currentUser?.email,
+        "sales_pipeline",
+        {
+          fileName: importFile.name,
+          fileHash: importPreview.file_hash || "",
+          fileSizeBytes: importFile.size || 0,
+        },
+      );
+      if (!tracker?.importJobId) throw new Error("The import progress job could not be created.");
+
+      const result = await invokeSalesImport(importFile, "apply", tracker.importJobId);
+      await refreshTrackedImport();
+      if (!result?.cancelled) await loadWorkOrders(false);
+      setImportPreview({ ...importPreview, appliedResult: result });
+      setImportFile(null);
+      if (!result?.cancelled) {
+        const reviewCount = Number(result?.conflicts || 0) + Number(result?.ambiguous || 0) + Number(result?.invalid || 0) + Number(result?.failed || 0);
+        if (reviewCount === 0) {
+          setTimeout(() => {
+            setImportPreview(null);
+            setImportError("");
+          }, 1200);
+        }
+      }
+    } catch (err) {
+      console.error("Import failed:", err);
+      setImportError(err?.response?.data?.error || err?.message || "Import failed. No unsafe retry was attempted.");
+      await refreshTrackedImport().catch(() => null);
+    } finally {
+      setImportApplyBusy(false);
+    }
+  };
+
+  const downloadImportIssues = () => {
+    const issues = importPreview?.appliedResult?.issues || importPreview?.issues || [];
+    if (!issues.length) return;
+    const rows = issues.map((issue) => ({
+      "Spreadsheet Row": issue.row ?? "",
+      "Customer": issue.customer || "",
+      "Est/Inv": issue.est_inv_at || "",
+      "Type": issue.type || "",
+      "Reason": issue.message || "",
+      "Fields": Array.isArray(issue.fields) ? issue.fields.join(", ") : "",
+      "Matching WorkOrder IDs": Array.isArray(issue.match_ids) ? issue.match_ids.join(", ") : "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Import Issues");
+    const stamp = format(new Date(), "yyyy-MM-dd_HHmm");
+    XLSX.writeFile(wb, `sales_import_issues_${stamp}.xlsx`);
   };
 
   const handleCreateFromForm = async (data) => {
