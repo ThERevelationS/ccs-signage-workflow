@@ -6,6 +6,7 @@ import {
   buildSalesImportPlan,
   normalizeImportDate,
   normalizeImportNumber,
+  summarizeSalesImportPlans,
 } from "../base44/shared/salesImportUtils.mjs";
 
 const assert = (condition, message) => {
@@ -73,6 +74,17 @@ const updatePlan = buildSalesImportPlan(roundTrip, match, { nowIso: "2026-09-22T
 assert(updatePlan.kind === "update", "Changed spreadsheet row should produce an update plan.");
 assert(updatePlan.nextFields.estimate_amount === 12450.5, "Changed estimate amount missing from plan.");
 assert(updatePlan.nextFields.sales_last_activity_at, "Verified imported Sales activity should stamp sales_last_activity_at.");
+
+const firstSyncExisting = { ...existing, id: "wo-first-sync" };
+delete firstSyncExisting.sales_import_snapshot;
+const firstSyncRow = parseOne({ Customer: "Acme Signs", "Est/Inv @": "12345", "Estimate Amount": "12000" });
+const firstSyncPlan = buildSalesImportPlan(
+  firstSyncRow,
+  resolveSalesImportMatch(firstSyncRow, buildExistingImportIndexes([firstSyncExisting])),
+  { nowIso: "2026-09-22T13:00:00.000Z" },
+);
+assert(firstSyncPlan.firstSync === true, "Existing records without an import snapshot must be labeled first sync.");
+assert(summarizeSalesImportPlans([firstSyncPlan], []).baseline === 1, "First-sync summary count failed.");
 
 const blankPreserves = parseOne({
   Customer: "Acme Signs",
