@@ -25,7 +25,6 @@ const FIELD_DEFINITIONS = [
   { field: "estimator", aliases: ["Estimator", "estimator"], type: "text" },
   { field: "est_inv_at", aliases: ["Est/Inv @", "Est/Inv", "Estimate/Invoice", "est_inv_at"], type: "identifier" },
   { field: "estimate_amount", aliases: ["Estimate Amount", "Estimate", "estimate_amount"], type: "number" },
-  { field: "quoted_amount", aliases: ["Quoted Amount", "Quote Amount", "quoted_amount"], type: "number" },
   { field: "current_task_description", aliases: ["Current Task Description", "Next Action", "Task Description", "current_task_description"], type: "text" },
   { field: "date_initial_contact", aliases: ["Date Est. Requested/Initial Contact", "Initial Contact", "Date Initial Contact", "date_initial_contact"], type: "date" },
   { field: "site_survey_date", aliases: ["Site Survey", "Site Survey Date", "site_survey_date"], type: "date" },
@@ -37,12 +36,10 @@ const FIELD_DEFINITIONS = [
   { field: "permit_receipt_confirmed_date", aliases: ["Date Permit Receipt Confirmed", "Permit Receipt Confirmed", "permit_receipt_confirmed_date"], type: "date" },
   { field: "permit_number", aliases: ["Permit Number", "permit_number"], type: "text" },
   { field: "permit_approved_date", aliases: ["Date Permit Approved/Received", "Permit Approved", "permit_approved_date"], type: "date" },
-  { field: "quote_date", aliases: ["Quote Date", "quote_date"], type: "date", noFuture: true },
   { field: "follow_up_date", aliases: ["Follow Up Date", "Follow-up Date", "follow_up_date"], type: "date" },
   { field: "expected_close_date", aliases: ["Expected Close Date", "Expected Close", "expected_close_date"], type: "date" },
   { field: "close_date", aliases: ["Close Date", "close_date"], type: "date", noFuture: true },
   { field: "lost_reason", aliases: ["Lost Reason", "lost_reason"], type: "text" },
-  { field: "probability", aliases: ["Probability", "Probability %", "probability"], type: "probability" },
   { field: "project_type", aliases: ["Project Type", "project_type"], type: "text" },
   { field: "sales_rep", aliases: ["Sales Rep", "Salesperson", "Owner", "sales_rep"], type: "text" },
   { field: "sales_import_source_id", aliases: ["Smartsheet Row ID", "Smartsheet Row Id", "Source Row ID", "Row ID", "sales_import_source_id"], type: "identifier" },
@@ -52,9 +49,6 @@ const IMPORTED_SALES_ACTIVITY_FIELDS = new Set([
   "sales_status",
   "lead_source",
   "estimate_amount",
-  "quoted_amount",
-  "probability",
-  "quote_date",
   "date_estimate_sent",
   "follow_up_date",
   "expected_close_date",
@@ -160,12 +154,6 @@ function readAliasedValue(row, lookup, aliases) {
 function parseField(definition, rawValue) {
   if (definition.type === "date") return normalizeImportDate(rawValue);
   if (definition.type === "number") return normalizeImportNumber(rawValue);
-  if (definition.type === "probability") {
-    const parsed = normalizeImportNumber(rawValue);
-    if (parsed.error || parsed.value === null) return parsed;
-    if (parsed.value < 0 || parsed.value > 100) return { value: null, error: "Probability must be between 0 and 100" };
-    return parsed;
-  }
   if (definition.type === "status") return normalizeSalesStatus(rawValue);
   if (definition.type === "identifier") return { value: normalizeIdentifier(rawValue) };
   return { value: normalizeText(rawValue) };
@@ -480,7 +468,7 @@ export function buildSalesImportPlan(importRow, match, { nowIso = new Date().toI
     }
   } else {
     if (["won", "lost"].includes(currentStatus) && !statusChanged) {
-      for (const protectedField of ["close_date", "lost_reason", "follow_up_date", "expected_close_date", "current_task_description", "current_task_deadline", "current_task_assigned_to", "quote_date", "date_estimate_sent"]) {
+      for (const protectedField of ["close_date", "lost_reason", "follow_up_date", "expected_close_date", "current_task_description", "current_task_deadline", "current_task_assigned_to", "date_estimate_sent"]) {
         if (Object.prototype.hasOwnProperty.call(proposed, protectedField)) {
           return { kind: "conflict", rowNumber: importRow.rowNumber, clientName: importRow.clientName, recordId: current.id, reason: `Closed outcome historical field changed in spreadsheet: ${protectedField}. Reopen/change the outcome in Sales Pipeline before correcting it.`, fields: [protectedField] };
         }
