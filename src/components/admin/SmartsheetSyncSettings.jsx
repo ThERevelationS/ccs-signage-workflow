@@ -769,6 +769,78 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
+  const captureRolloutBaseline = async () => {
+    if (saving || !dryRunPreview) return;
+    if (!config.observation_mode || config.global_enabled) {
+      setError("Rollout baseline capture is only allowed while observation mode is ON and global sync is OFF.");
+      return;
+    }
+    if (config.sales.rollout_baseline?.captured_at || config.orders.rollout_baseline?.captured_at) {
+      setError("A rollout baseline is already captured. This screen will not overwrite or move the baseline forward.");
+      return;
+    }
+
+    setSaving(true);
+    setSaved(false);
+    setError("");
+    try {
+      const capturedAt = new Date().toISOString();
+      const buildBaseline = (preview, label) => {
+        const total = Number(preview?.total_row_count || 0);
+        const returned = Number(preview?.returned_row_count || 0);
+        const rows = preview?.preview?.rows || [];
+        if (!total || returned !== total || rows.length !== returned) {
+          throw new Error(`${label} must have a complete stable dry run before baseline capture.`);
+        }
+        const baseline = buildSmartsheetRolloutBaseline({
+          sheetId: preview.sheet_id,
+          sheetVersion: preview.sheet_version,
+          rows,
+          capturedAt,
+        });
+        if (baseline.row_count !== returned) {
+          throw new Error(`${label} row IDs were incomplete or duplicated. Baseline capture was blocked.`);
+        }
+        return baseline;
+      };
+
+      const salesBaseline = buildBaseline(dryRunPreview.sales, "Workflow");
+      const orderBaseline = buildBaseline(dryRunPreview.orders, "Order Request");
+      const nextConfig = mergeConfig({
+        ...config,
+        schema_version: 3,
+        sales: {
+          ...config.sales,
+          rollout_baseline: salesBaseline,
+        },
+        orders: {
+          ...config.orders,
+          rollout_baseline: orderBaseline,
+        },
+      });
+      const savedRecord = await saveGlobalSettingValueIfUnchanged({
+        entity: base44.entities.GlobalSettings,
+        loadedRecord: record,
+        settingKey: SETTING_KEY,
+        nextValue: nextConfig,
+        label: "Smartsheet rollout baseline",
+      });
+      setRecord(savedRecord);
+      setConfig(mergeConfig(savedRecord?.setting_value));
+      setDryRunPreview(null);
+      setSaved(true);
+      setApiMessage(
+        `Rollout baseline captured in observation mode: ${salesBaseline.row_count.toLocaleString()} Workflow row IDs and ${orderBaseline.row_count.toLocaleString()} Order Request row IDs. Re-run Preview Rows to classify anything added afterward. No Customers, WorkOrders, Orders, or Smartsheet rows were changed.`
+      );
+      setTimeout(() => setSaved(false), 1800);
+    } catch (err) {
+      console.error("Smartsheet rollout baseline capture blocked:", err);
+      setError(err?.message || "Smartsheet rollout baseline could not be captured safely.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     load();
     loadApiStatus();
