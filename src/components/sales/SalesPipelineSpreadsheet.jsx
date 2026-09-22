@@ -1315,7 +1315,19 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
       const result = await invokeSalesImport(importFile, "apply", tracker.importJobId);
       await refreshTrackedImport();
-      if (!result?.cancelled) await loadWorkOrders(false);
+      if (!result?.cancelled) {
+        if (result?.changed_records_complete && Array.isArray(result.changed_records)) {
+          setWorkOrders((current) => {
+            const byId = new Map(current.map((row) => [row.id, row]));
+            result.changed_records.forEach((row) => {
+              if (row?.id) byId.set(row.id, row);
+            });
+            return Array.from(byId.values());
+          });
+        } else {
+          await loadWorkOrders(false);
+        }
+      }
       setImportPreview({ ...importPreview, appliedResult: result });
       setImportFile(null);
       if (!result?.cancelled) {
