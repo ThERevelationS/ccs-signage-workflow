@@ -198,7 +198,221 @@ function LiveMappingAnalysisCard({ title, result }) {
   );
 }
 
-function DryRunPreviewCard({ title, preview, newRecordLabel }) {
+function CustomerResolutionReviewQueue({
+  preview,
+  dataset,
+  reviewState,
+  onSaveChoice,
+  onClearChoice,
+  saving = false,
+}) {
+  const rolloutPreview = preview?.preview?.rolloutPreview || null;
+  if (!rolloutPreview || rolloutPreview.baseline_state !== "captured") return null;
+
+  const review = buildCustomerResolutionReviewGroups({
+    rows: preview?.preview?.rows || [],
+    rolloutPreview,
+    dataset,
+    sheetId: preview?.sheet_id,
+    reviewState,
+  });
+  const groups = review.groups || [];
+  const summary = review.summary || {};
+
+  return (
+    <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/50">
+      <div className="border-b border-cyan-200 px-3 py-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-xs font-semibold text-cyan-950">Post-baseline Customer review</div>
+            <div className="mt-1 text-[10px] text-cyan-900">
+              Decisions are saved separately for future sync use. They do not change Customers, aliases, WorkOrders, Orders, or Smartsheet rows.
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1 text-[10px]">
+            <Badge variant="outline">{summary.total_unique || 0} new names</Badge>
+            <Badge className="bg-green-100 text-green-700">{summary.exact_existing || 0} exact existing</Badge>
+            <Badge className="bg-amber-100 text-amber-800">{summary.needs_decision || 0} need decision</Badge>
+            <Badge className="bg-blue-100 text-blue-700">{summary.decided_existing || 0} existing approved</Badge>
+            <Badge className="bg-violet-100 text-violet-800">{summary.decided_new || 0} new approved</Badge>
+            {summary.blocked_missing_name > 0 && (
+              <Badge className="bg-red-100 text-red-700">{summary.blocked_missing_name} missing name</Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {groups.length === 0 ? (
+        <div className="px-3 py-4 text-xs text-cyan-900">
+          No new post-baseline customer names are waiting for review.
+        </div>
+      ) : (
+        <div className="max-h-[32rem] overflow-y-auto divide-y divide-cyan-100">
+          {groups.slice(0, 100).map((group) => {
+            const candidates = Array.isArray(group.candidates) ? group.candidates.slice(0, 5) : [];
+            const decision = group.decision;
+            return (
+              <div key={group.key} className="space-y-2 bg-white/80 px-3 py-3 text-xs">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-gray-900">{group.source_name}</div>
+                    <div className="mt-0.5 text-[10px] text-gray-500">
+                      {group.row_count.toLocaleString()} new Smartsheet row{group.row_count === 1 ? "" : "s"}
+                      {group.row_numbers?.length ? ` • rows ${group.row_numbers.join(", ")}` : ""}
+                    </div>
+                    {group.reason && <div className="mt-1 text-[10px] text-gray-500">{group.reason}</div>}
+                  </div>
+                  <Badge
+                    className={
+                      group.resolution_state === "exact_existing"
+                        ? "bg-green-100 text-green-700"
+                        : group.resolution_state === "decided"
+                          ? "bg-blue-100 text-blue-700"
+                          : group.resolution_state === "blocked_missing_name"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-800"
+                    }
+                  >
+                    {group.resolution_state === "exact_existing"
+                      ? "exact existing"
+                      : group.resolution_state === "decided"
+                        ? "decision saved"
+                        : group.resolution_state === "blocked_missing_name"
+                          ? "blocked"
+                          : "review required"}
+                  </Badge>
+                </div>
+
+                {group.resolution_state === "exact_existing" && (
+                  <div className="rounded-md border border-green-200 bg-green-50 p-2 text-[11px] text-green-900">
+                    Existing Base44 Customer: <strong>{group.recommended_company_name}</strong>. No manual customer decision is required.
+                  </div>
+                )}
+
+                {decision && (
+                  <div className="rounded-md border border-blue-200 bg-blue-50 p-2 text-[11px] text-blue-950">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        {decision.action === "use_existing_customer"
+                          ? <>Use existing Customer <strong>{decision.company_name}</strong>{decision.remember_alias ? " and plan this Smartsheet spelling as an alias." : "."}</>
+                          : <>Approve <strong>{decision.proposed_company_name}</strong> as a future new-Customer candidate.</>}
+                        <div className="mt-1 text-[10px] text-blue-800">Review decision only; nothing has been created or edited.</div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="min-h-11 shrink-0"
+                        disabled={saving}
+                        onClick={() => onClearChoice(group)}
+                      >
+                        Clear decision
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {!decision && group.review_required && (
+                  <div className="space-y-2">
+                    {candidates.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Existing Customer candidates</div>
+                        {candidates.map((candidate) => (
+                          <div key={candidate.customer_id} className="flex flex-col gap-2 rounded-md border bg-gray-50 p-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="font-medium text-gray-800">{candidate.company_name}</div>
+                              <div className="text-[10px] text-gray-500">
+                                Score {candidate.score || 0}
+                                {candidate.reasons?.length ? ` • ${candidate.reasons.join(", ")}` : ""}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="min-h-11"
+                                disabled={saving}
+                                onClick={() => onSaveChoice({
+                                  group,
+                                  action: "use_existing_customer",
+                                  candidate,
+                                  rememberAlias: false,
+                                })}
+                              >
+                                Use existing
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="min-h-11"
+                                disabled={saving}
+                                onClick={() => onSaveChoice({
+                                  group,
+                                  action: "use_existing_customer",
+                                  candidate,
+                                  rememberAlias: true,
+                                })}
+                              >
+                                Use + plan alias
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2 rounded-md border border-violet-200 bg-violet-50 p-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-[11px] text-violet-900">
+                        None of those are the same company? Approve this name as a future new Customer. This still creates nothing now.
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="min-h-11 shrink-0"
+                        disabled={saving || !group.normalized_name}
+                        onClick={() => onSaveChoice({
+                          group,
+                          action: "create_new_customer",
+                        })}
+                      >
+                        Approve new Customer
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {group.resolution_state === "blocked_missing_name" && (
+                  <div className="rounded-md border border-red-200 bg-red-50 p-2 text-[11px] text-red-900">
+                    A customer name is required before this row can enter customer resolution.
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {groups.length > 100 && (
+            <div className="bg-cyan-50 px-3 py-2 text-[10px] text-cyan-900">
+              Showing the first 100 of {groups.length.toLocaleString()} post-baseline customer names.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DryRunPreviewCard({
+  title,
+  preview,
+  newRecordLabel,
+  dataset,
+  reviewState,
+  onSaveCustomerReview,
+  onClearCustomerReview,
+  reviewSaving,
+}) {
   if (!preview) return null;
   const summary = preview.preview?.summary || {};
   const customerSummary = preview.preview?.customerSummary || {};
