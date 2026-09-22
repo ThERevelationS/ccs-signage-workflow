@@ -52,6 +52,58 @@
     "error_message": {
       "type": "string",
       "description": "Error message if failed"
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Original spreadsheet filename."
+    },
+    "file_hash": {
+      "type": "string",
+      "description": "Canonical spreadsheet content fingerprint used to detect exact repeat imports."
+    },
+    "file_size_bytes": {
+      "type": "number",
+      "description": "Uploaded spreadsheet size in bytes."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Current importer phase such as validating, matching, applying, or verifying."
+    },
+    "created_items": {
+      "type": "number",
+      "default": 0
+    },
+    "updated_items": {
+      "type": "number",
+      "default": 0
+    },
+    "unchanged_items": {
+      "type": "number",
+      "default": 0
+    },
+    "skipped_items": {
+      "type": "number",
+      "default": 0
+    },
+    "conflict_items": {
+      "type": "number",
+      "default": 0
+    },
+    "ambiguous_items": {
+      "type": "number",
+      "default": 0
+    },
+    "invalid_items": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_ms": {
+      "type": "number",
+      "description": "Total server processing time in milliseconds."
+    },
+    "result_message": {
+      "type": "string",
+      "description": "Compact human-readable import result summary."
     }
   },
   "required": [
