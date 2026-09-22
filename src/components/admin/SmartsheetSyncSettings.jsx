@@ -1087,6 +1087,50 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               </div>
               <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />
               <LiveMappingAnalysisCard title="Order Form ↔ Order Request" result={liveMappingAnalysis.orders} />
+
+              <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-950">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="font-semibold">Rollout baseline</div>
+                    <div className="mt-1 text-[11px]">
+                      Saves only the permanent Smartsheet row IDs from a complete read-only preview. It does not create Customers, WorkOrders, Orders, links, or Smartsheet changes.
+                    </div>
+                  </div>
+                  {!config.sales.rollout_baseline?.captured_at && !config.orders.rollout_baseline?.captured_at && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={captureRolloutBaseline}
+                      disabled={saving || !dryRunPreview || !config.observation_mode || config.global_enabled}
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                      Capture Rollout Baseline
+                    </Button>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant="outline">
+                    Workflow: {config.sales.rollout_baseline?.captured_at
+                      ? `${Number(config.sales.rollout_baseline.row_count || 0).toLocaleString()} rows captured`
+                      : "not captured"}
+                  </Badge>
+                  <Badge variant="outline">
+                    Order Request: {config.orders.rollout_baseline?.captured_at
+                      ? `${Number(config.orders.rollout_baseline.row_count || 0).toLocaleString()} rows captured`
+                      : "not captured"}
+                  </Badge>
+                  {(config.sales.rollout_baseline?.captured_at || config.orders.rollout_baseline?.captured_at) && (
+                    <Badge className="bg-green-100 text-green-700">immutable from this screen</Badge>
+                  )}
+                </div>
+                {!dryRunPreview && !config.sales.rollout_baseline?.captured_at && !config.orders.rollout_baseline?.captured_at && (
+                  <div className="mt-2 text-[10px] text-amber-900">
+                    Run Preview Rows first. Baseline capture stays disabled until both full-sheet scans finish successfully.
+                  </div>
+                )}
+              </div>
+
               {dryRunPreview && (
                 <div className="space-y-3 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
                   <div>
