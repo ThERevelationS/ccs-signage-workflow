@@ -343,6 +343,7 @@ async function completedDuplicateJob(ImportJob: any, fileHash: string, currentJo
     && Number(job?.conflict_items || 0) === 0
     && Number(job?.ambiguous_items || 0) === 0
     && Number(job?.invalid_items || 0) === 0
+    && Number(job?.skipped_items || 0) === 0
   ) || null;
 }
 
@@ -354,7 +355,7 @@ function issueRows(parsedInvalidRows: any[], plans: any[]) {
     message: (row.errors || []).join('; '),
   }));
   const planned = plans
-    .filter((plan) => ['invalid', 'conflict', 'ambiguous'].includes(plan.kind))
+    .filter((plan) => ['invalid', 'conflict', 'ambiguous', 'adoption'].includes(plan.kind))
     .map((plan) => ({
       row: plan.rowNumber,
       customer: plan.clientName || '',
@@ -481,7 +482,7 @@ Deno.serve(async (req) => {
 
     if (request.mode === 'preview') return Response.json(previewPayload);
 
-    const skippedItems = summary.conflict + summary.ambiguous + summary.invalid;
+    const skippedItems = summary.conflict + summary.ambiguous + summary.invalid + summary.adoption;
     importJob = await createOrPrepareImportJob(ImportJob, importJob, actorEmail, {
       totalItems: summary.total,
       fileName: request.fileName,
@@ -708,7 +709,7 @@ Deno.serve(async (req) => {
       });
     }
     const durationMs = Date.now() - startedAt;
-    const skipped = results.conflicts + results.ambiguous + results.invalid + results.failed;
+    const skipped = results.conflicts + results.ambiguous + results.invalid + results.failed + summary.adoption;
     const resultMessage = `${results.created} created, ${results.updated} updated, ${summary.unchanged} unchanged${skipped ? `, ${skipped} need review` : ''}.`;
 
     await ImportJob.update(importJob.id, {
@@ -743,6 +744,7 @@ Deno.serve(async (req) => {
       conflicts: results.conflicts,
       ambiguous: results.ambiguous,
       invalid: results.invalid,
+      adoption: summary.adoption,
       skipped,
       issues: runtimeIssues,
       changed_records: returnChangedRecords ? changedRecords : [],
