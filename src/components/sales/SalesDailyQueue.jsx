@@ -67,8 +67,8 @@ export default function SalesDailyQueue({
       const aDate = a.follow_up_date || a.expected_close_date || "9999-12-31";
       const bDate = b.follow_up_date || b.expected_close_date || "9999-12-31";
       if (aDate !== bDate) return String(aDate).localeCompare(String(bDate));
-      const aValue = Number(a.quoted_amount ?? a.estimate_amount ?? 0) || 0;
-      const bValue = Number(b.quoted_amount ?? b.estimate_amount ?? 0) || 0;
+      const aValue = Number(a.estimate_amount ?? 0) || 0;
+      const bValue = Number(b.estimate_amount ?? 0) || 0;
       return bValue - aValue;
     };
     Object.values(sections).forEach((rows) => rows.sort(byUrgency));
@@ -143,7 +143,7 @@ export default function SalesDailyQueue({
 
               <div className="mt-3 grid gap-2 lg:grid-cols-2">
                 {rows.map((workOrder) => {
-                  const value = Number(workOrder.quoted_amount ?? workOrder.estimate_amount ?? 0) || 0;
+                  const value = Number(workOrder.estimate_amount ?? 0) || 0;
                   const quoteAging = getQuoteAgingState(workOrder, today);
                   const quoteTimingMissing = quoteAging.awaitingResponse && !quoteAging.tracked;
                   const expectedCloseStamp = String(workOrder.expected_close_date || "").slice(0, 10);
