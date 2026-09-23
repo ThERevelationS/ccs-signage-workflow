@@ -261,6 +261,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [columnsMessage, setColumnsMessage] = useState({ sales: "", orders: "" });
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
+  const [syncStartedAt, setSyncStartedAt] = useState(null);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -268,6 +269,14 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     ((config.sales.mirror_enabled && (config.sales.pull_enabled || config.sales.push_enabled)) ||
       (config.orders.mirror_enabled && (config.orders.pull_enabled || config.orders.push_enabled)))
   ), [config]);
+
+  const dirty = useMemo(() => {
+    const saved = record?.setting_value;
+    if (!saved) return true;
+    const savedStr = JSON.stringify(mergeConfig(saved));
+    const currentStr = JSON.stringify(mergeConfig(config));
+    return savedStr !== currentStr;
+  }, [record, config]);
 
   const load = async () => {
     setLoading(true);
@@ -397,7 +406,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       }));
       setColumnsMessage((m) => ({
         ...m,
-        [dataset]: `Loaded ${cols.length} column${cols.length === 1 ? "" : "s"}; auto-bound ${matched} of ${total} field${matched === 1 ? "" : "s"}.`,
+        [dataset]: `Loaded ${cols.length} column${cols.length === 1 ? "" : "s"}; auto-bound ${matched} of ${total} field${matched === 1 ? "" : "s"}. Click "Save Settings" above to keep these bindings.`,
       }));
     } catch (err) {
       setColumnsMessage((m) => ({ ...m, [dataset]: err?.message || "Could not load Smartsheet columns." }));
@@ -411,6 +420,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setSyncing(true);
     setSyncResult(null);
     setError("");
+    setSyncStartedAt(new Date());
     try {
       const result = await runSmartsheetSync({ sessionToken });
       setSyncResult(result);
@@ -489,19 +499,58 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={load} disabled={saving}>
+            <Button type="button" size="sm" variant="outline" onClick={load} disabled={saving || syncing}>
               <RefreshCw className="h-4 w-4 mr-2" />Reload
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={runSync} disabled={syncing || saving || !config.global_enabled || config.observation_mode}>
               {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
               Run Sync Now
             </Button>
-            <Button type="button" size="sm" onClick={save} disabled={saving}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={save}
+              disabled={saving || !dirty}
+              className={dirty && !saved ? "ring-2 ring-amber-400 ring-offset-1" : ""}
+            >
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : saved ? <Check className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              {saved ? "Saved" : "Save Settings"}
+              {saving ? "Saving…" : saved ? "Saved" : dirty ? "Save Settings *" : "Save Settings"}
             </Button>
           </div>
         </div>
+
+        {dirty && !saving && (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span><strong>Unsaved changes.</strong> Column bindings and settings you loaded or toggled are not persisted yet. Click <strong>Save Settings</strong> to keep them.</span>
+          </div>
+        )}
+
+        {syncing && (
+          <div className="rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-900 flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+            <span><strong>Sync is running…</strong> Started {syncStartedAt ? new Date(syncStartedAt).toLocaleTimeString() : ""}. Do not close this page until it finishes.</span>
+          </div>
+        )}
+
+        {!syncing && syncResult && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 flex items-center gap-2">
+            <Check className="h-4 w-4 flex-shrink-0" />
+            <span><strong>Sync completed.</strong> Results shown below.</span>
+          </div>
+        )}
+
+        {!syncing && !syncResult && !config.global_enabled && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
+            <strong>Run Sync Now is disabled</strong> because the global kill switch is OFF. Turn on <strong>Global sync</strong> below to enable manual sync runs.
+          </div>
+        )}
+
+        {!syncing && !syncResult && config.global_enabled && config.observation_mode && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
+            <strong>Run Sync Now is disabled</strong> because observation mode is ON. Turn off <strong>Observation mode</strong> below to enable manual sync runs.
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
@@ -648,8 +697,14 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       />
 
       {syncResult && Array.isArray(syncResult.results) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
-          <div className="font-semibold text-sm text-gray-900">Sync results</div>
+        <div className="rounded-xl border border-emerald-200 bg-white p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-sm text-gray-900 flex items-center gap-2">
+              <Check className="h-4 w-4 text-emerald-600" />
+              Sync results
+            </div>
+            <span className="text-xs text-gray-500">Finished {new Date().toLocaleTimeString()}</span>
+          </div>
           {syncResult.results.map((r) => (
             <div key={r.dataset} className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs">
               <div className="font-medium capitalize">{r.dataset}</div>
