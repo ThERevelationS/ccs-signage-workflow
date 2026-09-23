@@ -839,6 +839,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         dataset,
         sheetId: snapshot?.sheet_id,
         customers: dryRunPreview.customer_catalog || [],
+        base44Records: snapshot?.record_catalog || [],
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS[dataset],
         columnBindings: snapshot?.column_bindings || {},
       });
@@ -1122,8 +1123,18 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       });
 
       setDryRunPreview({
-        sales: { ...salesSheet, preview: salesPreview, column_bindings: salesBinding.column_bindings },
-        orders: { ...orderSheet, preview: orderPreview, column_bindings: orderBinding.column_bindings },
+        sales: {
+          ...salesSheet, preview: salesPreview, column_bindings: salesBinding.column_bindings,
+          record_catalog: salesRows.map(({ id, customer_id, client_name, title, deleted }) => ({
+            id, customer_id, client_name, title, deleted,
+          })),
+        },
+        orders: {
+          ...orderSheet, preview: orderPreview, column_bindings: orderBinding.column_bindings,
+          record_catalog: orderRows.map(({ id, customer_id, customer_name, request_type, description, deleted }) => ({
+            id, customer_id, customer_name, request_type, description, deleted,
+          })),
+        },
         customer_catalog: customers.map((customer) => ({
           id: customer.id,
           company_name: customer.company_name,
