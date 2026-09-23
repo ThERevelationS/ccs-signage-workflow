@@ -158,6 +158,7 @@ function LiveMappingAnalysisCard({ title, result }) {
           <Badge className="bg-green-100 text-green-700">{analysis.counts.matched} matched</Badge>
           <Badge className="bg-amber-100 text-amber-800">{analysis.counts.missing} missing</Badge>
           <Badge className="bg-red-100 text-red-700">{analysis.counts.conflict} conflicts</Badge>
+          <Badge className="bg-orange-100 text-orange-800">{analysis.counts.incompatible || 0} incompatible</Badge>
           <Badge variant="outline">{analysis.counts.protected} protected</Badge>
         </div>
       </div>
@@ -169,9 +170,11 @@ function LiveMappingAnalysisCard({ title, result }) {
             ? "bg-green-100 text-green-700"
             : field.status === "conflict"
               ? "bg-red-100 text-red-700"
-              : field.status === "missing"
-                ? "bg-amber-100 text-amber-800"
-                : "bg-gray-100 text-gray-700";
+              : field.status === "incompatible"
+                ? "bg-orange-100 text-orange-800"
+                : field.status === "missing"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-gray-100 text-gray-700";
           return (
             <div key={field.field} className="grid grid-cols-1 gap-2 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
@@ -186,6 +189,11 @@ function LiveMappingAnalysisCard({ title, result }) {
                   </>
                 ) : field.status === "conflict" ? (
                   <div>{field.matches.map((match) => `${match.title} (ID ${match.id})`).join(", ")}</div>
+                ) : field.status === "incompatible" && column ? (
+                  <>
+                    <div className="font-medium">{column.title} • Column ID {column.id} • {column.type || "UNKNOWN"}</div>
+                    <div className="mt-0.5 text-[10px] text-orange-800">{field.compatibility?.reason || "Column type is not compatible with this mapping."}</div>
+                  </>
                 ) : field.status === "protected" ? (
                   <div>Base44 only — no Smartsheet binding</div>
                 ) : (
@@ -824,6 +832,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       result?.status === "ready"
       && Number(result.analysis?.counts?.missing || 0) === 0
       && Number(result.analysis?.counts?.conflict || 0) === 0
+      && Number(result.analysis?.counts?.incompatible || 0) === 0
     );
   }, [liveMappingAnalysis]);
 
@@ -997,9 +1006,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const matched = readyResults.reduce((sum, result) => sum + result.analysis.counts.matched, 0);
       const missing = readyResults.reduce((sum, result) => sum + result.analysis.counts.missing, 0);
       const conflicts = readyResults.reduce((sum, result) => sum + result.analysis.counts.conflict, 0);
+      const incompatible = readyResults.reduce((sum, result) => sum + Number(result.analysis.counts.incompatible || 0), 0);
       const unresolvedSheets = Object.values(results).length - readyResults.length;
       setApiMessage(
-        `Read-only live mapping analysis complete: ${matched} exact field matches, ${missing} missing field matches, ${conflicts} field conflicts, ${unresolvedSheets} unresolved target sheet${unresolvedSheets === 1 ? "" : "s"}. No settings or business data were changed.`
+        `Read-only live mapping analysis complete: ${matched} exact compatible field matches, ${missing} missing field matches, ${conflicts} field conflicts, ${incompatible} incompatible column matches, ${unresolvedSheets} unresolved target sheet${unresolvedSheets === 1 ? "" : "s"}. No settings or business data were changed.`
       );
     } catch (err) {
       setApiMessage(err?.message || "Smartsheet live mapping analysis failed.");
