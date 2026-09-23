@@ -2222,24 +2222,50 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       </AlertDialog>
 
       {/* Create Condition Dialog */}
-      <Dialog open={!!showOtherPopup} onOpenChange={() => setShowOtherPopup(null)}>
-        <DialogContent className="max-w-sm z-[110]">
+      <Dialog open={!!showOtherPopup} onOpenChange={(open) => { if (!open) setShowOtherPopup(null); }}>
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-sm z-[110]">
           <DialogHeader><DialogTitle>Add Condition</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="max-h-36 overflow-y-auto border rounded">
-              {dropdownConditions.map(dd => (
-                <div key={dd.id} onClick={() => showOtherPopup && handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, dd.id)}
-                  className="p-2 border-b last:border-b-0 hover:bg-purple-50 cursor-pointer flex items-center gap-2 text-sm">
-                  <List className="w-4 h-4 text-purple-500" /><span>{dd.name}</span>
-                </div>
-              ))}
+            <div className="max-h-48 overflow-y-auto overscroll-contain border rounded">
+              {dropdownConditions.length > 0 ? dropdownConditions.map(dd => (
+                <button
+                  key={dd.id}
+                  type="button"
+                  onClick={() => showOtherPopup && handleOtherDropdownSelect(showOtherPopup.items, showOtherPopup.setItems, showOtherPopup.itemId, showOtherPopup.detailId, dd.id)}
+                  className="min-h-11 w-full px-3 py-2 border-b last:border-b-0 hover:bg-purple-50 flex items-center gap-2 text-left text-sm touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-400"
+                  aria-label={`Add condition ${dd.name}`}
+                >
+                  <List className="w-4 h-4 shrink-0 text-purple-500" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 break-words">{dd.name}</span>
+                </button>
+              )) : (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No saved conditions yet.</div>
+              )}
             </div>
             <div className="flex gap-2">
-              <Input value={customDropdownValue} onChange={(e) => setCustomDropdownValue(e.target.value)} placeholder="New condition..." onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()} />
-              <Button onClick={handleCreateCustomDropdown} disabled={!customDropdownValue.trim()}><Plus className="w-4 h-4" /></Button>
+              <Input
+                value={customDropdownValue}
+                onChange={(e) => setCustomDropdownValue(e.target.value)}
+                placeholder="New condition..."
+                className="h-11 min-w-0 flex-1"
+                aria-label="New condition name"
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomDropdown()}
+              />
+              <Button
+                type="button"
+                onClick={handleCreateCustomDropdown}
+                disabled={!customDropdownValue.trim()}
+                className="h-11 w-11 shrink-0 px-0 touch-manipulation"
+                aria-label="Create and add condition"
+                title="Create and add condition"
+              >
+                <Plus className="w-4 h-4" aria-hidden="true" />
+              </Button>
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setShowOtherPopup(null)}>Cancel</Button></DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="h-11 min-w-24 touch-manipulation" onClick={() => setShowOtherPopup(null)}>Cancel</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
