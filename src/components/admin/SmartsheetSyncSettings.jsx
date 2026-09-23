@@ -1110,7 +1110,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         ),
       };
     }
+    const sameReviewedColumns = sameSmartsheetReviewedMapping(liveMappingAnalysis, refreshed);
     setLiveMappingAnalysis(refreshed);
+    if (!sameReviewedColumns) {
+      setMappingReviewed(false);
+      setDryRunPreview(null);
+      throw new Error("Smartsheet columns changed after the review (name, type, or ID). Review the refreshed mapping and confirm it again before continuing.");
+    }
     for (const dataset of ["sales", "orders"]) {
       if (!smartsheetAnalysisMatchesProfile(refreshed[dataset], config?.[dataset])) {
         throw new Error(`${dataset === "sales" ? "Workflow" : "Order Request"} columns changed or are no longer fully compatible. Review the refreshed live mapping before continuing.`);
@@ -1119,8 +1125,17 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     return refreshed;
   };
 
+  const copyMappingReview = async () => {
+    try {
+      await navigator.clipboard.writeText(mappingReviewReport);
+      setApiMessage("Copied the complete mapping report, including both sheet IDs and all field-to-column matches. No row values or credentials were copied.");
+    } catch {
+      setError("Could not copy automatically. Expand View full mapping report below to select and copy the text manually.");
+    }
+  };
+
   const bindVerifiedMappings = async () => {
-    if (!liveMappingsReadyToBind || saving) return;
+    if (!liveMappingsReadyToBind || saving || !mappingReviewed) return;
     if (!config.observation_mode || config.global_enabled) {
       setError("Verified ID binding is only allowed while observation mode is ON and the global sync switch is OFF.");
       return;
@@ -1488,6 +1503,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setConfig((current) => ({ ...current, [profileKey]: prepared.profile }));
     if (prepared.targetChanged) {
       setLiveMappingAnalysis(null);
+      setMappingReviewed(false);
       setDryRunPreview(null);
     }
     setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. ${prepared.targetChanged ? "Previous bindings, live mapping, and row-preview evidence were cleared. " : ""}Save Settings to persist this assignment.`);
@@ -1531,6 +1547,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setConfig((current) => ({ ...current, [key]: prepared.profile }));
     if (prepared.targetChanged) {
       setLiveMappingAnalysis(null);
+      setMappingReviewed(false);
       setDryRunPreview(null);
       setApiMessage("Target sheet changed. Previous saved bindings, live mapping, and row-preview evidence were cleared; run Analyze Live Mapping again.");
     }
