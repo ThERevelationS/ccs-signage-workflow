@@ -29,6 +29,7 @@ import {
   smartsheetProfileTargetLocked,
   smartsheetTargetIdentity,
 } from "../src/components/admin/smartsheetMappingFreshnessModel.js";
+import { buildSmartsheetRolloutReadiness } from "../src/components/admin/smartsheetRolloutReadinessModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -198,6 +199,52 @@ const partialPreviewPreflight = buildSmartsheetBaselinePreflight({
   config: mappingConfig,
 });
 assert(partialPreviewPreflight.ready === false, "A partial full-sheet preview must block baseline capture.");
+
+const readyRollout = buildSmartsheetRolloutReadiness({
+  apiStatus: { configured: true, read_only: true, write_actions_available: false },
+  config: { ...mappingConfig, global_enabled: false, observation_mode: true },
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  dryRunPreview: freshDryRun,
+});
+assert(readyRollout.backendReady === true, "Configured read-only backend status must satisfy rollout readiness.");
+assert(readyRollout.targetsReady === true, "Numeric permanent target IDs must satisfy target readiness.");
+assert(readyRollout.liveMappingReady === true, "Fresh compatible live analysis must satisfy mapping readiness.");
+assert(readyRollout.bindingsReady === true, "Saved matching permanent bindings must satisfy binding readiness.");
+assert(readyRollout.previewReady === true, "Fresh complete previews must satisfy preview readiness.");
+assert(readyRollout.canCaptureBaseline === true, "All safe observation-only preconditions should expose deliberate baseline capture.");
+
+const noSessionStatusRollout = buildSmartsheetRolloutReadiness({
+  apiStatus: null,
+  config: { ...mappingConfig, global_enabled: false, observation_mode: true },
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  dryRunPreview: freshDryRun,
+});
+assert(noSessionStatusRollout.canCaptureBaseline === false, "Unknown authenticated backend status must fail closed for baseline capture.");
+assert(noSessionStatusRollout.steps.find((item) => item.id === "backend")?.status === "pending",
+  "Readiness UI must show authenticated backend status as pending until it is verified.");
+
+const unsafeModeRollout = buildSmartsheetRolloutReadiness({
+  apiStatus: { configured: true, read_only: true, write_actions_available: false },
+  config: { ...mappingConfig, global_enabled: true, observation_mode: false },
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  dryRunPreview: freshDryRun,
+});
+assert(unsafeModeRollout.canCaptureBaseline === false, "Baseline capture must remain unavailable outside observation mode/global-off safety.");
+
+const completedRollout = buildSmartsheetRolloutReadiness({
+  apiStatus: { configured: true, read_only: true, write_actions_available: false },
+  config: {
+    ...mappingConfig,
+    global_enabled: false,
+    observation_mode: true,
+    sales: { ...mappingConfig.sales, rollout_baseline: { captured_at: "2026-09-23T10:10:00.000Z", sheet_id: "8702703019812740" } },
+    orders: { ...mappingConfig.orders, rollout_baseline: { captured_at: "2026-09-23T10:10:00.000Z", sheet_id: "4963691473987460" } },
+  },
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  dryRunPreview: freshDryRun,
+});
+assert(completedRollout.baselinesComplete === true, "Matching captured baselines must be reported as complete.");
+assert(completedRollout.canCaptureBaseline === false, "An already captured immutable baseline must never expose a second capture action.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
