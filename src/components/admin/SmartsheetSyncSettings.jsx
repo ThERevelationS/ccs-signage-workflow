@@ -1799,7 +1799,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     disabled={!liveMappingsReadyToBind || apiLoading || saving}
                     className="mt-0.5 h-4 w-4 shrink-0 accent-violet-700"
                   />
-                  <span>I have reviewed both complete mappings, including differently named fields and Request Type options. I confirm these columns represent the intended Base44 fields. Saving IDs will not activate sync or create any records.</span>
+                  <span>I have reviewed both complete mappings, including Notes ↔ Base44 work-notes translation, Lead Source and Current Task vocabulary reconciliation, task-owner user translation, differently named fields, and Request Type options. I confirm these columns and translation rules represent the intended business information. Saving IDs will not activate sync or create any records.</span>
                 </label>
               </div>
               <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />
