@@ -98,6 +98,26 @@ function mappingSnapshot(result) {
   });
 }
 
+export function buildSmartsheetMappingReviewGate({
+  liveMappingsReady = false,
+  mappingReviewed = false,
+  bindingsReady = false,
+} = {}) {
+  const canBind = Boolean(liveMappingsReady && mappingReviewed);
+  const canPreview = Boolean(canBind && bindingsReady);
+  return {
+    canBind,
+    canPreview,
+    reason: !liveMappingsReady
+      ? "Run a fresh compatible live mapping analysis first."
+      : !mappingReviewed
+        ? "Review and confirm all live field-to-column mappings before saving IDs."
+        : !bindingsReady
+          ? "Save the verified permanent column IDs before previewing rows."
+          : "",
+  };
+}
+
 export function sameSmartsheetReviewedMapping(original = {}, refreshed = {}) {
   return ["sales", "orders"].every((dataset) => {
     const before = mappingSnapshot(original?.[dataset]);
