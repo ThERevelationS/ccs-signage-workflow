@@ -28,6 +28,10 @@ import {
 
 const SETTING_KEY = "smartsheetSyncConfig";
 
+function normalizeForMatch(value) {
+  return String(value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 const DEFAULT_CONFIG = {
   schema_version: 3,
   global_enabled: false,
@@ -281,6 +285,38 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
+  const autoMatchBindings = (dataset, cols) => {
+    const fields = getMappableFields(dataset);
+    const existing = config?.[dataset]?.column_bindings || {};
+    const used = new Set(Object.values(existing));
+    const next = { ...existing };
+    let matched = 0;
+    for (const field of fields) {
+      if (next[field.key] && used.has(next[field.key])) continue;
+      const normLabel = normalizeForMatch(field.label);
+      const normKey = normalizeForMatch(field.key);
+      let bestCol = null;
+      for (const col of cols) {
+        if (used.has(col.id)) continue;
+        const normTitle = normalizeForMatch(col.title);
+        if (normTitle === normLabel || normTitle === normKey) { bestCol = col; break; }
+      }
+      if (!bestCol) {
+        for (const col of cols) {
+          if (used.has(col.id)) continue;
+          const normTitle = normalizeForMatch(col.title);
+          if (normTitle.includes(normLabel) || normLabel.includes(normTitle) || normTitle.includes(normKey)) { bestCol = col; break; }
+        }
+      }
+      if (bestCol) {
+        next[field.key] = bestCol.id;
+        used.add(bestCol.id);
+        matched++;
+      }
+    }
+    return { bindings: next, matched, total: fields.length };
+  };
+
   const loadColumns = async (dataset) => {
     const profile = config?.[dataset];
     const sheetId = profile?.smartsheet_sheet_id;
@@ -299,7 +335,19 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const cols = Array.isArray(result.columns) ? result.columns : [];
       if (dataset === "orders") setOrderColumns(cols);
       else setSalesColumns(cols);
-      setColumnsMessage((m) => ({ ...m, [dataset]: `Loaded ${cols.length} column${cols.length === 1 ? "" : "s"} from sheet ${sheetId}.` }));
+      const { bindings, matched, total } = autoMatchBindings(dataset, cols);
+      setConfig((c) => ({
+        ...c,
+        [dataset]: {
+          ...c[dataset],
+          column_bindings: bindings,
+          bindings_verified_at: matched > 0 ? new Date().toISOString() : (c[dataset]?.bindings_verified_at || ""),
+        },
+      }));
+      setColumnsMessage((m) => ({
+        ...m,
+        [dataset]: `Loaded ${cols.length} column${cols.length === 1 ? "" : "s"}; auto-bound ${matched} of ${total} field${matched === 1 ? "" : "s"}.`,
+      }));
     } catch (err) {
       setColumnsMessage((m) => ({ ...m, [dataset]: err?.message || "Could not load Smartsheet columns." }));
     } finally {
