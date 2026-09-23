@@ -12,10 +12,53 @@ import {
   setCustomerReviewDecision,
 } from "../src/components/admin/smartsheetCustomerResolutionReviewModel.js";
 import { buildSmartsheetCreationReadiness } from "../src/components/admin/smartsheetCreationReadinessModel.js";
+import {
+  enforceSmartsheetBackendSafety,
+  smartsheetWriteControlsLocked,
+} from "../src/components/admin/smartsheetSyncSafetyModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
+
+const legacyUnsafeConfig = {
+  global_enabled: true,
+  observation_mode: false,
+  backup_before_write: true,
+  sales: {
+    mirror_enabled: true,
+    importer_enabled: true,
+    pull_enabled: true,
+    push_enabled: true,
+    create_base44_from_smartsheet: true,
+    create_smartsheet_from_base44: true,
+  },
+  orders: {
+    mirror_enabled: true,
+    importer_enabled: false,
+    pull_enabled: true,
+    push_enabled: true,
+    create_base44_from_smartsheet: true,
+    create_smartsheet_from_base44: true,
+  },
+};
+const readOnlySafeConfig = enforceSmartsheetBackendSafety(legacyUnsafeConfig);
+assert(readOnlySafeConfig.global_enabled === false, "Read-only backend must force global sync OFF.");
+assert(readOnlySafeConfig.observation_mode === true, "Read-only backend must force observation mode ON.");
+for (const dataset of ["sales", "orders"]) {
+  for (const flag of ["mirror_enabled", "pull_enabled", "push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"]) {
+    assert(readOnlySafeConfig[dataset][flag] === false, `Read-only backend must force ${dataset}.${flag} OFF.`);
+  }
+}
+assert(readOnlySafeConfig.sales.importer_enabled === true, "Backend safety must not silently disable the separate manual importer.");
+assert(legacyUnsafeConfig.global_enabled === true && legacyUnsafeConfig.orders.pull_enabled === true,
+  "Backend safety normalization must not mutate the loaded settings object.");
+const writeCapableConfig = enforceSmartsheetBackendSafety(legacyUnsafeConfig, { writeBackendAvailable: true });
+assert(writeCapableConfig.global_enabled === true && writeCapableConfig.orders.pull_enabled === true,
+  "An explicitly write-capable backend may preserve configured write intent.");
+assert(smartsheetWriteControlsLocked(null) === true, "Write controls must fail closed before backend status loads.");
+assert(smartsheetWriteControlsLocked({ write_actions_available: false }) === true, "Read-only backend must lock write controls.");
+assert(smartsheetWriteControlsLocked({ write_actions_available: true }) === false, "Write controls may unlock only after explicit backend capability.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
