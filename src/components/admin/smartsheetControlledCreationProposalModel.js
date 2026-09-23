@@ -177,7 +177,9 @@ export function buildSmartsheetControlledCreationProposals({
     const blockers = [...(readiness.blockers || [])];
     const originalValues = { ...(source?.values || {}) };
     const sourceCustomerName = text(dataset === "sales" ? originalValues.client_name : originalValues.customer_name);
-    const identity = readiness.ready_for_controlled_create_review
+    // Show an approved Customer bundle even when a dependent record has missing fields.
+    // Existing-record matches and ambiguous Base44 candidates never propose a new link.
+    const identity = source?.status === "new_record" && readiness.customer?.ready
       ? resolveProposedCustomer(readiness.customer, sourceCustomerName, dataset, String(sheetId), catalog, blockers)
       : null;
 
@@ -236,6 +238,15 @@ export function buildSmartsheetControlledCreationProposals({
       payload.smartsheet_row_id = String(source.row_id);
     }
 
+    if (identity?.kind === "new_customer"
+      && ["ambiguous", "strong_review", "close_review"].includes(source?.customer_resolution?.outcome)
+      && (source?.customer_resolution?.candidates || []).length > 0) {
+      blockers.push(problem(
+        "similar_customer_risk",
+        "Approved new Customer still has similar existing candidates",
+        "Review the suggested existing Customers again before any future creation.",
+      ));
+    }
     if (readiness.ready_for_controlled_create_review && !identity) {
       blockers.push(problem("customer_relationship_missing", "No safe Customer relationship"));
     }
