@@ -438,6 +438,143 @@ async function releaseTimeOffCreateLock(stateEntity: any, stateId: string, reque
   return released.updated === 1;
 }
 
+async function claimCorrectionCreateLock(
+  stateEntity: any,
+  stateId: string,
+  requestId: string,
+  timeEntryId: string,
+  payloadHashValue: string,
+) {
+  const claimToken = crypto.randomUUID();
+  const staleMs = 30_000;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const current = await freshState(stateEntity, stateId);
+    const rawStatus = String(current.correction_create_status || '');
+
+    if (!rawStatus) {
+      const initialized = await stateEntity.updateMany(
+        { id: current.id, updated_date: current.updated_date },
+        { $set: {
+          correction_create_status: 'idle',
+          correction_create_request_id: '',
+          correction_create_time_entry_id: '',
+          correction_create_payload_hash: '',
+          correction_create_claim_token: '',
+          correction_create_started_at: null,
+        } },
+      );
+      if (!initialized || typeof initialized.updated !== 'number') throw new Error('Correction create lock initialization could not be verified.');
+      continue;
+    }
+
+    if (rawStatus === 'idle') {
+      const startedAt = new Date().toISOString();
+      const claimed = await stateEntity.updateMany(
+        { id: current.id, updated_date: current.updated_date, correction_create_status: 'idle' },
+        { $set: {
+          correction_create_status: 'creating',
+          correction_create_request_id: requestId,
+          correction_create_time_entry_id: timeEntryId,
+          correction_create_payload_hash: payloadHashValue,
+          correction_create_claim_token: claimToken,
+          correction_create_started_at: startedAt,
+        } },
+      );
+      if (!claimed || typeof claimed.updated !== 'number') throw new Error('Correction create lock claim could not be verified.');
+      if (claimed.updated === 1) {
+        return { acquired: true, claim_token: claimToken, state: await freshState(stateEntity, stateId), recovered: false };
+      }
+      continue;
+    }
+
+    if (rawStatus !== 'creating') {
+      return { acquired: false, investigation: true, error: 'Correction create lock is in an invalid state. Admin review is required.' };
+    }
+
+    const heldRequestId = String(current.correction_create_request_id || '');
+    if (heldRequestId !== requestId) {
+      return { acquired: false, different_request: true, error: 'Another correction submission is still being processed. Finish or recover that request before starting a new one.' };
+    }
+
+    const heldEntryId = String(current.correction_create_time_entry_id || '');
+    const heldPayloadHash = String(current.correction_create_payload_hash || '');
+    if (heldEntryId !== timeEntryId || !heldPayloadHash || !constantTimeEqual(heldPayloadHash, payloadHashValue)) {
+      return { acquired: false, investigation: true, error: 'This correction request id is already bound to different correction details. Admin review is required.' };
+    }
+
+    const startedMs = Date.parse(String(current.correction_create_started_at || ''));
+    const ageMs = Number.isFinite(startedMs) ? Date.now() - startedMs : Number.POSITIVE_INFINITY;
+    if (ageMs < staleMs) {
+      return { acquired: false, retry_same_request: true, error: 'This correction submission is already being processed. Retry the same request after status refresh.' };
+    }
+
+    const recoveredAt = new Date().toISOString();
+    const recovered = await stateEntity.updateMany(
+      {
+        id: current.id,
+        updated_date: current.updated_date,
+        correction_create_status: 'creating',
+        correction_create_request_id: requestId,
+        correction_create_time_entry_id: timeEntryId,
+        correction_create_payload_hash: heldPayloadHash,
+        correction_create_claim_token: String(current.correction_create_claim_token || ''),
+      },
+      { $set: {
+        correction_create_claim_token: claimToken,
+        correction_create_started_at: recoveredAt,
+      } },
+    );
+    if (!recovered || typeof recovered.updated !== 'number') throw new Error('Correction create lock recovery could not be verified.');
+    if (recovered.updated === 1) {
+      return { acquired: true, claim_token: claimToken, state: await freshState(stateEntity, stateId), recovered: true };
+    }
+  }
+
+  return { acquired: false, retry_same_request: true, error: 'Correction create lock changed concurrently. Retry the same request after status refresh.' };
+}
+
+async function releaseCorrectionCreateLock(
+  stateEntity: any,
+  stateId: string,
+  requestId: string,
+  timeEntryId: string,
+  payloadHashValue: string,
+  claimToken: string,
+) {
+  const current = await freshState(stateEntity, stateId).catch(() => null);
+  if (!current?.id) return false;
+  if (
+    String(current.correction_create_status || '') !== 'creating' ||
+    String(current.correction_create_request_id || '') !== requestId ||
+    String(current.correction_create_time_entry_id || '') !== timeEntryId ||
+    !constantTimeEqual(String(current.correction_create_payload_hash || ''), payloadHashValue) ||
+    String(current.correction_create_claim_token || '') !== claimToken
+  ) return false;
+
+  const released = await stateEntity.updateMany(
+    {
+      id: current.id,
+      updated_date: current.updated_date,
+      correction_create_status: 'creating',
+      correction_create_request_id: requestId,
+      correction_create_time_entry_id: timeEntryId,
+      correction_create_payload_hash: payloadHashValue,
+      correction_create_claim_token: claimToken,
+    },
+    { $set: {
+      correction_create_status: 'idle',
+      correction_create_request_id: '',
+      correction_create_time_entry_id: '',
+      correction_create_payload_hash: '',
+      correction_create_claim_token: '',
+      correction_create_started_at: null,
+    } },
+  );
+  if (!released || typeof released.updated !== 'number') throw new Error('Correction create lock release could not be verified.');
+  return released.updated === 1;
+}
+
 async function setState(stateEntity: any, state: any, expectedStatus: string, expectedRequestId: string | null, nextFields: any) {
   const query: any = {
     id: state.id,
