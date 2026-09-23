@@ -1181,6 +1181,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         throw new Error(`${dataset === "sales" ? "Workflow" : "Order Request"} columns changed or are no longer fully compatible. Review the refreshed live mapping before continuing.`);
       }
     }
+    const freshVocabularyEvidence = await fetchVocabularyEvidence();
+    if (!vocabularyEvidence || JSON.stringify(freshVocabularyEvidence) !== JSON.stringify(vocabularyEvidence)) {
+      setVocabularyEvidence(freshVocabularyEvidence);
+      setMappingReviewed(false);
+      setDryRunPreview(null);
+      throw new Error("Base44 lead sources, task choices, or task-assignee roster changed since the review. Review the refreshed vocabulary and confirm again.");
+    }
     return refreshed;
   };
 
