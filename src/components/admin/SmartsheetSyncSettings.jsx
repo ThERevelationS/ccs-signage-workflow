@@ -1261,7 +1261,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   };
 
   const bindVerifiedMappings = async () => {
-    if (!liveMappingsReadyToBind || saving || !mappingReviewed) return;
+    if (!liveMappingsReadyToBind || !vocabularyReadyToBind || saving || !mappingReviewed) return;
     if (!config.observation_mode || config.global_enabled) {
       setError("Verified ID binding is only allowed while observation mode is ON and the global sync switch is OFF.");
       return;
@@ -1915,7 +1915,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     type="checkbox"
                     checked={mappingReviewed}
                     onChange={(event) => setMappingReviewed(event.target.checked)}
-                    disabled={!liveMappingsReadyToBind || apiLoading || saving}
+                    disabled={!liveMappingsReadyToBind || !vocabularyReadyToBind || apiLoading || saving}
                     className="mt-0.5 h-4 w-4 shrink-0 accent-violet-700"
                   />
                   <span>I have reviewed both complete mappings, including Notes ↔ Base44 work-notes translation, Lead Source and Current Task vocabulary reconciliation, task-owner user translation, differently named fields, and Request Type options. I confirm these columns and translation rules represent the intended business information. Saving IDs will not activate sync or create any records.</span>
