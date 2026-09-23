@@ -499,19 +499,19 @@ Answer the question based on the documents and information available. Be specifi
         </div>
         
         {/* Contact Info in Header — always shown */}
-        <div className="text-xs space-y-1 bg-gray-50 p-2 rounded border border-gray-200">
-          <p className="font-semibold text-gray-700 mb-1">Contact Information</p>
+        <div className="space-y-2 rounded border border-gray-200 bg-gray-50 p-3 text-xs">
+          <p className="mb-1 font-semibold text-gray-700">Contact Information</p>
           {jurisdiction.contact_info?.department ? (
-            <div><span className="font-semibold text-gray-600">Dept:</span> <span className="text-gray-700">{jurisdiction.contact_info.department}</span></div>
+            <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:gap-2"><span className="shrink-0 font-semibold text-gray-600">Dept:</span> <span className="min-w-0 break-words text-gray-700">{jurisdiction.contact_info.department}</span></div>
           ) : null}
           {jurisdiction.contact_info?.phone ? (
-            <div><span className="font-semibold text-gray-600">Phone:</span> <a href={`tel:${jurisdiction.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.phone}</a></div>
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2"><span className="shrink-0 font-semibold text-gray-600">Phone:</span> <a href={`tel:${jurisdiction.contact_info.phone}`} className="inline-flex min-h-11 min-w-0 items-center break-all rounded-md px-2 text-sm font-medium text-blue-700 hover:bg-blue-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-0 sm:px-0 sm:text-xs">{jurisdiction.contact_info.phone}</a></div>
           ) : null}
           {jurisdiction.contact_info?.email ? (
-            <div><span className="font-semibold text-gray-600">Email:</span> <a href={`mailto:${jurisdiction.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.contact_info.email}</a></div>
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2"><span className="shrink-0 font-semibold text-gray-600">Email:</span> <a href={`mailto:${jurisdiction.contact_info.email}`} className="inline-flex min-h-11 min-w-0 items-center break-all rounded-md px-2 text-sm font-medium text-blue-700 hover:bg-blue-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-0 sm:px-0 sm:text-xs">{jurisdiction.contact_info.email}</a></div>
           ) : null}
           {jurisdiction.contact_info?.address ? (
-            <div><span className="font-semibold text-gray-600">Address:</span> <span className="text-gray-700">{jurisdiction.contact_info.address}</span></div>
+            <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:gap-2"><span className="shrink-0 font-semibold text-gray-600">Address:</span> <span className="min-w-0 break-words text-gray-700">{jurisdiction.contact_info.address}</span></div>
           ) : null}
           {!jurisdiction.contact_info?.department && !jurisdiction.contact_info?.phone && !jurisdiction.contact_info?.email && !jurisdiction.contact_info?.address && (
             <p className="text-gray-400 italic">No contact info yet. Use AI refresh to populate.</p>
