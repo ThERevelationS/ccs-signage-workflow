@@ -261,7 +261,8 @@ export default function FleetAnalytics() {
       <div className="grid xl:grid-cols-3 gap-5">
         <section className="xl:col-span-2 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3"><div><h2 className="font-semibold text-gray-900 dark:text-slate-100">Service Cost by Month · {selectedYear}</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Completed Fleet work orders only · {money(analytics.yearServiceCost)} recorded for the year.</p></div><BarChart3 className="w-5 h-5 text-indigo-500" /></div>
-          <div className="p-4 overflow-x-auto"><div className="min-w-[720px] h-64 flex items-end gap-2 border-b border-gray-200 dark:border-slate-700 pb-2">{analytics.monthly.map(row => <div key={row.month} className="flex-1 h-full flex flex-col justify-end items-center gap-1"><div className="text-[10px] text-gray-500 dark:text-slate-400 whitespace-nowrap">{row.cost > 0 ? money(row.cost) : ""}</div><div className="w-full rounded-t bg-indigo-500/80 min-h-[2px]" style={{ height: `${Math.max(2, (row.cost / maxMonthCost) * 170)}px` }} title={`${row.label}: ${money(row.cost)} · ${row.workOrders} completed work orders`} /><div className="text-xs font-semibold text-gray-600 dark:text-slate-300">{row.label}</div><div className="text-[10px] text-gray-400">{row.workOrders} WO{row.workOrders === 1 ? "" : "s"}</div></div>)}</div></div>
+          <MonthlyServiceCostMobile rows={analytics.monthly} maxCost={maxMonthCost} />
+          <div className="hidden sm:block p-4 overflow-x-auto"><div className="min-w-[720px] h-64 flex items-end gap-2 border-b border-gray-200 dark:border-slate-700 pb-2">{analytics.monthly.map(row => <div key={row.month} className="flex-1 h-full flex flex-col justify-end items-center gap-1"><div className="text-[10px] text-gray-500 dark:text-slate-400 whitespace-nowrap">{row.cost > 0 ? money(row.cost) : ""}</div><div className="w-full rounded-t bg-indigo-500/80 min-h-[2px]" style={{ height: `${Math.max(2, (row.cost / maxMonthCost) * 170)}px` }} title={`${row.label}: ${money(row.cost)} · ${row.workOrders} completed work orders`} /><div className="text-xs font-semibold text-gray-600 dark:text-slate-300">{row.label}</div><div className="text-[10px] text-gray-400">{row.workOrders} WO{row.workOrders === 1 ? "" : "s"}</div></div>)}</div></div>
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -282,6 +283,23 @@ export default function FleetAnalytics() {
         </section>
       </div>
     </div>
+  </div>;
+}
+
+function MonthlyServiceCostMobile({ rows, maxCost }) {
+  return <div className="space-y-3 p-4 sm:hidden" aria-label="Monthly Fleet service cost">
+    {rows.map(row => {
+      const width = row.cost > 0 ? Math.max(2, (row.cost / maxCost) * 100) : 0;
+      return <div key={row.month}>
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <span className="font-semibold text-gray-700 dark:text-slate-200">{row.label}</span>
+          <span className="text-right text-gray-500 dark:text-slate-400">{money(row.cost)} · {row.workOrders} WO{row.workOrders === 1 ? "" : "s"}</span>
+        </div>
+        <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-gray-100 dark:bg-slate-800">
+          <div className="h-full rounded-full bg-indigo-500/80" style={{ width: `${width}%` }} />
+        </div>
+      </div>;
+    })}
   </div>;
 }
 
