@@ -13,6 +13,10 @@ import {
 } from "../src/components/admin/smartsheetCustomerResolutionReviewModel.js";
 import { buildSmartsheetCreationReadiness } from "../src/components/admin/smartsheetCreationReadinessModel.js";
 import {
+  analyzeSmartsheetColumns,
+  buildVerifiedSmartsheetBinding,
+} from "../src/components/admin/smartsheetMappingModel.js";
+import {
   enforceSmartsheetBackendSafety,
   smartsheetWriteControlsLocked,
 } from "../src/components/admin/smartsheetSyncSafetyModel.js";
@@ -59,6 +63,48 @@ assert(writeCapableConfig.global_enabled === true && writeCapableConfig.orders.p
 assert(smartsheetWriteControlsLocked(null) === true, "Write controls must fail closed before backend status loads.");
 assert(smartsheetWriteControlsLocked({ write_actions_available: false }) === true, "Read-only backend must lock write controls.");
 assert(smartsheetWriteControlsLocked({ write_actions_available: true }) === false, "Write controls may unlock only after explicit backend capability.");
+
+const mappingBlueprint = [
+  { field: "customer", label: "Customer", direction: "two_way", transform: "customer_resolution", suggestedNames: [] },
+  { field: "amount", label: "Estimate Amount", direction: "two_way", transform: "money", suggestedNames: [] },
+  { field: "due", label: "Due Date", direction: "two_way", transform: "date", suggestedNames: [] },
+  { field: "type", label: "Request Type", direction: "two_way", transform: "status_translation", suggestedNames: [] },
+  { field: "internal", label: "Internal", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
+];
+const compatibleAnalysis = analyzeSmartsheetColumns(mappingBlueprint, [
+  { id: "101", title: "Customer", type: "TEXT_NUMBER" },
+  { id: "102", title: "Estimate Amount", type: "TEXT_NUMBER" },
+  { id: "103", title: "Due Date", type: "DATE" },
+  { id: "104", title: "Request Type", type: "PICKLIST", validation: true, options: ["Substrate", "Vinyl", "Supplies", "Other"] },
+]);
+assert(compatibleAnalysis.counts.matched === 4, "Compatible live columns should remain matched.");
+assert(compatibleAnalysis.counts.incompatible === 0, "Compatible live columns must not be reported as incompatible.");
+assert(compatibleAnalysis.counts.protected === 1, "Base44-only mapping fields must remain protected.");
+const compatibleBinding = buildVerifiedSmartsheetBinding({
+  status: "ready",
+  sheet: { id: "8702703019812740", name: "Workflow" },
+  analysis: compatibleAnalysis,
+});
+assert(Object.keys(compatibleBinding.column_bindings).length === 4, "Only compatible non-protected columns should bind.");
+
+const incompatibleDate = analyzeSmartsheetColumns([
+  { field: "due", label: "Due Date", direction: "two_way", transform: "date", suggestedNames: [] },
+], [{ id: "201", title: "Due Date", type: "TEXT_NUMBER" }]);
+assert(incompatibleDate.counts.incompatible === 1, "A date mapping must reject a same-title non-DATE column.");
+assert(incompatibleDate.fields[0].compatibility.reason.includes("DATE"), "Date mismatch should explain the required column type.");
+let incompatibleBindingBlocked = false;
+try {
+  buildVerifiedSmartsheetBinding({ status: "ready", sheet: { id: "1", name: "Test" }, analysis: incompatibleDate });
+} catch {
+  incompatibleBindingBlocked = true;
+}
+assert(incompatibleBindingBlocked, "Permanent binding must fail when any column match is type-incompatible.");
+
+const systemManagedWrite = analyzeSmartsheetColumns([
+  { field: "job", label: "Job Description", direction: "two_way", transform: "text", suggestedNames: [] },
+], [{ id: "301", title: "Job Description", type: "TEXT_NUMBER", system_column_type: "AUTO_NUMBER" }]);
+assert(systemManagedWrite.counts.incompatible === 1, "A future writable mapping must reject system-managed Smartsheet columns.");
+assert(systemManagedWrite.fields[0].compatibility.reason.includes("System-managed"), "System-column mismatch should explain why binding is blocked.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
