@@ -60,6 +60,7 @@ import {
   DEFAULT_SALES_LEAD_SOURCES,
   buildSmartsheetVocabularyReview,
   formatSmartsheetVocabularyReview,
+  smartsheetVocabularyReadyForBinding,
 } from "@/components/admin/smartsheetVocabularyReviewModel";
 import {
   enforceSmartsheetBackendSafety,
@@ -976,11 +977,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     dryRunPreview,
   }), [apiStatus, config, liveMappingAnalysis, dryRunPreview]);
 
+  const vocabularyReadyToBind = useMemo(() => smartsheetVocabularyReadyForBinding(vocabularyReview), [vocabularyReview]);
+
   const mappingReviewGate = useMemo(() => buildSmartsheetMappingReviewGate({
-    liveMappingsReady: liveMappingsReadyToBind,
+    liveMappingsReady: liveMappingsReadyToBind && vocabularyReadyToBind,
     mappingReviewed,
     bindingsReady: rolloutReadiness.bindingsReady,
-  }), [liveMappingsReadyToBind, mappingReviewed, rolloutReadiness.bindingsReady]);
+  }), [liveMappingsReadyToBind, vocabularyReadyToBind, mappingReviewed, rolloutReadiness.bindingsReady]);
 
   // Recalculate from the read-only row snapshot whenever a Customer review decision changes.
   // Stored previews are never a creation authorization and contain no live write callback.
