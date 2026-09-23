@@ -115,7 +115,7 @@ export function smartsheetVocabularyReadyForBinding(review) {
     review.orderTypes?.synchronized &&
     review.owners?.unresolved?.length === 0 &&
     review.owners?.ambiguous?.length === 0 &&
-    review.owners?.base44Only?.length === 0
+    (review.owners?.validated === false || review.owners?.base44Only?.length === 0)
   );
 }
 
