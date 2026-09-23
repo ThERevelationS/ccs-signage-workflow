@@ -63,7 +63,6 @@ import MyWorkflow from './pages/MyWorkflow';
 import NewUserSetup from './pages/NewUserSetup';
 import OrderForm from './pages/OrderForm';
 import Permitting from './pages/Permitting';
-import PermittingRepository from './pages/PermittingRepository';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Production from './pages/Production';
 import ReportingDashboard from './pages/ReportingDashboard';
@@ -93,7 +92,6 @@ export const PAGES = {
     "NewUserSetup": NewUserSetup,
     "OrderForm": OrderForm,
     "Permitting": Permitting,
-    "PermittingRepository": PermittingRepository,
     "PrivacyPolicy": PrivacyPolicy,
     "Production": Production,
     "ReportingDashboard": ReportingDashboard,
