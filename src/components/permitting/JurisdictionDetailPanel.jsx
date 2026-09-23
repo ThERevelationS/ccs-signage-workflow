@@ -380,10 +380,10 @@ Answer the question based on the documents and information available. Be specifi
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="p-4 border-b space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <h2 className="font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
+              <h2 className="min-w-0 break-words font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
               <Badge variant="outline">{jurisdiction.state}</Badge>
               <Badge className="bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
             </div>
@@ -394,31 +394,43 @@ Answer the question based on the documents and information available. Be specifi
               </a>
             )}
           </div>
-          <div className="flex gap-1">
+          <div className="flex w-full gap-2 sm:w-auto sm:justify-end">
             <Button
               size="sm"
               variant="outline"
               onClick={() => generateJurisdictionPDF(jurisdiction)}
               title="Download PDF report"
-              className="gap-1 text-xs"
+              className="min-h-11 flex-1 gap-1.5 text-xs sm:flex-none"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
               Report
             </Button>
-            <Button 
-              size="icon" 
+            <Button
+              size="sm"
               variant="outline"
               onClick={handleResearch}
               disabled={isResearching}
               title="Run AI research to fill in jurisdiction data"
+              className="min-h-11 min-w-11 flex-1 gap-1.5 px-3 sm:flex-none sm:px-2.5"
+              aria-label="Refresh jurisdiction research"
             >
               {isResearching ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
+              <span className="sm:hidden">{isResearching ? "Refreshing" : "Refresh"}</span>
             </Button>
-            <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="min-h-11 min-w-11 flex-1 gap-1.5 px-3 sm:flex-none sm:px-2.5"
+              aria-label="Close jurisdiction details"
+            >
+              <X className="w-4 h-4" />
+              <span className="sm:hidden">Close</span>
+            </Button>
           </div>
         </div>
 
