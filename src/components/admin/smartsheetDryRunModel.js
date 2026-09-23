@@ -5,6 +5,7 @@ import {
 } from "./smartsheetCustomerResolutionModel.js";
 import { buildSmartsheetRolloutPreview } from "./smartsheetRolloutModel.js";
 import { buildSmartsheetCreationReadiness } from "./smartsheetCreationReadinessModel.js";
+import { normalizeCombinedNotesText, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -23,6 +24,7 @@ function normalizeComparable(value, transform) {
   if (transform === "date") return normalizeWhitespace(value).slice(0, 10);
   if (transform === "status_translation") return normalizeStatus(value);
   if (transform === "customer_resolution") return normalizeWhitespace(value).toLowerCase();
+  if (transform === "notes_process") return normalizeCombinedNotesText(value);
   return normalizeWhitespace(value);
 }
 
@@ -59,14 +61,18 @@ function compareMappedFields({ rowValues, record, blueprint, columnBindings }) {
   for (const field of blueprint || []) {
     if (field?.direction === "base44_only") continue;
     if (!columnBindings?.[field.field]) continue;
-    const sheetValue = normalizeComparable(rowValues?.[field.field], field.transform);
-    const base44Value = normalizeComparable(record?.[field.field], field.transform);
+    const sheetRawValue = rowValues?.[field.field];
+    const base44RawValue = field.transform === "notes_process"
+      ? serializeBase44WorkNotes(record?.[field.field])
+      : record?.[field.field];
+    const sheetValue = normalizeComparable(sheetRawValue, field.transform);
+    const base44Value = normalizeComparable(base44RawValue, field.transform);
     if (sheetValue !== base44Value) {
       differences.push({
         field: field.field,
         label: field.label,
-        smartsheet_value: rowValues?.[field.field] ?? "",
-        base44_value: record?.[field.field] ?? "",
+        smartsheet_value: sheetRawValue ?? "",
+        base44_value: base44RawValue ?? "",
       });
     }
   }
@@ -109,7 +115,7 @@ export function buildSmartsheetDryRunPreview({
   const directByRowId = new Map();
   const legacyByRowId = new Map();
   const exactKeyFields = dataset === "sales"
-    ? ["client_name", "title"]
+    ? ["client_name", "est_inv_at"]
     : ["customer_name", "description", "request_type"];
   const exactCandidates = new Map();
   const customerIndex = buildCustomerResolutionIndex(customers);
