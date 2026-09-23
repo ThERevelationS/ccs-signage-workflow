@@ -322,6 +322,8 @@ const TEAM_MEMBERS = ["Carl", "Twyla", "Brett", "Kyle", "Joe", "Aidin", "Kay", "
 export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
+  const requestedTab = new URLSearchParams(window.location.search).get("tab");
+  const initialAdminTab = isAdmin && requestedTab === "smartsheet" ? "smartsheet" : "automations";
   
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
@@ -926,9 +928,9 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <div className="h-full overflow-y-auto p-3 sm:p-6">
       <div className="max-w-6xl mx-auto pb-8">
-        <Tabs defaultValue="automations" className="space-y-6">
+        <Tabs defaultValue={initialAdminTab} className="space-y-6">
           <div className="clay-card border-none p-2" style={{ background: '#FEE2E2' }}>
             <TabsList className="bg-transparent w-full flex flex-wrap gap-1">
               <TabsTrigger value="automations" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
