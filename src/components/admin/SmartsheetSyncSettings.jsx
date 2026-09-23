@@ -57,6 +57,11 @@ import {
 } from "@/components/admin/smartsheetCustomerResolutionReviewModel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
+  DEFAULT_SALES_LEAD_SOURCES,
+  buildSmartsheetVocabularyReview,
+  formatSmartsheetVocabularyReview,
+} from "@/components/admin/smartsheetVocabularyReviewModel";
+import {
   enforceSmartsheetBackendSafety,
   smartsheetWriteControlsLocked,
 } from "@/components/admin/smartsheetSyncSafetyModel";
@@ -875,11 +880,18 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [availableSheets, setAvailableSheets] = useState([]);
   const [columnPreview, setColumnPreview] = useState(null);
   const [liveMappingAnalysis, setLiveMappingAnalysis] = useState(null);
+  const [vocabularyEvidence, setVocabularyEvidence] = useState(null);
   const [mappingReviewed, setMappingReviewed] = useState(false);
   const [dryRunPreview, setDryRunPreview] = useState(null);
 
   const mappingReview = useMemo(() => buildSmartsheetMappingReview(liveMappingAnalysis), [liveMappingAnalysis]);
-  const mappingReviewReport = useMemo(() => formatSmartsheetMappingReview(liveMappingAnalysis), [liveMappingAnalysis]);
+  const vocabularyReview = useMemo(() => vocabularyEvidence && liveMappingAnalysis
+    ? buildSmartsheetVocabularyReview({ liveMappingAnalysis, ...vocabularyEvidence })
+    : null, [liveMappingAnalysis, vocabularyEvidence]);
+  const mappingReviewReport = useMemo(() => [
+    formatSmartsheetMappingReview(liveMappingAnalysis),
+    ...(vocabularyReview ? [formatSmartsheetVocabularyReview(vocabularyReview)] : []),
+  ].join("\n\n"), [liveMappingAnalysis, vocabularyReview]);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
