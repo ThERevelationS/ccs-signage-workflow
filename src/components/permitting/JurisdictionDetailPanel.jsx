@@ -739,6 +739,7 @@ Answer the question based on the documents and information available. Be specifi
               <Input
                 type="text"
                 placeholder="Search City/Locality/Info..."
+                aria-label="Search jurisdiction documents and information"
                 value={docSearchTerm}
                 onChange={(e) => searchDocuments(e.target.value)}
                 className="min-h-11 pl-9 text-sm"
@@ -843,6 +844,7 @@ Answer the question based on the documents and information available. Be specifi
                           <Input
                             type="text"
                             placeholder="Search within document..."
+                            aria-label={`Search within ${doc.title || "document"}`}
                             value={expandedDocSearch[doc.id] || ""}
                             onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
