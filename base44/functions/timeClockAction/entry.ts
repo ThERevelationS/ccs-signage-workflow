@@ -2719,11 +2719,61 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (String(requestRecord.last_request_id || '') === requestId) {
-        if (!constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), updatePayloadHash)) {
-          return Response.json({ success: false, error: 'This time-off update request id is already bound to different details.' }, { status: 409 });
+      const sameRequestSaved = String(requestRecord.last_request_id || '') === requestId;
+      if (sameRequestSaved && (
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), updatePayloadHash) ||
+        !updatedFieldsMatch(requestRecord)
+      )) {
+        return Response.json({ success: false, error: 'This time-off update request id no longer matches the saved edit. Admin investigation is required.' }, { status: 409 });
+      }
+      if (!sameRequestSaved && (
+        requestRecord.status !== 'pending' || String(requestRecord.updated_date || '') !== expectedUpdatedDate
+      )) {
+        return Response.json({ success: false, error: 'This time-off request is no longer pending at its loaded version. Reload before editing.' }, { status: 409 });
+      }
+
+      const hadPendingAudit = updateIntent?.outcome === 'pending';
+      if (!updateIntent?.id) {
+        try {
+          const ensured = await ensureUserActionAudit(auditEntity, {
+            action: 'time_off_request_update',
+            outcome: 'pending',
+            user_email: target.email,
+            user_name: target.full_name || target.email,
+            actor_email: actorEmail,
+            actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target),
+            server_timestamp: new Date().toISOString(),
+            request_id: requestId,
+            reason,
+            details: {
+              payload_hash: updatePayloadHash,
+              time_off_request_id: timeOffRequestId,
+              expected_updated_date: expectedUpdatedDate,
+              previous_fields: {
+                request_type: requestRecord.request_type,
+                start_date: requestRecord.start_date,
+                end_date: requestRecord.end_date,
+                hours_requested: requestRecord.hours_requested,
+                reason: requestRecord.reason,
+              },
+              requested_fields: requestedFields,
+            },
+          }, 'Time-off request update audit intent');
+          updateIntent = ensured.audit;
+        } catch {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off edit audit intent could not be verified. Retry the same update.' }, { status: 409 });
         }
-      } else {
+      }
+      // Audit creation can race; never mutate while the request id has ambiguous audit evidence.
+      updateIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off request update audit intent');
+      if (!updateIntent?.id || updateIntent.outcome !== 'pending' ||
+        !constantTimeEqual(String(updateIntent.details?.payload_hash || ''), updatePayloadHash) ||
+        String(updateIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+        return Response.json({ success: false, error: 'The time-off edit audit intent is ambiguous or no longer pending. Admin review is required.' }, { status: 409 });
+      }
+
+      if (!sameRequestSaved) {
         if (requestRecord.status !== 'pending') {
           return Response.json({ success: false, error: 'Only pending time-off requests can be edited.' }, { status: 409 });
         }
