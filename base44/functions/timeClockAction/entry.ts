@@ -3197,8 +3197,13 @@ Deno.serve(async (req) => {
         if (priorAudits.length > 1) return Response.json({ success: false, error: 'This correction request has multiple audit records. Admin investigation is required.' }, { status: 409 });
         let correctionAudit = priorAudits[0] || null;
         const priorAuditHash = String(correctionAudit?.details?.payload_hash || '');
-        if (priorAuditHash && !constantTimeEqual(priorAuditHash, storedHash)) {
-          return Response.json({ success: false, error: 'This correction request audit is bound to different correction details. Admin investigation is required.' }, { status: 409 });
+        const priorAuditRequestId = String(correctionAudit?.details?.correction_request_id || '');
+        if (correctionAudit?.id && (
+          asEmail(correctionAudit.user_email) !== target.email ||
+          (priorAuditRequestId && priorAuditRequestId !== priorByRequest.id) ||
+          (priorAuditHash && !constantTimeEqual(priorAuditHash, storedHash))
+        )) {
+          return Response.json({ success: false, error: 'This correction audit does not match the saved employee, correction record, or payload. Admin investigation is required.' }, { status: 409 });
         }
         if (correctionAudit?.outcome === 'pending') {
           await auditEntity.updateMany(
@@ -3227,6 +3232,13 @@ Deno.serve(async (req) => {
         }
         if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
           return Response.json({ success: false, retry_same_request: true, error: 'The correction request is saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+        }
+        if (
+          asEmail(correctionAudit.user_email) !== target.email ||
+          String(correctionAudit.details?.correction_request_id || '') !== priorByRequest.id ||
+          !constantTimeEqual(String(correctionAudit.details?.payload_hash || ''), storedHash)
+        ) {
+          return Response.json({ success: false, error: 'The completed correction audit could not be tied to this exact request and payload. Admin investigation is required.' }, { status: 409 });
         }
         let completedLockReleased = false;
         try {
