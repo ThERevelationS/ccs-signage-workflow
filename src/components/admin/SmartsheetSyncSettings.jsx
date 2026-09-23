@@ -1703,7 +1703,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                 <div>
                   <div className="text-xs font-semibold">Live mapping proposal — read only</div>
                   <div className="mt-1 text-[11px] text-gray-600">
-                    Permanent binding is blocked unless both sheets have zero missing fields and zero conflicts.
+                    Column-name and type matches are not a guarantee of business meaning. Check the name differences below before saving any IDs.
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1721,12 +1721,53 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     type="button"
                     size="sm"
                     onClick={bindVerifiedMappings}
-                    disabled={saving || !liveMappingsReadyToBind || !config.observation_mode || config.global_enabled}
+                    disabled={saving || apiLoading || !liveMappingsReadyToBind || !mappingReviewed || !config.observation_mode || config.global_enabled}
                   >
                     {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                     Bind Verified IDs
                   </Button>
                 </div>
+              </div>
+              <div className="rounded-lg border border-violet-200 bg-violet-50/70 p-3 space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-violet-950">Review all {mappingReview.matched.length} live column matches</div>
+                    <div className="mt-1 text-[11px] text-violet-800">
+                      {mappingReview.aliases.length} differently named match{mappingReview.aliases.length === 1 ? "" : "es"} need a meaning check; approved names are not automatically verified business mappings.
+                    </div>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" onClick={copyMappingReview} className="w-full sm:w-auto">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy full mapping report
+                  </Button>
+                </div>
+                {mappingReview.aliases.length > 0 && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-950">
+                    <div className="font-semibold">Verify these names represent the same business information:</div>
+                    <div className="mt-1 space-y-1">
+                      {mappingReview.aliases.map((item) => (
+                        <div key={item.dataset + item.field} className="break-words">
+                          {item.dataset === "sales" ? "Workflow" : "Order Request"}: <strong>{item.label}</strong> → <strong>{item.columnTitle}</strong>
+                          <span className="text-amber-800"> (column {item.columnId})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <details className="rounded-md border border-violet-200 bg-white p-2 text-[11px]">
+                  <summary className="cursor-pointer font-semibold text-violet-900">View full mapping report (manual copy fallback)</summary>
+                  <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-all text-[10px] text-slate-700">{mappingReviewReport}</pre>
+                </details>
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-violet-200 bg-white p-3 text-xs text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={mappingReviewed}
+                    onChange={(event) => setMappingReviewed(event.target.checked)}
+                    disabled={!liveMappingsReadyToBind || apiLoading || saving}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-violet-700"
+                  />
+                  <span>I have reviewed both complete mappings, including differently named fields and Request Type options. I confirm these columns represent the intended Base44 fields. Saving IDs will not activate sync or create any records.</span>
+                </label>
               </div>
               <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />
               <LiveMappingAnalysisCard title="Order Form ↔ Order Request" result={liveMappingAnalysis.orders} />
