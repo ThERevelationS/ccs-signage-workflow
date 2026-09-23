@@ -26,8 +26,9 @@ import {
 } from "@/components/admin/smartsheetMappingModel";
 import {
   buildSmartsheetBaselinePreflight,
+  prepareSmartsheetProfileTargetChange,
   smartsheetAnalysisMatchesProfile,
-  smartsheetTargetIdentity,
+  smartsheetProfileTargetLocked,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
@@ -739,7 +740,7 @@ function DryRunPreviewCard({
   );
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked = true }) {
+function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked = true, targetLocked = false }) {
   const patch = (next) => onChange({ ...value, ...next });
   return (
     <div className="rounded-xl border border-gray-200 bg-white/70 p-4 space-y-4">
@@ -753,6 +754,7 @@ function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked
             {value.mirror_enabled ? "Mirror armed" : "Mirror off"}
           </Badge>
           <Badge variant="outline">{Object.keys(value.column_bindings || {}).length} column IDs bound</Badge>
+          {targetLocked && <Badge className="bg-violet-100 text-violet-800">Target locked by baseline</Badge>}
         </div>
       </div>
 
@@ -762,6 +764,7 @@ function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked
           <Input
             value={value.smartsheet_sheet_name || ""}
             onChange={(e) => patch({ smartsheet_sheet_name: e.target.value })}
+            disabled={targetLocked}
             className="mt-1"
           />
         </div>
@@ -770,6 +773,7 @@ function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked
           <Input
             value={value.smartsheet_sheet_id || ""}
             onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
+            disabled={targetLocked}
             placeholder="Discovered from API later"
             className="mt-1"
           />
@@ -882,6 +886,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const load = async () => {
     setLoading(true);
     setError("");
+    setLiveMappingAnalysis(null);
+    setDryRunPreview(null);
     try {
       const [loaded, loadedReview] = await Promise.all([
         loadSingleGlobalSetting({
@@ -1405,18 +1411,21 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const assignSheet = (profileKey, sheet) => {
     if (!sheet?.id) return;
     const currentProfile = config?.[profileKey] || {};
-    const nextProfile = {
+    if (smartsheetProfileTargetLocked(currentProfile)) {
+      setError("This target sheet is locked because its rollout baseline has already been captured.");
+      return;
+    }
+    const prepared = prepareSmartsheetProfileTargetChange(currentProfile, {
       ...currentProfile,
       smartsheet_sheet_id: String(sheet.id),
       smartsheet_sheet_name: sheet.name || currentProfile.smartsheet_sheet_name || "",
-    };
-    const targetChanged = smartsheetTargetIdentity(currentProfile) !== smartsheetTargetIdentity(nextProfile);
-    setConfig((current) => ({ ...current, [profileKey]: nextProfile }));
-    if (targetChanged) {
+    });
+    setConfig((current) => ({ ...current, [profileKey]: prepared.profile }));
+    if (prepared.targetChanged) {
       setLiveMappingAnalysis(null);
       setDryRunPreview(null);
     }
-    setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. ${targetChanged ? "Previous live mapping and row-preview evidence was cleared. " : ""}Save Settings to persist this assignment.`);
+    setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. ${prepared.targetChanged ? "Previous bindings, live mapping, and row-preview evidence were cleared. " : ""}Save Settings to persist this assignment.`);
   };
 
   const save = async () => {
@@ -1448,12 +1457,17 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   };
 
   const setProfile = (key, next) => {
-    const targetChanged = smartsheetTargetIdentity(config?.[key]) !== smartsheetTargetIdentity(next);
-    setConfig((current) => ({ ...current, [key]: next }));
-    if (targetChanged) {
+    const currentProfile = config?.[key] || {};
+    const prepared = prepareSmartsheetProfileTargetChange(currentProfile, next);
+    if (prepared.targetChanged && smartsheetProfileTargetLocked(currentProfile)) {
+      setError("This target sheet is locked because its rollout baseline has already been captured.");
+      return;
+    }
+    setConfig((current) => ({ ...current, [key]: prepared.profile }));
+    if (prepared.targetChanged) {
       setLiveMappingAnalysis(null);
       setDryRunPreview(null);
-      setApiMessage("Target sheet changed. Previous live mapping and row-preview evidence was cleared; run Analyze Live Mapping again.");
+      setApiMessage("Target sheet changed. Previous saved bindings, live mapping, and row-preview evidence were cleared; run Analyze Live Mapping again.");
     }
   };
 
