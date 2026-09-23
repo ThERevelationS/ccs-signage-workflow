@@ -777,18 +777,18 @@ Answer the question based on the documents and information available. Be specifi
                    className="flex min-h-11 w-full items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
                    onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
                    aria-expanded={expandedDoc === doc.id}
-                   aria-controls={`jurisdiction-document-${doc.id}`}
+                   aria-controls={expandedDoc === doc.id ? `jurisdiction-document-${doc.id}` : undefined}
                    aria-label={`${expandedDoc === doc.id ? "Collapse" : "Expand"} ${doc.title || "document"}`}
                  >
                    <FileText className={`w-4 h-4 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />
-                   <div className="flex-1 min-w-0">
-                     <p className="break-words text-xs font-medium text-gray-800">{doc.title}</p>
-                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                   <span className="min-w-0 flex-1">
+                     <span className="block break-words text-xs font-medium text-gray-800">{doc.title}</span>
+                     <span className="mt-0.5 flex flex-wrap items-center gap-2">
                        <span className={`text-[10px] capitalize px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-purple-200 text-purple-700' : 'bg-amber-200 text-amber-700'}`}>{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
                        {doc.last_fetched && <span className="text-[10px] text-gray-500">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-blue-200 text-blue-700' : 'bg-gray-200 text-gray-700'}`}>{doc.source === 'ai_discovered' ? 'AI' : 'Manual'}</span>
-                     </div>
-                   </div>
+                     </span>
+                   </span>
                    {expandedDoc === doc.id ? <ChevronUp className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} /> : <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />}
                  </button>
                 {expandedDoc === doc.id && (
