@@ -151,6 +151,7 @@ export function buildSmartsheetControlledCreationProposals({
   dataset = "",
   sheetId = "",
   customers = [],
+  base44Records = [],
   blueprint = [],
   columnBindings = {},
   today = new Date().toISOString().slice(0, 10),
@@ -169,6 +170,24 @@ export function buildSmartsheetControlledCreationProposals({
 
   const byRowId = new Map((rows || []).map((row) => [String(row.row_id), row]));
   const catalog = customerCatalog(customers);
+  const fingerprint = (record) => dataset === "sales"
+    ? text(record?.title).toLowerCase().replace(/\s+/g, " ")
+    : [record?.request_type, record?.description].map((value) =>
+      text(value).toLowerCase().replace(/\s+/g, " ")).join("|");
+  const existingFingerprints = new Map();
+  for (const record of base44Records || []) {
+    if (!record?.id || record.deleted) continue;
+    const subject = fingerprint(record);
+    if (!subject) continue;
+    const customerKey = text(record.customer_id)
+      ? `id:${record.customer_id}`
+      : `name:${normalizeCustomerText(dataset === "sales" ? record.client_name : record.customer_name)}`;
+    if (customerKey === "name:") continue;
+    const key = `${customerKey}|${subject}`;
+    const matches = existingFingerprints.get(key) || [];
+    matches.push(String(record.id));
+    existingFingerprints.set(key, matches);
+  }
   const mappedFields = (blueprint || []).filter(
     (field) => field.direction !== "base44_only" && columnBindings?.[field.field]?.column_id,
   );
@@ -246,6 +265,22 @@ export function buildSmartsheetControlledCreationProposals({
         "Approved new Customer still has similar existing candidates",
         "Review the suggested existing Customers again before any future creation.",
       ));
+    }
+    if (identity?.kind === "existing_customer" && source?.status === "new_record") {
+      const subject = fingerprint(payload);
+      const keys = [
+        `id:${identity.customer_id}|${subject}`,
+        `name:${normalizeCustomerText(identity.company_name)}|${subject}`,
+        `name:${normalizeCustomerText(identity.source_name)}|${subject}`,
+      ];
+      const existingIds = [...new Set(keys.flatMap((key) => existingFingerprints.get(key) || []))];
+      if (existingIds.length) {
+        blockers.push(problem(
+          "possible_duplicate_base44_record",
+          "Possible duplicate existing Base44 record",
+          `Same resolved Customer and description in existing record ID(s): ${existingIds.slice(0, 5).join(", ")}. Review and link instead of creating a duplicate.`,
+        ));
+      }
     }
     if (readiness.ready_for_controlled_create_review && !identity) {
       blockers.push(problem("customer_relationship_missing", "No safe Customer relationship"));
