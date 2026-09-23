@@ -2189,32 +2189,37 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       </div>
 
       <AlertDialog open={!!noticeDialog} onOpenChange={(open) => { if (!open) setNoticeDialog(null); }}>
-        <AlertDialogContent className="clay-card border-none z-[120]">
+        <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
-              {noticeDialog?.title || "SIPS Template Builder"}
+            <AlertDialogTitle className="flex items-start gap-2 text-left">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500" aria-hidden="true" />
+              <span className="min-w-0 break-words">{noticeDialog?.title || "SIPS Template Builder"}</span>
             </AlertDialogTitle>
-            <AlertDialogDescription>{noticeDialog?.message}</AlertDialogDescription>
+            <AlertDialogDescription className="break-words text-left">{noticeDialog?.message}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setNoticeDialog(null)}>OK</AlertDialogAction>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogAction className="h-11 w-full touch-manipulation sm:w-auto" onClick={() => setNoticeDialog(null)}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={!!confirmDialog} onOpenChange={(open) => { if (!open && !isConfirming) setConfirmDialog(null); }}>
-        <AlertDialogContent className="clay-card border-none z-[120]">
+        <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-red-500" />
-              {confirmDialog?.title || "Confirm deletion"}
+            <AlertDialogTitle className="flex items-start gap-2 text-left">
+              <Trash2 className="w-5 h-5 shrink-0 text-red-500" aria-hidden="true" />
+              <span className="min-w-0 break-words">{confirmDialog?.title || "Confirm deletion"}</span>
             </AlertDialogTitle>
-            <AlertDialogDescription>{confirmDialog?.message}</AlertDialogDescription>
+            <AlertDialogDescription className="break-words text-left">{confirmDialog?.message}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isConfirming}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={runConfirmedAction} disabled={isConfirming} className="bg-red-600 hover:bg-red-700">
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="h-11 w-full touch-manipulation sm:w-auto" disabled={isConfirming}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={runConfirmedAction}
+              disabled={isConfirming}
+              aria-busy={isConfirming}
+              className="h-11 w-full bg-red-600 hover:bg-red-700 touch-manipulation sm:w-auto"
+            >
               {isConfirming ? "Deleting…" : (confirmDialog?.confirmLabel || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
