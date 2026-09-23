@@ -32,6 +32,53 @@ function normalizeForMatch(value) {
   return String(value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
+const FIELD_ALIASES = {
+  title: ["title", "project", "project name", "job", "job name", "job title", "opportunity name", "deal name"],
+  client_name: ["client", "client name", "customer", "customer name", "company", "company name", "account", "account name", "business", "business name"],
+  sales_status: ["sales status", "status", "stage", "pipeline stage", "sales stage", "deal stage", "opportunity stage"],
+  lead_source: ["lead source", "source", "lead", "origination", "origin", "referral source", "channel"],
+  estimate_amount: ["estimate amount", "estimate", "amount", "value", "budget", "deal value", "opportunity value", "estimated value", "quote amount", "price"],
+  contact_name: ["contact name", "contact", "name", "primary contact", "contact person"],
+  contact_email: ["contact email", "email", "e mail", "email address"],
+  contact_phone: ["contact phone", "phone", "tel", "telephone", "phone number", "mobile", "cell"],
+  sales_rep: ["sales rep", "rep", "salesperson", "sales person", "sales representative", "owner", "sales owner", "deal owner", "assigned rep"],
+  project_type: ["project type", "type", "category", "project category", "job type", "sign type"],
+  install_location: ["install location", "location", "site", "site location", "install address", "installation location"],
+  township_city: ["township city", "city", "township", "town", "municipality"],
+  county: ["county"],
+  due_date: ["due date", "due", "deadline", "target date"],
+  close_date: ["close date", "close", "closed date", "closing date", "date closed"],
+  expected_close_date: ["expected close date", "expected close", "forecast close", "expected closing date"],
+  date_initial_contact: ["date initial contact", "initial contact", "first contact", "date first contact"],
+  date_estimate_sent: ["date estimate sent", "estimate sent", "estimate sent date", "quote sent", "quote sent date"],
+  date_order_created: ["date order created", "order created", "order date", "date order"],
+  project_install_date: ["project install date", "install date", "installation date", "installation", "install"],
+  permit_submitted_date: ["permit submitted", "permit submitted date", "date permit submitted", "permit filed", "permit filed date"],
+  permit_approved_date: ["permit approved", "permit approved date", "date permit approved", "permit received", "permit received date"],
+  permit_number: ["permit number", "permit", "permit id", "permit no"],
+  permitting: ["permitting", "permit required", "permits needed", "permitting required"],
+  estimator: ["estimator", "estimate by", "estimated by"],
+  designer: ["designer", "design by", "designed by"],
+  surveyor: ["surveyor", "survey by", "surveyed by", "site surveyor"],
+  project_manager: ["project manager", "pm", "manager", "project mgmt", "project management"],
+  current_task_description: ["current task", "task", "current task description", "current step", "active task", "next task"],
+  current_task_assigned_to: ["current task assigned to", "assigned to", "assigned", "task assigned to", "owner assigned"],
+  current_task_deadline: ["current task deadline", "task deadline", "task due date", "current task due"],
+  lost_reason: ["lost reason", "reason lost", "loss reason", "close reason lost"],
+  notes_serialized: ["work notes", "notes", "work notes serialized", "job notes", "project notes"],
+  customer_name: ["customer name", "customer", "client", "client name", "company", "company name"],
+  request_type: ["request type", "type", "order type", "request category"],
+  description: ["description", "desc", "details", "item description", "order description"],
+  quantity: ["quantity", "qty", "quant", "amount needed"],
+  date_needed: ["date needed", "needed by", "needed date", "date required", "required date"],
+  date_ordered: ["date ordered", "ordered date", "order date", "date order placed", "placed date"],
+  vendor: ["vendor", "supplier", "vendor name", "supplier name", "source"],
+  date_received: ["date received", "received date", "date recv", "recv date"],
+  status: ["status", "order status", "request status", "fulfillment status"],
+  requestor_name: ["requestor name", "requestor", "requester", "requester name", "requested by", "requested by name"],
+  requestor_email: ["requestor email", "requester email", "requestor e mail", "request email", "requested by email"],
+};
+
 const DEFAULT_CONFIG = {
   schema_version: 3,
   global_enabled: false,
@@ -295,17 +342,21 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       if (next[field.key] && used.has(next[field.key])) continue;
       const normLabel = normalizeForMatch(field.label);
       const normKey = normalizeForMatch(field.key);
+      const aliases = (FIELD_ALIASES[field.key] || []).map(normalizeForMatch);
       let bestCol = null;
+      // Pass 1: exact match on label, key, or alias
       for (const col of cols) {
         if (used.has(col.id)) continue;
         const normTitle = normalizeForMatch(col.title);
-        if (normTitle === normLabel || normTitle === normKey) { bestCol = col; break; }
+        if (normTitle === normLabel || normTitle === normKey || aliases.includes(normTitle)) { bestCol = col; break; }
       }
+      // Pass 2: partial/contains match on label, key, or alias
       if (!bestCol) {
         for (const col of cols) {
           if (used.has(col.id)) continue;
           const normTitle = normalizeForMatch(col.title);
-          if (normTitle.includes(normLabel) || normLabel.includes(normTitle) || normTitle.includes(normKey)) { bestCol = col; break; }
+          if (normTitle.includes(normLabel) || normLabel.includes(normTitle) || normTitle.includes(normKey) ||
+              aliases.some((a) => normTitle.includes(a) || a.includes(normTitle))) { bestCol = col; break; }
         }
       }
       if (bestCol) {
