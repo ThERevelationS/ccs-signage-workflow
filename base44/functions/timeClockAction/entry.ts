@@ -575,6 +575,58 @@ async function releaseCorrectionCreateLock(
   return released.updated === 1;
 }
 
+async function releaseCompletedCorrectionCreateLock(
+  stateEntity: any,
+  stateId: string,
+  requestId: string,
+  timeEntryId: string,
+  payloadHashValue: string,
+) {
+  const current = await freshState(stateEntity, stateId).catch(() => null);
+  if (!current?.id) return false;
+
+  const rawStatus = String(current.correction_create_status || '');
+  if (!rawStatus || rawStatus === 'idle') return true;
+  if (rawStatus !== 'creating') return false;
+
+  const heldRequestId = String(current.correction_create_request_id || '');
+  if (heldRequestId !== requestId) return true;
+
+  const heldEntryId = String(current.correction_create_time_entry_id || '');
+  const heldPayloadHash = String(current.correction_create_payload_hash || '');
+  if (heldEntryId !== timeEntryId || !heldPayloadHash || !constantTimeEqual(heldPayloadHash, payloadHashValue)) return false;
+
+  const heldClaimToken = String(current.correction_create_claim_token || '');
+  const released = await stateEntity.updateMany(
+    {
+      id: current.id,
+      updated_date: current.updated_date,
+      correction_create_status: 'creating',
+      correction_create_request_id: requestId,
+      correction_create_time_entry_id: timeEntryId,
+      correction_create_payload_hash: heldPayloadHash,
+      correction_create_claim_token: heldClaimToken,
+    },
+    { $set: {
+      correction_create_status: 'idle',
+      correction_create_request_id: '',
+      correction_create_time_entry_id: '',
+      correction_create_payload_hash: '',
+      correction_create_claim_token: '',
+      correction_create_started_at: null,
+    } },
+  );
+  if (!released || typeof released.updated !== 'number') throw new Error('Completed correction create lock release could not be verified.');
+  if (released.updated === 1) return true;
+
+  const fresh = await freshState(stateEntity, stateId).catch(() => null);
+  if (!fresh?.id) return false;
+  const freshStatus = String(fresh.correction_create_status || '');
+  if (!freshStatus || freshStatus === 'idle') return true;
+  if (freshStatus === 'creating' && String(fresh.correction_create_request_id || '') !== requestId) return true;
+  return false;
+}
+
 async function setState(stateEntity: any, state: any, expectedStatus: string, expectedRequestId: string | null, nextFields: any) {
   const query: any = {
     id: state.id,
@@ -3175,6 +3227,21 @@ Deno.serve(async (req) => {
         }
         if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
           return Response.json({ success: false, retry_same_request: true, error: 'The correction request is saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+        }
+        let completedLockReleased = false;
+        try {
+          completedLockReleased = await releaseCompletedCorrectionCreateLock(
+            stateEntity,
+            state.id,
+            requestId,
+            entryId,
+            storedHash,
+          );
+        } catch (error) {
+          console.error('Completed correction request lock cleanup failed:', error?.message || error);
+        }
+        if (!completedLockReleased) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction request and audit are saved, but its create lock could not be released safely. Retry the same request.' }, { status: 409 });
         }
         return Response.json({ success: true, request: priorByRequest, audit_id: correctionAudit.id, reused: true });
       }
