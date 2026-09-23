@@ -1330,7 +1330,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           {(provided) => (
                         <div ref={provided.innerRef} {...provided.draggableProps} className="border rounded p-2 bg-white">
                           <div className="flex items-center gap-2 mb-1">
-                            <div {...provided.dragHandleProps}><GripVertical className="w-4 h-4 text-gray-400 cursor-grab" /></div>
+                            <div
+                              {...provided.dragHandleProps}
+                              className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-7 lg:w-7"
+                              aria-label={`Reorder ${product.customName}`}
+                              title={`Reorder ${product.customName}`}
+                            >
+                              <GripVertical className="w-4 h-4 text-gray-400" aria-hidden="true" />
+                            </div>
                             <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} disabled={product.isExisting} className="h-7 text-sm flex-1" />
                             {product.isExisting && (
                               <span
@@ -1514,7 +1521,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               <div ref={provided.innerRef} {...provided.draggableProps}
                                 onClick={() => editingSubTemplateId !== st.id && selectSubTemplateForEditing(st)}
                                 className={`p-1.5 rounded border cursor-pointer flex items-center gap-1 mb-1 ${selectedSubTemplate === st.id ? 'bg-purple-100 border-purple-300' : 'bg-white hover:bg-gray-50'}`}>
-                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                <div
+                                  {...provided.dragHandleProps}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-7 lg:w-7"
+                                  aria-label={`Reorder checklist option ${st.name}`}
+                                  title={`Reorder checklist option ${st.name}`}
+                                  aria-disabled={isSubTemplateReordering}
+                                >
+                                  <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
+                                </div>
                                 {editingSubTemplateId === st.id ? (
                                   <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-6 text-xs flex-1" autoFocus
@@ -1722,7 +1738,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                             {(provided) => (
                               <div ref={provided.innerRef} {...provided.draggableProps} onClick={() => editingProductTypeName !== type && selectProductType(type)}
                                 className={`p-1.5 rounded border cursor-pointer flex items-center gap-1 mb-1 ${selectedProductType === type ? 'bg-blue-100 border-blue-300' : 'bg-white hover:bg-gray-50'}`}>
-                                <div {...provided.dragHandleProps}><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                <div
+                                  {...provided.dragHandleProps}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-7 lg:w-7"
+                                  aria-label={`Reorder product checklist ${type}`}
+                                  title={`Reorder product checklist ${type}`}
+                                >
+                                  <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
+                                </div>
                                 {editingProductTypeName === type ? (
                                   <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <Input 
@@ -1954,7 +1978,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               <Draggable key={dd.id} draggableId={dd.id} index={index}>
                                 {(provided) => (
                                   <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded text-sm bg-green-50 border-green-300">
-                                    <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 lg:h-7 lg:w-7"
+                                      aria-label={`Reorder completed condition ${dd.name}`}
+                                      title={`Reorder completed condition ${dd.name}`}
+                                    >
+                                      <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
+                                    </div>
                                     <button 
                                       onClick={() => {
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed);
@@ -2036,7 +2067,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                               <Draggable key={dd.id} draggableId={dd.id} index={index}>
                                 {(provided) => (
                                   <div ref={provided.innerRef} {...provided.draggableProps} className="flex items-center gap-1 p-2 border rounded text-sm bg-yellow-50 border-yellow-300">
-                                    <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-3 h-3 text-gray-400" /></div>
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="h-11 w-11 shrink-0 rounded flex items-center justify-center cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 lg:h-7 lg:w-7"
+                                      aria-label={`Reorder continued condition ${dd.name}`}
+                                      title={`Reorder continued condition ${dd.name}`}
+                                    >
+                                      <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
+                                    </div>
                                     <button 
                                       onClick={() => {
                                         const completedItems = dropdownConditions.filter(d => d.is_completed);
