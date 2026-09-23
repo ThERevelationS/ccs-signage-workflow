@@ -50,6 +50,14 @@ export async function getSmartsheetRows({ sessionToken, sheetId, columnIds = [],
   });
 }
 
+export async function runSmartsheetSync({ sessionToken, dataset } = {}) {
+  return invokeSmartsheet("run_sync", sessionToken, dataset ? { dataset } : {});
+}
+
+export async function getSmartsheetColumnsForBindings({ sessionToken, sheetId } = {}) {
+  return invokeSmartsheet("sheet_columns", sessionToken, { sheet_id: String(sheetId || "").trim() });
+}
+
 export async function getAllSmartsheetRows({
   sessionToken,
   sheetId,

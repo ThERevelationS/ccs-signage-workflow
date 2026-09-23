@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Check, Loader2, RefreshCw, Save, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Check, Loader2, Play, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import {
   loadSingleGlobalSetting,
   saveGlobalSettingValueIfUnchanged,
@@ -14,7 +14,10 @@ import {
   getSmartsheetSyncStatus,
   listSmartsheetSheets,
   testSmartsheetConnection,
+  runSmartsheetSync,
+  getSmartsheetColumnsForBindings,
 } from "@/components/admin/smartsheetSyncPersistence";
+import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
 import {
   prepareSmartsheetProfileTargetChange,
   smartsheetProfileTargetLocked,
@@ -72,8 +75,16 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
   }, { writeBackendAvailable });
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, targetLocked = false }) {
+function IntegrationCard({ title, subtitle, value, onChange, targetLocked = false, dataset, sessionToken, columns, columnsLoading, onLoadColumns }) {
   const patch = (next) => onChange({ ...value, ...next });
+  const fields = dataset ? getMappableFields(dataset) : [];
+  const bindings = value.column_bindings || {};
+  const setBinding = (fieldKey, columnId) => {
+    const next = { ...bindings };
+    if (columnId) next[fieldKey] = columnId;
+    else delete next[fieldKey];
+    patch({ column_bindings: next });
+  };
   return (
     <div className="rounded-xl border border-gray-200 bg-white/70 p-4 space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -85,7 +96,7 @@ function IntegrationCard({ title, subtitle, value, onChange, targetLocked = fals
           <Badge className={value.mirror_enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}>
             {value.mirror_enabled ? "Mirror armed" : "Mirror off"}
           </Badge>
-          <Badge variant="outline">{Object.keys(value.column_bindings || {}).length} column IDs bound</Badge>
+          <Badge variant="outline">{Object.keys(bindings).length} column IDs bound</Badge>
           {targetLocked && <Badge className="bg-violet-100 text-violet-800">Target locked by baseline</Badge>}
         </div>
       </div>
@@ -102,15 +113,56 @@ function IntegrationCard({ title, subtitle, value, onChange, targetLocked = fals
         </div>
         <div>
           <Label className="text-xs">Smartsheet sheet ID</Label>
-          <Input
-            value={value.smartsheet_sheet_id || ""}
-            onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
-            disabled={targetLocked}
-            placeholder="Discovered from API later"
-            className="mt-1"
-          />
+          <div className="flex gap-2 mt-1">
+            <Input
+              value={value.smartsheet_sheet_id || ""}
+              onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
+              disabled={targetLocked}
+              placeholder="Numeric sheet ID"
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onLoadColumns(dataset)}
+              disabled={!sessionToken || !value.smartsheet_sheet_id || columnsLoading}
+            >
+              {columnsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span className="ml-1">Load columns</span>
+            </Button>
+          </div>
         </div>
       </div>
+
+      {fields.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold text-gray-700">Column bindings (Base44 field → Smartsheet column)</div>
+            {columns.length > 0 && <Badge variant="outline">{columns.length} columns discovered</Badge>}
+          </div>
+          {columns.length === 0 && (
+            <div className="text-[11px] text-gray-500">Enter the sheet ID and click "Load columns" to discover available Smartsheet columns, then bind each field.</div>
+          )}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-72 overflow-y-auto">
+            {fields.map((field) => (
+              <div key={field.key} className="flex flex-col gap-1">
+                <Label className="text-[11px] text-gray-600">{field.label}</Label>
+                <select
+                  value={bindings[field.key] || ""}
+                  onChange={(e) => setBinding(field.key, e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs"
+                >
+                  <option value="">— not bound —</option>
+                  {columns.map((col) => (
+                    <option key={col.id} value={col.id}>{col.title} ({col.type})</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {[
@@ -153,6 +205,11 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [apiLoading, setApiLoading] = useState(false);
   const [apiMessage, setApiMessage] = useState("");
   const [availableSheets, setAvailableSheets] = useState([]);
+  const [salesColumns, setSalesColumns] = useState([]);
+  const [orderColumns, setOrderColumns] = useState([]);
+  const [columnsLoading, setColumnsLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -221,6 +278,40 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       setApiMessage(err?.message || "Smartsheet sheet discovery failed.");
     } finally {
       setApiLoading(false);
+    }
+  };
+
+  const loadColumns = async (dataset) => {
+    const profile = config?.[dataset];
+    const sheetId = profile?.smartsheet_sheet_id;
+    if (!sessionToken || !sheetId) return;
+    setColumnsLoading(true);
+    setApiMessage("");
+    try {
+      const result = await getSmartsheetColumnsForBindings({ sessionToken, sheetId });
+      const cols = Array.isArray(result.columns) ? result.columns : [];
+      if (dataset === "orders") setOrderColumns(cols);
+      else setSalesColumns(cols);
+      setApiMessage(`Loaded ${cols.length} columns from sheet ${sheetId}.`);
+    } catch (err) {
+      setApiMessage(err?.message || "Could not load Smartsheet columns.");
+    } finally {
+      setColumnsLoading(false);
+    }
+  };
+
+  const runSync = async () => {
+    if (!sessionToken || syncing) return;
+    setSyncing(true);
+    setSyncResult(null);
+    setError("");
+    try {
+      const result = await runSmartsheetSync({ sessionToken });
+      setSyncResult(result);
+    } catch (err) {
+      setError(err?.message || "Smartsheet sync could not run.");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -298,6 +389,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           <div className="flex gap-2">
             <Button type="button" size="sm" variant="outline" onClick={load} disabled={saving}>
               <RefreshCw className="h-4 w-4 mr-2" />Reload
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={runSync} disabled={syncing || saving || !config.global_enabled || config.observation_mode}>
+              {syncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+              Run Sync Now
             </Button>
             <Button type="button" size="sm" onClick={save} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : saved ? <Check className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -430,6 +525,11 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
         targetLocked={smartsheetProfileTargetLocked(config.sales)}
+        dataset="sales"
+        sessionToken={sessionToken}
+        columns={salesColumns}
+        columnsLoading={columnsLoading}
+        onLoadColumns={loadColumns}
       />
 
       <IntegrationCard
@@ -438,7 +538,39 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
         targetLocked={smartsheetProfileTargetLocked(config.orders)}
+        dataset="orders"
+        sessionToken={sessionToken}
+        columns={orderColumns}
+        columnsLoading={columnsLoading}
+        onLoadColumns={loadColumns}
       />
+
+      {syncResult && Array.isArray(syncResult.results) && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-2">
+          <div className="font-semibold text-sm text-gray-900">Sync results</div>
+          {syncResult.results.map((r) => (
+            <div key={r.dataset} className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs">
+              <div className="font-medium capitalize">{r.dataset}</div>
+              {r.skipped ? (
+                <div className="text-amber-700 mt-1">Skipped: {r.reason}</div>
+              ) : (
+                <div className="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-4">
+                  <span>Examined: <strong>{r.records_examined}</strong></span>
+                  <span className="text-green-700">Created: <strong>{r.created}</strong></span>
+                  <span className="text-blue-700">Updated: <strong>{r.updated}</strong></span>
+                  <span className="text-amber-700">Conflicts: <strong>{r.conflicts}</strong></span>
+                  {r.errors > 0 && <span className="text-red-700">Errors: <strong>{r.errors}</strong></span>}
+                </div>
+              )}
+              {r.error_details?.length > 0 && (
+                <div className="mt-2 text-red-700 space-y-0.5">
+                  {r.error_details.map((e, i) => <div key={i}>{e}</div>)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <div className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Safety rules locked into the design</div>

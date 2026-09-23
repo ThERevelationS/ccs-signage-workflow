@@ -1,0 +1,47 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "smartsheet_scheduled_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_sync": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "smartsheetSyncAction",
+            "args": {
+              "action": "run_sync"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Run Smartsheet sync",
+            "description": "Push Base44 \u2192 Smartsheet"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Smartsheet Scheduled Sync",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7,12,17 * * 1-5",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Pushes Base44 Sales Pipeline and Order Form data to Smartsheet on a schedule. Only runs when global sync is enabled and observation mode is off."
+}
