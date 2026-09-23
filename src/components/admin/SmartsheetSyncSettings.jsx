@@ -43,6 +43,10 @@ import {
   setCustomerReviewDecision,
 } from "@/components/admin/smartsheetCustomerResolutionReviewModel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import {
+  enforceSmartsheetBackendSafety,
+  smartsheetWriteControlsLocked,
+} from "@/components/admin/smartsheetSyncSafetyModel";
 
 const SETTING_KEY = "smartsheetSyncConfig";
 const CUSTOMER_REVIEW_SETTING_KEY = "smartsheetCustomerResolutionReview";
@@ -84,13 +88,13 @@ const DEFAULT_CONFIG = {
   },
 };
 
-function mergeConfig(saved = {}) {
-  return {
+function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
+  return enforceSmartsheetBackendSafety({
     ...DEFAULT_CONFIG,
     ...(saved || {}),
     sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}) },
     orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}) },
-  };
+  }, { writeBackendAvailable });
 }
 
 function MappingPlan({ title, rows }) {
@@ -722,7 +726,7 @@ function DryRunPreviewCard({
   );
 }
 
-function IntegrationCard({ title, subtitle, value, onChange }) {
+function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked = true }) {
   const patch = (next) => onChange({ ...value, ...next });
   return (
     <div className="rounded-xl border border-gray-200 bg-white/70 p-4 space-y-4">
@@ -773,7 +777,11 @@ function IntegrationCard({ title, subtitle, value, onChange }) {
               <div className="text-sm font-medium text-gray-800">{label}</div>
               <div className="text-[11px] text-gray-500">{help}</div>
             </div>
-            <Switch checked={Boolean(value[key])} onCheckedChange={(checked) => patch({ [key]: checked })} />
+            <Switch
+              checked={Boolean(value[key])}
+              onCheckedChange={(checked) => patch({ [key]: checked })}
+              disabled={writeControlsLocked && key !== "importer_enabled"}
+            />
           </div>
         ))}
       </div>
@@ -1354,7 +1362,9 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setSaved(false);
     setError("");
     try {
-      const normalized = mergeConfig(config);
+      const normalized = mergeConfig(config, {
+        writeBackendAvailable: apiStatus?.write_actions_available === true,
+      });
       const savedRecord = await saveGlobalSettingValueIfUnchanged({
         entity: base44.entities.GlobalSettings,
         loadedRecord: record,
@@ -1637,14 +1647,22 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               <div className="text-sm font-medium">Global sync</div>
               <div className="text-[11px] text-gray-500">Emergency kill switch.</div>
             </div>
-            <Switch checked={config.global_enabled} onCheckedChange={(checked) => setConfig((c) => ({ ...c, global_enabled: checked }))} />
+            <Switch
+              checked={config.global_enabled}
+              onCheckedChange={(checked) => setConfig((c) => ({ ...c, global_enabled: checked }))}
+              disabled={smartsheetWriteControlsLocked(apiStatus)}
+            />
           </div>
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
             <div>
               <div className="text-sm font-medium">Observation mode</div>
               <div className="text-[11px] text-gray-500">Preview changes; perform no sync writes.</div>
             </div>
-            <Switch checked={config.observation_mode} onCheckedChange={(checked) => setConfig((c) => ({ ...c, observation_mode: checked }))} />
+            <Switch
+              checked={config.observation_mode}
+              onCheckedChange={(checked) => setConfig((c) => ({ ...c, observation_mode: checked }))}
+              disabled={smartsheetWriteControlsLocked(apiStatus)}
+            />
           </div>
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
             <div>
@@ -1690,6 +1708,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="WorkOrder Sales records will map to the Smartsheet Workflow sheet by stable IDs and approved field translations."
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
+        writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
       />
 
       <IntegrationCard
@@ -1697,6 +1716,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="Order records will map to the Smartsheet Order Request sheet, including controlled customer/work-order relationship setup."
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
+        writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
