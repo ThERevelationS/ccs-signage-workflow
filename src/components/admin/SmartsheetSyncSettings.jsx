@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Check, Loader2, RefreshCw, Save, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Check, Copy, Loader2, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import {
   loadSingleGlobalSetting,
   saveGlobalSettingValueIfUnchanged,
@@ -31,6 +31,11 @@ import {
   smartsheetProfileTargetLocked,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
 import { buildSmartsheetRolloutReadiness } from "@/components/admin/smartsheetRolloutReadinessModel";
+import {
+  buildSmartsheetMappingReview,
+  formatSmartsheetMappingReview,
+  sameSmartsheetReviewedMapping,
+} from "@/components/admin/smartsheetMappingReviewModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
 import { buildSmartsheetCreationReadiness } from "@/components/admin/smartsheetCreationReadinessModel";
@@ -869,7 +874,11 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [availableSheets, setAvailableSheets] = useState([]);
   const [columnPreview, setColumnPreview] = useState(null);
   const [liveMappingAnalysis, setLiveMappingAnalysis] = useState(null);
+  const [mappingReviewed, setMappingReviewed] = useState(false);
   const [dryRunPreview, setDryRunPreview] = useState(null);
+
+  const mappingReview = useMemo(() => buildSmartsheetMappingReview(liveMappingAnalysis), [liveMappingAnalysis]);
+  const mappingReviewReport = useMemo(() => formatSmartsheetMappingReview(liveMappingAnalysis), [liveMappingAnalysis]);
 
   const writesArmed = useMemo(() => Boolean(
     config.global_enabled &&
@@ -937,6 +946,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setLoading(true);
     setError("");
     setLiveMappingAnalysis(null);
+    setMappingReviewed(false);
     setDryRunPreview(null);
     try {
       const [loaded, loadedReview] = await Promise.all([
@@ -1012,6 +1022,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setApiLoading(true);
     setApiMessage("");
     setLiveMappingAnalysis(null);
+    setMappingReviewed(false);
     setDryRunPreview(null);
     try {
       await testSmartsheetConnection({ sessionToken });
@@ -1072,7 +1083,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const incompatible = readyResults.reduce((sum, result) => sum + Number(result.analysis.counts.incompatible || 0), 0);
       const unresolvedSheets = Object.values(results).length - readyResults.length;
       setApiMessage(
-        `Read-only live mapping analysis complete: ${matched} exact compatible field matches, ${missing} missing field matches, ${conflicts} field conflicts, ${incompatible} incompatible column matches, ${unresolvedSheets} unresolved target sheet${unresolvedSheets === 1 ? "" : "s"}. No settings or business data were changed.`
+        `Read-only live mapping analysis complete: ${matched} compatible name matches (including approved aliases), ${missing} missing, ${conflicts} conflicts, ${incompatible} incompatible, ${unresolvedSheets} unresolved target sheet${unresolvedSheets === 1 ? "" : "s"}. Review column meaning before saving permanent IDs. No settings or business data were changed.`
       );
     } catch (err) {
       setApiMessage(err?.message || "Smartsheet live mapping analysis failed.");
