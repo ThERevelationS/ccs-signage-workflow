@@ -309,8 +309,8 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
     <div className="flex h-full min-h-0 overflow-hidden bg-gray-50">
       <div className={`${selectedJurisdiction ? "hidden md:flex md:w-[420px] md:flex-none" : "flex w-full"} min-w-0 flex-col`}>
         <div className="bg-white border-b px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-purple-600" />
                 Jurisdictions
@@ -328,21 +328,21 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             <Button
               onClick={() => { setEditingJurisdiction(null); setShowForm(true); }}
               size="sm"
-              className="bg-purple-600 hover:bg-purple-700 gap-1"
+              className="min-h-11 w-full gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto"
             >
               <Plus className="w-4 h-4" /> Add
             </Button>
           </div>
 
-          <div className="flex gap-2 mb-3">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row">
             <Input
               value={aiDiscoverQuery}
               onChange={e => setAiDiscoverQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && aiDiscover()}
               placeholder="AI Discover: e.g. Jefferson County Kentucky..."
-              className="text-sm h-9"
+              className="min-h-11 text-sm"
             />
-            <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim()} size="sm" className="h-9 bg-purple-600 hover:bg-purple-700 gap-1 flex-shrink-0">
+            <Button onClick={aiDiscover} disabled={aiDiscoverLoading || !aiDiscoverQuery.trim()} size="sm" className="min-h-11 w-full flex-shrink-0 gap-1 bg-purple-600 hover:bg-purple-700 sm:w-auto">
               {aiDiscoverLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
               {aiDiscoverLoading ? "Researching..." : "Discover"}
             </Button>
@@ -353,7 +353,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Search jurisdiction names..."
-            className="text-sm h-8"
+            className="min-h-11 text-sm"
           />
           <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
             {[
@@ -369,7 +369,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
                 key={key}
                 type="button"
                 onClick={() => setTrustFilter(key)}
-                className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${colorClass} ${trustFilter === key ? "ring-2 ring-offset-1 ring-purple-300" : "opacity-80 hover:opacity-100"}`}
+                className={`min-h-11 whitespace-nowrap rounded-full border px-3 py-2 text-[11px] font-medium transition ${colorClass} ${trustFilter === key ? "ring-2 ring-offset-1 ring-purple-300" : "opacity-80 hover:opacity-100"}`}
               >
                 {label} ({count})
               </button>
