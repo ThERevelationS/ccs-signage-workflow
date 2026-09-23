@@ -1986,24 +1986,27 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     >
                                       <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
                                     </div>
-                                    <button 
+                                    <button
+                                      type="button"
                                       onClick={() => {
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed);
                                         const completedItems = dropdownConditions.filter(d => d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: false, order: continuedItems.length };
                                         saveDropdownConditions([...completedItems, ...continuedItems, movedItem]);
                                       }}
-                                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600"
-                                      title="Click to mark as Continued"
+                                      className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500 hover:bg-green-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
+                                      title={`Mark ${dd.name} as Continued`}
+                                      aria-label={`Mark condition ${dd.name} as Continued`}
                                     >
-                                      <Check className="w-3 h-3 text-white" />
+                                      <Check className="w-4 h-4 text-white lg:w-3 lg:h-3" aria-hidden="true" />
                                     </button>
                                     {editingDropdown === dd.id ? (
                                       <>
                                         <Input 
                                           id={`edit-${dd.id}`}
                                           defaultValue={dd.name} 
-                                          className="flex-1 h-6 text-sm" 
+                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6" 
+                                          aria-label={`Condition name ${dd.name}`}
                                           autoFocus
                                           onKeyDown={(e) => { 
                                             if (e.key === 'Enter') { 
@@ -2014,20 +2017,36 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                             if (e.key === 'Escape') setEditingDropdown(null); 
                                           }}
                                         />
-                                        <Button size="sm" className="h-6 px-2" onClick={() => {
+                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => {
                                           const input = document.getElementById(`edit-${dd.id}`);
                                           const newName = input?.value.trim();
                                           if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
                                           setEditingDropdown(null);
-                                        }}><Save className="w-3 h-3" /></Button>
+                                        }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                       </>
                                     ) : (
                                       <>
-                                        <span className="flex-1 truncate">{dd.name}</span>
-                                        <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                        <span className="min-w-0 flex-1 truncate">{dd.name}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingDropdown(dd.id)}
+                                          className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
+                                          aria-label={`Rename condition ${dd.name}`}
+                                          title={`Rename condition ${dd.name}`}
+                                        >
+                                          <Pencil className="w-4 h-4 text-gray-500 lg:w-3 lg:h-3" aria-hidden="true" />
+                                        </button>
                                       </>
                                     )}
-                                    <button onClick={() => requestDeleteCondition(dd)} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button
+                                      type="button"
+                                      onClick={() => requestDeleteCondition(dd)}
+                                      className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-7 lg:w-7"
+                                      aria-label={`Delete condition ${dd.name}`}
+                                      title={`Delete condition ${dd.name}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500 lg:w-3 lg:h-3" aria-hidden="true" />
+                                    </button>
                                   </div>
                                 )}
                               </Draggable>
@@ -2075,24 +2094,27 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     >
                                       <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
                                     </div>
-                                    <button 
+                                    <button
+                                      type="button"
                                       onClick={() => {
                                         const completedItems = dropdownConditions.filter(d => d.is_completed);
                                         const continuedItems = dropdownConditions.filter(d => !d.is_completed && d.id !== dd.id);
                                         const movedItem = { ...dd, is_completed: true, order: completedItems.length };
                                         saveDropdownConditions([...completedItems, movedItem, ...continuedItems]);
                                       }}
-                                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600"
-                                      title="Click to mark as Completed"
+                                      className="h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-500 hover:bg-yellow-600 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-600 focus-visible:ring-offset-2 lg:h-7 lg:w-7"
+                                      title={`Mark ${dd.name} as Completed`}
+                                      aria-label={`Mark condition ${dd.name} as Completed`}
                                     >
-                                      <span className="text-white text-xs font-bold">C</span>
+                                      <span className="text-white text-sm font-bold lg:text-xs" aria-hidden="true">C</span>
                                     </button>
                                     {editingDropdown === dd.id ? (
                                       <>
                                         <Input 
                                           id={`edit-${dd.id}`}
                                           defaultValue={dd.name} 
-                                          className="flex-1 h-6 text-sm" 
+                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6" 
+                                          aria-label={`Condition name ${dd.name}`}
                                           autoFocus
                                           onKeyDown={(e) => { 
                                             if (e.key === 'Enter') { 
@@ -2103,20 +2125,36 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                             if (e.key === 'Escape') setEditingDropdown(null); 
                                           }}
                                         />
-                                        <Button size="sm" className="h-6 px-2" onClick={() => {
+                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => {
                                           const input = document.getElementById(`edit-${dd.id}`);
                                           const newName = input?.value.trim();
                                           if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
                                           setEditingDropdown(null);
-                                        }}><Save className="w-3 h-3" /></Button>
+                                        }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                       </>
                                     ) : (
                                       <>
-                                        <span className="flex-1 truncate">{dd.name}</span>
-                                        <button onClick={() => setEditingDropdown(dd.id)} className="p-1 hover:bg-gray-100 rounded"><Pencil className="w-3 h-3 text-gray-400" /></button>
+                                        <span className="min-w-0 flex-1 truncate">{dd.name}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditingDropdown(dd.id)}
+                                          className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
+                                          aria-label={`Rename condition ${dd.name}`}
+                                          title={`Rename condition ${dd.name}`}
+                                        >
+                                          <Pencil className="w-4 h-4 text-gray-500 lg:w-3 lg:h-3" aria-hidden="true" />
+                                        </button>
                                       </>
                                     )}
-                                    <button onClick={() => requestDeleteCondition(dd)} className="p-1 hover:bg-red-50 rounded"><Trash2 className="w-3 h-3 text-red-500" /></button>
+                                    <button
+                                      type="button"
+                                      onClick={() => requestDeleteCondition(dd)}
+                                      className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-7 lg:w-7"
+                                      aria-label={`Delete condition ${dd.name}`}
+                                      title={`Delete condition ${dd.name}`}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500 lg:w-3 lg:h-3" aria-hidden="true" />
+                                    </button>
                                   </div>
                                 )}
                               </Draggable>
