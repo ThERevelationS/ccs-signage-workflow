@@ -279,4 +279,27 @@ assert.equal(buildSmartsheetControlledCreationProposals({
   customers, blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales, columnBindings: salesBinding,
 }).state, "baseline_required");
 
+const existingDuplicate = buildSmartsheetControlledCreationProposals({
+  rows: [source("s-existing-duplicate", 15, { client_name: "Acme Old", title: "Pylon sign" })],
+  creationReadiness: {
+    state: "ready",
+    rows: [{
+      row_id: "s-existing-duplicate",
+      ready_for_controlled_create_review: true,
+      blockers: [],
+      customer: { ready: true, state: "exact_existing", customer_id: "customer-1" },
+    }],
+  },
+  dataset: "sales",
+  sheetId: SALES_ID,
+  customers,
+  base44Records: [{ id: "existing-wo", customer_id: "customer-1", title: "Pylon sign" }],
+  blueprint: SMARTSHEET_MAPPING_BLUEPRINTS.sales,
+  columnBindings: salesBinding,
+  today,
+});
+assert.equal(existingDuplicate.rows[0].proposal_ready, false);
+assert.ok(has(existingDuplicate.rows[0], "possible_duplicate_base44_record"),
+  "An existing Base44 record with matching Customer and title must block a duplicate proposal");
+
 console.log("Smartsheet controlled creation proposal regression: PASS");
