@@ -20,6 +20,12 @@ import {
   enforceSmartsheetBackendSafety,
   smartsheetWriteControlsLocked,
 } from "../src/components/admin/smartsheetSyncSafetyModel.js";
+import {
+  buildSmartsheetBaselinePreflight,
+  smartsheetAnalysisMatchesProfile,
+  smartsheetDryRunMatchesAnalysis,
+  smartsheetTargetIdentity,
+} from "../src/components/admin/smartsheetMappingFreshnessModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -105,6 +111,62 @@ const systemManagedWrite = analyzeSmartsheetColumns([
 ], [{ id: "301", title: "Job Description", type: "TEXT_NUMBER", system_column_type: "AUTO_NUMBER" }]);
 assert(systemManagedWrite.counts.incompatible === 1, "A future writable mapping must reject system-managed Smartsheet columns.");
 assert(systemManagedWrite.fields[0].compatibility.reason.includes("System-managed"), "System-column mismatch should explain why binding is blocked.");
+
+const salesMappingResult = {
+  status: "ready",
+  sheet: { id: "8702703019812740", name: "Workflow" },
+  analysis: compatibleAnalysis,
+};
+const ordersMappingResult = {
+  status: "ready",
+  sheet: { id: "4963691473987460", name: "Order Request" },
+  analysis: compatibleAnalysis,
+};
+const mappingConfig = {
+  sales: { smartsheet_sheet_id: "8702703019812740", smartsheet_sheet_name: "Workflow" },
+  orders: { smartsheet_sheet_id: "4963691473987460", smartsheet_sheet_name: "Order Request" },
+};
+assert(smartsheetTargetIdentity(mappingConfig.sales) === "id:8702703019812740", "Permanent sheet ID must be the target identity when present.");
+assert(smartsheetAnalysisMatchesProfile(salesMappingResult, mappingConfig.sales) === true, "Fresh mapping evidence must match the configured permanent sheet ID.");
+assert(smartsheetAnalysisMatchesProfile(salesMappingResult, { ...mappingConfig.sales, smartsheet_sheet_id: "999" }) === false,
+  "Changing a configured sheet ID must stale the earlier live mapping analysis.");
+const syntheticBindings = Object.fromEntries(Object.entries(compatibleBinding.column_bindings).map(([field, binding]) => [field, { ...binding }]));
+const freshDryRun = {
+  sales: {
+    sheet_id: "8702703019812740", total_row_count: 2, returned_row_count: 2,
+    column_bindings: syntheticBindings, preview: { rows: [{ row_id: "s1" }, { row_id: "s2" }] },
+  },
+  orders: {
+    sheet_id: "4963691473987460", total_row_count: 2, returned_row_count: 2,
+    column_bindings: syntheticBindings, preview: { rows: [{ row_id: "o1" }, { row_id: "o2" }] },
+  },
+};
+assert(smartsheetDryRunMatchesAnalysis(freshDryRun.sales, salesMappingResult, mappingConfig.sales) === true,
+  "Row preview must retain the exact live mapping column IDs it was built from.");
+const readyPreflight = buildSmartsheetBaselinePreflight({
+  dryRunPreview: freshDryRun,
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  config: mappingConfig,
+});
+assert(readyPreflight.ready === true, "Matching fresh mapping evidence and complete previews should pass baseline preflight.");
+const changedTargetPreflight = buildSmartsheetBaselinePreflight({
+  dryRunPreview: freshDryRun,
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  config: { ...mappingConfig, sales: { ...mappingConfig.sales, smartsheet_sheet_id: "999" } },
+});
+assert(changedTargetPreflight.ready === false, "Changing a target sheet after Preview Rows must block baseline capture.");
+const changedBindingPreview = {
+  ...freshDryRun.sales,
+  column_bindings: { ...syntheticBindings, customer: { column_id: "different-column" } },
+};
+assert(smartsheetDryRunMatchesAnalysis(changedBindingPreview, salesMappingResult, mappingConfig.sales) === false,
+  "Changing a preview binding must stale that preview against the live mapping analysis.");
+const partialPreviewPreflight = buildSmartsheetBaselinePreflight({
+  dryRunPreview: { ...freshDryRun, orders: { ...freshDryRun.orders, returned_row_count: 1 } },
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  config: mappingConfig,
+});
+assert(partialPreviewPreflight.ready === false, "A partial full-sheet preview must block baseline capture.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
