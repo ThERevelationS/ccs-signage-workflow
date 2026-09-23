@@ -33,10 +33,10 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
       onClick={() => onSelect(jurisdiction)}
     >
       <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-gray-900 text-sm">{jurisdiction.name}</h3>
+              <h3 className="min-w-0 break-words font-semibold text-gray-900 text-sm">{jurisdiction.name}</h3>
               <Badge variant="outline" className="text-xs">{jurisdiction.state}</Badge>
               <Badge className="text-xs bg-gray-100 text-gray-600 capitalize">{jurisdiction.type}</Badge>
             </div>
@@ -64,23 +64,29 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
               </a>
             )}
           </div>
-          <div className="flex gap-1 flex-shrink-0">
+          <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0 sm:gap-1">
             <Button
-              variant="ghost" size="icon"
-              className="h-7 w-7"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 min-w-11 flex-1 gap-1.5 px-3 sm:flex-none sm:px-2.5"
               onClick={(e) => { e.stopPropagation(); onRefresh(jurisdiction); }}
               disabled={isRefreshing}
               title="AI Refresh"
+              aria-label={`Refresh ${jurisdiction.name}`}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-500' : 'text-gray-400'}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-500' : 'text-gray-500'}`} />
+              <span className="sm:hidden">{isRefreshing ? "Refreshing" : "Refresh"}</span>
             </Button>
             <Button
-              variant="ghost" size="icon"
-              className="h-7 w-7"
+              variant="ghost"
+              size="sm"
+              className="min-h-11 min-w-11 flex-1 gap-1.5 px-3 sm:flex-none sm:px-2.5"
               onClick={(e) => { e.stopPropagation(); onEdit(jurisdiction); }}
               title="Edit"
+              aria-label={`Edit ${jurisdiction.name}`}
             >
-              <Edit className="w-3.5 h-3.5 text-gray-400" />
+              <Edit className="w-4 h-4 text-gray-500" />
+              <span className="sm:hidden">Edit</span>
             </Button>
           </div>
         </div>
