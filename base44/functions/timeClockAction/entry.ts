@@ -3307,8 +3307,8 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, recovered: true, error: 'A previous interrupted manager approval was recovered. Reload the correction queue before taking another action.' }, { status: 409 });
         }
 
-        if (staleAudit?.outcome === 'confirmed') {
-          return Response.json({ success: false, error: 'The abandoned review has a confirmed correction audit but no matching TimeEntry marker. Admin investigation is required.' }, { status: 409 });
+        if (staleAudit?.id && ['confirmed', 'recovered'].includes(String(staleAudit.outcome || ''))) {
+          return Response.json({ success: false, error: 'The abandoned review has a terminal correction audit but no matching TimeEntry marker. Admin investigation is required.' }, { status: 409 });
         }
         if (staleAudit?.id && staleAudit.outcome === 'pending') {
           await auditEntity.updateMany({ id: staleAudit.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
@@ -3384,14 +3384,14 @@ Deno.serve(async (req) => {
           );
           if (!recoveredAudit || recoveredAudit.updated !== 1) {
             const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
-            if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied, but its audit could not be finalized. Retry the same review.' }, { status: 409 });
+            if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied, but its audit could not be finalized. Retry the same review.' }, { status: 409 });
             correctionAudit = freshAudit;
           } else {
             correctionAudit = await auditEntity.get(correctionAudit.id);
           }
         }
-        if (correctionAudit.outcome !== 'confirmed') {
-          return Response.json({ success: false, error: 'The applied correction has a non-confirmed audit state. Admin investigation is required.' }, { status: 409 });
+        if (!['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
+          return Response.json({ success: false, error: 'The applied correction has a non-terminal audit state. Admin investigation is required.' }, { status: 409 });
         }
         correctionAuditId = correctionAudit.id;
       } else {
@@ -3474,7 +3474,7 @@ Deno.serve(async (req) => {
         );
         if (!auditFinalized || auditFinalized.updated !== 1) {
           const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
-          if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The TimeEntry correction was applied, but its audit finalization was interrupted. Retry this same review.' }, { status: 409 });
+          if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The TimeEntry correction was applied, but its audit finalization was interrupted. Retry this same review.' }, { status: 409 });
         }
       }
 
@@ -3615,7 +3615,7 @@ Deno.serve(async (req) => {
           );
           if (!auditFinalized || auditFinalized.updated !== 1) {
             const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-            if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved but its audit is still being finalized. Retry this same correction request.' }, { status: 409 });
+            if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved but its audit is still being finalized. Retry this same correction request.' }, { status: 409 });
           }
         }
         if (savedForceClose) {
