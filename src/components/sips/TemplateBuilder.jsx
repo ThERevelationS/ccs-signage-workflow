@@ -946,7 +946,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   value={task.assigned_to || ""} 
                   onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, null, task.id)}
                   placeholder="Assign..." 
-                  className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-20" 
+                  className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-20"
                   list={`users-${task.id}`}
                   aria-label={`Assign task ${task.text}`}
                 />
@@ -1061,7 +1061,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         value={task.assigned_to || ""} 
                         onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, detail.id, task.id)}
                         placeholder="Assign..." 
-                        className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-16" 
+                        className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-16"
                         list={`users-detail-${task.id}`}
                         aria-label={`Assign detail task ${task.text}`}
                       />
