@@ -228,6 +228,40 @@ const staleNew = preview("orders", [
 ], orderBaseline, decision("orders", ORDERS_ID, "Acme Old", "create_new_customer"), ordersBinding);
 assert.ok(has(row(staleNew, "o-stale-new"), "new_customer_matches_existing"));
 
+const blockedDependent = preview("orders", [
+  source("o-approved-missing", 3, {
+    customer_name: "Fresh Order Co", request_type: "Vinyl", description: "",
+  }, newName),
+], orderBaseline, orderDecisions, ordersBinding);
+assert.equal(row(blockedDependent, "o-approved-missing").proposal_ready, false);
+assert.equal(row(blockedDependent, "o-approved-missing").customer?.kind, "new_customer",
+  "An approved Customer and blocked dependent Order must still preview as one bundle");
+assert.ok(has(row(blockedDependent, "o-approved-missing"), "missing_description"));
+
+const similarNew = preview("orders", [
+  source("o-similar", 3, {
+    customer_name: "Acme Signz", request_type: "Other", description: "Test duplicate risk",
+  }, {
+    outcome: "close_review",
+    candidates: [{ customer_id: "customer-1", company_name: "Acme Signs" }],
+  }),
+], orderBaseline, decision("orders", ORDERS_ID, "Acme Signz", "create_new_customer"), ordersBinding);
+assert.ok(has(row(similarNew, "o-similar"), "similar_customer_risk"),
+  "Approval does not hide a near-match existing-Customer risk");
+
+const conflictingAlias = preview("sales", [
+  source("s-alias-conflict", 4, { client_name: "Other Old", title: "Conflicting alias" }, {
+    outcome: "close_review",
+    recommended_customer_id: "customer-1",
+    recommended_company_name: "Acme Signs",
+    candidates: [{ customer_id: "customer-1", company_name: "Acme Signs" }],
+  }),
+], salesBaseline, decision("sales", SALES_ID, "Other Old", "use_existing_customer", {
+  customer_id: "customer-1", company_name: "Acme Signs", remember_alias: true,
+}), salesBinding);
+assert.ok(has(row(conflictingAlias, "s-alias-conflict"), "alias_conflict"),
+  "Approved alias belonging to another Customer must block the proposal");
+
 const noReview = preview("sales", [
   source("s-later-approved", 2, { client_name: "New Decision Co", title: "New quote" }, newName),
 ], salesBaseline, {}, salesBinding);
