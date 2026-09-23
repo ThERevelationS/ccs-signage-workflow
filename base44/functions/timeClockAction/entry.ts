@@ -2802,37 +2802,54 @@ Deno.serve(async (req) => {
         }
       }
 
-      let updateAudit: any = null;
-      try {
-        const ensured = await ensureUserActionAudit(auditEntity, {
-          action: 'time_off_request_update',
-          outcome: 'confirmed',
-          user_email: target.email,
-          user_name: target.full_name || target.email,
-          actor_email: actorEmail,
-          actor_role: actor.role,
-          authentication_method: authenticationMethodFor(actor, target),
+      // A saved edit is never success without the exact record fields, request marker,
+      // and a confirmed/recovered audit for this employee and request id.
+      if (!requestRecord?.id ||
+        String(requestRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), updatePayloadHash) ||
+        !updatedFieldsMatch(requestRecord)) {
+        return Response.json({ success: false, error: 'The saved time-off edit no longer matches its audit intent. Admin investigation is required.' }, { status: 409 });
+      }
+
+      const finalOutcome = hadPendingAudit || sameRequestSaved ? 'recovered' : 'confirmed';
+      const finalized = await auditEntity.updateMany(
+        { id: updateIntent.id, outcome: 'pending', request_id: requestId, user_email: target.email },
+        { $set: {
+          outcome: finalOutcome,
           server_timestamp: new Date().toISOString(),
-          request_id: requestId,
-          reason,
           details: {
+            ...(updateIntent.details || {}),
             payload_hash: updatePayloadHash,
-            time_off_request_id: requestRecord.id,
-            expected_updated_date: expectedUpdatedDate,
-            request_type: requestType,
-            start_date: startDate,
-            end_date: endDate,
-            hours_requested: hoursRequested,
+            time_off_request_id: timeOffRequestId,
+            saved_updated_date: requestRecord.updated_date,
+            requested_fields: requestedFields,
           },
-        }, 'Time-off request update audit');
-        updateAudit = ensured.audit;
-      } catch {
-        return Response.json({ success: false, retry_same_request: true, error: 'The time-off request update was saved but its audit could not be confirmed. Retry the same update.' }, { status: 409 });
+        } },
+      );
+      if (!finalized || finalized.updated !== 1) {
+        const fresh = await uniqueRow(auditEntity, auditQuery, 'Time-off update audit finalization');
+        if (!fresh?.id || fresh.id !== updateIntent.id ||
+          !['confirmed', 'recovered'].includes(String(fresh.outcome || '')) ||
+          !constantTimeEqual(String(fresh.details?.payload_hash || ''), updatePayloadHash) ||
+          String(fresh.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The time-off edit was saved but its audit finalization is incomplete. Retry the same update.' }, { status: 409 });
+        }
+        updateIntent = fresh;
+      } else {
+        updateIntent = await uniqueRow(auditEntity, auditQuery, 'Confirmed time-off edit audit');
       }
-      if (String(updateAudit?.details?.payload_hash || '') && !constantTimeEqual(String(updateAudit.details.payload_hash), updatePayloadHash)) {
-        return Response.json({ success: false, error: 'The time-off update audit is bound to different details. Admin investigation is required.' }, { status: 409 });
+
+      const confirmedRecord = await timeOffRequestEntity.get(timeOffRequestId).catch(() => null);
+      if (!updateIntent?.id || !['confirmed', 'recovered'].includes(String(updateIntent.outcome || '')) ||
+        !constantTimeEqual(String(updateIntent.details?.payload_hash || ''), updatePayloadHash) ||
+        String(updateIntent.details?.time_off_request_id || '') !== timeOffRequestId ||
+        !confirmedRecord?.id || asEmail(confirmedRecord.user_email) !== target.email ||
+        String(confirmedRecord.last_request_id || '') !== requestId ||
+        !constantTimeEqual(String(confirmedRecord.last_request_payload_hash || ''), updatePayloadHash) ||
+        !updatedFieldsMatch(confirmedRecord)) {
+        return Response.json({ success: false, error: 'The time-off edit and confirmed audit do not agree. Admin investigation is required.' }, { status: 409 });
       }
-      return Response.json({ success: true, request: requestRecord, audit_id: updateAudit.id, reused: String(requestRecord.last_request_id || '') === requestId && Boolean(priorUpdateAudit?.id) });
+      return Response.json({ success: true, request: confirmedRecord, audit_id: updateIntent.id, reused: finalOutcome === 'recovered' });
     }
 
     if (action === 'list_correction_requests') {
