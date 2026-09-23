@@ -1464,7 +1464,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             </div>
           )}
 
-          {apiMessage && <div className="text-xs">{apiMessage}</div>
+          {apiMessage && <div className="text-xs">{apiMessage}</div>}
 
           {availableSheets.length > 0 && (
             <div className="rounded-md border border-blue-200 bg-white/70 p-2">
