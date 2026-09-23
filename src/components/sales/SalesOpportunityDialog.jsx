@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -167,7 +168,7 @@ export default function SalesOpportunityDialog({
     .slice()
     .sort((a, b) => String(b?.timestamp || "").localeCompare(String(a?.timestamp || "")))
     .slice(0, 5), [workOrder?.work_notes]);
-  const taskOwners = useMemo(() => users.filter((user) => user.full_name && user.sales_roles?.includes("Task Assigned")), [users]);
+
   const attachedFiles = Array.isArray(workOrder?.files) ? workOrder.files : [];
   const previewFiles = attachedFiles.slice(0, 4);
   const coreBridgeUrl = safeExternalHttpUrl(workOrder?.corbridge_link);
@@ -363,18 +364,7 @@ export default function SalesOpportunityDialog({
                 <div><Label className="text-xs text-gray-500">Task deadline</Label><Input type="date" value={workOrder.current_task_deadline || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_deadline: event.target.value })} className="mt-1 h-11 sm:h-9" /></div>
                 <div>
                   <Label className="text-xs text-gray-500">Task owner</Label>
-                  <Select
-                    value={workOrder.current_task_assigned_to || "__unassigned__"}
-                    onValueChange={(value) => update({ current_task_assigned_to: value === "__unassigned__" ? "" : value })}
-                    disabled={!isRegistered || closeout}
-                  >
-                    <SelectTrigger className="mt-1 h-11 sm:h-9"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                      {workOrder.current_task_assigned_to && !taskOwners.some((user) => user.full_name === workOrder.current_task_assigned_to) && <SelectItem value={workOrder.current_task_assigned_to}>{workOrder.current_task_assigned_to}</SelectItem>}
-                      {taskOwners.map((user) => <SelectItem key={user.email || user.id} value={user.full_name}>{user.full_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <TaskAssigneeSelect key={workOrder.id} value={workOrder.current_task_assigned_to || ""} users={users} disabled={!isRegistered || closeout} onChange={(name) => update({ current_task_assigned_to: name })} className="mt-1 h-11 sm:h-9" context={workOrder.client_name || "this opportunity"} />
                 </div>
                 <div className="sm:col-span-2"><Label className="text-xs text-gray-500">{closeout ? "Last planned action / task" : "Next action / task"}</Label><Input value={workOrder.current_task_description || ""} disabled={!isRegistered || closeout} onChange={(event) => update({ current_task_description: event.target.value })} placeholder="What needs to happen next?" className="mt-1 h-11 sm:h-9" /></div>
               </div>

@@ -2364,7 +2364,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         {globalSettingsWarning}
         {archivePagingNotice}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-          <SalesPipelineMobileCards
+          <SalesPipelineMobileCards users={users}
             workOrders={filteredWorkOrders}
             onOpenDetails={openOpportunityDetails}
             onUpdateWorkOrder={updateWorkOrder}

@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { CheckCircle2 } from "lucide-react";
 import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
@@ -28,7 +29,7 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [] }) {
+export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
   return (
     <div className="space-y-2 p-1.5">
       {workOrders.map((wo) => {
@@ -75,6 +76,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                   </Select>
                 </div>
               )}
+            </div>
+
+            <div className="mb-3" onClick={(event) => event.stopPropagation()}>
+              <div className="mb-1 text-xs text-muted-foreground">Task assigned to</div>
+              <TaskAssigneeSelect value={wo.current_task_assigned_to || ""} users={users} disabled={!isRegistered || !isOpen} onChange={(name) => onUpdateWorkOrder?.(wo.id, "current_task_assigned_to", name)} context={wo.client_name || "this opportunity"} />
             </div>
 
             {wo.current_task_description && (

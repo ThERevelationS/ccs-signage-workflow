@@ -5,7 +5,8 @@ import {
 } from "./smartsheetCustomerResolutionModel.js";
 import { buildSmartsheetRolloutPreview } from "./smartsheetRolloutModel.js";
 import { buildSmartsheetCreationReadiness } from "./smartsheetCreationReadinessModel.js";
-import { normalizeCombinedNotesText, resolveSmartsheetPerson, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
+import { normalizeCombinedNotesText, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
+import { resolveSmartsheetTaskAssignee } from "./smartsheetTaskAssigneeModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -56,7 +57,7 @@ function candidateKey(values, fields) {
   return parts.every(Boolean) ? parts.join("\u0001") : "";
 }
 
-function compareMappedFields({ rowValues, record, blueprint, columnBindings, authorizedUsers = [] }) {
+function compareMappedFields({ rowValues, record, blueprint, columnBindings, authorizedUsers = [], customAssigneeNames = [] }) {
   const differences = [];
   for (const field of blueprint || []) {
     if (field?.direction === "base44_only") continue;
@@ -69,9 +70,9 @@ function compareMappedFields({ rowValues, record, blueprint, columnBindings, aut
     const base44Value = normalizeComparable(base44RawValue, field.transform);
     let translationState = "";
     if (field.field === "current_task_assigned_to" && normalizeWhitespace(sheetRawValue)) {
-      const resolution = resolveSmartsheetPerson(sheetRawValue, authorizedUsers);
+      const resolution = resolveSmartsheetTaskAssignee(sheetRawValue, authorizedUsers, customAssigneeNames);
       translationState = resolution.state;
-      if (resolution.user?.full_name) sheetValue = normalizeComparable(resolution.user.full_name, field.transform);
+      if (resolution.name) sheetValue = normalizeComparable(resolution.name, field.transform);
     }
     if (sheetValue !== base44Value) {
       differences.push({
@@ -118,6 +119,7 @@ export function buildSmartsheetDryRunPreview({
   rolloutBaseline = null,
   customerReviewState = null,
   authorizedUsers = [],
+  customAssigneeNames = [],
 } = {}) {
   const safeSheetId = String(sheetId || "");
   const directByRowId = new Map();
@@ -183,7 +185,7 @@ export function buildSmartsheetDryRunPreview({
     }
 
     const differences = matchedRecord
-      ? compareMappedFields({ rowValues, record: matchedRecord, blueprint, columnBindings, authorizedUsers })
+      ? compareMappedFields({ rowValues, record: matchedRecord, blueprint, columnBindings, authorizedUsers, customAssigneeNames })
       : [];
 
     const meaningful = hasMeaningfulMappedValue(rowValues);

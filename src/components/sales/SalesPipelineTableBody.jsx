@@ -1,4 +1,5 @@
 import React from "react";
+import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,13 +176,7 @@ export default function SalesPipelineTableBody({
               )}
               {isColumnVisible("current_task_assigned_to") && (
                 <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_assigned_to", "Task Assigned", wo.current_task_assigned_to)}>
-                  <Select value={wo.current_task_assigned_to || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)} disabled={!isRegistered || !isOpen}>
-                    <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.current_task_assigned_to || "-"}</SelectValue></SelectTrigger>
-                    <SelectContent>
-                      {wo.current_task_assigned_to && !users.some(u => u.full_name === wo.current_task_assigned_to && u.sales_roles?.includes("Task Assigned")) && <SelectItem key={wo.current_task_assigned_to} value={wo.current_task_assigned_to}>{wo.current_task_assigned_to}</SelectItem>}
-                      {users.filter(u => u.sales_roles?.includes("Task Assigned")).map(u => <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <TaskAssigneeSelect key={wo.id} value={wo.current_task_assigned_to || ""} users={users} onChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)} disabled={!isRegistered || !isOpen} className="h-7 text-xs border-0 bg-transparent px-1" context={wo.client_name || "this opportunity"} />
                 </td>
               )}
               {isColumnVisible("designer") && (

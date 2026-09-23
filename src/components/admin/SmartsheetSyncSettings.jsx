@@ -45,6 +45,8 @@ import {
   buildSmartsheetControlledCreationProposals,
 } from "@/components/admin/smartsheetControlledCreationProposalModel";
 import SmartsheetControlledCreationProposalsCard from "@/components/admin/SmartsheetControlledCreationProposalsCard";
+import SmartsheetCustomAssigneesCard from "@/components/admin/SmartsheetCustomAssigneesCard";
+import { CUSTOM_ASSIGNEE_SETTING_KEY } from "@/components/admin/smartsheetTaskAssigneeModel";
 import { buildSmartsheetRolloutBaseline } from "@/components/admin/smartsheetRolloutModel";
 import {
   buildCreateNewCustomerDecision,
@@ -191,7 +193,8 @@ function VocabularyReviewCard({ review }) {
             item.option + " (" + item.candidates.join(" / ") + ")").join(", ") || "None"}</div>
           <div className="mt-1 break-words"><strong>Base44 users absent from picklist:</strong> {review.owners.base44Only.map((item) =>
             item.full_name + " (suggested: " + item.suggested_option + ")").join(", ") || "None"}</div>
-          <p className="mt-2 text-amber-800">Unknown names require explicit identity review; never guess a matching user.</p>
+          <div className="mt-1 break-words"><strong>Confirmed custom names (not users):</strong> {(review.owners.confirmedCustom || []).join(", ") || "None"}</div>
+          <p className="mt-2 text-amber-800">Unmatched names require identity review or explicit custom-name confirmation below; never guess a matching user.</p>
         </div>
       </div>
       <p className="mt-2 text-amber-800">
@@ -1009,6 +1012,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS[dataset],
         columnBindings: snapshot?.column_bindings || {},
         authorizedUsers: dryRunPreview.authorized_user_catalog || [],
+        customAssigneeNames: dataset === "sales" ? dryRunPreview.custom_assignee_names || [] : [],
       });
       return { creationReadiness, proposals };
     };
@@ -1099,7 +1103,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   };
 
   const fetchVocabularyEvidence = async () => {
-    const [leadSourceSetting, taskSetting, authorizedUsers] = await Promise.all([
+    const [leadSourceSetting, taskSetting, authorizedUsers, customAssigneeSetting] = await Promise.all([
       loadSingleGlobalSetting({
         entity: base44.entities.GlobalSettings,
         settingKey: "salesLeadSources",
@@ -1117,6 +1121,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         maxRows: 1000,
         label: "Smartsheet vocabulary review task-assignee roster",
       }),
+      loadSingleGlobalSetting({ entity: base44.entities.GlobalSettings, settingKey: CUSTOM_ASSIGNEE_SETTING_KEY, label: "Confirmed custom assigned names" }),
     ]);
     const taskDescriptions = taskSetting?.setting_value?.items;
     if (!Array.isArray(taskDescriptions)) {
@@ -1126,6 +1131,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     return {
       leadSources: Array.isArray(savedLeadSources) ? savedLeadSources : [...DEFAULT_SALES_LEAD_SOURCES],
       leadSourcesSaved: Array.isArray(savedLeadSources),
+      customAssigneeSetting,
       taskDescriptions,
       authorizedUsers: authorizedUsers.map(({ id, full_name, is_active, sales_roles }) => ({
         id, full_name, is_active, sales_roles,
@@ -1246,7 +1252,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       setVocabularyEvidence(freshVocabularyEvidence);
       setMappingReviewed(false);
       setDryRunPreview(null);
-      throw new Error("Base44 lead sources, task choices, or task-assignee roster changed since the review. Review the refreshed vocabulary and confirm again.");
+      throw new Error("Base44 lead sources, task choices, assignee roster, or custom-name approvals changed since the review. Review the refreshed vocabulary and confirm again.");
+    }
+    if (!smartsheetVocabularyReadyForBinding(buildSmartsheetVocabularyReview({ liveMappingAnalysis: refreshed, ...freshVocabularyEvidence }))) {
+      setMappingReviewed(false);
+      setDryRunPreview(null);
+      throw new Error("Vocabulary or assigned-name review is incomplete. Reconcile it before binding, previewing, or baseline capture.");
     }
     return refreshed;
   };
@@ -1384,6 +1395,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         rolloutBaseline: config.sales.rollout_baseline,
         customerReviewState: customerReview,
         authorizedUsers,
+        customAssigneeNames: vocabularyReview?.owners?.customNames || [],
       });
       const orderPreview = buildSmartsheetDryRunPreview({
         sheetId: orderBinding.smartsheet_sheet_id,
@@ -1415,6 +1427,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           company_name: customer.company_name,
           legacy_client_names: customer.legacy_client_names || [],
         })),
+        custom_assignee_names: vocabularyReview?.owners?.customNames || [],
         authorized_user_catalog: authorizedUsers.map((user) => ({
           id: user.id,
           full_name: user.full_name || "",
@@ -1759,7 +1772,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               <Button type="button" size="sm" variant="outline" onClick={discoverSheets} disabled={apiLoading || !apiStatus?.configured}>
                 Discover Sheets
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={analyzeLiveMappings} disabled={apiLoading || !apiStatus?.configured}>
+              <Button type="button" size="sm" variant="outline" onClick={analyzeLiveMappings} disabled={saving || apiLoading || !apiStatus?.configured}>
                 Analyze Live Mapping
               </Button>
             </div>
@@ -1906,6 +1919,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                   </div>
                 )}
                 <VocabularyReviewCard review={vocabularyReview} />
+                <SmartsheetCustomAssigneesCard review={vocabularyReview} result={liveMappingAnalysis.sales} loadedRecord={vocabularyEvidence?.customAssigneeSetting} sessionToken={sessionToken} disabled={apiLoading || saving} onBusyChange={setSaving} onChanged={() => {
+                  setMappingReviewed(false);
+                  setDryRunPreview(null);
+                  setVocabularyEvidence(null);
+                  setLiveMappingAnalysis(null);
+                  setApiMessage("Custom-name confirmation saved; no user or business records changed. Run Analyze Live Mapping again to refresh all review gates.");
+                }} />
                 <details className="rounded-md border border-violet-200 bg-white p-2 text-[11px]">
                   <summary className="cursor-pointer font-semibold text-violet-900">View full mapping report (manual copy fallback)</summary>
                   <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-all text-[10px] text-slate-700">{mappingReviewReport}</pre>
@@ -1918,7 +1938,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     disabled={!liveMappingsReadyToBind || !vocabularyReadyToBind || apiLoading || saving}
                     className="mt-0.5 h-4 w-4 shrink-0 accent-violet-700"
                   />
-                  <span>I have reviewed both complete mappings, including Notes ↔ Base44 work-notes translation, Lead Source and Current Task vocabulary reconciliation, task-owner user translation, differently named fields, and Request Type options. I confirm these columns and translation rules represent the intended business information. Saving IDs will not activate sync or create any records.</span>
+                  <span>I have reviewed both complete mappings, including Notes ↔ Base44 work-notes translation, Lead Source and Current Task vocabulary reconciliation, task-owner user translation or confirmed custom names, differently named fields, and Request Type options. I confirm these columns and translation rules represent the intended business information. Saving IDs will not activate sync or create any records.</span>
                 </label>
               </div>
               <LiveMappingAnalysisCard title="Sales Pipeline ↔ Workflow" result={liveMappingAnalysis.sales} />

@@ -1,9 +1,9 @@
 import {
   LEAD_SOURCE_ALIASES,
   reconcilePicklistOptions,
-  resolveSmartsheetPerson,
   smartsheetPersonLabelForUser,
 } from "./smartsheetTranslationModel.js";
+import { reviewedCustomAssigneeNames, resolveSmartsheetTaskAssignee } from "./smartsheetTaskAssigneeModel.js";
 
 // Keep this aligned with the Sales Pipeline's missing-setting fallback.
 export const DEFAULT_SALES_LEAD_SOURCES = Object.freeze([
@@ -29,6 +29,7 @@ export function buildSmartsheetVocabularyReview({
   leadSourcesSaved = false,
   taskDescriptions = [],
   authorizedUsers = [],
+  customAssigneeSetting = null,
 } = {}) {
   const sourceColumn = matchedColumn(liveMappingAnalysis?.sales, "lead_source");
   const taskColumn = matchedColumn(liveMappingAnalysis?.sales, "current_task_description");
@@ -61,14 +62,18 @@ export function buildSmartsheetVocabularyReview({
     user.sales_roles.includes("Task Assigned")
   );
   const ownerOptions = Array.isArray(ownerColumn.options) ? ownerColumn.options : [];
+  const customNames = reviewedCustomAssigneeNames(customAssigneeSetting?.setting_value, liveMappingAnalysis?.sales?.sheet?.id, ownerColumn.id);
+  const confirmedCustomOwners = [];
   const resolvedOwners = [];
   const unresolvedOwners = [];
   const ambiguousOwners = [];
   const representedUserNames = new Set();
 
   for (const option of ownerOptions) {
-    const resolved = resolveSmartsheetPerson(option, eligibleUsers);
-    if (resolved.user) {
+    const resolved = resolveSmartsheetTaskAssignee(option, eligibleUsers, customNames);
+    if (resolved.custom) {
+      confirmedCustomOwners.push(resolved.name);
+    } else if (resolved.user) {
       resolvedOwners.push({ option, full_name: displayName(resolved.user), match: resolved.state });
       representedUserNames.add(displayName(resolved.user).toLowerCase());
     } else if (resolved.state === "ambiguous") {
@@ -91,6 +96,8 @@ export function buildSmartsheetVocabularyReview({
     tasks: { ...tasks, validated: taskColumn.validation === true },
     orderTypes: { ...orderTypes, validated: requestTypeColumn.validation === true },
     owners: {
+      customNames,
+      confirmedCustom: confirmedCustomOwners,
       resolved: resolvedOwners,
       unresolved: unresolvedOwners,
       ambiguous: ambiguousOwners,
@@ -134,7 +141,8 @@ export function formatSmartsheetVocabularyReview(review) {
   }
   lines.push(
     "Task Assigned: resolved: " + (review.owners.resolved.map((item) => item.option + " → " + item.full_name).join(", ") || "none"),
-    "Task Assigned: unresolved Smartsheet labels (manual identity review): " + (review.owners.unresolved.join(", ") || "none"),
+    "Task Assigned: confirmed custom labels (NOT user identities): " + ((review.owners.confirmedCustom || []).join(", ") || "none"),
+    "Task Assigned: unreviewed Smartsheet labels (identity or custom-name confirmation required): " + (review.owners.unresolved.join(", ") || "none"),
     "Task Assigned: ambiguous labels (manual identity review): " +
       (review.owners.ambiguous.map((item) => item.option + " [" + item.candidates.join("/") + "]").join(", ") || "none"),
     "Task Assigned: active Base44 users absent from Smartsheet choices (suggested only): " +

@@ -1,5 +1,6 @@
 import { normalizeCustomerText } from "./smartsheetCustomerResolutionModel.js";
-import { resolveSmartsheetPerson, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
+import { serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
+import { resolveSmartsheetTaskAssignee } from "./smartsheetTaskAssigneeModel.js";
 
 // Observation-only. This module has no Base44 client, Smartsheet transport, or write path.
 const ORDER_TYPES = Object.freeze({
@@ -160,6 +161,7 @@ export function buildSmartsheetControlledCreationProposals({
   columnBindings = {},
   noteTranslationsByRowId = {},
   authorizedUsers = [],
+  customAssigneeNames = [],
   today = new Date().toISOString().slice(0, 10),
 } = {}) {
   if (!["sales", "orders"].includes(dataset)
@@ -221,21 +223,21 @@ export function buildSmartsheetControlledCreationProposals({
 
     for (const field of mappedFields) {
       if (field.field === "current_task_assigned_to" && text(originalValues[field.field])) {
-        const resolution = resolveSmartsheetPerson(originalValues[field.field], authorizedUsers);
-        const translatedName = text(resolution.user?.full_name);
+        const resolution = resolveSmartsheetTaskAssignee(originalValues[field.field], authorizedUsers, customAssigneeNames);
+        const translatedName = text(resolution.name);
         fieldAudit.push({
           field: field.field,
           label: field.label,
           source_value: originalValues[field.field] ?? null,
           proposed_value: translatedName || null,
-          state: translatedName ? `translated_user_${resolution.state}` : `user_${resolution.state}`,
+          state: resolution.custom ? "confirmed_custom_name" : translatedName ? `translated_user_${resolution.state}` : `user_${resolution.state}`,
         });
         if (translatedName) {
           payload.current_task_assigned_to = translatedName;
         } else {
           blockers.push(problem(
             "task_owner_translation_required",
-            "Task owner needs Base44 user translation",
+            "Task owner needs user resolution or custom-name confirmation",
             resolution.state === "ambiguous"
               ? `Smartsheet owner “${text(originalValues[field.field])}” matches multiple Base44 users.`
               : `Smartsheet owner “${text(originalValues[field.field])}” does not resolve to an active Base44 user.`,

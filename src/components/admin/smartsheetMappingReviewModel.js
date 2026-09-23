@@ -65,7 +65,7 @@ export function formatSmartsheetMappingReview(results = {}) {
             : item.field === "current_task_description"
               ? " [TRANSLATION: task vocabulary is reconciled additively across Base44 and Smartsheet]"
               : item.field === "current_task_assigned_to"
-                ? " [TRANSLATION: resolves against active Base44 users by exact full name or unique first name; ambiguous/unresolved names are blocked]"
+                ? " [TRANSLATION: resolves eligible Base44 users by exact full name or unique first name; explicitly confirmed unmatched labels remain custom text, not user identities; ambiguous/unreviewed names are blocked]"
                 : "";
         lines.push(
           item.label + " [" + item.field + "] → " + item.columnTitle +
