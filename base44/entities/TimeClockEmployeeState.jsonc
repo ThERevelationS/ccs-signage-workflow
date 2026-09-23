@@ -139,6 +139,36 @@
       "type": "string",
       "format": "date-time",
       "description": "Trusted backend timestamp when the current Time Off create lock was claimed"
+    },
+    "correction_create_status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "creating"
+      ],
+      "default": "idle",
+      "description": "Backend-only serialization state for employee correction-request creation"
+    },
+    "correction_create_request_id": {
+      "type": "string",
+      "description": "Request id currently holding the employee correction-request create lock"
+    },
+    "correction_create_time_entry_id": {
+      "type": "string",
+      "description": "TimeEntry id bound to the current correction-request create lock"
+    },
+    "correction_create_payload_hash": {
+      "type": "string",
+      "description": "Canonical correction payload hash bound to the current correction-request create lock"
+    },
+    "correction_create_claim_token": {
+      "type": "string",
+      "description": "Opaque backend claim token for the current correction-request create lock"
+    },
+    "correction_create_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when the current correction-request create lock was claimed"
     }
   },
   "required": [
