@@ -1458,7 +1458,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             </div>
           )}
 
-          {apiMessage && <div className="text-xs">{apiMessage}</div>}
+          {apiStatus && smartsheetWriteControlsLocked(apiStatus) && (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900">
+              The deployed Smartsheet backend is read-only. Global sync and all mirror/pull/push/create controls are locked off until the backend explicitly advertises write actions.
+            </div>
+          )}
+
+          {apiMessage && <div className="text-xs">{apiMessage}</div>
 
           {availableSheets.length > 0 && (
             <div className="rounded-md border border-blue-200 bg-white/70 p-2">
