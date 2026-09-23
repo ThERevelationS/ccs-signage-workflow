@@ -2785,9 +2785,21 @@ Deno.serve(async (req) => {
           { $set: { ...requestedFields, last_request_id: requestId, last_request_payload_hash: updatePayloadHash } },
         );
         if (!updated || updated.updated !== 1) {
-          return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before editing it.' }, { status: 409 });
+          const raced = await timeOffRequestEntity.get(requestRecord.id).catch(() => null);
+          if (raced?.id && String(raced.last_request_id || '') === requestId &&
+            constantTimeEqual(String(raced.last_request_payload_hash || ''), updatePayloadHash) &&
+            updatedFieldsMatch(raced)) {
+            requestRecord = raced; // The exact same request succeeded in another session.
+          } else {
+            await auditEntity.updateMany(
+              { id: updateIntent.id, outcome: 'pending', request_id: requestId, user_email: target.email },
+              { $set: { outcome: 'blocked' } },
+            );
+            return Response.json({ success: false, error: 'This time-off request changed in another session. Reload before editing it.' }, { status: 409 });
+          }
+        } else {
+          requestRecord = await timeOffRequestEntity.get(requestRecord.id);
         }
-        requestRecord = await timeOffRequestEntity.get(requestRecord.id);
       }
 
       let updateAudit: any = null;
