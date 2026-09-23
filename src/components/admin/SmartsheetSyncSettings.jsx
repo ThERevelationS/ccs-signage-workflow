@@ -2152,30 +2152,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white/70 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-gray-900">Client resolution policy</h3>
-            <p className="mt-1 text-xs text-gray-500">Recommendations only in the current build. No Customer is linked, renamed, or created automatically.</p>
-          </div>
-          <Badge variant="outline">Review first</Badge>
-        </div>
-        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-          {SMARTSHEET_CUSTOMER_RESOLUTION_POLICY.map((rule) => (
-            <div key={rule.key} className="rounded-lg border bg-white p-3 text-xs">
-              <div className="flex items-start justify-between gap-2">
-                <div className="font-medium text-gray-800">{rule.label}</div>
-                <Badge variant="outline" className="shrink-0">{rule.outcome}</Badge>
-              </div>
-              <div className="mt-1 text-gray-500">{rule.behavior}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
-          Once you confirm that differently named records are the same company, the approved Smartsheet name can be preserved in the existing Base44 <code className="font-mono">legacy_client_names</code> alias list. That translates future rows without forcing either system to rename the customer.
-        </div>
-      </div>
-
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <div className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Safety rules locked into the design</div>
         <div className="mt-2 text-xs leading-relaxed">

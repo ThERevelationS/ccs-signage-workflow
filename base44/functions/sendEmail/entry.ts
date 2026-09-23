@@ -1,5 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { EmailClient } from 'npm:@azure/communication-email';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
@@ -11,53 +10,49 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const connectionString = Deno.env.get("AZURE_EMAIL_CONNECTION_STRING");
-    if (!connectionString) {
-      return Response.json({ error: 'Azure email not configured' }, { status: 503 });
+    const { to, subject, body, from_name } = payload || {};
+
+    if (!to || !subject || !body) {
+      return Response.json({ error: 'Missing required fields: to, subject, body' }, { status: 400 });
     }
 
-    const emailClient = new EmailClient(connectionString);
-    const { to, subject, body, from_email, from_name } = payload || {};
-
-    if (!to || !subject || !body || !from_email) {
-      return Response.json({ error: 'Missing required fields: to, subject, body, from_email' }, { status: 400 });
-    }
-
-    // Handle multiple recipients with bounded caller-controlled payloads.
-    const recipients = (Array.isArray(to) ? to : [to]).map((email) => String(email || '').trim()).filter(Boolean);
+    const recipients = (Array.isArray(to) ? to : [to]).map((email: unknown) => String(email || '').trim()).filter(Boolean);
     const safeSubject = String(subject || '').trim();
     const safeBody = String(body || '');
-    const safeFromEmail = String(from_email || '').trim();
     const safeFromName = String(from_name || '').trim();
-    if (recipients.length === 0 || recipients.length > 25 || recipients.some((email) => email.length > 320)) {
+    if (recipients.length === 0 || recipients.length > 25 || recipients.some((email: string) => email.length > 320)) {
       return Response.json({ error: 'Email recipients are invalid or exceed the allowed limit' }, { status: 400 });
     }
-    if (!safeSubject || safeSubject.length > 500 || safeBody.length > 1_000_000 || safeFromEmail.length > 320 || safeFromName.length > 200) {
+    if (!safeSubject || safeSubject.length > 500 || safeBody.length > 1_000_000 || safeFromName.length > 200) {
       return Response.json({ error: 'Email content exceeds the allowed limits' }, { status: 400 });
     }
-    const toRecipients = recipients.map(email => ({ address: email }));
 
-    const message = {
-      senderAddress: safeFromEmail,
-      content: {
-        subject: safeSubject,
-        html: safeBody.replace(/\n/g, '<br>')
-      },
-      recipients: {
-        to: toRecipients
+    const sent: string[] = [];
+    for (const recipient of [...new Set(recipients)]) {
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: recipient,
+          subject: safeSubject,
+          body: safeBody,
+          from_name: safeFromName || undefined,
+        });
+        sent.push(recipient);
+      } catch (error) {
+        console.error(`sendEmail failed for ${recipient}:`, error?.message || error);
       }
-    };
+    }
 
-    const poller = await emailClient.beginSend(message);
-    const result = await poller.pollUntilDone();
+    if (sent.length === 0) {
+      return Response.json({ error: 'Email could not be sent to any recipient' }, { status: 502 });
+    }
 
-    return Response.json({ success: true, id: result.id, status: result.status });
+    return Response.json({ success: true, sent_count: sent.length, recipients: sent });
   } catch (error) {
-    const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 409, 503].includes(status) ? status : 500;
-    console.error('sendEmail error:', error?.message || error);
+    const status = Number((error as any)?.status || 500);
+    const safeStatus = [400, 401, 403, 502, 503].includes(status) ? status : 500;
+    console.error('sendEmail error:', (error as any)?.message || error);
     return Response.json({
-      error: safeStatus === 500 ? 'Email could not be sent safely' : error.message,
+      error: safeStatus === 500 ? 'Email could not be sent safely' : (error as any)?.message,
     }, { status: safeStatus });
   }
 });
