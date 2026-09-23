@@ -7,6 +7,7 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
 const API_BASE = 'https://api.smartsheet.com/2.0';
 const WORKFLOW_SHEET_ID = '8702703019812740';
+const IMPLEMENTATION_VERSION = 2;
 
 const ALLOWED_TARGETS = Object.freeze({
   lead_source: {
@@ -155,6 +156,7 @@ Deno.serve(async (req) => {
     if (action === 'preview_append_options' || plan.additions.length === 0) {
       return Response.json({
         success: true,
+        implementation_version: IMPLEMENTATION_VERSION,
         read_only: true,
         target: targetKey,
         sheet_id: target.sheet_id,
@@ -201,6 +203,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
+      implementation_version: IMPLEMENTATION_VERSION,
       metadata_write: true,
       additive_only: true,
       target: targetKey,
