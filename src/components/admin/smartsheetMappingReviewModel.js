@@ -10,6 +10,7 @@ function reviewField(field, sheet, dataset) {
     sheetId: String(sheet?.id || ""),
     field: String(field?.field || ""),
     label: String(field?.label || field?.field || ""),
+    transform: String(field?.transform || ""),
     status: String(field?.status || ""),
     columnId: column ? String(column.id || "") : "",
     columnTitle: column ? String(column.title || "") : "",
@@ -57,10 +58,20 @@ export function formatSmartsheetMappingReview(results = {}) {
     for (const field of result.analysis?.fields || []) {
       const item = reviewField(field, result.sheet, dataset);
       if (item.status === "matched") {
+        const translationNote = item.transform === "notes_process"
+          ? " [TRANSLATION: Base44 work_notes combine into this Smartsheet Notes cell; Smartsheet Notes are split into reviewed work_notes before pull/create]"
+          : item.field === "lead_source"
+            ? " [TRANSLATION: vocabulary is reconciled additively across Base44 and Smartsheet; aliases such as Website/Web normalize to one value]"
+            : item.field === "current_task_description"
+              ? " [TRANSLATION: task vocabulary is reconciled additively across Base44 and Smartsheet]"
+              : item.field === "current_task_assigned_to"
+                ? " [TRANSLATION: resolves against active Base44 users by exact full name or unique first name; ambiguous/unresolved names are blocked]"
+                : "";
         lines.push(
           item.label + " [" + item.field + "] → " + item.columnTitle +
           " (ID " + item.columnId + ", " + item.columnType + ")" +
           (item.alias ? " [REVIEW NAME/MEANING]" : "") +
+          translationNote +
           (item.columnType === "PICKLIST"
             ? " [PICKLIST " + (item.validatedPicklist ? "validated" : "unvalidated") +
               "; allowed options: " + (item.columnOptions.length ? item.columnOptions.join(", ") : "not supplied") + "]"
@@ -85,6 +96,7 @@ function mappingSnapshot(result) {
     sheetId: String(result.sheet.id),
     fields: (result.analysis.fields || []).map((field) => ({
       field: String(field.field || ""),
+      transform: String(field.transform || ""),
       status: String(field.status || ""),
       matches: (field.matches || []).map((column) => ({
         id: String(column.id || ""),
