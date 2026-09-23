@@ -72,7 +72,7 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
   }, { writeBackendAvailable });
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked = true, targetLocked = false }) {
+function IntegrationCard({ title, subtitle, value, onChange, targetLocked = false }) {
   const patch = (next) => onChange({ ...value, ...next });
   return (
     <div className="rounded-xl border border-gray-200 bg-white/70 p-4 space-y-4">
@@ -129,7 +129,7 @@ function IntegrationCard({ title, subtitle, value, onChange, writeControlsLocked
             <Switch
               checked={Boolean(value[key])}
               onCheckedChange={(checked) => patch({ [key]: checked })}
-              disabled={writeControlsLocked && key !== "importer_enabled"}
+              disabled={false}
             />
           </div>
         ))}
@@ -341,7 +341,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
 
           {apiStatus && smartsheetWriteControlsLocked(apiStatus) && (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-900">
-              The deployed Smartsheet backend is read-only. Global sync and all mirror/pull/push/create controls are locked off until the backend explicitly advertises write actions.
+              The deployed Smartsheet backend is read-only. You can configure settings below, but no sync writes will run until a write-capable backend is deployed.
             </div>
           )}
 
@@ -371,9 +371,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               <div className="text-[11px] text-gray-500">Emergency kill switch.</div>
             </div>
             <Switch
-              checked={config.global_enabled}
-              onCheckedChange={(checked) => setConfig((c) => ({ ...c, global_enabled: checked }))}
-              disabled={smartsheetWriteControlsLocked(apiStatus)}
+            checked={config.global_enabled}
+            onCheckedChange={(checked) => setConfig((c) => ({ ...c, global_enabled: checked }))}
             />
           </div>
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
@@ -382,9 +381,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
               <div className="text-[11px] text-gray-500">Preview changes; perform no sync writes.</div>
             </div>
             <Switch
-              checked={config.observation_mode}
-              onCheckedChange={(checked) => setConfig((c) => ({ ...c, observation_mode: checked }))}
-              disabled={smartsheetWriteControlsLocked(apiStatus)}
+            checked={config.observation_mode}
+            onCheckedChange={(checked) => setConfig((c) => ({ ...c, observation_mode: checked }))}
             />
           </div>
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
@@ -431,7 +429,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="WorkOrder Sales records will map to the Smartsheet Workflow sheet by stable IDs and approved field translations."
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
-        writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
         targetLocked={smartsheetProfileTargetLocked(config.sales)}
       />
 
@@ -440,7 +437,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="Order records will map to the Smartsheet Order Request sheet, including controlled customer/work-order relationship setup."
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
-        writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
         targetLocked={smartsheetProfileTargetLocked(config.orders)}
       />
 
