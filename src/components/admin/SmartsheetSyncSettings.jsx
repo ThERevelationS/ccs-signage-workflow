@@ -966,6 +966,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setLoading(true);
     setError("");
     setLiveMappingAnalysis(null);
+    setVocabularyEvidence(null);
     setMappingReviewed(false);
     setDryRunPreview(null);
     try {
@@ -1037,11 +1038,47 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
+  const fetchVocabularyEvidence = async () => {
+    const [leadSourceSetting, taskSetting, authorizedUsers] = await Promise.all([
+      loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: "salesLeadSources",
+        label: "Sales lead-source vocabulary",
+      }),
+      loadSingleGlobalSetting({
+        entity: base44.entities.GlobalSettings,
+        settingKey: "salesTaskDescriptions",
+        label: "Sales task-description vocabulary",
+      }),
+      loadAllEntityRows({
+        entity: base44.entities.AuthorizedEmail,
+        sort: "full_name",
+        pageSize: 200,
+        maxRows: 1000,
+        label: "Smartsheet vocabulary review task-assignee roster",
+      }),
+    ]);
+    const taskDescriptions = taskSetting?.setting_value?.items;
+    if (!Array.isArray(taskDescriptions)) {
+      throw new Error("Base44 task-description vocabulary is unavailable; review cannot be completed safely.");
+    }
+    const savedLeadSources = leadSourceSetting?.setting_value?.items;
+    return {
+      leadSources: Array.isArray(savedLeadSources) ? savedLeadSources : [...DEFAULT_SALES_LEAD_SOURCES],
+      leadSourcesSaved: Array.isArray(savedLeadSources),
+      taskDescriptions,
+      authorizedUsers: authorizedUsers.map(({ id, full_name, is_active, sales_roles }) => ({
+        id, full_name, is_active, sales_roles,
+      })),
+    };
+  };
+
   const analyzeLiveMappings = async () => {
     if (!sessionToken || apiLoading) return;
     setApiLoading(true);
     setApiMessage("");
     setLiveMappingAnalysis(null);
+    setVocabularyEvidence(null);
     setMappingReviewed(false);
     setDryRunPreview(null);
     try {
@@ -1095,6 +1132,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         };
       }
 
+      const freshVocabularyEvidence = await fetchVocabularyEvidence();
+      setVocabularyEvidence(freshVocabularyEvidence);
       setLiveMappingAnalysis(results);
       const readyResults = Object.values(results).filter((result) => result.status === "ready");
       const matched = readyResults.reduce((sum, result) => sum + result.analysis.counts.matched, 0);
