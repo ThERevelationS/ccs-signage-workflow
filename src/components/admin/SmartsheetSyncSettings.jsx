@@ -46,6 +46,7 @@ import {
 } from "@/components/admin/smartsheetControlledCreationProposalModel";
 import SmartsheetControlledCreationProposalsCard from "@/components/admin/SmartsheetControlledCreationProposalsCard";
 import SmartsheetCustomAssigneesCard from "@/components/admin/SmartsheetCustomAssigneesCard";
+import SmartsheetMissingOwnersCard from "@/components/admin/SmartsheetMissingOwnersCard";
 import { CUSTOM_ASSIGNEE_SETTING_KEY } from "@/components/admin/smartsheetTaskAssigneeModel";
 import { buildSmartsheetRolloutBaseline } from "@/components/admin/smartsheetRolloutModel";
 import {
@@ -1919,6 +1920,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                   </div>
                 )}
                 <VocabularyReviewCard review={vocabularyReview} />
+                <SmartsheetMissingOwnersCard review={vocabularyReview} sessionToken={sessionToken} disabled={saving || apiLoading || config.global_enabled || !config.observation_mode || !config.backup_before_write} onBusyChange={setSaving} onChanged={() => {
+                  setMappingReviewed(false);
+                  setDryRunPreview(null);
+                  setVocabularyEvidence(null);
+                  setLiveMappingAnalysis(null);
+                  setApiMessage("Assignee choice added. Run Analyze Live Mapping again to review the updated list.");
+                }} />
                 <SmartsheetCustomAssigneesCard review={vocabularyReview} result={liveMappingAnalysis.sales} loadedRecord={vocabularyEvidence?.customAssigneeSetting} sessionToken={sessionToken} disabled={apiLoading || saving} onBusyChange={setSaving} onChanged={() => {
                   setMappingReviewed(false);
                   setDryRunPreview(null);
