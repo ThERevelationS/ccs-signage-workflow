@@ -772,13 +772,17 @@ Answer the question based on the documents and information available. Be specifi
           <div className="space-y-2">
              {(jurisdiction.documents || []).map(doc => (
                <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
-                 <div
-                   className="flex items-center gap-2 p-3 cursor-pointer hover:opacity-80 transition-opacity"
+                 <button
+                   type="button"
+                   className="flex min-h-11 w-full items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
                    onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
+                   aria-expanded={expandedDoc === doc.id}
+                   aria-controls={`jurisdiction-document-${doc.id}`}
+                   aria-label={`${expandedDoc === doc.id ? "Collapse" : "Expand"} ${doc.title || "document"}`}
                  >
                    <FileText className={`w-4 h-4 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />
                    <div className="flex-1 min-w-0">
-                     <p className="text-xs font-medium text-gray-800 truncate">{doc.title}</p>
+                     <p className="break-words text-xs font-medium text-gray-800">{doc.title}</p>
                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                        <span className={`text-[10px] capitalize px-1.5 py-0.5 rounded font-medium ${doc.source === 'ai_discovered' ? 'bg-purple-200 text-purple-700' : 'bg-amber-200 text-amber-700'}`}>{DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type}</span>
                        {doc.last_fetched && <span className="text-[10px] text-gray-500">{format(new Date(doc.last_fetched), "MM/dd/yy")}</span>}
@@ -786,17 +790,17 @@ Answer the question based on the documents and information available. Be specifi
                      </div>
                    </div>
                    {expandedDoc === doc.id ? <ChevronUp className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} /> : <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />}
-                 </div>
+                 </button>
                 {expandedDoc === doc.id && (
-                  <div className="px-3 pb-3 border-t space-y-3" style={{ background: doc.source === 'ai_discovered' ? '#f3e8ff' : '#fef3c7' }}>
+                  <div id={`jurisdiction-document-${doc.id}`} className="px-3 pb-3 border-t space-y-3" style={{ background: doc.source === 'ai_discovered' ? '#f3e8ff' : '#fef3c7' }}>
                     {/* Action Buttons */}
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       {(doc.file_url || doc.url) && (
                         <Button
                           size="sm"
                           onClick={() => downloadDocument(doc)}
                           disabled={downloadingDocId === doc.id}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 gap-1"
+                          className="min-h-11 w-full flex-1 gap-2 bg-blue-600 hover:bg-blue-700"
                         >
                           {downloadingDocId === doc.id ? (
                             <>
@@ -815,7 +819,7 @@ Answer the question based on the documents and information available. Be specifi
                         size="sm"
                         onClick={() => analyzeDocument(doc)}
                         disabled={analyzingDocId === doc.id || docAnalysis[doc.id]}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 gap-1"
+                        className="min-h-11 w-full flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700"
                       >
                         {analyzingDocId === doc.id ? (
                           <>
