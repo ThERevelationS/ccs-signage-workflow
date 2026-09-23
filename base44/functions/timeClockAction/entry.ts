@@ -2687,15 +2687,35 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Time-off request was not found or is archived.' }, { status: 404 });
       }
 
-      const priorUpdateAudit = await uniqueRow(
-        auditEntity,
-        { action: 'time_off_request_update', request_id: requestId, user_email: target.email },
-        'Time-off request update audit',
+      const updatedFieldsMatch = (row: any) => (
+        row?.id === timeOffRequestId &&
+        String(row.request_type || '') === requestType &&
+        String(row.start_date || '') === startDate &&
+        String(row.end_date || '') === endDate &&
+        Number(row.hours_requested) === hoursRequested &&
+        String(row.reason || '') === reason
       );
-      if (priorUpdateAudit?.id) {
-        const priorHash = String(priorUpdateAudit.details?.payload_hash || '');
-        if (priorHash && !constantTimeEqual(priorHash, updatePayloadHash)) {
-          return Response.json({ success: false, error: 'This time-off update request id is already bound to different details.' }, { status: 409 });
+      const auditQuery = { action: 'time_off_request_update', request_id: requestId, user_email: target.email };
+      let updateIntent = await uniqueRow(auditEntity, auditQuery, 'Time-off request update audit');
+      if (updateIntent?.id) {
+        const priorHash = String(updateIntent.details?.payload_hash || '');
+        if (!priorHash || !constantTimeEqual(priorHash, updatePayloadHash) ||
+          String(updateIntent.details?.time_off_request_id || '') !== timeOffRequestId) {
+          return Response.json({ success: false, error: 'This time-off update request id has mismatched or incomplete audit details. Admin investigation is required.' }, { status: 409 });
+        }
+        if (updateIntent.outcome === 'blocked') {
+          return Response.json({ success: false, error: 'This time-off update was previously blocked. Reload before submitting another edit.' }, { status: 409 });
+        }
+        if (['confirmed', 'recovered'].includes(String(updateIntent.outcome || ''))) {
+          if (String(requestRecord.last_request_id || '') !== requestId ||
+              !constantTimeEqual(String(requestRecord.last_request_payload_hash || ''), updatePayloadHash) ||
+              !updatedFieldsMatch(requestRecord)) {
+            return Response.json({ success: false, error: 'The completed time-off edit audit no longer matches the request record. Admin investigation is required.' }, { status: 409 });
+          }
+          return Response.json({ success: true, request: requestRecord, audit_id: updateIntent.id, reused: true });
+        }
+        if (updateIntent.outcome !== 'pending') {
+          return Response.json({ success: false, error: 'This time-off edit audit is not in a recoverable state.' }, { status: 409 });
         }
       }
 
