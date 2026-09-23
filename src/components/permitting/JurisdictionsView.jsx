@@ -307,7 +307,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden bg-gray-50">
-      <div className="flex flex-col w-full" style={{ maxWidth: selectedJurisdiction ? '420px' : '100%', minWidth: '320px', transition: 'max-width 0.3s' }}>
+      <div className={`${selectedJurisdiction ? "hidden md:flex md:w-[420px] md:flex-none" : "flex w-full"} min-w-0 flex-col`}>
         <div className="bg-white border-b px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -428,7 +428,7 @@ export default function JurisdictionsView({ focusJurisdiction = null }) {
       </div>
 
       {selectedJurisdiction && (
-        <div className="flex-1 border-l overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-hidden md:border-l">
           <JurisdictionDetailPanel
             jurisdiction={selectedJurisdiction}
             duplicateCount={duplicateCountFor(selectedJurisdiction)}
