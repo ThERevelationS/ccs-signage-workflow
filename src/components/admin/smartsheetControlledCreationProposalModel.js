@@ -35,6 +35,9 @@ function dateOnly(value) {
 
 function mappedValue(value, field) {
   if (value === null || value === undefined || text(value) === "") return { state: "blank", value: undefined };
+  if (field.transform === "notes_process") {
+    return { state: "translation_required", value: undefined };
+  }
   if (field.transform === "money") {
     const raw = typeof value === "number" ? value : Number(text(value).replace(/[$,\s]/g, ""));
     return Number.isFinite(raw)
@@ -154,6 +157,7 @@ export function buildSmartsheetControlledCreationProposals({
   base44Records = [],
   blueprint = [],
   columnBindings = {},
+  noteTranslationsByRowId = {},
   today = new Date().toISOString().slice(0, 10),
 } = {}) {
   if (!["sales", "orders"].includes(dataset)
@@ -171,7 +175,11 @@ export function buildSmartsheetControlledCreationProposals({
   const byRowId = new Map((rows || []).map((row) => [String(row.row_id), row]));
   const catalog = customerCatalog(customers);
   const fingerprint = (record) => dataset === "sales"
-    ? text(record?.title).toLowerCase().replace(/\s+/g, " ")
+    ? (text(record?.est_inv_at)
+      ? `est:${text(record?.est_inv_at).toLowerCase()}`
+      : text(record?.title)
+        ? `title:${text(record?.title).toLowerCase().replace(/\s+/g, " ")}`
+        : "")
     : [record?.request_type, record?.description].map((value) =>
       text(value).toLowerCase().replace(/\s+/g, " ")).join("|");
   const existingFingerprints = new Map();
@@ -218,6 +226,19 @@ export function buildSmartsheetControlledCreationProposals({
       });
       if (mapped.state === "invalid") {
         blockers.push(problem("invalid_field", `Invalid ${field.label || field.field}`, mapped.reason));
+      } else if (mapped.state === "translation_required") {
+        const translatedNotes = noteTranslationsByRowId?.[String(readiness.row_id)];
+        if (Array.isArray(translatedNotes)) {
+          payload.work_notes = translatedNotes;
+          fieldAudit[fieldAudit.length - 1].proposed_value = translatedNotes;
+          fieldAudit[fieldAudit.length - 1].state = "ai_translated";
+        } else {
+          blockers.push(problem(
+            "notes_ai_translation_required",
+            "Smartsheet Notes need AI translation",
+            "Split the combined Smartsheet Notes into reviewed Base44 work_notes before any future record creation.",
+          ));
+        }
       } else if (mapped.state === "mapped" && field.transform !== "customer_resolution") {
         payload[field.field] = mapped.value;
       }
@@ -229,6 +250,24 @@ export function buildSmartsheetControlledCreationProposals({
       if (identity.kind === "existing_customer") payload.customer_id = identity.customer_id;
       const customerAudit = fieldAudit.find((field) => field.field === customerField);
       if (customerAudit) customerAudit.proposed_value = identity.company_name;
+    }
+
+    if (dataset === "sales" && !text(payload.title)) {
+      const customer = text(payload.client_name || sourceCustomerName) || "Smartsheet Sales";
+      const estimateNumber = text(originalValues.est_inv_at);
+      const rowLabel = Number(readiness.row_number || 0) > 0
+        ? `Row ${Number(readiness.row_number)}`
+        : `Row ${String(readiness.row_id || "").slice(-8) || "New"}`;
+      payload.title = estimateNumber
+        ? `${customer} — ${estimateNumber}`
+        : `${customer} — ${rowLabel}`;
+      fieldAudit.push({
+        field: "title",
+        label: "Internal Work Order Title",
+        source_value: null,
+        proposed_value: payload.title,
+        state: "generated_internal",
+      });
     }
 
     // Recheck the actual payload independently of the earlier readiness gate.
