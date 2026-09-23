@@ -21,6 +21,8 @@ assert.equal(resolveSmartsheetTaskAssignee("EMILY", users, names).state, "unreso
 assert.equal(resolveSmartsheetTaskAssignee("Brett", users, names).name, "Brett Heinlein");
 assert.equal(resolveSmartsheetTaskAssignee("Brett", [...users, user("Brett Other")], ["Brett"]).state, "ambiguous");
 assert.equal(resolveSmartsheetTaskAssignee("Emily", [user("Emily")], names).custom, false);
+assert.equal(resolveSmartsheetTaskAssignee("Cameron", users, ["Cameron"]).state, "confirmed_custom_name");
+assert.equal(resolveSmartsheetTaskAssignee("Cameron", [...users, user("Cameron Smith")], ["Cameron"]).name, "Cameron Smith", "A future eligible user takes precedence over the custom label");
 assert.equal(resolveSmartsheetTaskAssignee("Brett", [{ ...users[0], is_active: false }]).state, "unresolved");
 assert.equal(validateCustomAssigneeName("  Cameron  "), "Cameron");
 assert.throws(() => validateCustomAssigneeName("   "));
@@ -34,6 +36,9 @@ const review = buildSmartsheetVocabularyReview({ ...args, customAssigneeSetting:
 assert.deepEqual(review.owners.confirmedCustom, ["Emily"]);
 assert.equal(smartsheetVocabularyReadyForBinding(review), true);
 assert.equal(smartsheetVocabularyReadyForBinding(buildSmartsheetVocabularyReview({ ...args, customAssigneeSetting: customSetting, authorizedUsers: [...users, user("Matias")] })), false);
+const unvalidatedOwners = buildSmartsheetVocabularyReview({ ...args, customAssigneeSetting: customSetting, authorizedUsers: [...users, user("Matias")] });
+unvalidatedOwners.owners.validated = false;
+assert.equal(smartsheetVocabularyReadyForBinding(unvalidatedOwners), true, "An unvalidated picklist need not list every eligible user");
 const blueprint = [{ field: "current_task_assigned_to", label: "Task assigned", direction: "both" }];
 const columnBindings = { current_task_assigned_to: { column_id: "owner" } };
 const source = { row_id: "row", status: "new_record", values: { client_name: "Customer", current_task_assigned_to: "Emily" } };
