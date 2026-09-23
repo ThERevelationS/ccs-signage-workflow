@@ -5,7 +5,7 @@ import {
 } from "./smartsheetCustomerResolutionModel.js";
 import { buildSmartsheetRolloutPreview } from "./smartsheetRolloutModel.js";
 import { buildSmartsheetCreationReadiness } from "./smartsheetCreationReadinessModel.js";
-import { normalizeCombinedNotesText, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
+import { normalizeCombinedNotesText, resolveSmartsheetPerson, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
 
 function normalizeWhitespace(value) {
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -56,7 +56,7 @@ function candidateKey(values, fields) {
   return parts.every(Boolean) ? parts.join("\u0001") : "";
 }
 
-function compareMappedFields({ rowValues, record, blueprint, columnBindings }) {
+function compareMappedFields({ rowValues, record, blueprint, columnBindings, authorizedUsers = [] }) {
   const differences = [];
   for (const field of blueprint || []) {
     if (field?.direction === "base44_only") continue;
@@ -65,14 +65,21 @@ function compareMappedFields({ rowValues, record, blueprint, columnBindings }) {
     const base44RawValue = field.transform === "notes_process"
       ? serializeBase44WorkNotes(record?.[field.field])
       : record?.[field.field];
-    const sheetValue = normalizeComparable(sheetRawValue, field.transform);
+    let sheetValue = normalizeComparable(sheetRawValue, field.transform);
     const base44Value = normalizeComparable(base44RawValue, field.transform);
+    let translationState = "";
+    if (field.field === "current_task_assigned_to" && normalizeWhitespace(sheetRawValue)) {
+      const resolution = resolveSmartsheetPerson(sheetRawValue, authorizedUsers);
+      translationState = resolution.state;
+      if (resolution.user?.full_name) sheetValue = normalizeComparable(resolution.user.full_name, field.transform);
+    }
     if (sheetValue !== base44Value) {
       differences.push({
         field: field.field,
         label: field.label,
         smartsheet_value: sheetRawValue ?? "",
         base44_value: base44RawValue ?? "",
+        translation_state: translationState,
       });
     }
   }
@@ -110,6 +117,7 @@ export function buildSmartsheetDryRunPreview({
   dataset = "",
   rolloutBaseline = null,
   customerReviewState = null,
+  authorizedUsers = [],
 } = {}) {
   const safeSheetId = String(sheetId || "");
   const directByRowId = new Map();
@@ -175,7 +183,7 @@ export function buildSmartsheetDryRunPreview({
     }
 
     const differences = matchedRecord
-      ? compareMappedFields({ rowValues, record: matchedRecord, blueprint, columnBindings })
+      ? compareMappedFields({ rowValues, record: matchedRecord, blueprint, columnBindings, authorizedUsers })
       : [];
 
     const meaningful = hasMeaningfulMappedValue(rowValues);
