@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,25 @@ import {
 
 const ChecklistSubItem = base44.entities.ChecklistSubItem;
 const GlobalSettings = base44.entities.GlobalSettings;
+
+// Keep the condition menu inside the visible viewport, including above the
+// trigger when there is more room there (e.g. near the bottom of a phone).
+function getConditionDropdownPosition(anchor, viewport) {
+  const gutter = 8;
+  const gap = 4;
+  const viewportRight = viewport.left + viewport.width;
+  const viewportBottom = viewport.top + viewport.height;
+  const width = Math.min(280, Math.max(0, viewport.width - gutter * 2));
+  const left = Math.min(Math.max(anchor.left, viewport.left + gutter), viewportRight - gutter - width);
+  const roomBelow = Math.max(0, viewportBottom - gutter - anchor.bottom - gap);
+  const roomAbove = Math.max(0, anchor.top - gap - viewport.top - gutter);
+  const openAbove = roomBelow < Math.min(192, viewport.height / 2) && roomAbove > roomBelow;
+  const maxHeight = Math.min(256, openAbove ? roomAbove : roomBelow);
+  const desiredTop = openAbove ? anchor.top - gap - maxHeight : anchor.bottom + gap;
+  const top = Math.max(viewport.top + gutter, Math.min(desiredTop, viewportBottom - gutter - maxHeight));
+
+  return { left, top, width, maxHeight };
+}
 
 export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, existingChecklist = [], isAdmin = false, workOrderProducts = [] }) {
   const [activeTab, setActiveTab] = useState("selectors");
@@ -67,7 +86,35 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   
   // Multi-select dropdown state
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  
+  const conditionTriggerRef = useRef(null);
+  const conditionPopupRef = useRef(null);
+  const [, refreshConditionPosition] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || !openDropdownId) return undefined;
+
+    const reposition = () => refreshConditionPosition(value => value + 1);
+    const closeOnEscape = (event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setOpenDropdownId(null);
+      conditionTriggerRef.current?.focus();
+    };
+
+    conditionPopupRef.current?.querySelector('button')?.focus();
+    window.addEventListener('resize', reposition);
+    window.visualViewport?.addEventListener('resize', reposition);
+    window.visualViewport?.addEventListener('scroll', reposition);
+    window.addEventListener('keydown', closeOnEscape, true);
+    return () => {
+      window.removeEventListener('resize', reposition);
+      window.visualViewport?.removeEventListener('resize', reposition);
+      window.visualViewport?.removeEventListener('scroll', reposition);
+      window.removeEventListener('keydown', closeOnEscape, true);
+    };
+  }, [isOpen, openDropdownId]);
+
   // Get users list
   const [users, setUsers] = useState([]);
   useEffect(() => {
@@ -756,9 +803,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       if (onChangeCallback) onChangeCallback();
     };
 
-    const getButtonRect = () => {
-      const btn = document.querySelector(`[data-dropdown-id="${uniqueId}"]`);
-      return btn?.getBoundingClientRect() || { bottom: 0, left: 0 };
+    const getPopupStyle = () => {
+      const visualViewport = window.visualViewport;
+      return getConditionDropdownPosition(
+        conditionTriggerRef.current?.getBoundingClientRect() || { left: 8, top: 8, bottom: 52 },
+        {
+          left: visualViewport?.offsetLeft ?? 0,
+          top: visualViewport?.offsetTop ?? 0,
+          width: visualViewport?.width ?? window.innerWidth,
+          height: visualViewport?.height ?? window.innerHeight,
+        }
+      );
     };
     
     return (
@@ -766,7 +821,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         <button
           type="button"
           data-dropdown-id={uniqueId}
-          onClick={(e) => { e.stopPropagation(); setOpenDropdownId(isOpen ? null : uniqueId); }}
+          onClick={(e) => { e.stopPropagation(); conditionTriggerRef.current = e.currentTarget; setOpenDropdownId(isOpen ? null : uniqueId); }}
           className="h-11 text-xs px-2 border rounded flex items-center gap-1 bg-white hover:bg-gray-50 min-w-[100px] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-6"
           aria-expanded={isOpen}
           aria-label={`${detailId ? 'Detail' : 'Checklist item'} conditions`}
@@ -776,13 +831,11 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         </button>
         {isOpen && ReactDOM.createPortal(
           <>
-            <div className="fixed inset-0 z-[300]" onClick={() => setOpenDropdownId(null)} />
+            <div className="fixed inset-0 z-[300]" onClick={() => { setOpenDropdownId(null); conditionTriggerRef.current?.focus(); }} />
             <div
-              className="fixed z-[301] bg-white border rounded-lg shadow-2xl min-w-[240px] max-h-64 overflow-y-auto"
-              style={{
-                top: getButtonRect().bottom + 4,
-                left: getButtonRect().left
-              }}
+              ref={conditionPopupRef}
+              className="fixed z-[301] bg-white border rounded-lg shadow-2xl max-h-64 overflow-y-auto overscroll-contain"
+              style={getPopupStyle()}
               role="group"
               aria-label={`${detailId ? 'Detail' : 'Checklist item'} conditions`}
             >
