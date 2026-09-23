@@ -116,13 +116,30 @@ const DEFAULT_CONFIG = {
   },
 };
 
+function normalizeBindings(bindings = {}) {
+  const out = {};
+  for (const [key, val] of Object.entries(bindings || {})) {
+    if (val && typeof val === "object" && val.column_id) {
+      out[key] = String(val.column_id);
+    } else if (typeof val === "string" && val.trim()) {
+      out[key] = val.trim();
+    } else if (val !== null && val !== undefined && val !== "") {
+      out[key] = String(val);
+    }
+  }
+  return out;
+}
+
 function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
-  return enforceSmartsheetBackendSafety({
+  const merged = {
     ...DEFAULT_CONFIG,
     ...(saved || {}),
     sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}), rollout_baseline: null },
     orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}), rollout_baseline: null },
-  }, { writeBackendAvailable });
+  };
+  if (merged.sales) merged.sales.column_bindings = normalizeBindings(merged.sales.column_bindings);
+  if (merged.orders) merged.orders.column_bindings = normalizeBindings(merged.orders.column_bindings);
+  return enforceSmartsheetBackendSafety(merged, { writeBackendAvailable });
 }
 
 function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionToken, columns, columnsLoading, columnsMessage, onLoadColumns }) {
