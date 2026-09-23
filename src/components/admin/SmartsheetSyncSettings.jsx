@@ -20,7 +20,6 @@ import {
 import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
 import {
   prepareSmartsheetProfileTargetChange,
-  smartsheetProfileTargetLocked,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
 import {
   enforceSmartsheetBackendSafety,
@@ -70,12 +69,12 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
   return enforceSmartsheetBackendSafety({
     ...DEFAULT_CONFIG,
     ...(saved || {}),
-    sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}) },
-    orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}) },
+    sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}), rollout_baseline: null },
+    orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}), rollout_baseline: null },
   }, { writeBackendAvailable });
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, targetLocked = false, dataset, sessionToken, columns, columnsLoading, onLoadColumns }) {
+function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionToken, columns, columnsLoading, onLoadColumns }) {
   const patch = (next) => onChange({ ...value, ...next });
   const fields = dataset ? getMappableFields(dataset) : [];
   const bindings = value.column_bindings || {};
@@ -97,7 +96,6 @@ function IntegrationCard({ title, subtitle, value, onChange, targetLocked = fals
             {value.mirror_enabled ? "Mirror armed" : "Mirror off"}
           </Badge>
           <Badge variant="outline">{Object.keys(bindings).length} column IDs bound</Badge>
-          {targetLocked && <Badge className="bg-violet-100 text-violet-800">Target locked by baseline</Badge>}
         </div>
       </div>
 
@@ -107,7 +105,6 @@ function IntegrationCard({ title, subtitle, value, onChange, targetLocked = fals
           <Input
             value={value.smartsheet_sheet_name || ""}
             onChange={(e) => patch({ smartsheet_sheet_name: e.target.value })}
-            disabled={targetLocked}
             className="mt-1"
           />
         </div>
@@ -117,7 +114,6 @@ function IntegrationCard({ title, subtitle, value, onChange, targetLocked = fals
             <Input
               value={value.smartsheet_sheet_id || ""}
               onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
-              disabled={targetLocked}
               placeholder="Numeric sheet ID"
               className="flex-1"
             />
@@ -323,10 +319,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const setProfile = (key, next) => {
     const currentProfile = config?.[key] || {};
     const prepared = prepareSmartsheetProfileTargetChange(currentProfile, next);
-    if (prepared.targetChanged && smartsheetProfileTargetLocked(currentProfile)) {
-      setError("This target sheet is locked because its rollout baseline has already been captured.");
-      return;
-    }
     setConfig((current) => ({ ...current, [key]: prepared.profile }));
     if (prepared.targetChanged) {
       setApiMessage("Target sheet changed. Previous saved bindings were cleared.");
@@ -524,7 +516,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="WorkOrder Sales records will map to the Smartsheet Workflow sheet by stable IDs and approved field translations."
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
-        targetLocked={smartsheetProfileTargetLocked(config.sales)}
         dataset="sales"
         sessionToken={sessionToken}
         columns={salesColumns}
@@ -537,7 +528,6 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         subtitle="Order records will map to the Smartsheet Order Request sheet, including controlled customer/work-order relationship setup."
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
-        targetLocked={smartsheetProfileTargetLocked(config.orders)}
         dataset="orders"
         sessionToken={sessionToken}
         columns={orderColumns}
