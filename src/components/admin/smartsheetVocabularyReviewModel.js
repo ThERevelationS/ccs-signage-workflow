@@ -100,6 +100,18 @@ export function buildSmartsheetVocabularyReview({
   };
 }
 
+export function smartsheetVocabularyReadyForBinding(review) {
+  return Boolean(
+    review?.ready &&
+    review.source?.synchronized &&
+    review.tasks?.synchronized &&
+    review.orderTypes?.synchronized &&
+    review.owners?.unresolved?.length === 0 &&
+    review.owners?.ambiguous?.length === 0 &&
+    review.owners?.base44Only?.length === 0
+  );
+}
+
 export function formatSmartsheetVocabularyReview(review) {
   if (!review?.ready) return "Vocabulary comparison unavailable; do not assume the option lists are synchronized.";
   const lines = [
