@@ -13,6 +13,23 @@ export function smartsheetTargetIdentity(profile = {}) {
   return name ? `name:${name}` : "";
 }
 
+export function prepareSmartsheetProfileTargetChange(currentProfile = {}, nextProfile = {}) {
+  const targetChanged = smartsheetTargetIdentity(currentProfile) !== smartsheetTargetIdentity(nextProfile);
+  if (!targetChanged) return { targetChanged: false, profile: { ...nextProfile } };
+  return {
+    targetChanged: true,
+    profile: {
+      ...nextProfile,
+      column_bindings: {},
+      bindings_verified_at: "",
+    },
+  };
+}
+
+export function smartsheetProfileTargetLocked(profile = {}) {
+  return Boolean(profile?.rollout_baseline?.captured_at);
+}
+
 export function smartsheetAnalysisMatchesProfile(result, profile = {}) {
   if (result?.status !== "ready" || !result?.sheet?.id) return false;
 
@@ -50,6 +67,11 @@ function sameBindingIds(actual = {}, expected = {}) {
   return true;
 }
 
+export function smartsheetPersistedBindingsMatchAnalysis(profile = {}, result) {
+  if (!profile?.bindings_verified_at || !smartsheetAnalysisMatchesProfile(result, profile)) return false;
+  return sameBindingIds(profile?.column_bindings || {}, analyzedBindings(result));
+}
+
 export function smartsheetDryRunMatchesAnalysis(preview, result, profile = {}) {
   if (!smartsheetAnalysisMatchesProfile(result, profile)) return false;
   if (!preview?.sheet_id || String(preview.sheet_id) !== String(result.sheet.id)) return false;
@@ -71,6 +93,10 @@ export function buildSmartsheetBaselinePreflight({
 
     if (!smartsheetAnalysisMatchesProfile(analysis, profile)) {
       reasons.push(`${label} live mapping analysis is missing, unresolved, incompatible, or stale for the current target sheet.`);
+      continue;
+    }
+    if (!smartsheetPersistedBindingsMatchAnalysis(profile, analysis)) {
+      reasons.push(`${label} permanent column bindings are not saved or no longer match the current live mapping.`);
       continue;
     }
     if (!smartsheetDryRunMatchesAnalysis(preview, analysis, profile)) {
