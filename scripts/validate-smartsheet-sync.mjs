@@ -30,6 +30,11 @@ import {
   smartsheetTargetIdentity,
 } from "../src/components/admin/smartsheetMappingFreshnessModel.js";
 import { buildSmartsheetRolloutReadiness } from "../src/components/admin/smartsheetRolloutReadinessModel.js";
+import {
+  buildSmartsheetMappingReview,
+  formatSmartsheetMappingReview,
+  sameSmartsheetReviewedMapping,
+} from "../src/components/admin/smartsheetMappingReviewModel.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -245,6 +250,40 @@ const completedRollout = buildSmartsheetRolloutReadiness({
 });
 assert(completedRollout.baselinesComplete === true, "Matching captured baselines must be reported as complete.");
 assert(completedRollout.canCaptureBaseline === false, "An already captured immutable baseline must never expose a second capture action.");
+
+const semanticAliasAnalysis = analyzeSmartsheetColumns([
+  { field: "title", label: "Job Description", direction: "two_way", transform: "text", suggestedNames: ["Notes"] },
+], [{ id: "601", title: "Notes", type: "TEXT_NUMBER" }]);
+const reviewedMappings = {
+  sales: { status: "ready", sheet: { id: "8702703019812740", name: "Workflow" }, analysis: semanticAliasAnalysis },
+  orders: ordersMappingResult,
+};
+const semanticReview = buildSmartsheetMappingReview(reviewedMappings);
+assert(semanticReview.aliases.length === 1 && semanticReview.aliases[0].columnTitle === "Notes",
+  "A compatible field with a different business label must be flagged for meaning review.");
+assert(semanticReview.matched.length === 5,
+  "The compact review should include all compatible mapped fields across both sheets.");
+const mappingReport = formatSmartsheetMappingReview(reviewedMappings);
+assert(mappingReport.includes("Job Description [title] → Notes") && mappingReport.includes("[REVIEW NAME/MEANING]"),
+  "The copyable report must disclose non-identical field-to-column names.");
+assert(mappingReport.includes("Substrate, Vinyl, Supplies, Other") && mappingReport.includes("PICKLIST validated"),
+  "The copyable report must include live picklist options and validation for Request Type review.");
+assert(!mappingReport.includes("Bearer ") && !mappingReport.includes("session_token"),
+  "The mapping report must contain field metadata only, not authentication details.");
+assert(sameSmartsheetReviewedMapping(reviewedMappings, structuredClone(reviewedMappings)) === true,
+  "Identical live metadata must preserve review freshness.");
+const renamedColumnReview = structuredClone(reviewedMappings);
+renamedColumnReview.sales.analysis.fields[0].matches[0].title = "Other Notes";
+assert(sameSmartsheetReviewedMapping(reviewedMappings, renamedColumnReview) === false,
+  "A column name change after review must block saving or previewing.");
+const replacedColumnReview = structuredClone(reviewedMappings);
+replacedColumnReview.sales.analysis.fields[0].matches[0].id = "999";
+assert(sameSmartsheetReviewedMapping(reviewedMappings, replacedColumnReview) === false,
+  "A column ID change after review must block saving or previewing.");
+const updatedPicklistReview = structuredClone(reviewedMappings);
+updatedPicklistReview.orders.analysis.fields[3].matches[0].options = ["Other"];
+assert(sameSmartsheetReviewedMapping(reviewedMappings, updatedPicklistReview) === false,
+  "A live picklist-option change after review must block saving or previewing.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
