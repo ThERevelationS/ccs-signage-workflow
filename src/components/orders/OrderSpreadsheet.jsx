@@ -94,7 +94,7 @@ import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/Cell
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
-import { importOrders as importOrdersFn } from "@/functions/importOrders";
+
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import {
   createOrderWithRecovery,
@@ -623,7 +623,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         reader.onerror = reject;
         reader.readAsBinaryString(file);
       });
-      const res = await importOrdersFn({ fileData, workOrderFilter: workOrderFilter || '', session_token: sessionToken });
+      const res = await base44.functions.invoke("importOrders", { fileData, workOrderFilter: workOrderFilter || '', session_token: sessionToken });
       const result = res.data;
       const conflictCount = Number(result.conflicts || 0);
       const errorCount = Number(result.errors || 0);
