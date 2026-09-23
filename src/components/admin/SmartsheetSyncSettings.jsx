@@ -30,6 +30,7 @@ import {
   smartsheetAnalysisMatchesProfile,
   smartsheetProfileTargetLocked,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
+import { buildSmartsheetRolloutReadiness } from "@/components/admin/smartsheetRolloutReadinessModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
 import { buildSmartsheetCreationReadiness } from "@/components/admin/smartsheetCreationReadinessModel";
@@ -218,6 +219,48 @@ function LiveMappingAnalysisCard({ title, result }) {
           {analysis.unmappedColumns.map((column) => `${column.title} (ID ${column.id})`).join(", ")}
         </div>
       )}
+    </div>
+  );
+}
+
+function RolloutReadinessCard({ readiness }) {
+  const statusClass = (status) => status === "complete" || status === "ready"
+    ? "bg-green-100 text-green-700"
+    : status === "blocked"
+      ? "bg-red-100 text-red-700"
+      : "bg-gray-100 text-gray-700";
+  const statusLabel = (status) => status === "complete"
+    ? "Complete"
+    : status === "ready"
+      ? "Ready"
+      : status === "blocked"
+        ? "Blocked"
+        : "Pending";
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-xs font-semibold text-slate-900">Rollout readiness — observation only</div>
+          <div className="mt-1 text-[11px] text-slate-600">
+            This checklist does not perform writes. It shows the exact sequence required before the immutable rollout baseline can be captured.
+          </div>
+        </div>
+        <Badge className={readiness?.canCaptureBaseline ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-800"}>
+          {readiness?.canCaptureBaseline ? "Baseline capture ready" : "Pre-baseline work remains"}
+        </Badge>
+      </div>
+      <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+        {(readiness?.steps || []).map((item, index) => (
+          <div key={item.id} className="rounded-md border bg-white p-2.5 text-xs">
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-medium text-slate-800">{index + 1}. {item.label}</div>
+              <Badge className={`${statusClass(item.status)} shrink-0`}>{statusLabel(item.status)}</Badge>
+            </div>
+            <div className="mt-1 text-[11px] text-slate-600">{item.detail}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -847,6 +890,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     config,
   }), [dryRunPreview, liveMappingAnalysis, config]);
 
+  const rolloutReadiness = useMemo(() => buildSmartsheetRolloutReadiness({
+    apiStatus,
+    config,
+    liveMappingAnalysis,
+    dryRunPreview,
+  }), [apiStatus, config, liveMappingAnalysis, dryRunPreview]);
+
   // Recalculate from the read-only row snapshot whenever a Customer review decision changes.
   // Stored previews are never a creation authorization and contain no live write callback.
   const controlledCreationReview = useMemo(() => {
@@ -1213,6 +1263,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
 
   const captureRolloutBaseline = async () => {
     if (saving || !dryRunPreview) return;
+    if (!rolloutReadiness.backendReady) {
+      setError("A configured authenticated read-only Smartsheet backend is required before baseline capture.");
+      return;
+    }
     if (!baselinePreflight.ready) {
       setError(baselinePreflight.reasons[0] || "A fresh matching live mapping analysis and complete row preview are required before baseline capture.");
       return;
@@ -1663,7 +1717,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                       size="sm"
                       variant="outline"
                       onClick={captureRolloutBaseline}
-                      disabled={saving || !dryRunPreview || !baselinePreflight.ready || !config.observation_mode || config.global_enabled}
+                      disabled={saving || !dryRunPreview || !rolloutReadiness.canCaptureBaseline}
                     >
                       {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                       Capture Rollout Baseline
@@ -1737,6 +1791,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             </div>
           )}
         </div>
+
+        <RolloutReadinessCard readiness={rolloutReadiness} />
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
