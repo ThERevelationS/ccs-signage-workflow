@@ -32,6 +32,7 @@ import {
 import { buildSmartsheetRolloutReadiness } from "../src/components/admin/smartsheetRolloutReadinessModel.js";
 import {
   buildSmartsheetMappingReview,
+  buildSmartsheetMappingReviewGate,
   formatSmartsheetMappingReview,
   sameSmartsheetReviewedMapping,
 } from "../src/components/admin/smartsheetMappingReviewModel.js";
@@ -284,6 +285,28 @@ const updatedPicklistReview = structuredClone(reviewedMappings);
 updatedPicklistReview.orders.analysis.fields[3].matches[0].options = ["Other"];
 assert(sameSmartsheetReviewedMapping(reviewedMappings, updatedPicklistReview) === false,
   "A live picklist-option change after review must block saving or previewing.");
+
+const unreviewedGate = buildSmartsheetMappingReviewGate({
+  liveMappingsReady: true,
+  mappingReviewed: false,
+  bindingsReady: false,
+});
+assert(unreviewedGate.canBind === false && unreviewedGate.canPreview === false,
+  "Live analysis alone must not unlock binding or row preview before semantic review.");
+const reviewedUnboundGate = buildSmartsheetMappingReviewGate({
+  liveMappingsReady: true,
+  mappingReviewed: true,
+  bindingsReady: false,
+});
+assert(reviewedUnboundGate.canBind === true && reviewedUnboundGate.canPreview === false,
+  "Completed semantic review may unlock binding but must not unlock Preview Rows before permanent IDs are saved.");
+const reviewedBoundGate = buildSmartsheetMappingReviewGate({
+  liveMappingsReady: true,
+  mappingReviewed: true,
+  bindingsReady: true,
+});
+assert(reviewedBoundGate.canBind === true && reviewedBoundGate.canPreview === true,
+  "Preview Rows may unlock only after analysis, semantic review, and saved matching permanent bindings.");
 
 const salesBindings = {
   client_name: { column_id: "1" },
