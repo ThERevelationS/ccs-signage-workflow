@@ -528,7 +528,7 @@ Answer the question based on the documents and information available. Be specifi
           }
         }}
       >
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent className="clay-card w-[calc(100%-2rem)] max-w-lg border-none p-4 sm:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {verificationTarget === "verified" ? "Mark this jurisdiction verified?" : verificationTarget === "historical" ? "Mark this jurisdiction historical?" : "Require re-verification?"}
@@ -541,21 +541,24 @@ Answer the question based on the documents and information available. Be specifi
                   : "This keeps the existing research and prior verification history, but marks the profile as needing a fresh staff review before it should be relied on."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-700">Review note (optional)</label>
+          <div className="space-y-2">
+            <label htmlFor="jurisdiction-verification-note" className="text-sm font-medium text-gray-700">Review note (optional)</label>
             <Input
+              id="jurisdiction-verification-note"
               value={verificationNote}
               onChange={(event) => setVerificationNote(event.target.value)}
               placeholder="Official page checked, scope, caveat, or reason for re-verification…"
               disabled={verificationSaving}
+              className="min-h-11"
             />
           </div>
           {verificationError && (
             <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">{verificationError}</div>
           )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={verificationSaving}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="grid grid-cols-1 gap-2 sm:flex sm:justify-end">
+            <AlertDialogCancel className="min-h-11 w-full sm:w-auto" disabled={verificationSaving}>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className="min-h-11 w-full sm:w-auto"
               disabled={verificationSaving || !verificationTarget}
               onClick={async (event) => {
                 event.preventDefault();
