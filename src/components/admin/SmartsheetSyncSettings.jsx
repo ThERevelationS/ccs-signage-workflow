@@ -1025,6 +1025,33 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
+  const revalidateCurrentLiveMappings = async () => {
+    if (!sessionToken) throw new Error("An authenticated admin session is required for live mapping revalidation.");
+    const refreshed = {};
+    for (const dataset of ["sales", "orders"]) {
+      const current = liveMappingAnalysis?.[dataset];
+      const profile = config?.[dataset];
+      if (!smartsheetAnalysisMatchesProfile(current, profile)) {
+        throw new Error(`${dataset === "sales" ? "Workflow" : "Order Request"} mapping evidence is missing or stale. Run Analyze Live Mapping again.`);
+      }
+      const columnsResult = await getSmartsheetColumns({ sessionToken, sheetId: current.sheet.id });
+      refreshed[dataset] = {
+        ...current,
+        analysis: analyzeSmartsheetColumns(
+          SMARTSHEET_MAPPING_BLUEPRINTS[dataset],
+          Array.isArray(columnsResult.columns) ? columnsResult.columns : [],
+        ),
+      };
+    }
+    setLiveMappingAnalysis(refreshed);
+    for (const dataset of ["sales", "orders"]) {
+      if (!smartsheetAnalysisMatchesProfile(refreshed[dataset], config?.[dataset])) {
+        throw new Error(`${dataset === "sales" ? "Workflow" : "Order Request"} columns changed or are no longer fully compatible. Review the refreshed live mapping before continuing.`);
+      }
+    }
+    return refreshed;
+  };
+
   const bindVerifiedMappings = async () => {
     if (!liveMappingsReadyToBind || saving) return;
     if (!config.observation_mode || config.global_enabled) {
@@ -1036,9 +1063,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setSaved(false);
     setError("");
     try {
+      const refreshedMappings = await revalidateCurrentLiveMappings();
       const verifiedAt = new Date().toISOString();
-      const salesBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.sales);
-      const orderBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.orders);
+      const salesBinding = buildVerifiedSmartsheetBinding(refreshedMappings.sales);
+      const orderBinding = buildVerifiedSmartsheetBinding(refreshedMappings.orders);
       const nextConfig = mergeConfig({
         ...config,
         schema_version: 3,
@@ -1081,8 +1109,9 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setApiMessage("");
     setDryRunPreview(null);
     try {
-      const salesBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.sales);
-      const orderBinding = buildVerifiedSmartsheetBinding(liveMappingAnalysis.orders);
+      const refreshedMappings = await revalidateCurrentLiveMappings();
+      const salesBinding = buildVerifiedSmartsheetBinding(refreshedMappings.sales);
+      const orderBinding = buildVerifiedSmartsheetBinding(refreshedMappings.orders);
       const salesColumnIds = Object.values(salesBinding.column_bindings).map((binding) => binding.column_id);
       const orderColumnIds = Object.values(orderBinding.column_bindings).map((binding) => binding.column_id);
 
@@ -1195,6 +1224,15 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     setSaved(false);
     setError("");
     try {
+      const refreshedMappings = await revalidateCurrentLiveMappings();
+      const refreshedPreflight = buildSmartsheetBaselinePreflight({
+        dryRunPreview,
+        liveMappingAnalysis: refreshedMappings,
+        config,
+      });
+      if (!refreshedPreflight.ready) {
+        throw new Error(refreshedPreflight.reasons[0] || "Live mapping evidence changed after the row preview. Run Preview Rows again before baseline capture.");
+      }
       const capturedAt = new Date().toISOString();
       const buildBaseline = (preview, label) => {
         const total = Number(preview?.total_row_count || 0);
