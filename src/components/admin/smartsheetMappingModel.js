@@ -69,6 +69,51 @@ function normalizeColumnTitle(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+const WRITABLE_DIRECTIONS = new Set([
+  SMARTSHEET_MAPPING_DIRECTIONS.TWO_WAY,
+  SMARTSHEET_MAPPING_DIRECTIONS.BASE44_TO_SMARTSHEET,
+]);
+
+const TEXT_COMPATIBLE_TYPES = new Set(["TEXT_NUMBER", "PICKLIST", "CONTACT_LIST"]);
+
+function analyzeColumnCompatibility(field, column) {
+  const type = String(column?.type || "").trim().toUpperCase();
+  const systemType = String(column?.system_column_type || "").trim();
+
+  if (!type) {
+    return { compatible: false, reason: "Smartsheet did not return a column type." };
+  }
+  if (WRITABLE_DIRECTIONS.has(field?.direction) && systemType) {
+    return {
+      compatible: false,
+      reason: `System-managed column ${systemType} is not safe for a future Base44 → Smartsheet write.`,
+    };
+  }
+
+  if (field?.transform === SMARTSHEET_TRANSFORMS.DATE) {
+    return type === "DATE"
+      ? { compatible: true, reason: "" }
+      : { compatible: false, reason: `Expected Smartsheet DATE; found ${type}.` };
+  }
+  if ([SMARTSHEET_TRANSFORMS.MONEY, SMARTSHEET_TRANSFORMS.PERCENT].includes(field?.transform)) {
+    return type === "TEXT_NUMBER"
+      ? { compatible: true, reason: "" }
+      : { compatible: false, reason: `Expected Smartsheet TEXT_NUMBER for numeric values; found ${type}.` };
+  }
+  if ([
+    SMARTSHEET_TRANSFORMS.TEXT,
+    SMARTSHEET_TRANSFORMS.CUSTOMER_RESOLUTION,
+    SMARTSHEET_TRANSFORMS.STATUS_TRANSLATION,
+    SMARTSHEET_TRANSFORMS.NOTES_PROCESS,
+  ].includes(field?.transform)) {
+    return TEXT_COMPATIBLE_TYPES.has(type)
+      ? { compatible: true, reason: "" }
+      : { compatible: false, reason: `Expected a scalar text-compatible Smartsheet column; found ${type}.` };
+  }
+
+  return { compatible: true, reason: "" };
+}
+
 export function analyzeSmartsheetColumns(rows = [], columns = []) {
   const safeColumns = Array.isArray(columns) ? columns : [];
   const byNormalizedTitle = new Map();
@@ -101,8 +146,13 @@ export function analyzeSmartsheetColumns(rows = [], columns = []) {
     }
 
     if (matches.length === 1) {
-      mappedColumnIds.add(String(matches[0].id));
-      return { ...row, status: "matched", matches };
+      const column = matches[0];
+      mappedColumnIds.add(String(column.id));
+      const compatibility = analyzeColumnCompatibility(row, column);
+      if (!compatibility.compatible) {
+        return { ...row, status: "incompatible", matches, compatibility };
+      }
+      return { ...row, status: "matched", matches, compatibility };
     }
     if (matches.length > 1) {
       return { ...row, status: "conflict", matches };
@@ -114,7 +164,7 @@ export function analyzeSmartsheetColumns(rows = [], columns = []) {
   const counts = fields.reduce((result, field) => {
     result[field.status] = (result[field.status] || 0) + 1;
     return result;
-  }, { matched: 0, missing: 0, conflict: 0, protected: 0 });
+  }, { matched: 0, missing: 0, conflict: 0, incompatible: 0, protected: 0 });
 
   return { fields, unmappedColumns, counts };
 }
@@ -125,8 +175,8 @@ export function buildVerifiedSmartsheetBinding(result) {
   }
 
   const counts = result.analysis.counts || {};
-  if (Number(counts.missing || 0) > 0 || Number(counts.conflict || 0) > 0) {
-    throw new Error("All non-protected fields must resolve uniquely before Smartsheet IDs can be bound.");
+  if (Number(counts.missing || 0) > 0 || Number(counts.conflict || 0) > 0 || Number(counts.incompatible || 0) > 0) {
+    throw new Error("All non-protected fields must resolve uniquely to compatible Smartsheet columns before IDs can be bound.");
   }
 
   const columnBindings = {};
