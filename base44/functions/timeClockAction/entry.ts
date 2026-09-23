@@ -3282,10 +3282,10 @@ Deno.serve(async (req) => {
             );
             if (!recoveredAudit || recoveredAudit.updated !== 1) {
               const freshAudit = await auditEntity.get(staleAudit.id).catch(() => null);
-              if (freshAudit?.outcome !== 'confirmed') return Response.json({ success: false, error: 'The abandoned correction was applied but its audit could not be recovered safely.' }, { status: 409 });
+              if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, error: 'The abandoned correction was applied but its audit could not be recovered safely.' }, { status: 409 });
             }
-          } else if (staleAudit.outcome !== 'confirmed') {
-            return Response.json({ success: false, error: 'The abandoned correction has a non-confirmed audit state. Admin investigation is required.' }, { status: 409 });
+          } else if (!['confirmed', 'recovered'].includes(String(staleAudit.outcome || ''))) {
+            return Response.json({ success: false, error: 'The abandoned correction has a non-terminal audit state. Admin investigation is required.' }, { status: 409 });
           }
           const recoveredStatus = previousDecision === 'approve_modified' ? 'approved_modified' : 'approved';
           const recovered = await correctionRequestEntity.updateMany(
