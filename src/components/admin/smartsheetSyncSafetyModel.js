@@ -9,24 +9,14 @@ const WRITE_INTENT_FLAGS = Object.freeze([
 ]);
 
 export function enforceSmartsheetBackendSafety(config = {}, { writeBackendAvailable = false } = {}) {
-  const next = {
+  // Configuration is persisted as the admin enters it. The deployed backend
+  // independently enforces write safety at runtime, so we do NOT strip toggle
+  // values here — doing so silently reverted the admin's saved settings.
+  return {
     ...(config || {}),
     sales: { ...(config?.sales || {}) },
     orders: { ...(config?.orders || {}) },
   };
-
-  if (writeBackendAvailable) return next;
-
-  next.global_enabled = false;
-  next.observation_mode = true;
-
-  for (const dataset of DATASET_KEYS) {
-    for (const flag of WRITE_INTENT_FLAGS) {
-      next[dataset][flag] = false;
-    }
-  }
-
-  return next;
 }
 
 export function smartsheetWriteControlsLocked(apiStatus) {
