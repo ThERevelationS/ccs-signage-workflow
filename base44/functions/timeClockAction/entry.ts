@@ -3179,7 +3179,7 @@ Deno.serve(async (req) => {
         return Response.json({ success: true, request: priorByRequest, audit_id: correctionAudit.id, reused: true });
       }
 
-      const entry = await entryEntity.get(entryId).catch(() => null);
+      let entry = await entryEntity.get(entryId).catch(() => null);
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
@@ -3190,9 +3190,6 @@ Deno.serve(async (req) => {
       if (String(entry.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ success: false, error: 'This time entry changed since it was loaded. Reload before requesting a correction.' }, { status: 409 });
       }
-      const openRequests = await correctionRequestEntity.filter({ time_entry_id: entry.id, status: { $in: ['pending', 'reviewing'] } });
-      if (!Array.isArray(openRequests)) throw new Error('Correction request lookup did not return a record list.');
-      if (openRequests.length > 0) return Response.json({ success: false, error: 'A correction request for this shift is already awaiting manager review.' }, { status: 409 });
 
       const clockIn = new Date(String(requested?.clock_in || entry.clock_in || ''));
       const clockOut = new Date(String(requested?.clock_out || entry.clock_out || ''));
@@ -3210,44 +3207,88 @@ Deno.serve(async (req) => {
         lunch_minutes: lunchMinutes,
         notes: String(requested?.notes ?? entry.notes ?? '').trim().slice(0, 4000),
       };
-      const now = new Date().toISOString();
       const submissionHash = await payloadHash({
         entry_id: entry.id,
         expected_updated_date: entry.updated_date,
         reason,
         requested_changes: requestedChanges,
       });
-      const correctionRequest = await correctionRequestEntity.create({
-        user_email: target.email,
-        user_name: target.full_name || target.email,
-        time_entry_id: entry.id,
-        time_entry_updated_date: entry.updated_date,
-        request_id: requestId,
-        requested_at: now,
-        employee_reason: reason,
-        original_snapshot: entryAuditSnapshot(entry),
-        requested_changes: requestedChanges,
-        status: 'pending',
-      });
-      if (!correctionRequest?.id) throw new Error('Correction request could not be persisted.');
+      const correctionCreateLock = await claimCorrectionCreateLock(
+        stateEntity,
+        state.id,
+        requestId,
+        entry.id,
+        submissionHash,
+      );
+      if (!correctionCreateLock?.acquired) {
+        return Response.json({
+          success: false,
+          ...(correctionCreateLock?.retry_same_request === true ? { retry_same_request: true } : {}),
+          error: correctionCreateLock?.error || 'Correction request creation could not acquire its authoritative lock.',
+        }, { status: 409 });
+      }
 
-      let correctionAudit: any = null;
       try {
-        const ensured = await ensureActionAudit(auditEntity, {
-          action: 'correction_request', outcome: 'confirmed', user_email: target.email,
-          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-          authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
-          request_id: requestId, time_entry_id: entry.id, reason,
-          details: { payload_hash: submissionHash, correction_request_id: correctionRequest.id, requested_changes: requestedChanges },
-        }, 'Correction-request audit');
-        correctionAudit = ensured.audit;
-      } catch {
-        return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but audit finalization was interrupted. Retry the same request.' }, { status: 409 });
+        entry = await entryEntity.get(entry.id).catch(() => null);
+        if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
+          return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
+        }
+        if (entry.status !== 'clocked_out' || !entry.clock_out || entryIsPayPeriodLocked(entry) || String(entry.updated_date || '') !== expectedUpdatedDate) {
+          return Response.json({ success: false, error: 'This time entry changed while the correction request was being submitted. Reload before trying again.' }, { status: 409 });
+        }
+
+        const openRequests = await correctionRequestEntity.filter({ time_entry_id: entry.id, status: { $in: ['pending', 'reviewing'] } });
+        if (!Array.isArray(openRequests)) throw new Error('Correction request lookup did not return a record list.');
+        if (openRequests.length > 0) {
+          return Response.json({ success: false, error: 'A correction request for this shift is already awaiting manager review.' }, { status: 409 });
+        }
+
+        const now = new Date().toISOString();
+        const correctionRequest = await correctionRequestEntity.create({
+          user_email: target.email,
+          user_name: target.full_name || target.email,
+          time_entry_id: entry.id,
+          time_entry_updated_date: entry.updated_date,
+          request_id: requestId,
+          requested_at: now,
+          employee_reason: reason,
+          original_snapshot: entryAuditSnapshot(entry),
+          requested_changes: requestedChanges,
+          status: 'pending',
+        });
+        if (!correctionRequest?.id) throw new Error('Correction request could not be persisted.');
+
+        let correctionAudit: any = null;
+        try {
+          const ensured = await ensureActionAudit(auditEntity, {
+            action: 'correction_request', outcome: 'confirmed', user_email: target.email,
+            user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target), server_timestamp: now,
+            request_id: requestId, time_entry_id: entry.id, reason,
+            details: { payload_hash: submissionHash, correction_request_id: correctionRequest.id, requested_changes: requestedChanges },
+          }, 'Correction-request audit');
+          correctionAudit = ensured.audit;
+        } catch {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but audit finalization was interrupted. Retry the same request.' }, { status: 409 });
+        }
+        if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
+        }
+        return Response.json({ success: true, request: correctionRequest, audit_id: correctionAudit.id });
+      } finally {
+        try {
+          await releaseCorrectionCreateLock(
+            stateEntity,
+            state.id,
+            requestId,
+            entryId,
+            submissionHash,
+            String(correctionCreateLock.claim_token || ''),
+          );
+        } catch (error) {
+          console.error('Correction create lock release failed; stale same-request recovery remains available:', error?.message || error);
+        }
       }
-      if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
-        return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
-      }
-      return Response.json({ success: true, request: correctionRequest, audit_id: correctionAudit.id });
     }
 
     if (action === 'review_correction_request') {
