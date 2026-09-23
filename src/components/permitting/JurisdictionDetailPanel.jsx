@@ -384,13 +384,19 @@ Answer the question based on the documents and information available. Be specifi
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <h2 className="min-w-0 break-words font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
-              <Badge variant="outline">{jurisdiction.state}</Badge>
-              <Badge className="bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
+              <Badge variant="outline" className="max-w-full break-words">{jurisdiction.state}</Badge>
+              <Badge className="max-w-full break-words bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
             </div>
             {jurisdiction.permitting_url && (
-              <a href={jurisdiction.permitting_url} target="_blank" rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                <ExternalLink className="w-3 h-3" /> Official Permitting Page
+              <a
+                href={jurisdiction.permitting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open official permitting page for ${jurisdiction.name} in a new tab`}
+                className="mt-2 inline-flex min-h-11 w-full max-w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto sm:justify-start"
+              >
+                <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                <span className="min-w-0 break-words">Official Permitting Page</span>
               </a>
             )}
           </div>
