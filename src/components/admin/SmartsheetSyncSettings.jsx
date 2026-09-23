@@ -74,7 +74,7 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
   }, { writeBackendAvailable });
 }
 
-function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionToken, columns, columnsLoading, onLoadColumns }) {
+function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionToken, columns, columnsLoading, columnsMessage, onLoadColumns }) {
   const patch = (next) => onChange({ ...value, ...next });
   const fields = dataset ? getMappableFields(dataset) : [];
   const bindings = value.column_bindings || {};
@@ -128,6 +128,9 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
               <span className="ml-1">Load columns</span>
             </Button>
           </div>
+          {columnsMessage && (
+            <div className={`text-[11px] mt-1 ${columnsMessage.includes("Loaded") ? "text-green-700" : "text-red-600"}`}>{columnsMessage}</div>
+          )}
         </div>
       </div>
 
@@ -203,7 +206,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const [availableSheets, setAvailableSheets] = useState([]);
   const [salesColumns, setSalesColumns] = useState([]);
   const [orderColumns, setOrderColumns] = useState([]);
-  const [columnsLoading, setColumnsLoading] = useState(false);
+  const [columnsLoading, setColumnsLoading] = useState({ sales: false, orders: false });
+  const [columnsMessage, setColumnsMessage] = useState({ sales: "", orders: "" });
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
 
@@ -280,19 +284,26 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const loadColumns = async (dataset) => {
     const profile = config?.[dataset];
     const sheetId = profile?.smartsheet_sheet_id;
-    if (!sessionToken || !sheetId) return;
-    setColumnsLoading(true);
-    setApiMessage("");
+    if (!sessionToken) {
+      setColumnsMessage((m) => ({ ...m, [dataset]: "Sign in required to load columns." }));
+      return;
+    }
+    if (!sheetId) {
+      setColumnsMessage((m) => ({ ...m, [dataset]: "Enter a sheet ID first." }));
+      return;
+    }
+    setColumnsLoading((s) => ({ ...s, [dataset]: true }));
+    setColumnsMessage((m) => ({ ...m, [dataset]: "" }));
     try {
       const result = await getSmartsheetColumnsForBindings({ sessionToken, sheetId });
       const cols = Array.isArray(result.columns) ? result.columns : [];
       if (dataset === "orders") setOrderColumns(cols);
       else setSalesColumns(cols);
-      setApiMessage(`Loaded ${cols.length} columns from sheet ${sheetId}.`);
+      setColumnsMessage((m) => ({ ...m, [dataset]: `Loaded ${cols.length} column${cols.length === 1 ? "" : "s"} from sheet ${sheetId}.` }));
     } catch (err) {
-      setApiMessage(err?.message || "Could not load Smartsheet columns.");
+      setColumnsMessage((m) => ({ ...m, [dataset]: err?.message || "Could not load Smartsheet columns." }));
     } finally {
-      setColumnsLoading(false);
+      setColumnsLoading((s) => ({ ...s, [dataset]: false }));
     }
   };
 
@@ -519,7 +530,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         dataset="sales"
         sessionToken={sessionToken}
         columns={salesColumns}
-        columnsLoading={columnsLoading}
+        columnsLoading={columnsLoading.sales}
+        columnsMessage={columnsMessage.sales}
         onLoadColumns={loadColumns}
       />
 
@@ -531,7 +543,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         dataset="orders"
         sessionToken={sessionToken}
         columns={orderColumns}
-        columnsLoading={columnsLoading}
+        columnsLoading={columnsLoading.orders}
+        columnsMessage={columnsMessage.orders}
         onLoadColumns={loadColumns}
       />
 
