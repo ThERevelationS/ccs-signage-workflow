@@ -3,6 +3,7 @@ import {
   DEFAULT_SALES_LEAD_SOURCES,
   buildSmartsheetVocabularyReview,
   formatSmartsheetVocabularyReview,
+  smartsheetVocabularyReadyForBinding,
 } from "../src/components/admin/smartsheetVocabularyReviewModel.js";
 
 function column(field, options, validation = false) {
@@ -53,6 +54,8 @@ assert.deepEqual(review.tasks.addToSmartsheet, ["SIPs"]);
 assert.deepEqual(review.tasks.addToBase44, []);
 assert.equal(review.tasks.validated, true);
 assert.equal(review.orderTypes.synchronized, true);
+assert.equal(smartsheetVocabularyReadyForBinding(review), false,
+  "Known vocabulary and identity gaps must keep permanent binding blocked");
 assert.equal(review.owners.resolved.length, 8);
 assert.deepEqual(review.owners.unresolved, ["PJ", "Cameron", "Emily"]);
 assert.deepEqual(review.owners.ambiguous, []);
@@ -75,5 +78,25 @@ const withoutDisabled = buildSmartsheetVocabularyReview({
 });
 assert.ok(withoutDisabled.owners.unresolved.includes("Brett"),
   "Inactive people must not be resolved automatically");
+
+const fullyAligned = buildSmartsheetVocabularyReview({
+  liveMappingAnalysis: {
+    sales: {
+      status: "ready",
+      analysis: { fields: [
+        column("lead_source", ["Web", "Referral"]),
+        column("current_task_description", ["Conduct Site Survey"]),
+        column("current_task_assigned_to", ["Brett"]),
+      ] },
+    },
+    orders: liveMappingAnalysis.orders,
+  },
+  leadSources: ["Website", "Referral"],
+  leadSourcesSaved: true,
+  taskDescriptions: [{ text: "Conduct Site Survey" }],
+  authorizedUsers: [{ full_name: "Brett Heinlein", sales_roles: ["Task Assigned"], is_active: true }],
+});
+assert.equal(smartsheetVocabularyReadyForBinding(fullyAligned), true,
+  "A fully reconciled vocabulary should allow semantic binding review");
 
 console.log("Smartsheet vocabulary read-only regression: PASS");
