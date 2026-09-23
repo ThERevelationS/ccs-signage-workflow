@@ -14,6 +14,8 @@ function reviewField(field, sheet, dataset) {
     columnId: column ? String(column.id || "") : "",
     columnTitle: column ? String(column.title || "") : "",
     columnType: column ? String(column.type || "") : "",
+    columnOptions: column && Array.isArray(column.options) ? column.options.map(String) : [],
+    validatedPicklist: Boolean(column?.validation === true),
     alias: Boolean(field?.status === "matched" && column
       && normalize(field?.label) !== normalize(column.title)),
     matches: (field?.matches || []).map((candidate) => ({
@@ -58,7 +60,11 @@ export function formatSmartsheetMappingReview(results = {}) {
         lines.push(
           item.label + " [" + item.field + "] → " + item.columnTitle +
           " (ID " + item.columnId + ", " + item.columnType + ")" +
-          (item.alias ? " [REVIEW NAME/MEANING]" : "")
+          (item.alias ? " [REVIEW NAME/MEANING]" : "") +
+          (item.columnType === "PICKLIST"
+            ? " [PICKLIST " + (item.validatedPicklist ? "validated" : "unvalidated") +
+              "; allowed options: " + (item.columnOptions.length ? item.columnOptions.join(", ") : "not supplied") + "]"
+            : "")
         );
       } else if (item.status === "protected") {
         lines.push(item.label + " [" + item.field + "] — Base44 only (protected)");
@@ -85,6 +91,8 @@ function mappingSnapshot(result) {
         title: String(column.title || ""),
         type: String(column.type || ""),
         systemType: String(column.system_column_type || ""),
+        validation: Boolean(column.validation === true),
+        options: Array.isArray(column.options) ? column.options.map(String) : [],
       })),
     })),
   });
