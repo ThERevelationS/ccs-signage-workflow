@@ -14,7 +14,7 @@ const notesField = SMARTSHEET_MAPPING_BLUEPRINTS.sales.find((field) => field.fie
 assert.equal(notesField?.transform, "notes_process");
 assert.equal(notesField?.direction, "two_way");
 assert.ok(SMARTSHEET_MAPPING_BLUEPRINTS.sales.some(
-  (field) => field.field === "description" && field.direction === "base44_only",
+  (field) => field.field === "title" && field.direction === "base44_only",
 ));
 assert.ok(!SMARTSHEET_MAPPING_BLUEPRINTS.sales.some(
   (field) => field.field === "title" && field.direction !== "base44_only",
