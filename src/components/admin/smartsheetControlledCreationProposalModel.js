@@ -1,5 +1,5 @@
 import { normalizeCustomerText } from "./smartsheetCustomerResolutionModel.js";
-import { resolveSmartsheetPerson } from "./smartsheetTranslationModel.js";
+import { resolveSmartsheetPerson, serializeBase44WorkNotes } from "./smartsheetTranslationModel.js";
 
 // Observation-only. This module has no Base44 client, Smartsheet transport, or write path.
 const ORDER_TYPES = Object.freeze({
@@ -179,9 +179,11 @@ export function buildSmartsheetControlledCreationProposals({
   const fingerprint = (record) => dataset === "sales"
     ? (text(record?.est_inv_at)
       ? `est:${text(record?.est_inv_at).toLowerCase()}`
-      : text(record?.title)
-        ? `title:${text(record?.title).toLowerCase().replace(/\s+/g, " ")}`
-        : "")
+      : text(Array.isArray(record?.work_notes) ? serializeBase44WorkNotes(record.work_notes) : record?.work_notes)
+        ? `notes:${text(Array.isArray(record?.work_notes) ? serializeBase44WorkNotes(record.work_notes) : record?.work_notes).toLowerCase().replace(/\s+/g, " ")}`
+        : text(record?.title)
+          ? `title:${text(record?.title).toLowerCase().replace(/\s+/g, " ")}`
+          : "")
     : [record?.request_type, record?.description].map((value) =>
       text(value).toLowerCase().replace(/\s+/g, " ")).join("|");
   const existingFingerprints = new Map();
@@ -331,7 +333,7 @@ export function buildSmartsheetControlledCreationProposals({
       ));
     }
     if (identity?.kind === "existing_customer" && source?.status === "new_record") {
-      const subject = fingerprint(payload);
+      const subject = fingerprint(originalValues) || fingerprint(payload);
       const keys = [
         `id:${identity.customer_id}|${subject}`,
         `name:${normalizeCustomerText(identity.company_name)}|${subject}`,
@@ -382,7 +384,7 @@ export function buildSmartsheetControlledCreationProposals({
       ? `existing:${row.customer.customer_id}`
       : `new:${row.customer.key}`;
     const subject = dataset === "sales"
-      ? text(row.proposed_payload.title).toLowerCase()
+      ? (fingerprint(row.source_values) || fingerprint(row.proposed_payload))
       : `${text(row.proposed_payload.request_type).toLowerCase()}|${text(row.proposed_payload.description).toLowerCase()}`;
     if (!subject) continue;
     const key = `${customerKey}|${subject}`;
