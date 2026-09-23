@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       {
         method: 'PUT',
         headers: headers(token),
-        body: JSON.stringify({ options: plan.next_options }),
+        body: JSON.stringify({ type: before.type, options: plan.next_options }),
       },
       0,
     );
