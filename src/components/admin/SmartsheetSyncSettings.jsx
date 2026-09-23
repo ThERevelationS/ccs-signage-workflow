@@ -33,6 +33,7 @@ import {
 import { buildSmartsheetRolloutReadiness } from "@/components/admin/smartsheetRolloutReadinessModel";
 import {
   buildSmartsheetMappingReview,
+  buildSmartsheetMappingReviewGate,
   formatSmartsheetMappingReview,
   sameSmartsheetReviewedMapping,
 } from "@/components/admin/smartsheetMappingReviewModel";
@@ -906,6 +907,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     dryRunPreview,
   }), [apiStatus, config, liveMappingAnalysis, dryRunPreview]);
 
+  const mappingReviewGate = useMemo(() => buildSmartsheetMappingReviewGate({
+    liveMappingsReady: liveMappingsReadyToBind,
+    mappingReviewed,
+    bindingsReady: rolloutReadiness.bindingsReady,
+  }), [liveMappingsReadyToBind, mappingReviewed, rolloutReadiness.bindingsReady]);
+
   // Recalculate from the read-only row snapshot whenever a Customer review decision changes.
   // Stored previews are never a creation authorization and contain no live write callback.
   const controlledCreationReview = useMemo(() => {
@@ -1186,7 +1193,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   };
 
   const previewLiveRows = async () => {
-    if (!sessionToken || apiLoading || !liveMappingsReadyToBind) return;
+    if (!sessionToken || apiLoading || !mappingReviewGate.canPreview) {
+      if (!apiLoading && sessionToken) {
+        setError(mappingReviewGate.reason || "Verified permanent bindings are required before Preview Rows.");
+      }
+      return;
+    }
     setApiLoading(true);
     setApiMessage("");
     setDryRunPreview(null);
@@ -1712,7 +1724,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     size="sm"
                     variant="outline"
                     onClick={previewLiveRows}
-                    disabled={apiLoading || !liveMappingsReadyToBind}
+                    disabled={apiLoading || !mappingReviewGate.canPreview}
                   >
                     {apiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                     Preview Rows
@@ -1721,13 +1733,18 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     type="button"
                     size="sm"
                     onClick={bindVerifiedMappings}
-                    disabled={saving || apiLoading || !liveMappingsReadyToBind || !mappingReviewed || !config.observation_mode || config.global_enabled}
+                    disabled={saving || apiLoading || !mappingReviewGate.canBind || !config.observation_mode || config.global_enabled}
                   >
                     {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                     Bind Verified IDs
                   </Button>
                 </div>
               </div>
+              {!mappingReviewGate.canPreview && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                  <strong>Next required step:</strong> {mappingReviewGate.reason}
+                </div>
+              )}
               <div className="rounded-lg border border-violet-200 bg-violet-50/70 p-3 space-y-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
