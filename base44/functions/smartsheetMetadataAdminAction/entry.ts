@@ -120,7 +120,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const actor = await authenticateSignShopSession(base44, body?.session_token);
+    let actor = null;
+    if (body?.session_token) {
+      actor = await authenticateSignShopSession(base44, body.session_token);
+    } else {
+      actor = await base44.auth.me().catch(() => null);
+    }
     if (actor?.role !== 'admin') {
       return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
     }
