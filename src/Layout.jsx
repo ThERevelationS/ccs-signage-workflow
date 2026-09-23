@@ -30,6 +30,7 @@ import {
   Clock,
   Megaphone,
   LogIn,
+  GitBranch,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -1090,6 +1091,26 @@ function LayoutContent({ children }) {
                   {currentUser && (
                     <div className="mb-3">
                       <GlobalWorkPauseControl fullWidth />
+                    </div>
+                  )}
+                  {isUserAdmin(currentUser) && (
+                    <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <Link
+                        to={createPageUrl("AdminSettings")}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-4 py-3 rounded-xl flex items-center gap-3 min-h-[48px] border border-indigo-200 bg-indigo-50"
+                      >
+                        <Settings className="w-5 h-5 flex-shrink-0 text-indigo-700" />
+                        <span className="font-semibold text-base text-indigo-900">Admin Settings</span>
+                      </Link>
+                      <Link
+                        to={`${createPageUrl("AdminSettings")}?tab=smartsheet`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="px-4 py-3 rounded-xl flex items-center gap-3 min-h-[48px] border border-cyan-200 bg-cyan-50"
+                      >
+                        <GitBranch className="w-5 h-5 flex-shrink-0 text-cyan-700" />
+                        <span className="font-semibold text-base text-cyan-900">Smartsheet Sync</span>
+                      </Link>
                     </div>
                   )}
                   <div className="grid grid-cols-1 gap-2">
