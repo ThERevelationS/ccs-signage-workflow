@@ -1196,21 +1196,31 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-1 sm:p-4" onClick={(e) => e.stopPropagation()}>
-        <div className="w-full sm:w-[95vw] max-w-[1600px] h-[96vh] sm:h-[90vh] overflow-hidden flex flex-col bg-white rounded-lg sm:rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-          <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between">
-            <div><h2 className="text-lg font-bold">Checklist Builder</h2></div>
-            <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
+        <div className="w-full sm:w-[95vw] max-w-[1600px] h-[96dvh] sm:h-[90vh] overflow-hidden flex flex-col bg-white rounded-lg sm:rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="px-3 py-2 border-b bg-gray-50 flex items-center justify-between gap-2">
+            <div className="min-w-0"><h2 className="text-lg font-bold truncate">Checklist Builder</h2></div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-11 w-11 shrink-0 p-0 touch-manipulation focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-8 lg:w-8"
+              onClick={onClose}
+              aria-label="Close Checklist Builder"
+              title="Close Checklist Builder"
+            >
+              <X className="w-5 h-5 lg:w-4 lg:h-4" aria-hidden="true" />
+            </Button>
           </div>
 
           {persistenceError && (
-            <div className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-start justify-between gap-3">
-              <div>
+            <div className="mx-3 mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <div className="min-w-0">
                 <div className="font-medium">Checklist Builder update blocked</div>
-                <div className="mt-1">{persistenceError}</div>
+                <div className="mt-1 break-words">{persistenceError}</div>
               </div>
-              <div className="flex gap-1 shrink-0">
-                <Button type="button" size="sm" variant="outline" className="h-7 border-red-300 bg-white text-red-800" onClick={async () => { await loadData(); setPersistenceError(""); }}>Reload latest</Button>
-                <Button type="button" size="sm" variant="ghost" className="h-7 text-red-800" onClick={() => setPersistenceError("")}>Dismiss</Button>
+              <div className="grid grid-cols-2 gap-2 shrink-0 sm:flex sm:gap-1">
+                <Button type="button" size="sm" variant="outline" className="h-11 border-red-300 bg-white text-red-800 touch-manipulation lg:h-7" onClick={async () => { await loadData(); setPersistenceError(""); }}>Reload latest</Button>
+                <Button type="button" size="sm" variant="ghost" className="h-11 text-red-800 touch-manipulation lg:h-7" onClick={() => setPersistenceError("")}>Dismiss</Button>
               </div>
             </div>
           )}
@@ -1218,12 +1228,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 py-1.5 border-b bg-white">
               <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-auto sm:h-8 gap-0.5`}>
-                <TabsTrigger value="selectors" className="text-xs data-[state=active]:bg-white">Select & Apply</TabsTrigger>
+                <TabsTrigger value="selectors" className="min-h-11 text-xs touch-manipulation data-[state=active]:bg-white sm:min-h-0">Select & Apply</TabsTrigger>
                 {isAdmin && (
                   <>
-                    <TabsTrigger value="producttypes" className="text-xs data-[state=active]:bg-white">Product Checklists</TabsTrigger>
-                    <TabsTrigger value="subtemplates" className="text-xs data-[state=active]:bg-white">Checklist Options</TabsTrigger>
-                    <TabsTrigger value="dropdowns" className="text-xs data-[state=active]:bg-white">Conditions</TabsTrigger>
+                    <TabsTrigger value="producttypes" className="min-h-11 text-xs touch-manipulation data-[state=active]:bg-white sm:min-h-0">Product Checklists</TabsTrigger>
+                    <TabsTrigger value="subtemplates" className="min-h-11 text-xs touch-manipulation data-[state=active]:bg-white sm:min-h-0">Checklist Options</TabsTrigger>
+                    <TabsTrigger value="dropdowns" className="min-h-11 text-xs touch-manipulation data-[state=active]:bg-white sm:min-h-0">Conditions</TabsTrigger>
                   </>
                 )}
               </TabsList>
@@ -2173,7 +2183,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           </Tabs>
 
           <div className="px-3 py-2 border-t bg-gray-50 flex justify-end">
-            <Button onClick={onClose} variant="outline" size="sm">Close</Button>
+            <Button type="button" onClick={onClose} variant="outline" size="sm" className="h-11 min-w-24 touch-manipulation lg:h-8">Close</Button>
           </div>
         </div>
       </div>
