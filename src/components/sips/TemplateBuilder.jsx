@@ -863,7 +863,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     
     return (
     <div ref={provided.innerRef} {...provided.draggableProps} 
-      className={`border rounded p-1.5 bg-white mb-1 ${expandedItems[item.id] ? 'ring-1 ring-blue-300' : ''}`}>
+      className={`min-w-0 border rounded p-1.5 bg-white mb-1 ${expandedItems[item.id] ? 'ring-1 ring-blue-300' : ''}`}>
       <div className="flex flex-wrap items-center gap-1 lg:flex-nowrap">
         <div
           {...provided.dragHandleProps}
@@ -921,20 +921,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       </div>
       
       {expandedItems[item.id] && (
-        <div className="ml-5 mt-1 pl-2 border-l-2 border-gray-200 space-y-1">
+        <div className="ml-1 sm:ml-5 mt-1 pl-1 sm:pl-2 min-w-0 border-l-2 border-gray-200 space-y-1">
           {/* Tasks */}
           {item.tasks?.map((task) => (
             <div key={task.id} className="space-y-0.5">
-              <div className="flex items-center gap-1 bg-orange-50 p-1 rounded text-xs group/task">
+              <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 bg-orange-50 p-1 rounded text-xs group/task lg:flex lg:flex-nowrap">
                 <span className="px-1 py-0.5 rounded bg-orange-100 text-orange-700 text-xs">T</span>
                 {editingItem === task.id ? (
                   <Input value={task.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, null, task.id)}
                     onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                    autoFocus className="h-11 text-xs flex-1 lg:h-4" aria-label={`Task ${task.text} text`} />
+                    autoFocus className="h-11 min-w-0 w-full text-xs flex-1 lg:h-4 lg:w-auto" aria-label={`Task ${task.text} text`} />
                 ) : (
                   <button
                     type="button"
-                    className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left text-xs touch-manipulation hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:min-h-0 lg:px-0"
+                    className="min-w-0 min-h-11 w-full flex-1 whitespace-normal break-words rounded px-1 text-left text-xs touch-manipulation hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:min-h-0 lg:w-auto lg:truncate lg:px-0"
                     onClick={() => setEditingItem(task.id)}
                     aria-label={`Edit task ${task.text}`}
                     title={`Edit task ${task.text}`}
@@ -946,7 +946,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   value={task.assigned_to || ""} 
                   onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, null, task.id)}
                   placeholder="Assign..." 
-                  className="h-11 text-xs w-24 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-20" 
+                  className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-20" 
                   list={`users-${task.id}`}
                   aria-label={`Assign task ${task.text}`}
                 />
@@ -956,7 +956,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 <button
                   type="button"
                   onClick={() => deleteItemWithChange(item.id, null, task.id)}
-                  className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/task:opacity-100 lg:focus-visible:opacity-100"
+                  className="col-start-3 row-start-1 h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/task:opacity-100 lg:focus-visible:opacity-100"
                   title={`Delete task ${task.text}`}
                   aria-label={`Delete task ${task.text}`}
                 >
@@ -965,16 +965,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               </div>
               {/* Subtasks */}
               {task.subtasks?.map((subtask) => (
-                <div key={subtask.id} className="ml-4 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask">
+                <div key={subtask.id} className="ml-1 sm:ml-4 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask lg:flex">
                   <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                   {editingItem === subtask.id ? (
                     <Input value={subtask.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, null, task.id, subtask.id)}
                       onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                      autoFocus className="h-11 text-xs flex-1 lg:h-4" aria-label={`Subtask ${subtask.text} text`} />
+                      autoFocus className="h-11 min-w-0 w-full text-xs flex-1 lg:h-4 lg:w-auto" aria-label={`Subtask ${subtask.text} text`} />
                   ) : (
                     <button
                       type="button"
-                      className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left text-xs touch-manipulation hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 lg:min-h-0 lg:px-0"
+                      className="min-w-0 min-h-11 w-full flex-1 whitespace-normal break-words rounded px-1 text-left text-xs touch-manipulation hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 lg:min-h-0 lg:w-auto lg:truncate lg:px-0"
                       onClick={() => setEditingItem(subtask.id)}
                       aria-label={`Edit subtask ${subtask.text}`}
                       title={`Edit subtask ${subtask.text}`}
@@ -993,14 +993,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   </button>
                 </div>
               ))}
-              <Input placeholder="+ subtask" aria-label={`Add subtask under ${task.text}`} className="ml-4 h-11 text-xs lg:h-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, null, task.id, e.target.value); e.target.value = ""; } }} />
+              <div className="pl-1 sm:pl-4"><Input placeholder="+ subtask" aria-label={`Add subtask under ${task.text}`} className="h-11 min-w-0 w-full text-xs lg:h-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, null, task.id, e.target.value); e.target.value = ""; } }} /></div>
             </div>
           ))}
           <Input placeholder="+ task" aria-label={`Add task under checklist item ${item.text}`} className="h-11 text-xs lg:h-5" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTaskWithChange(item.id, null, e.target.value); e.target.value = ""; } }} />
           
           {/* Details */}
           {item.details?.map((detail) => (
-            <div key={detail.id} className="bg-gray-50 p-1 rounded border">
+            <div key={detail.id} className="min-w-0 bg-gray-50 p-1 rounded border">
               <div className="flex flex-wrap items-center gap-1 text-xs lg:flex-nowrap">
                 <span className="px-1 py-0.5 rounded bg-purple-100 text-purple-700">D</span>
                 {editingItem === detail.id ? (
@@ -1037,19 +1037,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                   <Trash2 className="w-4 h-4 mx-auto" aria-hidden="true" />
                 </button>
               </div>
-              <div className="ml-4 mt-1 space-y-0.5">
+              <div className="ml-1 sm:ml-4 mt-1 min-w-0 space-y-0.5">
                 {detail.tasks?.map((task) => (
                   <div key={task.id} className="space-y-0.5">
-                    <div className="flex items-center gap-1 bg-orange-50 p-0.5 rounded text-xs group/dtask">
+                    <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 bg-orange-50 p-0.5 rounded text-xs group/dtask lg:flex lg:flex-nowrap">
                       <span className="px-0.5 rounded bg-orange-100 text-orange-700">T</span>
                       {editingItem === task.id ? (
                         <Input value={task.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id, task.id)}
                           onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                          autoFocus className="h-11 text-xs flex-1 lg:h-4" aria-label={`Task ${task.text} text`} />
+                          autoFocus className="h-11 min-w-0 w-full text-xs flex-1 lg:h-4 lg:w-auto" aria-label={`Task ${task.text} text`} />
                       ) : (
                         <button
                           type="button"
-                          className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left text-xs touch-manipulation hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:min-h-0 lg:px-0"
+                          className="min-w-0 min-h-11 w-full flex-1 whitespace-normal break-words rounded px-1 text-left text-xs touch-manipulation hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:min-h-0 lg:w-auto lg:truncate lg:px-0"
                           onClick={() => setEditingItem(task.id)}
                           aria-label={`Edit task ${task.text}`}
                           title={`Edit task ${task.text}`}
@@ -1061,7 +1061,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         value={task.assigned_to || ""} 
                         onChange={(e) => updateItemWithChange(item.id, { assigned_to: e.target.value }, detail.id, task.id)}
                         placeholder="Assign..." 
-                        className="h-11 text-xs w-24 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-16" 
+                        className="col-span-3 row-start-2 h-11 min-w-0 w-full text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:h-4 lg:w-16" 
                         list={`users-detail-${task.id}`}
                         aria-label={`Assign detail task ${task.text}`}
                       />
@@ -1071,7 +1071,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <button
                         type="button"
                         onClick={() => deleteItemWithChange(item.id, detail.id, task.id)}
-                        className="h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/dtask:opacity-100 lg:focus-visible:opacity-100"
+                        className="col-start-3 row-start-1 h-11 w-11 shrink-0 rounded text-red-500 hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-6 lg:w-6 lg:opacity-0 lg:group-hover/dtask:opacity-100 lg:focus-visible:opacity-100"
                         title={`Delete task ${task.text}`}
                         aria-label={`Delete task ${task.text}`}
                       >
@@ -1080,16 +1080,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     </div>
                     {/* Subtasks under detail tasks */}
                     {task.subtasks?.map((subtask) => (
-                      <div key={subtask.id} className="ml-3 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsubtask">
+                      <div key={subtask.id} className="ml-1 sm:ml-3 grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsubtask lg:flex">
                         <span className="px-0.5 rounded bg-yellow-100 text-yellow-700">S</span>
                         {editingItem === subtask.id ? (
                           <Input value={subtask.text} onChange={(e) => updateItemWithChange(item.id, { text: e.target.value }, detail.id, task.id, subtask.id)}
                             onBlur={() => setEditingItem(null)} onKeyDown={(e) => e.key === 'Enter' && setEditingItem(null)}
-                            autoFocus className="h-11 text-xs flex-1 lg:h-4" aria-label={`Subtask ${subtask.text} text`} />
+                            autoFocus className="h-11 min-w-0 w-full text-xs flex-1 lg:h-4 lg:w-auto" aria-label={`Subtask ${subtask.text} text`} />
                         ) : (
                           <button
                             type="button"
-                            className="min-w-0 min-h-11 flex-1 truncate rounded px-1 text-left text-xs touch-manipulation hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 lg:min-h-0 lg:px-0"
+                            className="min-w-0 min-h-11 w-full flex-1 whitespace-normal break-words rounded px-1 text-left text-xs touch-manipulation hover:bg-yellow-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 lg:min-h-0 lg:w-auto lg:truncate lg:px-0"
                             onClick={() => setEditingItem(subtask.id)}
                             aria-label={`Edit subtask ${subtask.text}`}
                             title={`Edit subtask ${subtask.text}`}
@@ -1108,7 +1108,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                         </button>
                       </div>
                     ))}
-                    <Input placeholder="+ subtask" aria-label={`Add subtask under ${task.text}`} className="ml-3 h-11 text-xs lg:h-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} />
+                    <div className="pl-1 sm:pl-3"><Input placeholder="+ subtask" aria-label={`Add subtask under ${task.text}`} className="h-11 min-w-0 w-full text-xs lg:h-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addSubtaskWithChange(item.id, detail.id, task.id, e.target.value); e.target.value = ""; } }} /></div>
                   </div>
                 ))}
                 <Input placeholder="+ task" aria-label={`Add task under detail ${detail.text}`} className="h-11 text-xs lg:h-4" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { addTaskWithChange(item.id, detail.id, e.target.value); e.target.value = ""; } }} />
