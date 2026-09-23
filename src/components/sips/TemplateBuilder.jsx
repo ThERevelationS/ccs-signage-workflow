@@ -2005,7 +2005,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         <Input 
                                           id={`edit-${dd.id}`}
                                           defaultValue={dd.name} 
-                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6" 
+                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6"
                                           aria-label={`Condition name ${dd.name}`}
                                           autoFocus
                                           onKeyDown={(e) => { 
@@ -2113,7 +2113,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         <Input 
                                           id={`edit-${dd.id}`}
                                           defaultValue={dd.name} 
-                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6" 
+                                          className="h-11 min-w-0 flex-1 text-sm lg:h-6"
                                           aria-label={`Condition name ${dd.name}`}
                                           autoFocus
                                           onKeyDown={(e) => { 
