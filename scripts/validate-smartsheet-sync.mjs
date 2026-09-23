@@ -253,20 +253,26 @@ assert(completedRollout.baselinesComplete === true, "Matching captured baselines
 assert(completedRollout.canCaptureBaseline === false, "An already captured immutable baseline must never expose a second capture action.");
 
 const semanticAliasAnalysis = analyzeSmartsheetColumns([
-  { field: "title", label: "Job Description", direction: "two_way", transform: "text", suggestedNames: ["Notes"] },
-], [{ id: "601", title: "Notes", type: "TEXT_NUMBER" }]);
+  { field: "work_notes", label: "Notes", direction: "two_way", transform: "notes_process", suggestedNames: ["Notes"] },
+  { field: "lead_source", label: "Lead Source", direction: "two_way", transform: "text", suggestedNames: ["Source"] },
+], [
+  { id: "601", title: "Notes", type: "TEXT_NUMBER" },
+  { id: "602", title: "Source", type: "PICKLIST", options: ["Web", "Referral"] },
+]);
 const reviewedMappings = {
   sales: { status: "ready", sheet: { id: "8702703019812740", name: "Workflow" }, analysis: semanticAliasAnalysis },
   orders: ordersMappingResult,
 };
 const semanticReview = buildSmartsheetMappingReview(reviewedMappings);
-assert(semanticReview.aliases.length === 1 && semanticReview.aliases[0].columnTitle === "Notes",
+assert(semanticReview.aliases.length === 1 && semanticReview.aliases[0].columnTitle === "Source",
   "A compatible field with a different business label must be flagged for meaning review.");
-assert(semanticReview.matched.length === 5,
+assert(semanticReview.matched.length === 6,
   "The compact review should include all compatible mapped fields across both sheets.");
 const mappingReport = formatSmartsheetMappingReview(reviewedMappings);
-assert(mappingReport.includes("Job Description [title] → Notes") && mappingReport.includes("[REVIEW NAME/MEANING]"),
+assert(mappingReport.includes("Lead Source [lead_source] → Source") && mappingReport.includes("[REVIEW NAME/MEANING]"),
   "The copyable report must disclose non-identical field-to-column names.");
+assert(mappingReport.includes("Notes [work_notes] → Notes") && mappingReport.includes("Base44 work_notes combine into this Smartsheet Notes cell"),
+  "The copyable report must disclose the structured Notes translation semantics.");
 assert(mappingReport.includes("Substrate, Vinyl, Supplies, Other") && mappingReport.includes("PICKLIST validated"),
   "The copyable report must include live picklist options and validation for Request Type review.");
 assert(!mappingReport.includes("Bearer ") && !mappingReport.includes("session_token"),
