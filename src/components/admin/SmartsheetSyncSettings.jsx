@@ -936,6 +936,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         base44Records: snapshot?.record_catalog || [],
         blueprint: SMARTSHEET_MAPPING_BLUEPRINTS[dataset],
         columnBindings: snapshot?.column_bindings || {},
+        authorizedUsers: dryRunPreview.authorized_user_catalog || [],
       });
       return { creationReadiness, proposals };
     };
@@ -1209,7 +1210,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const salesColumnIds = Object.values(salesBinding.column_bindings).map((binding) => binding.column_id);
       const orderColumnIds = Object.values(orderBinding.column_bindings).map((binding) => binding.column_id);
 
-      const [salesSheet, orderSheet, salesRows, orderRows, customers] = await Promise.all([
+      const [salesSheet, orderSheet, salesRows, orderRows, customers, authorizedUsers] = await Promise.all([
         getAllSmartsheetRows({
           sessionToken,
           sheetId: salesBinding.smartsheet_sheet_id,
@@ -1245,6 +1246,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           maxRows: 50000,
           label: "Smartsheet customer-resolution catalog",
         }),
+        loadAllEntityRows({
+          entity: base44.entities.AuthorizedEmail,
+          sort: "full_name",
+          pageSize: 200,
+          maxRows: 1000,
+          label: "Smartsheet task-owner translation roster",
+        }),
       ]);
 
       const salesPreview = buildSmartsheetDryRunPreview({
@@ -1257,6 +1265,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         dataset: "sales",
         rolloutBaseline: config.sales.rollout_baseline,
         customerReviewState: customerReview,
+        authorizedUsers,
       });
       const orderPreview = buildSmartsheetDryRunPreview({
         sheetId: orderBinding.smartsheet_sheet_id,
@@ -1273,8 +1282,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       setDryRunPreview({
         sales: {
           ...salesSheet, preview: salesPreview, column_bindings: salesBinding.column_bindings,
-          record_catalog: salesRows.map(({ id, customer_id, client_name, title, deleted }) => ({
-            id, customer_id, client_name, title, deleted,
+          record_catalog: salesRows.map(({ id, customer_id, client_name, title, est_inv_at, deleted }) => ({
+            id, customer_id, client_name, title, est_inv_at, deleted,
           })),
         },
         orders: {
@@ -1287,6 +1296,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           id: customer.id,
           company_name: customer.company_name,
           legacy_client_names: customer.legacy_client_names || [],
+        })),
+        authorized_user_catalog: authorizedUsers.map((user) => ({
+          id: user.id,
+          full_name: user.full_name || "",
+          email: user.email || "",
+          sales_roles: user.sales_roles || [],
+          is_active: user.is_active,
         })),
       });
       setApiMessage(
