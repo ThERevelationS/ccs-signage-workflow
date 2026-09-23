@@ -734,14 +734,14 @@ Answer the question based on the documents and information available. Be specifi
            </p>
           <div className="mb-3">
             <div className="relative">
-              {docSearching && <Loader2 className="absolute left-2 top-2 w-4 h-4 text-blue-500 animate-spin" />}
-              {!docSearching && <Search className="absolute left-2 top-2 w-4 h-4 text-gray-400" />}
+              {docSearching && <Loader2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-500" />}
+              {!docSearching && <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />}
               <Input
                 type="text"
                 placeholder="Search City/Locality/Info..."
                 value={docSearchTerm}
                 onChange={(e) => searchDocuments(e.target.value)}
-                className="text-xs pl-8 h-7"
+                className="min-h-11 pl-9 text-sm"
               />
             </div>
             {docSearching && <p className="text-xs text-gray-500 mt-1">Searching...</p>}
@@ -751,7 +751,8 @@ Answer the question based on the documents and information available. Be specifi
             {searchResults.length > 0 && (
               <div className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
                 {searchResults.map(result => (
-                  <div 
+                  <button
+                    type="button"
                     key={`${result.type}-${result.id}`}
                     onClick={() => {
                       if (result.type === 'document') {
@@ -760,11 +761,11 @@ Answer the question based on the documents and information available. Be specifi
                       setDocSearchTerm("");
                       setSearchResults([]);
                     }}
-                    className={`text-xs p-2 rounded cursor-pointer border ${result.type === 'jurisdiction' ? 'bg-purple-50 border-purple-200 hover:bg-purple-100' : 'bg-white border-blue-200 hover:bg-blue-100'}`}
+                    className={`min-h-11 w-full rounded border p-3 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${result.type === 'jurisdiction' ? 'bg-purple-50 border-purple-200 hover:bg-purple-100' : 'bg-white border-blue-200 hover:bg-blue-100'}`}
                   >
-                    <p className="font-medium text-gray-800">{result.title}</p>
-                    <p className="text-gray-600 text-[11px] mt-0.5">{result.snippet}</p>
-                  </div>
+                    <span className="block break-words font-medium text-gray-800">{result.title}</span>
+                    <span className="mt-0.5 block break-words text-[11px] text-gray-600">{result.snippet}</span>
+                  </button>
                 ))}
               </div>
             )}
@@ -838,21 +839,21 @@ Answer the question based on the documents and information available. Be specifi
                     {/* Search within document */}
                     {(doc.extracted_text || doc.ai_summary) && (
                       <div className="mt-3 space-y-2">
-                        <div className="relative flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
                             type="text"
                             placeholder="Search within document..."
                             value={expandedDocSearch[doc.id] || ""}
                             onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
-                            className="text-xs h-7 flex-1"
+                            className="min-h-11 flex-1 text-sm"
                           />
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
                             disabled={searchingDocId === doc.id || !expandedDocSearch[doc.id]?.trim()}
-                            className="h-7 px-2 text-xs gap-1"
+                            className="min-h-11 w-full gap-2 px-3 text-xs sm:w-auto"
                           >
                             {searchingDocId === doc.id ? (
                               <>
@@ -860,9 +861,10 @@ Answer the question based on the documents and information available. Be specifi
                               </>
                             ) : (
                               <>
-                                <Search className="w-3 h-3" />
+                                <Search className="h-4 w-4" />
                               </>
                             )}
+                            <span className="sm:sr-only">Search</span>
                           </Button>
                         </div>
                         
