@@ -24,6 +24,11 @@ import {
   mappingDirectionLabel,
   mappingTransformLabel,
 } from "@/components/admin/smartsheetMappingModel";
+import {
+  buildSmartsheetBaselinePreflight,
+  smartsheetAnalysisMatchesProfile,
+  smartsheetTargetIdentity,
+} from "@/components/admin/smartsheetMappingFreshnessModel";
 import { SMARTSHEET_CUSTOMER_RESOLUTION_POLICY } from "@/components/admin/smartsheetCustomerResolutionModel";
 import { buildSmartsheetDryRunPreview } from "@/components/admin/smartsheetDryRunModel";
 import { buildSmartsheetCreationReadiness } from "@/components/admin/smartsheetCreationReadinessModel";
@@ -826,15 +831,17 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       (config.orders.mirror_enabled && (config.orders.pull_enabled || config.orders.push_enabled)))
   ), [config]);
 
-  const liveMappingsReadyToBind = useMemo(() => {
-    const results = [liveMappingAnalysis?.sales, liveMappingAnalysis?.orders];
-    return results.every((result) =>
-      result?.status === "ready"
-      && Number(result.analysis?.counts?.missing || 0) === 0
-      && Number(result.analysis?.counts?.conflict || 0) === 0
-      && Number(result.analysis?.counts?.incompatible || 0) === 0
-    );
-  }, [liveMappingAnalysis]);
+  const liveMappingsReadyToBind = useMemo(() => (
+    ["sales", "orders"].every((dataset) =>
+      smartsheetAnalysisMatchesProfile(liveMappingAnalysis?.[dataset], config?.[dataset])
+    )
+  ), [liveMappingAnalysis, config]);
+
+  const baselinePreflight = useMemo(() => buildSmartsheetBaselinePreflight({
+    dryRunPreview,
+    liveMappingAnalysis,
+    config,
+  }), [dryRunPreview, liveMappingAnalysis, config]);
 
   // Recalculate from the read-only row snapshot whenever a Customer review decision changes.
   // Stored previews are never a creation authorization and contain no live write callback.
@@ -1171,6 +1178,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
 
   const captureRolloutBaseline = async () => {
     if (saving || !dryRunPreview) return;
+    if (!baselinePreflight.ready) {
+      setError(baselinePreflight.reasons[0] || "A fresh matching live mapping analysis and complete row preview are required before baseline capture.");
+      return;
+    }
     if (!config.observation_mode || config.global_enabled) {
       setError("Rollout baseline capture is only allowed while observation mode is ON and global sync is OFF.");
       return;
@@ -1355,15 +1366,19 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
 
   const assignSheet = (profileKey, sheet) => {
     if (!sheet?.id) return;
-    setConfig((current) => ({
-      ...current,
-      [profileKey]: {
-        ...current[profileKey],
-        smartsheet_sheet_id: String(sheet.id),
-        smartsheet_sheet_name: sheet.name || current[profileKey]?.smartsheet_sheet_name || "",
-      },
-    }));
-    setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. Save Settings to persist this assignment.`);
+    const currentProfile = config?.[profileKey] || {};
+    const nextProfile = {
+      ...currentProfile,
+      smartsheet_sheet_id: String(sheet.id),
+      smartsheet_sheet_name: sheet.name || currentProfile.smartsheet_sheet_name || "",
+    };
+    const targetChanged = smartsheetTargetIdentity(currentProfile) !== smartsheetTargetIdentity(nextProfile);
+    setConfig((current) => ({ ...current, [profileKey]: nextProfile }));
+    if (targetChanged) {
+      setLiveMappingAnalysis(null);
+      setDryRunPreview(null);
+    }
+    setApiMessage(`${sheet.name || sheet.id} selected for ${profileKey === "sales" ? "Sales Pipeline" : "Order Form"}. ${targetChanged ? "Previous live mapping and row-preview evidence was cleared. " : ""}Save Settings to persist this assignment.`);
   };
 
   const save = async () => {
@@ -1394,7 +1409,15 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     }
   };
 
-  const setProfile = (key, next) => setConfig((current) => ({ ...current, [key]: next }));
+  const setProfile = (key, next) => {
+    const targetChanged = smartsheetTargetIdentity(config?.[key]) !== smartsheetTargetIdentity(next);
+    setConfig((current) => ({ ...current, [key]: next }));
+    if (targetChanged) {
+      setLiveMappingAnalysis(null);
+      setDryRunPreview(null);
+      setApiMessage("Target sheet changed. Previous live mapping and row-preview evidence was cleared; run Analyze Live Mapping again.");
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>;
@@ -1588,7 +1611,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                       size="sm"
                       variant="outline"
                       onClick={captureRolloutBaseline}
-                      disabled={saving || !dryRunPreview || !config.observation_mode || config.global_enabled}
+                      disabled={saving || !dryRunPreview || !baselinePreflight.ready || !config.observation_mode || config.global_enabled}
                     >
                       {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
                       Capture Rollout Baseline
@@ -1613,6 +1636,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                 {!dryRunPreview && !config.sales.rollout_baseline?.captured_at && !config.orders.rollout_baseline?.captured_at && (
                   <div className="mt-2 text-[10px] text-amber-900">
                     Run Preview Rows first. Baseline capture stays disabled until both full-sheet scans finish successfully.
+                  </div>
+                )}
+                {dryRunPreview && !baselinePreflight.ready && (
+                  <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-900">
+                    <div className="font-semibold">Baseline preflight blocked</div>
+                    {baselinePreflight.reasons.map((reason) => <div key={reason} className="mt-0.5">• {reason}</div>)}
                   </div>
                 )}
               </div>
