@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert } from "lucide-react";
+import { ExternalLink, FileText, RefreshCw, Edit, Clock, CheckCircle, ShieldAlert, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
@@ -123,6 +123,18 @@ export default function JurisdictionCard({ jurisdiction, onEdit, onRefresh, onSe
             ))}
           </div>
         )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3 min-h-11 w-full justify-between gap-2 text-xs sm:w-auto sm:justify-center"
+          onClick={(e) => { e.stopPropagation(); onSelect(jurisdiction); }}
+          aria-label={`Open details for ${jurisdiction.name}`}
+        >
+          Open details
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
