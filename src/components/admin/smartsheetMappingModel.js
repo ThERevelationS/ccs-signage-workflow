@@ -20,7 +20,7 @@ export const SMARTSHEET_TRANSFORMS = Object.freeze({
 const sales = [
   { field: "client_name", label: "Customer", direction: "two_way", transform: "customer_resolution", suggestedNames: ["Customer", "Client", "Client Name"] },
   { field: "work_notes", label: "Notes", direction: "two_way", transform: "notes_process", suggestedNames: ["Notes"] },
-  { field: "description", label: "Job Description", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
+  { field: "title", label: "Job Description", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
   { field: "sales_status", label: "Sales Status", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
   { field: "lead_source", label: "Lead Source", direction: "two_way", transform: "text", suggestedNames: ["Source", "Lead Source"] },
   { field: "sales_rep", label: "Sales Rep", direction: "base44_only", transform: "internal_history", suggestedNames: [] },
