@@ -144,6 +144,63 @@ function MappingPlan({ title, rows }) {
   );
 }
 
+function VocabularyReviewCard({ review }) {
+  if (!review) return null;
+  if (!review.ready) {
+    return <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+      Live vocabulary comparison unavailable. {review.reason} Do not assume the lists match.
+    </div>;
+  }
+
+  const sections = [
+    ["Lead Source", review.source],
+    ["Current Task Description", review.tasks],
+    ["Order Request Type", review.orderTypes],
+  ];
+  return (
+    <div className="rounded-lg border border-amber-300 bg-amber-50/70 p-3 text-xs text-amber-950">
+      <div className="font-semibold">Read-only vocabulary reconciliation</div>
+      <p className="mt-1">
+        Compares live Smartsheet picklists with Base44's current choices. Suggested additions are
+        not saved, and unknown people are never assigned automatically.
+      </p>
+      <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-2">
+        {sections.map(([name, section]) => (
+          <div key={name} className="min-w-0 rounded-md border border-amber-200 bg-white p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <strong>{name}</strong>
+              <Badge variant="outline">{section.synchronized ? "Matched" : "Needs reconciliation"}</Badge>
+            </div>
+            {name === "Lead Source" && !section.savedSetting && (
+              <p className="mt-1 text-amber-800">No saved Base44 list; compared the Sales Pipeline defaults.</p>
+            )}
+            <div className="mt-2 break-words"><strong>Add to Base44:</strong> {section.addToBase44.join(", ") || "None"}</div>
+            <div className="mt-1 break-words"><strong>Add to Smartsheet:</strong> {section.addToSmartsheet.join(", ") || "None"}</div>
+          </div>
+        ))}
+        <div className="min-w-0 rounded-md border border-amber-200 bg-white p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <strong>Task Assigned</strong>
+            <Badge variant="outline">{review.owners.unresolved.length + review.owners.ambiguous.length
+              ? "Identity review needed" : "Names resolved"}</Badge>
+          </div>
+          <div className="mt-2">{review.owners.resolved.length} existing Smartsheet names resolve to eligible Base44 users.</div>
+          <div className="mt-1 break-words"><strong>Unknown Smartsheet names:</strong> {review.owners.unresolved.join(", ") || "None"}</div>
+          <div className="mt-1 break-words"><strong>Ambiguous names:</strong> {review.owners.ambiguous.map((item) =>
+            item.option + " (" + item.candidates.join(" / ") + ")").join(", ") || "None"}</div>
+          <div className="mt-1 break-words"><strong>Base44 users absent from picklist:</strong> {review.owners.base44Only.map((item) =>
+            item.full_name + " (suggested: " + item.suggested_option + ")").join(", ") || "None"}</div>
+          <p className="mt-2 text-amber-800">Unknown names require explicit identity review; never guess a matching user.</p>
+        </div>
+      </div>
+      <p className="mt-2 text-amber-800">
+        Website/Web is normalized for comparison. Terminal Current Task labels such as Lost and
+        Completed Sale never determine modern sales outcomes. Re-analyze after resolving differences.
+      </p>
+    </div>
+  );
+}
+
 function LiveMappingAnalysisCard({ title, result }) {
   if (!result) return null;
 
@@ -1845,6 +1902,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                     </div>
                   </div>
                 )}
+                <VocabularyReviewCard review={vocabularyReview} />
                 <details className="rounded-md border border-violet-200 bg-white p-2 text-[11px]">
                   <summary className="cursor-pointer font-semibold text-violet-900">View full mapping report (manual copy fallback)</summary>
                   <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-all text-[10px] text-slate-700">{mappingReviewReport}</pre>
