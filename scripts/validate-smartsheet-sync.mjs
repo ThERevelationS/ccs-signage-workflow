@@ -22,8 +22,11 @@ import {
 } from "../src/components/admin/smartsheetSyncSafetyModel.js";
 import {
   buildSmartsheetBaselinePreflight,
+  prepareSmartsheetProfileTargetChange,
   smartsheetAnalysisMatchesProfile,
   smartsheetDryRunMatchesAnalysis,
+  smartsheetPersistedBindingsMatchAnalysis,
+  smartsheetProfileTargetLocked,
   smartsheetTargetIdentity,
 } from "../src/components/admin/smartsheetMappingFreshnessModel.js";
 
@@ -122,15 +125,34 @@ const ordersMappingResult = {
   sheet: { id: "4963691473987460", name: "Order Request" },
   analysis: compatibleAnalysis,
 };
+const syntheticBindings = Object.fromEntries(Object.entries(compatibleBinding.column_bindings).map(([field, binding]) => [field, { ...binding }]));
 const mappingConfig = {
-  sales: { smartsheet_sheet_id: "8702703019812740", smartsheet_sheet_name: "Workflow" },
-  orders: { smartsheet_sheet_id: "4963691473987460", smartsheet_sheet_name: "Order Request" },
+  sales: {
+    smartsheet_sheet_id: "8702703019812740", smartsheet_sheet_name: "Workflow",
+    bindings_verified_at: "2026-09-23T10:00:00.000Z", column_bindings: syntheticBindings,
+  },
+  orders: {
+    smartsheet_sheet_id: "4963691473987460", smartsheet_sheet_name: "Order Request",
+    bindings_verified_at: "2026-09-23T10:00:00.000Z", column_bindings: syntheticBindings,
+  },
 };
 assert(smartsheetTargetIdentity(mappingConfig.sales) === "id:8702703019812740", "Permanent sheet ID must be the target identity when present.");
 assert(smartsheetAnalysisMatchesProfile(salesMappingResult, mappingConfig.sales) === true, "Fresh mapping evidence must match the configured permanent sheet ID.");
 assert(smartsheetAnalysisMatchesProfile(salesMappingResult, { ...mappingConfig.sales, smartsheet_sheet_id: "999" }) === false,
   "Changing a configured sheet ID must stale the earlier live mapping analysis.");
-const syntheticBindings = Object.fromEntries(Object.entries(compatibleBinding.column_bindings).map(([field, binding]) => [field, { ...binding }]));
+assert(smartsheetPersistedBindingsMatchAnalysis(mappingConfig.sales, salesMappingResult) === true,
+  "Baseline readiness requires saved permanent bindings that exactly match live analysis.");
+assert(smartsheetPersistedBindingsMatchAnalysis({ ...mappingConfig.sales, bindings_verified_at: "" }, salesMappingResult) === false,
+  "Unsaved or unverified bindings must not satisfy baseline readiness.");
+const preparedTargetChange = prepareSmartsheetProfileTargetChange(mappingConfig.sales, {
+  ...mappingConfig.sales,
+  smartsheet_sheet_id: "999",
+});
+assert(preparedTargetChange.targetChanged === true, "Changing the permanent target must be detected.");
+assert(Object.keys(preparedTargetChange.profile.column_bindings).length === 0 && preparedTargetChange.profile.bindings_verified_at === "",
+  "Changing a target sheet must clear previously verified permanent bindings.");
+assert(smartsheetProfileTargetLocked({ rollout_baseline: { captured_at: "2026-09-23T10:00:00.000Z" } }) === true,
+  "A captured rollout baseline must lock its target sheet identity.");
 const freshDryRun = {
   sales: {
     sheet_id: "8702703019812740", total_row_count: 2, returned_row_count: 2,
@@ -148,7 +170,16 @@ const readyPreflight = buildSmartsheetBaselinePreflight({
   liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
   config: mappingConfig,
 });
-assert(readyPreflight.ready === true, "Matching fresh mapping evidence and complete previews should pass baseline preflight.");
+assert(readyPreflight.ready === true, "Matching saved bindings, fresh mapping evidence, and complete previews should pass baseline preflight.");
+const unsavedBindingPreflight = buildSmartsheetBaselinePreflight({
+  dryRunPreview: freshDryRun,
+  liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
+  config: {
+    sales: { ...mappingConfig.sales, bindings_verified_at: "", column_bindings: {} },
+    orders: mappingConfig.orders,
+  },
+});
+assert(unsavedBindingPreflight.ready === false, "Baseline capture must be blocked until permanent bindings are saved.");
 const changedTargetPreflight = buildSmartsheetBaselinePreflight({
   dryRunPreview: freshDryRun,
   liveMappingAnalysis: { sales: salesMappingResult, orders: ordersMappingResult },
