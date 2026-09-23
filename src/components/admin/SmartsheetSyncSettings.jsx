@@ -1572,12 +1572,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                           Inspect columns
                         </Button>
                         {isWorkflow && (
-                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("sales", sheet)}>
+                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("sales", sheet)} disabled={smartsheetProfileTargetLocked(config.sales)}>
                             Use for Sales
                           </Button>
                         )}
                         {isOrderRequest && (
-                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("orders", sheet)}>
+                          <Button type="button" size="sm" variant="outline" onClick={() => assignSheet("orders", sheet)} disabled={smartsheetProfileTargetLocked(config.orders)}>
                             Use for Orders
                           </Button>
                         )}
@@ -1806,6 +1806,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         value={config.sales}
         onChange={(next) => setProfile("sales", next)}
         writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
+        targetLocked={smartsheetProfileTargetLocked(config.sales)}
       />
 
       <IntegrationCard
@@ -1814,6 +1815,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         value={config.orders}
         onChange={(next) => setProfile("orders", next)}
         writeControlsLocked={smartsheetWriteControlsLocked(apiStatus)}
+        targetLocked={smartsheetProfileTargetLocked(config.orders)}
       />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
