@@ -6,6 +6,7 @@ import {
   buildCells,
   buildSnapshot,
   getMappableFields,
+  parseRowToFields,
 } from '../../shared/smartsheetSyncFields.ts';
 
 const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
@@ -193,6 +194,184 @@ function detectConflict(
   return false;
 }
 
+// Normalize Smartsheet text values to Base44 enum values for known enum fields.
+function normalizePullValue(fieldKey: string, value: any): any {
+  if (value === null || value === undefined || value === "") return undefined;
+  const str = String(value).trim();
+  if (!str) return undefined;
+  const lower = str.toLowerCase();
+  if (fieldKey === "sales_status") {
+    if (["lead", "new", "open"].includes(lower)) return "lead";
+    if (["quoted", "quote sent", "proposal sent", "estimate sent"].includes(lower)) return "quoted";
+    if (["follow_up", "follow up", "following up", "follow-up", "followup"].includes(lower)) return "follow_up";
+    if (["won", "closed won", "deal won", "yes", "win"].includes(lower)) return "won";
+    if (["lost", "closed lost", "deal lost", "no"].includes(lower)) return "lost";
+    if (["on_hold", "on hold", "hold", "paused", "pending"].includes(lower)) return "on_hold";
+    return undefined;
+  }
+  if (fieldKey === "status") {
+    if (["pending", "not started", "new", "requested", "todo"].includes(lower)) return "pending";
+    if (["ordered", "submitted", "placed", "in progress"].includes(lower)) return "ordered";
+    if (["received", "complete", "done", "fulfilled", "delivered"].includes(lower)) return "received";
+    if (["cancelled", "canceled", "void", "closed"].includes(lower)) return "cancelled";
+    return undefined;
+  }
+  if (fieldKey === "request_type") {
+    if (lower.includes("substrate")) return "Substrate";
+    if (lower.includes("vinyl")) return "Vinyl";
+    if (lower.includes("suppl")) return "Supplies";
+    return "Other";
+  }
+  if (fieldKey === "permitting") {
+    if (["yes", "y", "required", "true"].includes(lower)) return "yes";
+    if (["no", "n", "not required", "false"].includes(lower)) return "no";
+    if (["maybe", "perhaps", "uncertain", "tbd", "unsure"].includes(lower)) return "maybe";
+    return "na";
+  }
+  return str;
+}
+
+async function pullDataset(
+  base44: any,
+  token: string,
+  dataset: 'sales' | 'orders',
+  profile: any,
+  globalConfig: any,
+) {
+  const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+  if (!/^\d+$/.test(sheetId)) {
+    return { dataset, direction: 'pull', skipped: true, reason: 'No numeric Smartsheet sheet ID configured.' };
+  }
+  const bindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+  const boundColumnCount = Object.values(bindings).filter((id: any) => /^\d+$/.test(String(id).trim())).length;
+  if (boundColumnCount === 0) {
+    return { dataset, direction: 'pull', skipped: true, reason: 'No column bindings configured for this dataset.' };
+  }
+
+  // Fetch all rows from the Smartsheet sheet using only bound column IDs
+  const columnIds = Object.values(bindings).map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id));
+  const allRows: any[] = [];
+  let page = 1;
+  const pageSize = 200;
+  let totalRowCount = 0;
+  while (page <= 100) {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+      columnIds: columnIds.join(','),
+      exclude: 'nonexistentCells',
+    });
+    const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+    const rows = normalizeSheetRows(result.body);
+    if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
+    allRows.push(...rows);
+    if (allRows.length >= totalRowCount || rows.length === 0) break;
+    page++;
+  }
+
+  const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
+  if (allRows.length > massLimit) {
+    return {
+      dataset,
+      direction: 'pull',
+      skipped: true,
+      reason: `${allRows.length} Smartsheet rows exceed the mass-change hard stop of ${massLimit}. Raise the limit in settings.`,
+    };
+  }
+
+  // Load existing Base44 records already linked to this Smartsheet sheet.
+  // Filtering by smartsheet_sheet_id returns only synced records, avoiding the
+  // 500-record default limit and preventing duplicate creates on re-pulls.
+  const entityName = dataset === 'sales' ? 'WorkOrder' : 'Order';
+  let existingRecords: any[] = [];
+  if (dataset === 'sales') {
+    existingRecords = await base44.asServiceRole.entities.WorkOrder.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+  } else {
+    existingRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+  }
+  existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+  const recordsByRowId: Record<string, any> = {};
+  for (const rec of existingRecords) {
+    const rowId = cleanText(rec?.smartsheet_row_id, 40);
+    if (rowId && /^\d+$/.test(rowId)) recordsByRowId[rowId] = rec;
+  }
+
+  // Collect records to create and update
+  const toCreate: any[] = [];
+  const toUpdate: any[] = [];
+
+  for (const row of allRows) {
+    const rowId = row.id;
+    if (!rowId || !/^\d+$/.test(rowId)) continue;
+
+    const rawFields = parseRowToFields(row, bindings, dataset);
+    // Normalize enum fields to valid Base44 values
+    const fieldValues: Record<string, any> = {};
+    for (const [key, val] of Object.entries(rawFields)) {
+      const normalized = normalizePullValue(key, val);
+      if (normalized !== undefined) fieldValues[key] = normalized;
+    }
+
+    const existing = recordsByRowId[rowId];
+    if (existing) {
+      toUpdate.push({ id: existing.id, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
+    } else if (profile?.create_base44_from_smartsheet) {
+      const newRecord: any = { ...fieldValues };
+      if (dataset === 'sales') {
+        if (!newRecord.title) newRecord.title = newRecord.client_name || `Smartsheet row ${rowId}`;
+        if (!newRecord.client_name) newRecord.client_name = 'Unknown';
+        newRecord.in_pipeline = true;
+      } else {
+        if (!newRecord.customer_name) newRecord.customer_name = 'Unknown';
+        if (!newRecord.request_type) newRecord.request_type = 'Other';
+        if (!newRecord.description) newRecord.description = `Imported from Smartsheet row ${rowId}`;
+      }
+      newRecord.smartsheet_row_id = rowId;
+      newRecord.smartsheet_sheet_id = sheetId;
+      newRecord.smartsheet_last_synced_at = new Date().toISOString();
+      toCreate.push(newRecord);
+    }
+  }
+
+  let createdCount = 0;
+  let updatedCount = 0;
+  const errors: string[] = [];
+
+  // Bulk create in batches of 100 to avoid rate limits
+  for (let i = 0; i < toCreate.length; i += 100) {
+    const batch = toCreate.slice(i, i + 100);
+    try {
+      const result = await base44.asServiceRole.entities[entityName].bulkCreate(batch);
+      createdCount += Array.isArray(result) ? result.length : 0;
+    } catch (err) {
+      errors.push(`Create batch ${Math.floor(i / 100) + 1}: ${(err as any)?.message || 'unknown error'}`);
+    }
+  }
+
+  // Bulk update in batches of 100
+  for (let i = 0; i < toUpdate.length; i += 100) {
+    const batch = toUpdate.slice(i, i + 100);
+    try {
+      const result = await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
+      updatedCount += Array.isArray(result) ? result.length : 0;
+    } catch (err) {
+      errors.push(`Update batch ${Math.floor(i / 100) + 1}: ${(err as any)?.message || 'unknown error'}`);
+    }
+  }
+
+  return {
+    dataset,
+    direction: 'pull',
+    sheet_id: sheetId,
+    rows_examined: allRows.length,
+    records_examined: allRows.length,
+    created: createdCount,
+    updated: updatedCount,
+    errors: errors.length,
+    error_details: errors.slice(0, 10),
+  };
+}
+
 async function loadSyncConfig(base44: any) {
   const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });
   const record = Array.isArray(results) ? results[0] : results;
@@ -344,7 +523,7 @@ Deno.serve(async (req) => {
       if (actor?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
-    } else if (action !== 'run_sync' && action !== 'push_dataset') {
+    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset') {
       return Response.json({ success: false, error: 'Admin session is required for this action.' }, { status: 403 });
     }
 
@@ -355,7 +534,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'run_sync', 'push_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
@@ -440,7 +619,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === 'run_sync' || action === 'push_dataset') {
+    if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset') {
       const { config } = await loadSyncConfig(base44);
       if (!config) {
         return Response.json({ success: false, error: 'No Smartsheet sync configuration saved yet. Configure and save settings first.' }, { status: 400 });
@@ -452,25 +631,41 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow writes.' }, { status: 400 });
       }
 
+      const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';
       const datasetsToRun: ('sales' | 'orders')[] =
-        action === 'push_dataset' && body?.dataset === 'orders'
+        isSingleDataset && body?.dataset === 'orders'
           ? ['orders']
-          : action === 'push_dataset'
+          : isSingleDataset
             ? ['sales']
             : ['sales', 'orders'];
 
       const results: any[] = [];
       for (const dataset of datasetsToRun) {
         const profile = config?.[dataset] || {};
-        if (!profile.mirror_enabled || !profile.push_enabled) {
-          results.push({ dataset, skipped: true, reason: 'Mirror or push not enabled for this dataset.' });
+        if (!profile.mirror_enabled) {
+          results.push({ dataset, skipped: true, reason: 'Mirror not enabled for this dataset.' });
           continue;
         }
+
+        const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
+        const wantPush = action === 'push_dataset' || (action === 'run_sync' && profile.push_enabled);
+
+        if (!wantPull && !wantPush) {
+          results.push({ dataset, skipped: true, reason: 'Neither push nor pull enabled for this dataset.' });
+          continue;
+        }
+
         try {
-          const result = await pushDataset(base44, token, dataset, profile, config);
-          results.push(result);
+          if (wantPull) {
+            const pullResult = await pullDataset(base44, token, dataset, profile, config);
+            results.push(pullResult);
+          }
+          if (wantPush) {
+            const pushResult = await pushDataset(base44, token, dataset, profile, config);
+            results.push(pushResult);
+          }
         } catch (err) {
-          results.push({ dataset, skipped: true, reason: (err as any)?.message || 'Push failed.' });
+          results.push({ dataset, skipped: true, reason: (err as any)?.message || 'Sync failed.' });
         }
       }
 

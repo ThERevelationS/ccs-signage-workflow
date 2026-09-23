@@ -140,6 +140,43 @@ export function buildCells(record: any, bindings: Record<string, string>, datase
   return cells;
 }
 
+// Reverse mapping: extract Base44 field values from a Smartsheet row's cells.
+// bindings: { [base44FieldKey]: smartsheetColumnId }
+export function parseRowToFields(
+  row: { id: string; cells: { columnId: string; value: any; displayValue?: string }[] },
+  bindings: Record<string, string>,
+  dataset: "sales" | "orders",
+): Record<string, any> {
+  const fields = getMappableFields(dataset);
+  const columnToField: Record<string, MappableField> = {};
+  for (const field of fields) {
+    const columnId = String(bindings?.[field.key] ?? "").trim();
+    if (columnId && /^\d+$/.test(columnId)) {
+      columnToField[columnId] = field;
+    }
+  }
+  const out: Record<string, any> = {};
+  for (const cell of row?.cells || []) {
+    const colId = String(cell.columnId || "");
+    const field = columnToField[colId];
+    if (!field) continue;
+    const raw = cell.displayValue != null ? cell.displayValue : cell.value;
+    if (raw === null || raw === undefined || raw === "") continue;
+    if (field.type === "number") {
+      const num = Number(raw);
+      if (Number.isFinite(num)) out[field.key] = num;
+    } else if (field.type === "date") {
+      const stamp = dateStamp(raw);
+      if (stamp) out[field.key] = stamp;
+    } else if (field.type === "notes") {
+      // Skip notes on pull — would need complex deserialization
+    } else {
+      out[field.key] = cleanText(raw);
+    }
+  }
+  return out;
+}
+
 // Snapshot of the values we just wrote, stored on the record for three-way
 // conflict detection on the next sync.
 export function buildSnapshot(record: any, bindings: Record<string, string>, dataset: "sales" | "orders") {

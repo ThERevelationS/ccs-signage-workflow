@@ -394,6 +394,25 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     return { bindings: next, matched, total: fields.length };
   };
 
+  // Fetch columns only (for display) without auto-binding — used on page load
+  // so saved bindings are visible immediately without marking the form dirty.
+  const fetchColumnsOnly = async (dataset) => {
+    const profile = config?.[dataset];
+    const sheetId = profile?.smartsheet_sheet_id;
+    if (!sessionToken || !sheetId) return;
+    setColumnsLoading((s) => ({ ...s, [dataset]: true }));
+    try {
+      const result = await getSmartsheetColumnsForBindings({ sessionToken, sheetId });
+      const cols = Array.isArray(result.columns) ? result.columns : [];
+      if (dataset === "orders") setOrderColumns(cols);
+      else setSalesColumns(cols);
+    } catch {
+      // silent — columns just won't show in dropdowns
+    } finally {
+      setColumnsLoading((s) => ({ ...s, [dataset]: false }));
+    }
+  };
+
   const loadColumns = async (dataset) => {
     const profile = config?.[dataset];
     const sheetId = profile?.smartsheet_sheet_id;
@@ -452,6 +471,16 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
     load();
     loadApiStatus();
   }, [sessionToken]);
+
+  // Auto-load column lists when the page loads and a sheet ID is already
+  // configured, so saved bindings are visible in the dropdowns immediately.
+  const [autoLoaded, setAutoLoaded] = useState(false);
+  useEffect(() => {
+    if (loading || !sessionToken || autoLoaded) return;
+    if (config.sales?.smartsheet_sheet_id) fetchColumnsOnly("sales");
+    if (config.orders?.smartsheet_sheet_id) fetchColumnsOnly("orders");
+    setAutoLoaded(true);
+  }, [loading, sessionToken, autoLoaded]);
 
   const setProfile = (key, next) => {
     const currentProfile = config?.[key] || {};
@@ -722,17 +751,20 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
             </div>
             <span className="text-xs text-gray-500">Finished {new Date().toLocaleTimeString()}</span>
           </div>
-          {syncResult.results.map((r) => (
-            <div key={r.dataset} className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs">
-              <div className="font-medium capitalize">{r.dataset}</div>
+          {syncResult.results.map((r, i) => (
+            <div key={`${r.dataset}-${r.direction || i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs">
+              <div className="font-medium capitalize">
+                {r.dataset}
+                {r.direction && <span className="ml-2 text-gray-500">({r.direction === "pull" ? "Smartsheet → Base44" : "Base44 → Smartsheet"})</span>}
+              </div>
               {r.skipped ? (
                 <div className="text-amber-700 mt-1">Skipped: {r.reason}</div>
               ) : (
                 <div className="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-4">
-                  <span>Examined: <strong>{r.records_examined}</strong></span>
+                  <span>{r.direction === "pull" ? "Rows: " : "Examined: "}<strong>{r.records_examined}</strong></span>
                   <span className="text-green-700">Created: <strong>{r.created}</strong></span>
                   <span className="text-blue-700">Updated: <strong>{r.updated}</strong></span>
-                  <span className="text-amber-700">Conflicts: <strong>{r.conflicts}</strong></span>
+                  {r.direction !== "pull" && <span className="text-amber-700">Conflicts: <strong>{r.conflicts}</strong></span>}
                   {r.errors > 0 && <span className="text-red-700">Errors: <strong>{r.errors}</strong></span>}
                 </div>
               )}
