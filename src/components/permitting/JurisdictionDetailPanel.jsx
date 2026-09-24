@@ -633,9 +633,9 @@ Answer the question based on the documents and information available. Be specifi
 
         {/* AI Summary */}
          {jurisdiction.ai_summary && (
-           <div className="bg-indigo-50 rounded-lg p-3 border-l-4 border-l-indigo-400">
-             <p className="text-xs font-semibold text-indigo-800 mb-1">AI Summary</p>
-             <p className="text-sm text-gray-700 leading-relaxed">{jurisdiction.ai_summary}</p>
+           <div className="min-w-0 rounded-lg border-l-4 border-l-indigo-400 bg-indigo-50 p-3">
+             <p className="mb-1 text-xs font-semibold text-indigo-800">AI Summary</p>
+             <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{jurisdiction.ai_summary}</p>
            </div>
          )}
 
@@ -944,9 +944,9 @@ Answer the question based on the documents and information available. Be specifi
                     )}
                     
                     {doc.ai_summary && (
-                      <div>
-                        <p className="text-[10px] font-semibold text-purple-600 mb-1">AI Summary</p>
-                        <p className="text-xs text-gray-700 leading-relaxed">{doc.ai_summary}</p>
+                      <div className="min-w-0">
+                        <p className="mb-1 text-[10px] font-semibold text-purple-600">AI Summary</p>
+                        <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{doc.ai_summary}</p>
                       </div>
                     )}
                     {doc.extracted_text && (
