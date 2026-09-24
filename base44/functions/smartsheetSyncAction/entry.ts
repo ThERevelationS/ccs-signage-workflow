@@ -5,9 +5,12 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import {
   buildCells,
   buildSnapshot,
-  getMappableFields,
   parseRowToFields,
 } from '../../shared/smartsheetSyncFields.ts';
+import {
+  filterSalesColumnBindings,
+  shouldCreateSmartsheetSalesRecordInPipeline,
+} from '../../shared/smartsheetSalesSafety.mjs';
 
 const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
 const API_BASE = 'https://api.smartsheet.com/2.0';
@@ -242,7 +245,8 @@ async function pullDataset(
   if (!/^\d+$/.test(sheetId)) {
     return { dataset, direction: 'pull', skipped: true, reason: 'No numeric Smartsheet sheet ID configured.' };
   }
-  const bindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+  const rawBindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+  const bindings = dataset === 'sales' ? filterSalesColumnBindings(rawBindings) : rawBindings;
   const boundColumnCount = Object.values(bindings).filter((id: any) => /^\d+$/.test(String(id).trim())).length;
   if (boundColumnCount === 0) {
     return { dataset, direction: 'pull', skipped: true, reason: 'No column bindings configured for this dataset.' };
@@ -320,7 +324,7 @@ async function pullDataset(
       if (dataset === 'sales') {
         if (!newRecord.title) newRecord.title = newRecord.client_name || `Smartsheet row ${rowId}`;
         if (!newRecord.client_name) newRecord.client_name = 'Unknown';
-        newRecord.in_pipeline = true;
+        newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
       } else {
         if (!newRecord.customer_name) newRecord.customer_name = 'Unknown';
         if (!newRecord.request_type) newRecord.request_type = 'Other';
@@ -557,7 +561,8 @@ async function pushDataset(
   if (!/^\d+$/.test(sheetId)) {
     return { dataset, skipped: true, reason: 'No numeric Smartsheet sheet ID configured.' };
   }
-  const bindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+  const rawBindings = profile?.column_bindings && typeof profile.column_bindings === 'object' ? profile.column_bindings : {};
+  const bindings = dataset === 'sales' ? filterSalesColumnBindings(rawBindings) : rawBindings;
   const boundColumnCount = Object.values(bindings).filter((id: any) => /^\d+$/.test(String(id).trim())).length;
   if (boundColumnCount === 0) {
     return { dataset, skipped: true, reason: 'No column bindings configured for this dataset.' };
