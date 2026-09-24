@@ -393,6 +393,34 @@ async function pullDataset(
     }
   }
 
+  // Soft-delete orphaned Base44 records whose Smartsheet rows no longer exist.
+  // These records can't get updates from Smartsheet and show stale/missing data.
+  const smartsheetRowIds = new Set(allRows.map((r: any) => String(r.id)));
+  const orphans = existingRecords.filter((r: any) => {
+    const rowId = cleanText(r?.smartsheet_row_id, 40);
+    return rowId && /^\d+$/.test(rowId) && !smartsheetRowIds.has(rowId) && !r.deleted;
+  });
+  let orphanCount = 0;
+  if (orphans.length > 0) {
+    const orphanBatchSize = 100;
+    const now = new Date().toISOString();
+    for (let i = 0; i < orphans.length; i += orphanBatchSize) {
+      const batch = orphans.slice(i, i + orphanBatchSize);
+      const payload = batch.map((r: any) => ({
+        id: r.id,
+        deleted: true,
+        deleted_at: now,
+        deleted_by: 'smartsheet_sync_orphan_cleanup',
+      }));
+      try {
+        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
+        orphanCount += payload.length;
+      } catch {
+        // non-critical — orphan cleanup is best-effort
+      }
+    }
+  }
+
   return {
     dataset,
     direction: 'pull',
@@ -403,6 +431,7 @@ async function pullDataset(
     updated: updatedCount,
     errors: errors.length,
     error_details: errors.slice(0, 10),
+    orphans_soft_deleted: orphanCount,
   };
 }
 
@@ -574,7 +603,7 @@ Deno.serve(async (req) => {
       if (actor?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
-    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset') {
+    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset' && action !== 'debug_dates') {
       return Response.json({ success: false, error: 'Admin session is required for this action.' }, { status: 403 });
     }
 
@@ -746,13 +775,34 @@ Deno.serve(async (req) => {
           });
         }
       }
+      // Also fetch ALL columns to verify the bindings point to the right columns
+      const colResult = await smartsheetGet(`/sheets/${sheetId}/columns?includeAll=true`, token);
+      const allColumns = (Array.isArray(colResult.body?.data) ? colResult.body.data : []).map((c: any) => ({
+        id: String(c?.id ?? ''),
+        title: cleanText(c?.title, 300),
+        type: cleanText(c?.type, 80),
+      })).filter((c: any) => c.id);
+      // Count how many Smartsheet rows have values in the date columns
+      let ssRowsWithOrdered = 0;
+      let ssRowsWithReceived = 0;
+      for (const row of allRows) {
+        const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
+        const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
+        if (orderedCell?.value ?? orderedCell?.display_value) ssRowsWithOrdered++;
+        if (receivedCell?.value ?? receivedCell?.display_value) ssRowsWithReceived++;
+      }
       return Response.json({
         success: true,
         total_smartsheet_rows: allRows.length,
+        ss_rows_with_ordered: ssRowsWithOrdered,
+        ss_rows_with_received: ssRowsWithReceived,
         ss_has_ordered_b44_missing: ssHasOrderedB44Missing,
         ss_has_received_b44_missing: ssHasReceivedB44Missing,
         discrepancy_count: discrepancies.length,
         discrepancies: discrepancies.slice(0, 20),
+        bound_date_ordered_col: { id: dateOrderedCol, title: allColumns.find((c: any) => c.id === dateOrderedCol)?.title, type: allColumns.find((c: any) => c.id === dateOrderedCol)?.type },
+        bound_date_received_col: { id: dateReceivedCol, title: allColumns.find((c: any) => c.id === dateReceivedCol)?.title, type: allColumns.find((c: any) => c.id === dateReceivedCol)?.type },
+        all_date_columns: allColumns.filter((c: any) => c.type === 'DATE' || c.title?.toLowerCase().includes('date') || c.title?.toLowerCase().includes('ordered') || c.title?.toLowerCase().includes('received')),
       });
     }
 
