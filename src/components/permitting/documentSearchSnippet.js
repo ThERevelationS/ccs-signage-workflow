@@ -55,24 +55,3 @@ export function documentMatchSnippet(content, position, matchLength) {
   const end = Math.min(content.length, position + matchLength + 100);
   return `${start > 0 ? "…" : ""}${content.slice(start, end)}${end < content.length ? "…" : ""}`;
 }
-
-// Retain match offsets rather than a potentially large array of copied excerpts.
-export function findDocumentMatchPositions(content, searchTerm) {
-  if (typeof content !== "string" || typeof searchTerm !== "string" || !searchTerm.trim()) return [];
-  const text = content.toLowerCase();
-  const term = searchTerm.toLowerCase();
-  const positions = [];
-  let index = text.indexOf(term);
-  while (index !== -1) {
-    positions.push(index);
-    index = text.indexOf(term, index + 1);
-  }
-  return positions;
-}
-
-export function documentMatchSnippet(content, position, matchLength) {
-  if (typeof content !== "string" || position < 0 || position >= content.length) return "";
-  const start = Math.max(0, position - 100);
-  const end = Math.min(content.length, position + matchLength + 100);
-  return `${start > 0 ? "…" : ""}${content.slice(start, end)}${end < content.length ? "…" : ""}`;
-}
