@@ -1961,17 +1961,71 @@ Deno.serve(async (req) => {
         }
 
         const lockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id || entry.pay_period_id === period.id).map((entry: any) => entry.id);
-        if (lockableIds.length) {
+        const newlyLockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id).map((entry: any) => entry.id);
+        if (newlyLockableIds.length) {
           const lockResult = await entryEntity.updateMany(
-            { id: { $in: lockableIds }, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+            {
+              id: { $in: newlyLockableIds },
+              status: 'clocked_out',
+              approval_status: 'approved',
+              pay_period_id: { $in: [null, ''] },
+              archived_test_data: { $ne: true },
+              archived_admin: { $ne: true },
+            },
             { $set: { pay_period_id: period.id, pay_period_locked_at: now, pay_period_locked_by: actorEmail } },
           );
           if (!lockResult || typeof lockResult.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'Pay-period entry locking could not be verified. Retry the same finalization after reloading.' }, { status: 409 });
+        }
+        if (lockableIds.length) {
           const lockedRows = await entryEntity.filter({ pay_period_id: period.id });
           if (!Array.isArray(lockedRows)) throw new Error('Pay-period lock verification did not return a record list.');
           const lockedIds = new Set(lockedRows.map((entry: any) => entry.id));
           const missingLocks = lockableIds.filter((id: string) => !lockedIds.has(id));
-          if (missingLocks.length) return Response.json({ success: false, retry_same_request: true, error: 'Some pay-period entries are not locked yet. Retry the same finalization after reloading.' }, { status: 409 });
+          if (missingLocks.length) {
+            if (newlyLockableIds.length) {
+              const rollback = await entryEntity.updateMany(
+                {
+                  id: { $in: newlyLockableIds },
+                  pay_period_id: period.id,
+                  pay_period_locked_at: now,
+                  pay_period_locked_by: actorEmail,
+                },
+                { $unset: { pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '' } },
+              );
+              if (!rollback || typeof rollback.updated !== 'number') {
+                return Response.json({ success: false, error: 'Approval changed during pay-period finalization and newly acquired entry locks could not be rolled back safely. Admin investigation is required.' }, { status: 409 });
+              }
+              const residualAttemptLocks = await entryEntity.filter({
+                id: { $in: newlyLockableIds },
+                pay_period_id: period.id,
+                pay_period_locked_at: now,
+                pay_period_locked_by: actorEmail,
+              });
+              if (!Array.isArray(residualAttemptLocks)) throw new Error('Pay-period approval-race rollback verification did not return a record list.');
+              if (residualAttemptLocks.length) {
+                return Response.json({ success: false, error: 'Approval changed during pay-period finalization and some newly acquired entry locks remain. Admin investigation is required.' }, { status: 409 });
+              }
+            }
+            await auditEntity.updateMany(
+              { id: intent.id, outcome: 'pending', request_id: requestId },
+              { $set: {
+                outcome: 'blocked',
+                details: {
+                  ...(intent.details || {}),
+                  payload_hash: statusPayloadHash,
+                  pay_period_id: period.id,
+                  decision,
+                  note,
+                  blocked_reason: 'entry_approval_changed_during_finalization',
+                  missing_lock_count: missingLocks.length,
+                },
+              } },
+            );
+            return Response.json({
+              success: false,
+              error: 'One or more shift approvals changed while the pay period was being finalized. Newly acquired locks were rolled back; reload and review the period again.',
+            }, { status: 409 });
+          }
         }
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const summary = { entry_count: completedEntries.length, employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size, total_hours: totalHours };
