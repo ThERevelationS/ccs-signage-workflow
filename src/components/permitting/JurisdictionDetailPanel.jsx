@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
-import { documentSearchSnippet, splitDocumentSearchMatches, findDocumentMatchPositions, documentMatchSnippet } from "./documentSearchSnippet";
+import { documentSearchSnippet, splitDocumentSearchMatches, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -180,6 +180,16 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
       console.error("Search error:", e);
     }
     setSearchingDocId(null);
+  };
+
+  const moveDocumentMatch = (docId, direction) => {
+    setDocSearchResults(prev => {
+      const current = prev[docId];
+      if (!current?.matches) return prev;
+      const nextIndex = stepDocumentMatchIndex(current.activeIndex, current.matches, direction);
+      if (nextIndex === current.activeIndex) return prev;
+      return { ...prev, [docId]: { ...current, activeIndex: nextIndex } };
+    });
   };
 
   const analyzeDocument = async (doc) => {
@@ -858,7 +868,18 @@ Answer the question based on the documents and information available. Be specifi
                             aria-label={`Search within ${doc.title || "document"}`}
                             value={expandedDocSearch[doc.id] || ""}
                             onChange={(e) => searchWithinDocument(doc.id, e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && searchWithinDocument(doc.id, expandedDocSearch[doc.id])}
+                            onKeyDown={(e) => {
+                              if (e.nativeEvent?.isComposing) return;
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                moveDocumentMatch(doc.id, e.shiftKey ? -1 : 1);
+                              } else if (e.key === "Escape" && (expandedDocSearch[doc.id] || docSearchResults[doc.id])) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                searchWithinDocument(doc.id, "");
+                              }
+                            }}
+                            aria-describedby={docSearchResults[doc.id]?.matches > 1 ? `document-search-hint-${doc.id}` : undefined}
                             className="min-h-11 flex-1 text-sm"
                           />
                           <Button
@@ -879,7 +900,22 @@ Answer the question based on the documents and information available. Be specifi
                             )}
                             <span className="sm:sr-only">Search</span>
                           </Button>
+                          {(expandedDocSearch[doc.id] || docSearchResults[doc.id]) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="min-h-11 w-full px-3 text-xs sm:w-auto"
+                              onClick={() => searchWithinDocument(doc.id, "")}
+                              aria-label={`Clear search within ${doc.title || "document"}`}
+                            >Clear</Button>
+                          )}
                         </div>
+                        {docSearchResults[doc.id]?.matches > 1 && (
+                          <p id={`document-search-hint-${doc.id}`} className="text-xs text-gray-500">
+                            Enter: next match · Shift+Enter: previous match · Escape: clear search
+                          </p>
+                        )}
                         
                         {docSearchResults[doc.id] && (
                           <div className="bg-white p-2 rounded border border-blue-200">
@@ -911,10 +947,7 @@ Answer the question based on the documents and information available. Be specifi
                                       variant="outline"
                                       className="min-h-11 flex-1 sm:flex-none"
                                       disabled={docSearchResults[doc.id].activeIndex === 0}
-                                      onClick={() => setDocSearchResults(prev => ({
-                                        ...prev,
-                                        [doc.id]: { ...prev[doc.id], activeIndex: prev[doc.id].activeIndex - 1 }
-                                      }))}
+                                      onClick={() => moveDocumentMatch(doc.id, -1)}
                                     >Previous match</Button>
                                     <Button
                                       type="button"
@@ -922,10 +955,7 @@ Answer the question based on the documents and information available. Be specifi
                                       variant="outline"
                                       className="min-h-11 flex-1 sm:flex-none"
                                       disabled={docSearchResults[doc.id].activeIndex === docSearchResults[doc.id].matches - 1}
-                                      onClick={() => setDocSearchResults(prev => ({
-                                        ...prev,
-                                        [doc.id]: { ...prev[doc.id], activeIndex: prev[doc.id].activeIndex + 1 }
-                                      }))}
+                                      onClick={() => moveDocumentMatch(doc.id, 1)}
                                     >Next match</Button>
                                   </div>
                                 )}
