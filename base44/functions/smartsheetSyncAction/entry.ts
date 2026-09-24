@@ -337,11 +337,6 @@ async function pullDataset(
   let updatedCount = 0;
   const errors: string[] = [];
 
-  // Debug: log first update batch
-  if (toUpdate.length > 0) {
-    console.log('DEBUG toUpdate first 2:', JSON.stringify(toUpdate.slice(0, 2)));
-  }
-
   // Bulk create in batches of 100 to avoid rate limits
   for (let i = 0; i < toCreate.length; i += 100) {
     const batch = toCreate.slice(i, i + 100);
