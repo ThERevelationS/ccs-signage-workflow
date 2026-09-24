@@ -4265,20 +4265,20 @@ Deno.serve(async (req) => {
         decision,
         note,
       });
-      const priorApprovalAudits = await auditEntity.filter({ action: 'time_approval', request_id: requestId, time_entry_id: entry.id });
+      const approvalAuditQuery = { action: 'time_approval', request_id: requestId };
+      const priorApprovalAudits = await auditEntity.filter(approvalAuditQuery);
       if (!Array.isArray(priorApprovalAudits)) throw new Error('Approval audit lookup did not return a record list.');
       if (priorApprovalAudits.length > 1) return Response.json({ success: false, error: 'This approval request has multiple audit records. Admin investigation is required.' }, { status: 409 });
       let intent = priorApprovalAudits[0] || null;
-      const priorPayloadHash = String(intent?.details?.payload_hash || '');
-      if (intent && priorPayloadHash && !constantTimeEqual(priorPayloadHash, approvalPayloadHash)) {
-        return Response.json({ success: false, error: 'This approval request id is already bound to different review details. Submit a new approval action.' }, { status: 409 });
-      }
-      if (intent && !priorPayloadHash) {
-        const priorDecision = String(intent?.details?.decision || '');
-        const priorNote = String(intent?.details?.note || '');
-        if ((priorDecision && priorDecision !== decision) || priorNote !== note) {
-          return Response.json({ success: false, error: 'This approval request id is already bound to different review details. Submit a new approval action.' }, { status: 409 });
-        }
+      const approvalAuditMatches = (auditRow: any) => Boolean(
+        auditRow?.id &&
+        String(auditRow.time_entry_id || '') === entry.id &&
+        asEmail(auditRow.user_email) === target.email &&
+        asEmail(auditRow.actor_email) === actorEmail &&
+        constantTimeEqual(String(auditRow.details?.payload_hash || ''), approvalPayloadHash)
+      );
+      if (intent?.id && !approvalAuditMatches(intent)) {
+        return Response.json({ success: false, error: 'This approval request id belongs to a different employee, manager, shift, or review payload. Admin investigation is required.' }, { status: 409 });
       }
       if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This approval request was previously blocked. Reload and submit a new approval action.' }, { status: 409 });
 
