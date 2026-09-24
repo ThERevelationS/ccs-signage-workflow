@@ -86,3 +86,19 @@ export function salesPushSnapshotNeedsReview(record = {}, sheetId = "", expected
     !Object.prototype.hasOwnProperty.call(prior, columnId)
   );
 }
+
+// A previously linked Sales record with no verified snapshot for every current
+// bound column must not be blindly rewritten. A new mapping (such as Est / Inv #)
+// can be absent from an old snapshot even when the Smartsheet cell has data.
+// Leave new, unlinked opportunities to the separate creation safety workflow.
+export function salesPushSnapshotNeedsReview(record = {}, sheetId = "", expectedSnapshot = {}) {
+  const rowId = String(record?.smartsheet_row_id ?? "").trim();
+  const linkedSheetId = String(record?.smartsheet_sheet_id ?? "").trim();
+  if (!/^\d+$/.test(rowId) || !/^\d+$/.test(linkedSheetId) || linkedSheetId !== String(sheetId).trim()) return false;
+  const prior = record?.smartsheet_sync_snapshot;
+  if (!record?.smartsheet_last_synced_at || !prior || typeof prior !== "object" || Array.isArray(prior)) return true;
+  const requiredColumns = Object.keys(expectedSnapshot || {});
+  return requiredColumns.length === 0 || requiredColumns.some((columnId) =>
+    !Object.prototype.hasOwnProperty.call(prior, columnId)
+  );
+}
