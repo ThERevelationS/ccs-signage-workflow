@@ -31,3 +31,31 @@ export function isLegacyTerminalSalesTask(value) {
 export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
   return !isLegacyTerminalSalesTask(fields?.current_task_description);
 }
+
+// Only skip a linked Sales pull when every populated inbound field already
+// agrees with the record AND its existing snapshot already reflects that state.
+// Missing/old snapshots still follow the existing reconciliation path.
+export function salesPulledFieldsUnchanged(existing = {}, incoming = {}) {
+  return Object.entries(incoming).every(([key, value]) => {
+    if (!SALES_SYNC_ALLOWED_FIELD_SET.has(key)) return false;
+    const current = existing?.[key];
+    if (key === "estimate_amount") {
+      return current != null && current !== "" && Number.isFinite(Number(current)) &&
+        Number.isFinite(Number(value)) && Number(current) === Number(value);
+    }
+    return String(current ?? "").trim() === String(value ?? "").trim();
+  });
+}
+
+export function salesPullSnapshotAligned(existing = {}, expectedSnapshot = {}) {
+  const prior = existing?.smartsheet_sync_snapshot;
+  if (!existing?.smartsheet_last_synced_at || !prior || typeof prior !== "object" ||
+      Array.isArray(prior) || !expectedSnapshot || typeof expectedSnapshot !== "object") return false;
+  const columns = Object.entries(expectedSnapshot);
+  return columns.length > 0 && columns.every(([columnId, value]) => {
+    if (!Object.prototype.hasOwnProperty.call(prior, columnId)) return false;
+    const previous = prior[columnId];
+    if (previous == null || value == null) return previous == null && value == null;
+    return String(previous).trim() === String(value).trim();
+  });
+}
