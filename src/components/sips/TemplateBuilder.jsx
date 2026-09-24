@@ -56,6 +56,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [noticeDialog, setNoticeDialog] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [pendingEditorSwitch, setPendingEditorSwitch] = useState(null);
   
   // Template Selector state
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -489,7 +490,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     }
   };
 
-  const selectSubTemplateForEditing = (subTemplate) => {
+  const selectSubTemplateForEditing = (subTemplate, discardUnsaved = false) => {
+    if (!discardUnsaved && selectedSubTemplate === subTemplate.id) return;
+    if (!discardUnsaved && selectedSubTemplate && subTemplateHasChanges) {
+      setPendingEditorSwitch({ kind: 'subtemplate', id: subTemplate.id, name: subTemplate.name });
+      return;
+    }
     setSelectedSubTemplate(subTemplate.id);
     setSubTemplateChecklistItems(subTemplateItems[subTemplate.id]?.items || []);
     setExpandedItems({});
@@ -598,12 +604,29 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   // Product Type Management
-  const selectProductType = (type) => {
+  const selectProductType = (type, discardUnsaved = false) => {
+    if (!discardUnsaved && selectedProductType === type) return;
+    if (!discardUnsaved && selectedProductType && productTypeHasChanges) {
+      setPendingEditorSwitch({ kind: 'producttype', id: type, name: type });
+      return;
+    }
     setSelectedProductType(type);
     setProductTypeItems(productTypeTemplates[type]?.items || []);
     setExpandedItems({});
     setProductTypeHasChanges(false);
     setProductTypeSaveStatus('idle');
+  };
+
+  const confirmEditorSwitch = () => {
+    const request = pendingEditorSwitch;
+    setPendingEditorSwitch(null);
+    if (!request) return;
+    if (request.kind === 'subtemplate') {
+      const next = subTemplates.find(st => st.id === request.id);
+      if (next) selectSubTemplateForEditing(next, true);
+    } else if (request.kind === 'producttype' && productTypes.includes(request.id)) {
+      selectProductType(request.id, true);
+    }
   };
 
   const saveProductTypeTemplate = async () => {
@@ -1571,7 +1594,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                   </div>
                                 ) : (
                                   <>
-                                    <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{st.name}</div><div className="text-xs text-gray-500">{subTemplateItems[st.id]?.items?.length || 0} items</div></div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); selectSubTemplateForEditing(st); }}
+                                      aria-pressed={selectedSubTemplate === st.id}
+                                      aria-label={`Edit checklist option ${st.name}`}
+                                      className="h-11 flex-1 min-w-0 rounded text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-auto"
+                                    >
+                                      <span className="block font-medium text-xs truncate">{st.name}</span>
+                                      <span className="block text-xs text-gray-500">{subTemplateItems[st.id]?.items?.length || 0} items</span>
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); duplicateSubTemplate(st); }}
@@ -1825,7 +1857,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                   </div>
                                 ) : (
                                   <>
-                                    <div className="flex-1 min-w-0"><div className="font-medium text-xs truncate">{type}</div><div className="text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</div></div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); selectProductType(type); }}
+                                      aria-pressed={selectedProductType === type}
+                                      aria-label={`Edit product checklist ${type}`}
+                                      className="h-11 flex-1 min-w-0 rounded text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-auto"
+                                    >
+                                      <span className="block font-medium text-xs truncate">{type}</span>
+                                      <span className="block text-xs text-gray-500">{productTypeTemplates[type]?.items?.length || 0} items</span>
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); duplicateProductTypeTemplate(type); }}
@@ -2263,6 +2304,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               className="h-11 w-full bg-red-600 hover:bg-red-700 touch-manipulation sm:w-auto"
             >
               {isConfirming ? "Deleting…" : (confirmDialog?.confirmLabel || "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingEditorSwitch} onOpenChange={(open) => { if (!open) setPendingEditorSwitch(null); }}>
+        <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-left">Discard unsaved checklist edits?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words text-left">
+              Switching to “{pendingEditorSwitch?.name}” will discard your unsaved changes to the current {pendingEditorSwitch?.kind === 'subtemplate' ? 'checklist option' : 'product checklist'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="h-11 w-full touch-manipulation sm:w-auto">Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 w-full bg-amber-700 hover:bg-amber-800 touch-manipulation sm:w-auto"
+              onClick={confirmEditorSwitch}
+            >
+              Discard and switch
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
