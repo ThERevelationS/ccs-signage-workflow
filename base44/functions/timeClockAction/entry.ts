@@ -4325,6 +4325,16 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
       }
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
+      if (decision === 'approve') {
+        const unresolvedCorrections = await correctionRequestEntity.filter({
+          time_entry_id: entry.id,
+          status: { $in: ['pending', 'reviewing'] },
+        });
+        if (!Array.isArray(unresolvedCorrections)) throw new Error('Shift approval correction lookup did not return a record list.');
+        if (unresolvedCorrections.length) {
+          return Response.json({ success: false, error: 'This shift has an unresolved employee correction. Review the correction before approving the shift.' }, { status: 409 });
+        }
+      }
 
       const now = new Date().toISOString();
       if (!intent) {
