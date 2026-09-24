@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
-import { documentSearchSnippet, splitDocumentSearchMatches } from "./documentSearchSnippet";
+import { documentSearchSnippet, splitDocumentSearchMatches, findDocumentMatchPositions, documentMatchSnippet } from "./documentSearchSnippet";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -171,38 +171,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
       const searchContent = doc.extracted_text || doc.ai_summary || "";
       const searchTerm = searchText.toLowerCase();
       
-      if (!searchContent) {
-        setDocSearchResults(prev => ({
-          ...prev,
-          [docId]: { matches: 0, snippets: [] }
-        }));
-      } else {
-        // Search for the term in the content
-        const contentLower = searchContent.toLowerCase();
-        const allMatches = [];
-        let index = 0;
-        
-        while ((index = contentLower.indexOf(searchTerm, index)) !== -1) {
-          const start = Math.max(0, index - 100);
-          const end = Math.min(searchContent.length, index + searchTerm.length + 100);
-          const snippet = searchContent.substring(start, end);
-          
-          allMatches.push({
-            position: index,
-            snippet: (start > 0 ? '...' : '') + snippet.trim() + (end < searchContent.length ? '...' : '')
-          });
-          
-          index += 1;
-        }
-        
-        setDocSearchResults(prev => ({
-          ...prev,
-          [docId]: { 
-            matches: allMatches.length, 
-            snippets: allMatches.slice(0, 3).map(m => m.snippet)
-          }
-        }));
-      }
+      const positions = findDocumentMatchPositions(searchContent, searchTerm);
+      setDocSearchResults(prev => ({
+        ...prev,
+        [docId]: { matches: positions.length, positions, activeIndex: 0, query: searchText }
+      }));
     } catch (e) {
       console.error("Search error:", e);
     }
@@ -914,12 +887,48 @@ Answer the question based on the documents and information available. Be specifi
                               <p className="text-xs text-gray-500">No matches found</p>
                             ) : (
                               <div className="space-y-1">
-                                <p className="text-xs font-semibold text-blue-700">{docSearchResults[doc.id].matches} match{docSearchResults[doc.id].matches !== 1 ? 'es' : ''} found</p>
-                                {docSearchResults[doc.id].snippets.map((snippet, i) => (
-                                  <p key={i} className="line-clamp-2 min-w-0 whitespace-pre-wrap text-xs italic text-gray-600 [overflow-wrap:anywhere]">
-                                    ...{snippet}...
-                                  </p>
-                                ))}
+                                <p className="text-sm font-semibold text-blue-700" aria-live="polite" aria-atomic="true">
+                                  Match {docSearchResults[doc.id].activeIndex + 1} of {docSearchResults[doc.id].matches}
+                                </p>
+                                <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">
+                                  {splitDocumentSearchMatches(
+                                    documentMatchSnippet(
+                                      doc.extracted_text || doc.ai_summary || "",
+                                      docSearchResults[doc.id].positions[docSearchResults[doc.id].activeIndex],
+                                      docSearchResults[doc.id].query.length
+                                    ),
+                                    docSearchResults[doc.id].query
+                                  ).map((part, index) => part.matched
+                                    ? <mark key={index} className="rounded-sm bg-yellow-200 px-0.5 font-semibold text-gray-900">{part.text}</mark>
+                                    : <span key={index}>{part.text}</span>
+                                  )}
+                                </p>
+                                {docSearchResults[doc.id].matches > 1 && (
+                                  <div className="flex flex-wrap gap-2 pt-1">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="min-h-11 flex-1 sm:flex-none"
+                                      disabled={docSearchResults[doc.id].activeIndex === 0}
+                                      onClick={() => setDocSearchResults(prev => ({
+                                        ...prev,
+                                        [doc.id]: { ...prev[doc.id], activeIndex: prev[doc.id].activeIndex - 1 }
+                                      }))}
+                                    >Previous match</Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="min-h-11 flex-1 sm:flex-none"
+                                      disabled={docSearchResults[doc.id].activeIndex === docSearchResults[doc.id].matches - 1}
+                                      onClick={() => setDocSearchResults(prev => ({
+                                        ...prev,
+                                        [doc.id]: { ...prev[doc.id], activeIndex: prev[doc.id].activeIndex + 1 }
+                                      }))}
+                                    >Next match</Button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
