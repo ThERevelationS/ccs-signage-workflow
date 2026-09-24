@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
+import { documentSearchSnippet } from "./documentSearchSnippet";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -130,7 +131,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           type: 'document',
           id: doc.id,
           title: doc.title,
-          snippet: (doc.ai_summary || doc.extracted_text || "").substring(0, 150) + "..."
+          snippet: documentSearchSnippet(doc, term)
         });
       }
     });
