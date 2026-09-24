@@ -294,10 +294,29 @@ async function pullDataset(
     existingRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+
+  // Order Form only: a duplicated stable Smartsheet row link is ambiguous.
+  // Fail closed instead of picking one Order arbitrarily or creating another.
+  const orderRowLinkCounts: Record<string, number> = {};
+  if (dataset === 'orders') {
+    for (const rec of existingRecords) {
+      const rowId = cleanText(rec?.smartsheet_row_id, 40);
+      if (rowId && /^\d+$/.test(rowId)) orderRowLinkCounts[rowId] = (orderRowLinkCounts[rowId] || 0) + 1;
+    }
+  }
+  const duplicateOrderRowIds = new Set(
+    Object.entries(orderRowLinkCounts)
+      .filter(([, count]) => count > 1)
+      .map(([rowId]) => rowId),
+  );
+
   const recordsByRowId: Record<string, any> = {};
   for (const rec of existingRecords) {
     const rowId = cleanText(rec?.smartsheet_row_id, 40);
-    if (rowId && /^\d+$/.test(rowId)) recordsByRowId[rowId] = rec;
+    if (rowId && /^\d+$/.test(rowId)) {
+      if (dataset === 'orders' && duplicateOrderRowIds.has(rowId)) continue;
+      recordsByRowId[rowId] = rec;
+    }
   }
 
   // Collect records to create and update
