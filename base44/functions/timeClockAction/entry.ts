@@ -3054,8 +3054,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update_notes') {
-      if (actor.role === 'badge') {
-        return Response.json({ success: false, error: 'A signed-in employee session is required to edit notes.' }, { status: 403 });
+      if (actor.role === 'badge' || actorEmail !== target.email) {
+        return Response.json({ success: false, error: 'Employees must use their own signed-in Time Clock session to edit notes.' }, { status: 403 });
       }
       const entryId = String(body?.entry_id || '').trim();
       const expectedUpdatedDate = String(body?.expected_updated_date || '').trim();
@@ -3069,85 +3069,201 @@ Deno.serve(async (req) => {
       if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
-      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before editing notes.' }, { status: 409 });
 
       const notesPayloadHash = await payloadHash({ entry_id: entry.id, expected_updated_date: expectedUpdatedDate, notes });
-      const priorAudits = await auditEntity.filter({ action: 'notes_update', request_id: requestId, time_entry_id: entry.id });
+      const savedByThisRequest = (record: any) => Boolean(
+        record?.id &&
+        asEmail(record.user_email) === target.email &&
+        String(record.notes || '') === notes &&
+        String(record.last_notes_request_id || '') === requestId &&
+        constantTimeEqual(String(record.last_notes_payload_hash || ''), notesPayloadHash)
+      );
+      const auditMatchesThisRequest = (auditRow: any) => Boolean(
+        auditRow?.id &&
+        asEmail(auditRow.user_email) === target.email &&
+        asEmail(auditRow.actor_email) === actorEmail &&
+        constantTimeEqual(String(auditRow.details?.payload_hash || ''), notesPayloadHash) &&
+        String(auditRow.details?.expected_updated_date || '') === expectedUpdatedDate
+      );
+
+      const auditQuery = { action: 'notes_update', request_id: requestId, time_entry_id: entry.id };
+      const priorAudits = await auditEntity.filter(auditQuery);
       if (!Array.isArray(priorAudits)) throw new Error('Notes audit lookup did not return a record list.');
       if (priorAudits.length > 1) return Response.json({ success: false, error: 'This notes update has multiple audit records. Admin investigation is required.' }, { status: 409 });
       let intent: any = priorAudits[0] || null;
+
       if (intent?.id) {
-        const priorHash = String(intent.details?.payload_hash || '');
-        if (priorHash && !constantTimeEqual(priorHash, notesPayloadHash)) {
-          return Response.json({ success: false, error: 'This notes request id is already bound to different note details.' }, { status: 409 });
-        }
-        if (!priorHash && (
-          String(intent.details?.requested_notes ?? intent.details?.new_notes ?? '') !== notes ||
-          (intent.details?.expected_updated_date && String(intent.details.expected_updated_date) !== expectedUpdatedDate)
-        )) {
-          return Response.json({ success: false, error: 'This notes request id is already bound to different note details.' }, { status: 409 });
+        if (!auditMatchesThisRequest(intent)) {
+          return Response.json({ success: false, error: 'This notes request id is already bound to different employee, version, or note details. Admin investigation is required.' }, { status: 409 });
         }
         if (intent.outcome === 'blocked') {
           return Response.json({ success: false, error: 'This notes request was previously blocked. Reload and submit a new notes update.' }, { status: 409 });
         }
         if (['confirmed', 'recovered'].includes(String(intent.outcome || ''))) {
-          if (String(entry.notes || '') !== notes) {
-            return Response.json({ success: false, error: 'The notes audit is confirmed but the TimeEntry no longer matches it. Admin investigation is required.' }, { status: 409 });
-          }
-          return Response.json({ success: true, entry, audit_id: intent.id, reused: true });
+          return Response.json({
+            success: true,
+            entry,
+            audit_id: intent.id,
+            reused: true,
+            superseded: !savedByThisRequest(entry),
+          });
         }
-        if (intent.outcome === 'pending' && String(entry.notes || '') === notes && String(entry.updated_date || '') !== expectedUpdatedDate) {
+        if (intent.outcome === 'pending' && savedByThisRequest(entry)) {
+          const recoveredAt = new Date().toISOString();
           const recovered = await auditEntity.updateMany(
-            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email },
             { $set: {
-              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-              details: { ...(intent.details || {}), payload_hash: notesPayloadHash, expected_updated_date: expectedUpdatedDate, new_notes: notes, recovered_after_entry_save: true },
+              outcome: 'recovered',
+              server_timestamp: recoveredAt,
+              details: {
+                ...(intent.details || {}),
+                payload_hash: notesPayloadHash,
+                expected_updated_date: expectedUpdatedDate,
+                new_notes: notes,
+                saved_updated_date: entry.updated_date,
+                recovered_after_entry_save: true,
+              },
             } },
           );
           if (!recovered || recovered.updated !== 1) {
             const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+            if (
+              !freshAudit ||
+              !['confirmed', 'recovered'].includes(String(freshAudit.outcome || '')) ||
+              !auditMatchesThisRequest(freshAudit)
+            ) {
               return Response.json({ success: false, retry_same_request: true, error: 'The notes were saved but their audit is still being finalized. Retry the same notes update.' }, { status: 409 });
             }
+            intent = freshAudit;
+          } else {
+            intent = await auditEntity.get(intent.id);
           }
           entry = await entryEntity.get(entry.id);
+          if (!savedByThisRequest(entry) || !auditMatchesThisRequest(intent)) {
+            return Response.json({ success: false, error: 'The recovered notes update no longer matches its TimeEntry marker or audit. Admin investigation is required.' }, { status: 409 });
+          }
           return Response.json({ success: true, entry, audit_id: intent.id, reused: true });
         }
         if (intent.outcome === 'pending' && String(entry.updated_date || '') !== expectedUpdatedDate) {
-          return Response.json({ success: false, error: 'This notes update was interrupted and the TimeEntry changed afterward. Admin investigation is required.' }, { status: 409 });
+          await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email },
+            { $set: {
+              outcome: 'blocked',
+              details: { ...(intent.details || {}), blocked_reason: entryIsPayPeriodLocked(entry) ? 'pay_period_locked_before_note_save' : 'time_entry_changed_before_note_save' },
+            } },
+          );
+          if (entryIsPayPeriodLocked(entry)) {
+            return Response.json({ success: false, error: 'This shift was locked by a finalized pay period before the notes update could be saved. Reopen that pay period before editing notes.' }, { status: 409 });
+          }
+          return Response.json({ success: false, error: 'This time entry changed in another session before the notes update could be saved. Reload before editing its notes.' }, { status: 409 });
         }
+      }
+
+      if (entryIsPayPeriodLocked(entry)) {
+        if (intent?.id && intent.outcome === 'pending') {
+          await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email },
+            { $set: {
+              outcome: 'blocked',
+              details: { ...(intent.details || {}), blocked_reason: 'pay_period_locked_before_note_save' },
+            } },
+          );
+        }
+        return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before editing notes.' }, { status: 409 });
       }
 
       const now = new Date().toISOString();
       if (!intent) {
-        intent = await auditEntity.create({
-          action: 'notes_update', outcome: 'pending', user_email: target.email,
-          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
-          authentication_method: authenticationMethodFor(actor, target),
-          server_timestamp: now, request_id: requestId, time_entry_id: entry.id,
-          details: { payload_hash: notesPayloadHash, expected_updated_date: expectedUpdatedDate, previous_notes: entry.notes || '', requested_notes: notes },
-        });
+        try {
+          await auditEntity.create({
+            action: 'notes_update', outcome: 'pending', user_email: target.email,
+            user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+            authentication_method: authenticationMethodFor(actor, target),
+            server_timestamp: now, request_id: requestId, time_entry_id: entry.id,
+            details: { payload_hash: notesPayloadHash, expected_updated_date: expectedUpdatedDate, previous_notes: entry.notes || '', requested_notes: notes },
+          });
+        } catch (error) {
+          console.error('Notes audit intent write was ambiguous; verifying exact request:', error?.message || error);
+        }
+        const createdAudits = await auditEntity.filter(auditQuery);
+        if (!Array.isArray(createdAudits)) throw new Error('Notes audit intent verification did not return a record list.');
+        if (createdAudits.length > 1) {
+          return Response.json({ success: false, error: 'This notes update has multiple audit intents. No note was changed by this attempt; admin investigation is required.' }, { status: 409 });
+        }
+        intent = createdAudits[0] || null;
       }
-      if (!intent?.id) throw new Error('Notes audit intent could not be persisted. No TimeEntry was changed.');
+      if (!intent?.id || intent.outcome !== 'pending' || !auditMatchesThisRequest(intent)) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The notes audit intent could not be verified. Retry the same notes update.' }, { status: 409 });
+      }
 
+      const savedAt = new Date().toISOString();
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
-        { $set: { notes } },
+        { $set: {
+          notes,
+          last_notes_request_id: requestId,
+          last_notes_payload_hash: notesPayloadHash,
+          last_notes_updated_at: savedAt,
+          last_notes_updated_by: actorEmail,
+        } },
       );
+
+      let savedEntry = await entryEntity.get(entry.id).catch(() => null);
       if (!updateResult || updateResult.updated !== 1) {
-        await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
-        return Response.json({ success: false, error: 'This time entry changed in another session. Reload before editing its notes.' }, { status: 409 });
+        if (!savedByThisRequest(savedEntry)) {
+          await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email },
+            { $set: {
+              outcome: 'blocked',
+              details: {
+                ...(intent.details || {}),
+                blocked_reason: entryIsPayPeriodLocked(savedEntry) ? 'pay_period_locked_before_note_save' : 'time_entry_changed_before_note_save',
+              },
+            } },
+          );
+          if (entryIsPayPeriodLocked(savedEntry)) {
+            return Response.json({ success: false, error: 'This shift was locked by a finalized pay period before the notes update could be saved. Reopen that pay period before editing notes.' }, { status: 409 });
+          }
+          return Response.json({ success: false, error: 'This time entry changed in another session. Reload before editing its notes.' }, { status: 409 });
+        }
       }
-      const savedEntry = await entryEntity.get(entry.id);
-      const auditFinalized = await auditEntity.updateMany({ id: intent.id, outcome: 'pending', request_id: requestId }, { $set: {
-        outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-        details: { ...(intent.details || {}), payload_hash: notesPayloadHash, expected_updated_date: expectedUpdatedDate, previous_notes: entry.notes || '', new_notes: notes },
-      } });
+
+      if (!savedByThisRequest(savedEntry)) {
+        return Response.json({ success: false, error: 'The notes update response was ambiguous and its TimeEntry request marker could not be verified. Admin investigation is required.' }, { status: 409 });
+      }
+
+      const auditFinalized = await auditEntity.updateMany(
+        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email },
+        { $set: {
+          outcome: 'confirmed',
+          server_timestamp: new Date().toISOString(),
+          details: {
+            ...(intent.details || {}),
+            payload_hash: notesPayloadHash,
+            expected_updated_date: expectedUpdatedDate,
+            previous_notes: entry.notes || '',
+            new_notes: notes,
+            saved_updated_date: savedEntry.updated_date,
+          },
+        } },
+      );
       if (!auditFinalized || auditFinalized.updated !== 1) {
         const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+        if (
+          !freshAudit ||
+          !['confirmed', 'recovered'].includes(String(freshAudit.outcome || '')) ||
+          !auditMatchesThisRequest(freshAudit)
+        ) {
           return Response.json({ success: false, retry_same_request: true, error: 'The notes were saved but audit finalization was interrupted. Retry the same notes update.' }, { status: 409 });
         }
+        intent = freshAudit;
+      } else {
+        intent = await auditEntity.get(intent.id);
+      }
+
+      savedEntry = await entryEntity.get(entry.id).catch(() => null);
+      if (!savedByThisRequest(savedEntry) || !auditMatchesThisRequest(intent) || !['confirmed', 'recovered'].includes(String(intent?.outcome || ''))) {
+        return Response.json({ success: false, error: 'The saved notes and audit do not agree. Admin investigation is required.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
