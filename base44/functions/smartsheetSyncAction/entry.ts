@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import {
   buildCells,
   buildSnapshot,
@@ -558,7 +559,11 @@ async function pushDataset(
   if (dataset === 'sales') {
     records = await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
   } else {
-    records = await base44.asServiceRole.entities.Order.list('-updated_date', 500);
+    records = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.Order,
+      sort: 'id',
+      label: 'Order Form Smartsheet push Orders',
+    });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
 
