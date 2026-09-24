@@ -829,6 +829,13 @@ Deno.serve(async (req) => {
         if (rowId) recordsByRowId[rowId] = rec;
       }
       // Compare
+      const parseDate = (v: any) => {
+        const raw = String(v ?? '').trim();
+        if (!raw) return null;
+        const d = new Date(raw);
+        if (Number.isNaN(d.getTime())) return null;
+        return d.toISOString().slice(0, 10);
+      };
       const discrepancies: any[] = [];
       let ssHasOrderedB44Missing = 0;
       let ssHasReceivedB44Missing = 0;
@@ -843,13 +850,6 @@ Deno.serve(async (req) => {
         const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
         const ssOrdered = orderedCell?.value ?? orderedCell?.display_value ?? null;
         const ssReceived = receivedCell?.value ?? receivedCell?.display_value ?? null;
-        const parseDate = (v: any) => {
-          const raw = String(v ?? '').trim();
-          if (!raw) return null;
-          const d = new Date(raw);
-          if (Number.isNaN(d.getTime())) return null;
-          return d.toISOString().slice(0, 10);
-        };
         const ssOrderedParsed = ssOrdered ? parseDate(ssOrdered) : null;
         const ssReceivedParsed = ssReceived ? parseDate(ssReceived) : null;
         if (ssOrderedParsed && !rec.date_ordered) ssHasOrderedB44Missing++;
@@ -877,11 +877,29 @@ Deno.serve(async (req) => {
       // Count how many Smartsheet rows have values in the date columns
       let ssRowsWithOrdered = 0;
       let ssRowsWithReceived = 0;
+      let ssRowsWithValidOrderedDate = 0;
+      let ssRowsWithValidReceivedDate = 0;
+      const nonDateValues: Record<string, string[]> = { ordered: {}, received: {} };
       for (const row of allRows) {
         const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
         const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
-        if (orderedCell?.value ?? orderedCell?.display_value) ssRowsWithOrdered++;
-        if (receivedCell?.value ?? receivedCell?.display_value) ssRowsWithReceived++;
+        const orderedRaw = orderedCell?.value ?? orderedCell?.display_value;
+        const receivedRaw = receivedCell?.value ?? receivedCell?.display_value;
+        if (orderedRaw) ssRowsWithOrdered++;
+        if (receivedRaw) ssRowsWithReceived++;
+        const orderedParsed = orderedRaw ? parseDate(orderedRaw) : null;
+        const receivedParsed = receivedRaw ? parseDate(receivedRaw) : null;
+        if (orderedParsed) ssRowsWithValidOrderedDate++;
+        if (receivedParsed) ssRowsWithValidReceivedDate++;
+        // Track non-date values
+        if (orderedRaw && !orderedParsed) {
+          const key = String(orderedRaw).slice(0, 50);
+          nonDateValues.ordered[key] = (nonDateValues.ordered[key] || 0) + 1;
+        }
+        if (receivedRaw && !receivedParsed) {
+          const key = String(receivedRaw).slice(0, 50);
+          nonDateValues.received[key] = (nonDateValues.received[key] || 0) + 1;
+        }
       }
       return Response.json({
         success: true,
@@ -891,6 +909,10 @@ Deno.serve(async (req) => {
         b44_records_total: existingRecords.length,
         ss_rows_with_ordered: ssRowsWithOrdered,
         ss_rows_with_received: ssRowsWithReceived,
+        ss_rows_with_valid_ordered_date: ssRowsWithValidOrderedDate,
+        ss_rows_with_valid_received_date: ssRowsWithValidReceivedDate,
+        non_date_values_ordered: nonDateValues.ordered,
+        non_date_values_received: nonDateValues.received,
         ss_has_ordered_b44_missing: ssHasOrderedB44Missing,
         ss_has_received_b44_missing: ssHasReceivedB44Missing,
         discrepancy_count: discrepancies.length,
