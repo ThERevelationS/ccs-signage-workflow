@@ -326,6 +326,7 @@ async function pullDataset(
   for (const row of allRows) {
     const rowId = row.id;
     if (!rowId || !/^\d+$/.test(rowId)) continue;
+    if (dataset === 'orders' && duplicateOrderRowIds.has(rowId)) continue;
 
     const rawFields = parseRowToFields(row, bindings, dataset);
     // Normalize enum fields to valid Base44 values
