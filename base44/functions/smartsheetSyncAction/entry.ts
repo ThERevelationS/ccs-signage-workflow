@@ -177,16 +177,16 @@ async function smartsheetWrite(method: 'POST' | 'PUT', path: string, token: stri
 // on the Base44 record. Returns true if Smartsheet was edited since the last
 // sync (a conflict — someone changed the row outside Base44).
 function detectConflict(
-  currentSmartsheetCells: { columnId: string; value: string | number | null; displayValue?: string }[],
+  currentSmartsheetCells: { column_id: string; value: string | number | null; display_value?: string }[],
   snapshot: Record<string, string | number | null> | null,
   bindings: Record<string, string>,
 ): boolean {
   if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync → no conflict
   const bindingColumnIds = new Set(Object.values(bindings || {}).map((id) => String(id).trim()).filter((id) => /^\d+$/.test(id)));
   for (const cell of currentSmartsheetCells) {
-    const colId = String(cell.columnId || '');
+    const colId = String(cell.column_id || cell.columnId || '');
     if (!bindingColumnIds.has(colId)) continue;
-    const current = cell.displayValue != null ? String(cell.displayValue) : (cell.value == null ? '' : String(cell.value));
+    const current = cell.display_value != null ? String(cell.display_value) : (cell.displayValue != null ? String(cell.displayValue) : (cell.value == null ? '' : String(cell.value)));
     const last = snapshot[colId];
     const lastStr = last == null ? '' : String(last);
     if (current.trim() !== lastStr.trim()) return true;
@@ -305,6 +305,21 @@ async function pullDataset(
     if (!rowId || !/^\d+$/.test(rowId)) continue;
 
     const rawFields = parseRowToFields(row, bindings, dataset);
+    // Debug: log first row's parsed fields and raw cells
+    if (allRows.indexOf(row) === 0) {
+      const fieldValuesDebug: Record<string, any> = {};
+      for (const [key, val] of Object.entries(rawFields)) {
+        const normalized = normalizePullValue(key, val);
+        if (normalized !== undefined) fieldValuesDebug[key] = normalized;
+      }
+      console.log('DEBUG pull first row:', JSON.stringify({
+        dataset,
+        rowId,
+        rawFields,
+        fieldValues: fieldValuesDebug,
+        existingRecord: recordsByRowId[rowId] ? { id: recordsByRowId[rowId].id, client_name: recordsByRowId[rowId].client_name } : null,
+      }));
+    }
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
@@ -336,6 +351,11 @@ async function pullDataset(
   let createdCount = 0;
   let updatedCount = 0;
   const errors: string[] = [];
+
+  // Debug: log first update batch
+  if (toUpdate.length > 0) {
+    console.log('DEBUG toUpdate first 2:', JSON.stringify(toUpdate.slice(0, 2)));
+  }
 
   // Bulk create in batches of 100 to avoid rate limits
   for (let i = 0; i < toCreate.length; i += 100) {
@@ -376,6 +396,23 @@ async function loadSyncConfig(base44: any) {
   const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });
   const record = Array.isArray(results) ? results[0] : results;
   return { record, config: record?.setting_value || null };
+}
+
+// Store the last sync run status so the persistent UI widget can show it
+// on every page. Best-effort — never blocks the sync itself.
+async function saveSyncStatus(base44: any, status: any) {
+  try {
+    const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+    const record = Array.isArray(existing) ? existing[0] : existing;
+    const value = { ...status, updated_at: new Date().toISOString() };
+    if (record?.id) {
+      await base44.asServiceRole.entities.GlobalSettings.update(record.id, { setting_value: value });
+    } else {
+      await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'smartsheetSyncStatus', setting_value: value });
+    }
+  } catch {
+    // non-critical — sync status display is best-effort
+  }
 }
 
 async function pushDataset(
@@ -631,6 +668,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow writes.' }, { status: 400 });
       }
 
+      await saveSyncStatus(base44, { status: 'running', started_at: new Date().toISOString(), action });
+
       const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';
       const datasetsToRun: ('sales' | 'orders')[] =
         isSingleDataset && body?.dataset === 'orders'
@@ -668,6 +707,8 @@ Deno.serve(async (req) => {
           results.push({ dataset, skipped: true, reason: (err as any)?.message || 'Sync failed.' });
         }
       }
+
+      await saveSyncStatus(base44, { status: 'completed', completed_at: new Date().toISOString(), results });
 
       return Response.json({
         success: true,

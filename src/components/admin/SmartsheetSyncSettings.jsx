@@ -656,6 +656,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           )}
         </div>
 
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 flex items-start gap-2">
+          <RefreshCw className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <div>
+            <strong>Automatic sync is active.</strong> The sync runs automatically every 15 minutes, server-side — it continues even when no one has the app open, and does not use integration credits (Smartsheet API calls use your Smartsheet token directly). Both directions (pull and push) run for every dataset that has them enabled. A live status indicator appears at the bottom-right corner of every page.
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
             <div>

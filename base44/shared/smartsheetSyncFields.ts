@@ -143,7 +143,7 @@ export function buildCells(record: any, bindings: Record<string, string>, datase
 // Reverse mapping: extract Base44 field values from a Smartsheet row's cells.
 // bindings: { [base44FieldKey]: smartsheetColumnId }
 export function parseRowToFields(
-  row: { id: string; cells: { columnId: string; value: any; displayValue?: string }[] },
+  row: { id: string; cells: { column_id: string; value: any; display_value?: string }[] },
   bindings: Record<string, string>,
   dataset: "sales" | "orders",
 ): Record<string, any> {
@@ -157,10 +157,10 @@ export function parseRowToFields(
   }
   const out: Record<string, any> = {};
   for (const cell of row?.cells || []) {
-    const colId = String(cell.columnId || "");
+    const colId = String(cell.column_id || cell.columnId || "");
     const field = columnToField[colId];
     if (!field) continue;
-    const raw = cell.displayValue != null ? cell.displayValue : cell.value;
+    const raw = cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : cell.value);
     if (raw === null || raw === undefined || raw === "") continue;
     if (field.type === "number") {
       const num = Number(raw);

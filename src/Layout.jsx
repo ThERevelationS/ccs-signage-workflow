@@ -47,6 +47,7 @@ import { AnnouncementProvider } from "@/components/announcements/AnnouncementCon
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
+import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -923,6 +924,9 @@ function LayoutContent({ children }) {
             </MultiPageContainer>
           </MultiPageContext.Provider>
         </main>
+
+        {/* Smartsheet Sync Status Widget — persistent on every page */}
+        <SmartsheetSyncWidget />
 
         {/* Add Task Dialog */}
         <AddTaskDialog 
