@@ -4433,8 +4433,12 @@ Deno.serve(async (req) => {
           if (!released) {
             const currentGate = await freshState(stateEntity, state.id).catch(() => null);
             const gateStatus = String(currentGate?.correction_create_status || '');
-            if (gateStatus === 'creating' && String(currentGate?.correction_create_request_id || '') === requestId) {
-              throw new Error('The approval gate could not be released after processing. Retry the same approval request to recover its lock.');
+            const safelyReleased = currentGate?.id && (
+              gateStatus === 'idle' ||
+              (gateStatus === 'creating' && String(currentGate.correction_create_request_id || '') !== requestId)
+            );
+            if (!safelyReleased) {
+              throw new Error('The approval gate could not be released or verified after processing. Retry the same approval request to recover its lock.');
             }
           }
         }
