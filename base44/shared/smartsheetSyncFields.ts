@@ -160,9 +160,13 @@ export function parseRowToFields(
     const colId = String(cell.column_id || cell.columnId || "");
     const field = columnToField[colId];
     if (!field) continue;
-    // Prefer the raw `value` (ISO date for DATE columns, number for NUMBER columns)
-    // over `display_value` (locale-formatted string) to avoid date parsing issues.
-    const raw = cell.value != null ? cell.value : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : null));
+    // For date and number fields, prefer the raw `value` (ISO date / number).
+    // For text fields, prefer `display_value` — Smartsheet CONTACT columns store
+    // an object in `value` and the readable name in `display_value`.
+    const preferValue = field.type === 'date' || field.type === 'number';
+    const raw = preferValue
+      ? (cell.value != null ? cell.value : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : null)))
+      : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : cell.value));
     if (raw === null || raw === undefined || raw === "") continue;
     if (field.type === "number") {
       const num = Number(raw);

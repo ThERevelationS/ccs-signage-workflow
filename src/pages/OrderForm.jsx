@@ -9,7 +9,6 @@ import {
   ClipboardList,
   Search,
   Plus,
-  Upload,
   Download
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
@@ -135,26 +134,15 @@ export default function OrderForm() {
             )}
             
             {canImportExport && (
-              <>
-                <Button 
-                  onClick={() => spreadsheetRef.current?.importFromExcel()}
-                  size="sm" 
-                  className="h-8 px-3"
-                  variant="ghost"
-                >
-                  <Upload className="w-4 h-4 mr-1" />
-                  Import
-                </Button>
-                <Button 
-                  onClick={() => spreadsheetRef.current?.exportToExcel()}
-                  size="sm" 
-                  className="h-8 px-3"
-                  variant="ghost"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Export
-                </Button>
-              </>
+              <Button 
+                onClick={() => spreadsheetRef.current?.exportToExcel()}
+                size="sm" 
+                className="h-8 px-3"
+                variant="ghost"
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export
+              </Button>
             )}
           </div>
         </div>

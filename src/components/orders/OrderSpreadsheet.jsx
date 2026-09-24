@@ -555,15 +555,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const getRowColor = (order) => {
-    if (order.status === "received") return "bg-green-100";
+    if (order.date_received || order.status === "received") return "bg-green-100";
     if (order.status === "ordered") return "bg-green-50";
     if (order.status === "cancelled") return "bg-gray-100";
     return "bg-white";
   };
 
   const getRowStyle = (order) => {
-    if (order.status === "received") {
-      return { textDecoration: "line-through", textDecorationColor: "#1F2937", textDecorationThickness: "2px" };
+    if (order.date_received) {
+      return { textDecoration: "line-through", textDecorationColor: "#9CA3AF", textDecorationThickness: "1.5px" };
     }
     return {};
   };
@@ -738,12 +738,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       }
     }
 
+    // Always separate received items (those with date_received) to the bottom.
+    const withReceivedFlag = result.map(o => ({ ...o, _hasReceived: Boolean(o.date_received) }));
+    const notReceived = withReceivedFlag.filter(o => !o._hasReceived);
+    const received = withReceivedFlag.filter(o => o._hasReceived);
+
     if (sortConfig.key) {
       const key = sortConfig.key;
       const isDateField = key.includes('date');
       const dir = sortConfig.direction === 'asc' ? 1 : -1;
       
-      return result.sort((a, b) => {
+      const sortFn = (a, b) => {
         let aVal = a[key] ?? '';
         let bVal = b[key] ?? '';
 
@@ -756,16 +761,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
 
         return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
-      });
+      };
+      notReceived.sort(sortFn);
+      received.sort(sortFn);
+      return [...notReceived, ...received];
     }
 
-    return result.sort((a, b) => {
-      const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
+    const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
+    const defaultSortFn = (a, b) => {
       const aOrder = statusOrder[a.status] ?? 0;
       const bOrder = statusOrder[b.status] ?? 0;
       if (aOrder !== bOrder) return aOrder - bOrder;
       return (a.row_number || 0) - (b.row_number || 0);
-    });
+    };
+    notReceived.sort(defaultSortFn);
+    received.sort(defaultSortFn);
+    return [...notReceived, ...received];
   }, [orders, filterStatus, searchTerm, sortConfig]);
 
   // Virtual scrolling setup
@@ -879,9 +890,24 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         </div>
       )}
 
+      {/* Force strikethrough on all child elements (inputs, selects, buttons) for received rows */}
+      <style>{`
+        .order-received-row td,
+        .order-received-row td input,
+        .order-received-row td select,
+        .order-received-row td button,
+        .order-received-row td span,
+        .order-received-row td div {
+          text-decoration: line-through !important;
+          text-decoration-color: #9CA3AF !important;
+          text-decoration-thickness: 1.5px !important;
+          opacity: 0.75;
+        }
+      `}</style>
+
       {/* Spreadsheet Table */}
       <div ref={tableContainerRef} className="overflow-auto" style={{ height: 'calc(100vh - 300px)' }}>
-      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', overflow: 'visible' }}>
+      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'auto', overflow: 'visible' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
           <col style={{ width: compact ? '12%' : '18%', minWidth: '140px' }} />
@@ -994,7 +1020,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             <React.Fragment key={order.id}>
               {isFocused && <tr><td colSpan="11" className="h-3 bg-transparent border-none"></td></tr>}
               <tr 
-                className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''}`}
+                className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${order.date_received ? 'order-received-row' : ''}`}
                 style={getRowStyle(order)}
               >
               {/* Row Number - Clickable Focus Button */}
