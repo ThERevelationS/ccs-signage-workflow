@@ -896,22 +896,21 @@ Answer the question based on the documents and information available. Be specifi
                             e.stopPropagation();
                             setViewingPDF(doc);
                           }}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6 mt-3"
+                          className="mt-3 min-h-11 h-auto w-full gap-2 whitespace-normal break-words bg-green-600 px-3 py-3 text-center font-semibold text-white hover:bg-green-700"
                         >
-                          <FileText className="w-5 h-5 mr-2" />
-                          Open {doc.title}
+                          <FileText className="h-5 w-5 flex-shrink-0" />
+                          <span className="min-w-0 break-words">Open {doc.title}</span>
                         </Button>
                       ) : (
                         <a
                           href={doc.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block w-full mt-3"
+                          aria-label={`Open ${doc.title || "document"} in a new tab`}
+                          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-green-600 px-3 py-3 text-center text-sm font-semibold text-white hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                         >
-                          <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-6">
-                            <FileText className="w-5 h-5 mr-2" />
-                            Open {doc.title}
-                          </Button>
+                          <FileText className="h-5 w-5 flex-shrink-0" />
+                          <span className="min-w-0 break-words">Open {doc.title}</span>
                         </a>
                       )
                     ) : (
@@ -924,13 +923,14 @@ Answer the question based on the documents and information available. Be specifi
                     {doc.url && (
                       <div className="mt-2">
                         <p className="text-[10px] font-semibold text-gray-500 mb-1">Original Source</p>
-                        <a 
-                          href={doc.url} 
-                          target="_blank" 
+                        <a
+                          href={doc.url}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline break-all block p-2 bg-white rounded border border-gray-200 hover:bg-blue-50"
+                          aria-label={`Open original source for ${doc.title || "document"} in a new tab`}
+                          className="flex min-h-11 w-full items-center rounded border border-gray-200 bg-white p-3 text-xs text-blue-700 hover:bg-blue-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         >
-                          {doc.url}
+                          <span className="min-w-0 break-all">{doc.url}</span>
                         </a>
                       </div>
                     )}
