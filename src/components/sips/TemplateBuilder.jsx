@@ -1564,10 +1564,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                   <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
                                 </div>
                                 {editingSubTemplateId === st.id ? (
-                                  <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
-                                    <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-6 text-xs flex-1" autoFocus
+                                  <div className="flex-1 min-w-0 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                    <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-11 min-w-0 flex-1 text-sm lg:h-6 lg:text-xs" aria-label={`Rename checklist option ${st.name}`} autoFocus
                                       onKeyDown={async (e) => { if (e.key === 'Enter') await renameSubTemplate(st, editingSubTemplateName); if (e.key === 'Escape') setEditingSubTemplateId(null); }} />
-                                    <Button size="sm" className="h-6 px-1" onClick={() => renameSubTemplate(st, editingSubTemplateName)}><Save className="w-3 h-3" /></Button>
+                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save checklist option name ${st.name}`} title={`Save checklist option name ${st.name}`} onClick={() => renameSubTemplate(st, editingSubTemplateName)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
                                   <>
@@ -1617,12 +1617,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 {selectedSubTemplate ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
+                      <h3 className="min-w-0 flex-1 truncate font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
                       {(subTemplateHasChanges || subTemplateSaveStatus === 'saved') && (
                         <Button 
                           onClick={saveSubTemplateChecklist} 
                           size="sm" 
-                          className={`h-7 ${subTemplateSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          className={`h-11 shrink-0 ml-2 touch-manipulation lg:h-7 ${subTemplateSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          type="button"
+                          aria-label={subTemplateSaveStatus === 'saved' ? "Checklist option saved" : "Save checklist option"}
                         >
                           <Save className="w-3 h-3 mr-1" />
                           {subTemplateSaveStatus === 'saved' ? 'Saved' : 'Save'}
@@ -1780,11 +1782,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                   <GripVertical className="w-4 h-4 text-gray-400 lg:w-3 lg:h-3" aria-hidden="true" />
                                 </div>
                                 {editingProductTypeName === type ? (
-                                  <div className="flex-1 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex-1 min-w-0 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <Input 
                                       value={editingProductTypeValue} 
                                       onChange={(e) => setEditingProductTypeValue(e.target.value)} 
-                                      className="h-6 text-xs flex-1" 
+                                      className="h-11 min-w-0 flex-1 text-sm lg:h-6 lg:text-xs"
+                                      aria-label={`Rename product checklist ${type}`}
                                       autoFocus
                                       onKeyDown={async (e) => { 
                                         if (e.key === 'Enter' && editingProductTypeValue.trim()) { 
@@ -1804,7 +1807,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         if (e.key === 'Escape') setEditingProductTypeName(null); 
                                       }} 
                                     />
-                                    <Button size="sm" className="h-6 px-1" onClick={async () => { 
+                                    <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={async () => { 
                                       if (editingProductTypeValue.trim()) {
                                         const newName = editingProductTypeValue.trim();
                                         const newTypes = productTypes.map(t => t === type ? newName : t);
@@ -1818,7 +1821,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         if (selectedProductType === type) setSelectedProductType(newName);
                                       }
                                       setEditingProductTypeName(null); 
-                                    }}><Save className="w-3 h-3" /></Button>
+                                    }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
                                   <>
@@ -1868,12 +1871,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 {selectedProductType ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-sm">{selectedProductType}</h3>
+                      <h3 className="min-w-0 flex-1 truncate font-bold text-sm">{selectedProductType}</h3>
                       {(productTypeHasChanges || productTypeSaveStatus === 'saved') && (
                         <Button 
                           onClick={saveProductTypeTemplate} 
                           size="sm" 
-                          className={`h-7 ${productTypeSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          className={`h-11 shrink-0 ml-2 touch-manipulation lg:h-7 ${productTypeSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          type="button"
+                          aria-label={productTypeSaveStatus === 'saved' ? "Product checklist saved" : "Save product checklist"}
                         >
                           <Save className="w-3 h-3 mr-1" />
                           {productTypeSaveStatus === 'saved' ? 'Saved' : 'Save'}
