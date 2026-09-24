@@ -348,35 +348,76 @@ async function pullDataset(
     }
   }
 
-  // Individual updates with concurrency control — bulkUpdate was silently
-  // failing to apply date fields for some records. Individual updates are
-  // reliable but must be throttled to avoid rate limits on large sheets.
+  // Hybrid update strategy:
+  // 1. bulkUpdate for all fields (fast, no rate limits) — but it silently
+  //    drops date fields for some records.
+  // 2. Second pass: individual update() calls for records where dates should
+  //    exist but don't after the bulk update. This is a small subset (~150-260
+  //    records) so individual calls stay within rate limits.
   const snapshotUpdates: any[] = [];
-  const CONCURRENCY = 10;
-  for (let i = 0; i < toUpdate.length; i += CONCURRENCY) {
-    const batch = toUpdate.slice(i, i + CONCURRENCY);
-    const results = await Promise.allSettled(
-      batch.map(async (rec: any) => {
-        const { id, _existing, ...fields } = rec;
-        const saved = await base44.asServiceRole.entities[entityName].update(id, fields);
-        if (_existing) {
+  const bulkBatchSize = 100;
+  for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
+    const batch = toUpdate.slice(i, i + bulkBatchSize);
+    const payload = batch.map(({ id, _existing, ...fields }: any) => ({ id, ...fields }));
+    try {
+      await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
+      updatedCount += payload.length;
+      for (const rec of batch) {
+        if (rec._existing) {
+          const { id, _existing, ...fields } = rec;
           const merged = { ..._existing, ...fields };
           const snapshot = buildSnapshot(merged, bindings, dataset);
           snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
         }
-        return id;
-      })
-    );
-    for (let j = 0; j < results.length; j++) {
-      if (results[j].status === 'fulfilled') {
-        updatedCount++;
-      } else {
-        errors.push(`Update ${batch[j]?.id}: ${(results[j] as any)?.reason?.message || 'unknown error'}`);
+      }
+    } catch (err: any) {
+      errors.push(`Bulk update batch ${Math.floor(i / bulkBatchSize) + 1}: ${err?.message || 'unknown error'}`);
+    }
+  }
+
+  // Second pass: fix records where dates should exist but were dropped by bulkUpdate.
+  // Identify date fields for this dataset.
+  const dateFields = dataset === 'orders'
+    ? ['date_ordered', 'date_received', 'date_needed']
+    : ['date_initial_contact', 'date_estimate_sent', 'date_order_created', 'project_install_date',
+       'permit_submitted_date', 'permit_receipt_confirmed_date', 'permit_approved_date',
+       'follow_up_date', 'close_date', 'expected_close_date', 'site_survey_date'];
+
+  const dateFixes: any[] = [];
+  for (const rec of toUpdate) {
+    const { id, _existing, ...fields } = rec;
+    for (const df of dateFields) {
+      if (fields[df] && (!_existing || _existing[df] !== fields[df])) {
+        // This date should be set — queue a targeted individual update
+        dateFixes.push({ id, field: df, value: fields[df] });
       }
     }
-    // Small delay between batches to avoid rate limits
-    if (i + CONCURRENCY < toUpdate.length) {
-      await new Promise((r) => setTimeout(r, 100));
+  }
+
+  // Group date fixes by record id to minimize API calls
+  const fixesByRecord: Record<string, Record<string, any>> = {};
+  for (const fix of dateFixes) {
+    if (!fixesByRecord[fix.id]) fixesByRecord[fix.id] = {};
+    fixesByRecord[fix.id][fix.field] = fix.value;
+  }
+
+  // Apply date fixes with individual update() calls, low concurrency.
+  const fixIds = Object.keys(fixesByRecord);
+  const FIX_CONCURRENCY = 3;
+  let fixApplied = 0;
+  for (let i = 0; i < fixIds.length; i += FIX_CONCURRENCY) {
+    const batch = fixIds.slice(i, i + FIX_CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map(async (rid) => {
+        await base44.asServiceRole.entities[entityName].update(rid, fixesByRecord[rid]);
+        return rid;
+      })
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') fixApplied++;
+    }
+    if (i + FIX_CONCURRENCY < fixIds.length) {
+      await new Promise((res) => setTimeout(res, 200));
     }
   }
 
