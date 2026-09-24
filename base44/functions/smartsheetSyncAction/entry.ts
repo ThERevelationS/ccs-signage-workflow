@@ -3,6 +3,7 @@ import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -258,6 +259,7 @@ async function pullDataset(
   const allRows: any[] = [];
   let page = 1;
   const pageSize = 200;
+  const orderPageGuard = dataset === 'orders' ? createSmartsheetOrderPageGuard({ pageSize, maxPages: 100 }) : null;
   let totalRowCount = 0;
   while (page <= 100) {
     const params = new URLSearchParams({
@@ -268,11 +270,14 @@ async function pullDataset(
     });
     const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
     const rows = normalizeSheetRows(result.body);
+    const orderPageComplete = orderPageGuard ? orderPageGuard.accept(page, result.body, rows) : false;
     if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
     allRows.push(...rows);
-    if (allRows.length >= totalRowCount || rows.length === 0) break;
+    if (orderPageGuard ? orderPageComplete : (allRows.length >= totalRowCount || rows.length === 0)) break;
     page++;
   }
+  // Never apply a partial Order Request download to live Base44 Orders.
+  orderPageGuard?.assertComplete();
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
   if (allRows.length > massLimit) {
