@@ -1,3 +1,5 @@
+import { buildSharedOrderContactCell, readSharedOrderRequestor, sharedOrderRequestorColumnId } from './smartsheetOrderContact.mjs';
+
 // Shared Smartsheet sync field vocabulary used by both the backend sync engine
 // and the frontend column-bindings editor. Keeps the two sides in sync so a
 // binding configured in the UI maps to the exact field the backend writes.
@@ -131,12 +133,20 @@ export function extractFieldValue(record: any, field: MappableField): string | n
 // bindings: { [base44FieldKey]: smartsheetColumnId }
 export function buildCells(record: any, bindings: Record<string, string>, dataset: "sales" | "orders") {
   const fields = getMappableFields(dataset);
-  const cells: { columnId: string; value: string | number | null }[] = [];
+  const cells: { columnId: string; value: string | number | null; displayValue?: string }[] = [];
+  const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   for (const field of fields) {
+    if (sharedContactId && (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (!columnId || !/^\d+$/.test(columnId)) continue;
     const value = extractFieldValue(record, field);
     cells.push({ columnId, value });
+  }
+  // A shared CONTACT_LIST column is one cell, not separate name/email writes.
+  // With no valid email, leave Smartsheet's existing contact untouched.
+  if (sharedContactId) {
+    const contactCell = buildSharedOrderContactCell(record, sharedContactId);
+    if (contactCell) cells.push(contactCell);
   }
   return cells;
 }
@@ -165,7 +175,15 @@ export function parseRowToFields(
     const colId = String(cell.column_id || cell.columnId || "");
     const fieldList = columnToFields[colId];
     if (!fieldList || fieldList.length === 0) continue;
+    const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
+    if (sharedContactId && sharedContactId === colId) {
+      const contact = readSharedOrderRequestor(cell);
+      if (contact.name) out.requestor_name = contact.name;
+      if (contact.email) out.requestor_email = contact.email;
+    }
     for (const field of fieldList) {
+      if (sharedContactId && sharedContactId === colId &&
+          (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
       // For date and number fields, prefer the raw `value` (ISO date / number).
       // For text fields, prefer `display_value` — Smartsheet CONTACT columns store
       // an object in `value` and the readable name in `display_value`.
@@ -195,10 +213,16 @@ export function parseRowToFields(
 export function buildSnapshot(record: any, bindings: Record<string, string>, dataset: "sales" | "orders") {
   const fields = getMappableFields(dataset);
   const snapshot: Record<string, string | number | null> = {};
+  const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   for (const field of fields) {
+    if (sharedContactId && (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (!columnId || !/^\d+$/.test(columnId)) continue;
     snapshot[columnId] = extractFieldValue(record, field);
+  }
+  if (sharedContactId) {
+    const contactCell = buildSharedOrderContactCell(record, sharedContactId);
+    if (contactCell) snapshot[sharedContactId] = contactCell.value;
   }
   return snapshot;
 }
