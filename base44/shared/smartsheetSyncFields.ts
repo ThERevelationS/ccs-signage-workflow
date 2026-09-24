@@ -13,6 +13,7 @@ export const SALES_MAPPABLE_FIELDS: MappableField[] = [
   { key: "client_name", label: "Client Name", type: "text" },
   { key: "sales_status", label: "Sales Status", type: "text" },
   { key: "lead_source", label: "Lead Source", type: "text" },
+  { key: "est_inv_at", label: "Est / Inv #", type: "text" },
   { key: "estimate_amount", label: "Estimate Amount", type: "number" },
   { key: "contact_name", label: "Contact Name", type: "text" },
   { key: "contact_email", label: "Contact Email", type: "text" },
