@@ -3499,6 +3499,13 @@ Deno.serve(async (req) => {
           },
         },
       );
+      const adminCorrectionAuditMatches = (auditRow: any, expectedReviewHash: string) => Boolean(
+        auditRow?.id &&
+        expectedReviewHash &&
+        asEmail(auditRow.user_email) === target.email &&
+        String(auditRow.details?.correction_request_id || '') === correctionRequest.id &&
+        constantTimeEqual(String(auditRow.details?.review_payload_hash || ''), expectedReviewHash)
+      );
 
       if (['approved', 'approved_modified', 'rejected'].includes(correctionRequest.status)) {
         if (String(correctionRequest.review_request_id || '') === requestId) {
@@ -3515,6 +3522,10 @@ Deno.serve(async (req) => {
       if (correctionRequest.status === 'reviewing' && !resumingReview) {
         const previousRequestId = String(correctionRequest.review_request_id || '');
         const previousDecision = String(correctionRequest.review_decision || '');
+        const previousReviewHash = String(correctionRequest.review_payload_hash || '');
+        if (!previousRequestId || !previousReviewHash) {
+          return Response.json({ success: false, error: 'The abandoned manager review is missing its request or payload binding. Admin investigation is required.' }, { status: 409 });
+        }
         const reviewStartedAt = correctionRequest.review_started_at ? new Date(correctionRequest.review_started_at) : null;
         const reviewAgeMs = reviewStartedAt && Number.isFinite(reviewStartedAt.getTime())
           ? Date.now() - reviewStartedAt.getTime()
@@ -3530,6 +3541,9 @@ Deno.serve(async (req) => {
         if (!Array.isArray(staleAudits)) throw new Error('Stale correction audit recovery lookup did not return a record list.');
         if (staleAudits.length > 1) return Response.json({ success: false, error: 'The abandoned review has multiple correction audits. Admin investigation is required.' }, { status: 409 });
         const staleAudit = staleAudits[0] || null;
+        if (staleAudit?.id && !adminCorrectionAuditMatches(staleAudit, previousReviewHash)) {
+          return Response.json({ success: false, error: 'The abandoned correction audit does not match the employee, correction request, or review payload. Admin investigation is required.' }, { status: 409 });
+        }
         const staleApplied = staleEntry?.id && String(staleEntry.last_correction_request_id || '') === correctionRequest.id;
 
         if (staleApplied) {
@@ -3545,13 +3559,17 @@ Deno.serve(async (req) => {
                   original: correctionRequest.original_snapshot,
                   corrected: entryAuditSnapshot(staleEntry),
                   correction_request_id: correctionRequest.id,
+                  review_payload_hash: previousReviewHash,
                   recovered_after_abandoned_review: true,
                 },
               } },
             );
             if (!recoveredAudit || recoveredAudit.updated !== 1) {
               const freshAudit = await auditEntity.get(staleAudit.id).catch(() => null);
-              if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, error: 'The abandoned correction was applied but its audit could not be recovered safely.' }, { status: 409 });
+              if (
+                !['confirmed', 'recovered'].includes(String(freshAudit?.outcome || '')) ||
+                !adminCorrectionAuditMatches(freshAudit, previousReviewHash)
+              ) return Response.json({ success: false, error: 'The abandoned correction was applied but its audit could not be recovered safely.' }, { status: 409 });
             }
           } else if (!['confirmed', 'recovered'].includes(String(staleAudit.outcome || ''))) {
             return Response.json({ success: false, error: 'The abandoned correction has a non-terminal audit state. Admin investigation is required.' }, { status: 409 });
@@ -3631,6 +3649,9 @@ Deno.serve(async (req) => {
       if (!Array.isArray(auditRows)) throw new Error('Correction audit recovery lookup did not return a record list.');
       if (auditRows.length > 1) return Response.json({ success: false, error: 'Multiple correction audit records exist for this review request. Admin investigation is required.' }, { status: 409 });
       let correctionAudit: any = auditRows[0] || null;
+      if (correctionAudit?.id && !adminCorrectionAuditMatches(correctionAudit, reviewHash)) {
+        return Response.json({ success: false, error: 'This correction audit does not match the employee, correction request, or manager-review payload. Admin investigation is required.' }, { status: 409 });
+      }
       const alreadyApplied = String(entry.last_correction_request_id || '') === correctionRequest.id;
       let correctionAuditId = String(correctionRequest.applied_audit_id || correctionAudit?.id || '');
 
@@ -3647,13 +3668,17 @@ Deno.serve(async (req) => {
                 original: correctionRequest.original_snapshot,
                 corrected: entryAuditSnapshot(entry),
                 correction_request_id: correctionRequest.id,
+                review_payload_hash: reviewHash,
                 recovered_after_interruption: true,
               },
             } },
           );
           if (!recoveredAudit || recoveredAudit.updated !== 1) {
             const freshAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
-            if (!['confirmed', 'recovered'].includes(String(freshAudit?.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied, but its audit could not be finalized. Retry the same review.' }, { status: 409 });
+            if (
+              !['confirmed', 'recovered'].includes(String(freshAudit?.outcome || '')) ||
+              !adminCorrectionAuditMatches(freshAudit, reviewHash)
+            ) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied, but its audit could not be finalized. Retry the same review.' }, { status: 409 });
             correctionAudit = freshAudit;
           } else {
             correctionAudit = await auditEntity.get(correctionAudit.id);
@@ -3661,6 +3686,9 @@ Deno.serve(async (req) => {
         }
         if (!['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
           return Response.json({ success: false, error: 'The applied correction has a non-terminal audit state. Admin investigation is required.' }, { status: 409 });
+        }
+        if (!adminCorrectionAuditMatches(correctionAudit, reviewHash)) {
+          return Response.json({ success: false, error: 'The applied correction audit cannot be tied to this exact employee, correction request, and manager-review payload. Admin investigation is required.' }, { status: 409 });
         }
         correctionAuditId = correctionAudit.id;
       } else {
