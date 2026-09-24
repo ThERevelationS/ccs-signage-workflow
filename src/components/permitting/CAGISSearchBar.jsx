@@ -49,31 +49,33 @@ export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
 
   return (
     <div className="space-y-2">
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row">
         <Input
           type="text"
           placeholder="Search property (address, parcel #, owner)..."
+          aria-label="Search property by address, parcel number, or owner"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 text-sm"
+          className="min-h-11 flex-1 text-sm"
         />
         <Button 
           type="submit" 
           disabled={loading || !searchTerm.trim()}
-          className="bg-blue-600 hover:bg-blue-700 gap-2"
+          className="min-h-11 w-full gap-2 bg-blue-600 px-4 hover:bg-blue-700 sm:w-auto"
           size="sm"
+          aria-label={loading ? "Searching property database" : "Search property database"}
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           ) : (
-            <Search className="w-4 h-4" />
+            <Search className="h-4 w-4" aria-hidden="true" />
           )}
-          Search
+          {loading ? "Searching..." : "Search"}
         </Button>
       </form>
 
       {error && (
-        <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -84,7 +86,9 @@ export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 transition-colors"
+            className="flex min-h-11 w-full items-center justify-between gap-2 bg-blue-50 p-3 text-left transition-colors hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Collapse" : "Expand"} property information`}
           >
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -96,20 +100,22 @@ export default function CAGISSearchBar({ onLocationSelect, cagisUrl }) {
           {expanded && (
             <div className="p-3 space-y-3 text-xs max-h-80 overflow-y-auto">
               {cagisUrl ? (
-                <a 
+                <a
                   href={cagisUrl}
-                  target="_blank" 
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                  aria-label="Open jurisdiction property database in a new tab"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded bg-blue-600 px-3 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
                 >
                   View on Database →
                 </a>
               ) : (
-                <a 
+                <a
                   href={`https://cagis.hamilton-co.org/cagisonline/`}
-                  target="_blank" 
+                  target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
+                  aria-label="Open CAGIS in a new tab"
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-1 rounded bg-blue-600 px-3 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
                 >
                   View on CAGIS →
                 </a>
