@@ -2,6 +2,8 @@ import {
   SALES_SYNC_ALLOWED_FIELDS,
   filterSalesColumnBindings,
   isLegacyTerminalSalesTask,
+  salesPulledFieldsUnchanged,
+  salesPullSnapshotAligned,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -62,5 +64,26 @@ assert(
   shouldCreateSmartsheetSalesRecordInPipeline({ current_task_description: "Prospect Initiation" }) === true,
   "Active Smartsheet rows should still create as modern pipeline opportunities."
 );
+
+// Synthetic live-record scenarios: unchanged pulls must never need a write.
+const syncedRecord = {
+  client_name: "Example Client",
+  lead_source: "Web",
+  estimate_amount: 250,
+  sales_status: "lead", // Base44-only, never compared to Smartsheet.
+  smartsheet_last_synced_at: "2026-09-24T15:00:00Z",
+  smartsheet_sync_snapshot: { "11": "Example Client", "12": 250, "13": "Web", "14": "" },
+};
+const snapshot = { "11": "Example Client", "12": 250, "13": "Web", "14": "" };
+const sameRemote = { client_name: "Example Client", estimate_amount: "250", lead_source: "Web" };
+assert(salesPulledFieldsUnchanged(syncedRecord, sameRemote), "Unchanged Sales values, including numeric strings, must not cause a write.");
+assert(salesPullSnapshotAligned(syncedRecord, snapshot), "An existing matching snapshot must allow a true no-op.");
+assert(!salesPulledFieldsUnchanged(syncedRecord, { ...sameRemote, estimate_amount: "275" }), "A changed estimate must remain eligible for reconciliation.");
+assert(!salesPulledFieldsUnchanged(syncedRecord, { ...sameRemote, current_task_description: "Follow Up" }), "A newly populated task must not be skipped.");
+assert(!salesPulledFieldsUnchanged({ ...syncedRecord, estimate_amount: null }, { estimate_amount: 0 }), "An unknown estimate must not be treated as zero.");
+assert(!salesPullSnapshotAligned({ ...syncedRecord, smartsheet_sync_snapshot: null }, snapshot), "Missing snapshots must not bypass reconciliation.");
+assert(!salesPullSnapshotAligned({ ...syncedRecord, smartsheet_last_synced_at: null }, snapshot), "Unverified rows must not be treated as synced.");
+assert(!salesPullSnapshotAligned(syncedRecord, { ...snapshot, "14": "changed notes" }), "A stale notes snapshot must not be skipped.");
+assert(!salesPullSnapshotAligned(syncedRecord, { ...snapshot, "15": "new binding" }), "A newly bound field must not inherit an unrelated old snapshot.");
 
 console.log("Smartsheet Sales boundary validation passed.");
