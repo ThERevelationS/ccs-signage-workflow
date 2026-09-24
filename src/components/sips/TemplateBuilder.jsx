@@ -1632,9 +1632,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       )}
                     </div>
                     <div className="flex gap-1 mb-2">
-                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 text-sm flex-1 lg:h-7"
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 min-w-0 flex-1 text-sm lg:h-7" aria-label="New checklist option item"
                         onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} />
-                      <Button type="button" onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add checklist item">
+                      <Button type="button" disabled={!newItemText.trim()} onClick={() => addChecklistItem(subTemplateChecklistItems, setSubTemplateChecklistItems, false)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add checklist item">
                         <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
                       </Button>
                     </div>
@@ -1886,9 +1886,9 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       )}
                     </div>
                     <div className="flex gap-1 mb-2">
-                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 text-sm flex-1 lg:h-7"
+                      <Input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} placeholder="Add checklist item..." className="h-11 min-w-0 flex-1 text-sm lg:h-7" aria-label="New product checklist item"
                         onKeyDown={(e) => e.key === 'Enter' && addChecklistItem(productTypeItems, setProductTypeItems, true)} />
-                      <Button type="button" onClick={() => addChecklistItem(productTypeItems, setProductTypeItems, true)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add product checklist item">
+                      <Button type="button" disabled={!newItemText.trim()} onClick={() => addChecklistItem(productTypeItems, setProductTypeItems, true)} size="sm" variant="outline" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-3" aria-label="Add product checklist item">
                         <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
                       </Button>
                     </div>
