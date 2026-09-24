@@ -42,8 +42,12 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')].filter(el => el.getClientRects().length);
       if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
       const first = controls[0], last = controls[controls.length - 1];
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      const active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && active === last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener("keydown", handleKey);
     return () => { document.removeEventListener("keydown", handleKey); previousFocus.current?.focus?.(); };
@@ -116,12 +120,12 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   };
 
   return <div className="fixed inset-0 z-[120] bg-black/60 p-2 sm:p-4 overflow-y-auto">
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-repair-estimate-title" aria-describedby="fleet-repair-estimate-description" tabIndex={-1} className="mx-auto w-full max-w-5xl rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl overflow-hidden">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-repair-estimate-title" aria-describedby="fleet-repair-estimate-description" tabIndex={-1} className="mx-auto w-full max-w-5xl max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl overflow-x-hidden overflow-y-auto overscroll-contain">
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-gray-200 dark:border-slate-800 px-4 sm:px-5 py-4 flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><DollarSign className="w-5 h-5 text-indigo-600"/><h2 id="fleet-repair-estimate-title" className="text-lg font-bold">Repair Estimate & Approval</h2></div><p id="fleet-repair-estimate-description" className="text-xs text-gray-500 dark:text-slate-400 mt-1">{workOrder?.work_order_number} · {equipmentName || "Fleet equipment"} · Fleet-only financial planning</p></div><button ref={closeRef} type="button" onClick={onClose} disabled={!!busy} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800" aria-label="Close repair estimate"><X className="w-5 h-5 mx-auto"/></button></div>
       <div className="p-4 sm:p-5 space-y-5">
         {error&&<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
         {message&&<div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">{message}</div>}
-        {loading?<div className="py-16 flex justify-center"><Loader2 className="w-7 h-7 animate-spin text-gray-400"/></div>:<>
+        {loading?<div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div>:<>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Estimate status" value={pretty(estimate?.status||"draft")} /><Stat label="Approval tier" value={estimate?.approval_tier||"No matching tier"}/><Stat label="Approval required" value={estimate?.approval_required?"Yes":"No"} attention={estimate?.approval_required&&estimate?.status!=="approved"}/><Stat label="Estimated total" value={money(estimate?.estimated_total ?? preview.total)} /></div>
           {estimate?.approval_required&&estimate.status!=="approved"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 flex items-start gap-2"><AlertTriangle className="w-5 h-5 shrink-0"/><div><b>Approval gate active.</b> This work order cannot be started or completed until this estimate is approved.</div></div>}
           <section className="rounded-xl border border-gray-200 dark:border-slate-700 p-4 space-y-4"><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Field label="Labor hours"><input type="number" min="0" step="0.1" value={form.estimated_labor_hours} disabled={locked} onChange={e=>set("estimated_labor_hours",e.target.value)} className="field"/></Field><Field label="Labor rate"><input type="number" min="0" step="0.01" value={form.labor_rate} disabled={locked} onChange={e=>set("labor_rate",e.target.value)} className="field"/></Field><Field label="Miscellaneous"><input type="number" min="0" step="0.01" value={form.misc_total} disabled={locked} onChange={e=>set("misc_total",e.target.value)} className="field"/></Field><Field label="Estimated completion"><input type="date" value={form.estimated_completion_date} disabled={locked} onChange={e=>set("estimated_completion_date",e.target.value)} className="field"/></Field></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-2"><MoneyMini label="Labor" value={preview.labor}/><MoneyMini label="Parts" value={preview.partsTotal}/><MoneyMini label="Fluids" value={preview.fluidsTotal}/><MoneyMini label="Total" value={preview.total} strong/></div></section>
@@ -134,7 +138,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">{!locked||estimate?.status==="changes_requested"?<><button type="button" onClick={()=>save(false)} disabled={!!busy} className="min-h-11 px-4 rounded-lg border border-gray-300 dark:border-slate-700 font-semibold">{busy==="save"?"Saving…":"Save Draft"}</button><button type="button" onClick={()=>save(true)} disabled={!!busy} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2">{busy==="submit"?<Loader2 className="w-4 h-4 animate-spin"/>:<Send className="w-4 h-4"/>}Save & Submit</button></>:null}</div>
         </>}
       </div>
-      <style>{`.field{width:100%;border:1px solid rgb(209 213 219);border-radius:.6rem;padding:.6rem .72rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}.field:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}button:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}.field:disabled{opacity:.65;background:rgb(249 250 251)}.dark .field:disabled{background:rgb(30 41 59)}`}</style>
+      <style>{`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.6rem;padding:.6rem .72rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}.field:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}button:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}.field:disabled{opacity:.65;background:rgb(249 250 251)}.dark .field:disabled{background:rgb(30 41 59)}`}</style>
     </div>
   </div>;
 }
