@@ -348,38 +348,35 @@ async function pullDataset(
     }
   }
 
-  // Bulk update in batches of 100 with retry for rate limits.
-  // Individual updates were tried but hit rate limits on large sheets (1675+ rows).
-  const updateBatchSize = 100;
+  // Individual updates with concurrency control — bulkUpdate was silently
+  // failing to apply date fields for some records. Individual updates are
+  // reliable but must be throttled to avoid rate limits on large sheets.
   const snapshotUpdates: any[] = [];
-  for (let i = 0; i < toUpdate.length; i += updateBatchSize) {
-    const batch = toUpdate.slice(i, i + updateBatchSize);
-    // Strip _existing before sending — it's only for snapshot building.
-    const payload = batch.map(({ id, _existing, ...fields }: any) => ({ id, ...fields }));
-    let attempt = 0;
-    const maxAttempts = 3;
-    while (attempt < maxAttempts) {
-      try {
-        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
-        updatedCount += payload.length;
-        // Queue snapshot updates for a separate bulk pass
-        for (const rec of batch) {
-          if (rec._existing) {
-            const { id, _existing, ...fields } = rec;
-            const merged = { ..._existing, ...fields };
-            const snapshot = buildSnapshot(merged, bindings, dataset);
-            snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
-          }
+  const CONCURRENCY = 10;
+  for (let i = 0; i < toUpdate.length; i += CONCURRENCY) {
+    const batch = toUpdate.slice(i, i + CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map(async (rec: any) => {
+        const { id, _existing, ...fields } = rec;
+        const saved = await base44.asServiceRole.entities[entityName].update(id, fields);
+        if (_existing) {
+          const merged = { ..._existing, ...fields };
+          const snapshot = buildSnapshot(merged, bindings, dataset);
+          snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
         }
-        break;
-      } catch (err: any) {
-        attempt++;
-        if (attempt >= maxAttempts || !String(err?.message || '').includes('Rate limit')) {
-          errors.push(`Update batch ${Math.floor(i / updateBatchSize) + 1}: ${err?.message || 'unknown error'}`);
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 1000 * attempt));
+        return id;
+      })
+    );
+    for (let j = 0; j < results.length; j++) {
+      if (results[j].status === 'fulfilled') {
+        updatedCount++;
+      } else {
+        errors.push(`Update ${batch[j]?.id}: ${(results[j] as any)?.reason?.message || 'unknown error'}`);
       }
+    }
+    // Small delay between batches to avoid rate limits
+    if (i + CONCURRENCY < toUpdate.length) {
+      await new Promise((r) => setTimeout(r, 100));
     }
   }
 
@@ -406,6 +403,47 @@ async function pullDataset(
     smartsheet_row_ids: smartsheetRowIds.size,
     orphan_candidates: orphans.length,
   };
+
+  // Soft-delete duplicate Base44 records that share the same smartsheet_row_id.
+  // Keep the most recently updated record per row_id; soft-delete the rest.
+  const recordsByRowIdList: Record<string, any[]> = {};
+  for (const rec of existingRecords) {
+    const rowId = cleanText(rec?.smartsheet_row_id, 40);
+    if (rowId && /^\d+$/.test(rowId)) {
+      if (!recordsByRowIdList[rowId]) recordsByRowIdList[rowId] = [];
+      recordsByRowIdList[rowId].push(rec);
+    }
+  }
+  const duplicatesToDelete: any[] = [];
+  for (const [rowId, recs] of Object.entries(recordsByRowIdList)) {
+    if (recs.length <= 1) continue;
+    // Keep the most recently updated; soft-delete the rest
+    recs.sort((a: any, b: any) => new Date(b?.updated_date || 0).getTime() - new Date(a?.updated_date || 0).getTime());
+    for (let i = 1; i < recs.length; i++) {
+      duplicatesToDelete.push(recs[i]);
+    }
+  }
+  let dedupCount = 0;
+  if (duplicatesToDelete.length > 0) {
+    const now = new Date().toISOString();
+    const dedupBatchSize = 100;
+    for (let i = 0; i < duplicatesToDelete.length; i += dedupBatchSize) {
+      const batch = duplicatesToDelete.slice(i, i + dedupBatchSize);
+      const payload = batch.map((r: any) => ({
+        id: r.id,
+        deleted: true,
+        deleted_at: now,
+        deleted_by: 'smartsheet_sync_dedup',
+      }));
+      try {
+        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
+        dedupCount += payload.length;
+      } catch {
+        // non-critical — dedup is best-effort
+      }
+    }
+  }
+  debugCounts.duplicates_soft_deleted = dedupCount;
   let orphanCount = 0;
   if (orphans.length > 0) {
     const orphanBatchSize = 100;
