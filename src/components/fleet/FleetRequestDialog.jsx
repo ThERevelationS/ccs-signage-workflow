@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { Loader2, X, Upload, ImagePlus } from "lucide-react";
@@ -9,6 +9,45 @@ export default function FleetRequestDialog({ open, mode, request, equipment, par
   const [error, setError] = useState("");
   const [confirmReceive, setConfirmReceive] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState([]);
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const previousFocus = useRef(null);
+  const closeCallback = useRef(onClose);
+  const savingState = useRef(saving);
+  const confirmingState = useRef(confirmReceive);
+  closeCallback.current = onClose;
+  savingState.current = saving;
+  confirmingState.current = confirmReceive;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previousFocus.current = document.activeElement;
+    closeRef.current?.focus();
+    const handleKey = (event) => {
+      if (confirmingState.current) return; // Nested receiving confirmation owns focus.
+      if (event.key === "Escape") {
+        if (!savingState.current) { event.preventDefault(); closeCallback.current?.(); }
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0], last = controls[controls.length - 1], active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -100,10 +139,10 @@ export default function FleetRequestDialog({ open, mode, request, equipment, par
     await performSubmit();
   };
 
-  return <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto"><div role="dialog" aria-modal="true" aria-labelledby="fleet-request-dialog-title" className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
-    <div className="flex items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-slate-800"><div className="min-w-0"><div id="fleet-request-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{title}</div><div className="text-xs text-gray-500">Fleet inventory only — never Master Inventory.</div></div><button type="button" onClick={onClose} aria-label="Close Fleet request dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto"/></button></div>
+  return <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto"><div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-request-dialog-title" aria-describedby="fleet-request-dialog-description" tabIndex={-1} className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
+    <div className="flex items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-slate-800"><div className="min-w-0"><div id="fleet-request-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{title}</div><div id="fleet-request-dialog-description" className="text-xs text-gray-500">Fleet inventory only — never Master Inventory.</div></div><button ref={closeRef} type="button" onClick={onClose} disabled={saving} aria-label="Close Fleet request dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto"/></button></div>
     <form onSubmit={submit} className="p-4 sm:p-6 space-y-4">
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
+      {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
       {(mode === "create" || mode === "edit") && <>
         {form.inventory_item_id && <div className="rounded-lg border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-800 dark:text-indigo-200">This request is linked to an exact Fleet inventory record. Item identity is locked so receiving updates the intended part/fluid instead of relying on name matching.</div>}
         <div className="grid sm:grid-cols-2 gap-4">
