@@ -15,6 +15,7 @@ import {
   salesPulledFieldsUnchanged,
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
+  salesPushSnapshotNeedsReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -609,6 +610,25 @@ async function pushDataset(
       dataset,
       skipped: true,
       reason: `${records.length} records exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
+    };
+  }
+
+  // Stop before any Smartsheet write if existing Sales links have incomplete
+  // snapshots. Legacy snapshots can predate the Est / Inv # mapping, and
+  // treating a newly mapped field as locally authoritative could overwrite
+  // working Smartsheet values. Reconcile these links through reviewed pull first.
+  const snapshotReviewRecords = dataset === 'sales'
+    ? records.filter((record: any) =>
+        salesPushSnapshotNeedsReview(record, sheetId, buildSnapshot(record, bindings, 'sales')))
+    : [];
+  if (snapshotReviewRecords.length > 0) {
+    return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${snapshotReviewRecords.length} linked Sales records have missing or outdated sync snapshots. Review and reconcile before Sales push. No rows were written.`,
+      records_examined: records.length,
+      snapshot_review_required: snapshotReviewRecords.length,
+      created: 0, updated: 0, unchanged_skipped: 0, conflicts: 0, errors: 0,
+      error_details: [], conflict_record_ids: [],
     };
   }
 
