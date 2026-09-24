@@ -773,7 +773,15 @@ Answer the question based on the documents and information available. Be specifi
                     }}
                     className={`min-h-11 w-full rounded border p-3 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${result.type === 'jurisdiction' ? 'bg-purple-50 border-purple-200 hover:bg-purple-100' : 'bg-white border-blue-200 hover:bg-blue-100'}`}
                   >
-                    <span className="block min-w-0 font-medium text-gray-800 [overflow-wrap:anywhere]">{result.title}</span>
+                    <span className="block min-w-0 font-medium text-gray-800 [overflow-wrap:anywhere]">
+                      {result.type === "document"
+                        ? splitDocumentSearchMatches(result.title, docSearchTerm).map((part, index) =>
+                            part.matched
+                              ? <mark key={index} className="rounded-sm bg-yellow-200 px-0.5 font-semibold text-gray-900">{part.text}</mark>
+                              : <span key={index}>{part.text}</span>
+                          )
+                        : result.title}
+                    </span>
                     <span className="mt-0.5 block min-w-0 whitespace-pre-wrap text-[11px] leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
                       {result.type === "document"
                         ? splitDocumentSearchMatches(result.snippet, docSearchTerm).map((part, index) =>
