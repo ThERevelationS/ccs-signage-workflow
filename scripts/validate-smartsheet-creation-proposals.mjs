@@ -30,7 +30,7 @@ const source = (rowId, rowNumber, values, customerResolution = exactAlias, statu
 });
 const binding = (fields) => Object.fromEntries(fields.map((field, index) => [field, { column_id: String(index + 1) }]));
 const salesBinding = binding([
-  "client_name", "title", "current_task_description", "lead_source",
+  "client_name", "est_inv_at", "current_task_description", "lead_source",
   "estimate_amount", "date_estimate_sent", "date_initial_contact",
 ]);
 const ordersBinding = binding([
@@ -177,6 +177,52 @@ assert.deepEqual(fresh1.customer.customer_payload, { company_name: "Fresh Co", c
 assert.equal(fresh1.proposed_payload.customer_id, undefined, "No invented Customer ID");
 assert.equal(fresh1.relationships.customer.planned_customer_key, fresh2.customer.key);
 assert.equal(sales.proposals.summary.new_customer_groups, 2, "One Fresh and one Cross-sheet group before reconciliation");
+
+const multiProjectSales = preview("sales", [
+  source("s-multi-1", 30, {
+    client_name: "Multi Project Co", est_inv_at: "EST-1001", current_task_description: "Channel letters",
+  }, newName),
+  source("s-multi-2", 31, {
+    client_name: "Multi Project Co", est_inv_at: "EST-1002", current_task_description: "Monument sign",
+  }, newName),
+], salesBaseline, decision("sales", SALES_ID, "Multi Project Co", "create_new_customer"), salesBinding);
+const multiSales1 = row(multiProjectSales, "s-multi-1");
+const multiSales2 = row(multiProjectSales, "s-multi-2");
+assert.equal(multiProjectSales.proposals.summary.dependent_record_lines, 2,
+  "One Customer with two Sales projects must preserve two dependent WorkOrder lines.");
+assert.equal(multiProjectSales.proposals.rows.length, 2,
+  "Customer resolution must never collapse multiple Sales source rows.");
+assert.equal(multiSales1.customer.key, multiSales2.customer.key,
+  "The two Sales lines should share one Customer decision.");
+assert.notEqual(multiSales1.source_line_key, multiSales2.source_line_key,
+  "Each Sales project row must retain its own permanent source-line identity.");
+assert.equal(multiSales1.proposal_ready, true);
+assert.equal(multiSales2.proposal_ready, true);
+assert.equal(multiSales1.proposed_payload.title, "Multi Project Co — EST-1001");
+assert.equal(multiSales2.proposed_payload.title, "Multi Project Co — EST-1002");
+assert.ok(!has(multiSales1, "missing_title") && !has(multiSales2, "missing_title"),
+  "Base44-only Job Description must not be required from Smartsheet.");
+
+const multiDescriptionOrders = preview("orders", [
+  source("o-multi-1", 30, {
+    customer_name: "Acme Old", request_type: "Other", description: "Parking sign package",
+  }),
+  source("o-multi-2", 31, {
+    customer_name: "Acme Old", request_type: "Other", description: "Lobby directory package",
+  }),
+], orderBaseline, {}, ordersBinding);
+const multiOrder1 = row(multiDescriptionOrders, "o-multi-1");
+const multiOrder2 = row(multiDescriptionOrders, "o-multi-2");
+assert.equal(multiDescriptionOrders.proposals.summary.dependent_record_lines, 2,
+  "One Customer with two Order descriptions must preserve two dependent Order lines.");
+assert.equal(multiDescriptionOrders.proposals.rows.length, 2,
+  "Customer resolution must never collapse multiple Order source rows.");
+assert.equal(multiOrder1.customer.customer_id, "customer-1");
+assert.equal(multiOrder2.customer.customer_id, "customer-1");
+assert.notEqual(multiOrder1.source_line_key, multiOrder2.source_line_key,
+  "Each Order description row must retain its own permanent source-line identity.");
+assert.equal(multiOrder1.proposal_ready, true);
+assert.equal(multiOrder2.proposal_ready, true);
 
 for (const id of ["s-dup-1", "s-dup-2"]) {
   assert.equal(row(sales, id).proposal_ready, false);
