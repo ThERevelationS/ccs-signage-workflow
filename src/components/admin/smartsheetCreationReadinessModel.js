@@ -29,9 +29,10 @@ function requiredFieldBlockers(row, dataset) {
     if (!cleanText(values.client_name)) {
       blockers.push(blocker("missing_customer", "Customer missing", "WorkOrder requires Customer."));
     }
-    if (!cleanText(values.title)) {
-      blockers.push(blocker("missing_title", "Job Description missing", "WorkOrder requires Job Description."));
-    }
+    // Job Description/title is intentionally Base44-only. A Smartsheet Sales row
+    // is its own project line by permanent row ID; the later proposal layer
+    // generates a safe internal title instead of requiring a nonexistent
+    // Smartsheet title column.
     return blockers;
   }
 
@@ -222,7 +223,7 @@ export function buildSmartsheetCreationReadiness({
     if (item.blockers.some((entry) => ["customer_review_required", "customer_review_missing", "customer_name_missing", "missing_customer"].includes(entry.code))) {
       acc.blocked_customer += 1;
     }
-    if (item.blockers.some((entry) => ["missing_title", "missing_request_type", "invalid_request_type", "missing_description"].includes(entry.code))) {
+    if (item.blockers.some((entry) => ["missing_request_type", "invalid_request_type", "missing_description"].includes(entry.code))) {
       acc.blocked_required_fields += 1;
     }
     if (item.blockers.some((entry) => ["already_linked", "existing_record_candidate", "existing_record_ambiguous"].includes(entry.code))) {
