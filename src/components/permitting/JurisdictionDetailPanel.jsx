@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState(null);
+  const selectedDocHeaderRef = useRef(null);
+  const pendingDocNavigationRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
   const [viewingPDF, setViewingPDF] = useState(null);
@@ -68,6 +70,15 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setVerificationNote("");
     setVerificationError("");
   }, [jurisdiction.id]);
+
+  // After a search selection expands a document, move keyboard focus and scroll to its header.
+  // Clearing search results also triggers this when the selected document was already expanded.
+  useEffect(() => {
+    if (pendingDocNavigationRef.current !== expandedDoc || !selectedDocHeaderRef.current) return;
+    pendingDocNavigationRef.current = null;
+    selectedDocHeaderRef.current.focus({ preventScroll: true });
+    selectedDocHeaderRef.current.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [expandedDoc, searchResults]);
 
   const isPDF = (doc) => {
     const url = doc.file_url || doc.url || "";
@@ -766,6 +777,7 @@ Answer the question based on the documents and information available. Be specifi
                     key={`${result.type}-${result.id}`}
                     onClick={() => {
                       if (result.type === 'document') {
+                        pendingDocNavigationRef.current = result.id;
                         setExpandedDoc(result.id);
                       }
                       setDocSearchTerm("");
@@ -801,7 +813,8 @@ Answer the question based on the documents and information available. Be specifi
                <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
                  <button
                    type="button"
-                   className="flex min-h-11 w-full items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
+                   ref={expandedDoc === doc.id ? selectedDocHeaderRef : null}
+                   className="flex min-h-11 w-full scroll-mt-4 items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
                    onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
                    aria-expanded={expandedDoc === doc.id}
                    aria-controls={expandedDoc === doc.id ? `jurisdiction-document-${doc.id}` : undefined}
