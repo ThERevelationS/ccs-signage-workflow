@@ -4,6 +4,7 @@ import {
   isLegacyTerminalSalesTask,
   salesPulledFieldsUnchanged,
   salesPullSnapshotAligned,
+  salesPushRecordUnchanged,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -85,5 +86,16 @@ assert(!salesPullSnapshotAligned({ ...syncedRecord, smartsheet_sync_snapshot: nu
 assert(!salesPullSnapshotAligned({ ...syncedRecord, smartsheet_last_synced_at: null }, snapshot), "Unverified rows must not be treated as synced.");
 assert(!salesPullSnapshotAligned(syncedRecord, { ...snapshot, "14": "changed notes" }), "A stale notes snapshot must not be skipped.");
 assert(!salesPullSnapshotAligned(syncedRecord, { ...snapshot, "15": "new binding" }), "A newly bound field must not inherit an unrelated old snapshot.");
+
+// Push skips only a verified, correctly linked, unchanged Sales record.
+const linkedRecord = { ...syncedRecord, smartsheet_row_id: "12345", smartsheet_sheet_id: "8702703019812740" };
+const salesSheetId = "8702703019812740";
+assert(salesPushRecordUnchanged(linkedRecord, salesSheetId, snapshot), "A verified unchanged Sales record must skip push.");
+assert(!salesPushRecordUnchanged({ ...linkedRecord, smartsheet_row_id: null }, salesSheetId, snapshot), "New Sales records must still push.");
+assert(!salesPushRecordUnchanged(linkedRecord, "999", snapshot), "A different linked sheet must still reconcile.");
+assert(!salesPushRecordUnchanged({ ...linkedRecord, smartsheet_sync_snapshot: null }, salesSheetId, snapshot), "Missing snapshots must still reconcile.");
+assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, { ...snapshot, "12": 275 }), "Changed estimates must still push.");
+assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, { ...snapshot, "14": "Updated notes" }), "Changed notes must still reconcile.");
+assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, {}), "An empty snapshot must not suppress a push.");
 
 console.log("Smartsheet Sales boundary validation passed.");
