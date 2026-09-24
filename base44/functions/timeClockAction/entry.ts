@@ -4356,24 +4356,35 @@ Deno.serve(async (req) => {
             $unset: { approved_at: '', approved_by: '', approval_note: '' },
           };
       const result = await entryEntity.updateMany(
-        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, status: 'clocked_out', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        { id: entry.id, updated_date: expectedUpdatedDate, user_email: target.email, status: 'clocked_out', pay_period_id: { $in: [null, ''] }, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
         update,
       );
+      const savedEntry = await entryEntity.get(entry.id).catch(() => null);
       if (!result || result.updated !== 1) {
-        await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
-        return Response.json({ success: false, error: 'The TimeEntry changed before approval could be saved. Reload before trying again.' }, { status: 409 });
+        if (!savedByThisApproval(savedEntry)) {
+          if (savedEntry?.id && !entryIsPayPeriodLocked(savedEntry) && String(savedEntry.updated_date || '') === expectedUpdatedDate) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The approval has not yet been saved and its audit is still pending. Retry this exact request.' }, { status: 409 });
+          }
+          await auditEntity.updateMany(
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email, actor_email: actorEmail },
+            { $set: { outcome: 'blocked' } },
+          );
+          return Response.json({ success: false, error: 'The TimeEntry changed or became pay-period locked before this approval could be saved. Reload before trying again.' }, { status: 409 });
+        }
       }
-      const savedEntry = await entryEntity.get(entry.id);
-      const auditFinalized = await auditEntity.updateMany(
-        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+      if (!savedByThisApproval(savedEntry)) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The approval write could not be tied to its exact TimeEntry request marker. Retry this same approval action.' }, { status: 409 });
+      }
+      await auditEntity.updateMany(
+        { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email, actor_email: actorEmail },
         { $set: {
           outcome: 'confirmed', server_timestamp: new Date().toISOString(),
           details: { ...(intent.details || {}), payload_hash: approvalPayloadHash, original: entryAuditSnapshot(entry), updated: entryAuditSnapshot(savedEntry), decision, note },
         } },
       );
-      if (!auditFinalized || auditFinalized.updated !== 1) {
-        const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-        if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but audit finalization was interrupted. Retry the same approval action.' }, { status: 409 });
+      const finalAudit = await auditEntity.get(intent.id).catch(() => null);
+      if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) || !approvalAuditMatches(finalAudit)) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but its exact manager audit could not be confirmed. Retry the same approval action.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
     }
