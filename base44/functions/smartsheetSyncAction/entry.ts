@@ -5,6 +5,7 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
+import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -773,7 +774,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'audit_order_requestor_emails', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
@@ -856,6 +857,47 @@ Deno.serve(async (req) => {
         returned_row_count: rows.length,
         rows,
       });
+    }
+
+    if (action === 'audit_order_requestor_emails') {
+      // Admin-only, read-only comparison. Safe while sync is disabled or in observation mode.
+      // Never infer a repair from a matching name alone; permanent row IDs must agree.
+      const { config } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const contactColumnId = sharedOrderRequestorColumnId(profile?.column_bindings);
+      if (!/^\d+$/.test(sheetId) || !contactColumnId) {
+        return Response.json({
+          success: false,
+          error: 'Order Form needs a permanent sheet ID and a shared Requestor contact-column binding.',
+        }, { status: 400 });
+      }
+
+      const linkedOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { smartsheet_sheet_id: sheetId },
+        sort: 'id',
+        label: 'Order Form read-only contact audit',
+      });
+      const sheetRows: any[] = [];
+      const pageSize = 200;
+      const guard = createSmartsheetOrderPageGuard({ pageSize, maxPages: 100 });
+      for (let page = 1; page <= 100; page++) {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          columnIds: contactColumnId,
+          exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+        const rows = normalizeSheetRows(result.body);
+        const complete = guard.accept(page, result.body, rows);
+        sheetRows.push(...rows);
+        if (complete) break;
+      }
+      guard.assertComplete(); // Never report candidates from partial or moving-sheet reads.
+      const audit = auditOrderRequestorContacts(linkedOrders, sheetRows, contactColumnId);
+      return Response.json({ success: true, sheet_id: sheetId, ...audit });
     }
 
     if (action === 'debug_dates') {
