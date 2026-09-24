@@ -4257,8 +4257,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
       if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
-      if (entryIsPayPeriodLocked(entry)) return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
-
       const approvalPayloadHash = await payloadHash({
         entry_id: entry.id,
         expected_updated_date: expectedUpdatedDate,
@@ -4283,6 +4281,14 @@ Deno.serve(async (req) => {
       if (intent?.outcome === 'blocked') return Response.json({ success: false, error: 'This approval request was previously blocked. Reload and submit a new approval action.' }, { status: 409 });
 
       const expectedStatus = decision === 'approve' ? 'approved' : 'needs_review';
+      const savedByThisApproval = (record: any) => Boolean(
+        record?.id &&
+        String(record.id) === entry.id &&
+        asEmail(record.user_email) === target.email &&
+        String(record.approval_request_id || '') === requestId &&
+        String(record.approval_status || '') === expectedStatus &&
+        (decision !== 'approve' || asEmail(record.approved_by) === actorEmail)
+      );
       if (String(entry.approval_request_id || '') === requestId) {
         if ((entry.approval_status || 'unreviewed') !== expectedStatus) {
           return Response.json({ success: false, error: 'This approval request id is already associated with a different approval state.' }, { status: 409 });
@@ -4306,13 +4312,17 @@ Deno.serve(async (req) => {
           }
         }
         const finalAudit = await auditEntity.get(intent.id).catch(() => null);
-        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || ''))) {
-          return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved but a confirmed audit could not be verified yet. Retry the same approval action.' }, { status: 409 });
+        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) ||
+          !approvalAuditMatches(finalAudit) || !savedByThisApproval(entry)) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The saved approval and exact manager audit could not be verified. Retry the same approval action.' }, { status: 409 });
         }
         return Response.json({ success: true, entry, audit_id: intent.id, reused: true });
       }
       if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
         return Response.json({ success: false, error: 'This approval request was already confirmed but the TimeEntry marker does not match. Admin investigation is required.' }, { status: 409 });
+      }
+      if (entryIsPayPeriodLocked(entry)) {
+        return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
       }
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
 
