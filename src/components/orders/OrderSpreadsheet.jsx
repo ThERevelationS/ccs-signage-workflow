@@ -903,11 +903,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           text-decoration-thickness: 1.5px !important;
           opacity: 0.75;
         }
+        .order-spreadsheet th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       `}</style>
 
       {/* Spreadsheet Table */}
       <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
-      <table className="w-full border-collapse" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', width: '100%' }}>
+      <table className="w-full border-collapse border rounded-lg order-spreadsheet" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
           <col style={{ width: '15%' }} />

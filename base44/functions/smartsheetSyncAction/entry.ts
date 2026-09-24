@@ -314,7 +314,7 @@ async function pullDataset(
 
     const existing = recordsByRowId[rowId];
     if (existing) {
-      toUpdate.push({ id: existing.id, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
+      toUpdate.push({ id: existing.id, _existing: existing, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
@@ -348,14 +348,21 @@ async function pullDataset(
     }
   }
 
-  // Bulk update in batches of 100
-  for (let i = 0; i < toUpdate.length; i += 100) {
-    const batch = toUpdate.slice(i, i + 100);
+  // Individual updates — bulkUpdate was found to silently fail to apply
+  // field values to Order/WorkOrder entities, so we update one at a time.
+  for (const rec of toUpdate) {
     try {
-      const result = await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
-      updatedCount += Array.isArray(result) ? result.length : 0;
+      const { id, _existing, ...fields } = rec;
+      await base44.asServiceRole.entities[entityName].update(id, fields);
+      // Store a fresh snapshot so the next push doesn't see a false conflict.
+      if (_existing) {
+        const merged = { ..._existing, ...fields };
+        const snapshot = buildSnapshot(merged, bindings, dataset);
+        await base44.asServiceRole.entities[entityName].update(id, { smartsheet_sync_snapshot: snapshot });
+      }
+      updatedCount++;
     } catch (err) {
-      errors.push(`Update batch ${Math.floor(i / 100) + 1}: ${(err as any)?.message || 'unknown error'}`);
+      errors.push(`Update ${rec.id}: ${(err as any)?.message || 'unknown error'}`);
     }
   }
 
