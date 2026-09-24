@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
@@ -49,6 +49,54 @@ export default function FleetWorkOrderDialog({
   const [pendingPhotos, setPendingPhotos] = useState({ before_photos: [], problem_photos: [], after_photos: [] });
   const [confirmComplete, setConfirmComplete] = useState("");
   const [refreshingInventory, setRefreshingInventory] = useState(false);
+  const dialogRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const savingRef = useRef(saving);
+  const confirmingRef = useRef(!!confirmComplete);
+  onCloseRef.current = onClose;
+  savingRef.current = saving;
+  confirmingRef.current = !!confirmComplete;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previousFocusRef.current = document.activeElement;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event) => {
+      // The nested completion confirmation owns keyboard focus while it is open.
+      if (confirmingRef.current) return;
+      if (event.key === "Escape") {
+        if (!savingRef.current) {
+          event.preventDefault();
+          onCloseRef.current?.();
+        }
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -218,13 +266,13 @@ export default function FleetWorkOrderDialog({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto">
-      <div role="dialog" aria-modal="true" aria-labelledby="fleet-work-order-dialog-title" className="max-w-4xl mx-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-work-order-dialog-title" tabIndex={-1} className="max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] mx-auto overflow-x-hidden overflow-y-auto overscroll-contain bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-2xl">
           <div><div id="fleet-work-order-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{mode === "create" ? "New Fleet Work Order" : mode === "complete" ? `Complete ${workOrder?.work_order_number || "Work Order"}` : `Edit ${workOrder?.work_order_number || "Work Order"}`}</div><div className="text-xs text-gray-500">Fleet maintenance only — never enters signage production.</div></div>
-          <button type="button" onClick={onClose} aria-label="Close Fleet work order dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
+          <button ref={closeButtonRef} type="button" onClick={onClose} disabled={saving || !!confirmComplete} aria-label="Close Fleet work order dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
         <form onSubmit={submit} className="p-4 sm:p-6 space-y-5">
-          {error && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
+          {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
           {workOrder?.public_submission_key && <div className="rounded-xl border border-violet-200 bg-violet-50/70 px-3 py-3 text-sm text-violet-950 dark:border-violet-900 dark:bg-violet-950/20 dark:text-violet-100"><div className="font-semibold">Submitted from the public Fleet issue form</div><div className="mt-1 grid sm:grid-cols-3 gap-x-4 gap-y-1 text-xs"><div><span className="text-violet-600 dark:text-violet-300">Reporter:</span> {workOrder.public_reporter_name || "Anonymous"}</div><div><span className="text-violet-600 dark:text-violet-300">Contact:</span> {workOrder.public_reporter_contact || "Not provided"}</div><div><span className="text-violet-600 dark:text-violet-300">Reported:</span> {workOrder.public_reported_at ? new Date(workOrder.public_reported_at).toLocaleString() : "—"}</div></div><div className="mt-1 text-[11px] text-violet-600 dark:text-violet-300">Reporter identity fields are read-only provenance and are not changed when this work order is edited.</div></div>}
 
           <nav aria-label="Work order form sections" className="flex gap-2 overflow-x-auto pb-1 overscroll-x-contain">
@@ -295,7 +343,7 @@ export default function FleetWorkOrderDialog({
           <div className="rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 px-3 py-2 text-xs">Fleet notifications are live. Completion updates Fleet inventory/history, advances linked recurring maintenance, and queues completion/low-stock notifications only after the server-side idempotency checks pass.</div>
 
           <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <button type="button" onClick={onClose} disabled={saving} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button>
+            <button type="button" onClick={onClose} disabled={saving || !!confirmComplete} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700">Cancel</button>
             <button type="submit" disabled={saving} className="min-h-11 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{completing ? "Complete Work Order" : mode === "create" ? "Create Work Order" : "Save Changes"}</button>
           </div>
         </form>
@@ -310,7 +358,7 @@ export default function FleetWorkOrderDialog({
         onCancel={() => setConfirmComplete("")}
         onConfirm={performSubmit}
       />
-      <style>{`.fleet-input{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.dark .fleet-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style>
+      <style>{`.fleet-input{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.5rem;padding:.55rem .7rem;background:white}.fleet-input:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}.dark .fleet-input{background:rgb(15 23 42);border-color:rgb(51 65 85);color:rgb(226 232 240)}`}</style>
     </div>
   );
 }
