@@ -1,0 +1,12 @@
+import { interpretSmartsheetSyncStatus as interpret, SMARTSHEET_SYNC_STALE_AFTER_MS as limit } from '../src/components/admin/smartsheetSyncStatusModel.js';
+import assert from 'node:assert/strict';
+const now = Date.parse('2026-09-24T22:30:00Z');
+const running = mins => ({ status: 'running', started_at: new Date(now - 45 * 60000).toISOString(), updated_at: new Date(now - mins * 60000).toISOString() });
+assert.deepEqual(interpret(running(1), now), { isRunning: true, isStale: false, ageMinutes: 1 });
+assert.deepEqual(interpret(running(30), now), { isRunning: true, isStale: false, ageMinutes: 30 });
+assert.deepEqual(interpret(running(31), now), { isRunning: false, isStale: true, ageMinutes: 31 });
+assert.deepEqual(interpret({ status: 'running', updated_at: 'invalid', started_at: 'invalid' }, now), { isRunning: false, isStale: true, ageMinutes: null });
+assert.deepEqual(interpret({ status: 'completed', updated_at: new Date(now - 60 * 60000).toISOString() }, now), { isRunning: false, isStale: false, ageMinutes: null });
+assert.equal(limit, 30 * 60000);
+assert.equal(interpret(running(500), now).isStale, true);
+console.log('Smartsheet sync status presentation: 7 synthetic assertions passed.');
