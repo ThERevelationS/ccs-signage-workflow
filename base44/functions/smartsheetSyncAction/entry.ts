@@ -820,8 +820,9 @@ Deno.serve(async (req) => {
         if (allRows.length >= totalRowCount || rows.length === 0) break;
         page++;
       }
-      // Load Base44 records
-      const existingRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+      // Load Base44 records (non-deleted only)
+      const rawRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+      const existingRecords = (Array.isArray(rawRecords) ? rawRecords : []).filter((r: any) => !r?.deleted);
       const recordsByRowId: Record<string, any> = {};
       for (const rec of existingRecords) {
         const rowId = cleanText(rec?.smartsheet_row_id, 40);
@@ -831,9 +832,13 @@ Deno.serve(async (req) => {
       const discrepancies: any[] = [];
       let ssHasOrderedB44Missing = 0;
       let ssHasReceivedB44Missing = 0;
+      let matchedCount = 0;
+      let unmatchedCount = 0;
+      let b44HasReceivedButSsMissing = 0;
       for (const row of allRows) {
         const rec = recordsByRowId[row.id];
-        if (!rec) continue;
+        if (!rec) { unmatchedCount++; continue; }
+        matchedCount++;
         const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
         const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
         const ssOrdered = orderedCell?.value ?? orderedCell?.display_value ?? null;
@@ -881,6 +886,9 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         total_smartsheet_rows: allRows.length,
+        matched_count: matchedCount,
+        unmatched_count: unmatchedCount,
+        b44_records_total: existingRecords.length,
         ss_rows_with_ordered: ssRowsWithOrdered,
         ss_rows_with_received: ssRowsWithReceived,
         ss_has_ordered_b44_missing: ssHasOrderedB44Missing,
