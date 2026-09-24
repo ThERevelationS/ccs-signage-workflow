@@ -14,6 +14,7 @@ import {
   filterSalesColumnBindings,
   salesPulledFieldsUnchanged,
   salesPullSnapshotAligned,
+  salesPushRecordUnchanged,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -611,6 +612,19 @@ async function pushDataset(
     };
   }
 
+  // A linked Sales record whose mapped fields still match its last snapshot
+  // needs no Smartsheet write or new Base44 sync timestamp. Preserve all
+  // unmatched, changed, and unsnapshotted records for ordinary reconciliation.
+  const pendingRecords = dataset === 'sales'
+    ? records.filter((record: any) => !salesPushRecordUnchanged(record, sheetId, buildSnapshot(record, bindings, 'sales')))
+    : records;
+  const unchangedSkipped = records.length - pendingRecords.length;
+  if (dataset === 'sales' && pendingRecords.length === 0) {
+    return { dataset, sheet_id: sheetId, records_examined: records.length,
+      created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
+      conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
+  }
+
   // Backup before write: snapshot the whole target sheet into a BackupLog entry.
   if (globalConfig?.backup_before_write) {
     try {
@@ -641,7 +655,7 @@ async function pushDataset(
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
 
-  for (const record of records) {
+  for (const record of pendingRecords) {
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
     if (sharedContactId && (record.requestor_name || record.requestor_email) &&
         !isValidContactEmail(record.requestor_email)) requestorContactsSkippedNoEmail++;
@@ -702,6 +716,7 @@ async function pushDataset(
     records_examined: records.length,
     created: created.length,
     updated: updated.length,
+    ...(dataset === 'sales' ? { unchanged_skipped: unchangedSkipped } : {}),
     conflicts: conflicts.length,
     errors: errors.length,
     error_details: errors.slice(0, 10),
