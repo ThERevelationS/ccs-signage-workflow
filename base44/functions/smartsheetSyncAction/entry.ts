@@ -491,26 +491,7 @@ async function pullDataset(
     }
   }
   debugCounts.duplicates_soft_deleted = dedupCount;
-  let orphanCount = 0;
-  if (orphans.length > 0) {
-    const orphanBatchSize = 100;
-    const now = new Date().toISOString();
-    for (let i = 0; i < orphans.length; i += orphanBatchSize) {
-      const batch = orphans.slice(i, i + orphanBatchSize);
-      const payload = batch.map((r: any) => ({
-        id: r.id,
-        deleted: true,
-        deleted_at: now,
-        deleted_by: 'smartsheet_sync_orphan_cleanup',
-      }));
-      try {
-        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
-        orphanCount += payload.length;
-      } catch {
-        // non-critical — orphan cleanup is best-effort
-      }
-    }
-  }
+  debugCounts.orphans_preserved_for_review = orphans.length;
 
   return {
     dataset,
