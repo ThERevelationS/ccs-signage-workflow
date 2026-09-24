@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { ImagePlus, Loader2, Upload, X } from "lucide-react";
 
@@ -23,6 +23,42 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
   const [localBusy, setLocalBusy] = useState(false);
   const [localError, setLocalError] = useState("");
   const busy = saving || localBusy;
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const previousFocus = useRef(null);
+  const closeCallback = useRef(onClose);
+  const busyState = useRef(busy);
+  closeCallback.current = onClose;
+  busyState.current = busy;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previousFocus.current = document.activeElement;
+    closeRef.current?.focus();
+    const handleKey = event => {
+      if (event.key === "Escape") {
+        if (!busyState.current) { event.preventDefault(); closeCallback.current?.(); }
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0], last = controls[controls.length - 1], active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -112,13 +148,13 @@ export default function FleetInventoryDialog({ open, itemType, item, equipment, 
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-2 sm:p-4" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}> 
-      <div role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-dialog-title" className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-dialog-title" aria-describedby="fleet-inventory-dialog-description" tabIndex={-1} className="w-full max-w-3xl max-h-[94dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-4 sm:px-5 py-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div className="min-w-0"><h2 id="fleet-inventory-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100 break-words">{title}</h2><p className="text-xs text-gray-500 dark:text-slate-400">Fleet inventory only. This never writes to CCS Master Inventory or Sign Maintenance inventory.</p></div>
-          <button type="button" onClick={onClose} disabled={busy} aria-label="Close Fleet inventory dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
+          <div className="min-w-0"><h2 id="fleet-inventory-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100 break-words">{title}</h2><p id="fleet-inventory-dialog-description" className="text-xs text-gray-500 dark:text-slate-400">Fleet inventory only. This never writes to CCS Master Inventory or Sign Maintenance inventory.</p></div>
+          <button ref={closeRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Fleet inventory dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
         </div>
         <form onSubmit={submit} className="p-4 sm:p-5 space-y-5">
-          {localError && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{localError}</div>}
+          {localError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{localError}</div>}
           {itemType === "part" ? <div className="grid md:grid-cols-2 gap-4">
             <Field label="Part Name *"><input required value={form.part_name || ""} onChange={e => set("part_name", e.target.value)} className="field" /></Field>
             <Field label="Part Number"><input value={form.part_number || ""} onChange={e => set("part_number", e.target.value)} className="field" /></Field>
