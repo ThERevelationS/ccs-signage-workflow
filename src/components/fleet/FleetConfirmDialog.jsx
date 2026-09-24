@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 export default function FleetConfirmDialog({
@@ -12,14 +12,49 @@ export default function FleetConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const dialogRef = useRef(null);
+  const cancelButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
+  const cancelRef = useRef(onCancel);
+  const busyRef = useRef(busy);
+  cancelRef.current = onCancel;
+  busyRef.current = busy;
+
   useEffect(() => {
-    if (!open || busy) return undefined;
+    if (!open) return undefined;
+    previousFocusRef.current = document.activeElement;
+    cancelButtonRef.current?.focus();
     const onKey = (event) => {
-      if (event.key === "Escape") onCancel?.();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!busyRef.current) cancelRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll("button:not(:disabled)")]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, busy, onCancel]);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -34,7 +69,7 @@ export default function FleetConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel?.(); }}>
-      <div role="alertdialog" aria-modal="true" aria-labelledby="fleet-confirm-title" aria-describedby="fleet-confirm-description" className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+      <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="fleet-confirm-title" aria-describedby="fleet-confirm-description" tabIndex={-1} className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconClass}`}><AlertTriangle className="w-5 h-5" /></div>
           <div className="min-w-0">
@@ -43,8 +78,8 @@ export default function FleetConfirmDialog({
           </div>
         </div>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button type="button" disabled={busy} onClick={() => onCancel?.()} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">{cancelLabel}</button>
-          <button type="button" disabled={busy} onClick={() => onConfirm?.()} className={`min-h-11 px-4 py-2 rounded-lg text-white font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 ${confirmClass}`}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}{confirmLabel}</button>
+          <button ref={cancelButtonRef} type="button" disabled={busy} onClick={() => onCancel?.()} className="min-h-11 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">{cancelLabel}</button>
+          <button type="button" disabled={busy} onClick={() => onConfirm?.()} className={`min-h-11 px-4 py-2 rounded-lg text-white font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${confirmClass}`}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}{confirmLabel}</button>
         </div>
       </div>
     </div>
