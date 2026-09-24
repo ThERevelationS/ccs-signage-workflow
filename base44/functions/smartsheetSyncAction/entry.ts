@@ -4,6 +4,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
+import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -187,12 +188,25 @@ function detectConflict(
   currentSmartsheetCells: { column_id: string; value: string | number | null; display_value?: string }[],
   snapshot: Record<string, string | number | null> | null,
   bindings: Record<string, string>,
+  dataset: 'sales' | 'orders',
 ): boolean {
   if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync → no conflict
   const bindingColumnIds = new Set(Object.values(bindings || {}).map((id) => String(id).trim()).filter((id) => /^\d+$/.test(id)));
+  const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   for (const cell of currentSmartsheetCells) {
     const colId = String(cell.column_id || cell.columnId || '');
     if (!bindingColumnIds.has(colId)) continue;
+    if (sharedContactId && colId === sharedContactId) {
+      // The CONTACT_LIST raw value is its email; display_value is its name.
+      // A missing contact snapshot means this field was intentionally not written.
+      if (!Object.prototype.hasOwnProperty.call(snapshot, colId)) continue;
+      const expected = String(snapshot[colId] ?? '').trim();
+      const actual = isValidContactEmail(expected)
+        ? String(cell.value ?? '').trim()
+        : String(cell.display_value ?? cell.value ?? '').trim();
+      if (actual !== expected) return true;
+      continue;
+    }
     const current = cell.display_value != null ? String(cell.display_value) : (cell.displayValue != null ? String(cell.displayValue) : (cell.value == null ? '' : String(cell.value)));
     const last = snapshot[colId];
     const lastStr = last == null ? '' : String(last);
@@ -257,7 +271,7 @@ async function pullDataset(
   }
 
   // Fetch all rows from the Smartsheet sheet using only bound column IDs
-  const columnIds = Object.values(bindings).map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id));
+  const columnIds = [...new Set(Object.values(bindings).map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
   const allRows: any[] = [];
   let page = 1;
   const pageSize = 200;
@@ -641,21 +655,21 @@ async function pushDataset(
           );
           const sheetRows = normalizeSheetRows(rowResult.body);
           const currentCells = sheetRows[0]?.cells || [];
-          if (detectConflict(currentCells, record.smartsheet_sync_snapshot, bindings)) {
+          if (detectConflict(currentCells, record.smartsheet_sync_snapshot, bindings, dataset)) {
             conflicts.push(record.id);
             continue;
           }
         }
         await smartsheetWrite('PUT', `/sheets/${sheetId}/rows`, token, [{
           id: existingRowId,
-          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value })),
+          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
         updated.push(record.id);
       } else {
         // CREATE new row
         const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
           toTop: true,
-          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value })),
+          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
         const newRowId = String(result?.body?.result?.id || result?.body?.id || '');
         if (newRowId && /^\d+$/.test(newRowId)) {
