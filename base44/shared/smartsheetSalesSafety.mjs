@@ -59,3 +59,14 @@ export function salesPullSnapshotAligned(existing = {}, expectedSnapshot = {}) {
     return String(previous).trim() === String(value).trim();
   });
 }
+
+// A linked Sales record needs no push if its current bound values still match
+// its last verified snapshot. Do not fetch or overwrite the remote row merely
+// to refresh timestamps; a remote-only change belongs to the pull path.
+// Never skip new or differently linked records, or records missing a snapshot.
+export function salesPushRecordUnchanged(record = {}, sheetId = "", expectedSnapshot = {}) {
+  const linkedRowId = String(record?.smartsheet_row_id ?? "").trim();
+  const linkedSheetId = String(record?.smartsheet_sheet_id ?? "").trim();
+  return /^\d+$/.test(linkedRowId) && linkedSheetId === String(sheetId).trim() &&
+    /^\d+$/.test(linkedSheetId) && salesPullSnapshotAligned(record, expectedSnapshot);
+}
