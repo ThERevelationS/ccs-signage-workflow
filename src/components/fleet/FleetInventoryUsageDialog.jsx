@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, PackageMinus, X } from "lucide-react";
 
 const FLUID_UNITS = ["ounces", "pints", "quarts", "gallons"];
@@ -10,6 +10,42 @@ export default function FleetInventoryUsageDialog({ open, item, itemType, equipm
   const [notes, setNotes] = useState("");
   const [operationKey, setOperationKey] = useState("");
   const [localError, setLocalError] = useState("");
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const previousFocus = useRef(null);
+  const closeCallback = useRef(onClose);
+  const busyState = useRef(busy);
+  closeCallback.current = onClose;
+  busyState.current = busy;
+
+  useEffect(() => {
+    if (!open || !item) return undefined;
+    previousFocus.current = document.activeElement;
+    closeRef.current?.focus();
+    const handleKey = event => {
+      if (event.key === "Escape") {
+        if (!busyState.current) { event.preventDefault(); closeCallback.current?.(); }
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0], last = controls[controls.length - 1], active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
+    };
+  }, [open, item]);
 
   useEffect(() => {
     if (!open || !item) return;
@@ -44,10 +80,10 @@ export default function FleetInventoryUsageDialog({ open, item, itemType, equipm
 
   return (
     <div className="fixed inset-0 z-[110] bg-black/50 flex items-center justify-center p-2 sm:p-4" onMouseDown={e => e.target === e.currentTarget && !busy && onClose()}>
-      <div role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-usage-dialog-title" className="w-full max-w-lg max-h-[94dvh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-inventory-usage-dialog-title" aria-describedby="fleet-inventory-usage-dialog-description" tabIndex={-1} className="w-full max-w-lg max-h-[94dvh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-4 sm:px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="min-w-0"><h2 id="fleet-inventory-usage-dialog-title" className="font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><PackageMinus className="w-5 h-5 text-indigo-500"/>Record Fleet Usage</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Deducts Fleet-only stock and writes equipment usage history. This does not touch signage inventory.</p></div>
-          <button type="button" onClick={onClose} disabled={busy} aria-label="Close Fleet inventory usage dialog" className="min-h-11 min-w-11 shrink-0 p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5"/></button>
+          <div className="min-w-0"><h2 id="fleet-inventory-usage-dialog-title" className="font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2"><PackageMinus className="w-5 h-5 text-indigo-500"/>Record Fleet Usage</h2><p id="fleet-inventory-usage-dialog-description" className="text-xs text-gray-500 dark:text-slate-400 mt-1">Deducts Fleet-only stock and writes equipment usage history. This does not touch signage inventory.</p></div>
+          <button ref={closeRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Fleet inventory usage dialog" className="min-h-11 min-w-11 shrink-0 p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5"/></button>
         </div>
         <form onSubmit={submit} className="p-4 sm:p-5 space-y-4">
           <div className="rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-slate-800/60"><div className="font-semibold text-gray-900 dark:text-slate-100 break-words">{itemName}</div><div className="text-xs text-gray-500 dark:text-slate-400 mt-1">Available: {stockQuantity ?? "—"} {stockUnit}</div></div>
@@ -58,7 +94,7 @@ export default function FleetInventoryUsageDialog({ open, item, itemType, equipm
           </div>
           {itemType === "fluid" && unit !== stockUnit && <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">The server will convert {unit} to the inventory stock unit ({stockUnit}) before deducting quantity.</div>}
           <label className="block text-sm"><span className="block text-xs font-medium text-gray-500 mb-1 dark:text-slate-400">Notes</span><textarea rows={3} value={notes} onChange={e=>setNotes(e.target.value)} className="usage-field" placeholder="Optional context, e.g. emergency top-off or shop repair"/></label>
-          {(localError || error) && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{localError || error}</div>}
+          {(localError || error) && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{localError || error}</div>}
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Usage is retry-safe. Insufficient stock or incompatible equipment is rejected instead of silently reducing inventory below zero.</div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2"><button type="button" onClick={onClose} disabled={busy} className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Cancel</button><button type="submit" disabled={busy} className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">{busy&&<Loader2 className="w-4 h-4 animate-spin"/>}Record Usage</button></div>
         </form>
