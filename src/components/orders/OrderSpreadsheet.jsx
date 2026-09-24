@@ -906,19 +906,19 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       `}</style>
 
       {/* Spreadsheet Table */}
-      <div ref={tableContainerRef} className="overflow-auto" style={{ height: 'calc(100vh - 300px)' }}>
-      <table className="w-full border-collapse border rounded-lg" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'auto', overflow: 'visible' }}>
+      <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
+      <table className="w-full border-collapse" style={{ fontSize: compact ? '11px' : '12px', tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
           <col style={{ width: '32px' }} />
-          <col style={{ width: compact ? '12%' : '18%', minWidth: '140px' }} />
-          <col style={{ width: compact ? '8%' : '8%', minWidth: '80px' }} />
-          <col style={{ width: compact ? '20%' : '25%', minWidth: '180px' }} />
-          <col style={{ width: '5%', minWidth: '40px' }} />
-          <col style={{ width: '8%', minWidth: '60px' }} />
-          <col style={{ width: '8%', minWidth: '70px' }} />
-          <col style={{ width: '8%', minWidth: '70px' }} />
-          <col style={{ width: compact ? '7%' : '8%', minWidth: '60px' }} />
-          <col style={{ width: '8%', minWidth: '70px' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '38%' }} />
+          <col style={{ width: '4%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
           <col style={{ width: '32px' }} />
         </colgroup>
         {/* Header Row */}
