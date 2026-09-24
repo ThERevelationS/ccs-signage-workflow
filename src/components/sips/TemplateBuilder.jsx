@@ -1979,9 +1979,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                 </div>
                 
                 <div className="flex gap-2 mb-4">
-                  <Input value={newDropdownName} onChange={(e) => setNewDropdownName(e.target.value)} placeholder="New condition..." className="flex-1 h-8 text-sm"
-                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }} />
-                  <Button size="sm" onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}><Plus className="w-3 h-3 mr-1" />Add</Button>
+                  <Input
+                    value={newDropdownName}
+                    onChange={(e) => setNewDropdownName(e.target.value)}
+                    placeholder="New condition..."
+                    className="h-11 min-w-0 flex-1 text-sm lg:h-8"
+                    aria-label="New condition name"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newDropdownName.trim()}
+                    className="h-11 shrink-0 px-3 touch-manipulation focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 lg:h-8"
+                    aria-label="Add condition"
+                    onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}
+                  >
+                    <Plus className="w-4 h-4 mr-1" aria-hidden="true" />Add
+                  </Button>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
