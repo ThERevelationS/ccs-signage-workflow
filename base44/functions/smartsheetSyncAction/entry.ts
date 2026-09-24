@@ -432,8 +432,9 @@ async function pullDataset(
     }
   }
 
-  // Soft-delete orphaned Base44 records whose Smartsheet rows no longer exist.
-  // These records can't get updates from Smartsheet and show stale/missing data.
+  // Preserve Base44 records whose linked Smartsheet row is missing.
+  // A missing row can be caused by deletion, movement, API visibility, or a partial read;
+  // flag it for review instead of mutating production data automatically.
   const smartsheetRowIds = new Set(allRows.map((r: any) => String(r.id)));
   const orphans = existingRecords.filter((r: any) => {
     const rowId = cleanText(r?.smartsheet_row_id, 40);
