@@ -305,21 +305,6 @@ async function pullDataset(
     if (!rowId || !/^\d+$/.test(rowId)) continue;
 
     const rawFields = parseRowToFields(row, bindings, dataset);
-    // Debug: log first row's parsed fields and raw cells
-    if (allRows.indexOf(row) === 0) {
-      const fieldValuesDebug: Record<string, any> = {};
-      for (const [key, val] of Object.entries(rawFields)) {
-        const normalized = normalizePullValue(key, val);
-        if (normalized !== undefined) fieldValuesDebug[key] = normalized;
-      }
-      console.log('DEBUG pull first row:', JSON.stringify({
-        dataset,
-        rowId,
-        rawFields,
-        fieldValues: fieldValuesDebug,
-        existingRecord: recordsByRowId[rowId] ? { id: recordsByRowId[rowId].id, client_name: recordsByRowId[rowId].client_name } : null,
-      }));
-    }
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
@@ -668,8 +653,6 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Observation mode is ON. Turn it off in settings to allow writes.' }, { status: 400 });
       }
 
-      await saveSyncStatus(base44, { status: 'running', started_at: new Date().toISOString(), action });
-
       const isSingleDataset = action === 'push_dataset' || action === 'pull_dataset';
       const datasetsToRun: ('sales' | 'orders')[] =
         isSingleDataset && body?.dataset === 'orders'
@@ -678,7 +661,29 @@ Deno.serve(async (req) => {
             ? ['sales']
             : ['sales', 'orders'];
 
+      // Build the list of steps so the UI can show a real progress bar.
+      const steps: { dataset: string; direction: string; label: string }[] = [];
+      for (const dataset of datasetsToRun) {
+        const profile = config?.[dataset] || {};
+        if (!profile.mirror_enabled) continue;
+        const wantPull = action === 'pull_dataset' || (action === 'run_sync' && profile.pull_enabled);
+        const wantPush = action === 'push_dataset' || (action === 'run_sync' && profile.push_enabled);
+        if (wantPull) steps.push({ dataset, direction: 'pull', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} ← Smartsheet` });
+        if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
+      }
+
+      await saveSyncStatus(base44, {
+        status: 'running',
+        started_at: new Date().toISOString(),
+        action,
+        total_steps: steps.length,
+        completed_steps: 0,
+        current_step_label: steps[0]?.label || '',
+        results: [],
+      });
+
       const results: any[] = [];
+      let completedSteps = 0;
       for (const dataset of datasetsToRun) {
         const profile = config?.[dataset] || {};
         if (!profile.mirror_enabled) {
@@ -696,19 +701,49 @@ Deno.serve(async (req) => {
 
         try {
           if (wantPull) {
+            const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'pull')?.label || '';
+            await saveSyncStatus(base44, {
+              status: 'running',
+              started_at: new Date().toISOString(),
+              action,
+              total_steps: steps.length,
+              completed_steps: completedSteps,
+              current_step_label: stepLabel,
+              results,
+            });
             const pullResult = await pullDataset(base44, token, dataset, profile, config);
             results.push(pullResult);
+            completedSteps++;
           }
           if (wantPush) {
+            const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'push')?.label || '';
+            await saveSyncStatus(base44, {
+              status: 'running',
+              started_at: new Date().toISOString(),
+              action,
+              total_steps: steps.length,
+              completed_steps: completedSteps,
+              current_step_label: stepLabel,
+              results,
+            });
             const pushResult = await pushDataset(base44, token, dataset, profile, config);
             results.push(pushResult);
+            completedSteps++;
           }
         } catch (err) {
           results.push({ dataset, skipped: true, reason: (err as any)?.message || 'Sync failed.' });
+          completedSteps++;
         }
       }
 
-      await saveSyncStatus(base44, { status: 'completed', completed_at: new Date().toISOString(), results });
+      await saveSyncStatus(base44, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        total_steps: steps.length,
+        completed_steps: steps.length,
+        current_step_label: '',
+        results,
+      });
 
       return Response.json({
         success: true,

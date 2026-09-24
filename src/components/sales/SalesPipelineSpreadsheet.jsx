@@ -486,7 +486,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }
   };
 
-  const calculateDays = (fromDate, toDate) => {
+  const calculateDays = useCallback((fromDate, toDate) => {
     // Guard against falsy values
     if (!fromDate || fromDate === '' || fromDate === null || fromDate === undefined) return null;
     
@@ -511,7 +511,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     } catch (error) {
       return null;
     }
-  };
+  }, []);
 
   const addNewRow = () => {
     if (!isRegistered) return;
@@ -2118,16 +2118,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     count: filteredWorkOrders.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 28,
-    overscan: 15,
+    overscan: 5,
   });
 
-  const isColumnVisible = (columnId) => {
+  const isColumnVisible = useCallback((columnId) => {
     if (!activeColumnPreset?.column_settings) return true;
     const setting = activeColumnPreset.column_settings.find(c => c.id === columnId);
     return setting?.visible !== false;
-  };
+  }, [activeColumnPreset]);
 
-  const handleContextMenu = (e, wo, fieldName, fieldLabel, currentValue) => {
+  const handleContextMenu = useCallback((e, wo, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({
@@ -2138,7 +2138,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       fieldLabel,
       currentValue
     });
-  };
+  }, []);
 
   const clearCell = (woId, fieldName) => {
     updateWorkOrder(woId, fieldName, "");
@@ -2525,7 +2525,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       )}
 
       <div ref={parentRef} className="overflow-auto" style={{ flex: 1, minHeight: 0, height: 0 }}>
-        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'auto' }}>
+        <table className="w-full border-collapse border rounded-lg" style={{ fontSize: '12px', tableLayout: 'fixed' }}>
           <thead className="sticky top-0 z-10 bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap [&_th]:py-1">
             <tr className="h-7 border-b bg-gray-100">
               <th className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ width: '32px', minWidth: '32px' }}>#</th>
