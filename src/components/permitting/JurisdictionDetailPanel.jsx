@@ -703,24 +703,32 @@ Answer the question based on the documents and information available. Be specifi
 
         {/* Parent County Info */}
         {jurisdiction.parent_county?.name && (
-          <div className="bg-orange-50 rounded-lg p-3 border-l-4 border-l-orange-400">
-            <p className="text-xs font-semibold text-orange-800 mb-2">Parent County: {jurisdiction.parent_county.name}</p>
-            <div className="space-y-1 text-xs text-gray-700">
+          <div className="rounded-lg border-l-4 border-l-orange-400 bg-orange-50 p-3">
+            <p className="mb-2 break-words text-xs font-semibold text-orange-800">Parent County: {jurisdiction.parent_county.name}</p>
+            <div className="space-y-2 text-xs text-gray-700">
               {jurisdiction.parent_county.website_url && (
-                <div>
-                  <a href={jurisdiction.parent_county.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    {jurisdiction.parent_county.website_url}
+                <div className="min-w-0">
+                  <a
+                    href={jurisdiction.parent_county.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open parent county website for ${jurisdiction.parent_county.name} in a new tab`}
+                    className="flex min-h-11 w-full items-center rounded-md border border-orange-200 bg-white px-3 py-2 text-sm text-blue-700 hover:bg-orange-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-xs"
+                  >
+                    <span className="min-w-0 break-all">{jurisdiction.parent_county.website_url}</span>
                   </a>
                 </div>
               )}
               {jurisdiction.parent_county.contact_info?.phone && (
-                <div>
-                  <span className="font-medium text-orange-700">Phone:</span> <a href={`tel:${jurisdiction.parent_county.contact_info.phone}`} className="text-blue-600 hover:underline">{jurisdiction.parent_county.contact_info.phone}</a>
+                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <span className="shrink-0 font-medium text-orange-700">Phone:</span>
+                  <a href={`tel:${jurisdiction.parent_county.contact_info.phone}`} className="inline-flex min-h-11 min-w-0 items-center rounded-md px-2 text-sm font-medium text-blue-700 hover:bg-orange-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:min-h-0 sm:px-0 sm:text-xs">{jurisdiction.parent_county.contact_info.phone}</a>
                 </div>
               )}
               {jurisdiction.parent_county.contact_info?.email && (
-                <div>
-                  <span className="font-medium text-orange-700">Email:</span> <a href={`mailto:${jurisdiction.parent_county.contact_info.email}`} className="text-blue-600 hover:underline">{jurisdiction.parent_county.contact_info.email}</a>
+                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <span className="shrink-0 font-medium text-orange-700">Email:</span>
+                  <a href={`mailto:${jurisdiction.parent_county.contact_info.email}`} className="inline-flex min-h-11 min-w-0 items-center break-all rounded-md px-2 text-sm font-medium text-blue-700 hover:bg-orange-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:min-h-0 sm:px-0 sm:text-xs">{jurisdiction.parent_county.contact_info.email}</a>
                 </div>
               )}
             </div>
