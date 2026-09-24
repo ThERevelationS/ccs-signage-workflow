@@ -11,6 +11,8 @@ import {
 } from '../../shared/smartsheetSyncFields.ts';
 import {
   filterSalesColumnBindings,
+  salesPulledFieldsUnchanged,
+  salesPullSnapshotAligned,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -328,6 +330,7 @@ async function pullDataset(
   // Collect records to create and update
   const toCreate: any[] = [];
   const toUpdate: any[] = [];
+  let unchangedSkipped = 0;
 
   for (const row of allRows) {
     const rowId = row.id;
@@ -344,6 +347,13 @@ async function pullDataset(
 
     const existing = recordsByRowId[rowId];
     if (existing) {
+      // A no-op pull must not bump updated_date or rewrite working Sales data.
+      // If the snapshot is missing/stale, retain the existing reconciliation path.
+      if (dataset === 'sales' && salesPulledFieldsUnchanged(existing, fieldValues) &&
+          salesPullSnapshotAligned(existing, buildSnapshot(existing, bindings, 'sales'))) {
+        unchangedSkipped++;
+        continue;
+      }
       toUpdate.push({ id: existing.id, _existing: existing, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
@@ -506,6 +516,7 @@ async function pullDataset(
     records_examined: allRows.length,
     created: createdCount,
     updated: updatedCount,
+    unchanged_skipped: unchangedSkipped,
     errors: errors.length,
     error_details: errors.slice(0, 10),
     orphans_soft_deleted: 0,
