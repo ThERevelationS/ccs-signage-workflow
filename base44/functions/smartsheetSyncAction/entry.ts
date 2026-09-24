@@ -670,6 +670,92 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'debug_dates') {
+      // Diagnostic: fetch raw Smartsheet cells for date columns and compare with Base44.
+      const { config } = await loadSyncConfig(base44);
+      if (!config) {
+        return Response.json({ success: false, error: 'No sync config.' }, { status: 400 });
+      }
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const bindings = profile?.column_bindings || {};
+      const dateOrderedCol = String(bindings?.date_ordered || '').trim();
+      const dateReceivedCol = String(bindings?.date_received || '').trim();
+      const columnIds = [dateOrderedCol, dateReceivedCol].filter((id: string) => /^\d+$/.test(id));
+      if (!columnIds.length) {
+        return Response.json({ success: false, error: 'No date column bindings.' }, { status: 400 });
+      }
+      // Fetch all rows with only the date columns
+      const allRows: any[] = [];
+      let page = 1;
+      const pageSize = 200;
+      let totalRowCount = 0;
+      while (page <= 100) {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+          columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+        const rows = normalizeSheetRows(result.body);
+        if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
+        allRows.push(...rows);
+        if (allRows.length >= totalRowCount || rows.length === 0) break;
+        page++;
+      }
+      // Load Base44 records
+      const existingRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+      const recordsByRowId: Record<string, any> = {};
+      for (const rec of existingRecords) {
+        const rowId = cleanText(rec?.smartsheet_row_id, 40);
+        if (rowId) recordsByRowId[rowId] = rec;
+      }
+      // Compare
+      const discrepancies: any[] = [];
+      let ssHasOrderedB44Missing = 0;
+      let ssHasReceivedB44Missing = 0;
+      for (const row of allRows) {
+        const rec = recordsByRowId[row.id];
+        if (!rec) continue;
+        const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
+        const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
+        const ssOrdered = orderedCell?.value ?? orderedCell?.display_value ?? null;
+        const ssReceived = receivedCell?.value ?? receivedCell?.display_value ?? null;
+        const parseDate = (v: any) => {
+          const raw = String(v ?? '').trim();
+          if (!raw) return null;
+          const d = new Date(raw);
+          if (Number.isNaN(d.getTime())) return null;
+          return d.toISOString().slice(0, 10);
+        };
+        const ssOrderedParsed = ssOrdered ? parseDate(ssOrdered) : null;
+        const ssReceivedParsed = ssReceived ? parseDate(ssReceived) : null;
+        if (ssOrderedParsed && !rec.date_ordered) ssHasOrderedB44Missing++;
+        if (ssReceivedParsed && !rec.date_received) ssHasReceivedB44Missing++;
+        if ((ssOrderedParsed && !rec.date_ordered) || (ssReceivedParsed && !rec.date_received)) {
+          discrepancies.push({
+            row_id: row.id,
+            customer: rec.customer_name,
+            b44_ordered: rec.date_ordered,
+            b44_received: rec.date_received,
+            ss_ordered_raw: ssOrdered,
+            ss_ordered_parsed: ssOrderedParsed,
+            ss_received_raw: ssReceived,
+            ss_received_parsed: ssReceivedParsed,
+          });
+        }
+      }
+      return Response.json({
+        success: true,
+        total_smartsheet_rows: allRows.length,
+        ss_has_ordered_b44_missing: ssHasOrderedB44Missing,
+        ss_has_received_b44_missing: ssHasReceivedB44Missing,
+        discrepancy_count: discrepancies.length,
+        discrepancies: discrepancies.slice(0, 20),
+      });
+    }
+
     if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset') {
       const { config } = await loadSyncConfig(base44);
       if (!config) {
