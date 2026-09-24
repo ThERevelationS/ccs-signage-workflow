@@ -148,36 +148,42 @@ export function parseRowToFields(
   dataset: "sales" | "orders",
 ): Record<string, any> {
   const fields = getMappableFields(dataset);
-  const columnToField: Record<string, MappableField> = {};
+  // Multiple Base44 fields can map to the same Smartsheet column (e.g.
+  // requestor_name and requestor_email both bound to a CONTACT column).
+  // Keep a list of fields per column so all of them get populated.
+  const columnToFields: Record<string, MappableField[]> = {};
   for (const field of fields) {
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (columnId && /^\d+$/.test(columnId)) {
-      columnToField[columnId] = field;
+      if (!columnToFields[columnId]) columnToFields[columnId] = [];
+      columnToFields[columnId].push(field);
     }
   }
   const out: Record<string, any> = {};
   for (const cell of row?.cells || []) {
     const colId = String(cell.column_id || cell.columnId || "");
-    const field = columnToField[colId];
-    if (!field) continue;
-    // For date and number fields, prefer the raw `value` (ISO date / number).
-    // For text fields, prefer `display_value` — Smartsheet CONTACT columns store
-    // an object in `value` and the readable name in `display_value`.
-    const preferValue = field.type === 'date' || field.type === 'number';
-    const raw = preferValue
-      ? (cell.value != null ? cell.value : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : null)))
-      : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : cell.value));
-    if (raw === null || raw === undefined || raw === "") continue;
-    if (field.type === "number") {
-      const num = Number(raw);
-      if (Number.isFinite(num)) out[field.key] = num;
-    } else if (field.type === "date") {
-      const stamp = dateStamp(raw);
-      if (stamp) out[field.key] = stamp;
-    } else if (field.type === "notes") {
-      // Skip notes on pull — would need complex deserialization
-    } else {
-      out[field.key] = cleanText(raw);
+    const fieldList = columnToFields[colId];
+    if (!fieldList || fieldList.length === 0) continue;
+    for (const field of fieldList) {
+      // For date and number fields, prefer the raw `value` (ISO date / number).
+      // For text fields, prefer `display_value` — Smartsheet CONTACT columns store
+      // an object in `value` and the readable name in `display_value`.
+      const preferValue = field.type === 'date' || field.type === 'number';
+      const raw = preferValue
+        ? (cell.value != null ? cell.value : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : null)))
+        : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : cell.value));
+      if (raw === null || raw === undefined || raw === "") continue;
+      if (field.type === "number") {
+        const num = Number(raw);
+        if (Number.isFinite(num)) out[field.key] = num;
+      } else if (field.type === "date") {
+        const stamp = dateStamp(raw);
+        if (stamp) out[field.key] = stamp;
+      } else if (field.type === "notes") {
+        // Skip notes on pull — would need complex deserialization
+      } else {
+        out[field.key] = cleanText(raw);
+      }
     }
   }
   return out;

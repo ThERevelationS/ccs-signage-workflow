@@ -348,21 +348,48 @@ async function pullDataset(
     }
   }
 
-  // Individual updates — bulkUpdate was found to silently fail to apply
-  // field values to Order/WorkOrder entities, so we update one at a time.
-  for (const rec of toUpdate) {
-    try {
-      const { id, _existing, ...fields } = rec;
-      await base44.asServiceRole.entities[entityName].update(id, fields);
-      // Store a fresh snapshot so the next push doesn't see a false conflict.
-      if (_existing) {
-        const merged = { ..._existing, ...fields };
-        const snapshot = buildSnapshot(merged, bindings, dataset);
-        await base44.asServiceRole.entities[entityName].update(id, { smartsheet_sync_snapshot: snapshot });
+  // Bulk update in batches of 100 with retry for rate limits.
+  // Individual updates were tried but hit rate limits on large sheets (1675+ rows).
+  const updateBatchSize = 100;
+  const snapshotUpdates: any[] = [];
+  for (let i = 0; i < toUpdate.length; i += updateBatchSize) {
+    const batch = toUpdate.slice(i, i + updateBatchSize);
+    // Strip _existing before sending — it's only for snapshot building.
+    const payload = batch.map(({ id, _existing, ...fields }: any) => ({ id, ...fields }));
+    let attempt = 0;
+    const maxAttempts = 3;
+    while (attempt < maxAttempts) {
+      try {
+        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
+        updatedCount += payload.length;
+        // Queue snapshot updates for a separate bulk pass
+        for (const rec of batch) {
+          if (rec._existing) {
+            const { id, _existing, ...fields } = rec;
+            const merged = { ..._existing, ...fields };
+            const snapshot = buildSnapshot(merged, bindings, dataset);
+            snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
+          }
+        }
+        break;
+      } catch (err: any) {
+        attempt++;
+        if (attempt >= maxAttempts || !String(err?.message || '').includes('Rate limit')) {
+          errors.push(`Update batch ${Math.floor(i / updateBatchSize) + 1}: ${err?.message || 'unknown error'}`);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
       }
-      updatedCount++;
-    } catch (err) {
-      errors.push(`Update ${rec.id}: ${(err as any)?.message || 'unknown error'}`);
+    }
+  }
+
+  // Write snapshots in bulk so the next push sync doesn't see false conflicts.
+  for (let i = 0; i < snapshotUpdates.length; i += updateBatchSize) {
+    const batch = snapshotUpdates.slice(i, i + updateBatchSize);
+    try {
+      await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
+    } catch {
+      // non-critical — snapshot is only for conflict detection
     }
   }
 
