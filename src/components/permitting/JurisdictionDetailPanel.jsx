@@ -962,15 +962,26 @@ Answer the question based on the documents and information available. Be specifi
         <p className="text-xs font-semibold text-cyan-800 mb-2 flex items-center gap-1">
           <MessageSquare className="w-3 h-3" /> Ask AI about this jurisdiction
         </p>
-        {chatHistory.length > 0 && (
-          <div className="max-h-48 overflow-y-auto space-y-2 mb-2 bg-white rounded-lg p-2 border">
+        {(chatHistory.length > 0 || asking) && (
+          <div
+            className="mb-2 max-h-56 space-y-2 overflow-y-auto rounded-lg border bg-white p-2 sm:max-h-48"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-label="Jurisdiction AI conversation"
+          >
             {chatHistory.map((msg, i) => (
-              <div key={i} className={`text-xs p-2 rounded ${msg.role === 'user' ? 'bg-blue-50 text-blue-800 ml-4' : 'bg-purple-50 text-gray-800 mr-4'}`}>
+              <div key={i} className={`min-w-0 rounded p-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] sm:text-xs ${msg.role === 'user' ? 'bg-blue-50 text-blue-800 sm:ml-4' : 'bg-purple-50 text-gray-800 sm:mr-4'}`}>
                 <span className="font-semibold">{msg.role === 'user' ? 'You: ' : 'AI: '}</span>
-                {msg.content}
+                <span className="whitespace-pre-wrap">{msg.content}</span>
               </div>
             ))}
-            {asking && <div className="text-xs text-gray-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Thinking...</div>}
+            {asking && (
+              <div className="flex min-h-8 items-center gap-2 rounded bg-gray-50 px-2.5 text-xs text-gray-500" role="status" aria-atomic="true">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Thinking...
+              </div>
+            )}
           </div>
         )}
         <div className="flex flex-col gap-2 sm:flex-row">
