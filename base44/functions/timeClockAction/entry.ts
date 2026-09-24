@@ -3425,7 +3425,12 @@ Deno.serve(async (req) => {
         if (rows.length > 1) return { audit: null, investigation: true };
         let reviewAudit: any = rows[0] || null;
         const storedAuditHash = String(reviewAudit?.details?.review_payload_hash || '');
-        if (storedAuditHash && !constantTimeEqual(storedAuditHash, reviewHash)) return { audit: null, investigation: true };
+        const storedAuditCorrectionRequestId = String(reviewAudit?.details?.correction_request_id || '');
+        if (reviewAudit?.id && (
+          asEmail(reviewAudit.user_email) !== target.email ||
+          (storedAuditCorrectionRequestId && storedAuditCorrectionRequestId !== correctionRequest.id) ||
+          (storedAuditHash && !constantTimeEqual(storedAuditHash, reviewHash))
+        )) return { audit: null, investigation: true };
 
         if (!reviewAudit?.id) {
           try {
@@ -3474,6 +3479,13 @@ Deno.serve(async (req) => {
 
         if (!reviewAudit || !['confirmed', 'recovered'].includes(String(reviewAudit.outcome || ''))) {
           return { audit: null, retry: true };
+        }
+        if (
+          asEmail(reviewAudit.user_email) !== target.email ||
+          String(reviewAudit.details?.correction_request_id || '') !== correctionRequest.id ||
+          !constantTimeEqual(String(reviewAudit.details?.review_payload_hash || ''), reviewHash)
+        ) {
+          return { audit: null, investigation: true };
         }
         return { audit: reviewAudit };
       };
