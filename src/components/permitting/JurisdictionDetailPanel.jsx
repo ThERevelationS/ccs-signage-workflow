@@ -973,16 +973,24 @@ Answer the question based on the documents and information available. Be specifi
             {asking && <div className="text-xs text-gray-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Thinking...</div>}
           </div>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             value={question}
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && askQuestion()}
             placeholder="e.g. What is the max sign height? Are permits required?"
-            className="text-xs h-8 flex-1"
+            aria-label="Ask AI about this jurisdiction"
+            className="min-h-11 flex-1 text-sm"
           />
-          <Button size="sm" onClick={askQuestion} disabled={asking || !question.trim()} className="h-8 bg-purple-600 hover:bg-purple-700">
-            {asking ? <Loader2 className="w-3 h-3 animate-spin" /> : "Ask"}
+          <Button
+            size="sm"
+            onClick={askQuestion}
+            disabled={asking || !question.trim()}
+            className="min-h-11 w-full gap-2 bg-purple-600 px-4 hover:bg-purple-700 sm:w-auto"
+            aria-label={asking ? "Asking AI about this jurisdiction" : "Ask AI about this jurisdiction"}
+          >
+            {asking && <Loader2 className="h-4 w-4 animate-spin" />}
+            {asking ? "Asking..." : "Ask"}
           </Button>
         </div>
       </div>
