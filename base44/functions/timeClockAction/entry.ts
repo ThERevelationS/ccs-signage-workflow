@@ -4316,6 +4316,14 @@ Deno.serve(async (req) => {
           !approvalAuditMatches(finalAudit) || !savedByThisApproval(entry)) {
           return Response.json({ success: false, retry_same_request: true, error: 'The saved approval and exact manager audit could not be verified. Retry the same approval action.' }, { status: 409 });
         }
+        if (decision === 'approve') {
+          const completedGateReleased = await releaseCompletedCorrectionCreateLock(
+            stateEntity, state.id, requestId, entry.id, approvalPayloadHash,
+          );
+          if (!completedGateReleased) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The approval and audit are saved, but the shared correction/approval lock still needs recovery. Retry this same approval.' }, { status: 409 });
+          }
+        }
         return Response.json({ success: true, entry, audit_id: intent.id, reused: true });
       }
       if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
@@ -4325,6 +4333,25 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
       }
       if (String(entry.updated_date || '') !== expectedUpdatedDate) return Response.json({ success: false, error: 'This TimeEntry changed since it was loaded. Reload before approving it.' }, { status: 409 });
+
+      // Serialize approval with employee correction creation using the existing
+      // per-employee CAS gate, including the unresolved-correction check.
+      let approvalGate: any = null;
+      if (decision === 'approve') {
+        approvalGate = await claimCorrectionCreateLock(
+          stateEntity, state.id, requestId, entry.id, approvalPayloadHash,
+        );
+        if (!approvalGate?.acquired) {
+          return Response.json({
+            success: false,
+            ...(approvalGate?.retry_same_request ? { retry_same_request: true } : {}),
+            error: approvalGate?.investigation
+              ? approvalGate.error
+              : 'Another correction submission or approval is being processed for this employee. Retry after the current action finishes.',
+          }, { status: 409 });
+        }
+      }
+      try {
       if (decision === 'approve') {
         const unresolvedCorrections = await correctionRequestEntity.filter({
           time_entry_id: entry.id,
@@ -4397,6 +4424,21 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but its exact manager audit could not be confirmed. Retry the same approval action.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
+      } finally {
+        if (approvalGate?.acquired) {
+          const released = await releaseCorrectionCreateLock(
+            stateEntity, state.id, requestId, entry.id, approvalPayloadHash,
+            String(approvalGate.claim_token || ''),
+          );
+          if (!released) {
+            const currentGate = await freshState(stateEntity, state.id).catch(() => null);
+            const gateStatus = String(currentGate?.correction_create_status || '');
+            if (gateStatus === 'creating' && String(currentGate?.correction_create_request_id || '') === requestId) {
+              throw new Error('The approval gate could not be released after processing. Retry the same approval request to recover its lock.');
+            }
+          }
+        }
+      }
     }
 
     if (action === 'admin_archive_entry') {
