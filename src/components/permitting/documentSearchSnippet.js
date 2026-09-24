@@ -55,3 +55,9 @@ export function documentMatchSnippet(content, position, matchLength) {
   const end = Math.min(content.length, position + matchLength + 100);
   return `${start > 0 ? "…" : ""}${content.slice(start, end)}${end < content.length ? "…" : ""}`;
 }
+
+// Keyboard and button navigation share the same bounds; do not wrap unexpectedly.
+export function stepDocumentMatchIndex(index, matchCount, direction) {
+  if (matchCount <= 0) return 0;
+  return Math.max(0, Math.min(matchCount - 1, index + direction));
+}
