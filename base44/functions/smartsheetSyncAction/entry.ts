@@ -381,8 +381,9 @@ async function pullDataset(
   }
 
   // Write snapshots in bulk so the next push sync doesn't see false conflicts.
-  for (let i = 0; i < snapshotUpdates.length; i += updateBatchSize) {
-    const batch = snapshotUpdates.slice(i, i + updateBatchSize);
+  const snapshotBatchSize = 100;
+  for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
+    const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
     } catch {
