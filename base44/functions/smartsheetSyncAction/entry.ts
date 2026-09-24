@@ -503,7 +503,9 @@ async function pullDataset(
     updated: updatedCount,
     errors: errors.length,
     error_details: errors.slice(0, 10),
-    orphans_soft_deleted: orphanCount,
+    orphans_soft_deleted: 0,
+    orphans_flagged_for_review: orphans.length,
+    orphan_record_ids: orphans.slice(0, 10).map((record: any) => record.id),
     debug: debugCounts,
   };
 }
