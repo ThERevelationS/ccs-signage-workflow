@@ -644,30 +644,30 @@ Answer the question based on the documents and information available. Be specifi
           <div className="bg-red-50 rounded-lg p-3 border-l-4 border-l-red-400 space-y-3">
             <div>
               <p className="text-xs font-semibold text-red-800 mb-2">Permit Requirements</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                 {req.requires_permit !== undefined && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex min-w-0 items-start gap-1.5">
                     {req.requires_permit ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span>Permit Required</span>
+                    <span className="min-w-0 break-words">Permit Required</span>
                   </div>
                 )}
-                {req.max_sign_area_sqft && <div><span className="text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
-                {req.max_height_ft && <div><span className="text-gray-500">Max Height:</span> {req.max_height_ft} ft</div>}
-                {req.fee_range && <div><span className="text-gray-500">Fees:</span> {req.fee_range}</div>}
-                {req.processing_time && <div><span className="text-gray-500">Processing:</span> {req.processing_time}</div>}
+                {req.max_sign_area_sqft && <div className="min-w-0 break-words"><span className="font-medium text-gray-500">Max Area:</span> {req.max_sign_area_sqft} sq ft</div>}
+                {req.max_height_ft && <div className="min-w-0 break-words"><span className="font-medium text-gray-500">Max Height:</span> {req.max_height_ft} ft</div>}
+                {req.fee_range && <div className="min-w-0 break-words"><span className="font-medium text-gray-500">Fees:</span> {req.fee_range}</div>}
+                {req.processing_time && <div className="min-w-0 break-words"><span className="font-medium text-gray-500">Processing:</span> {req.processing_time}</div>}
                 {req.illumination_allowed !== undefined && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex min-w-0 items-start gap-1.5">
                     {req.illumination_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span>Illumination Allowed</span>
+                    <span className="min-w-0 break-words">Illumination Allowed</span>
                   </div>
                 )}
                 {req.electronic_signs_allowed !== undefined && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex min-w-0 items-start gap-1.5">
                     {req.electronic_signs_allowed ? <CheckCircle className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />}
-                    <span>Electronic Signs</span>
+                    <span className="min-w-0 break-words">Electronic Signs</span>
                   </div>
                 )}
-                {req.setback_requirements && <div className="col-span-2"><span className="text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
+                {req.setback_requirements && <div className="min-w-0 break-words sm:col-span-2"><span className="font-medium text-gray-500">Setbacks:</span> {req.setback_requirements}</div>}
               </div>
             </div>
 
@@ -676,22 +676,22 @@ Answer the question based on the documents and information available. Be specifi
                 <p className="text-xs font-semibold text-red-800 mb-2">Detailed Rules</p>
                 <div className="space-y-2 text-xs text-gray-700">
                   {jurisdiction.sqft_width_height_rules && (
-                    <div>
+                    <div className="min-w-0 break-words leading-relaxed">
                       <span className="font-medium text-red-700">SQFT/Width/Height:</span> {jurisdiction.sqft_width_height_rules}
                     </div>
                   )}
                   {jurisdiction.height_allowances && (
-                    <div>
+                    <div className="min-w-0 break-words leading-relaxed">
                       <span className="font-medium text-red-700">Height Allowances:</span> {jurisdiction.height_allowances}
                     </div>
                   )}
                   {jurisdiction.setback_rules && (
-                    <div>
+                    <div className="min-w-0 break-words leading-relaxed">
                       <span className="font-medium text-red-700">Setback Rules:</span> {jurisdiction.setback_rules}
                     </div>
                   )}
                   {jurisdiction.lighting_allowances && (
-                    <div>
+                    <div className="min-w-0 break-words leading-relaxed">
                       <span className="font-medium text-red-700">Lighting Allowances:</span> {jurisdiction.lighting_allowances}
                     </div>
                   )}
