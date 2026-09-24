@@ -1348,7 +1348,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                             >
                               <GripVertical className="w-4 h-4 text-gray-400" aria-hidden="true" />
                             </div>
-                            <Input value={product.customName} onChange={(e) => updateProductName(product.id, e.target.value)} disabled={product.isExisting} className="h-7 text-sm flex-1" />
+                            <Input
+                              value={product.customName}
+                              onChange={(e) => updateProductName(product.id, e.target.value)}
+                              disabled={product.isExisting}
+                              className="h-11 min-w-0 flex-1 text-sm lg:h-7"
+                              aria-label={product.isExisting
+                                ? `Saved product name ${product.customName}`
+                                : `Product name for ${product.productType} checklist`}
+                            />
                             {product.isExisting && (
                               <span
                                 className="text-[10px] font-medium rounded bg-green-100 text-green-700 px-1.5 py-0.5"
@@ -1435,8 +1443,13 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                           </DragDropContext>
                           )}
                           {selectedProducts.length > 0 && (
-                          <Button onClick={handleApplyTemplate} className="w-full mt-2 bg-purple-600 hover:bg-purple-700">
-                          <CheckSquare className="w-4 h-4 mr-2" />Apply to Project
+                          <Button
+                            type="button"
+                            onClick={handleApplyTemplate}
+                            className="min-h-11 w-full mt-2 bg-purple-600 hover:bg-purple-700 touch-manipulation focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
+                            aria-label="Apply selected checklist setup to project"
+                          >
+                            <CheckSquare className="w-4 h-4 mr-2" aria-hidden="true" />Apply to Project
                           </Button>
                           )}
                 </div>
