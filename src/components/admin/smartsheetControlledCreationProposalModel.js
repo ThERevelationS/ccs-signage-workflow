@@ -355,6 +355,10 @@ export function buildSmartsheetControlledCreationProposals({
     }
 
     return {
+      // Permanent invariant: one Smartsheet source row remains one dependent
+      // WorkOrder/Order proposal line. Customer grouping may be shared, but
+      // project/order lines are never collapsed by Customer name.
+      source_line_key: `${String(sheetId)}|${String(readiness.row_id || "")}`,
       row_id: readiness.row_id,
       row_number: readiness.row_number,
       label: readiness.label,
@@ -378,7 +382,9 @@ export function buildSmartsheetControlledCreationProposals({
   });
 
   // Flag same-customer/same-work duplicates within this preview, including aliases
-  // that resolve to the same existing Customer.
+  // that resolve to the same existing Customer. This is review-only: every
+  // permanent Smartsheet row stays in proposed[] as its own line; never merge,
+  // drop, or replace rows just because they share one Customer.
   const fingerprints = new Map();
   for (const row of proposed) {
     if (!row.data_ready || !row.customer) continue;
@@ -409,6 +415,7 @@ export function buildSmartsheetControlledCreationProposals({
 
   const summary = {
     post_baseline_rows: proposed.length,
+    dependent_record_lines: proposed.length,
     data_ready: proposed.filter((item) => item.data_ready).length,
     proposal_ready: proposed.filter((item) => item.proposal_ready).length,
     blocked: proposed.filter((item) => !item.proposal_ready).length,
