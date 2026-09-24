@@ -400,6 +400,12 @@ async function pullDataset(
     const rowId = cleanText(r?.smartsheet_row_id, 40);
     return rowId && /^\d+$/.test(rowId) && !smartsheetRowIds.has(rowId) && !r.deleted;
   });
+  const debugCounts = {
+    existing_records: existingRecords.length,
+    records_by_row_id: Object.keys(recordsByRowId).length,
+    smartsheet_row_ids: smartsheetRowIds.size,
+    orphan_candidates: orphans.length,
+  };
   let orphanCount = 0;
   if (orphans.length > 0) {
     const orphanBatchSize = 100;
@@ -432,6 +438,7 @@ async function pullDataset(
     errors: errors.length,
     error_details: errors.slice(0, 10),
     orphans_soft_deleted: orphanCount,
+    debug: debugCounts,
   };
 }
 
