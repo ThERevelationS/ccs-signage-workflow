@@ -471,8 +471,9 @@ async function pullDataset(
     orphan_candidates: orphans.length,
   };
 
-  // Soft-delete duplicate Base44 records that share the same smartsheet_row_id.
-  // Keep the most recently updated record per row_id; soft-delete the rest.
+  // Detect duplicate Base44 records that share a Smartsheet row ID, but never
+  // delete or mutate them automatically. These are live WorkOrders and require
+  // explicit human review before any cleanup decision.
   const recordsByRowIdList: Record<string, any[]> = {};
   for (const rec of existingRecords) {
     const rowId = cleanText(rec?.smartsheet_row_id, 40);
@@ -481,36 +482,14 @@ async function pullDataset(
       recordsByRowIdList[rowId].push(rec);
     }
   }
-  const duplicatesToDelete: any[] = [];
-  for (const [rowId, recs] of Object.entries(recordsByRowIdList)) {
-    if (recs.length <= 1) continue;
-    // Keep the most recently updated; soft-delete the rest
-    recs.sort((a: any, b: any) => new Date(b?.updated_date || 0).getTime() - new Date(a?.updated_date || 0).getTime());
-    for (let i = 1; i < recs.length; i++) {
-      duplicatesToDelete.push(recs[i]);
-    }
-  }
-  let dedupCount = 0;
-  if (duplicatesToDelete.length > 0) {
-    const now = new Date().toISOString();
-    const dedupBatchSize = 100;
-    for (let i = 0; i < duplicatesToDelete.length; i += dedupBatchSize) {
-      const batch = duplicatesToDelete.slice(i, i + dedupBatchSize);
-      const payload = batch.map((r: any) => ({
-        id: r.id,
-        deleted: true,
-        deleted_at: now,
-        deleted_by: 'smartsheet_sync_dedup',
-      }));
-      try {
-        await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
-        dedupCount += payload.length;
-      } catch {
-        // non-critical — dedup is best-effort
-      }
-    }
-  }
-  debugCounts.duplicates_soft_deleted = dedupCount;
+  const duplicateGroups = Object.entries(recordsByRowIdList)
+    .filter(([, recs]) => recs.length > 1)
+    .map(([rowId, recs]) => ({
+      row_id: rowId,
+      record_ids: recs.map((record: any) => record.id),
+    }));
+  debugCounts.duplicates_soft_deleted = 0;
+  debugCounts.duplicate_groups_flagged_for_review = duplicateGroups.length;
   debugCounts.orphans_preserved_for_review = orphans.length;
 
   return {
@@ -526,6 +505,9 @@ async function pullDataset(
     orphans_soft_deleted: 0,
     orphans_flagged_for_review: orphans.length,
     orphan_record_ids: orphans.slice(0, 10).map((record: any) => record.id),
+    duplicates_soft_deleted: 0,
+    duplicate_groups_flagged_for_review: duplicateGroups.length,
+    duplicate_groups: duplicateGroups.slice(0, 10),
     debug: debugCounts,
   };
 }
