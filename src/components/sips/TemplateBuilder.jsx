@@ -1386,30 +1386,39 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                     item.product_name === product.customName && item.sub_template_name === st.name
                                   );
                                   return (
-                                    <div
+                                    <button
                                       key={st.id}
+                                      type="button"
                                       onClick={() => { if (!isAlreadyApplied) toggleSubTemplateForProduct(product.id, st.id); }}
+                                      aria-pressed={isAlreadyApplied || isSelected}
+                                      aria-disabled={isAlreadyApplied}
+                                      aria-label={isAlreadyApplied
+                                        ? `${st.name}, already applied to saved Work Order checklist`
+                                        : `${isSelected ? 'Remove' : 'Add'} checklist option ${st.name} for ${product.customName}`}
                                       title={isAlreadyApplied ? "Applied — this saved checklist option remains on the Work Order" : undefined}
-                                      className={`text-xs px-1.5 py-1 rounded border flex items-center gap-1 ${
+                                      className={`min-h-11 max-w-full px-2 py-1.5 rounded border inline-flex items-center gap-1.5 text-left text-xs touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-1 ${
                                         isAlreadyApplied
                                           ? 'bg-green-50 border-green-200 text-green-700 cursor-default'
                                           : isSelected
-                                            ? 'bg-purple-100 border-purple-400 cursor-pointer'
-                                            : 'bg-white cursor-pointer hover:border-purple-300'
+                                            ? 'bg-purple-100 border-purple-400'
+                                            : 'bg-white hover:border-purple-300'
                                       }`}
                                     >
-                                      <div className={`w-3 h-3 rounded border flex items-center justify-center ${
-                                        isAlreadyApplied
-                                          ? 'bg-green-500 border-green-500'
-                                          : isSelected
-                                            ? 'bg-purple-500 border-purple-500'
-                                            : 'border-gray-400'
-                                      }`}>
-                                        {(isAlreadyApplied || isSelected) && <Check className="w-2 h-2 text-white" />}
-                                      </div>
-                                      <span>{st.name}</span>
-                                      {isAlreadyApplied && <span className="font-medium">Applied</span>}
-                                    </div>
+                                      <span
+                                        className={`w-4 h-4 shrink-0 rounded border flex items-center justify-center ${
+                                          isAlreadyApplied
+                                            ? 'bg-green-500 border-green-500'
+                                            : isSelected
+                                              ? 'bg-purple-500 border-purple-500'
+                                              : 'border-gray-400'
+                                        }`}
+                                        aria-hidden="true"
+                                      >
+                                        {(isAlreadyApplied || isSelected) && <Check className="w-3 h-3 text-white" />}
+                                      </span>
+                                      <span className="min-w-0 break-words">{st.name}</span>
+                                      {isAlreadyApplied && <span className="shrink-0 font-medium">Applied</span>}
+                                    </button>
                                   );
                                 })}
                               </div>
