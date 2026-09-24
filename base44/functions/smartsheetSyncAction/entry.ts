@@ -299,7 +299,12 @@ async function pullDataset(
   if (dataset === 'sales') {
     existingRecords = await base44.asServiceRole.entities.WorkOrder.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
   } else {
-    existingRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+    existingRecords = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.Order,
+      query: { smartsheet_sheet_id: sheetId },
+      sort: 'id',
+      label: 'Order Form Smartsheet pull linked Orders',
+    });
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
 
