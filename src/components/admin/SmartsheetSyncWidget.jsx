@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { RefreshCw, Check, AlertTriangle, GitBranch, X } from "lucide-react";
+import { interpretSmartsheetSyncStatus } from "./smartsheetSyncStatusModel.js";
 
 const STATUS_KEY = 'smartsheetSyncStatus';
 const CONFIG_KEY = 'smartsheetSyncConfig';
@@ -48,7 +49,7 @@ export default function SmartsheetSyncWidget() {
   if (loading) return null;
   if (!config?.global_enabled) return null;
 
-  const isRunning = status?.status === 'running';
+  const { isRunning, isStale, ageMinutes } = interpretSmartsheetSyncStatus(status);
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
@@ -62,8 +63,8 @@ export default function SmartsheetSyncWidget() {
 
   // Only show the widget when a sync is running, or briefly after completion
   if (!isRunning && dismissed) return null;
-  if (!isRunning && !status?.completed_at) return null;
-  if (!isRunning && totalCreated === 0 && totalUpdated === 0 && !hasErrors) return null;
+  if (!isRunning && !isStale && !status?.completed_at) return null;
+  if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors) return null;
 
   const lastSync = status?.completed_at || status?.started_at;
   const lastSyncDate = lastSync ? new Date(lastSync) : null;
@@ -80,20 +81,22 @@ export default function SmartsheetSyncWidget() {
               {isRunning && (
                 <RefreshCw className="w-3 h-3 text-blue-500 animate-spin absolute -top-1 -right-1" />
               )}
-              {!isRunning && lastSyncDate && !hasErrors && (
+              {!isRunning && !isStale && lastSyncDate && !hasErrors && (
                 <Check className="w-3 h-3 text-green-500 absolute -top-1 -right-1" />
               )}
-              {!isRunning && hasErrors && (
+              {!isRunning && (isStale || hasErrors) && (
                 <AlertTriangle className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" />
               )}
             </div>
             <div className="text-xs min-w-0">
               <div className="font-semibold text-gray-800 truncate">
-                {isRunning ? "Smartsheet Sync" : "Sync Complete"}
+                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : "Sync Complete"}
               </div>
               <div className="text-gray-500 truncate">
                 {isRunning
                   ? currentStepLabel || "Preparing…"
+                  : isStale
+                    ? ageMinutes === null ? "Missing progress timestamp" : `No reported progress for ${ageMinutes}m`
                   : lastSyncDate
                     ? minutesAgo < 1
                       ? "just now"
@@ -116,7 +119,13 @@ export default function SmartsheetSyncWidget() {
         </div>
 
         {/* Progress bar */}
-        {isRunning ? (
+        {isStale ? (
+          <div className="px-3 py-2.5 space-y-2 text-[11px] text-amber-800" role="status">
+            <p>The last sync still says running, but its progress timestamp is stale. Its actual outcome is unverified; do not assume the run completed.</p>
+            <p className="text-gray-600">Last reported: {currentStepLabel || "Unknown stage"} · {completedSteps}/{totalSteps} stages</p>
+            <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Review sync settings →</Link>
+          </div>
+        ) : isRunning ? (
           <div className="px-3 py-2.5 space-y-2">
             <div className="flex items-center justify-between text-[11px] text-gray-600">
               <span className="font-medium truncate">{currentStepLabel || "Initializing…"}</span>
