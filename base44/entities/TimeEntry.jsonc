@@ -90,6 +90,23 @@
       "type": "string",
       "description": "Additional notes"
     },
+    "last_notes_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the most recent authoritative notes update"
+    },
+    "last_notes_payload_hash": {
+      "type": "string",
+      "description": "SHA-256 fingerprint binding the most recent notes update request to its TimeEntry version and note text"
+    },
+    "last_notes_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of the most recent authoritative notes update"
+    },
+    "last_notes_updated_by": {
+      "type": "string",
+      "description": "Signed-in employee email that performed the most recent authoritative notes update"
+    },
     "archived_test_data": {
       "type": "boolean",
       "default": false,
