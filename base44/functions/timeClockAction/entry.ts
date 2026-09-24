@@ -4298,15 +4298,15 @@ Deno.serve(async (req) => {
         }
         if (intent.outcome === 'pending') {
           const auditFinalized = await auditEntity.updateMany(
-            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
+            { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id, user_email: target.email, actor_email: actorEmail },
             { $set: {
-              outcome: 'confirmed', server_timestamp: new Date().toISOString(),
+              outcome: 'recovered', server_timestamp: new Date().toISOString(),
               details: { ...(intent.details || {}), payload_hash: approvalPayloadHash, updated: entryAuditSnapshot(entry), decision, note, recovered_after_entry_save: true },
             } },
           );
           if (!auditFinalized || auditFinalized.updated !== 1) {
             const freshAudit = await auditEntity.get(intent.id).catch(() => null);
-            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || ''))) {
+            if (!freshAudit || !['confirmed', 'recovered'].includes(String(freshAudit.outcome || '')) || !approvalAuditMatches(freshAudit)) {
               return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved but its audit is still being finalized. Retry the same approval action.' }, { status: 409 });
             }
           }
@@ -4337,6 +4337,12 @@ Deno.serve(async (req) => {
         });
       }
       if (!intent?.id) throw new Error('Approval audit intent could not be persisted. No TimeEntry was changed.');
+      const verifiedApprovalAudits = await auditEntity.filter(approvalAuditQuery);
+      if (!Array.isArray(verifiedApprovalAudits) || verifiedApprovalAudits.length !== 1 ||
+        String(verifiedApprovalAudits[0]?.id || '') !== intent.id || !approvalAuditMatches(verifiedApprovalAudits[0]) ||
+        verifiedApprovalAudits[0].outcome !== 'pending') {
+        return Response.json({ success: false, error: 'Approval audit intent is ambiguous or mismatched. No approval was changed by this attempt; admin investigation is required.' }, { status: 409 });
+      }
 
       const update = decision === 'approve'
         ? {
