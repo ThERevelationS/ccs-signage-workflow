@@ -63,6 +63,7 @@ export default function SmartsheetControlledCreationProposalsCard({
 
       <div className="mt-2 flex flex-wrap gap-1 text-[11px]">
         <Badge variant="outline">{summary.post_baseline_rows || 0} post-baseline rows</Badge>
+        <Badge variant="outline">{summary.dependent_record_lines ?? summary.post_baseline_rows ?? 0} separate project/order lines</Badge>
         <Badge className="bg-emerald-100 text-emerald-800">{summary.proposal_ready || 0} complete proposals</Badge>
         <Badge className="bg-amber-100 text-amber-800">{summary.blocked || 0} blocked / review</Badge>
         <Badge className="bg-violet-100 text-violet-800">{summary.new_customer_groups || 0} distinct planned Customers</Badge>
@@ -80,7 +81,7 @@ export default function SmartsheetControlledCreationProposalsCard({
         <div className="mt-3 rounded-md border border-violet-200 bg-white/80 p-2">
           <div className="font-semibold text-violet-950">New Customer + dependent record bundles</div>
           <p className="mt-0.5 text-[11px] text-violet-800">
-            Each group proposes ONE new Customer shared by the listed rows on this sheet; IDs are placeholders, not real Base44 IDs.
+            Each group proposes ONE new Customer shared by the listed rows on this sheet, while EVERY listed Smartsheet row remains its own WorkOrder/Order line. Customer grouping never collapses separate projects or descriptions. IDs are placeholders, not real Base44 IDs.
           </p>
           <div className="mt-2 space-y-2">
             {[...customerGroups.values()].slice(0, 50).map((group) => (
@@ -117,7 +118,7 @@ export default function SmartsheetControlledCreationProposalsCard({
                 <span className="min-w-0 flex-1">
                   <span className="font-semibold text-slate-900">Row {row.row_number || "—"} — {row.label}</span>
                   <span className="mt-0.5 block text-[10px] text-slate-500">
-                    {row.entity} • permanent row ID {row.row_id}
+                    {row.entity} • separate source line • permanent row ID {row.row_id}
                     {row.customer?.kind === "existing_customer"
                       ? ` • Existing Customer: ${row.customer.company_name}`
                       : row.customer?.kind === "new_customer"
