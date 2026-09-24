@@ -5,6 +5,7 @@ import {
   salesPulledFieldsUnchanged,
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
+  salesPushSnapshotNeedsReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -97,5 +98,15 @@ assert(!salesPushRecordUnchanged({ ...linkedRecord, smartsheet_sync_snapshot: nu
 assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, { ...snapshot, "12": 275 }), "Changed estimates must still push.");
 assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, { ...snapshot, "14": "Updated notes" }), "Changed notes must still reconcile.");
 assert(!salesPushRecordUnchanged(linkedRecord, salesSheetId, {}), "An empty snapshot must not suppress a push.");
+
+// Legacy Sales snapshots predate the Est / Inv # binding. Never auto-push
+// such linked production records until the newly mapped field is reconciled.
+const mappedSnapshot = { ...snapshot, "4624329576763268": null };
+assert(salesPushSnapshotNeedsReview(linkedRecord, salesSheetId, mappedSnapshot), "Old linked snapshot missing Est / Inv # must block automatic Sales push.");
+assert(!salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_sync_snapshot: mappedSnapshot }, salesSheetId, mappedSnapshot), "A complete linked snapshot may continue to normal push conflict checks.");
+assert(salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_sync_snapshot: null }, salesSheetId, mappedSnapshot), "Missing snapshot must require review.");
+assert(salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_last_synced_at: null }, salesSheetId, mappedSnapshot), "Unverified timestamp must require review.");
+assert(!salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_row_id: null }, salesSheetId, mappedSnapshot), "New unlinked opportunities use separate creation safeguards.");
+assert(!salesPushSnapshotNeedsReview(linkedRecord, "999", mappedSnapshot), "Different-sheet links remain outside this Sales preflight.");
 
 console.log("Smartsheet Sales boundary validation passed.");
