@@ -638,8 +638,13 @@ async function pushDataset(
   const updated: string[] = [];
   const conflicts: string[] = [];
   const errors: string[] = [];
+  let requestorContactsSkippedNoEmail = 0;
+  const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
 
   for (const record of records) {
+    // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
+    if (sharedContactId && (record.requestor_name || record.requestor_email) &&
+        !isValidContactEmail(record.requestor_email)) requestorContactsSkippedNoEmail++;
     const cells = buildCells(record, bindings, dataset);
     if (cells.length === 0) continue;
     const existingRowId = cleanText(record?.smartsheet_row_id, 40);
@@ -701,6 +706,7 @@ async function pushDataset(
     errors: errors.length,
     error_details: errors.slice(0, 10),
     conflict_record_ids: conflicts.slice(0, 10),
+    ...(dataset === 'orders' ? { requestor_contacts_skipped_no_valid_email: requestorContactsSkippedNoEmail } : {}),
   };
 }
 
