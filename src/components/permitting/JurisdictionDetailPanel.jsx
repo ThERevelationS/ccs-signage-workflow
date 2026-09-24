@@ -772,8 +772,8 @@ Answer the question based on the documents and information available. Be specifi
                     }}
                     className={`min-h-11 w-full rounded border p-3 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${result.type === 'jurisdiction' ? 'bg-purple-50 border-purple-200 hover:bg-purple-100' : 'bg-white border-blue-200 hover:bg-blue-100'}`}
                   >
-                    <span className="block break-words font-medium text-gray-800">{result.title}</span>
-                    <span className="mt-0.5 block break-words text-[11px] text-gray-600">{result.snippet}</span>
+                    <span className="block min-w-0 font-medium text-gray-800 [overflow-wrap:anywhere]">{result.title}</span>
+                    <span className="mt-0.5 block min-w-0 whitespace-pre-wrap text-[11px] leading-relaxed text-gray-600 [overflow-wrap:anywhere]">{result.snippet}</span>
                   </button>
                 ))}
               </div>
@@ -886,7 +886,7 @@ Answer the question based on the documents and information available. Be specifi
                               <div className="space-y-1">
                                 <p className="text-xs font-semibold text-blue-700">{docSearchResults[doc.id].matches} match{docSearchResults[doc.id].matches !== 1 ? 'es' : ''} found</p>
                                 {docSearchResults[doc.id].snippets.map((snippet, i) => (
-                                  <p key={i} className="text-xs text-gray-600 italic line-clamp-2">
+                                  <p key={i} className="line-clamp-2 min-w-0 whitespace-pre-wrap text-xs italic text-gray-600 [overflow-wrap:anywhere]">
                                     ...{snippet}...
                                   </p>
                                 ))}
