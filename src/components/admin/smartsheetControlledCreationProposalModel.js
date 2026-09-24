@@ -172,7 +172,7 @@ export function buildSmartsheetControlledCreationProposals({
       creation_enabled: false,
       automatic_creates: 0,
       rows: [],
-      summary: { post_baseline_rows: 0, data_ready: 0, proposal_ready: 0, blocked: 0, new_customer_groups: 0 },
+      summary: { post_baseline_rows: 0, dependent_record_lines: 0, data_ready: 0, proposal_ready: 0, blocked: 0, new_customer_groups: 0 },
     };
   }
 
