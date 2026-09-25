@@ -38,7 +38,7 @@ export default function OrderMobileCards({ orders, onOpenDetails }) {
                 )}
               </div>
               <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${statusColor}`}>
-                {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                {order.receipt_option || (displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1))}
               </span>
             </div>
 
