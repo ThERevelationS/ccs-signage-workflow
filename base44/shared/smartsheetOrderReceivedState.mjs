@@ -1,9 +1,9 @@
-// Order Form only: keep actual receipts separate from open text choices.
-// A receipt date or the explicit In Stock choice confirms receipt; other
-// custom text choices (for example Backordered) must stay in open Orders.
+// Order Form only: Date Received is the authoritative receipt flag in the
+// configured Order Request sheet. Keep historical records without deleting them.
 export function isFulfilledOrder(order) {
-  return Boolean(order?.date_received) ||
-    String(order?.receipt_option ?? '').trim().toLowerCase() === 'in stock';
+  // The Smartsheet Date Received column supports a date or a text choice.
+  // Preserve the existing rule: any nonempty entry marks the row received.
+  return Boolean(order?.date_received) || Boolean(String(order?.receipt_option ?? '').trim());
 }
 
 export function effectiveOrderStatus(order) {
