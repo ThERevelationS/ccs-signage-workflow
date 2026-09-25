@@ -1137,11 +1137,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!workOrder) return;
     setCorbridgeDialog({ open: true, workOrder });
     setCorbridgeDraft({
-      invoiceNumber: workOrder.corbridge_invoice_number || workOrder.est_inv_at || "",
+      invoiceNumber: workOrder.est_inv_at || "",
       link: workOrder.corbridge_link || "",
     });
     setCorbridgeBaselines({
-      corbridge_invoice_number: workOrder.corbridge_invoice_number,
       est_inv_at: workOrder.est_inv_at,
       corbridge_link: workOrder.corbridge_link,
     });
@@ -1164,11 +1163,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       setWorkOrders((current) => current.map((workOrder) => workOrder.id === id ? latest : workOrder));
       setCorbridgeDialog({ open: true, workOrder: latest });
       setCorbridgeDraft({
-        invoiceNumber: latest.corbridge_invoice_number || latest.est_inv_at || "",
+        invoiceNumber: latest.est_inv_at || "",
         link: latest.corbridge_link || "",
       });
       setCorbridgeBaselines({
-        corbridge_invoice_number: latest.corbridge_invoice_number,
         est_inv_at: latest.est_inv_at,
         corbridge_link: latest.corbridge_link,
       });
@@ -1183,11 +1181,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const workOrder = corbridgeDialog.workOrder;
     if (!workOrder?.id) return;
     const updates = {
-      corbridge_invoice_number: invoiceNumber,
       est_inv_at: invoiceNumber
     };
     const expectedFields = {
-      corbridge_invoice_number: corbridgeBaselines.corbridge_invoice_number,
       est_inv_at: corbridgeBaselines.est_inv_at,
     };
     if (link) {
@@ -1200,7 +1196,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         workOrderId: workOrder.id,
         expectedFields,
         nextFields: updates,
-        label: "Corebridge link fields",
+        label: "Estimate/invoice number and Base44 link",
       });
       setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
       closeCorbridgeDialog();
@@ -1224,7 +1220,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       "Smartsheet Row ID": str(wo.sales_import_source_id), "Sales Rep": str(wo.sales_rep),
       "Current Task Deadline": str(wo.current_task_deadline), "Current Task Assigned to": str(wo.current_task_assigned_to),
       "Designer": str(wo.designer), "Project Manager": str(wo.project_manager), "Estimator": str(wo.estimator),
-      "Est/Inv @": str(wo.est_inv_at || wo.corbridge_invoice_number), "Estimate Amount": num(wo.estimate_amount),
+      "Est/Inv @": str(wo.est_inv_at), "Estimate Amount": num(wo.estimate_amount),
       "Current Task Description": str(wo.current_task_description), "Date Est. Requested/Initial Contact": str(wo.date_initial_contact),
       "Site Survey": str(wo.site_survey_date), "Date Estimate Sent to Customer": str(wo.date_estimate_sent),
       "Date Order Created": str(wo.date_order_created), "Project Install Date": str(wo.project_install_date),
