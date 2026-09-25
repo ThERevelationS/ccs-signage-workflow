@@ -214,6 +214,27 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     return saved;
   };
 
+  const startDropdownRename = (condition) => {
+    setEditingDropdown(condition.id);
+    setEditingDropdownName(condition.name || "");
+  };
+
+  const cancelDropdownRename = () => {
+    setEditingDropdown(null);
+    setEditingDropdownName("");
+  };
+
+  const saveDropdownRename = async (condition) => {
+    const name = editingDropdownName.trim();
+    if (!name) return;
+    try {
+      await saveDropdownConditions(dropdownConditions.map(item => item.id === condition.id ? { ...item, name } : item));
+      cancelDropdownRename();
+    } catch (error) {
+      console.error("Error renaming condition:", error);
+    }
+  };
+
   const saveSubTemplateEntry = async (subTemplateId, nextEntry, { remove = false, label = 'SIP Sub-Template Items' } = {}) => {
     const currentSetting = settingRecords.subTemplateItems;
     if (!currentSetting?.id) {
