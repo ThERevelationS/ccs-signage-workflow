@@ -3436,9 +3436,15 @@ Deno.serve(async (req) => {
           notes: String(requested?.notes ?? priorChanges.notes ?? '').trim().slice(0, 4000),
         };
         const retryHash = await payloadHash({ entry_id: entryId, expected_updated_date: expectedUpdatedDate, reason, requested_changes: retryChanges });
+        // A correction submitted against an approved shift advances the review
+        // version when approval returns to Needs Review. Idempotency stays bound
+        // to the immutable version in the employee's original snapshot.
+        const originalSubmissionVersion = String(
+          priorByRequest.original_snapshot?.updated_date || priorByRequest.time_entry_updated_date || '',
+        );
         const storedHash = await payloadHash({
           entry_id: priorByRequest.time_entry_id,
-          expected_updated_date: priorByRequest.time_entry_updated_date,
+          expected_updated_date: originalSubmissionVersion,
           reason: priorByRequest.employee_reason,
           requested_changes: priorChanges,
         });
