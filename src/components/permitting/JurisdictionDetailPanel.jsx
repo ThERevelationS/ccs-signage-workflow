@@ -770,6 +770,7 @@ Answer the question based on the documents and information available. Be specifi
                     firstJurisdictionSearchResultRef.current?.focus();
                   } else if (event.key === "Escape" && docSearchTerm) {
                     event.preventDefault();
+                    event.stopPropagation();
                     searchDocuments("");
                   }
                 }}
