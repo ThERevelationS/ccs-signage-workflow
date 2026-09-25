@@ -1982,7 +1982,7 @@ Deno.serve(async (req) => {
       }
       if (String(period.last_request_id || '') === requestId && period.status === expectedStatus) {
         if (decision === 'finalize') {
-          // Interrupted responses can leave a completed finalization's gates held.
+          // Interrupted responses may leave a completed finalization's gates held.
           const staleGates = await stateEntity.filter({
             correction_create_status: 'creating',
             correction_create_request_id: requestId,
@@ -2061,53 +2061,6 @@ Deno.serve(async (req) => {
           }, { status: 409 });
         }
 
-        // Hold each included employee's shared correction/approval gate through
-        // the last correction-read and pay-period entry-lock commit.
-        const finalizationGates: Array<{ stateId: string; claimToken: string }> = [];
-        const gateEntryId = `pay_period:${period.id}`;
-        try {
-          const employeeEmails = [...new Set(completedEntries.map((entry: any) => asEmail(entry.user_email)))].sort();
-          if (employeeEmails.some((email: string) => !email)) {
-            return Response.json({ success: false, error: 'A completed shift has no employee identity. Admin investigation is required before finalization.' }, { status: 409 });
-          }
-          for (const employeeEmail of employeeEmails) {
-            const employee = await uniqueRow(authorized, { email: employeeEmail }, 'Pay-period employee');
-            // Employees lacking current authorization cannot submit corrections.
-            if (!employee?.id) continue;
-            const employeeState = await ensureState(stateEntity, employee);
-            const claimed = await claimCorrectionCreateLock(
-              stateEntity, employeeState.id, requestId, gateEntryId, statusPayloadHash,
-            );
-            if (!claimed?.acquired) {
-              return Response.json({
-                success: false, retry_same_request: true,
-                error: 'An employee correction or manager approval is in progress. Retry this same finalization after the action finishes.',
-              }, { status: 409 });
-            }
-            finalizationGates.push({ stateId: employeeState.id, claimToken: String(claimed.claim_token || '') });
-          }
-          const latestCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
-          if (!Array.isArray(latestCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
-          const newlyPending = latestCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
-          if (newlyPending.length) {
-            await auditEntity.updateMany(
-              { id: intent.id, outcome: 'pending', request_id: requestId },
-              { $set: {
-                outcome: 'blocked',
-                details: {
-                  ...(intent.details || {}), payload_hash: statusPayloadHash,
-                  pay_period_id: period.id, decision, note,
-                  blocked_reason: 'correction_submitted_during_finalization',
-                  pending_correction_count: newlyPending.length,
-                },
-              } },
-            );
-            return Response.json({
-              success: false,
-              error: 'An employee correction was submitted while the pay period was being checked. Reload and resolve the correction before finalizing.',
-            }, { status: 409 });
-          }
-
         const lockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id || entry.pay_period_id === period.id).map((entry: any) => entry.id);
         const newlyLockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id).map((entry: any) => entry.id);
         if (newlyLockableIds.length) {
@@ -2182,28 +2135,6 @@ Deno.serve(async (req) => {
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
         );
         if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'Entries were locked but pay-period finalization was interrupted. Retry the same finalization request.' }, { status: 409 });
-        } finally {
-          let releaseFailed = false;
-          for (const gate of finalizationGates.reverse()) {
-            try {
-              const released = await releaseCorrectionCreateLock(
-                stateEntity, gate.stateId, requestId, gateEntryId, statusPayloadHash, gate.claimToken,
-              );
-              if (!released) {
-                const current = await freshState(stateEntity, gate.stateId).catch(() => null);
-                const gateStatus = String(current?.correction_create_status || '');
-                const safe = current?.id && (
-                  gateStatus === 'idle' ||
-                  (gateStatus === 'creating' && String(current.correction_create_request_id || '') !== requestId)
-                );
-                if (!safe) releaseFailed = true;
-              }
-            } catch {
-              releaseFailed = true;
-            }
-          }
-          if (releaseFailed) throw new Error('A pay-period finalization employee gate could not be released safely. Retry this same finalization request for recovery.');
-        }
       } else {
         const reopened = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'finalized' },
