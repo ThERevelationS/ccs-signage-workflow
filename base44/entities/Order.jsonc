@@ -45,10 +45,18 @@
       "format": "date",
       "description": "Date the order is needed"
     },
+    "date_needed_option": {
+      "type": "string",
+      "description": "Optional text from the Smartsheet Date Needed column, such as ASAP or a scheduling note. Kept separate from ISO dates."
+    },
     "date_ordered": {
       "type": "string",
       "format": "date",
       "description": "Date the order was placed"
+    },
+    "date_ordered_option": {
+      "type": "string",
+      "description": "Optional text from the Smartsheet Date Ordered column, such as N/A, Stock or In Stock. Kept separate from ISO dates."
     },
     "vendor": {
       "type": "string",
