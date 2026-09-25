@@ -1,12 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const body = await req.json().catch(() => ({}));
+    await authenticateSignShopSession(base44, body?.session_token);
 
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
     if (!apiKey) {
@@ -17,6 +16,8 @@ Deno.serve(async (req) => {
     return Response.json({ apiKey });
   } catch (error) {
     console.error('getGoogleMapsKey error:', error?.message || error);
-    return Response.json({ error: 'Google Maps configuration could not be loaded safely' }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    return Response.json({ error: safeStatus === 401 ? 'Authentication required' : 'Google Maps configuration could not be loaded safely' }, { status: safeStatus });
   }
 });
