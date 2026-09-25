@@ -56,7 +56,8 @@ try {
   const engine = await readFile('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
   assert.match(engine, /detectConflict\(currentCells, record\.smartsheet_sync_snapshot, bindings, dataset\)/);
   assert.match(engine, /const sharedContactId = dataset === 'orders' \? sharedOrderRequestorColumnId\(bindings\) : '';/);
-  assert.equal((engine.match(/displayValue: c\.displayValue/g) || []).length, 2);
+  assert.ok((engine.match(/displayValue: c\.displayValue/g) || []).length >= 2);
+  assert.match(engine, /freshCells\.map\(\(c\) =>/); // guarded Order create still sends contact display names
   assert.match(engine, /requestor_contacts_skipped_no_valid_email/);
   console.log('PASS push payload and conflict guard use Order contact semantics');
 
