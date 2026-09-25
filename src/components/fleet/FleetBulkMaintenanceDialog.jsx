@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { FLEET_MAINTENANCE_TEMPLATES, prettyMaintenanceFrequency } from "@/components/fleet/fleetMaintenanceTemplates";
 import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Search, Sparkles, Truck, X } from "lucide-react";
@@ -26,9 +26,44 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
+  const dialogRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const openerRef = useRef(null);
+  const closeCallbackRef = useRef(onClose);
+  const busyRef = useRef(busy);
+  closeCallbackRef.current = onClose;
+  busyRef.current = busy;
 
   useEffect(() => {
     if (!open) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!busyRef.current) closeCallbackRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')]
+        .filter(element => element instanceof HTMLElement && element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
     setOperationKey(crypto.randomUUID());
     setForm(EMPTY);
     setSelectedIds([]);
@@ -38,6 +73,11 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
     setBusy("");
     setError("");
     setResult(null);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      if (openerRef.current?.isConnected) openerRef.current.focus();
+    };
   }, [open]);
 
   const eligibleEquipment = useMemo(() => equipment.filter(item => item.status !== "retired"), [equipment]);
@@ -166,11 +206,11 @@ export default function FleetBulkMaintenanceDialog({ open, equipment = [], onClo
       ? `Every ${form.custom_frequency_value || "?"} ${form.custom_frequency_unit}`
       : prettyMaintenanceFrequency(form.frequency);
 
-  return <div className="fixed inset-0 z-[120] bg-black/55 flex items-center justify-center p-2 sm:p-4" onMouseDown={event => event.target === event.currentTarget && !busy && onClose()} onKeyDown={event => { if (event.key === "Escape" && !busy) { event.stopPropagation(); onClose(); } }}>
-    <div role="dialog" aria-modal="true" aria-labelledby="fleet-bulk-maintenance-dialog-title" className="w-full max-w-6xl max-h-[96dvh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+  return <div className="fixed inset-0 z-[120] bg-black/55 flex items-center justify-center p-2 sm:p-4" onMouseDown={event => event.target === event.currentTarget && !busy && onClose()}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-bulk-maintenance-dialog-title" aria-describedby="fleet-bulk-maintenance-dialog-description" tabIndex={-1} className="w-full max-w-6xl max-h-[96dvh] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
       <div className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-gray-200 bg-white px-4 sm:px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-        <div><h2 id="fleet-bulk-maintenance-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">Bulk Maintenance Planner</h2><p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Preview every asset before commit. Retries use the same deterministic create identities and do not intentionally duplicate schedules.</p></div>
-        <button type="button" onClick={onClose} disabled={!!busy} aria-label="Close bulk maintenance planner" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
+        <div><h2 id="fleet-bulk-maintenance-dialog-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">Bulk Maintenance Planner</h2><p id="fleet-bulk-maintenance-dialog-description" className="text-xs text-gray-500 dark:text-slate-400 mt-1">Preview every asset before commit. Retries use the same deterministic create identities and do not intentionally duplicate schedules.</p></div>
+        <button ref={closeButtonRef} type="button" onClick={onClose} disabled={!!busy} aria-label="Close bulk maintenance planner" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
       </div>
 
       <div className="p-4 sm:p-5 space-y-5">
