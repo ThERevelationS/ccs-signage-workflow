@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Gauge, Loader2, X } from "lucide-react";
 
@@ -21,6 +21,18 @@ export default function FleetMeterRuleDialog({ open, equipment, tasks = [], rule
   const [error, setError] = useState("");
   const [readingPreview, setReadingPreview] = useState(null);
   const [readingLoading, setReadingLoading] = useState(false);
+  const dialogRef = useRef(null);
+  const openerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const timer = window.setTimeout(() => dialogRef.current?.focus(), 0);
+    return () => {
+      window.clearTimeout(timer);
+      openerRef.current?.focus?.();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -102,8 +114,16 @@ export default function FleetMeterRuleDialog({ open, equipment, tasks = [], rule
 
   const bouncieEligible = ["matched", "manual"].includes(equipment?.bouncie_link_status);
   return <div className="fixed inset-0 z-[110] bg-black/55 p-4 flex items-center justify-center" onKeyDown={event => { if (event.key === "Escape" && !saving) { event.stopPropagation(); onClose(); } }}>
-    <div role="dialog" aria-modal="true" aria-labelledby="fleet-meter-rule-title" className="w-full max-w-2xl max-h-[92dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
-      <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 py-4 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800"><div><div className="flex items-center gap-2"><Gauge className="w-5 h-5 text-indigo-600"/><h2 id="fleet-meter-rule-title" className="text-lg font-bold">{rule ? "Edit Meter Maintenance" : "Add Meter Maintenance"}</h2></div><p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Link a recurring schedule to mileage or hours. Date and meter can work together—whichever comes first creates the maintenance work.</p></div><button type="button" onClick={onClose} disabled={saving} aria-label="Close meter maintenance dialog" className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="w-5 h-5 mx-auto"/></button></div>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-meter-rule-title" aria-describedby="fleet-meter-rule-description" tabIndex={-1} onKeyDown={event => {
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(event.currentTarget.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(node => node instanceof HTMLElement && node.offsetParent !== null);
+      if (!focusable.length) { event.preventDefault(); event.currentTarget.focus(); return; }
+      const first = /** @type {HTMLElement} */ (focusable[0]);
+      const last = /** @type {HTMLElement} */ (focusable[focusable.length - 1]);
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === event.currentTarget)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }} className="w-full max-w-2xl max-h-[92dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-2xl">
+      <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 py-4 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800"><div><div className="flex items-center gap-2"><Gauge className="w-5 h-5 text-indigo-600"/><h2 id="fleet-meter-rule-title" className="text-lg font-bold">{rule ? "Edit Meter Maintenance" : "Add Meter Maintenance"}</h2></div><p id="fleet-meter-rule-description" className="mt-1 text-xs text-gray-500 dark:text-slate-400">Link a recurring schedule to mileage or hours. Date and meter can work together—whichever comes first creates the maintenance work.</p></div><button type="button" onClick={onClose} disabled={saving} aria-label="Close meter maintenance dialog" className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="w-5 h-5 mx-auto"/></button></div>
       <form onSubmit={save} className="p-5 space-y-4">
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 px-3 py-2 text-sm">{error}</div>}
         <Field label="Maintenance schedule *"><select required value={form.maintenance_task_id || ""} onChange={e=>set("maintenance_task_id",e.target.value)} className="field" disabled={!!rule}><option value="">Select recurring schedule…</option>{availableTasks.map(task=><option key={task.id} value={task.id}>{task.title} · due {task.start_date || "no date"}</option>)}</select></Field>
