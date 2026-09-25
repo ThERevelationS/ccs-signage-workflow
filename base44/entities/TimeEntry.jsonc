@@ -204,6 +204,15 @@
       "type": "string",
       "description": "Idempotency key for the latest manager approval action"
     },
+    "correction_needs_review_request_id": {
+      "type": "string",
+      "description": "Employee correction submission request that most recently returned an approved shift to Needs Review"
+    },
+    "correction_needs_review_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp of the latest correction-triggered Needs Review transition"
+    },
     "pay_period_id": {
       "type": "string",
       "description": "Finalized TimeClockPayPeriod that locked this TimeEntry"
