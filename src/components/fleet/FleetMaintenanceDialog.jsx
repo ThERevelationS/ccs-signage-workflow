@@ -205,8 +205,8 @@ export default function FleetMaintenanceDialog({ open, task, initialEquipmentId 
         if (e.key !== "Tab") return;
         const focusable = Array.from(e.currentTarget.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(node => node instanceof HTMLElement && node.offsetParent !== null);
         if (!focusable.length) { e.preventDefault(); e.currentTarget.focus(); return; }
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
+        const first = /** @type {HTMLElement} */ (focusable[0]);
+        const last = /** @type {HTMLElement} */ (focusable[focusable.length - 1]);
         if (e.shiftKey && (document.activeElement === first || document.activeElement === e.currentTarget)) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }} className="w-full max-w-5xl max-h-[96dvh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-gray-200 dark:border-slate-700">
