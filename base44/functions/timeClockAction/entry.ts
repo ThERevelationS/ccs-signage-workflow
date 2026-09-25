@@ -627,6 +627,30 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
+async function recoverCompletedClockInMutationGate(
+  stateEntity: any,
+  entryEntity: any,
+  state: any,
+  target: any,
+) {
+  if (String(state?.correction_create_status || '') !== 'creating') return state;
+  const heldRequestId = String(state.correction_create_request_id || '');
+  const gateEntryId = `clock_in:${asEmail(target?.email)}`;
+  if (!heldRequestId || String(state.correction_create_time_entry_id || '') !== gateEntryId) return state;
+  if (state.status !== 'clocked_in' || !state.active_entry_id) return state;
+
+  const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
+  if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== asEmail(target.email) ||
+      String(entry.clock_in_request_id || '') !== heldRequestId || entry.archived_test_data || entry.archived_admin) return state;
+
+  const expectedHash = await payloadHash({ action: 'clock_in', user_email: asEmail(target.email) });
+  if (!constantTimeEqual(String(state.correction_create_payload_hash || ''), expectedHash)) return state;
+  const released = await releaseCompletedCorrectionCreateLock(
+    stateEntity, state.id, heldRequestId, gateEntryId, expectedHash,
+  );
+  return released ? await freshState(stateEntity, state.id) : state;
+}
+
 // The caller must hold the shared per-employee correction/approval gate.
 async function ensureCorrectionSubmissionNeedsReview({
   entryEntity, correctionRequestEntity, auditEntity, requestRecord, correctionAudit,
@@ -1668,6 +1692,7 @@ Deno.serve(async (req) => {
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
     state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
+    state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, state, target);
 
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
