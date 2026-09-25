@@ -9,21 +9,24 @@ import {
   ClipboardList,
   Search,
   Plus,
-  Download
+  Download,
+  ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
+import OrderRequestorEmailReview from "@/components/orders/OrderRequestorEmailReview";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function OrderForm() {
-  const { currentUser, isRegistered, promptForEmail } = useAuth();
+  const { currentUser, sessionToken, isRegistered, promptForEmail } = useAuth();
   
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
   const [canImportExport, setCanImportExport] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [emailReviewOpen, setEmailReviewOpen] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -133,6 +136,19 @@ export default function OrderForm() {
               </Button>
             )}
             
+            {currentUser?.role === "admin" && !!sessionToken && (
+              <Button
+                type="button"
+                onClick={() => setEmailReviewOpen(true)}
+                size="sm"
+                className="h-8 px-3"
+                variant="ghost"
+              >
+                <ShieldCheck className="w-4 h-4 mr-1" />
+                Review emails
+              </Button>
+            )}
+
             {canImportExport && (
               <Button 
                 onClick={() => spreadsheetRef.current?.exportToExcel()}
@@ -155,6 +171,13 @@ export default function OrderForm() {
         />
       </div>
     </div>
+    {currentUser?.role === "admin" && !!sessionToken && (
+      <OrderRequestorEmailReview
+        open={emailReviewOpen}
+        onOpenChange={setEmailReviewOpen}
+        sessionToken={sessionToken}
+      />
+    )}
     </PullToRefresh>
   );
 }
