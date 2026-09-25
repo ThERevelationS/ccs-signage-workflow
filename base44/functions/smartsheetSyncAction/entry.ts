@@ -860,6 +860,94 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'preview_sales_est_inv_snapshot') {
+      // Admin-session-only diagnostic. This does not run sync or write records,
+      // and remains available while the global sync kill switch is OFF.
+      const { config } = await loadSyncConfig(base44);
+      const profile = config?.sales || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const bindings = filterSalesColumnBindings(profile?.column_bindings || {});
+      const columnId = String(bindings.est_inv_at || '');
+      if (!/^\d+$/.test(sheetId) || !/^\d+$/.test(columnId)) {
+        return Response.json({ success: false, error: 'A verified Sales sheet and Est / Inv # binding are required.' }, { status: 400 });
+      }
+      // Match the CURRENT Sales push window exactly; never describe the sample
+      // as complete coverage of the entire historic WorkOrder archive.
+      const raw = await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
+      if (!Array.isArray(raw)) throw new Error('Sales snapshot preview could not verify its read window.');
+      const records = raw.filter((r: any) => !r?.deleted);
+      const candidates = records.filter((record: any) => {
+        const rowId = String(record?.smartsheet_row_id ?? '').trim();
+        const prior = record?.smartsheet_sync_snapshot;
+        return record?.smartsheet_sheet_id === sheetId && /^\d+$/.test(rowId) &&
+          (!prior || typeof prior !== 'object' || Array.isArray(prior) ||
+            !Object.prototype.hasOwnProperty.call(prior, columnId));
+      });
+      const limit = Math.max(1, Math.min(25, Math.floor(Number(body?.sample_size) || 20)));
+      const offset = Math.max(0, Math.min(499, Math.floor(Number(body?.sample_offset) || 0)));
+      const sample = candidates.slice(offset, offset + limit);
+      if (sample.length === 0) {
+        return Response.json({
+          success: true, read_only: true, dataset: 'sales', sheet_id: sheetId,
+          field: 'est_inv_at', column_id: columnId,
+          push_window_examined: records.length, candidate_count_in_push_window: candidates.length,
+          sample_offset: offset, sample_size: 0,
+          next_sample_offset: null, sample_is_complete_archive: false,
+          summary: {}, cases: [],
+        });
+      }
+      const requestedIds = [...new Set(sample.map((record: any) => String(record.smartsheet_row_id)))];
+      const params = new URLSearchParams({
+        rowIds: requestedIds.join(','), columnIds: columnId, exclude: 'nonexistentCells',
+      });
+      const result = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+      if (!Array.isArray(result.body?.rows) ||
+          (result.body?.id && String(result.body.id) !== sheetId)) {
+        throw Object.assign(new Error('Smartsheet did not return a verifiable snapshot preview.'), { status: 502 });
+      }
+      const sheetRows = normalizeSheetRows(result.body);
+      const requested = new Set(requestedIds);
+      if (sheetRows.some((row: any) => !requested.has(row.id)) ||
+          new Set(sheetRows.map((row: any) => row.id)).size !== sheetRows.length) {
+        throw Object.assign(new Error('Smartsheet returned unexpected or duplicate rows.'), { status: 502 });
+      }
+      const byId = new Map(sheetRows.map((row: any) => [row.id, row]));
+      const linkCounts: Record<string, number> = {};
+      for (const record of records) {
+        const rowId = String(record?.smartsheet_row_id ?? '').trim();
+        if (record?.smartsheet_sheet_id === sheetId && /^\d+$/.test(rowId)) {
+          linkCounts[rowId] = (linkCounts[rowId] || 0) + 1;
+        }
+      }
+      const summary: Record<string, number> = {};
+      const cases = sample.map((record: any) => {
+        const rowId = String(record.smartsheet_row_id);
+        const remote = byId.get(rowId) as any;
+        const cell = remote?.cells?.find((entry: any) => entry.column_id === columnId);
+        const remoteValue = cell ? (cell.display_value || cell.value) : null;
+        const comparison = classifySalesEstInvPreview(record.est_inv_at, remoteValue, Boolean(remote));
+        const duplicateLinkInWindow = (linkCounts[rowId] || 0) > 1;
+        summary[comparison] = (summary[comparison] || 0) + 1;
+        return {
+          workorder_id: record.id, smartsheet_row_id: rowId,
+          client_name: cleanText(record.client_name, 180),
+          base44_est_inv_at: cleanText(record.est_inv_at, 160),
+          smartsheet_est_inv_at: remote ? cleanText(remoteValue, 160) : null,
+          comparison, duplicate_link_in_push_window: duplicateLinkInWindow,
+          review_required: true,
+        };
+      });
+      return Response.json({
+        success: true, read_only: true, dataset: 'sales', sheet_id: sheetId,
+        field: 'est_inv_at', column_id: columnId,
+        push_window_examined: records.length, push_window_limit: 500,
+        candidate_count_in_push_window: candidates.length,
+        sample_offset: offset, sample_size: cases.length,
+        next_sample_offset: offset + cases.length < candidates.length ? offset + cases.length : null,
+        sample_is_complete_archive: false, summary, cases,
+      });
+    }
+
     if (action === 'audit_order_requestor_emails') {
       // Admin-only, read-only comparison. Safe while sync is disabled or in observation mode.
       // Never infer a repair from a matching name alone; permanent row IDs must agree.
