@@ -35,6 +35,17 @@ export function splitDocumentSearchMatches(text, searchTerm) {
   return segments.length ? segments : [{ text: value, matched: false }];
 }
 
+// Choose the text that contains the query so an AI-summary-only match remains searchable
+// even when the document also has extracted text.
+export function documentSearchContent(doc, searchTerm) {
+  const extractedText = typeof doc?.extracted_text === "string" ? doc.extracted_text : "";
+  const summary = typeof doc?.ai_summary === "string" ? doc.ai_summary : "";
+  const term = typeof searchTerm === "string" ? searchTerm.toLowerCase() : "";
+  if (term && extractedText.toLowerCase().includes(term)) return extractedText;
+  if (term && summary.toLowerCase().includes(term)) return summary;
+  return extractedText || summary;
+}
+
 // Retain match offsets rather than a potentially large array of copied excerpts.
 export function findDocumentMatchPositions(content, searchTerm) {
   if (typeof content !== "string" || typeof searchTerm !== "string" || !searchTerm.trim()) return [];
