@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { effectiveOrderStatus } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 
 const STATUS_COLORS = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -19,7 +20,8 @@ export default function OrderMobileCards({ orders, onOpenDetails }) {
   return (
     <div className="space-y-3 p-3">
       {orders.map((order) => {
-        const statusColor = STATUS_COLORS[order.status] || "bg-gray-100 text-gray-700";
+        const displayStatus = effectiveOrderStatus(order);
+        const statusColor = STATUS_COLORS[displayStatus] || "bg-gray-100 text-gray-700";
         const dateNeeded = safeDate(order.date_needed);
         return (
           <div
@@ -36,7 +38,7 @@ export default function OrderMobileCards({ orders, onOpenDetails }) {
                 )}
               </div>
               <span className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${statusColor}`}>
-                {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
+                {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
               </span>
             </div>
 
