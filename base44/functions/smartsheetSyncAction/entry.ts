@@ -7,7 +7,7 @@ import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPage
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
-import { auditOrderCreateAttempts } from '../../shared/smartsheetOrderCreateReview.mjs';
+import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -1031,9 +1031,7 @@ Deno.serve(async (req) => {
             columnIds: evidenceColumnId, exclude: 'nonexistentCells',
           });
           const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
-          if (result.body?.id && String(result.body.id) !== sheetId) {
-            throw Object.assign(new Error('Smartsheet returned a different sheet than the configured Order Request ID.'), { status: 502 });
-          }
+          verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
           const rows = normalizeSheetRows(result.body);
           const complete = guard.accept(page, result.body, rows);
           if (page === 1) sheetVersion = result.body.version;
