@@ -7,6 +7,7 @@ import {
   salesPushRecordUnchanged,
   salesPushSnapshotNeedsReview,
   classifySalesEstInvPreview,
+  verifiedSalesPreviewColumn,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -118,5 +119,21 @@ assert(classifySalesEstInvPreview('EST-100', '') === 'base44_only', 'Base44-only
 assert(classifySalesEstInvPreview(null, null) === 'both_blank', 'Two blank cells are not evidence of a verified snapshot.');
 assert(classifySalesEstInvPreview('EST-100', null, false) === 'row_not_returned', 'Missing API rows must not be called blank or deleted.');
 assert(classifySalesEstInvPreview(100, '100') === 'match', 'Text/number representation must compare consistently.');
+
+// Realistic Get Sheet metadata: the configured column must be returned before
+// absent row cells are interpreted as blank. This is not a live API test.
+const estColumnId = "4624329576763268";
+const sampleSheetColumns = [{ id: 3087579177346948, title: "Customer" },
+  { id: 4624329576763268, title: "Est / Inv #", type: "TEXT_NUMBER" }];
+assert(verifiedSalesPreviewColumn(sampleSheetColumns, estColumnId)?.title === "Est / Inv #",
+  "Expected sheet column metadata must be verified by permanent ID.");
+assert(verifiedSalesPreviewColumn([{ id: 3087579177346948, title: "Customer" }], estColumnId) === null,
+  "A missing mapped column must not create false blank remote values.");
+assert(verifiedSalesPreviewColumn(null, estColumnId) === null,
+  "Missing sheet metadata must fail closed.");
+assert(verifiedSalesPreviewColumn([...sampleSheetColumns, sampleSheetColumns[1]], estColumnId) === null,
+  "Duplicate metadata for one column must fail closed.");
+assert(verifiedSalesPreviewColumn([{ id: estColumnId, title: " " }], estColumnId) === null,
+  "An unidentified Smartsheet column cannot be treated as Est / Inv #.");
 
 console.log("Smartsheet Sales boundary validation passed.");
