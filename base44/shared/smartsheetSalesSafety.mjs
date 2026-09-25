@@ -112,3 +112,16 @@ export function verifiedSalesPreviewColumn(columns, expectedColumnId) {
   return title ? { id, title: title.slice(0, 180) } : null;
 }
 
+// Get Sheet must return the actual bound column before an omitted cell can
+// safely be interpreted as blank. Smartsheet returns only requested columns
+// when columnIds is supplied; no match, ambiguous IDs, or missing metadata
+// means the preview must fail closed without classifying any row.
+export function verifiedSalesPreviewColumn(columns, expectedColumnId) {
+  const id = String(expectedColumnId ?? "").trim();
+  if (!/^\d+$/.test(id) || !Array.isArray(columns)) return null;
+  const matches = columns.filter((column) => String(column?.id ?? "").trim() === id);
+  if (matches.length !== 1) return null;
+  const title = String(matches[0]?.title ?? "").trim();
+  return title ? { id, title: title.slice(0, 180) } : null;
+}
+
