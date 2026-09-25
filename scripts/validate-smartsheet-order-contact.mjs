@@ -72,6 +72,21 @@ try {
   }, { date_received: '323' }, 'orders');
   assert.equal(datedReceived.date_received, '2026-09-25');
   assert.equal(datedReceived.receipt_option, '');
+  const mixedOtherDates = parseRowToFields({
+    id: 'mixed-dates', cells: [
+      { column_id: '324', value: 'ASAP', display_value: 'ASAP' },
+      { column_id: '325', value: 'N/A', display_value: 'N/A' },
+      { column_id: '326', value: '03/09/021', display_value: '03/09/021' },
+    ],
+  }, { date_needed: '324', date_ordered: '325', date_received: '326' }, 'orders');
+  assert.equal(mixedOtherDates.date_needed, '');
+  assert.equal(mixedOtherDates.date_needed_option, 'ASAP');
+  assert.equal(mixedOtherDates.date_ordered, '');
+  assert.equal(mixedOtherDates.date_ordered_option, 'N/A');
+  assert.equal(mixedOtherDates.date_received, '2021-03-09');
+  assert.equal(mixedOtherDates.receipt_option, '');
+  console.log('PASS mixed Order date columns preserve text options and translate zero-prefixed three-digit years');
+
   console.log('PASS mixed Smartsheet Date Received cells preserve In Stock/custom text separately from ISO dates');
 
   const nameOnly = parseRowToFields({
