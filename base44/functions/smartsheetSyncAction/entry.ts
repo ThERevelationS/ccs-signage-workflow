@@ -20,6 +20,7 @@ import {
   salesPushRecordUnchanged,
   salesPushSnapshotNeedsReview,
   classifySalesEstInvPreview,
+  verifiedSalesPreviewColumn,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -947,9 +948,11 @@ Deno.serve(async (req) => {
         rowIds: requestedIds.join(','), columnIds: columnId, exclude: 'nonexistentCells',
       });
       const result = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
-      if (!Array.isArray(result.body?.rows) ||
-          (result.body?.id && String(result.body.id) !== sheetId)) {
-        throw Object.assign(new Error('Smartsheet did not return a verifiable snapshot preview.'), { status: 502 });
+      // An absent selected column is NOT evidence of a blank cell. Validate
+      // the actual sheet/column metadata before classifying any remote value.
+      const verifiedColumn = verifiedSalesPreviewColumn(result.body?.columns, columnId);
+      if (!Array.isArray(result.body?.rows) || String(result.body?.id ?? '') !== sheetId || !verifiedColumn) {
+        throw Object.assign(new Error('Smartsheet did not verify the configured Est / Inv # column. No comparison was accepted.'), { status: 502 });
       }
       const sheetRows = normalizeSheetRows(result.body);
       const requested = new Set(requestedIds);
@@ -986,6 +989,7 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true, read_only: true, dataset: 'sales', sheet_id: sheetId,
         field: 'est_inv_at', column_id: columnId,
+        verified_column_title: verifiedColumn.title,
         push_window_examined: records.length, push_window_limit: 500,
         candidate_count_in_push_window: candidates.length,
         sample_offset: offset, sample_size: cases.length,
