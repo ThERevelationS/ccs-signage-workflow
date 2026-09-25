@@ -66,13 +66,19 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
 
-  // Close PDF viewer when jurisdiction changes
+  // Do not carry document expansion, search results, or pending focus into another jurisdiction.
   useEffect(() => {
     setViewingPDF(null);
     setVerificationTarget(null);
     setVerificationNote("");
     setVerificationError("");
+    setExpandedDoc(null);
+    setDocSearchTerm("");
+    setSearchResults([]);
+    setExpandedDocSearch({});
+    setDocSearchResults({});
     setClearedDocSearchId(null);
+    pendingDocNavigationRef.current = null;
   }, [jurisdiction.id]);
 
   // After a search selection expands a document, move keyboard focus and scroll to its header.
