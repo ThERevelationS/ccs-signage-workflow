@@ -18,6 +18,7 @@ import {
   getSmartsheetColumnsForBindings,
 } from "@/components/admin/smartsheetSyncPersistence";
 import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
+import SmartsheetSalesSnapshotReview from "@/components/admin/SmartsheetSalesSnapshotReview";
 import {
   prepareSmartsheetProfileTargetChange,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
@@ -734,6 +735,12 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         columnsLoading={columnsLoading.sales}
         columnsMessage={columnsMessage.sales}
         onLoadColumns={loadColumns}
+      />
+
+      <SmartsheetSalesSnapshotReview
+        sessionToken={sessionToken}
+        savedSales={record?.setting_value?.sales}
+        draftSales={config.sales}
       />
 
       <IntegrationCard
