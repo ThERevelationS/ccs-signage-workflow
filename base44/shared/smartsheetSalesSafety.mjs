@@ -99,3 +99,15 @@ export function classifySalesEstInvPreview(localValue, remoteValue, rowExists = 
   return local === remote ? "match" : "different";
 }
 
+// Strictly read-only review classification for a newly mapped Est / Inv # cell.
+// Matching values are observations, never permission to backfill snapshots.
+export function classifySalesEstInvPreview(localValue, remoteValue, rowExists = true) {
+  if (!rowExists) return "row_not_returned";
+  const local = String(localValue ?? "").trim();
+  const remote = String(remoteValue ?? "").trim();
+  if (!local && !remote) return "both_blank";
+  if (!local) return "smartsheet_only";
+  if (!remote) return "base44_only";
+  return local === remote ? "match" : "different";
+}
+
