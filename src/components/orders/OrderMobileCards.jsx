@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { Archive, ChevronDown } from "lucide-react";
 import { effectiveOrderStatus } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 
 const STATUS_COLORS = {
@@ -65,46 +66,44 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
     <div className="space-y-3 p-3">
       {separateHistory ? (
         <>
-          <section aria-label="All Orders not received" className="overflow-hidden rounded-xl border border-purple-200 bg-purple-50/60">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-purple-200 bg-purple-100 px-3 py-3">
-              <h2 className="text-sm font-bold text-purple-900">All Orders — Not Received</h2>
-              <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-purple-900">{openCount}</span>
+          <section aria-label="Open orders" className="space-y-2">
+            <div className="flex items-center gap-1.5 px-1 text-xs text-slate-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-400" aria-hidden="true" />
+              Open <span className="font-semibold tabular-nums text-slate-700">{openCount}</span>
             </div>
-            <div className="space-y-3 p-3">
-              {openCount > 0 ? renderCards(orders.slice(0, openCount)) : (
-                <p className="py-5 text-center text-sm text-gray-600">No outstanding Orders match this view.</p>
-              )}
-            </div>
+            {openCount > 0 ? renderCards(orders.slice(0, openCount)) : (
+              <p className="px-1 py-4 text-sm text-slate-500">No open orders</p>
+            )}
           </section>
-          <section aria-label="Received Order history" className="overflow-hidden rounded-xl border border-green-200 bg-green-50/60">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-green-200 bg-green-100 px-3 py-3">
-              <h2 className="text-sm font-bold text-green-900">History — Received</h2>
-              <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-green-900">{orders.length - openCount}</span>
-            </div>
-            <div className="space-y-3 p-3">
-              {historyCount === 0 ? (
-                <p className="py-5 text-center text-sm text-gray-600">No received Orders match this view.</p>
-              ) : (
-                <>
-                  <button type="button" aria-expanded={historyExpanded} aria-controls="order-history-mobile-items"
-                    className="min-h-11 w-full rounded-lg border border-green-300 bg-white px-3 text-sm font-semibold text-green-900"
-                    onClick={() => { setHistoryExpanded(expanded => !expanded); setHistoryLimit(50); }}>
-                    {historyExpanded ? "Hide received history" : `Show received history (${historyCount})`}
-                  </button>
-                  {historyExpanded && (
-                    <div id="order-history-mobile-items" className="space-y-3">
-                      {renderCards(orders.slice(openCount, openCount + historyLimit))}
-                      {historyCount > historyLimit && (
-                        <button type="button" className="min-h-11 w-full rounded-lg border border-green-300 bg-white px-3 text-sm font-semibold text-green-900"
-                          onClick={() => setHistoryLimit(limit => limit + 50)}>
-                          Show next 50 ({historyCount - historyLimit} remaining)
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+          <section aria-label="Received order history" className="mt-4 border-t-2 border-slate-200 pt-2">
+            {historyCount > 0 ? (
+              <>
+                <button type="button" aria-expanded={historyExpanded} aria-controls="order-history-mobile-items"
+                  aria-label={`Received history, ${historyCount} orders. ${historyExpanded ? "Collapse" : "Expand"}`}
+                  className="flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                  onClick={() => { setHistoryExpanded(expanded => !expanded); setHistoryLimit(50); }}>
+                  <Archive className="h-4 w-4" aria-hidden="true" />
+                  <span>History</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 tabular-nums text-slate-500">{historyCount}</span>
+                  <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${historyExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+                </button>
+                {historyExpanded && (
+                  <div id="order-history-mobile-items" className="space-y-3 pt-2">
+                    {renderCards(orders.slice(openCount, openCount + historyLimit))}
+                    {historyCount > historyLimit && (
+                      <button type="button" className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                        onClick={() => setHistoryLimit(limit => limit + 50)}>
+                        Show next 50 ({historyCount - historyLimit} remaining)
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-2 px-2 py-3 text-xs text-slate-400">
+                <Archive className="h-4 w-4" aria-hidden="true" /> History <span className="tabular-nums">0</span>
+              </div>
+            )}
           </section>
         </>
       ) : (
