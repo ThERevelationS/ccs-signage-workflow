@@ -3801,6 +3801,31 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
       }
 
+      // An approved shift's employee submission is not reviewable until its
+      // Needs Review transition, request-version update and audit are complete.
+      if (correctionRequest.status === 'pending' &&
+          String(correctionRequest.original_snapshot?.approval_status || '') === 'approved') {
+        const reviewableEntry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
+        const submissionAudit = await uniqueRow(auditEntity, {
+          action: 'correction_request', request_id: correctionRequest.request_id,
+          time_entry_id: correctionRequest.time_entry_id,
+        }, 'Approved-shift correction submission audit');
+        const transition = submissionAudit?.details?.approval_transition;
+        if (!reviewableEntry?.id || asEmail(reviewableEntry.user_email) !== target.email ||
+            reviewableEntry.approval_status !== 'needs_review' ||
+            String(reviewableEntry.correction_needs_review_request_id || '') !== String(correctionRequest.request_id || '') ||
+            String(reviewableEntry.updated_date || '') !== String(correctionRequest.time_entry_updated_date || '') ||
+            !submissionAudit?.id || !['confirmed', 'recovered'].includes(String(submissionAudit.outcome || '')) ||
+            asEmail(submissionAudit.user_email) !== target.email ||
+            String(submissionAudit.details?.correction_request_id || '') !== correctionRequest.id ||
+            String(transition?.correction_request_id || '') !== correctionRequest.id ||
+            String(transition?.saved_entry_updated_date || '') !== String(correctionRequest.time_entry_updated_date || '')) {
+          return Response.json({
+            success: false,
+            error: 'The employee correction is still completing its audited Needs Review transition or the shift changed afterward. Refresh before reviewing this request.',
+          }, { status: 409 });
+        }
+      }
       const resumingReview = correctionRequest.status === 'reviewing' && String(correctionRequest.review_request_id || '') === requestId;
       if (correctionRequest.status === 'reviewing' && !resumingReview) {
         const previousRequestId = String(correctionRequest.review_request_id || '');
