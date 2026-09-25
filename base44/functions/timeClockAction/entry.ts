@@ -3494,6 +3494,28 @@ Deno.serve(async (req) => {
         ) {
           return Response.json({ success: false, error: 'The completed correction audit could not be tied to this exact request and payload. Admin investigation is required.' }, { status: 409 });
         }
+        let recoveredRequest = priorByRequest;
+        if (String(priorByRequest.original_snapshot?.approval_status || '') === 'approved' && priorByRequest.status === 'pending') {
+          const recoveryGate = await claimCorrectionCreateLock(stateEntity, state.id, requestId, entryId, storedHash);
+          if (!recoveryGate?.acquired) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The saved correction is awaiting its Needs Review transition. Retry this same request after the current action finishes.' }, { status: 409 });
+          }
+          try {
+            const transitioned = await ensureCorrectionSubmissionNeedsReview({
+              entryEntity, correctionRequestEntity, auditEntity, requestRecord: priorByRequest,
+              correctionAudit, requestId, requestHash: storedHash, target,
+            });
+            if (!transitioned) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The saved correction cannot yet return its approved shift to Needs Review safely. Retry the same request or ask an admin to investigate.' }, { status: 409 });
+            }
+            recoveredRequest = transitioned;
+          } finally {
+            const released = await releaseCorrectionCreateLock(
+              stateEntity, state.id, requestId, entryId, storedHash, String(recoveryGate.claim_token || ''),
+            );
+            if (!released) throw new Error('Saved correction recovery could not release its shared approval gate.');
+          }
+        }
         let completedLockReleased = false;
         try {
           completedLockReleased = await releaseCompletedCorrectionCreateLock(
@@ -3509,7 +3531,7 @@ Deno.serve(async (req) => {
         if (!completedLockReleased) {
           return Response.json({ success: false, retry_same_request: true, error: 'The correction request and audit are saved, but its create lock could not be released safely. Retry the same request.' }, { status: 409 });
         }
-        return Response.json({ success: true, request: priorByRequest, audit_id: correctionAudit.id, reused: true });
+        return Response.json({ success: true, request: recoveredRequest, audit_id: correctionAudit.id, reused: true });
       }
 
       let entry = await entryEntity.get(entryId).catch(() => null);
@@ -3607,7 +3629,14 @@ Deno.serve(async (req) => {
         if (!correctionAudit || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || ''))) {
           return Response.json({ success: false, retry_same_request: true, error: 'The correction request was saved but a confirmed audit could not be verified yet. Retry the same request.' }, { status: 409 });
         }
-        return Response.json({ success: true, request: correctionRequest, audit_id: correctionAudit.id });
+        const readyRequest = await ensureCorrectionSubmissionNeedsReview({
+          entryEntity, correctionRequestEntity, auditEntity, requestRecord: correctionRequest,
+          correctionAudit, requestId, requestHash: submissionHash, target,
+        });
+        if (!readyRequest) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The correction was saved but the approved shift has not yet returned to Needs Review safely. Retry the same correction request.' }, { status: 409 });
+        }
+        return Response.json({ success: true, request: readyRequest, audit_id: correctionAudit.id });
       } finally {
         try {
           await releaseCorrectionCreateLock(
