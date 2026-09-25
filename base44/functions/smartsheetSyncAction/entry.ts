@@ -847,7 +847,7 @@ Deno.serve(async (req) => {
       if (actor?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
-    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset' && action !== 'debug_dates') {
+    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset') {
       return Response.json({ success: false, error: 'Admin session is required for this action.' }, { status: 403 });
     }
 
@@ -858,7 +858,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
@@ -1123,6 +1123,64 @@ Deno.serve(async (req) => {
       guard.assertComplete(); // Never report candidates from partial or moving-sheet reads.
       const audit = auditOrderRequestorContacts(linkedOrders, sheetRows, contactColumnId);
       return Response.json({ success: true, sheet_id: sheetId, ...audit });
+    }
+
+    if (action === 'audit_order_dates') {
+      // Admin-only and read-only. Check the actual column types, parse each
+      // permanent row ID with strict calendar rules and report discrepancies.
+      // This action never enables sync or writes any production data.
+      const { config } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const bindings = profile?.column_bindings || {};
+      const dateFields = ['date_needed', 'date_ordered', 'date_received'];
+      const requested = dateFields.map(field => ({ field, column_id: cleanText(bindings[field], 40) }));
+      if (!/^\d+$/.test(sheetId) || requested.some(column => !/^\d+$/.test(column.column_id)) ||
+          new Set(requested.map(column => column.column_id)).size !== requested.length) {
+        return Response.json({ success: false,
+          error: 'A permanent Order Request sheet ID and three distinct date-column IDs are required.' }, { status: 400 });
+      }
+      const metadata = await smartsheetGet(`/sheets/${sheetId}/columns?includeAll=true`, token);
+      const columns = normalizeColumns(metadata.body);
+      const dateColumns = requested.map(binding => ({
+        ...binding,
+        ...((column: any) => column
+          ? { title: column.title, type: column.type } : { title: '', type: '' })(
+          columns.find((column: any) => column.id === binding.column_id)),
+      }));
+      if (dateColumns.some(column => !column.title || !column.type)) {
+        throw Object.assign(new Error('Smartsheet did not confirm every configured Order date-column ID.'), { status: 502 });
+      }
+      const sheetRows: any[] = [];
+      const guard = createSmartsheetOrderPageGuard({ pageSize: 200, maxPages: 100 });
+      let sheetVersion: number | null = null;
+      for (let page = 1; page <= 100; page++) {
+        const params = new URLSearchParams({
+          page: String(page), pageSize: '200',
+          columnIds: requested.map(column => column.column_id).join(','),
+          exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+        verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
+        const rows = normalizeSheetRows(result.body);
+        const complete = guard.accept(page, result.body, rows);
+        if (page === 1) sheetVersion = result.body.version;
+        sheetRows.push(...rows);
+        if (complete) break;
+      }
+      guard.assertComplete();
+      const orders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { smartsheet_sheet_id: sheetId }, sort: 'id',
+        label: 'Order Form read-only date parity review',
+      });
+      const audit = auditOrderDateParity(orders, sheetRows, bindings, sheetId);
+      return Response.json({ success: true, ...audit, sheet_id: sheetId,
+        sheet_version: sheetVersion, sheet_download_verified: true,
+        date_columns: dateColumns,
+        sync_global_enabled: config?.global_enabled === true,
+        sync_observation_mode: config?.observation_mode !== false,
+      });
     }
 
     if (action === 'debug_dates') {
