@@ -92,7 +92,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
-import { effectiveOrderStatus, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
+import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
@@ -156,6 +156,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const saved = localStorage.getItem('orderVendors');
     return saved ? JSON.parse(saved) : DEFAULT_VENDORS;
   });
+  const [receiptOptions, setReceiptOptions] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('orderReceiptOptions') || '[]');
+      return ['In Stock', ...saved.filter(option => typeof option === 'string' && option.trim() && option.toLowerCase() !== 'in stock')];
+    } catch { return ['In Stock']; }
+  });
+  const [newReceiptOption, setNewReceiptOption] = useState('');
   const [newRequestType, setNewRequestType] = useState("");
   const [newVendor, setNewVendor] = useState("");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
@@ -563,7 +570,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const getRowStyle = (order) => {
-    if (order.date_received) {
+    if (isFulfilledOrder(order)) {
       return { textDecoration: "line-through", textDecorationColor: "#9CA3AF", textDecorationThickness: "1.5px" };
     }
     return {};
@@ -590,7 +597,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       "Date Needed (Requester fills out this column)": order.date_needed || "",
       "Ordered Date (Carl Fills out this column)": order.date_ordered || "",
       "Vendor (Anyone can fill out this column)": order.vendor || "",
-      "Date Recieved (Anyone can fill out this column)": order.date_received || ""
+      "Date Recieved (Anyone can fill out this column)": order.receipt_option || order.date_received || ""
     }));
 
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -740,7 +747,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
 
     // Always separate received items (those with date_received) to the bottom.
-    const withReceivedFlag = result.map(o => ({ ...o, _hasReceived: Boolean(o.date_received) }));
+    const withReceivedFlag = result.map(o => ({ ...o, _hasReceived: isFulfilledOrder(o) }));
     const notReceived = withReceivedFlag.filter(o => !o._hasReceived);
     const received = withReceivedFlag.filter(o => o._hasReceived);
 
@@ -1022,7 +1029,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             <React.Fragment key={order.id}>
               {isFocused && <tr><td colSpan="11" className="h-3 bg-transparent border-none"></td></tr>}
               <tr 
-                className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${order.date_received ? 'order-received-row' : ''}`}
+                className={`border-b hover:bg-gray-50 ${getRowColor(order)} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${isFulfilledOrder(order) ? 'order-received-row' : ''}`}
                 style={getRowStyle(order)}
               >
               {/* Row Number - Clickable Focus Button */}
