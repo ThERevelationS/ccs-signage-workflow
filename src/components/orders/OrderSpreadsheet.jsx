@@ -92,6 +92,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import { effectiveOrderStatus, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
@@ -555,8 +556,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const getRowColor = (order) => {
-    if (order.date_received || order.status === "received") return "bg-green-100";
-    if (order.status === "ordered") return "bg-green-50";
+    if (effectiveOrderStatus(order) === "received") return "bg-green-100";
+    if (effectiveOrderStatus(order) === "ordered") return "bg-green-50";
     if (order.status === "cancelled") return "bg-gray-100";
     return "bg-white";
   };
@@ -687,7 +688,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   // Memoized filtered and sorted orders with optimized sorting
   const filteredOrders = useMemo(() => {
     let result = orders.filter(order => {
-      if (filterStatus !== "all" && order.status !== filterStatus) return false;
+      if (!orderMatchesReceivedFilter(order, filterStatus)) return false;
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const searchable = [
@@ -769,8 +770,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
     const statusOrder = { pending: 0, cancelled: 1, ordered: 2, received: 3 };
     const defaultSortFn = (a, b) => {
-      const aOrder = statusOrder[a.status] ?? 0;
-      const bOrder = statusOrder[b.status] ?? 0;
+      const aOrder = statusOrder[effectiveOrderStatus(a)] ?? 0;
+      const bOrder = statusOrder[effectiveOrderStatus(b)] ?? 0;
       if (aOrder !== bOrder) return aOrder - bOrder;
       return (a.row_number || 0) - (b.row_number || 0);
     };
