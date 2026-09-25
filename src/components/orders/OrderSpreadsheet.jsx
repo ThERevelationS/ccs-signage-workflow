@@ -92,6 +92,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -787,12 +788,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return [...notReceived, ...received];
   }, [orders, filterStatus, searchTerm, sortConfig]);
 
+  const historyLayout = useMemo(() => orderHistoryLayout(filteredOrders, filterStatus), [filteredOrders, filterStatus]);
+
   // Virtual scrolling setup
   const tableContainerRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
-    count: filteredOrders.length,
+    count: historyLayout.virtualCount,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 32,
+    estimateSize: (index) => index === historyLayout.historyVirtualIndex ? 48 : 32,
     overscan: 15,
   });
 
@@ -836,6 +839,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return (
       <OrderMobileCards
         orders={filteredOrders}
+        separateHistory={historyLayout.split}
+        openCount={historyLayout.openCount}
         onOpenDetails={(order) => alert(`Order: ${order.description}`)}
       />
     );
@@ -913,6 +918,25 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         }
         .order-spreadsheet th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       `}</style>
+
+      {/* Keep active work and received history visibly separate without loading Orders twice. */}
+      {historyLayout.split && (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-bold text-purple-900">All Orders — Not Received</h2>
+            <p className="text-xs text-purple-800">
+              {historyLayout.openCount} outstanding {historyLayout.openCount === 1 ? 'item' : 'items'}
+              {historyLayout.openCount === 0 ? ' match this view.' : ' awaiting receipt.'}
+            </p>
+          </div>
+          {historyLayout.receivedCount > 0 && (
+            <button type="button" className="min-h-10 rounded-lg border border-green-300 bg-white px-3 text-xs font-semibold text-green-800 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+              onClick={() => rowVirtualizer.scrollToIndex(historyLayout.historyVirtualIndex, { align: 'start' })}>
+              Jump to History ({historyLayout.receivedCount})
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Spreadsheet Table */}
       <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
@@ -1022,7 +1046,19 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             <td colSpan={11} />
           </tr>
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const index = virtualRow.index;
+            if (virtualRow.index === historyLayout.historyVirtualIndex) {
+              return (
+                <tr key="received-history-heading" className="border-y-2 border-green-300 bg-green-100" style={{ height: '48px' }}>
+                  <td colSpan={11} className="px-4 py-2">
+                    <div role="heading" aria-level={2} className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold text-green-900">
+                      <span>History — Received</span>
+                      <span className="rounded-full bg-white px-2 py-1 text-xs">{historyLayout.receivedCount} received {historyLayout.receivedCount === 1 ? 'item' : 'items'}</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            }
+            const index = historyLayout.orderIndexAtVirtual(virtualRow.index);
             const order = filteredOrders[index];
             const isFocused = focusedRowId === order.id;
             return (
