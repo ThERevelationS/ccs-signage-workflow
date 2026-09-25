@@ -212,7 +212,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               {coreBridgeUrl ? (
                 <button type="button" onClick={() => openExternalHttpUrl(coreBridgeUrl)} className="min-w-0 flex-1 truncate text-left text-xs text-blue-600 hover:underline" title="Open CoreBridge">{wo.est_inv_at || "Link"}</button>
               ) : wo.corbridge_link ? (
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-amber-700" title="CoreBridge link is present but is not a usable http/https URL. Use the link button to correct it.">{wo.corbridge_invoice_number || wo.est_inv_at || "Invalid link"}</span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-amber-700" title="CoreBridge link is present but is not a usable http/https URL. Use the link button to correct it.">{wo.est_inv_at || "Invalid link"}</span>
               ) : (
                 <Input value={wo.est_inv_at || ""} onChange={(e) => updateWorkOrder(wo.id, "est_inv_at", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1 flex-1" placeholder="-" disabled={!isRegistered} />
               )}
