@@ -1,7 +1,11 @@
 // Order Form only: Date Received is the authoritative receipt flag in the
 // configured Order Request sheet. Keep historical records without deleting them.
+export function isFulfilledOrder(order) {
+  return Boolean(order?.date_received) || String(order?.receipt_option ?? '').trim().toLowerCase() === 'in stock';
+}
+
 export function effectiveOrderStatus(order) {
-  if (order?.date_received) return 'received';
+  if (isFulfilledOrder(order)) return 'received';
   if (order?.status === 'cancelled') return 'cancelled';
   if (order?.date_ordered) return 'ordered';
   // Historical imports defaulted to pending even when receipt dates existed.
@@ -10,10 +14,10 @@ export function effectiveOrderStatus(order) {
 }
 
 export function orderMatchesReceivedFilter(order, filter) {
-  if (filter === 'not_received') return !order?.date_received;
-  if (filter === 'received') return Boolean(order?.date_received);
+  if (filter === 'not_received') return !isFulfilledOrder(order);
+  if (filter === 'received') return isFulfilledOrder(order);
   if (filter === 'pending' || filter === 'ordered' || filter === 'cancelled') {
-    return !order?.date_received && effectiveOrderStatus(order) === filter;
+    return !isFulfilledOrder(order) && effectiveOrderStatus(order) === filter;
   }
   return true; // Existing unfiltered consumers and explicit Order history view.
 }
@@ -23,7 +27,7 @@ export function orderMatchesReceivedFilter(order, filter) {
 // an existing receipt date or a locally cancelled Order.
 export function orderStatusFromPulledDates(fields, existing, hasStatusBinding) {
   if (hasStatusBinding) return fields;
-  if (fields?.date_received) return { ...fields, status: 'received' };
-  if (existing?.status === 'cancelled' || existing?.date_received) return fields;
+  if (isFulfilledOrder(fields)) return { ...fields, status: 'received' };
+  if (existing?.status === 'cancelled' || isFulfilledOrder(existing)) return fields;
   return { ...fields, status: (fields?.date_ordered || existing?.date_ordered) ? 'ordered' : 'pending' };
 }
