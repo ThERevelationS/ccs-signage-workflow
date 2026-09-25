@@ -1,12 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { getActiveConnection, callBouncieApi, WEBHOOK_EVENTS } from '../../shared/bouncie.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+    const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
     const isAdmin = user.role === 'admin';
     const conn = await getActiveConnection(base44);
     if (!conn) return Response.json({ connected: false, isAdmin });
@@ -57,6 +57,8 @@ export default async function(req) {
       expectedWebhookEvents: WEBHOOK_EVENTS
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    return Response.json({ error: safeStatus === 401 ? 'Authentication required' : error.message }, { status: safeStatus });
   }
 }
