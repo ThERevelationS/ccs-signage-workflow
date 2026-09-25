@@ -26,8 +26,14 @@ export function createdOrderSmartsheetRowId(body) {
 }
 
 export function orderSmartsheetCreateNeedsReview(record) {
-  // Treat malformed historical markers as unresolved, not as clearance to retry.
-  return Boolean(record?.smartsheet_create_attempt);
+  // A completed marker is trustworthy only alongside its matching permanent
+  // Base44 link. Preserve malformed or interrupted markers for manual review.
+  const marker = record?.smartsheet_create_attempt;
+  if (!marker) return false;
+  const rowId = numericId(record?.smartsheet_row_id);
+  return !(marker.status === 'linked' && rowId &&
+    numericId(marker.row_id) === rowId &&
+    String(marker.sheet_id ?? '') === String(record.smartsheet_sheet_id ?? ''));
 }
 
 export async function createOrderSmartsheetRowWithGuard({
@@ -62,7 +68,7 @@ export async function createOrderSmartsheetRowWithGuard({
     ? attemptId.trim() : crypto.randomUUID();
   const started = typeof startedAt === 'string' && startedAt.trim()
     ? startedAt.trim() : new Date().toISOString();
-  const marker = { sheet_id: targetSheet, attempt_id: token, started_at: started };
+  const marker = { sheet_id: targetSheet, attempt_id: token, started_at: started, status: 'reserved' };
 
   // Write BEFORE POST. Any ambiguous error at or after this point leaves a
   // durable marker; subsequent runs are not allowed to repeat the POST.
@@ -96,8 +102,14 @@ export async function createOrderSmartsheetRowWithGuard({
       smartsheet_sheet_id: targetSheet,
       smartsheet_sync_snapshot: snapshot,
       smartsheet_last_synced_at: syncedAt,
-      smartsheet_create_attempt: null,
+      smartsheet_create_attempt: { ...marker, status: 'linked', row_id: rowId, linked_at: syncedAt },
     });
+    const verified = await entity.get(id);
+    if (String(verified?.smartsheet_row_id ?? '') !== rowId ||
+        String(verified?.smartsheet_sheet_id ?? '') !== targetSheet ||
+        orderSmartsheetCreateNeedsReview(verified)) {
+      throw new Error('Base44 did not verify its permanent Order row link.');
+    }
   } catch {
     throw new Error(`Smartsheet created Order row ${rowId}, but Base44 could not confirm its permanent link. Review and link manually; never POST again.`);
   }
