@@ -19,10 +19,12 @@ assert.equal(orderMatchesReceivedFilter({ status: 'pending', date_ordered: '2026
 assert.equal(orderMatchesReceivedFilter({ status: 'pending', date_received: '2026-09-25' }, 'pending'), false);
 assert.equal(effectiveOrderStatus({ receipt_option: 'In Stock', status: 'pending' }), 'received');
 assert.equal(orderMatchesReceivedFilter({ receipt_option: 'In Stock' }, 'not_received'), false);
-assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'not_received'), true);
+assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'not_received'), false);
+assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'received'), true);
+assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Stock', status: 'pending' }, 'received'), true);
 assert.deepEqual(orderStatusFromPulledDates({ receipt_option: 'In Stock' }, null, false),
   { receipt_option: 'In Stock', status: 'received' });
-console.log('PASS receipt dates and In Stock enter History; Backordered and stale status remain open');
+console.log('PASS Date Received and nonempty receipt options enter History; stale status alone stays open');
 
 assert.deepEqual(orderStatusFromPulledDates({ date_received: '2026-09-25' }, { status: 'pending' }, false),
   { date_received: '2026-09-25', status: 'received' });
