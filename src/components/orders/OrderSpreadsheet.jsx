@@ -1451,7 +1451,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                 setSaveError('');
                                 await persistImmediateOrderFields(order.id, {
                                   date_received: '', receipt_option: option,
-                                  status: option.toLowerCase() === 'in stock' ? 'received' : (order.date_ordered ? 'ordered' : 'pending'),
+                                  status: 'received',
                                 }, 'Order received option');
                                 setOpenDatePopover(null);
                               } catch (error) {
@@ -1475,7 +1475,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                             setNewReceiptOption('');
                           }}>Add</Button>
                       </div>
-                      <p className="text-xs text-gray-500">In Stock counts as received. Other options stay open until dated.</p>
+                      <p className="text-xs text-gray-500">Any selected option counts as received, just like a received date.</p>
                     </div>
                     <Calendar
                               mode="single"
