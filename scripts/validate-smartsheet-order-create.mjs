@@ -74,6 +74,31 @@ function fixture(initial = {}) {
 
 {
   const state = fixture();
+  let releasePost;
+  let notifyEntered;
+  const holdingPost = new Promise((resolve) => { releasePost = resolve; });
+  const entered = new Promise((resolve) => { notifyEntered = resolve; });
+  let posts = 0;
+  const first = createOrderSmartsheetRowWithGuard(state.args(async () => {
+    posts++;
+    notifyEntered();
+    await holdingPost;
+    return success(6789);
+  }));
+  await entered;
+  await assert.rejects(
+    createOrderSmartsheetRowWithGuard(state.args(async () => { posts++; return success(9999); })),
+    /already in progress/,
+  );
+  releasePost();
+  await first;
+  assert.equal(posts, 1);
+  assert.equal(state.getStored().smartsheet_row_id, '6789');
+  console.log('PASS overlapping create calls in one runtime send only one POST');
+}
+
+{
+  const state = fixture();
   let posts = 0;
   await assert.rejects(
     createOrderSmartsheetRowWithGuard(state.args(async () => {
