@@ -3,7 +3,13 @@ import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
-import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
+import { replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
+import {
+  SALES_NUMBER_BACKFILL_CONFIRMATION,
+  assessSalesNumberFill,
+  normalizeSalesNumber,
+  validateSalesNumberSelections,
+} from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
@@ -871,11 +877,13 @@ Deno.serve(async (req) => {
     // workflow calls have no session token and run as the service role, matching
     // the pattern used by the other scheduled fleet functions in this app.
     const hasSessionToken = Boolean(String(body?.session_token || '').trim());
+    let adminActor: any = null;
     if (hasSessionToken) {
       const actor = await authenticateSignShopSession(base44, body?.session_token);
       if (actor?.role !== 'admin') {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
+      adminActor = actor;
     } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset') {
       return Response.json({ success: false, error: 'Admin session is required for this action.' }, { status: 403 });
     }
@@ -887,7 +895,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
