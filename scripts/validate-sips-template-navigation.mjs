@@ -6,10 +6,11 @@ const names=['requestTabChange','requestClose','confirmNavigation'];
 const blocks=names.map(name=>{const start=src.indexOf('  const '+name+' = ');assert(start>=0,name);const end=src.indexOf('\n  };',start);assert(end>start,name);return src.slice(start,end+6)});
 const program=blocks.join('\n')+'\nthis.actions={requestTabChange,requestClose,confirmNavigation}';
 function setup(sub=false,product=false){
- const state={activeTab:'subtemplates',pendingNavigation:null,closed:false,subTemplateHasChanges:sub,productTypeHasChanges:product,subTemplateChecklistItems:['draft sub'],productTypeItems:['draft product'],subTemplateSaveStatus:'idle',productTypeSaveStatus:'idle'};
+ const state={activeTab:'subtemplates',pendingNavigation:null,closed:false,subTemplateHasChanges:sub,productTypeHasChanges:product,subTemplateChecklistItems:['draft sub'],productTypeItems:['draft product'],subTemplateSaveStatus:'idle',productTypeSaveStatus:'idle',newItemText:'',newSubTemplateName:'',newProductTypeName:'',newDropdownName:'',editingSubTemplateId:null,editingSubTemplateName:'',editingProductTypeName:null,editingProductTypeValue:'',editingDropdown:null,editingDropdownName:''};
  const ctx={...state,selectedSubTemplate:'sub1',selectedProductType:'prod1',subTemplateItems:{sub1:{items:['saved sub']}},productTypeTemplates:{prod1:{items:['saved product']}},onClose:()=>state.closed=true};
  for(const key of Object.keys(state)){ctx['set'+key[0].toUpperCase()+key.slice(1)]=v=>{ctx[key]=v;state[key]=v}}
- Object.defineProperty(ctx,'hasUnsavedEditorChanges',{get:()=>ctx.subTemplateHasChanges||ctx.productTypeHasChanges});
+ Object.defineProperty(ctx,'hasUnsavedNameDrafts',{get:()=>false});
+ Object.defineProperty(ctx,'hasUnsavedEditorChanges',{get:()=>ctx.subTemplateHasChanges||ctx.productTypeHasChanges||ctx.hasUnsavedNameDrafts});
  vm.createContext(ctx);vm.runInContext(program,ctx);
  return {state,...ctx.actions,cancel:()=>ctx.setPendingNavigation(null)};
 }
