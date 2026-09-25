@@ -47,6 +47,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const jurisdictionHeadingRef = useRef(null);
   const jurisdictionSearchInputRef = useRef(null);
   const firstJurisdictionSearchResultRef = useRef(null);
+  const jurisdictionSearchResultRefs = useRef(new Map());
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
@@ -778,7 +779,7 @@ Answer the question based on the documents and information available. Be specifi
               />
             </div>
             <p id={`jurisdiction-search-instructions-${jurisdiction.id}`} className="sr-only">
-              Press Down Arrow to browse search results. Press Escape to return to and clear the search.
+              Press Down Arrow to browse results. Use Up and Down arrows between results, Home and End for the first and last result, and Escape to return to and clear the search.
             </p>
             <p role="status" aria-live="polite" aria-atomic="true" className="mt-1 text-xs text-gray-600">
               {docSearching ? "Searching..." : docSearchTerm.trim()
@@ -788,18 +789,33 @@ Answer the question based on the documents and information available. Be specifi
                 : ""}
             </p>
             {searchResults.length > 0 && (
-              <div role="group" aria-label="Jurisdiction search results" className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
+              <div role="group" aria-label="Jurisdiction search results" aria-describedby={`jurisdiction-search-instructions-${jurisdiction.id}`} className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
                 {searchResults.map((result, index) => (
                   <button
                     type="button"
-                    ref={index === 0 ? firstJurisdictionSearchResultRef : null}
+                    ref={(node) => {
+                      if (node) jurisdictionSearchResultRefs.current.set(index, node);
+                      else jurisdictionSearchResultRefs.current.delete(index);
+                      if (index === 0) firstJurisdictionSearchResultRef.current = node;
+                    }}
                     key={`${result.type}-${result.id}`}
                     onKeyDown={(event) => {
-                      if (event.key !== "Escape") return;
+                      if (event.nativeEvent?.isComposing) return;
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        jurisdictionSearchInputRef.current?.focus();
+                        searchDocuments("");
+                        return;
+                      }
+                      if (event.altKey || event.ctrlKey || event.metaKey) return;
+                      const nextIndex = documentHeaderTargetIndex(event.key, index, searchResults.length);
+                      if (nextIndex === null) return;
+                      const nextResult = jurisdictionSearchResultRefs.current.get(nextIndex);
+                      if (!nextResult) return;
                       event.preventDefault();
-                      event.stopPropagation();
-                      jurisdictionSearchInputRef.current?.focus();
-                      searchDocuments("");
+                      nextResult.focus({ preventScroll: true });
+                      nextResult.scrollIntoView({ block: "nearest", behavior: "auto" });
                     }}
                     onClick={() => {
                       if (result.type === 'document') {
