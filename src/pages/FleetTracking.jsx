@@ -6,6 +6,7 @@ import FleetMap from "@/components/fleet/FleetMap";
 import VehiclePanel from "@/components/fleet/VehiclePanel";
 import AlertSettingsModal from "@/components/fleet/AlertSettingsModal";
 import { buildWeeklyRanges } from "@/components/fleet/fleetHelpers";
+import { useAuth } from "@/components/auth/EmailGate";
 import { filterAllFleetRows, listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { Loader2, LinkIcon, AlertCircle, RefreshCw, LogOut, ExternalLink, ChevronDown, ChevronUp, Gauge, GripHorizontal, Maximize2, Minimize2, X } from "lucide-react";
 
@@ -48,9 +49,9 @@ function resolveFleetEquipmentLink(vehicle, equipmentRows = []) {
 }
 
 export default function FleetTracking() {
+  const { currentUser, sessionToken } = useAuth();
   const [status, setStatus] = useState(null); // {connected, user, ...}
   const [statusLoading, setStatusLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(true);
   const [fleetEquipment, setFleetEquipment] = useState([]);
@@ -76,7 +77,7 @@ export default function FleetTracking() {
 
   const loadStatus = useCallback(async () => {
     try {
-      const { data } = await base44.functions.invoke("bouncieStatus", {});
+      const { data } = await base44.functions.invoke("bouncieStatus", { session_token: sessionToken });
       setStatus(data);
       return data;
     } catch (e) {
@@ -88,6 +89,7 @@ export default function FleetTracking() {
     try {
       setVehiclesLoading(true);
       const { data } = await base44.functions.invoke("bouncieApi", {
+        session_token: sessionToken,
         method: "GET", path: "/v1/vehicles", query: {}
       });
       setVehicles(data?.data || []);
@@ -101,8 +103,9 @@ export default function FleetTracking() {
 
   const loadNotifications = useCallback(async () => {
     try {
-      const notifs = await base44.entities.BouncieNotification.list("-timestamp", 200);
-      setNotifications(notifs || []);
+      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "list", session_token: sessionToken });
+      if (data?.error) throw new Error(data.error);
+      setNotifications(data?.notifications || []);
     } catch {
       // entity may not be readable yet
     }
@@ -124,6 +127,7 @@ export default function FleetTracking() {
       const ranges = buildWeeklyRanges(days);
       const results = await Promise.all(
         ranges.map(r => base44.functions.invoke("bouncieApi", {
+          session_token: sessionToken,
           method: "GET", path: "/v1/trips",
           query: { imei, "starts-after": r["starts-after"], "ends-before": r["ends-before"], "gps-format": "geojson" }
         }))
@@ -156,18 +160,13 @@ export default function FleetTracking() {
   // Initial load + auth
   useEffect(() => {
     (async () => {
-      let authenticatedUser = null;
-      try {
-        authenticatedUser = await base44.auth.me();
-        setCurrentUser(authenticatedUser);
-      } catch {}
       const s = await loadStatus();
       setStatusLoading(false);
       if (s?.connected) {
         loadNotifications();
         if (!s?.needsReconnect) {
           loadVehicles();
-          if (authenticatedUser?.role === "admin") syncNotifications();
+          if (currentUser?.role === "admin") syncNotifications();
         } else {
           setVehiclesLoading(false);
         }
@@ -217,7 +216,7 @@ export default function FleetTracking() {
     const popup = window.open("", "_blank");
     setConnecting(true);
     try {
-      const { data } = await base44.functions.invoke("bouncieAuthInitiate", { redirectBase: window.location.origin });
+      const { data } = await base44.functions.invoke("bouncieAuthInitiate", { session_token: sessionToken });
       if (data?.authUrl) {
         if (popup) {
           popup.location.href = data.authUrl;
@@ -255,7 +254,7 @@ export default function FleetTracking() {
   const handleMarkRead = async (id) => {
     setNotifications(n => n.map(x => x.id === id ? { ...x, is_read: true } : x));
     try {
-      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_read", id });
+      const { data } = await base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_read", id, session_token: sessionToken });
       if (data?.error) throw new Error(data.error);
     } catch (e) {
       setError(e?.message || "Unable to mark Bouncie notification read.");
@@ -280,7 +279,7 @@ export default function FleetTracking() {
   const handleClearNotifications = async () => {
     if (!selectedNotificationVins.length) return;
     try {
-      const results = await Promise.all(selectedNotificationVins.map((vin) => base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin })));
+      const results = await Promise.all(selectedNotificationVins.map((vin) => base44.functions.invoke("fleetBouncieNotificationAction", { action: "mark_vehicle_read", vehicle_vin: vin, session_token: sessionToken })));
       const failed = results.find((result) => result?.data?.error);
       if (failed?.data?.error) throw new Error(failed.data.error);
       const selectedSet = new Set(selectedNotificationVins);
