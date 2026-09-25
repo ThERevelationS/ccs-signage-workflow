@@ -52,6 +52,7 @@ export default function SmartsheetSyncWidget() {
   const { isRunning, isStale, ageMinutes } = interpretSmartsheetSyncStatus(status);
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
+  const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
   const totalExamined = results.reduce((sum, r) => sum + (r.records_examined || r.rows_examined || 0), 0);
@@ -64,7 +65,7 @@ export default function SmartsheetSyncWidget() {
   // Only show the widget when a sync is running, or briefly after completion
   if (!isRunning && dismissed) return null;
   if (!isRunning && !isStale && !status?.completed_at) return null;
-  if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors) return null;
+  if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded) return null;
 
   const lastSync = status?.completed_at || status?.started_at;
   const lastSyncDate = lastSync ? new Date(lastSync) : null;
@@ -81,16 +82,16 @@ export default function SmartsheetSyncWidget() {
               {isRunning && (
                 <RefreshCw className="w-3 h-3 text-blue-500 animate-spin absolute -top-1 -right-1" />
               )}
-              {!isRunning && !isStale && lastSyncDate && !hasErrors && (
+              {!isRunning && !isStale && lastSyncDate && !hasErrors && !hasReviewNeeded && (
                 <Check className="w-3 h-3 text-green-500 absolute -top-1 -right-1" />
               )}
-              {!isRunning && (isStale || hasErrors) && (
+              {!isRunning && (isStale || hasErrors || hasReviewNeeded) && (
                 <AlertTriangle className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" />
               )}
             </div>
             <div className="text-xs min-w-0">
               <div className="font-semibold text-gray-800 truncate">
-                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : "Sync Complete"}
+                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sales sync needs review" : hasErrors ? "Sync has errors" : "Sync Complete"}
               </div>
               <div className="text-gray-500 truncate">
                 {isRunning
@@ -173,6 +174,11 @@ export default function SmartsheetSyncWidget() {
             {(totalCreated > 0 || totalUpdated > 0) && (
               <div className="text-[10px] text-gray-500 pt-1 border-t border-gray-100">
                 +{totalCreated} created · ↑{totalUpdated} updated
+              </div>
+            )}
+            {hasReviewNeeded && (
+              <div className="text-[11px] text-amber-700 pt-1" role="status">
+                An attempted Sales stage was blocked or reported errors/conflicts. Review the stage results before treating this run as complete.
               </div>
             )}
             <div className="text-[10px] text-gray-400 pt-0.5">
