@@ -16,9 +16,11 @@ export function readSharedOrderRequestor(cell) {
   const label = typeof cell?.display_value === 'string'
     ? cell.display_value.trim()
     : (typeof cell?.displayValue === 'string' ? cell.displayValue.trim() : '');
+  const hasEmail = isValidContactEmail(raw);
   return {
-    name: label || raw || undefined,
-    email: isValidContactEmail(raw) ? raw : undefined,
+    // When Smartsheet omits the display name, never copy an email into Name.
+    name: label || (hasEmail ? undefined : (raw || undefined)),
+    email: hasEmail ? raw : undefined,
   };
 }
 
