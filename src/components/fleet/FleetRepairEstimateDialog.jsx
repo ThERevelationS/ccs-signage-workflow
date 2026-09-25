@@ -35,7 +35,9 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     closeRef.current?.focus();
     const handleKey = event => {
       if (event.key === "Escape") {
-        if (!busyState.current) { event.preventDefault(); closeCallback.current?.(); }
+        event.preventDefault();
+        event.stopPropagation();
+        if (!busyState.current) closeCallback.current?.();
         return;
       }
       if (event.key !== "Tab" || !dialogRef.current) return;
@@ -50,7 +52,10 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       else if (!event.shiftKey && active === last) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener("keydown", handleKey);
-    return () => { document.removeEventListener("keydown", handleKey); previousFocus.current?.focus?.(); };
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
+    };
   }, [open]);
 
   const load = async () => {
