@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
 import OrderRequestorEmailReview from "@/components/orders/OrderRequestorEmailReview";
+import OrderCreateAttemptReview from "@/components/orders/OrderCreateAttemptReview";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -27,6 +28,7 @@ export default function OrderForm() {
   const [canImportExport, setCanImportExport] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [emailReviewOpen, setEmailReviewOpen] = useState(false);
+  const [createAttemptReviewOpen, setCreateAttemptReviewOpen] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -149,6 +151,19 @@ export default function OrderForm() {
               </Button>
             )}
 
+            {currentUser?.role === "admin" && !!sessionToken && (
+              <Button
+                type="button"
+                onClick={() => setCreateAttemptReviewOpen(true)}
+                size="sm"
+                className="h-8 px-3"
+                variant="ghost"
+              >
+                <ShieldCheck className="w-4 h-4 mr-1" />
+                Review sync attempts
+              </Button>
+            )}
+
             {canImportExport && (
               <Button 
                 onClick={() => spreadsheetRef.current?.exportToExcel()}
@@ -172,11 +187,18 @@ export default function OrderForm() {
       </div>
     </div>
     {currentUser?.role === "admin" && !!sessionToken && (
-      <OrderRequestorEmailReview
-        open={emailReviewOpen}
-        onOpenChange={setEmailReviewOpen}
-        sessionToken={sessionToken}
-      />
+      <>
+        <OrderRequestorEmailReview
+          open={emailReviewOpen}
+          onOpenChange={setEmailReviewOpen}
+          sessionToken={sessionToken}
+        />
+        <OrderCreateAttemptReview
+          open={createAttemptReviewOpen}
+          onOpenChange={setCreateAttemptReviewOpen}
+          sessionToken={sessionToken}
+        />
+      </>
     )}
     </PullToRefresh>
   );
