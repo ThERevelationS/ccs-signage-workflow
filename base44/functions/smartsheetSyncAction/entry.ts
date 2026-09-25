@@ -7,6 +7,7 @@ import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPage
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
+import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import {
   buildCells,
@@ -386,6 +387,11 @@ async function pullDataset(
     }
 
     const existing = recordsByRowId[rowId];
+    if (dataset === 'orders') {
+      Object.assign(fieldValues, orderStatusFromPulledDates(
+        fieldValues, existing, /^\d+$/.test(String(bindings?.status ?? '').trim()),
+      ));
+    }
     if (existing) {
       // A no-op pull must not bump updated_date or rewrite working Sales data.
       // If the snapshot is missing/stale, retain the existing reconciliation path.
