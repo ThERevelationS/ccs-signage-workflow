@@ -37,9 +37,12 @@ const ui = readFileSync(new URL('../src/pages/OrderForm.jsx', import.meta.url), 
 const spreadsheet = readFileSync(new URL('../src/components/orders/OrderSpreadsheet.jsx', import.meta.url), 'utf8');
 const mobile = readFileSync(new URL('../src/components/orders/OrderMobileCards.jsx', import.meta.url), 'utf8');
 const backend = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');
-assert.match(ui, /useState\("not_received"\)/);
+assert.match(ui, /useState\("all_with_received"\)/);
+assert.match(ui, /value="open_only"/);
 assert.match(ui, /value="all_with_received"/);
-assert.match(ui, /order_form_filter === "all" \? "not_received"/);
+assert.match(ui, /\["all", "not_received"\]\.includes\(me\.order_form_filter\)/);
+assert.match(spreadsheet, /orderHistoryLayout\(filteredOrders, filterStatus\)/);
+assert.match(mobile, /separateHistory/);
 assert.match(spreadsheet, /orderMatchesReceivedFilter\(order, filterStatus\)/);
 assert.match(spreadsheet, /effectiveOrderStatus\(a\)/);
 assert.match(mobile, /effectiveOrderStatus\(order\)/);
