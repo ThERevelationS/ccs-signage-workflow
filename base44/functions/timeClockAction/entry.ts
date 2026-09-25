@@ -2091,6 +2091,14 @@ Deno.serve(async (req) => {
         const periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
         const activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
         const completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
+        const previousLocks = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(previousLocks)) throw new Error('Prior pay-period lock lookup did not return a record list.');
+        const completedIds = new Set(completedEntries.map((entry: any) => entry.id));
+        if (previousLocks.some((entry: any) => !completedIds.has(entry.id) ||
+            String(entry.pay_period_locked_at || '') !== lockTimestamp ||
+            asEmail(entry.pay_period_locked_by) !== asEmail(intent.actor_email))) {
+          return Response.json({ success: false, error: 'This period has entry locks that cannot be attributed to this exact finalization. Admin investigation is required.' }, { status: 409 });
+        }
         const unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
         const lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
         const activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
@@ -2099,6 +2107,7 @@ Deno.serve(async (req) => {
         const pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
 
         if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
+          if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'Finalization is blocked and its staged entry locks could not be safely cleared. Retry the same request or request admin investigation.' }, { status: 409 });
           await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
             outcome: 'blocked', details: {
               ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note,
@@ -2175,7 +2184,7 @@ Deno.serve(async (req) => {
               archived_test_data: { $ne: true },
               archived_admin: { $ne: true },
             },
-            { $set: { pay_period_id: period.id, pay_period_locked_at: now, pay_period_locked_by: actorEmail } },
+            { $set: { pay_period_id: period.id, pay_period_locked_at: lockTimestamp, pay_period_locked_by: actorEmail } },
           );
           if (!lockResult || typeof lockResult.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'Pay-period entry locking could not be verified. Retry the same finalization after reloading.' }, { status: 409 });
         }
