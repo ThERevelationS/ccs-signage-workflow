@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { effectiveOrderStatus } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 
@@ -17,6 +18,10 @@ const safeDate = (d) => {
 };
 
 export default function OrderMobileCards({ orders, onOpenDetails, separateHistory = false, openCount = 0 }) {
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [historyLimit, setHistoryLimit] = useState(50);
+  const [visibleLimit, setVisibleLimit] = useState(100);
+  const historyCount = orders.length - openCount;
   const renderCards = (items) => items.map((order) => {
         const displayStatus = effectiveOrderStatus(order);
         const statusColor = STATUS_COLORS[displayStatus] || "bg-gray-100 text-gray-700";
@@ -77,13 +82,42 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
               <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-green-900">{orders.length - openCount}</span>
             </div>
             <div className="space-y-3 p-3">
-              {orders.length > openCount ? renderCards(orders.slice(openCount)) : (
+              {historyCount === 0 ? (
                 <p className="py-5 text-center text-sm text-gray-600">No received Orders match this view.</p>
+              ) : (
+                <>
+                  <button type="button" aria-expanded={historyExpanded} aria-controls="order-history-mobile-items"
+                    className="min-h-11 w-full rounded-lg border border-green-300 bg-white px-3 text-sm font-semibold text-green-900"
+                    onClick={() => { setHistoryExpanded(expanded => !expanded); setHistoryLimit(50); }}>
+                    {historyExpanded ? "Hide received history" : `Show received history (${historyCount})`}
+                  </button>
+                  {historyExpanded && (
+                    <div id="order-history-mobile-items" className="space-y-3">
+                      {renderCards(orders.slice(openCount, openCount + historyLimit))}
+                      {historyCount > historyLimit && (
+                        <button type="button" className="min-h-11 w-full rounded-lg border border-green-300 bg-white px-3 text-sm font-semibold text-green-900"
+                          onClick={() => setHistoryLimit(limit => limit + 50)}>
+                          Show next 50 ({historyCount - historyLimit} remaining)
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </section>
         </>
-      ) : renderCards(orders)}
+      ) : (
+        <>
+          {renderCards(orders.slice(0, visibleLimit))}
+          {orders.length > visibleLimit && (
+            <button type="button" className="min-h-11 w-full rounded-lg border border-purple-300 bg-white px-3 text-sm font-semibold text-purple-900"
+              onClick={() => setVisibleLimit(limit => limit + 100)}>
+              Show next 100 ({orders.length - visibleLimit} remaining)
+            </button>
+          )}
+        </>
+      )}
       {!separateHistory && orders.length === 0 && (
         <div className="text-center text-gray-400 py-10 text-sm">No orders found</div>
       )}
