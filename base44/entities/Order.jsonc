@@ -57,7 +57,11 @@
     "date_received": {
       "type": "string",
       "format": "date",
-      "description": "Date the order was received"
+      "description": "Date the order was received. ISO date only, never a text receipt option."
+    },
+    "receipt_option": {
+      "type": "string",
+      "description": "Optional text from the Smartsheet Date Received column, such as In Stock or a custom receipt choice. Kept separate from ISO dates."
     },
     "status": {
       "type": "string",
