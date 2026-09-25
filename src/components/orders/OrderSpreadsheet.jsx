@@ -1258,11 +1258,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `needed-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `needed-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {safeFormatDate(order.date_needed, "MM/dd/yy")}
+                      {order.date_needed_option || safeFormatDate(order.date_needed, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    {order.date_needed && (
+                    {(order.date_needed || order.date_needed_option) && (
                       <div className="p-2 border-b">
                         <Button
                           size="sm"
@@ -1297,8 +1297,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                             return;
                           }
                           updateOrder(order.id, "date_needed", format(date, "yyyy-MM-dd"));
+                          updateOrder(order.id, "date_needed_option", "");
                         } else {
                           updateOrder(order.id, "date_needed", "");
+                          updateOrder(order.id, "date_needed_option", "");
                         }
                         setOpenDatePopover(null);
                       }}
@@ -1320,11 +1322,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `ordered-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `ordered-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {safeFormatDate(order.date_ordered, "MM/dd/yy")}
+                      {order.date_ordered_option || safeFormatDate(order.date_ordered, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    {order.date_ordered && (
+                    {(order.date_ordered || order.date_ordered_option) && (
                       <div className="p-2 border-b">
                         <Button
                           size="sm"
@@ -1357,7 +1359,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_ordered: dateStr, status: "ordered" },
+                                      { date_ordered: dateStr, date_ordered_option: "", status: "ordered" },
                                       "Order date ordered"
                                     );
                                   } catch (error) {
@@ -1369,7 +1371,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_ordered: "" },
+                                      { date_ordered: "", date_ordered_option: "", status: order.date_received || order.receipt_option ? "received" : "pending" },
                                       "Order date ordered clear"
                                     );
                                   } catch (error) {
