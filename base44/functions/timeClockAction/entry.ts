@@ -1972,14 +1972,30 @@ Deno.serve(async (req) => {
         return Boolean(finalAudit && ['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')));
       };
 
-      if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
-        const unlock = await entryEntity.updateMany({ pay_period_id: period.id }, { $unset: {
-          pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '',
-        } });
-        if (!unlock || typeof unlock.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but entry unlock verification was interrupted. Retry the same reopen action.' }, { status: 409 });
+      const unlockFinalizedPeriodEntries = async () => {
+        // Unlock only locks owned by the finalization being reopened. A delayed
+        // duplicate reopen must not erase locks from a later finalization.
+        const lockAt = String(period.finalized_summary?.lock_timestamp || period.finalized_at || '');
+        const lockedBy = asEmail(period.finalized_summary?.locked_by || period.finalized_by);
+        if (!lockAt || !lockedBy) return false;
+        const currentLocks = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(currentLocks)) throw new Error('Pay-period reopen lock lookup did not return a record list.');
+        if (currentLocks.some((entry: any) => String(entry.pay_period_locked_at || '') !== lockAt ||
+            asEmail(entry.pay_period_locked_by) !== lockedBy)) return false;
+        if (currentLocks.length) {
+          const unlocked = await entryEntity.updateMany(
+            { pay_period_id: period.id, pay_period_locked_at: lockAt, pay_period_locked_by: lockedBy },
+            { $unset: { pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '' } },
+          );
+          if (!unlocked || typeof unlocked.updated !== 'number') return false;
+        }
         const stillLocked = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(stillLocked)) throw new Error('Pay-period unlock verification did not return a record list.');
-        if (stillLocked.length) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but some entry locks remain. Retry the same reopen action.' }, { status: 409 });
+        return stillLocked.length === 0;
+      };
+
+      if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
+        if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen action or request admin investigation.' }, { status: 409 });
         if (!await ensureStatusAuditConfirmed(true)) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its audit is still being finalized. Retry the same reopen action.' }, { status: 409 });
         return Response.json({ success: true, period, audit_id: intent.id, reused: true });
       }
@@ -2270,13 +2286,7 @@ Deno.serve(async (req) => {
           { $set: { status: 'review', reopened_at: now, reopened_by: actorEmail, reopen_reason: note, last_request_id: requestId } },
         );
         if (!reopened || reopened.updated !== 1) return Response.json({ success: false, error: 'Pay period changed in another session. Reload before reopening it.' }, { status: 409 });
-        const unlock = await entryEntity.updateMany({ pay_period_id: period.id }, { $unset: {
-          pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '',
-        } });
-        if (!unlock || typeof unlock.updated !== 'number') return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but entry unlock verification was interrupted. Retry the same reopen request.' }, { status: 409 });
-        const stillLocked = await entryEntity.filter({ pay_period_id: period.id });
-        if (!Array.isArray(stillLocked)) throw new Error('Pay-period unlock verification did not return a record list.');
-        if (stillLocked.length) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but some entry locks remain. Retry the same reopen request.' }, { status: 409 });
+        if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen request or request admin investigation.' }, { status: 409 });
       }
 
       period = await payPeriodEntity.get(period.id);
