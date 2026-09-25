@@ -8,6 +8,7 @@ import {
   salesPushSnapshotNeedsReview,
   classifySalesEstInvPreview,
   verifiedSalesPreviewColumn,
+  salesRunRequiresReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -135,5 +136,24 @@ assert(verifiedSalesPreviewColumn([...sampleSheetColumns, sampleSheetColumns[1]]
   "Duplicate metadata for one column must fail closed.");
 assert(verifiedSalesPreviewColumn([{ id: estColumnId, title: " " }], estColumnId) === null,
   "An unidentified Smartsheet column cannot be treated as Est / Inv #.");
+
+// A completed coordinator loop is not a completed Sales sync if an attempted
+// Sales stage was blocked, conflicted, or reported errors. Intentionally
+// disabled stages and unrelated Order results do not trigger this Sales flag.
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'push', skipped: true, snapshot_review_required: 500 }]),
+  'A missing Sales push snapshot must show needs_review rather than completed.');
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'pull', skipped: true, reason: 'Unable to read sheet' }]),
+  'An attempted failed Sales pull must show needs_review.');
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'push', conflicts: 1, skipped: false }]),
+  'A Sales push conflict must show needs_review.');
+assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'push', errors: 2 }]),
+  'Sales push errors must show needs_review.');
+assert(!salesRunRequiresReview([{ dataset: 'sales', skipped: true, reason: 'Mirror disabled' }]),
+  'Intentionally disabled Sales must not appear as an attempted sync failure.');
+assert(!salesRunRequiresReview([{ dataset: 'orders', direction: 'push', skipped: true }]),
+  'Order results must not be reclassified by the Sales-only status helper.');
+assert(!salesRunRequiresReview([{ dataset: 'sales', direction: 'pull', created: 0, updated: 0, errors: 0 },
+  { dataset: 'sales', direction: 'push', unchanged_skipped: 500, conflicts: 0, errors: 0 }]),
+  'A verified no-op Sales sync should still report completed.');
 
 console.log("Smartsheet Sales boundary validation passed.");
