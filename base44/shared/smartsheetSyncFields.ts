@@ -200,7 +200,14 @@ export function parseRowToFields(
         if (Number.isFinite(num)) out[field.key] = num;
       } else if (field.type === "date") {
         const stamp = dateStamp(raw);
-        if (stamp) out[field.key] = stamp;
+        if (stamp) {
+          out[field.key] = stamp;
+          if (dataset === 'orders' && field.key === 'date_received') out.receipt_option = '';
+        } else if (dataset === 'orders' && field.key === 'date_received' && typeof raw === 'string') {
+          // Smartsheet's mixed Date Received column can contain In Stock or
+          // custom text. Preserve it separately; never coerce text into a date.
+          out.receipt_option = cleanText(raw, 120);
+        }
       } else if (field.type === "notes") {
         // Skip notes on pull — would need complex deserialization
       } else {
