@@ -730,15 +730,36 @@ async function pushDataset(
           cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
         updated.push(record.id);
+      } else if (dataset === 'orders') {
+        // Reserve the permanent Order before POST; never automatically retry an
+        // uncertain create or silently create a second row for an existing link.
+        await createOrderSmartsheetRowWithGuard({
+          entity: base44.asServiceRole.entities.Order,
+          record,
+          sheetId,
+          postRow: async (freshOrder: any) => {
+            const freshCells = buildCells(freshOrder, bindings, 'orders');
+            if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
+            const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
+              toTop: true,
+              cells: freshCells.map((c) => ({ columnId: c.columnId, value: c.value,
+                ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
+            }]);
+            return result.body;
+          },
+          makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
+        });
+        created.push(record.id); // helper already stored and verified link + snapshot atomically
+        continue;
       } else {
-        // CREATE new row
+        // Preserve the existing Sales creation flow; Order guards are isolated.
         const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
           toTop: true,
           cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
         const newRowId = String(result?.body?.result?.id || result?.body?.id || '');
         if (newRowId && /^\d+$/.test(newRowId)) {
-          await base44.asServiceRole.entities[dataset === 'sales' ? 'WorkOrder' : 'Order'].update(record.id, {
+          await base44.asServiceRole.entities.WorkOrder.update(record.id, {
             smartsheet_row_id: newRowId,
             smartsheet_sheet_id: sheetId,
           });
