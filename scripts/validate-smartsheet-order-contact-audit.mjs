@@ -51,7 +51,16 @@ assert.deepEqual(first.counts, {
   duplicate_base44_row_link: 2,
   base44_row_link_missing: 1,
 });
-assert.equal(first.record_ids_by_category.same_name_valid_smartsheet_email[0].base44_record_id, 'candidate');
+const candidate = first.record_ids_by_category.same_name_valid_smartsheet_email[0];
+assert.equal(candidate.base44_record_id, 'candidate');
+assert.equal(candidate.requestor_name, 'Alex Person');
+assert.equal(candidate.current_base44_email, 'Alex Person');
+assert.equal(candidate.smartsheet_contact_name, 'Alex Person');
+assert.equal(candidate.smartsheet_contact_email, 'alex@example.com');
+const mismatch = first.record_ids_by_category.smartsheet_name_mismatch[0];
+assert.equal(mismatch.smartsheet_contact_name, 'Another Person');
+assert.equal(mismatch.smartsheet_contact_email, 'bailey@example.com');
+assert.equal(Object.hasOwn(first.record_ids_by_category.smartsheet_row_missing[0], 'smartsheet_contact_email'), false);
 assert.equal(JSON.stringify(orders), originalOrders);
 assert.equal(JSON.stringify(sheetRows), originalRows);
 console.log('PASS stable-ID match, candidate/review categories, sort independence and no data mutation');
@@ -87,3 +96,15 @@ assert.doesNotMatch(auditRoute, /smartsheetWrite|\.bulkUpdate\(|\.create\(|\.upd
 const unauthenticatedActions = engine.match(/else if \((action !== 'run_sync'.*)\) \{/);
 assert.ok(unauthenticatedActions && !unauthenticatedActions[1].includes('audit_order_requestor_emails'));
 console.log('PASS audit API is admin-session-only, read-only and full-page-verified');
+
+const orderPage = await readFile('src/pages/OrderForm.jsx', 'utf8');
+const reviewDialog = await readFile('src/components/orders/OrderRequestorEmailReview.jsx', 'utf8');
+assert.match(orderPage, /currentUser\?\.role === \"admin\" && !!sessionToken/);
+assert.match(orderPage, /<OrderRequestorEmailReview/);
+assert.match(reviewDialog, /action: \"audit_order_requestor_emails\"/);
+assert.match(reviewDialog, /session_token: sessionToken/);
+assert.match(reviewDialog, /data\?\.read_only !== true/);
+assert.match(reviewDialog, /record_id_lists_truncated/);
+assert.match(reviewDialog, /smartsheet_contact_email/);
+assert.doesNotMatch(reviewDialog, /\.update\(|\.create\(|\.delete\(|\bpush_dataset\b|\bpull_dataset\b/);
+console.log('PASS Order Form admin review dialog is connected and has no write actions');
