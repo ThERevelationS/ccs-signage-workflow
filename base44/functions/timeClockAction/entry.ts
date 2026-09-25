@@ -5073,6 +5073,7 @@ Deno.serve(async (req) => {
           error: 'Clock In is temporarily serialized with a pay-period finalization or another employee record change. Retry this same Clock In after status refresh.',
         }, { status: 409 });
       }
+      state = clockInGate.state?.id ? clockInGate.state : await freshState(stateEntity, state.id);
 
       try {
         const officialClockIn = resumingClockIn && state.pending_started_at
