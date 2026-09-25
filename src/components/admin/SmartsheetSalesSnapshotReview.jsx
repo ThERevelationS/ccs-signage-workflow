@@ -78,8 +78,8 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
             <Badge variant="outline" className="border-blue-200 text-blue-700">Read-only</Badge>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-gray-600">
-            Compare saved Base44 values with live Smartsheet cells for linked records missing the
-            Est / Inv # snapshot. This does not sync, backfill, approve, or change any records.
+            Compare saved Base44 values with Smartsheet cells for linked records with a blank number
+            or an incomplete Est / Inv # snapshot. This does not sync, backfill, approve, or change records.
           </p>
           <p className="mt-1 text-xs text-amber-800">
             Only the current 500-record Sales push window is examined, not the full historical archive.
@@ -109,14 +109,18 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
       {result && (
         <div className="space-y-3" aria-live="polite">
           <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-900">
-            <strong>{candidates.toLocaleString()}</strong> linked records with missing Est / Inv #
-            snapshots among <strong>{result.push_window_examined.toLocaleString()}</strong> records
+            <strong>{candidates.toLocaleString()}</strong> linked records needing number or snapshot
+            review among <strong>{result.push_window_examined.toLocaleString()}</strong> records
             examined in the current push window. Displaying {cases.length ? offset + 1 : 0}–
             {offset + cases.length} of these candidates.
           </div>
           {result.verified_column_title && (
             <p className="text-xs text-blue-800">Confirmed Smartsheet column: <strong>{result.verified_column_title}</strong></p>
           )}
+          <p className="text-xs text-blue-800">
+            <strong>{result.potential_five_digit_backfill_in_sample || 0}</strong> five-digit numbers in this sample
+            could fill blank Base44 values, pending complete permanent-row-link verification.
+          </p>
           <div className="flex flex-wrap gap-2 text-xs">
             {Object.entries(result.summary || {}).map(([key, count]) => (
               <Badge key={key} variant="outline">{LABELS[key] || key}: {count}</Badge>
@@ -140,6 +144,12 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
                       <div className="break-all font-medium text-gray-900">{displayValue(item.smartsheet_est_inv_at)}</div>
                     </div>
                   </div>
+                  {item.potential_number_to_fill && (
+                    <p className="font-medium text-blue-700">Potential number to fill: {item.potential_number_to_fill}. Full row-link verification required; nothing applied.</p>
+                  )}
+                  {item.existing_invoice_number_conflict && (
+                    <p className="font-medium text-amber-700">The existing Corebridge number differs. Manual review required; no overwrite.</p>
+                  )}
                   {item.duplicate_link_in_push_window && (
                     <p className="font-medium text-amber-700">Multiple records share this Smartsheet row ID in the current window.</p>
                   )}
