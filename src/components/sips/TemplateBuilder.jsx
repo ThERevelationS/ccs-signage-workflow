@@ -57,6 +57,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [pendingEditorSwitch, setPendingEditorSwitch] = useState(null);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
   
   // Template Selector state
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -615,6 +616,28 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setExpandedItems({});
     setProductTypeHasChanges(false);
     setProductTypeSaveStatus('idle');
+  };
+
+  const hasUnsavedEditorChanges = subTemplateHasChanges || productTypeHasChanges;
+  const requestTabChange = (tab) => {
+    if (tab === activeTab) return;
+    if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'tab', tab });
+    else setActiveTab(tab);
+  };
+  const requestClose = () => {
+    if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'close' });
+    else onClose();
+  };
+  const confirmNavigation = () => {
+    const next = pendingNavigation;
+    setPendingNavigation(null);
+    if (!next) return;
+    setSubTemplateHasChanges(false);
+    setProductTypeHasChanges(false);
+    setSubTemplateSaveStatus('idle');
+    setProductTypeSaveStatus('idle');
+    if (next.kind === 'close') onClose();
+    else setActiveTab(next.tab);
   };
 
   const confirmEditorSwitch = () => {
@@ -1227,7 +1250,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               variant="ghost"
               size="sm"
               className="h-11 w-11 shrink-0 p-0 touch-manipulation focus-visible:ring-2 focus-visible:ring-purple-400 lg:h-8 lg:w-8"
-              onClick={onClose}
+              onClick={requestClose}
               aria-label="Close Checklist Builder"
               title="Close Checklist Builder"
             >
@@ -1248,7 +1271,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={requestTabChange} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 py-1.5 border-b bg-white">
               <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1'} bg-gray-200 p-0.5 h-auto sm:h-8 gap-0.5`}>
                 <TabsTrigger value="selectors" className="min-h-11 text-xs touch-manipulation data-[state=active]:bg-white sm:min-h-0">Select & Apply</TabsTrigger>
@@ -2266,7 +2289,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           </Tabs>
 
           <div className="px-3 py-2 border-t bg-gray-50 flex justify-end">
-            <Button type="button" onClick={onClose} variant="outline" size="sm" className="h-11 min-w-24 touch-manipulation lg:h-8">Close</Button>
+            <Button type="button" onClick={requestClose} variant="outline" size="sm" className="h-11 min-w-24 touch-manipulation lg:h-8">Close</Button>
           </div>
         </div>
       </div>
@@ -2305,6 +2328,19 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
             >
               {isConfirming ? "Deleting…" : (confirmDialog?.confirmLabel || "Delete")}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingNavigation} onOpenChange={(open) => { if (!open) setPendingNavigation(null); }}>
+        <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved checklist edits?</AlertDialogTitle>
+            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will leave unsaved checklist edits behind. Save first or discard to continue.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11">Keep editing</AlertDialogCancel>
+            <AlertDialogAction className="h-11 bg-amber-700 hover:bg-amber-800" onClick={confirmNavigation}>{pendingNavigation?.kind === 'close' ? 'Discard and close' : 'Discard and switch'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
