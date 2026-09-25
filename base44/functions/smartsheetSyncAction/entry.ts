@@ -9,6 +9,7 @@ import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContact
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
+import { auditOrderDateParity } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -294,6 +295,7 @@ async function pullDataset(
       exclude: 'nonexistentCells',
     });
     const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+    if (orderPageGuard) verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
     const rows = normalizeSheetRows(result.body);
     const orderPageComplete = orderPageGuard ? orderPageGuard.accept(page, result.body, rows) : false;
     if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
@@ -330,6 +332,21 @@ async function pullDataset(
     });
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+
+  // Order-only date preflight: do not mutate any Order if a legacy cell has
+  // an untranslatable date or a duplicate permanent Base44 row link.
+  // A received text choice is valid; an impossible date is not.
+  if (dataset === 'orders') {
+    const audit = auditOrderDateParity(existingRecords, allRows, bindings, sheetId);
+    if (audit.counts.invalid_date_values || audit.counts.duplicate_base44_links) {
+      return { dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+        reason: 'Order Request date translation or permanent row links require review before pull. No Orders were changed.',
+        date_translation_invalid: audit.counts.invalid_date_values,
+        duplicate_order_row_links: audit.counts.duplicate_base44_links,
+        samples: { invalid_values: audit.samples.invalid_values, ambiguous_links: audit.samples.ambiguous_links },
+      };
+    }
+  }
 
   // A prior Order POST may have succeeded without a confirmed Base44 row link.
   // Do not create duplicate Base44 Orders from orphan Smartsheet rows while
@@ -382,6 +399,11 @@ async function pullDataset(
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
+      // A verified nonempty text receipt explicitly replaces a stale date.
+      if (dataset === 'orders' && key === 'date_received' && val === '' && rawFields.receipt_option) {
+        fieldValues.date_received = '';
+        continue;
+      }
       const normalized = normalizePullValue(key, val);
       if (normalized !== undefined) fieldValues[key] = normalized;
     }
