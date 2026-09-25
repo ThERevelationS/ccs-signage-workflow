@@ -594,8 +594,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       "Description": order.description || "",
       "How much?": order.quantity || "",
       "Requestor": order.requestor_name || "",
-      "Date Needed (Requester fills out this column)": order.date_needed || "",
-      "Ordered Date (Carl Fills out this column)": order.date_ordered || "",
+      "Date Needed (Requester fills out this column)": order.date_needed_option || order.date_needed || "",
+      "Ordered Date (Carl Fills out this column)": order.date_ordered_option || order.date_ordered || "",
       "Vendor (Anyone can fill out this column)": order.vendor || "",
       "Date Recieved (Anyone can fill out this column)": order.receipt_option || order.date_received || ""
     }));
@@ -1761,7 +1761,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       setSaveError(error?.message || 'Could not clear the received value. Reload before retrying.');
                     }
                   } else {
+                    const optionField = clearDateConfirm.field === 'date_needed'
+                      ? 'date_needed_option'
+                      : clearDateConfirm.field === 'date_ordered'
+                        ? 'date_ordered_option'
+                        : '';
                     updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, '');
+                    if (optionField) updateOrder(clearDateConfirm.orderId, optionField, '');
                     await saveAllChanges();
                   }
                 }
