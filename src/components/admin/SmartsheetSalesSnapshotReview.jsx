@@ -147,9 +147,6 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
                   {item.potential_number_to_fill && (
                     <p className="font-medium text-blue-700">Potential number to fill: {item.potential_number_to_fill}. Full row-link verification required; nothing applied.</p>
                   )}
-                  {item.existing_invoice_number_conflict && (
-                    <p className="font-medium text-amber-700">The existing Corebridge number differs. Manual review required; no overwrite.</p>
-                  )}
                   {item.duplicate_link_in_push_window && (
                     <p className="font-medium text-amber-700">Multiple records share this Smartsheet row ID in the current window.</p>
                   )}
