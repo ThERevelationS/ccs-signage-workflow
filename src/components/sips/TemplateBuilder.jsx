@@ -543,6 +543,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
       });
       setSubTemplates(prev => prev.map(st => st.id === saved.id ? saved : st));
       setEditingSubTemplateId(null);
+      setEditingSubTemplateName("");
       return true;
     } catch (error) {
       console.error("Sub-template rename blocked:", error);
@@ -1684,7 +1685,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                 {editingSubTemplateId === st.id ? (
                                   <div className="flex-1 min-w-0 flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <Input value={editingSubTemplateName} onChange={(e) => setEditingSubTemplateName(e.target.value)} className="h-11 min-w-0 flex-1 text-sm lg:h-6 lg:text-xs" aria-label={`Rename checklist option ${st.name}`} autoFocus
-                                      onKeyDown={async (e) => { if (e.key === 'Enter') await renameSubTemplate(st, editingSubTemplateName); if (e.key === 'Escape') setEditingSubTemplateId(null); }} />
+                                      onKeyDown={async (e) => { if (e.key === 'Enter') await renameSubTemplate(st, editingSubTemplateName); if (e.key === 'Escape') { setEditingSubTemplateId(null); setEditingSubTemplateName(""); } }} />
                                     <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save checklist option name ${st.name}`} title={`Save checklist option name ${st.name}`} onClick={() => renameSubTemplate(st, editingSubTemplateName)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
@@ -1929,9 +1930,10 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                             await saveProductTypeTemplates(newTemplates);
                                           }
                                           if (selectedProductType === type) setSelectedProductType(newName);
-                                          setEditingProductTypeName(null); 
-                                        } 
-                                        if (e.key === 'Escape') setEditingProductTypeName(null); 
+                                          setEditingProductTypeName(null);
+                                          setEditingProductTypeValue("");
+                                        }
+                                        if (e.key === 'Escape') { setEditingProductTypeName(null); setEditingProductTypeValue(""); } 
                                       }} 
                                     />
                                     <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-1" aria-label={`Save product checklist name ${type}`} title={`Save product checklist name ${type}`} onClick={async () => { 
@@ -1947,7 +1949,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                         }
                                         if (selectedProductType === type) setSelectedProductType(newName);
                                       }
-                                      setEditingProductTypeName(null); 
+                                      setEditingProductTypeName(null);
+                                      setEditingProductTypeValue("");
                                     }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                   </div>
                                 ) : (
