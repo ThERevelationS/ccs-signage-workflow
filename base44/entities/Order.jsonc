@@ -91,6 +91,10 @@
       "type": "object",
       "description": "Last successfully synchronized mapped values used for three-way Smartsheet/Base44 conflict detection."
     },
+    "smartsheet_create_attempt": {
+      "type": "object",
+      "description": "Order Form-only write-ahead marker for an uncertain Smartsheet row creation. Preserve until permanent row-link reconciliation; never retry an unresolved attempt."
+    },
     "deleted": {
       "type": "boolean",
       "default": false,
