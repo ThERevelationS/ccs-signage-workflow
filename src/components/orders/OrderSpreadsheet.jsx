@@ -1407,7 +1407,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_ordered: "", date_ordered_option: "", status: order.date_received || order.receipt_option ? "received" : "pending" },
+                                      { date_ordered: "", date_ordered_option: "", status: isFulfilledOrder(order) ? "received" : "pending" },
                                       "Order date ordered clear"
                                     );
                                   } catch (error) {
