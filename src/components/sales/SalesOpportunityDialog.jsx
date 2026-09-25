@@ -429,7 +429,7 @@ export default function SalesOpportunityDialog({
                 </div>
               )}
               <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.corbridge_invoice_number || workOrder.est_inv_at || "—"}</div></div>
+                <div><div className="text-xs text-gray-400">Estimate / invoice</div><div className="font-medium text-gray-800">{workOrder.est_inv_at || "—"}</div></div>
                 <div>
                   <div className="text-xs text-gray-400">Quote sent date</div>
                   <div className="mt-1 flex items-center gap-2">
