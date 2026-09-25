@@ -1747,17 +1747,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             <AlertDialogAction 
               onClick={async () => {
                 if (clearDateConfirm) {
-                  updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, "");
-                  // If clearing date_received, update status back to ordered or pending
                   if (clearDateConfirm.field === 'date_received') {
                     const order = orders.find(o => o.id === clearDateConfirm.orderId);
-                    if (order?.date_ordered) {
-                      updateOrder(clearDateConfirm.orderId, "status", "ordered");
-                    } else {
-                      updateOrder(clearDateConfirm.orderId, "status", "pending");
+                    try {
+                      setSaveError('');
+                      await persistImmediateOrderFields(order.id, {
+                        date_received: '', receipt_option: '',
+                        status: order.date_ordered ? 'ordered' : 'pending',
+                      }, 'Clear received value');
+                    } catch (error) {
+                      setSaveError(error?.message || 'Could not clear the received value. Reload before retrying.');
                     }
+                  } else {
+                    updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, '');
+                    await saveAllChanges();
                   }
-                  await saveAllChanges();
                 }
                 setClearDateConfirm(null);
               }}
