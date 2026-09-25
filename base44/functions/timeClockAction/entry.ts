@@ -1933,6 +1933,9 @@ Deno.serve(async (req) => {
       if (!Array.isArray(statusAuditRows)) throw new Error('Pay-period audit lookup did not return a record list.');
       if (statusAuditRows.length > 1) return Response.json({ success: false, error: 'This pay-period action has multiple audit records. Admin investigation is required.' }, { status: 409 });
       let intent = statusAuditRows[0] || null;
+      if (intent && asEmail(intent.actor_email) !== actorEmail) {
+        return Response.json({ success: false, error: 'This pay-period request belongs to another administrator.' }, { status: 409 });
+      }
       const priorStatusHash = String(intent?.details?.payload_hash || '');
       if (intent && priorStatusHash && !constantTimeEqual(priorStatusHash, statusPayloadHash)) {
         return Response.json({ success: false, error: 'This pay-period request id is already bound to a different period action. Submit a new action.' }, { status: 409 });
@@ -2003,6 +2006,25 @@ Deno.serve(async (req) => {
       }
       if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
         return Response.json({ success: false, error: 'This pay-period audit is confirmed but the period request marker does not match. Admin investigation is required.' }, { status: 409 });
+      }
+      if (decision === 'finalize' && period.status === 'review' && String(period.last_request_id || '') !== requestId) {
+        const earlierRequest = String(period.last_request_id || '');
+        if (earlierRequest) {
+          const earlierAudit = await uniqueRow(auditEntity, { action: 'pay_period_status', request_id: earlierRequest }, 'Prior pay-period action');
+          if (earlierAudit?.outcome === 'pending' && String(earlierAudit.details?.pay_period_id || '') === period.id) {
+            return Response.json({ success: false, error: 'An earlier pay-period action is still being recovered. Retry that exact request before starting another finalization.' }, { status: 409 });
+          }
+        }
+      }
+      if (decision === 'reopen' && period.status === 'finalized') {
+        const finalizationAudit = await uniqueRow(auditEntity, {
+          action: 'pay_period_status', request_id: String(period.last_request_id || ''),
+        }, 'Pay-period finalization audit');
+        if (!finalizationAudit || !['confirmed', 'recovered'].includes(String(finalizationAudit.outcome || '')) ||
+            String(finalizationAudit.details?.pay_period_id || '') !== period.id ||
+            String(finalizationAudit.details?.decision || '') !== 'finalize') {
+          return Response.json({ success: false, error: 'The finalization audit is not confirmed. Recover the exact finalization request before reopening.' }, { status: 409 });
+        }
       }
       if (decision === 'review' && period.status !== 'open') return Response.json({ success: false, error: 'Only an open pay period can move to review.' }, { status: 409 });
       if (decision === 'finalize' && period.status !== 'review') return Response.json({ success: false, error: 'Only a pay period in Review can be finalized.' }, { status: 409 });
