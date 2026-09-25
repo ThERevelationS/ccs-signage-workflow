@@ -43,6 +43,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [expandedDoc, setExpandedDoc] = useState(null);
   const selectedDocHeaderRef = useRef(null);
   const pendingDocNavigationRef = useRef(null);
+  const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
   const [viewingPDF, setViewingPDF] = useState(null);
@@ -54,6 +55,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [docAnalysis, setDocAnalysis] = useState({});
   const [searchingDocId, setSearchingDocId] = useState(null);
   const [docSearchResults, setDocSearchResults] = useState({});
+  const [clearedDocSearchId, setClearedDocSearchId] = useState(null);
   const [isResearching, setIsResearching] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [verificationTarget, setVerificationTarget] = useState(null);
@@ -69,6 +71,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setVerificationTarget(null);
     setVerificationNote("");
     setVerificationError("");
+    setClearedDocSearchId(null);
   }, [jurisdiction.id]);
 
   // After a search selection expands a document, move keyboard focus and scroll to its header.
@@ -151,6 +154,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   };
 
   const searchWithinDocument = async (docId, searchText) => {
+    setClearedDocSearchId(searchText.trim() ? null : docId);
     setExpandedDocSearch(prev => ({
       ...prev,
       [docId]: searchText
@@ -863,6 +867,7 @@ Answer the question based on the documents and information available. Be specifi
                       <div className="mt-3 space-y-2">
                         <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
+                            ref={expandedDoc === doc.id ? documentSearchInputRef : null}
                             type="text"
                             placeholder="Search within document..."
                             aria-label={`Search within ${doc.title || "document"}`}
@@ -906,7 +911,10 @@ Answer the question based on the documents and information available. Be specifi
                               size="sm"
                               variant="outline"
                               className="min-h-11 w-full px-3 text-xs sm:w-auto"
-                              onClick={() => searchWithinDocument(doc.id, "")}
+                              onClick={() => {
+                                searchWithinDocument(doc.id, "");
+                                documentSearchInputRef.current?.focus();
+                              }}
                               aria-label={`Clear search within ${doc.title || "document"}`}
                             >Clear</Button>
                           )}
@@ -917,13 +925,22 @@ Answer the question based on the documents and information available. Be specifi
                           </p>
                         )}
                         
+                        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                          {docSearchResults[doc.id]
+                            ? docSearchResults[doc.id].matches > 0
+                              ? `Match ${docSearchResults[doc.id].activeIndex + 1} of ${docSearchResults[doc.id].matches} in ${doc.title || "document"}`
+                              : `No matches found in ${doc.title || "document"}`
+                            : clearedDocSearchId === doc.id
+                              ? `Search cleared in ${doc.title || "document"}`
+                              : ""}
+                        </p>
                         {docSearchResults[doc.id] && (
                           <div className="bg-white p-2 rounded border border-blue-200">
                             {docSearchResults[doc.id].matches === 0 ? (
                               <p className="text-xs text-gray-500">No matches found</p>
                             ) : (
                               <div className="space-y-1">
-                                <p className="text-sm font-semibold text-blue-700" aria-live="polite" aria-atomic="true">
+                                <p className="text-sm font-semibold text-blue-700">
                                   Match {docSearchResults[doc.id].activeIndex + 1} of {docSearchResults[doc.id].matches}
                                 </p>
                                 <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">
