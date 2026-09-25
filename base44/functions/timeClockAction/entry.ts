@@ -2042,6 +2042,39 @@ Deno.serve(async (req) => {
       }
       if (!intent?.id) throw new Error('Pay-period audit intent could not be persisted. No status change was made.');
 
+      if (decision === 'finalize' && String(period.last_request_id || '') !== requestId) {
+        // Claim the period before writing any entry locks. Other requests must
+        // recover the claimed action before they can replace its marker.
+        const claimedPeriod = await payPeriodEntity.updateMany(
+          { id: period.id, updated_date: period.updated_date, status: 'review' },
+          { $set: { last_request_id: requestId } },
+        );
+        if (!claimedPeriod || claimedPeriod.updated !== 1) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The pay period changed while finalization was being claimed. Reload and retry this request.' }, { status: 409 });
+        }
+        period = await payPeriodEntity.get(period.id);
+      }
+
+      // Pending audit timestamp is the lock owner; retries reuse it exactly.
+      const lockTimestamp = String(intent.server_timestamp || '');
+      const releaseStagedPeriodLocks = async () => {
+        if (!lockTimestamp) return false;
+        const existing = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(existing)) throw new Error('Pay-period staged-lock lookup did not return a record list.');
+        if (existing.some((entry: any) => String(entry.pay_period_locked_at || '') !== lockTimestamp ||
+            asEmail(entry.pay_period_locked_by) !== asEmail(intent.actor_email))) return false;
+        if (existing.length) {
+          const rollback = await entryEntity.updateMany(
+            { pay_period_id: period.id, pay_period_locked_at: lockTimestamp, pay_period_locked_by: intent.actor_email },
+            { $unset: { pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '' } },
+          );
+          if (!rollback || typeof rollback.updated !== 'number') return false;
+        }
+        const remaining = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(remaining)) throw new Error('Pay-period staged-lock rollback verification did not return a record list.');
+        return remaining.length === 0;
+      };
+
       if (decision === 'review') {
         const updated = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'open' },
