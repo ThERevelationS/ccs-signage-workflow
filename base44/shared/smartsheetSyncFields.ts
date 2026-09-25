@@ -1,5 +1,5 @@
 import { buildSharedOrderContactCell, readSharedOrderRequestor, sharedOrderRequestorColumnId } from './smartsheetOrderContact.mjs';
-import { translateOrderDateCell } from './smartsheetOrderDateTranslation.mjs';
+import { orderDateOptionField, translateOrderDateCell } from './smartsheetOrderDateTranslation.mjs';
 
 // Shared Smartsheet sync field vocabulary used by both the backend sync engine
 // and the frontend column-bindings editor. Keeps the two sides in sync so a
@@ -208,17 +208,18 @@ export function parseRowToFields(
       } else if (field.type === "date") {
         if (dataset === 'orders') {
           const translated = translateOrderDateCell(cell, field.key);
+          const optionField = orderDateOptionField(field.key);
           if (translated.kind === 'date') {
             out[field.key] = translated.value;
-            if (field.key === 'date_received') out.receipt_option = '';
-          } else if (translated.kind === 'text' && field.key === 'date_received') {
-            // A nonempty Smartsheet text choice explicitly replaces the old
-            // received date. This clear is applied only after full-sheet date
-            // validation and verified permanent-row matching by the pull.
-            out.date_received = '';
-            out.receipt_option = translated.value;
+            if (optionField) out[optionField] = '';
+          } else if (translated.kind === 'text' && optionField) {
+            // The legacy Smartsheet date columns intentionally contain text
+            // choices/notes. Preserve them separately and clear only the paired
+            // date after full-sheet validation and permanent-row matching.
+            out[field.key] = '';
+            out[optionField] = translated.value;
           }
-          // Invalid values are rejected by the Order-only pull preflight.
+          // Invalid date-shaped values are rejected by the Order-only pull preflight.
         } else {
           const stamp = dateStamp(raw);
           if (stamp) out[field.key] = stamp;
