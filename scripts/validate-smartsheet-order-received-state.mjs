@@ -39,15 +39,16 @@ console.log('PASS Order pull derives receipt state but never clears existing dat
 // The virtual History header must not shift real Order IDs, indexes or exports.
 const splitOrders = [
   { id: 'open', status: 'pending' },
-  { id: 'backordered', status: 'received', receipt_option: 'Backordered' },
-  { id: 'in-stock', receipt_option: ' in stock ' },
+  { id: 'ordered', status: 'ordered', date_ordered: '2026-09-24' },
+  { id: 'stock', status: 'pending', receipt_option: 'Stock' },
+  { id: 'backordered', status: 'pending', receipt_option: 'Backordered' },
   { id: 'dated', date_received: '2026-09-24' },
 ];
 const split = orderHistoryLayout(splitOrders, 'all_with_received');
 assert.equal(split.split, true);
-assert.deepEqual([split.openCount, split.receivedCount, split.historyVirtualIndex, split.virtualCount], [2, 2, 2, 5]);
-assert.deepEqual([0, 1, 3, 4].map(i => splitOrders[split.orderIndexAtVirtual(i)].id),
-  ['open', 'backordered', 'in-stock', 'dated']);
+assert.deepEqual([split.openCount, split.receivedCount, split.historyVirtualIndex, split.virtualCount], [2, 3, 2, 6]);
+assert.deepEqual([0, 1, 3, 4, 5].map(i => splitOrders[split.orderIndexAtVirtual(i)].id),
+  ['open', 'ordered', 'stock', 'backordered', 'dated']);
 assert.equal(orderMatchesReceivedFilter(splitOrders[1], 'open_only'), true);
 assert.equal(orderMatchesReceivedFilter(splitOrders[2], 'open_only'), false);
 assert.equal(orderMatchesReceivedFilter(splitOrders[1], 'received'), false);
@@ -57,7 +58,7 @@ assert.deepEqual([openOnly.openCount, openOnly.receivedCount, openOnly.historyVi
   [2, 0, null, 2]);
 const historyOnly = orderHistoryLayout(splitOrders.slice(2), 'all_with_received');
 assert.deepEqual([historyOnly.openCount, historyOnly.receivedCount, historyOnly.historyVirtualIndex, historyOnly.virtualCount],
-  [0, 2, 0, 3]);
+  [0, 3, 0, 4]);
 const selectedOpen = orderHistoryLayout(splitOrders.slice(0, 2), 'open_only');
 assert.deepEqual([selectedOpen.split, selectedOpen.historyVirtualIndex, selectedOpen.virtualCount], [false, null, 2]);
 const empty = orderHistoryLayout([], 'all_with_received');
