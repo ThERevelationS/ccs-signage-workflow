@@ -20,6 +20,7 @@ import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
 import { documentSearchSnippet, splitDocumentSearchMatches, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
+import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
@@ -41,7 +42,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [answer, setAnswer] = useState(null);
   const [asking, setAsking] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState(null);
-  const selectedDocHeaderRef = useRef(null);
+  const documentHeaderRefs = useRef(new Map());
   const pendingDocNavigationRef = useRef(null);
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
@@ -77,10 +78,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   // After a search selection expands a document, move keyboard focus and scroll to its header.
   // Clearing search results also triggers this when the selected document was already expanded.
   useEffect(() => {
-    if (pendingDocNavigationRef.current !== expandedDoc || !selectedDocHeaderRef.current) return;
+    const header = documentHeaderRefs.current.get(expandedDoc);
+    if (pendingDocNavigationRef.current !== expandedDoc || !header) return;
     pendingDocNavigationRef.current = null;
-    selectedDocHeaderRef.current.focus({ preventScroll: true });
-    selectedDocHeaderRef.current.scrollIntoView({ block: "start", behavior: "auto" });
+    header.focus({ preventScroll: true });
+    header.scrollIntoView({ block: "start", behavior: "auto" });
   }, [expandedDoc, searchResults]);
 
   const isPDF = (doc) => {
@@ -796,13 +798,32 @@ Answer the question based on the documents and information available. Be specifi
             )}
           </div>
           <div className="space-y-2">
+            <p id={`document-header-navigation-${jurisdiction.id}`} className="sr-only">
+              Use Up and Down arrows to move between document headings, Home and End for the first and last heading, and Enter or Space to expand a document.
+            </p>
              {(jurisdiction.documents || []).map(doc => (
                <div key={doc.id} className={`border-l-4 rounded-lg overflow-hidden ${doc.source === 'ai_discovered' ? 'bg-purple-50 border-l-purple-400' : 'bg-amber-50 border-l-amber-400'}`}>
                  <button
                    type="button"
-                   ref={expandedDoc === doc.id ? selectedDocHeaderRef : null}
+                   ref={(node) => {
+                     if (node) documentHeaderRefs.current.set(doc.id, node);
+                     else documentHeaderRefs.current.delete(doc.id);
+                   }}
                    className="flex min-h-11 w-full scroll-mt-4 items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
                    onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
+                   onKeyDown={(event) => {
+                     if (event.altKey || event.ctrlKey || event.metaKey) return;
+                     const documents = jurisdiction.documents || [];
+                     const currentIndex = documents.findIndex(item => item.id === doc.id);
+                     const nextIndex = documentHeaderTargetIndex(event.key, currentIndex, documents.length);
+                     if (nextIndex === null) return;
+                     const nextHeader = documentHeaderRefs.current.get(documents[nextIndex].id);
+                     if (!nextHeader) return;
+                     event.preventDefault();
+                     nextHeader.focus({ preventScroll: true });
+                     nextHeader.scrollIntoView({ block: "nearest", behavior: "auto" });
+                   }}
+                   aria-describedby={`document-header-navigation-${jurisdiction.id}`}
                    aria-expanded={expandedDoc === doc.id}
                    aria-controls={expandedDoc === doc.id ? `jurisdiction-document-${doc.id}` : undefined}
                    aria-label={`${expandedDoc === doc.id ? "Collapse" : "Expand"} ${doc.title || "document"}`}
