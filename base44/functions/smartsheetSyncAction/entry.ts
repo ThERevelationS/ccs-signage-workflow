@@ -7,6 +7,7 @@ import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPage
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
+import { auditOrderCreateAttempts } from '../../shared/smartsheetOrderCreateReview.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -820,7 +821,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
@@ -990,6 +991,58 @@ Deno.serve(async (req) => {
         sample_offset: offset, sample_size: cases.length,
         next_sample_offset: offset + cases.length < candidates.length ? offset + cases.length : null,
         sample_is_complete_archive: false, summary, cases,
+      });
+    }
+
+    if (action === 'audit_order_create_attempts') {
+      // Admin-session-only evidence review. No sync, marker clearing, POST or production writes.
+      const { config } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const evidenceColumnId = [profile?.column_bindings?.customer_name,
+        sharedOrderRequestorColumnId(profile?.column_bindings)]
+        .map((value: unknown) => cleanText(value, 40))
+        .find((value: string) => /^\d+$/.test(value));
+      if (!/^\d+$/.test(sheetId) || !evidenceColumnId) {
+        return Response.json({
+          success: false,
+          error: 'Order Request needs a permanent sheet ID and at least one valid column ID for safe row-ID evidence.',
+        }, { status: 400 });
+      }
+      const allOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        sort: 'id',
+        label: 'Order Form create-attempt read-only audit',
+      });
+      const hasMarkers = allOrders.some((order: any) => Boolean(order?.smartsheet_create_attempt));
+      const sheetRows: any[] = [];
+      let sheetVersion: number | null = null;
+      if (hasMarkers) {
+        const pageSize = 200;
+        const guard = createSmartsheetOrderPageGuard({ pageSize, maxPages: 100 });
+        for (let page = 1; page <= 100; page++) {
+          const params = new URLSearchParams({
+            page: String(page), pageSize: String(pageSize),
+            columnIds: evidenceColumnId, exclude: 'nonexistentCells',
+          });
+          const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+          if (result.body?.id && String(result.body.id) !== sheetId) {
+            throw Object.assign(new Error('Smartsheet returned a different sheet than the configured Order Request ID.'), { status: 502 });
+          }
+          const rows = normalizeSheetRows(result.body);
+          const complete = guard.accept(page, result.body, rows);
+          if (page === 1) sheetVersion = result.body.version;
+          sheetRows.push(...rows);
+          if (complete) break;
+        }
+        guard.assertComplete(); // Never label a row missing based on a partial or moving download.
+      }
+      const audit = auditOrderCreateAttempts(allOrders, sheetRows, sheetId);
+      return Response.json({
+        success: true, ...audit,
+        sheet_version: sheetVersion,
+        sheet_download_verified: hasMarkers,
+        evidence_scope: hasMarkers ? 'complete_configured_sheet' : 'no_attempt_markers',
       });
     }
 
