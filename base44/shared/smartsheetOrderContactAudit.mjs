@@ -56,6 +56,7 @@ export function auditOrderRequestorContacts(orders, sheetRows, contactColumnId) 
 
     const rowId = String(order?.smartsheet_row_id ?? '').trim();
     let category;
+    let smartsheetContact = null;
     if (!/^\d+$/.test(rowId)) category = 'base44_row_link_missing';
     else if ((linkCounts.get(rowId) || 0) > 1) category = 'duplicate_base44_row_link';
     else if (!smartsheetById.has(rowId)) category = 'smartsheet_row_missing';
@@ -64,6 +65,7 @@ export function auditOrderRequestorContacts(orders, sheetRows, contactColumnId) 
       const contactCell = (Array.isArray(sheetRow?.cells) ? sheetRow.cells : [])
         .find((cell) => String(cell?.column_id ?? cell?.columnId ?? '').trim() === columnId);
       const contact = readSharedOrderRequestor(contactCell);
+      smartsheetContact = contact;
       if (!contact.email) category = 'smartsheet_contact_has_no_valid_email';
       else if (!baseName || !contact.name || normalizedName(contact.name) === normalizedName(contact.email)) {
         category = 'smartsheet_name_unverified';
@@ -76,7 +78,14 @@ export function auditOrderRequestorContacts(orders, sheetRows, contactColumnId) 
     }
     counts[category]++;
     if (recordIds[category].length < 100) {
-      recordIds[category].push({ base44_record_id: String(order.id), smartsheet_row_id: rowId });
+      recordIds[category].push({
+        base44_record_id: String(order.id),
+        smartsheet_row_id: rowId,
+        requestor_name: String(order?.requestor_name ?? '').trim(),
+        current_base44_email: currentEmail,
+        ...(smartsheetContact?.name ? { smartsheet_contact_name: smartsheetContact.name } : {}),
+        ...(smartsheetContact?.email ? { smartsheet_contact_email: smartsheetContact.email } : {}),
+      });
     }
   }
 
