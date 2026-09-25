@@ -62,7 +62,7 @@ try {
     id: 'stock-row', cells: [{ column_id: '323', value: 'In Stock', display_value: 'In Stock' }],
   }, { date_received: '323' }, 'orders');
   assert.equal(textReceived.receipt_option, 'In Stock');
-  assert.equal(Object.hasOwn(textReceived, 'date_received'), false);
+  assert.equal(textReceived.date_received, ''); // Verified nonempty text replaces a stale received date after full-sheet preflight.
   const customReceived = parseRowToFields({
     id: 'custom-row', cells: [{ column_id: '323', value: 'Backordered', display_value: '' }],
   }, { date_received: '323' }, 'orders');
