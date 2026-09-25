@@ -6,6 +6,7 @@ import {
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
   salesPushSnapshotNeedsReview,
+  classifySalesEstInvPreview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
@@ -108,5 +109,14 @@ assert(salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_sync_snapshot:
 assert(salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_last_synced_at: null }, salesSheetId, mappedSnapshot), "Unverified timestamp must require review.");
 assert(!salesPushSnapshotNeedsReview({ ...linkedRecord, smartsheet_row_id: null }, salesSheetId, mappedSnapshot), "New unlinked opportunities use separate creation safeguards.");
 assert(!salesPushSnapshotNeedsReview(linkedRecord, "999", mappedSnapshot), "Different-sheet links remain outside this Sales preflight.");
+
+// Preview categories must stay advisory; no category authorizes a live mutation.
+assert(classifySalesEstInvPreview('EST-100', 'EST-100') === 'match', 'Matching IDs should be labeled without repairing snapshots.');
+assert(classifySalesEstInvPreview('EST-100', 'EST-101') === 'different', 'Conflicting IDs must be visible for manual review.');
+assert(classifySalesEstInvPreview('', 'EST-100') === 'smartsheet_only', 'Smartsheet-only IDs must be preserved for review.');
+assert(classifySalesEstInvPreview('EST-100', '') === 'base44_only', 'Base44-only IDs must be preserved for review.');
+assert(classifySalesEstInvPreview(null, null) === 'both_blank', 'Two blank cells are not evidence of a verified snapshot.');
+assert(classifySalesEstInvPreview('EST-100', null, false) === 'row_not_returned', 'Missing API rows must not be called blank or deleted.');
+assert(classifySalesEstInvPreview(100, '100') === 'match', 'Text/number representation must compare consistently.');
 
 console.log("Smartsheet Sales boundary validation passed.");
