@@ -2108,53 +2108,6 @@ Deno.serve(async (req) => {
             }, { status: 409 });
           }
 
-        // Hold the existing per-employee correction/approval gates through
-        // correction revalidation, entry locking and the final period commit.
-        const finalizationGates: Array<{ stateId: string; claimToken: string }> = [];
-        const gateEntryId = `pay_period:${period.id}`;
-        try {
-          const employeeEmails = [...new Set(completedEntries.map((entry: any) => asEmail(entry.user_email)))].sort();
-          if (employeeEmails.some((email: string) => !email)) {
-            return Response.json({ success: false, error: 'A completed shift has no employee identity. Admin investigation is required before finalization.' }, { status: 409 });
-          }
-          for (const employeeEmail of employeeEmails) {
-            const employee = await uniqueRow(authorized, { email: employeeEmail }, 'Pay-period employee');
-            // Employees without current authorization cannot submit corrections.
-            if (!employee?.id) continue;
-            const employeeState = await ensureState(stateEntity, employee);
-            const claimed = await claimCorrectionCreateLock(
-              stateEntity, employeeState.id, requestId, gateEntryId, statusPayloadHash,
-            );
-            if (!claimed?.acquired) {
-              return Response.json({
-                success: false, retry_same_request: true,
-                error: 'An employee correction or manager approval is in progress. Retry this same finalization after that action finishes.',
-              }, { status: 409 });
-            }
-            finalizationGates.push({ stateId: employeeState.id, claimToken: String(claimed.claim_token || '') });
-          }
-          const latestCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
-          if (!Array.isArray(latestCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
-          const newlyPending = latestCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
-          if (newlyPending.length) {
-            await auditEntity.updateMany(
-              { id: intent.id, outcome: 'pending', request_id: requestId },
-              { $set: {
-                outcome: 'blocked',
-                details: {
-                  ...(intent.details || {}), payload_hash: statusPayloadHash,
-                  pay_period_id: period.id, decision, note,
-                  blocked_reason: 'correction_submitted_during_finalization',
-                  pending_correction_count: newlyPending.length,
-                },
-              } },
-            );
-            return Response.json({
-              success: false,
-              error: 'An employee correction arrived during finalization. Reload and resolve the correction before finalizing.',
-            }, { status: 409 });
-          }
-
         const lockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id || entry.pay_period_id === period.id).map((entry: any) => entry.id);
         const newlyLockableIds = completedEntries.filter((entry: any) => !entry.pay_period_id).map((entry: any) => entry.id);
         if (newlyLockableIds.length) {
