@@ -3817,7 +3817,14 @@ Deno.serve(async (req) => {
           time_entry_id: correctionRequest.time_entry_id,
         }, 'Approved-shift correction submission audit');
         const transition = submissionAudit?.details?.approval_transition;
+        const submittedHash = await payloadHash({
+          entry_id: correctionRequest.time_entry_id,
+          expected_updated_date: correctionRequest.original_snapshot?.updated_date,
+          reason: correctionRequest.employee_reason,
+          requested_changes: correctionRequest.requested_changes,
+        });
         if (!reviewableEntry?.id || asEmail(reviewableEntry.user_email) !== target.email ||
+            !constantTimeEqual(String(submissionAudit?.details?.payload_hash || ''), submittedHash) ||
             reviewableEntry.approval_status !== 'needs_review' ||
             String(reviewableEntry.correction_needs_review_request_id || '') !== String(correctionRequest.request_id || '') ||
             String(reviewableEntry.updated_date || '') !== String(correctionRequest.time_entry_updated_date || '') ||
