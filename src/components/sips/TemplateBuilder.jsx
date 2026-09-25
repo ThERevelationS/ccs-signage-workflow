@@ -632,6 +632,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     const next = pendingNavigation;
     setPendingNavigation(null);
     if (!next) return;
+    // Discard both the dirty flags and their local drafts. Otherwise returning
+    // to an editor tab can show discarded edits as though they were saved.
+    if (subTemplateHasChanges && selectedSubTemplate) {
+      setSubTemplateChecklistItems(subTemplateItems[selectedSubTemplate]?.items || []);
+    }
+    if (productTypeHasChanges && selectedProductType) {
+      setProductTypeItems(productTypeTemplates[selectedProductType]?.items || []);
+    }
     setSubTemplateHasChanges(false);
     setProductTypeHasChanges(false);
     setSubTemplateSaveStatus('idle');
