@@ -711,6 +711,13 @@ async function pushDataset(
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
 
   for (const record of pendingRecords) {
+    // Until the configured Date Received column type is independently verified,
+    // do not send null over a text receipt choice (In Stock or a custom value).
+    // Order pull can preserve that text; Order push must fail closed for it.
+    if (dataset === 'orders' && record.receipt_option && !record.date_received) {
+      errors.push(`${record.id}: Text received option requires verified Smartsheet column type before push. No row was written.`);
+      continue;
+    }
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
     if (sharedContactId && (record.requestor_name || record.requestor_email) &&
         !isValidContactEmail(record.requestor_email)) requestorContactsSkippedNoEmail++;
