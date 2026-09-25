@@ -16,6 +16,7 @@ import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
 import OrderRequestorEmailReview from "@/components/orders/OrderRequestorEmailReview";
 import OrderCreateAttemptReview from "@/components/orders/OrderCreateAttemptReview";
+import OrderDateParityReview from "@/components/orders/OrderDateParityReview";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
@@ -30,6 +31,7 @@ export default function OrderForm() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [emailReviewOpen, setEmailReviewOpen] = useState(false);
   const [createAttemptReviewOpen, setCreateAttemptReviewOpen] = useState(false);
+  const [dateReviewOpen, setDateReviewOpen] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -168,6 +170,14 @@ export default function OrderForm() {
               </Button>
             )}
 
+            {currentUser?.role === "admin" && !!sessionToken && (
+              <Button type="button" onClick={() => setDateReviewOpen(true)} size="sm"
+                className="h-8 px-3" variant="ghost">
+                <ShieldCheck className="w-4 h-4 mr-1" />
+                Review dates
+              </Button>
+            )}
+
             {canImportExport && (
               <Button 
                 onClick={() => spreadsheetRef.current?.exportToExcel()}
@@ -200,6 +210,11 @@ export default function OrderForm() {
         <OrderCreateAttemptReview
           open={createAttemptReviewOpen}
           onOpenChange={setCreateAttemptReviewOpen}
+          sessionToken={sessionToken}
+        />
+        <OrderDateParityReview
+          open={dateReviewOpen}
+          onOpenChange={setDateReviewOpen}
           sessionToken={sessionToken}
         />
       </>
