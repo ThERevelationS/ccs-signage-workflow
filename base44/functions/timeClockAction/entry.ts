@@ -627,6 +627,90 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
+// The caller must hold the shared per-employee correction/approval gate.
+async function ensureCorrectionSubmissionNeedsReview({
+  entryEntity, correctionRequestEntity, auditEntity, requestRecord, correctionAudit,
+  requestId, requestHash, target,
+}: any) {
+  const original = requestRecord?.original_snapshot || {};
+  if (String(original.approval_status || 'unreviewed') !== 'approved' || requestRecord.status !== 'pending') return requestRecord;
+  if (!correctionAudit?.id || !['confirmed', 'recovered'].includes(String(correctionAudit.outcome || '')) ||
+      asEmail(correctionAudit.user_email) !== target.email ||
+      String(correctionAudit.details?.correction_request_id || '') !== requestRecord.id ||
+      !constantTimeEqual(String(correctionAudit.details?.payload_hash || ''), requestHash)) return null;
+  const originalVersion = String(original.updated_date || '');
+  if (!originalVersion) return null;
+  let entry = await entryEntity.get(requestRecord.time_entry_id).catch(() => null);
+  if (!entry?.id || asEmail(entry.user_email) !== target.email ||
+      entry.archived_test_data || entry.archived_admin || entry.status !== 'clocked_out') return null;
+
+  const previousTransition = correctionAudit.details?.approval_transition;
+  const transitionVersion = String(previousTransition?.saved_entry_updated_date || '');
+  if (previousTransition && (
+    String(previousTransition.correction_request_id || '') !== requestRecord.id ||
+    String(previousTransition.from || '') !== 'approved' ||
+    String(previousTransition.to || '') !== 'needs_review' || !transitionVersion
+  )) return null;
+  if (transitionVersion && String(requestRecord.time_entry_updated_date || '') === transitionVersion) return requestRecord;
+
+  if (String(entry.correction_needs_review_request_id || '') !== requestId) {
+    if (entry.approval_status !== 'approved' || entryIsPayPeriodLocked(entry) ||
+        String(entry.updated_date || '') !== originalVersion ||
+        String(requestRecord.time_entry_updated_date || '') !== originalVersion) return null;
+    const changedAt = new Date().toISOString();
+    const saved = await entryEntity.updateMany({
+      id: entry.id, updated_date: originalVersion, user_email: target.email,
+      status: 'clocked_out', approval_status: 'approved', pay_period_id: { $in: [null, ''] },
+      archived_test_data: { $ne: true }, archived_admin: { $ne: true },
+    }, {
+      $set: {
+        approval_status: 'needs_review', correction_needs_review_request_id: requestId,
+        correction_needs_review_at: changedAt,
+      },
+      $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' },
+    });
+    if (!saved || typeof saved.updated !== 'number') return null;
+    entry = await entryEntity.get(entry.id).catch(() => null);
+  }
+  if (!entry?.id || asEmail(entry.user_email) !== target.email ||
+      String(entry.correction_needs_review_request_id || '') !== requestId ||
+      entry.approval_status !== 'needs_review' || entryIsPayPeriodLocked(entry) ||
+      String(entry.clock_in || '') !== String(original.clock_in || '') ||
+      String(entry.clock_out || '') !== String(original.clock_out || '') ||
+      Number(entry.lunch_minutes || 0) !== Number(original.lunch_minutes || 0) ||
+      String(entry.notes || '') !== String(original.notes || '')) return null;
+
+  if (String(requestRecord.time_entry_updated_date || '') === originalVersion) {
+    const updatedVersion = await correctionRequestEntity.updateMany({
+      id: requestRecord.id, request_id: requestId, user_email: target.email,
+      status: 'pending', time_entry_updated_date: originalVersion,
+    }, { $set: { time_entry_updated_date: entry.updated_date } });
+    if (!updatedVersion || typeof updatedVersion.updated !== 'number') return null;
+    requestRecord = await correctionRequestEntity.get(requestRecord.id).catch(() => null);
+  }
+  if (!requestRecord?.id ||
+      String(requestRecord.time_entry_updated_date || '') !== String(entry.updated_date || '')) return null;
+
+  const transition = {
+    from: 'approved', to: 'needs_review', correction_request_id: requestRecord.id,
+    request_id: requestId, saved_entry_updated_date: entry.updated_date,
+    changed_at: entry.correction_needs_review_at,
+  };
+  const updatedAudit = await auditEntity.updateMany({
+    id: correctionAudit.id, action: 'correction_request', outcome: { $in: ['confirmed', 'recovered'] },
+    request_id: requestId, time_entry_id: entry.id, user_email: target.email,
+  }, { $set: { details: { ...(correctionAudit.details || {}), approval_transition: transition } } });
+  if (!updatedAudit || typeof updatedAudit.updated !== 'number') return null;
+  const finalAudit = await auditEntity.get(correctionAudit.id).catch(() => null);
+  if (!finalAudit?.id || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) ||
+      asEmail(finalAudit.user_email) !== target.email ||
+      String(finalAudit.details?.correction_request_id || '') !== requestRecord.id ||
+      !constantTimeEqual(String(finalAudit.details?.payload_hash || ''), requestHash) ||
+      String(finalAudit.details?.approval_transition?.saved_entry_updated_date || '') !==
+        String(entry.updated_date || '')) return null;
+  return requestRecord;
+}
+
 async function setState(stateEntity: any, state: any, expectedStatus: string, expectedRequestId: string | null, nextFields: any) {
   const query: any = {
     id: state.id,
