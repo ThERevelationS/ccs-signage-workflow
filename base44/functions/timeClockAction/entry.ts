@@ -5062,57 +5062,93 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: `Found ${existingActives.length} existing active TimeEntry record${existingActives.length === 1 ? '' : 's'}. Reset or admin review is required before clock-in.` }, { status: 409 });
       }
 
-      const officialClockIn = resumingClockIn && state.pending_started_at
-        ? state.pending_started_at
-        : new Date().toISOString();
-      const claimed = resumingClockIn
-        ? state
-        : await setState(stateEntity, state, 'clocked_out', null, {
-            status: 'clocking_in', active_entry_id: null, last_request_id: requestId, last_request_payload_hash: null,
-            pending_started_at: officialClockIn, break_status: 'working', active_break_id: null,
-            last_break_request_id: null, break_pending_started_at: null,
-            work_pause_status: 'working', active_work_pause_id: null,
-            last_work_pause_request_id: null, work_pause_pending_started_at: null,
-            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
-            labor_pending_activity_type: '', labor_pending_work_order_id: '',
+      const clockInGateEntryId = `clock_in:${target.email}`;
+      const clockInGatePayloadHash = await payloadHash({ action: 'clock_in', user_email: target.email });
+      const clockInGate = await claimCorrectionCreateLock(
+        stateEntity, state.id, requestId, clockInGateEntryId, clockInGatePayloadHash,
+      );
+      if (!clockInGate?.acquired) {
+        return Response.json({
+          success: false, retry_same_request: true,
+          error: 'Clock In is temporarily serialized with a pay-period finalization or another employee record change. Retry this same Clock In after status refresh.',
+        }, { status: 409 });
+      }
+
+      try {
+        const officialClockIn = resumingClockIn && state.pending_started_at
+          ? state.pending_started_at
+          : new Date().toISOString();
+        const claimed = resumingClockIn
+          ? state
+          : await setState(stateEntity, state, 'clocked_out', null, {
+              status: 'clocking_in', active_entry_id: null, last_request_id: requestId, last_request_payload_hash: null,
+              pending_started_at: officialClockIn, break_status: 'working', active_break_id: null,
+              last_break_request_id: null, break_pending_started_at: null,
+              work_pause_status: 'working', active_work_pause_id: null,
+              last_work_pause_request_id: null, work_pause_pending_started_at: null,
+              labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+              labor_pending_activity_type: '', labor_pending_work_order_id: '',
+            });
+        if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+
+        let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-in request');
+        if (!entry) {
+          entry = await entryEntity.create({
+            user_email: target.email,
+            user_name: target.full_name || target.email,
+            clock_in: officialClockIn,
+            clock_in_request_id: requestId,
+            clock_source: 'server',
+            status: 'clocked_in',
           });
-      if (!claimed) return Response.json({ success: false, error: 'Clock-in lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+        }
+        if (!entry?.id) throw new Error('Clock-in TimeEntry could not be created.');
 
-      let entry = await uniqueRow(entryEntity, { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } }, 'Clock-in request');
-      if (!entry) {
-        entry = await entryEntity.create({
-          user_email: target.email,
-          user_name: target.full_name || target.email,
-          clock_in: officialClockIn,
-          clock_in_request_id: requestId,
-          clock_source: 'server',
-          status: 'clocked_in',
+        const currentClaim = await freshState(stateEntity, claimed.id);
+        const auditClaim = await setState(stateEntity, currentClaim, 'clocking_in', requestId, {
+          pending_started_at: currentClaim.pending_started_at || entry.clock_in,
         });
-      }
-      if (!entry?.id) throw new Error('Clock-in TimeEntry could not be created.');
+        if (!auditClaim) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Clock-in is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+        }
+        await ensureClockInAudit({ auditEntity, entry, target, actor, requestId });
+        const finalized = await setState(stateEntity, auditClaim, 'clocking_in', requestId, {
+          status: 'clocked_in', active_entry_id: entry.id, last_action_at: entry.clock_in,
+          pending_started_at: null, break_status: 'working', active_break_id: null,
+          last_break_request_id: null, break_pending_started_at: null,
+          work_pause_status: 'working', active_work_pause_id: null,
+          last_work_pause_request_id: null, work_pause_pending_started_at: null,
+          labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+          labor_pending_activity_type: '', labor_pending_work_order_id: '',
+        });
+        if (!finalized) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Clock-in and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
+        }
 
-      const currentClaim = await freshState(stateEntity, claimed.id);
-      const auditClaim = await setState(stateEntity, currentClaim, 'clocking_in', requestId, {
-        pending_started_at: currentClaim.pending_started_at || entry.clock_in,
-      });
-      if (!auditClaim) {
-        return Response.json({ success: false, retry_same_request: true, error: 'Clock-in is being recovered in another session. Retry the same action after status refresh.' }, { status: 409 });
+        return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
+      } finally {
+        let releaseFailed = false;
+        try {
+          const released = await releaseCorrectionCreateLock(
+            stateEntity, state.id, requestId, clockInGateEntryId,
+            clockInGatePayloadHash, String(clockInGate.claim_token || ''),
+          );
+          if (!released) {
+            const current = await freshState(stateEntity, state.id).catch(() => null);
+            const gateStatus = String(current?.correction_create_status || '');
+            const safe = current?.id && (
+              !gateStatus || gateStatus === 'idle' ||
+              (gateStatus === 'creating' && String(current.correction_create_request_id || '') !== requestId)
+            );
+            if (!safe) releaseFailed = true;
+          }
+        } catch {
+          releaseFailed = true;
+        }
+        if (releaseFailed) {
+          throw new Error('Clock-in employee mutation gate could not be released safely. Retry this same Clock In for recovery.');
+        }
       }
-      await ensureClockInAudit({ auditEntity, entry, target, actor, requestId });
-      const finalized = await setState(stateEntity, auditClaim, 'clocking_in', requestId, {
-        status: 'clocked_in', active_entry_id: entry.id, last_action_at: entry.clock_in,
-        pending_started_at: null, break_status: 'working', active_break_id: null,
-        last_break_request_id: null, break_pending_started_at: null,
-        work_pause_status: 'working', active_work_pause_id: null,
-        last_work_pause_request_id: null, work_pause_pending_started_at: null,
-        labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
-        labor_pending_activity_type: '', labor_pending_work_order_id: '',
-      });
-      if (!finalized) {
-        return Response.json({ success: false, retry_same_request: true, error: 'Clock-in and its audit were saved but state finalization was interrupted. Retry this same action to recover safely.' }, { status: 409 });
-      }
-
-      return Response.json({ success: true, status: 'clocked_in', entry, user: publicEmployee(target), audit_saved: true });
     }
 
     if (action === 'clock_out') {
