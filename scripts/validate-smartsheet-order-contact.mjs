@@ -37,6 +37,27 @@ try {
   assert.equal(inbound.requestor_email, 'casey@example.com');
   console.log('PASS inbound Order contact separates email from display name');
 
+  const noDisplay = parseRowToFields({
+    id: '2', cells: [{ column_id: '123', value: 'casey@example.com', display_value: '' }],
+  }, bindings, 'orders');
+  assert.equal(noDisplay.requestor_email, 'casey@example.com');
+  assert.equal(Object.hasOwn(noDisplay, 'requestor_name'), false);
+  const plainRawCells = parseRowToFields({
+    id: '3', cells: [
+      { column_id: '321', value: 'Raw Smartsheet customer', display_value: '' },
+      { column_id: '322', value: 'Aluminum panel', display_value: '' },
+      { column_id: '323', value: '2026-09-25', display_value: '09/25/26' },
+    ],
+  }, { ...bindings, description: '322', date_received: '323' }, 'orders');
+  assert.equal(plainRawCells.customer_name, 'Raw Smartsheet customer');
+  assert.equal(plainRawCells.description, 'Aluminum panel');
+  assert.equal(plainRawCells.date_received, '2026-09-25');
+  const salesUnchanged = parseRowToFields({
+    id: '4', cells: [{ column_id: '321', value: 'Sales Raw', display_value: '' }],
+  }, { client_name: '321' }, 'sales');
+  assert.equal(Object.hasOwn(salesUnchanged, 'client_name'), false);
+  console.log('PASS Order raw text fallback, ISO date priority and no email-as-name; Sales translation unchanged');
+
   const nameOnly = parseRowToFields({
     id: '1', cells: [{ column_id: '123', value: 'Casey Example', display_value: 'Casey Example' }],
   }, bindings, 'orders');
