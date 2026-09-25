@@ -38,7 +38,5 @@ export function assessSalesNumberFill({ record, sheetId, rowId, remoteValue, exp
   const stored = String(record.est_inv_at ?? '').trim();
   if (stored === number) return 'already_set';
   if (stored) return 'base44_number_already_populated';
-  const otherNumber = String(record.corbridge_invoice_number ?? '').trim();
-  if (otherNumber && otherNumber !== number) return 'existing_corebridge_number_differs';
   return 'eligible';
 }
