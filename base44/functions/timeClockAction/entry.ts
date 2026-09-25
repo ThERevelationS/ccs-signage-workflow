@@ -2312,7 +2312,18 @@ Deno.serve(async (req) => {
           { id: period.id, updated_date: period.updated_date, status: 'finalized' },
           { $set: { status: 'review', reopened_at: now, reopened_by: actorEmail, reopen_reason: note, last_request_id: requestId } },
         );
-        if (!reopened || reopened.updated !== 1) return Response.json({ success: false, error: 'Pay period changed in another session. Reload before reopening it.' }, { status: 409 });
+        if (!reopened || reopened.updated !== 1) {
+          const latest = await payPeriodEntity.get(period.id);
+          if (latest?.status !== 'review' || String(latest.last_request_id || '') !== requestId) {
+            const blocked = await auditEntity.updateMany(
+              { id: intent.id, outcome: 'pending', request_id: requestId },
+              { $set: { outcome: 'blocked', details: { ...(intent.details || {}), blocked_reason: 'reopen_claim_lost' } } },
+            );
+            if (!blocked || blocked.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The reopen claim conflicted and its audit could not be resolved. Retry the same request.' }, { status: 409 });
+            return Response.json({ success: false, error: 'Another pay-period action won the reopen race. Reload before submitting a new request.' }, { status: 409 });
+          }
+          period = latest;
+        }
         if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen request or request admin investigation.' }, { status: 409 });
       }
 
