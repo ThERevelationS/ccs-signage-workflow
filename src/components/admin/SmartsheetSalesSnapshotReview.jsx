@@ -86,7 +86,7 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
             Other linked fields and duplicate relationships still require separate review.
           </p>
         </div>
-        <Button type="button" variant="outline" size="sm" className="min-h-10 shrink-0"
+        <Button type="button" variant="outline" size="sm" className="min-h-11 shrink-0"
           onClick={() => load(0)} disabled={!canPreview || busy}>
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :
             result ? <RefreshCw className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
@@ -150,10 +150,10 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-gray-500">Review only. No changes will be applied.</p>
             <div className="flex gap-2">
-              <Button type="button" size="sm" variant="outline" className="min-h-10"
+              <Button type="button" size="sm" variant="outline" className="min-h-11"
                 disabled={busy || !canPreview || offset === 0}
                 onClick={() => load(Math.max(0, offset - PAGE_SIZE))}>Previous</Button>
-              <Button type="button" size="sm" variant="outline" className="min-h-10"
+              <Button type="button" size="sm" variant="outline" className="min-h-11"
                 disabled={busy || !canPreview || result.next_sample_offset == null}
                 onClick={() => load(result.next_sample_offset)}>Next</Button>
             </div>
