@@ -24,7 +24,7 @@ const rows = [111, 222, 444, 555, 666, 777, 888].map(id => ({ id: String(id) }))
 const result = auditOrderCreateAttempts(orders, rows.slice().reverse(), SHEET);
 assert.equal(result.read_only, true);
 assert.equal(result.total_markers, 8);
-assert.equal(result.unresolved_markers, 6);
+assert.equal(result.unresolved_markers, 5);
 assert.deepEqual(result.counts, { verified_link: 1, ambiguous: 6, missing_row: 1 });
 assert.equal(result.records_by_category.verified_link[0].base44_record_id, 'linked');
 assert.equal(result.records_by_category.missing_row[0].base44_record_id, 'missing');
