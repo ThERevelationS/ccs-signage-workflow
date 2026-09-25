@@ -244,7 +244,9 @@ export function buildSnapshot(record: any, bindings: Record<string, string>, dat
     if (sharedContactId && (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (!columnId || !/^\d+$/.test(columnId)) continue;
-    snapshot[columnId] = extractFieldValue(record, field);
+    const optionField = dataset === 'orders' ? orderDateOptionField(field.key) : '';
+    const optionValue = optionField ? cleanText(record?.[optionField], 120) : '';
+    snapshot[columnId] = optionValue || extractFieldValue(record, field);
   }
   if (sharedContactId) {
     const contactCell = buildSharedOrderContactCell(record, sharedContactId);
