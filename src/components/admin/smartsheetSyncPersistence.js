@@ -58,7 +58,8 @@ export async function previewSmartsheetSalesEstInv({ sessionToken, sampleOffset 
     sample_size: Math.max(1, Math.min(25, Math.floor(Number(sampleSize) || 20))),
   });
   if (result?.read_only !== true || result?.dataset !== "sales" ||
-      !Array.isArray(result?.cases) || !Number.isFinite(Number(result?.candidate_count_in_push_window))) {
+      !Array.isArray(result?.cases) || !Number.isFinite(Number(result?.candidate_count_in_push_window)) ||
+      (result.cases.length > 0 && !String(result.verified_column_title ?? "").trim())) {
     throw new Error("The Sales snapshot preview did not return a verifiable read-only result.");
   }
   return result;

@@ -44,6 +44,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [expandedDoc, setExpandedDoc] = useState(null);
   const documentHeaderRefs = useRef(new Map());
   const pendingDocNavigationRef = useRef(null);
+  const jurisdictionHeadingRef = useRef(null);
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
@@ -390,7 +391,7 @@ Answer the question based on the documents and information available. Be specifi
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <h2 className="min-w-0 break-words font-bold text-lg text-gray-900">{jurisdiction.name}</h2>
+              <h2 ref={jurisdictionHeadingRef} tabIndex={-1} className="min-w-0 break-words font-bold text-lg text-gray-900 focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">{jurisdiction.name}</h2>
               <Badge variant="outline" className="max-w-full break-words">{jurisdiction.state}</Badge>
               <Badge className="max-w-full break-words bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
             </div>
@@ -774,6 +775,10 @@ Answer the question based on the documents and information available. Be specifi
                       if (result.type === 'document') {
                         pendingDocNavigationRef.current = result.id;
                         setExpandedDoc(result.id);
+                      } else if (result.type === 'jurisdiction') {
+                        // Focus the persistent heading before the selected result disappears.
+                        jurisdictionHeadingRef.current?.focus({ preventScroll: true });
+                        jurisdictionHeadingRef.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
                       }
                       setDocSearchTerm("");
                       setSearchResults([]);

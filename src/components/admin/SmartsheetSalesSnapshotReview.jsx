@@ -114,6 +114,9 @@ export default function SmartsheetSalesSnapshotReview({ sessionToken, savedSales
             examined in the current push window. Displaying {cases.length ? offset + 1 : 0}–
             {offset + cases.length} of these candidates.
           </div>
+          {result.verified_column_title && (
+            <p className="text-xs text-blue-800">Confirmed Smartsheet column: <strong>{result.verified_column_title}</strong></p>
+          )}
           <div className="flex flex-wrap gap-2 text-xs">
             {Object.entries(result.summary || {}).map(([key, count]) => (
               <Badge key={key} variant="outline">{LABELS[key] || key}: {count}</Badge>
