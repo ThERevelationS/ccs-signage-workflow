@@ -3,13 +3,7 @@ import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
-import { replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
-import {
-  SALES_NUMBER_BACKFILL_CONFIRMATION,
-  assessSalesNumberFill,
-  normalizeSalesNumber,
-  validateSalesNumberSelections,
-} from '../../shared/smartsheetSalesNumberBackfill.mjs';
+import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
@@ -1054,10 +1048,8 @@ Deno.serve(async (req) => {
         const comparison = classifySalesEstInvPreview(record.est_inv_at, remoteValue, Boolean(remote));
         const duplicateLinkInWindow = (linkCounts[rowId] || 0) > 1;
         const fiveDigitNumber = normalizeSalesNumber(remoteValue);
-        const existingInvoiceNumber = String(record?.corbridge_invoice_number ?? '').trim();
         const potentialNumberToFill = comparison === 'smartsheet_only' && !!fiveDigitNumber &&
-          !duplicateLinkInWindow && (!existingInvoiceNumber || existingInvoiceNumber === fiveDigitNumber)
-          ? fiveDigitNumber : null;
+          !duplicateLinkInWindow ? fiveDigitNumber : null;
         summary[comparison] = (summary[comparison] || 0) + 1;
         return {
           workorder_id: record.id, smartsheet_row_id: rowId,
@@ -1067,8 +1059,6 @@ Deno.serve(async (req) => {
           comparison, duplicate_link_in_push_window: duplicateLinkInWindow,
           potential_number_to_fill: potentialNumberToFill,
           full_link_verification_required: !!potentialNumberToFill,
-          existing_invoice_number_conflict: !!fiveDigitNumber && !!existingInvoiceNumber &&
-            existingInvoiceNumber !== fiveDigitNumber,
           review_required: true,
         };
       });
