@@ -230,6 +230,43 @@ test('a broken committed lock snapshot refuses exact-request audit confirmation'
   assert.equal(h.audit(finalizeRequest)[0].outcome, 'pending');
 });
 
+test('a losing period claim blocks its own orphan audit before any entry locks', async () => {
+  const h = setup();
+  let compete = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (compete && entity === 'TimeClockPayPeriod' && update.$set?.last_request_id === finalizeRequest) {
+      compete = false;
+      h.period().last_request_id = 'synthetic-winner-001';
+      h.period().updated_date = '2026-09-20T00:00:01.000Z';
+      h.rows.TimeClockAudit.push({
+        id: 'winner-audit', action: 'pay_period_status', request_id: 'synthetic-winner-001',
+        outcome: 'pending', details: { decision: 'finalize', pay_period_id: h.period().id },
+      });
+    }
+  });
+  const loser = await h.action('finalize', finalizeRequest);
+  assert.equal(loser.status, 409);
+  assert.equal(h.audit(finalizeRequest)[0].outcome, 'blocked');
+  assert.equal(h.audit(finalizeRequest)[0].details.blocked_reason, 'period_claim_lost');
+  assert.equal(h.entryLocks().length, 0);
+});
+
+test('pending reopen audit prevents a new finalization from overtaking unlock recovery', async () => {
+  const h = setup();
+  assert.equal((await h.action('finalize', finalizeRequest)).status, 200);
+  let interrupt = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (interrupt && entity === 'TimeEntry' && update.$unset?.pay_period_id !== undefined) {
+      interrupt = false; throw new Error('Synthetic reopen unlock interruption');
+    }
+  });
+  assert.equal((await h.action('reopen', 'pending-reopen-001', 'Manager correction')).status, 500);
+  assert.equal((await h.action('finalize', 'overtaking-finalize-001')).status, 409);
+  assert.equal(h.audit('overtaking-finalize-001').length, 0);
+  assert.equal((await h.action('reopen', 'pending-reopen-001', 'Manager correction')).status, 200);
+  assert.equal((await h.action('finalize', 'later-finalize-001')).status, 200);
+});
+
 for (const [name, fn] of tests) {
   try { await fn(); console.log('PASS ' + name); }
   catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
