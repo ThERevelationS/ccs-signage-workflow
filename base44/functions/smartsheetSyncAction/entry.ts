@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
@@ -874,10 +875,12 @@ Deno.serve(async (req) => {
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
     const configured = Boolean(token);
 
-    // Manual UI calls pass a session_token and require admin auth. Scheduled
-    // workflow calls have no session token and run as the service role, matching
-    // the pattern used by the other scheduled fleet functions in this app.
+    // A missing session is not proof of a trusted scheduled workflow. Only
+    // the exact scheduled run_sync action with its workflow-only capability
+    // may run without an authenticated admin session. Dataset actions never do.
     const hasSessionToken = Boolean(String(body?.session_token || '').trim());
+    const scheduledRun = !hasSessionToken && action === 'run_sync' &&
+      await hasWorkflowInvocationCapability(body, 'smartsheetSyncAction');
     let adminActor: any = null;
     if (hasSessionToken) {
       const actor = await authenticateSignShopSession(base44, body?.session_token);
@@ -885,8 +888,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
       adminActor = actor;
-    } else if (action !== 'run_sync' && action !== 'push_dataset' && action !== 'pull_dataset') {
-      return Response.json({ success: false, error: 'Admin session is required for this action.' }, { status: 403 });
+    } else if (!scheduledRun) {
+      return Response.json({ success: false, error: 'Admin session or verified scheduled workflow is required.' }, { status: 403 });
     }
 
     if (action === 'status') {

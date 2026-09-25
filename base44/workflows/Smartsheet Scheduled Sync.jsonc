@@ -13,7 +13,8 @@
           "with": {
             "function_name": "smartsheetSyncAction",
             "args": {
-              "action": "run_sync"
+              "action": "run_sync",
+              "_workflow_capability": "PkqkW1Iclz6ucp1fDEYC3Vxx-rxRGl6gFDbm5wiPLyr0VvCk40iucbbdS1fXHsSV"
             }
           },
           "then": "end",
