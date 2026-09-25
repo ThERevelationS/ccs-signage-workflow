@@ -10,6 +10,7 @@ import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } f
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderDateParity } from '../../shared/smartsheetOrderDateTranslation.mjs';
+import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -463,10 +464,16 @@ async function pullDataset(
   //    exist but don't after the bulk update. This is a small subset (~150-260
   //    records) so individual calls stay within rate limits.
   const snapshotUpdates: any[] = [];
+  const orderDateVerifications: any[] = [];
+  const bulkSucceededOrderIds = new Set<string>();
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     const batch = toUpdate.slice(i, i + bulkBatchSize);
-    const payload = batch.map(({ id, _existing, ...fields }: any) => ({ id, ...fields }));
+    const payload = batch.map(({ id, _existing, ...fields }: any) => ({
+      id, ...fields,
+      // A verified Order timestamp is recorded only after date read-back.
+      ...(dataset === 'orders' ? { smartsheet_last_synced_at: _existing?.smartsheet_last_synced_at || null } : {}),
+    }));
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
       updatedCount += payload.length;
@@ -475,7 +482,10 @@ async function pullDataset(
           const { id, _existing, ...fields } = rec;
           const merged = { ..._existing, ...fields };
           const snapshot = buildSnapshot(merged, bindings, dataset);
-          snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
+          if (dataset === 'orders') {
+            bulkSucceededOrderIds.add(id);
+            orderDateVerifications.push({ id, previous: _existing, changes: changedPulledOrderDates(_existing, fields), snapshot });
+          } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
         }
       }
     } catch (err: any) {
@@ -494,6 +504,7 @@ async function pullDataset(
   const dateFixes: any[] = [];
   for (const rec of toUpdate) {
     const { id, _existing, ...fields } = rec;
+    if (dataset === 'orders') continue; // Verified read-back replaces blind Order date fixes.
     for (const df of dateFields) {
       if (fields[df] && (!_existing || _existing[df] !== fields[df])) {
         // This date should be set — queue a targeted individual update
@@ -526,6 +537,23 @@ async function pullDataset(
     }
     if (i + FIX_CONCURRENCY < fixIds.length) {
       await new Promise((res) => setTimeout(res, 200));
+    }
+  }
+
+  // Order-only read-after-write: Base44 bulkUpdate may acknowledge dates it
+  // omitted. Repair only fields whose previous value is still safe, verify
+  // the permanent Order again, then and only then record sync evidence.
+  if (dataset === 'orders') {
+    for (const item of orderDateVerifications) {
+      if (!bulkSucceededOrderIds.has(item.id)) continue;
+      try {
+        await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
+        snapshotUpdates.push({ id: item.id, smartsheet_sync_snapshot: item.snapshot,
+          smartsheet_last_synced_at: new Date().toISOString() });
+      } catch (error: any) {
+        errors.push(`Order ${item.id} date verification: ${error?.message || 'unknown error'}. Snapshot not advanced.`);
+        updatedCount--;
+      }
     }
   }
 
