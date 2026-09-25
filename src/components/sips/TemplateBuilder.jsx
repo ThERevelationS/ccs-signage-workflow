@@ -493,11 +493,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const selectSubTemplateForEditing = (subTemplate, discardUnsaved = false) => {
     if (!discardUnsaved && selectedSubTemplate === subTemplate.id) return;
-    if (!discardUnsaved && selectedSubTemplate && subTemplateHasChanges) {
+    if (!discardUnsaved && selectedSubTemplate && (subTemplateHasChanges || (activeTab === 'subtemplates' && newItemText.trim()))) {
       setPendingEditorSwitch({ kind: 'subtemplate', id: subTemplate.id, name: subTemplate.name });
       return;
     }
     setSelectedSubTemplate(subTemplate.id);
+    setNewItemText("");
     setSubTemplateChecklistItems(subTemplateItems[subTemplate.id]?.items || []);
     setExpandedItems({});
     setSubTemplateHasChanges(false);
@@ -607,18 +608,20 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   // Product Type Management
   const selectProductType = (type, discardUnsaved = false) => {
     if (!discardUnsaved && selectedProductType === type) return;
-    if (!discardUnsaved && selectedProductType && productTypeHasChanges) {
+    if (!discardUnsaved && selectedProductType && (productTypeHasChanges || (activeTab === 'producttypes' && newItemText.trim()))) {
       setPendingEditorSwitch({ kind: 'producttype', id: type, name: type });
       return;
     }
     setSelectedProductType(type);
+    setNewItemText("");
     setProductTypeItems(productTypeTemplates[type]?.items || []);
     setExpandedItems({});
     setProductTypeHasChanges(false);
     setProductTypeSaveStatus('idle');
   };
 
-  const hasUnsavedEditorChanges = subTemplateHasChanges || productTypeHasChanges;
+  // Text in the Add item field is not part of saved checklist data until Add is pressed.
+  const hasUnsavedEditorChanges = subTemplateHasChanges || productTypeHasChanges || Boolean(newItemText.trim());
   const requestTabChange = (tab) => {
     if (tab === activeTab) return;
     if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'tab', tab });
@@ -642,6 +645,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     }
     setSubTemplateHasChanges(false);
     setProductTypeHasChanges(false);
+    setNewItemText("");
     setSubTemplateSaveStatus('idle');
     setProductTypeSaveStatus('idle');
     if (next.kind === 'close') onClose();
@@ -2344,7 +2348,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
           <AlertDialogHeader>
             <AlertDialogTitle>Discard unsaved checklist edits?</AlertDialogTitle>
-            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will leave unsaved checklist edits behind. Save first or discard to continue.</AlertDialogDescription>
+            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will discard unsaved checklist edits and any new item you haven't added. Add the item and save your changes first, or discard to continue.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-11">Keep editing</AlertDialogCancel>
@@ -2358,7 +2362,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
           <AlertDialogHeader>
             <AlertDialogTitle className="text-left">Discard unsaved checklist edits?</AlertDialogTitle>
             <AlertDialogDescription className="break-words text-left">
-              Switching to “{pendingEditorSwitch?.name}” will discard your unsaved changes to the current {pendingEditorSwitch?.kind === 'subtemplate' ? 'checklist option' : 'product checklist'}.
+              Switching to “{pendingEditorSwitch?.name}” will discard unsaved checklist edits and any new item you haven't added to the current {pendingEditorSwitch?.kind === 'subtemplate' ? 'checklist option' : 'product checklist'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0">
