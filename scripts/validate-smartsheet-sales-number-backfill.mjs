@@ -14,6 +14,9 @@ assert.equal(normalizeSalesNumber('123456'), '');
 assert.equal(validateSalesNumberSelections([{ workorder_id: 'w1', smartsheet_row_id: rowId, expected_number: 14568 }])[0].expected_number, '14568');
 assert.throws(() => validateSalesNumberSelections([{ workorder_id: 'w1', smartsheet_row_id: rowId, expected_number: '14568' }, { workorder_id: 'w2', smartsheet_row_id: rowId, expected_number: '14568' }]));
 assert.throws(() => validateSalesNumberSelections([]));
+assert.throws(() => validateSalesNumberSelections(Array.from({ length: 21 }, (_, index) => ({
+  workorder_id: 'w' + index, smartsheet_row_id: String(1234567890 + index), expected_number: '14568',
+}))), 'More than 20 reviewed records must be rejected.');
 test({}, 'eligible', 'Five-digit Smartsheet values fill only blank matched WorkOrders');
 test({ record: { ...record, est_inv_at: '14568' } }, 'already_set', 'Retry is idempotent');
 test({ record: { ...record, est_inv_at: '14589' } }, 'base44_number_already_populated', 'Existing estimate number must not be overwritten');
