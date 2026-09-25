@@ -16,7 +16,7 @@ export function effectiveOrderStatus(order) {
 }
 
 export function orderMatchesReceivedFilter(order, filter) {
-  if (filter === 'not_received') return !isFulfilledOrder(order);
+  if (filter === 'not_received' || filter === 'open_only') return !isFulfilledOrder(order);
   if (filter === 'received') return isFulfilledOrder(order);
   if (filter === 'pending' || filter === 'ordered' || filter === 'cancelled') {
     return !isFulfilledOrder(order) && effectiveOrderStatus(order) === filter;
