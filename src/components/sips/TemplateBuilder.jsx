@@ -2192,32 +2192,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       <>
                                         <Input 
                                           id={`edit-${dd.id}`}
-                                          defaultValue={dd.name} 
+                                          value={editingDropdownName}
+                                          onChange={(e) => setEditingDropdownName(e.target.value)}
                                           className="h-11 min-w-0 flex-1 text-sm lg:h-6"
                                           aria-label={`Condition name ${dd.name}`}
                                           autoFocus
-                                          onKeyDown={(e) => { 
-                                            if (e.key === 'Enter') { 
-                                              const newName = e.target.value.trim(); 
-                                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
-                                              setEditingDropdown(null); 
-                                            } 
-                                            if (e.key === 'Escape') setEditingDropdown(null); 
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveDropdownRename(dd);
+                                            if (e.key === 'Escape') cancelDropdownRename();
                                           }}
                                         />
-                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => {
-                                          const input = document.getElementById(`edit-${dd.id}`);
-                                          const newName = input?.value.trim();
-                                          if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                                          setEditingDropdown(null);
-                                        }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => saveDropdownRename(dd)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                       </>
                                     ) : (
                                       <>
                                         <span className="min-w-0 flex-1 truncate">{dd.name}</span>
                                         <button
                                           type="button"
-                                          onClick={() => setEditingDropdown(dd.id)}
+                                          onClick={() => startDropdownRename(dd)}
                                           className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
                                           aria-label={`Rename condition ${dd.name}`}
                                           title={`Rename condition ${dd.name}`}
@@ -2300,32 +2292,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       <>
                                         <Input 
                                           id={`edit-${dd.id}`}
-                                          defaultValue={dd.name} 
+                                          value={editingDropdownName}
+                                          onChange={(e) => setEditingDropdownName(e.target.value)}
                                           className="h-11 min-w-0 flex-1 text-sm lg:h-6"
                                           aria-label={`Condition name ${dd.name}`}
                                           autoFocus
-                                          onKeyDown={(e) => { 
-                                            if (e.key === 'Enter') { 
-                                              const newName = e.target.value.trim(); 
-                                              if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d)); 
-                                              setEditingDropdown(null); 
-                                            } 
-                                            if (e.key === 'Escape') setEditingDropdown(null); 
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveDropdownRename(dd);
+                                            if (e.key === 'Escape') cancelDropdownRename();
                                           }}
                                         />
-                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => {
-                                          const input = document.getElementById(`edit-${dd.id}`);
-                                          const newName = input?.value.trim();
-                                          if (newName) saveDropdownConditions(dropdownConditions.map(d => d.id === dd.id ? { ...d, name: newName } : d));
-                                          setEditingDropdown(null);
-                                        }}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
+                                        <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-6 lg:w-auto lg:px-2" aria-label={`Save condition name ${dd.name}`} title={`Save condition name ${dd.name}`} onClick={() => saveDropdownRename(dd)}><Save className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" /></Button>
                                       </>
                                     ) : (
                                       <>
                                         <span className="min-w-0 flex-1 truncate">{dd.name}</span>
                                         <button
                                           type="button"
-                                          onClick={() => setEditingDropdown(dd.id)}
+                                          onClick={() => startDropdownRename(dd)}
                                           className="h-11 w-11 shrink-0 rounded flex items-center justify-center hover:bg-gray-100 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 lg:h-7 lg:w-7"
                                           aria-label={`Rename condition ${dd.name}`}
                                           title={`Rename condition ${dd.name}`}
