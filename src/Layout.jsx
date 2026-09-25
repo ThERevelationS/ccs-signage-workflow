@@ -1154,12 +1154,21 @@ function LayoutContent({ children }) {
 
 function LayoutContentWrapper({ children, currentPageName }) {
   const { currentUser } = useAuth();
+  const internalFleetPage = String(currentPageName || "").startsWith("Fleet");
+  const protectedChildren = internalFleetPage && !currentUser ? (
+    <div className="min-h-[60vh] flex items-center justify-center p-6">
+      <div className="max-w-md rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <h1 className="text-lg font-bold text-gray-900 dark:text-slate-100">Fleet sign-in required</h1>
+        <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">Sign in to CCS to view Fleet equipment, tracking, maintenance, inventory, costs, or other internal Fleet information.</p>
+      </div>
+    </div>
+  ) : children;
   return (
     <ImportProgressProvider currentUserEmail={currentUser?.email}>
       <ResearchProgressProvider>
         <MultiImportProvider>
           <AnnouncementProvider currentPageName={currentPageName}>
-            <LayoutContent>{children}</LayoutContent>
+            <LayoutContent>{protectedChildren}</LayoutContent>
             <ResearchProgressBar />
           </AnnouncementProvider>
         </MultiImportProvider>
