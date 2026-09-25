@@ -36,7 +36,25 @@ export function orderSmartsheetCreateNeedsReview(record) {
     String(marker.sheet_id ?? '') === String(record.smartsheet_sheet_id ?? ''));
 }
 
-export async function createOrderSmartsheetRowWithGuard({
+// Prevent simultaneous Order POSTs in one backend runtime. The durable
+// reservation below protects later invocations, including across runtimes.
+const activeOrderCreates = new Set();
+
+export async function createOrderSmartsheetRowWithGuard(args) {
+  const key = String(args?.record?.id ?? '').trim();
+  if (!key) throw new Error('Order Smartsheet create requires a permanent Base44 record ID.');
+  if (activeOrderCreates.has(key)) {
+    throw new Error('An Order Smartsheet create is already in progress. No second POST was sent.');
+  }
+  activeOrderCreates.add(key);
+  try {
+    return await performOrderSmartsheetCreate(args);
+  } finally {
+    activeOrderCreates.delete(key);
+  }
+}
+
+async function performOrderSmartsheetCreate({
   entity,
   record,
   sheetId,
