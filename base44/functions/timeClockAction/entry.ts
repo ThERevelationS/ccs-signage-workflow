@@ -2194,29 +2194,10 @@ Deno.serve(async (req) => {
           const lockedIds = new Set(lockedRows.map((entry: any) => entry.id));
           const missingLocks = lockableIds.filter((id: string) => !lockedIds.has(id));
           if (missingLocks.length) {
-            if (newlyLockableIds.length) {
-              const rollback = await entryEntity.updateMany(
-                {
-                  id: { $in: newlyLockableIds },
-                  pay_period_id: period.id,
-                  pay_period_locked_at: now,
-                  pay_period_locked_by: actorEmail,
-                },
-                { $unset: { pay_period_id: '', pay_period_locked_at: '', pay_period_locked_by: '' } },
-              );
-              if (!rollback || typeof rollback.updated !== 'number') {
-                return Response.json({ success: false, error: 'Approval changed during pay-period finalization and newly acquired entry locks could not be rolled back safely. Admin investigation is required.' }, { status: 409 });
-              }
-              const residualAttemptLocks = await entryEntity.filter({
-                id: { $in: newlyLockableIds },
-                pay_period_id: period.id,
-                pay_period_locked_at: now,
-                pay_period_locked_by: actorEmail,
-              });
-              if (!Array.isArray(residualAttemptLocks)) throw new Error('Pay-period approval-race rollback verification did not return a record list.');
-              if (residualAttemptLocks.length) {
-                return Response.json({ success: false, error: 'Approval changed during pay-period finalization and some newly acquired entry locks remain. Admin investigation is required.' }, { status: 409 });
-              }
+            // Include locks staged by an earlier interrupted attempt with this
+            // same request, not just locks acquired during the current retry.
+            if (!await releaseStagedPeriodLocks()) {
+              return Response.json({ success: false, retry_same_request: true, error: 'Approval changed and staged pay-period locks could not be fully rolled back. Retry the same request or request admin investigation.' }, { status: 409 });
             }
             await auditEntity.updateMany(
               { id: intent.id, outcome: 'pending', request_id: requestId },
@@ -2240,9 +2221,16 @@ Deno.serve(async (req) => {
           }
         }
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
-        const summary = { entry_count: completedEntries.length, employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size, total_hours: totalHours };
+        const summary = {
+          entry_count: completedEntries.length,
+          employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size,
+          total_hours: totalHours,
+          lock_timestamp: lockTimestamp,
+          locked_by: actorEmail,
+          request_id: requestId,
+        };
         const finalized = await payPeriodEntity.updateMany(
-          { id: period.id, updated_date: period.updated_date, status: 'review' },
+          { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
         );
         if (!finalized || finalized.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'Entries were locked but pay-period finalization was interrupted. Retry the same finalization request.' }, { status: 409 });
