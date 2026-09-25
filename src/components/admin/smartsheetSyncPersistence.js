@@ -50,6 +50,20 @@ export async function getSmartsheetRows({ sessionToken, sheetId, columnIds = [],
   });
 }
 
+// Admin-only, read-only review of legacy Sales Est / Inv # snapshots.
+// The backend chooses the persisted sheet/binding and never repairs records.
+export async function previewSmartsheetSalesEstInv({ sessionToken, sampleOffset = 0, sampleSize = 20 } = {}) {
+  const result = await invokeSmartsheet("preview_sales_est_inv_snapshot", sessionToken, {
+    sample_offset: Math.max(0, Math.min(499, Math.floor(Number(sampleOffset) || 0))),
+    sample_size: Math.max(1, Math.min(25, Math.floor(Number(sampleSize) || 20))),
+  });
+  if (result?.read_only !== true || result?.dataset !== "sales" ||
+      !Array.isArray(result?.cases) || !Number.isFinite(Number(result?.candidate_count_in_push_window))) {
+    throw new Error("The Sales snapshot preview did not return a verifiable read-only result.");
+  }
+  return result;
+}
+
 export async function runSmartsheetSync({ sessionToken, dataset } = {}) {
   return invokeSmartsheet("run_sync", sessionToken, dataset ? { dataset } : {});
 }
