@@ -16,6 +16,11 @@ assert.equal(effectiveOrderStatus({ status: 'pending', date_ordered: '2026-09-23
 assert.equal(effectiveOrderStatus({ status: 'cancelled' }), 'cancelled');
 assert.equal(orderMatchesReceivedFilter({ status: 'pending', date_ordered: '2026-09-23' }, 'ordered'), true);
 assert.equal(orderMatchesReceivedFilter({ status: 'pending', date_received: '2026-09-25' }, 'pending'), false);
+assert.equal(effectiveOrderStatus({ receipt_option: 'In Stock', status: 'pending' }), 'received');
+assert.equal(orderMatchesReceivedFilter({ receipt_option: 'In Stock' }, 'not_received'), false);
+assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'not_received'), true);
+assert.deepEqual(orderStatusFromPulledDates({ receipt_option: 'In Stock' }, null, false),
+  { receipt_option: 'In Stock', status: 'received' });
 console.log('PASS open-only default and accessible history use Date Received, not stale Pending status');
 
 assert.deepEqual(orderStatusFromPulledDates({ date_received: '2026-09-25' }, { status: 'pending' }, false),
@@ -38,5 +43,10 @@ assert.match(ui, /order_form_filter === "all" \? "not_received"/);
 assert.match(spreadsheet, /orderMatchesReceivedFilter\(order, filterStatus\)/);
 assert.match(spreadsheet, /effectiveOrderStatus\(a\)/);
 assert.match(mobile, /effectiveOrderStatus\(order\)/);
+assert.match(mobile, /order\.receipt_option/);
+assert.match(spreadsheet, /localStorage\.setItem\('orderReceiptOptions'/);
+assert.match(spreadsheet, /receipt_option: option/);
+assert.match(spreadsheet, /date_received: dateStr, receipt_option: ''/);
 assert.match(backend, /dataset === 'orders'\) \{\s*Object\.assign\(fieldValues, orderStatusFromPulledDates/);
+assert.match(backend, /dataset === 'orders' && record\.receipt_option && !record\.date_received/);
 console.log('PASS main Order Form, mobile display and Order-only backend pull are wired consistently');
