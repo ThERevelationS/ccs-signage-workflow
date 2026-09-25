@@ -48,9 +48,11 @@ export default function OrderForm() {
         try {
           const me = await base44.auth.me();
           if (me?.order_form_filter) {
-            // The legacy "all" preference maps to the now-default split view;
-            // preserve any other filter the user explicitly saved.
-            setFilterStatus(me.order_form_filter === "all" ? "all_with_received" : me.order_form_filter);
+            // Migrate the former default (not_received) and legacy all view
+            // to the new split default. A new open_only value preserves future
+            // explicit Not Received Only selections.
+            setFilterStatus(["all", "not_received"].includes(me.order_form_filter)
+              ? "all_with_received" : me.order_form_filter); 
           }
         } catch (e) {
           // User might not have this field yet
@@ -124,7 +126,7 @@ export default function OrderForm() {
               triggerClassName="w-44"
             >
               <SelectItem value="all_with_received">All Orders + History</SelectItem>
-              <SelectItem value="not_received">Not Received Only</SelectItem>
+              <SelectItem value="open_only">Not Received Only</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="ordered">Ordered</SelectItem>
               <SelectItem value="received">Received</SelectItem>
