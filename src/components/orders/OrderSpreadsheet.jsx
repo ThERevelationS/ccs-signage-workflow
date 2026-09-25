@@ -1419,11 +1419,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 <Popover open={openDatePopover === `received-${order.id}`} onOpenChange={(open) => setOpenDatePopover(open ? `received-${order.id}` : null)}>
                   <PopoverTrigger asChild disabled={!isRegistered}>
                     <button className="h-7 w-full text-xs text-left px-1 hover:bg-gray-100 rounded flex items-center">
-                      {safeFormatDate(order.date_received, "MM/dd/yy")}
+                      {order.receipt_option || safeFormatDate(order.date_received, "MM/dd/yy")}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    {order.date_received && (
+                    {(order.date_received || order.receipt_option) && (
                       <div className="p-2 border-b">
                         <Button
                           size="sm"
@@ -1438,6 +1438,43 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         </Button>
                       </div>
                     )}
+                    <div className="max-w-[310px] space-y-2 border-b p-3">
+                      <p className="text-xs font-semibold text-gray-700">Choose an option or a date</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {receiptOptions.map((option) => (
+                          <Button key={option} type="button" size="sm"
+                            variant={order.receipt_option === option ? 'default' : 'outline'} disabled={isSaving}
+                            onClick={async () => {
+                              try {
+                                setSaveError('');
+                                await persistImmediateOrderFields(order.id, {
+                                  date_received: '', receipt_option: option,
+                                  status: option.toLowerCase() === 'in stock' ? 'received' : (order.date_ordered ? 'ordered' : 'pending'),
+                                }, 'Order received option');
+                                setOpenDatePopover(null);
+                              } catch (error) {
+                                setSaveError(error?.message || 'The receipt option could not be saved. Reload before retrying.');
+                              }
+                            }}>{option}</Button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input value={newReceiptOption} maxLength={120} placeholder="Add another option"
+                          aria-label="New receipt option" className="h-9 text-xs"
+                          onChange={(event) => setNewReceiptOption(event.target.value)} />
+                        <Button type="button" size="sm" variant="outline"
+                          disabled={!newReceiptOption.trim() || receiptOptions.some(option => option.toLowerCase() === newReceiptOption.trim().toLowerCase())}
+                          onClick={() => {
+                            const option = newReceiptOption.trim();
+                            if (!option || receiptOptions.some(existing => existing.toLowerCase() === option.toLowerCase())) return;
+                            const next = [...receiptOptions, option];
+                            setReceiptOptions(next);
+                            localStorage.setItem('orderReceiptOptions', JSON.stringify(next));
+                            setNewReceiptOption('');
+                          }}>Add</Button>
+                      </div>
+                      <p className="text-xs text-gray-500">In Stock counts as received. Other options stay open until dated.</p>
+                    </div>
                     <Calendar
                               mode="single"
                               selected={parseLocalDate(order.date_received)}
@@ -1466,7 +1503,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_received: dateStr, status: "received" },
+                                      { date_received: dateStr, receipt_option: '', status: "received" },
                                       "Order date received"
                                     );
                                   } catch (error) {
@@ -1478,7 +1515,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_received: "" },
+                                      { date_received: "", receipt_option: '', status: order.date_ordered ? 'ordered' : 'pending' },
                                       "Order date received clear"
                                     );
                                   } catch (error) {
