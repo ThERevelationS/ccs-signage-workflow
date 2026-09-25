@@ -10,7 +10,7 @@ import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContact
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceivedState.mjs';
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
-import { auditOrderDateParity } from '../../shared/smartsheetOrderDateTranslation.mjs';
+import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import {
   buildCells,
@@ -401,10 +401,13 @@ async function pullDataset(
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
-      // A verified nonempty text receipt explicitly replaces a stale date.
-      if (dataset === 'orders' && key === 'date_received' && val === '' && rawFields.receipt_option) {
-        fieldValues.date_received = '';
-        continue;
+      // A verified nonempty text option explicitly replaces a stale paired date.
+      if (dataset === 'orders' && ['date_needed', 'date_ordered', 'date_received'].includes(key) && val === '') {
+        const optionField = orderDateOptionField(key);
+        if (optionField && rawFields[optionField]) {
+          fieldValues[key] = '';
+          continue;
+        }
       }
       const normalized = normalizePullValue(key, val);
       if (normalized !== undefined) fieldValues[key] = normalized;
@@ -765,8 +768,12 @@ async function pushDataset(
     // Until the configured Date Received column type is independently verified,
     // do not send null over a text receipt choice (In Stock or a custom value).
     // Order pull can preserve that text; Order push must fail closed for it.
-    if (dataset === 'orders' && record.receipt_option && !record.date_received) {
-      errors.push(`${record.id}: Text received option requires verified Smartsheet column type before push. No row was written.`);
+    if (dataset === 'orders' && (
+      (record.date_needed_option && !record.date_needed) ||
+      (record.date_ordered_option && !record.date_ordered) ||
+      (record.receipt_option && !record.date_received)
+    )) {
+      errors.push(`${record.id}: Text date option requires verified Smartsheet column type before push. No row was written.`);
       continue;
     }
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
