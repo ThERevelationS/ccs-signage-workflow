@@ -17,6 +17,7 @@ import {
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
   salesPushSnapshotNeedsReview,
+  classifySalesEstInvPreview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -774,7 +775,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'audit_order_requestor_emails', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'audit_order_requestor_emails', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
       });
     }
