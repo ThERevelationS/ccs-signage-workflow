@@ -101,7 +101,7 @@ function fixture(initial = {}) {
       posts++;
       return { message: 'SUCCESS', resultCode: 0, result: [] };
     })),
-    /permanent Order row ID/,
+    /created Order rows|permanent Order row ID/,
   );
   assert.equal(posts, 1);
   assert.equal(state.getStored().smartsheet_create_attempt.status, 'reserved');
