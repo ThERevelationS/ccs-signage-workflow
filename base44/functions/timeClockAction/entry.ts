@@ -2154,6 +2154,7 @@ Deno.serve(async (req) => {
           if (!Array.isArray(latestCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
           const newlyPending = latestCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
           if (newlyPending.length) {
+            if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'A late correction blocked finalization, but staged entry locks could not be safely cleared. Retry the same request.' }, { status: 409 });
             await auditEntity.updateMany(
               { id: intent.id, outcome: 'pending', request_id: requestId },
               { $set: {
@@ -2219,6 +2220,13 @@ Deno.serve(async (req) => {
               error: 'One or more shift approvals changed while the pay period was being finalized. Newly acquired locks were rolled back; reload and review the period again.',
             }, { status: 409 });
           }
+        }
+        const confirmedLocks = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(confirmedLocks)) throw new Error('Final pay-period lock lookup did not return a record list.');
+        if (confirmedLocks.length !== completedEntries.length || confirmedLocks.some((entry: any) =>
+          !completedIds.has(entry.id) || String(entry.pay_period_locked_at || '') !== lockTimestamp ||
+          asEmail(entry.pay_period_locked_by) !== actorEmail || entry.status !== 'clocked_out' || entry.approval_status !== 'approved')) {
+          return Response.json({ success: false, retry_same_request: true, error: 'Final pay-period lock ownership or approvals changed. Retry this finalization for investigation before committing.' }, { status: 409 });
         }
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const summary = {
