@@ -235,6 +235,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     }
   };
 
+  const createDropdownCondition = async () => {
+    const name = newDropdownName.trim();
+    if (!name) return;
+    try {
+      await saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name, is_completed: false, order: dropdownConditions.length }]);
+      setNewDropdownName("");
+    } catch (error) {
+      console.error("Error creating condition:", error);
+    }
+  };
+
   const saveSubTemplateEntry = async (subTemplateId, nextEntry, { remove = false, label = 'SIP Sub-Template Items' } = {}) => {
     const currentSetting = settingRecords.subTemplateItems;
     if (!currentSetting?.id) {
@@ -2129,7 +2140,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     placeholder="New condition..."
                     className="h-11 min-w-0 flex-1 text-sm lg:h-8"
                     aria-label="New condition name"
-                    onKeyDown={(e) => { if (e.key === 'Enter' && newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}
+                    onKeyDown={(e) => e.key === 'Enter' && createDropdownCondition()}
                   />
                   <Button
                     type="button"
@@ -2137,7 +2148,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                     disabled={!newDropdownName.trim()}
                     className="h-11 shrink-0 px-3 touch-manipulation focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 lg:h-8"
                     aria-label="Add condition"
-                    onClick={() => { if (newDropdownName.trim()) { saveDropdownConditions([...dropdownConditions, { id: Date.now().toString(), name: newDropdownName.trim(), is_completed: false, order: dropdownConditions.length }]); setNewDropdownName(""); } }}
+                    onClick={createDropdownCondition}
                   >
                     <Plus className="w-4 h-4 mr-1" aria-hidden="true" />Add
                   </Button>
