@@ -8,6 +8,16 @@ const id = (value) => {
 };
 const label = (value, max = 180) => String(value ?? '').trim().slice(0, max);
 
+// Row-count and version checks alone cannot prove which sheet supplied the evidence.
+// Reject an absent or mismatched permanent sheet identity on every response page.
+export function verifyOrderCreateAuditSheetIdentity(body, configuredSheetId) {
+  const expectedId = id(configuredSheetId);
+  if (!expectedId || id(body?.id) !== expectedId) {
+    throw new Error('Smartsheet did not confirm the configured permanent Order Request sheet ID.');
+  }
+  return expectedId;
+}
+
 export function auditOrderCreateAttempts(orders, sheetRows, configuredSheetId) {
   const sheetId = id(configuredSheetId);
   if (!sheetId || !Array.isArray(orders) || !Array.isArray(sheetRows)) {
