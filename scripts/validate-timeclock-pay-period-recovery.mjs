@@ -297,6 +297,115 @@ test('a losing concurrent reopen leaves no pending audit and does not unlock', a
   assert.equal(h.entryLocks().length, 1);
 });
 
+test('finalization gate wins and a concurrent Clock In cannot create a shift', async () => {
+  const h = setup();
+  let releaseGate;
+  let reachedGate;
+  const gateHeld = new Promise((resolve) => { reachedGate = resolve; });
+  const continueFinalization = new Promise((resolve) => { releaseGate = resolve; });
+  let paused = false;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (!paused && entity === 'TimeClockEmployeeState' && row.user_email === employee.email &&
+        update.$set?.correction_create_time_entry_id === 'pay_period:synthetic-period') {
+      paused = true;
+      reachedGate();
+      await continueFinalization;
+    }
+  });
+
+  const finalizing = h.action('finalize', 'gate-wins-finalize-001');
+  await gateHeld;
+  const clockIn = await h.clockIn('blocked-clock-in-001');
+  assert.equal(clockIn.status, 409, JSON.stringify(clockIn.body));
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 0);
+  releaseGate();
+  const finalized = await finalizing;
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+});
+
+test('Clock In gate wins and finalization retries into an active-shift block', async () => {
+  const h = setup();
+  let releaseGate;
+  let reachedGate;
+  const gateHeld = new Promise((resolve) => { reachedGate = resolve; });
+  const continueClockIn = new Promise((resolve) => { releaseGate = resolve; });
+  let paused = false;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (!paused && entity === 'TimeClockEmployeeState' && row.user_email === employee.email &&
+        String(update.$set?.correction_create_time_entry_id || '').startsWith('clock_in:')) {
+      paused = true;
+      reachedGate();
+      await continueClockIn;
+    }
+  });
+
+  const clockingIn = h.clockIn('gate-wins-clockin-001');
+  await gateHeld;
+  const firstFinalize = await h.action('finalize', 'clockin-wins-finalize-001');
+  assert.equal(firstFinalize.status, 409, JSON.stringify(firstFinalize.body));
+  releaseGate();
+  const clockedIn = await clockingIn;
+  assert.equal(clockedIn.status, 200, JSON.stringify(clockedIn.body));
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 1);
+
+  h.setAfterRowUpdate(null);
+  const retry = await h.action('finalize', 'clockin-wins-finalize-001');
+  assert.equal(retry.status, 409, JSON.stringify(retry.body));
+  assert.equal(h.audit('clockin-wins-finalize-001')[0].outcome, 'blocked');
+});
+
+test('post-gate resnapshot catches a newly completed unapproved shift', async () => {
+  const h = setup();
+  let injected = false;
+  h.setAfterRowUpdate((entity, _query, update, row) => {
+    if (!injected && entity === 'TimeClockEmployeeState' && row.user_email === administrator.email &&
+        update.$set?.correction_create_time_entry_id === 'pay_period:synthetic-period') {
+      injected = true;
+      h.rows.TimeEntry.push({
+        id: 'arrived-during-finalization', user_email: employee.email, status: 'clocked_out',
+        clock_in: '2026-09-21T14:00:00.000Z', clock_out: '2026-09-21T14:05:00.000Z',
+        approval_status: 'unreviewed', total_hours: 0.08,
+        updated_date: '2026-09-21T14:05:01.000Z',
+      });
+    }
+  });
+  const result = await h.action('finalize', 'resnapshot-finalize-001');
+  assert.equal(result.status, 409, JSON.stringify(result.body));
+  assert.equal(h.period().status, 'review');
+  assert.equal(h.entryLocks().length, 0);
+  assert.equal(h.audit('resnapshot-finalize-001')[0].outcome, 'blocked');
+  assert.equal(h.audit('resnapshot-finalize-001')[0].details.blocked_reason, 'readiness_changed_after_employee_gates');
+});
+
+test('completed Clock In recovers a stranded employee mutation gate', async () => {
+  const h = setup();
+  const requestId = 'stranded-clockin-001';
+  const encoded = new TextEncoder().encode(JSON.stringify({ action: 'clock_in', user_email: employee.email }));
+  const digest = await webcrypto.subtle.digest('SHA-256', encoded);
+  const payloadHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  const entry = {
+    id: 'stranded-clockin-entry', user_email: employee.email, user_name: employee.full_name,
+    status: 'clocked_in', clock_in: '2026-09-21T15:00:00.000Z',
+    clock_in_request_id: requestId, clock_source: 'server',
+    updated_date: '2026-09-21T15:00:01.000Z',
+  };
+  h.rows.TimeEntry.push(entry);
+  Object.assign(state, {
+    status: 'clocked_in', active_entry_id: entry.id, last_request_id: requestId,
+    correction_create_status: 'creating', correction_create_request_id: requestId,
+    correction_create_time_entry_id: `clock_in:${employee.email}`,
+    correction_create_payload_hash: payloadHash, correction_create_claim_token: 'stranded-token',
+    correction_create_started_at: '2026-09-21T15:00:00.000Z',
+  });
+
+  const retry = await h.clockIn(requestId);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.status, 'already_clocked_in');
+  assert.equal(state.correction_create_status, 'idle');
+  assert.equal(state.correction_create_request_id, '');
+});
+
 for (const [name, fn] of tests) {
   try { await fn(); console.log('PASS ' + name); }
   catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
