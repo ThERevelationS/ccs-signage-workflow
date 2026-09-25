@@ -48,5 +48,7 @@ assert.match(spreadsheet, /localStorage\.setItem\('orderReceiptOptions'/);
 assert.match(spreadsheet, /receipt_option: option/);
 assert.match(spreadsheet, /date_received: dateStr, receipt_option: ''/);
 assert.match(backend, /dataset === 'orders'\) \{\s*Object\.assign\(fieldValues, orderStatusFromPulledDates/);
-assert.match(backend, /dataset === 'orders' && record\.receipt_option && !record\.date_received/);
+assert.match(backend, /record\.date_needed_option && !record\.date_needed/);
+assert.match(backend, /record\.date_ordered_option && !record\.date_ordered/);
+assert.match(backend, /record\.receipt_option && !record\.date_received/);
 console.log('PASS main Order Form, mobile display and Order-only backend pull are wired consistently');
