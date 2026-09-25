@@ -1,14 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { appFunctionUrl } from '../../shared/bouncie.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
     if (user.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
 
     const clientId = (secrets.get('BOUNCIE_CLIENT_ID') || '').trim();
@@ -51,6 +52,8 @@ export default async function(req) {
 
     return Response.json({ authUrl: authUrl.toString(), redirectUri });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const status = Number(error?.status || 500);
+    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    return Response.json({ error: safeStatus === 401 ? 'Authentication required' : error.message }, { status: safeStatus });
   }
 }
