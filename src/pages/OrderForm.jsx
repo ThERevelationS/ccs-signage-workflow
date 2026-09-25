@@ -23,8 +23,8 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 export default function OrderForm() {
   const { currentUser, sessionToken, isRegistered, promptForEmail } = useAuth();
   
-  // Lead with outstanding Order Request items; preserve historical records.
-  const [filterStatus, setFilterStatus] = useState("not_received");
+  // Show outstanding Orders and a visibly separate received history by default.
+  const [filterStatus, setFilterStatus] = useState("all_with_received");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
   const [canImportExport, setCanImportExport] = useState(false);
@@ -48,9 +48,9 @@ export default function OrderForm() {
         try {
           const me = await base44.auth.me();
           if (me?.order_form_filter) {
-            // Legacy "all" included historical received rows. The explicit
-            // all-with-history selection now uses its own persisted value.
-            setFilterStatus(me.order_form_filter === "all" ? "not_received" : me.order_form_filter);
+            // The legacy "all" preference maps to the now-default split view;
+            // preserve any other filter the user explicitly saved.
+            setFilterStatus(me.order_form_filter === "all" ? "all_with_received" : me.order_form_filter);
           }
         } catch (e) {
           // User might not have this field yet
@@ -123,8 +123,8 @@ export default function OrderForm() {
               title="Show orders"
               triggerClassName="w-44"
             >
-              <SelectItem value="not_received">Not Received</SelectItem>
               <SelectItem value="all_with_received">All Orders + History</SelectItem>
+              <SelectItem value="not_received">Not Received Only</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="ordered">Ordered</SelectItem>
               <SelectItem value="received">Received</SelectItem>
