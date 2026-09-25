@@ -58,6 +58,22 @@ try {
   assert.equal(Object.hasOwn(salesUnchanged, 'client_name'), false);
   console.log('PASS Order raw text fallback, ISO date priority and no email-as-name; Sales translation unchanged');
 
+  const textReceived = parseRowToFields({
+    id: 'stock-row', cells: [{ column_id: '323', value: 'In Stock', display_value: 'In Stock' }],
+  }, { date_received: '323' }, 'orders');
+  assert.equal(textReceived.receipt_option, 'In Stock');
+  assert.equal(Object.hasOwn(textReceived, 'date_received'), false);
+  const customReceived = parseRowToFields({
+    id: 'custom-row', cells: [{ column_id: '323', value: 'Backordered', display_value: '' }],
+  }, { date_received: '323' }, 'orders');
+  assert.equal(customReceived.receipt_option, 'Backordered');
+  const datedReceived = parseRowToFields({
+    id: 'date-row', cells: [{ column_id: '323', value: '2026-09-25', display_value: '09/25/26' }],
+  }, { date_received: '323' }, 'orders');
+  assert.equal(datedReceived.date_received, '2026-09-25');
+  assert.equal(datedReceived.receipt_option, '');
+  console.log('PASS mixed Smartsheet Date Received cells preserve In Stock/custom text separately from ISO dates');
+
   const nameOnly = parseRowToFields({
     id: '1', cells: [{ column_id: '123', value: 'Casey Example', display_value: 'Casey Example' }],
   }, bindings, 'orders');
