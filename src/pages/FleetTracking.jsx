@@ -477,6 +477,7 @@ export default function FleetTracking() {
               selectedVin={selectedVin}
               selectedTrip={selectedTrip}
               onSelectVehicle={selectTrackingVehicle}
+              sessionToken={sessionToken}
             />
           )}
 
