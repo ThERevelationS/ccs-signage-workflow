@@ -188,9 +188,12 @@ export function parseRowToFields(
       // For text fields, prefer `display_value` — Smartsheet CONTACT columns store
       // an object in `value` and the readable name in `display_value`.
       const preferValue = field.type === 'date' || field.type === 'number';
+      const display = cell.display_value != null ? cell.display_value : cell.displayValue;
       const raw = preferValue
-        ? (cell.value != null ? cell.value : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : null)))
-        : (cell.display_value != null ? cell.display_value : (cell.displayValue != null ? cell.displayValue : cell.value));
+        ? (cell.value != null ? cell.value : (display != null ? display : null))
+        : (dataset === 'orders' && (display === '' || display == null)
+          ? cell.value // Smartsheet sometimes omits displayValue even for populated text cells.
+          : (display != null ? display : cell.value));
       if (raw === null || raw === undefined || raw === "") continue;
       if (field.type === "number") {
         const num = Number(raw);
