@@ -83,7 +83,7 @@ export default function FleetTracking() {
     } catch (e) {
       setStatus({ connected: false, error: e.message });
     }
-  }, []);
+  }, [sessionToken]);
 
   const loadVehicles = useCallback(async () => {
     try {
@@ -99,7 +99,7 @@ export default function FleetTracking() {
     } finally {
       setVehiclesLoading(false);
     }
-  }, []);
+  }, [sessionToken]);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -107,9 +107,9 @@ export default function FleetTracking() {
       if (data?.error) throw new Error(data.error);
       setNotifications(data?.notifications || []);
     } catch {
-      // entity may not be readable yet
+      // Keep the map usable if notification history is temporarily unavailable.
     }
-  }, []);
+  }, [sessionToken]);
 
   const syncNotifications = useCallback(async () => {
     try {
@@ -140,7 +140,7 @@ export default function FleetTracking() {
     } finally {
       setTripsLoading(false);
     }
-  }, []);
+  }, [sessionToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -172,7 +172,7 @@ export default function FleetTracking() {
         }
       }
     })();
-  }, []);
+  }, [currentUser?.role, loadNotifications, loadStatus, loadVehicles, syncNotifications]);
 
   // Refresh the visible map/notification feed every minute. CCS-local alert evaluation
   // runs independently in the scheduled Fleet Bouncie Alert Sync workflow.
