@@ -37,18 +37,20 @@ const render = (orders, split, openCount) =>
   }));
 const countCards = (html) => (html.match(/clay-card p-4/g) || []).length;
 const mixed = render([...open, ...received], true, 2);
-assert.match(mixed, /All Orders — Not Received/);
-assert.match(mixed, /History — Received/);
-assert.match(mixed, /Show received history \(120\)/);
+assert.match(mixed, /aria-label="Open orders"/);
+assert.match(mixed, /aria-label="Received order history"/);
+assert.match(mixed, /Received history, 120 orders\. Expand/);
+assert.doesNotMatch(mixed, /All Orders — Not Received|History — Received/);
 assert.equal(countCards(mixed), 2, 'Collapsed History must not render 120 hidden cards');
 assert.doesNotMatch(mixed, /Received 119/);
 console.log('PASS mobile default displays separate active/history sections and does not render hidden historical cards');
 
 const onlyHistory = render(received, true, 0);
-assert.match(onlyHistory, /No outstanding Orders match this view/);
+assert.match(onlyHistory, /No open orders/);
 assert.equal(countCards(onlyHistory), 0);
 const onlyOpen = render(open, true, 2);
-assert.match(onlyOpen, /No received Orders match this view/);
+assert.match(onlyOpen, /aria-label="Received order history"/);
+assert.doesNotMatch(onlyOpen, /aria-controls="order-history-mobile-items"/);
 assert.equal(countCards(onlyOpen), 2);
 console.log('PASS zero-open and zero-history mobile views have meaningful empty states');
 
