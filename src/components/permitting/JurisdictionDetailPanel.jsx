@@ -45,6 +45,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const documentHeaderRefs = useRef(new Map());
   const pendingDocNavigationRef = useRef(null);
   const jurisdictionHeadingRef = useRef(null);
+  const jurisdictionSearchInputRef = useRef(null);
+  const firstJurisdictionSearchResultRef = useRef(null);
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
@@ -754,24 +756,50 @@ Answer the question based on the documents and information available. Be specifi
               {docSearching && <Loader2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-500" />}
               {!docSearching && <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />}
               <Input
+                ref={jurisdictionSearchInputRef}
                 type="text"
                 placeholder="Search City/Locality/Info..."
                 aria-label="Search jurisdiction documents and information"
+                aria-describedby={`jurisdiction-search-instructions-${jurisdiction.id}`}
                 value={docSearchTerm}
                 onChange={(e) => searchDocuments(e.target.value)}
+                onKeyDown={(event) => {
+                  if (event.nativeEvent?.isComposing) return;
+                  if (event.key === "ArrowDown" && searchResults.length > 0) {
+                    event.preventDefault();
+                    firstJurisdictionSearchResultRef.current?.focus();
+                  } else if (event.key === "Escape" && docSearchTerm) {
+                    event.preventDefault();
+                    searchDocuments("");
+                  }
+                }}
                 className="min-h-11 pl-9 text-sm"
               />
             </div>
-            {docSearching && <p className="text-xs text-gray-500 mt-1">Searching...</p>}
-            {!docSearching && docSearchTerm && searchResults.length === 0 && (
-              <p className="text-xs text-gray-400 mt-1">No matches found</p>
-            )}
+            <p id={`jurisdiction-search-instructions-${jurisdiction.id}`} className="sr-only">
+              Press Down Arrow to browse search results. Press Escape to return to and clear the search.
+            </p>
+            <p role="status" aria-live="polite" aria-atomic="true" className="mt-1 text-xs text-gray-600">
+              {docSearching ? "Searching..." : docSearchTerm.trim()
+                ? searchResults.length === 0
+                  ? "No matches found"
+                  : `${searchResults.length} result${searchResults.length === 1 ? "" : "s"} found`
+                : ""}
+            </p>
             {searchResults.length > 0 && (
-              <div className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
-                {searchResults.map(result => (
+              <div role="group" aria-label="Jurisdiction search results" className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
+                {searchResults.map((result, index) => (
                   <button
                     type="button"
+                    ref={index === 0 ? firstJurisdictionSearchResultRef : null}
                     key={`${result.type}-${result.id}`}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Escape") return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      jurisdictionSearchInputRef.current?.focus();
+                      searchDocuments("");
+                    }}
                     onClick={() => {
                       if (result.type === 'document') {
                         pendingDocNavigationRef.current = result.id;
