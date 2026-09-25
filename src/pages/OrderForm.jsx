@@ -22,7 +22,8 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 export default function OrderForm() {
   const { currentUser, sessionToken, isRegistered, promptForEmail } = useAuth();
   
-  const [filterStatus, setFilterStatus] = useState("all");
+  // Lead with outstanding Order Request items; preserve historical records.
+  const [filterStatus, setFilterStatus] = useState("not_received");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
   const [canImportExport, setCanImportExport] = useState(false);
@@ -45,7 +46,9 @@ export default function OrderForm() {
         try {
           const me = await base44.auth.me();
           if (me?.order_form_filter) {
-            setFilterStatus(me.order_form_filter);
+            // Legacy "all" included historical received rows. The explicit
+            // all-with-history selection now uses its own persisted value.
+            setFilterStatus(me.order_form_filter === "all" ? "not_received" : me.order_form_filter);
           }
         } catch (e) {
           // User might not have this field yet
@@ -102,7 +105,7 @@ export default function OrderForm() {
         </div>
 
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
@@ -115,10 +118,11 @@ export default function OrderForm() {
             <MobileSelect
               value={filterStatus}
               onValueChange={handleFilterChange}
-              title="Filter by status"
-              triggerClassName="w-36"
+              title="Show orders"
+              triggerClassName="w-44"
             >
-              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="not_received">Not Received</SelectItem>
+              <SelectItem value="all_with_received">All Orders + History</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="ordered">Ordered</SelectItem>
               <SelectItem value="received">Received</SelectItem>
