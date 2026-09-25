@@ -465,15 +465,13 @@ async function pullDataset(
   //    records) so individual calls stay within rate limits.
   const snapshotUpdates: any[] = [];
   const orderDateVerifications: any[] = [];
-  const bulkSucceededOrderIds = new Set<string>();
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     const batch = toUpdate.slice(i, i + bulkBatchSize);
-    const payload = batch.map(({ id, _existing, ...fields }: any) => ({
-      id, ...fields,
-      // A verified Order timestamp is recorded only after date read-back.
-      ...(dataset === 'orders' ? { smartsheet_last_synced_at: _existing?.smartsheet_last_synced_at || null } : {}),
-    }));
+    const payload = batch.map(({ id, _existing, ...fields }: any) => {
+      const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
+      return { id, ...(dataset === 'orders' ? withoutUnverifiedTimestamp : fields) };
+    });
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
       updatedCount += payload.length;
@@ -483,8 +481,11 @@ async function pullDataset(
           const merged = { ..._existing, ...fields };
           const snapshot = buildSnapshot(merged, bindings, dataset);
           if (dataset === 'orders') {
-            bulkSucceededOrderIds.add(id);
-            orderDateVerifications.push({ id, previous: _existing, changes: changedPulledOrderDates(_existing, fields), snapshot });
+            const changes = changedPulledOrderDates(_existing, fields);
+            if (Object.keys(changes).length) {
+              orderDateVerifications.push({ id, previous: _existing, changes, snapshot });
+            } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot,
+              smartsheet_last_synced_at: new Date().toISOString() });
           } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
         }
       }
@@ -545,7 +546,6 @@ async function pullDataset(
   // the permanent Order again, then and only then record sync evidence.
   if (dataset === 'orders') {
     for (const item of orderDateVerifications) {
-      if (!bulkSucceededOrderIds.has(item.id)) continue;
       try {
         await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
         snapshotUpdates.push({ id: item.id, smartsheet_sync_snapshot: item.snapshot,
