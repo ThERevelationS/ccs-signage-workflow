@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { orderHistoryLayout } from '../src/components/orders/orderHistoryLayout.js';
 import {
   effectiveOrderStatus, orderMatchesReceivedFilter, orderStatusFromPulledDates,
 } from '../base44/shared/smartsheetOrderReceivedState.mjs';
@@ -21,7 +22,7 @@ assert.equal(orderMatchesReceivedFilter({ receipt_option: 'In Stock' }, 'not_rec
 assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'not_received'), true);
 assert.deepEqual(orderStatusFromPulledDates({ receipt_option: 'In Stock' }, null, false),
   { receipt_option: 'In Stock', status: 'received' });
-console.log('PASS open-only default and accessible history use Date Received, not stale Pending status');
+console.log('PASS receipt dates and In Stock enter History; Backordered and stale status remain open');
 
 assert.deepEqual(orderStatusFromPulledDates({ date_received: '2026-09-25' }, { status: 'pending' }, false),
   { date_received: '2026-09-25', status: 'received' });
@@ -33,6 +34,34 @@ assert.deepEqual(orderStatusFromPulledDates({}, { date_received: '2026-09-25', s
 assert.deepEqual(orderStatusFromPulledDates({ status: 'cancelled' }, null, true), { status: 'cancelled' });
 console.log('PASS Order pull derives receipt state but never clears existing dates, cancelled Orders or explicit bound status');
 
+// The virtual History header must not shift real Order IDs, indexes or exports.
+const splitOrders = [
+  { id: 'open', status: 'pending' },
+  { id: 'backordered', status: 'received', receipt_option: 'Backordered' },
+  { id: 'in-stock', receipt_option: ' in stock ' },
+  { id: 'dated', date_received: '2026-09-24' },
+];
+const split = orderHistoryLayout(splitOrders, 'all_with_received');
+assert.equal(split.split, true);
+assert.deepEqual([split.openCount, split.receivedCount, split.historyVirtualIndex, split.virtualCount], [2, 2, 2, 5]);
+assert.deepEqual([0, 1, 3, 4].map(i => splitOrders[split.orderIndexAtVirtual(i)].id),
+  ['open', 'backordered', 'in-stock', 'dated']);
+assert.equal(orderMatchesReceivedFilter(splitOrders[1], 'open_only'), true);
+assert.equal(orderMatchesReceivedFilter(splitOrders[2], 'open_only'), false);
+assert.equal(orderMatchesReceivedFilter(splitOrders[1], 'received'), false);
+assert.equal(orderMatchesReceivedFilter(splitOrders[2], 'received'), true);
+const openOnly = orderHistoryLayout(splitOrders.slice(0, 2), 'all_with_received');
+assert.deepEqual([openOnly.openCount, openOnly.receivedCount, openOnly.historyVirtualIndex, openOnly.virtualCount],
+  [2, 0, null, 2]);
+const historyOnly = orderHistoryLayout(splitOrders.slice(2), 'all_with_received');
+assert.deepEqual([historyOnly.openCount, historyOnly.receivedCount, historyOnly.historyVirtualIndex, historyOnly.virtualCount],
+  [0, 2, 0, 3]);
+const selectedOpen = orderHistoryLayout(splitOrders.slice(0, 2), 'open_only');
+assert.deepEqual([selectedOpen.split, selectedOpen.historyVirtualIndex, selectedOpen.virtualCount], [false, null, 2]);
+const empty = orderHistoryLayout([], 'all_with_received');
+assert.deepEqual([empty.openCount, empty.receivedCount, empty.historyVirtualIndex, empty.virtualCount], [0, 0, null, 0]);
+console.log('PASS default split layout, virtual History divider and zero/open/history-only cases');
+
 const ui = readFileSync(new URL('../src/pages/OrderForm.jsx', import.meta.url), 'utf8');
 const spreadsheet = readFileSync(new URL('../src/components/orders/OrderSpreadsheet.jsx', import.meta.url), 'utf8');
 const mobile = readFileSync(new URL('../src/components/orders/OrderMobileCards.jsx', import.meta.url), 'utf8');
@@ -42,6 +71,12 @@ assert.match(ui, /value="open_only"/);
 assert.match(ui, /value="all_with_received"/);
 assert.match(ui, /\["all", "not_received"\]\.includes\(me\.order_form_filter\)/);
 assert.match(spreadsheet, /orderHistoryLayout\(filteredOrders, filterStatus\)/);
+assert.match(spreadsheet, /key="received-history-heading"/);
+assert.match(spreadsheet, /historyLayout\.orderIndexAtVirtual\(virtualRow\.index\)/);
+assert.match(spreadsheet, /historyLayout\.virtualCount/);
+assert.match(spreadsheet, /Jump to History/);
+assert.match(mobile, /History — Received/);
+assert.match(mobile, /All Orders — Not Received/);
 assert.match(mobile, /separateHistory/);
 assert.match(spreadsheet, /orderMatchesReceivedFilter\(order, filterStatus\)/);
 assert.match(spreadsheet, /effectiveOrderStatus\(a\)/);
