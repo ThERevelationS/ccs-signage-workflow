@@ -6,6 +6,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
+import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -326,6 +327,19 @@ async function pullDataset(
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
 
+  // A prior Order POST may have succeeded without a confirmed Base44 row link.
+  // Do not create duplicate Base44 Orders from orphan Smartsheet rows while
+  // any uncertain create attempt for this sheet awaits manual reconciliation.
+  if (dataset === 'orders') {
+    const unresolved = existingRecords.filter(orderSmartsheetCreateNeedsReview);
+    if (unresolved.length) return {
+      dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
+      reason: `${unresolved.length} Order Smartsheet create attempts require review before pull. No Orders were changed.`,
+      create_attempts_need_review: unresolved.length,
+      review_order_ids: unresolved.slice(0, 10).map((record: any) => record.id),
+    };
+  }
+
   // Order Form only: a duplicated stable Smartsheet row link is ambiguous.
   // Fail closed instead of picking one Order arbitrarily or creating another.
   const orderRowLinkCounts: Record<string, number> = {};
@@ -605,6 +619,16 @@ async function pushDataset(
     });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
+
+  if (dataset === 'orders') {
+    const unresolved = records.filter(orderSmartsheetCreateNeedsReview);
+    if (unresolved.length) return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${unresolved.length} Order Smartsheet create attempts require review before retry. No rows were written.`,
+      create_attempts_need_review: unresolved.length,
+      review_order_ids: unresolved.slice(0, 10).map((record: any) => record.id),
+    };
+  }
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
   if (records.length > massLimit) {
