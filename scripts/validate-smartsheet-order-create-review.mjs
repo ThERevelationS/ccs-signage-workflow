@@ -35,7 +35,7 @@ for (const id of ['timeout', 'existing', 'conflict', 'other-sheet', 'duplicate',
 }
 assert.match(reasons.timeout, /cannot be ruled out/i);
 assert.match(reasons.conflict, /different permanent row IDs/i);
-assert.match(reasons.otherSheet, /does not match/i);
+assert.match(reasons['other-sheet'], /does not match/i);
 assert.match(reasons.duplicate, /multiple active/i);
 assert.match(reasons.deleted, /not fully verified/i);
 assert.equal(result.records_by_category.ambiguous.find(r => r.base44_record_id === 'existing').remote_row_present, true);
