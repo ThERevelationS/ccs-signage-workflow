@@ -46,6 +46,17 @@ export function documentSearchContent(doc, searchTerm) {
   return extractedText || summary;
 }
 
+export function documentSearchContentSource(doc, searchTerm) {
+  const extractedText = typeof doc?.extracted_text === "string" ? doc.extracted_text : "";
+  const summary = typeof doc?.ai_summary === "string" ? doc.ai_summary : "";
+  const term = typeof searchTerm === "string" ? searchTerm.toLowerCase() : "";
+  if (term && extractedText.toLowerCase().includes(term)) return "extracted_text";
+  if (term && summary.toLowerCase().includes(term)) return "ai_summary";
+  if (extractedText) return "extracted_text";
+  if (summary) return "ai_summary";
+  return null;
+}
+
 // Retain match offsets rather than a potentially large array of copied excerpts.
 export function findDocumentMatchPositions(content, searchTerm) {
   if (typeof content !== "string" || typeof searchTerm !== "string" || !searchTerm.trim()) return [];
