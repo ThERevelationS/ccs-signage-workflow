@@ -938,7 +938,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
             </button>
           )}
         </div>
-      )
+      )}
 
       {/* Spreadsheet Table */}
       <div ref={tableContainerRef} className="overflow-y-auto overflow-x-hidden" style={{ height: 'calc(100vh - 300px)' }}>
