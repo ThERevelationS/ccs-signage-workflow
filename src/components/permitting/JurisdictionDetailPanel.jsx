@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
-import { documentSearchSnippet, splitDocumentSearchMatches, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
+import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
@@ -181,7 +181,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setSearchingDocId(docId);
     try {
       const doc = jurisdiction.documents.find(d => d.id === docId);
-      const searchContent = doc.extracted_text || doc.ai_summary || "";
+      const searchContent = documentSearchContent(doc, searchText);
       const searchTerm = searchText.toLowerCase();
       
       const positions = findDocumentMatchPositions(searchContent, searchTerm);
@@ -978,7 +978,7 @@ Answer the question based on the documents and information available. Be specifi
                                 <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">
                                   {splitDocumentSearchMatches(
                                     documentMatchSnippet(
-                                      doc.extracted_text || doc.ai_summary || "",
+                                      documentSearchContent(doc, docSearchResults[doc.id].query),
                                       docSearchResults[doc.id].positions[docSearchResults[doc.id].activeIndex],
                                       docSearchResults[doc.id].query.length
                                     ),
