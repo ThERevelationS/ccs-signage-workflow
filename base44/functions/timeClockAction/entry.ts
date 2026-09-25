@@ -2044,7 +2044,7 @@ Deno.serve(async (req) => {
         const earlierRequest = String(period.last_request_id || '');
         if (earlierRequest) {
           const earlierAudit = await uniqueRow(auditEntity, { action: 'pay_period_status', request_id: earlierRequest }, 'Prior pay-period action');
-          if (earlierAudit?.outcome === 'pending' && String(earlierAudit.details?.pay_period_id || '') === period.id) {
+          if (!earlierAudit || (earlierAudit.outcome === 'pending' && String(earlierAudit.details?.pay_period_id || '') === period.id)) {
             return Response.json({ success: false, error: 'An earlier pay-period action is still being recovered. Retry that exact request before starting another finalization.' }, { status: 409 });
           }
         }
@@ -2083,9 +2083,19 @@ Deno.serve(async (req) => {
           { $set: { last_request_id: requestId } },
         );
         if (!claimedPeriod || claimedPeriod.updated !== 1) {
-          return Response.json({ success: false, retry_same_request: true, error: 'The pay period changed while finalization was being claimed. Reload and retry this request.' }, { status: 409 });
+          const latest = await payPeriodEntity.get(period.id);
+          if (latest.status !== 'review' || String(latest.last_request_id || '') !== requestId) {
+            const blocked = await auditEntity.updateMany(
+              { id: intent.id, outcome: 'pending', request_id: requestId },
+              { $set: { outcome: 'blocked', details: { ...(intent.details || {}), blocked_reason: 'period_claim_lost' } } },
+            );
+            if (!blocked || blocked.updated !== 1) return Response.json({ success: false, retry_same_request: true, error: 'The pay-period claim conflicted and its pending audit could not be resolved. Retry the same request.' }, { status: 409 });
+            return Response.json({ success: false, error: 'Another pay-period action claimed or changed this period. Reload before submitting a new request.' }, { status: 409 });
+          }
+          period = latest;
+        } else {
+          period = await payPeriodEntity.get(period.id);
         }
-        period = await payPeriodEntity.get(period.id);
       }
 
       // Pending audit timestamp is the lock owner; retries reuse it exactly.
