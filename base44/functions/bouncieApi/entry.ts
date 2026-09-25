@@ -1,13 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { callBouncieApi, isAllowedRead, isAllowedAdminWrite } from '../../shared/bouncie.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const body = await req.json().catch(() => ({}));
+    const user = await authenticateSignShopSession(base44, body?.session_token);
     const method = String(body.method || 'GET').toUpperCase();
     const path = body.path;
     const { query, body: reqBody } = body;
@@ -40,6 +39,12 @@ export default async function(req) {
     const data = await callBouncieApi(base44, method, path, { query, body: reqBody });
     return Response.json({ data });
   } catch (error) {
+    if (Number(error?.status) === 401) {
+      return Response.json({ error: 'Authentication required', code: 'auth_required' }, { status: 401 });
+    }
+    if ([409, 503].includes(Number(error?.status))) {
+      return Response.json({ error: error.message, code: 'auth_error' }, { status: Number(error.status) });
+    }
     if (error.message === 'BOUNCIE_NOT_CONNECTED') {
       return Response.json({ error: 'Bouncie is not connected.', code: 'not_connected' }, { status: 400 });
     }
