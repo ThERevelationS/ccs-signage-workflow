@@ -84,7 +84,7 @@ function vehicleLabel(vehicle) {
   return String(vehicle?.nickName || vehicle?.model?.name || vehicle?.model?.make || "Vehicle").trim();
 }
 
-export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelectVehicle }) {
+export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelectVehicle, sessionToken }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -182,7 +182,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
 
   useEffect(() => {
     let cancelled = false;
-    loadGoogleMaps()
+    loadGoogleMaps(sessionToken)
       .then((maps) => {
         if (cancelled || !containerRef.current) return;
         mapRef.current = new maps.Map(containerRef.current, {
@@ -222,7 +222,7 @@ export default function FleetMap({ vehicles, selectedVin, selectedTrip, onSelect
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [sessionToken]);
 
   useEffect(() => {
     if (!mapRef.current) return;
