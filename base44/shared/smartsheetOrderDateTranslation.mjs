@@ -2,6 +2,12 @@
 // while legacy TEXT_NUMBER cells may contain US dates or receipt choices.
 // Never let JavaScript Date.parse silently normalize an impossible date.
 const DATE_FIELDS = ['date_needed', 'date_ordered', 'date_received'];
+const OPTION_FIELD_BY_DATE = {
+  date_needed: 'date_needed_option',
+  date_ordered: 'date_ordered_option',
+  date_received: 'receipt_option',
+};
+export const orderDateOptionField = field => OPTION_FIELD_BY_DATE[field] || '';
 const numericId = value => /^\d+$/.test(String(value ?? '').trim()) ? String(value).trim() : '';
 const pad = value => String(value).padStart(2, '0');
 
@@ -66,7 +72,7 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId) {
   }
   const counts = { matched: 0, unlinked_smartsheet_rows: 0, duplicate_base44_links: 0,
     smartsheet_date_missing_in_base44: 0, different_dates: 0, invalid_date_values: 0,
-    text_receipt_differences: 0, base44_date_missing_in_smartsheet: 0 };
+    text_option_differences: 0, text_receipt_differences: 0, base44_date_missing_in_smartsheet: 0 };
   const byField = Object.fromEntries(DATE_FIELDS.map(field => [field,
     { smartsheet_dates: 0, missing_base44: 0, different: 0, invalid: 0, text_choices: 0 }]));
   const samples = { missing_dates: [], different_dates: [], invalid_values: [], text_choices: [], ambiguous_links: [] };
@@ -98,11 +104,13 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId) {
       }
       if (parsed.kind === 'text') {
         byField[field].text_choices++;
+        const optionField = orderDateOptionField(field);
         if (matches.length === 1 &&
-            (String(matches[0].receipt_option ?? '').trim() !== parsed.value || !!matches[0].date_received)) {
-          counts.text_receipt_differences++;
-          sample('text_choices', { row_id: rowId, base44_order_id: matches[0].id,
-            smartsheet_value: parsed.value, base44_value: matches[0].receipt_option || matches[0].date_received || '' });
+            (String(matches[0]?.[optionField] ?? '').trim() !== parsed.value || !!matches[0]?.[field])) {
+          counts.text_option_differences++;
+          if (field === 'date_received') counts.text_receipt_differences++;
+          sample('text_choices', { row_id: rowId, base44_order_id: matches[0].id, field,
+            smartsheet_value: parsed.value, base44_value: matches[0]?.[optionField] || matches[0]?.[field] || '' });
         }
         continue;
       }
