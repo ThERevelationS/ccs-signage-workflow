@@ -125,5 +125,18 @@ export function salesRunRequiresReview(results = []) {
   );
 }
 
+// An executed Sales stage is not successful merely because the coordinator
+// finished its loop. Deliberately disabled stages have no direction and do not
+// count as failures; blocked stages, errors, and conflicts require review.
+export function salesRunRequiresReview(results = []) {
+  return Array.isArray(results) && results.some((result) =>
+    result?.dataset === "sales" && (
+      (result?.skipped === true && (result?.direction === "pull" || result?.direction === "push")) ||
+      Number(result?.errors || 0) > 0 || Number(result?.conflicts || 0) > 0 ||
+      Number(result?.snapshot_review_required || 0) > 0
+    )
+  );
+}
+
 
 
