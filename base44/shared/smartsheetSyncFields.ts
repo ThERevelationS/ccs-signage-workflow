@@ -1,4 +1,5 @@
 import { buildSharedOrderContactCell, readSharedOrderRequestor, sharedOrderRequestorColumnId } from './smartsheetOrderContact.mjs';
+import { translateOrderDateCell } from './smartsheetOrderDateTranslation.mjs';
 
 // Shared Smartsheet sync field vocabulary used by both the backend sync engine
 // and the frontend column-bindings editor. Keeps the two sides in sync so a
@@ -199,14 +200,22 @@ export function parseRowToFields(
         const num = Number(raw);
         if (Number.isFinite(num)) out[field.key] = num;
       } else if (field.type === "date") {
-        const stamp = dateStamp(raw);
-        if (stamp) {
-          out[field.key] = stamp;
-          if (dataset === 'orders' && field.key === 'date_received') out.receipt_option = '';
-        } else if (dataset === 'orders' && field.key === 'date_received' && typeof raw === 'string') {
-          // Smartsheet's mixed Date Received column can contain In Stock or
-          // custom text. Preserve it separately; never coerce text into a date.
-          out.receipt_option = cleanText(raw, 120);
+        if (dataset === 'orders') {
+          const translated = translateOrderDateCell(cell, field.key);
+          if (translated.kind === 'date') {
+            out[field.key] = translated.value;
+            if (field.key === 'date_received') out.receipt_option = '';
+          } else if (translated.kind === 'text' && field.key === 'date_received') {
+            // A nonempty Smartsheet text choice explicitly replaces the old
+            // received date. This clear is applied only after full-sheet date
+            // validation and verified permanent-row matching by the pull.
+            out.date_received = '';
+            out.receipt_option = translated.value;
+          }
+          // Invalid values are rejected by the Order-only pull preflight.
+        } else {
+          const stamp = dateStamp(raw);
+          if (stamp) out[field.key] = stamp;
         }
       } else if (field.type === "notes") {
         // Skip notes on pull — would need complex deserialization
