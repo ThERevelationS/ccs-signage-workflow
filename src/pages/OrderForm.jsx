@@ -52,7 +52,7 @@ export default function OrderForm() {
             // to the new split default. A new open_only value preserves future
             // explicit Not Received Only selections.
             setFilterStatus(["all", "not_received"].includes(me.order_form_filter)
-              ? "all_with_received" : me.order_form_filter); 
+              ? "all_with_received" : me.order_form_filter);
           }
         } catch (e) {
           // User might not have this field yet
