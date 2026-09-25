@@ -28,4 +28,4 @@ assert.equal(await verify({}, 'smartsheetSyncAction'), false, 'Missing capabilit
 assert.equal(await verify({ _workflow_capability: token + 'x' }, 'smartsheetSyncAction'), false, 'Wrong capability must be denied');
 assert.equal(await verify(args, 'checkDeadlineReminders'), false, 'Capability must not work for another workflow');
 assert.equal(await verify({ _workflow_capability: 42 }, 'smartsheetSyncAction'), false, 'Malformed capability must be denied');
-console.log('Smartsheet workflow authorization: 12/12 PASS (credential never displayed).');
+console.log('Smartsheet workflow authorization: 14/14 PASS (credential never displayed).');
