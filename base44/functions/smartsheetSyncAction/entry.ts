@@ -21,6 +21,7 @@ import {
   salesPushSnapshotNeedsReview,
   classifySalesEstInvPreview,
   verifiedSalesPreviewColumn,
+  salesRunRequiresReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
 
@@ -1286,8 +1287,10 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        let activeDirection: 'pull' | 'push' | null = null;
         try {
           if (wantPull) {
+            activeDirection = 'pull';
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'pull')?.label || '';
             await saveSyncStatus(base44, {
               status: 'running',
@@ -1299,10 +1302,11 @@ Deno.serve(async (req) => {
               results,
             });
             const pullResult = await pullDataset(base44, token, dataset, profile, config);
-            results.push(pullResult);
+            results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
             completedSteps++;
           }
           if (wantPush) {
+            activeDirection = 'push';
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'push')?.label || '';
             await saveSyncStatus(base44, {
               status: 'running',
@@ -1314,17 +1318,19 @@ Deno.serve(async (req) => {
               results,
             });
             const pushResult = await pushDataset(base44, token, dataset, profile, config);
-            results.push(pushResult);
+            results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
             completedSteps++;
           }
         } catch (err) {
-          results.push({ dataset, skipped: true, reason: (err as any)?.message || 'Sync failed.' });
+          results.push({ dataset, ...(dataset === 'sales' && activeDirection ? { direction: activeDirection } : {}), skipped: true, reason: (err as any)?.message || 'Sync failed.' });
           completedSteps++;
         }
       }
 
+      const salesNeedsReview = salesRunRequiresReview(results);
       await saveSyncStatus(base44, {
-        status: 'completed',
+        status: salesNeedsReview ? 'needs_review' : 'completed',
+        needs_review: salesNeedsReview,
         completed_at: new Date().toISOString(),
         total_steps: steps.length,
         completed_steps: steps.length,
@@ -1336,6 +1342,8 @@ Deno.serve(async (req) => {
         success: true,
         configured: true,
         write_actions_available: true,
+        sync_complete: !salesNeedsReview,
+        needs_review: salesNeedsReview,
         results,
       });
     }
