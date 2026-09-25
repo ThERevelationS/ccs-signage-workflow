@@ -2001,6 +2001,23 @@ Deno.serve(async (req) => {
       }
       if (String(period.last_request_id || '') === requestId && period.status === expectedStatus) {
         if (decision === 'finalize') {
+          // A saved period marker alone is not sufficient evidence of completed
+          // entry locking. Verify the committed lock snapshot before audit reuse.
+          const expectedCount = Number(period.finalized_summary?.entry_count);
+          const savedLockAt = String(period.finalized_summary?.lock_timestamp || '');
+          const savedLockedBy = asEmail(period.finalized_summary?.locked_by);
+          if (!Number.isInteger(expectedCount) || expectedCount < 0 || !savedLockAt || !savedLockedBy ||
+              String(period.finalized_summary?.request_id || '') !== requestId) {
+            return Response.json({ success: false, error: 'The finalized period lacks a matching entry-lock snapshot. Admin investigation is required.' }, { status: 409 });
+          }
+          const committedLocks = await entryEntity.filter({ pay_period_id: period.id });
+          if (!Array.isArray(committedLocks)) throw new Error('Finalization recovery lock lookup did not return a record list.');
+          if (committedLocks.length !== expectedCount || committedLocks.some((entry: any) =>
+            String(entry.pay_period_locked_at || '') !== savedLockAt ||
+            asEmail(entry.pay_period_locked_by) !== savedLockedBy ||
+            entry.status !== 'clocked_out' || entry.approval_status !== 'approved')) {
+            return Response.json({ success: false, error: 'The finalized period and stored entry locks do not match. Admin investigation is required.' }, { status: 409 });
+          }
           // Interrupted responses can leave a completed finalization's gates held.
           const staleGates = await stateEntity.filter({
             correction_create_status: 'creating',
