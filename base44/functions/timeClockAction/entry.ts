@@ -2129,25 +2129,25 @@ Deno.serve(async (req) => {
         const endDate = validDateKey(period.end_date);
         if (!startDate || !endDate) return Response.json({ success: false, error: 'Stored pay-period dates are invalid.' }, { status: 409 });
 
-        const allEntries = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
+        let allEntries = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
         if (!Array.isArray(allEntries)) throw new Error('TimeEntry pay-period readiness lookup did not return a record list.');
-        const periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
-        const activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
-        const completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
+        let periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
+        let activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
+        let completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
         const previousLocks = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(previousLocks)) throw new Error('Prior pay-period lock lookup did not return a record list.');
-        const completedIds = new Set(completedEntries.map((entry: any) => entry.id));
+        let completedIds = new Set(completedEntries.map((entry: any) => entry.id));
         if (previousLocks.some((entry: any) => !completedIds.has(entry.id) ||
             String(entry.pay_period_locked_at || '') !== lockTimestamp ||
             asEmail(entry.pay_period_locked_by) !== asEmail(intent.actor_email))) {
           return Response.json({ success: false, error: 'This period has entry locks that cannot be attributed to this exact finalization. Admin investigation is required.' }, { status: 409 });
         }
-        const unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
-        const lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
-        const activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
+        let unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
+        let lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
+        let activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
         if (!Array.isArray(activeCorrections)) throw new Error('Correction readiness lookup did not return a record list.');
-        const periodEntryIds = new Set(periodEntries.map((entry: any) => entry.id));
-        const pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
+        let periodEntryIds = new Set(periodEntries.map((entry: any) => entry.id));
+        let pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
 
         if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
           if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'Finalization is blocked and its staged entry locks could not be safely cleared. Retry the same request or request admin investigation.' }, { status: 409 });
@@ -2168,19 +2168,20 @@ Deno.serve(async (req) => {
           }, { status: 409 });
         }
 
-        // Hold each included employee's shared correction/approval gate through
-        // the last correction-read and pay-period entry-lock commit.
+        // Hold every currently authorized employee's shared mutation gate.
+        // Clock In, correction creation, and manager approval all serialize here,
+        // so a new shift cannot arrive after the readiness scan and before commit.
         const finalizationGates: Array<{ stateId: string; claimToken: string }> = [];
         const gateEntryId = `pay_period:${period.id}`;
         try {
-          const employeeEmails = [...new Set(completedEntries.map((entry: any) => asEmail(entry.user_email)))].sort();
-          if (employeeEmails.some((email: string) => !email)) {
-            return Response.json({ success: false, error: 'A completed shift has no employee identity. Admin investigation is required before finalization.' }, { status: 409 });
+          const authorizedEmployees = await authorized.filter({});
+          if (!Array.isArray(authorizedEmployees)) throw new Error('Authorized employee lookup did not return a record list.');
+          const employeeEmails = authorizedEmployees.map((employee: any) => asEmail(employee.email));
+          if (employeeEmails.some((email: string) => !email) || new Set(employeeEmails).size !== employeeEmails.length) {
+            return Response.json({ success: false, error: 'Authorized employee identities are incomplete or duplicated. Admin investigation is required before finalization.' }, { status: 409 });
           }
-          for (const employeeEmail of employeeEmails) {
-            const employee = await uniqueRow(authorized, { email: employeeEmail }, 'Pay-period employee');
-            // Employees lacking current authorization cannot submit corrections.
-            if (!employee?.id) continue;
+          authorizedEmployees.sort((a: any, b: any) => asEmail(a.email).localeCompare(asEmail(b.email)));
+          for (const employee of authorizedEmployees) {
             const employeeState = await ensureState(stateEntity, employee);
             const claimed = await claimCorrectionCreateLock(
               stateEntity, employeeState.id, requestId, gateEntryId, statusPayloadHash,
@@ -2188,11 +2189,51 @@ Deno.serve(async (req) => {
             if (!claimed?.acquired) {
               return Response.json({
                 success: false, retry_same_request: true,
-                error: 'An employee correction or manager approval is in progress. Retry this same finalization after the action finishes.',
+                error: 'An employee Clock In, correction, or manager approval is in progress. Retry this same finalization after the action finishes.',
               }, { status: 409 });
             }
             finalizationGates.push({ stateId: employeeState.id, claimToken: String(claimed.claim_token || '') });
           }
+
+          // Rebuild readiness from authoritative TimeEntry state after all employee
+          // gates are held. This catches a shift that arrived or completed between
+          // the first readiness read and acquisition of that employee's gate.
+          allEntries = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
+          if (!Array.isArray(allEntries)) throw new Error('Post-gate TimeEntry readiness lookup did not return a record list.');
+          periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
+          activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
+          completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
+          completedIds = new Set(completedEntries.map((entry: any) => entry.id));
+          unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
+          lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
+          activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
+          if (!Array.isArray(activeCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
+          periodEntryIds = new Set(periodEntries.map((entry: any) => entry.id));
+          pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
+
+          if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
+            if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'Finalization readiness changed and staged entry locks could not be safely cleared. Retry the same request or request admin investigation.' }, { status: 409 });
+            await auditEntity.updateMany(
+              { id: intent.id, outcome: 'pending', request_id: requestId },
+              { $set: {
+                outcome: 'blocked',
+                details: {
+                  ...(intent.details || {}), payload_hash: statusPayloadHash,
+                  pay_period_id: period.id, decision, note,
+                  blocked_reason: 'readiness_changed_after_employee_gates',
+                  active_shift_count: activeOverlap.length,
+                  unapproved_count: unapproved.length,
+                  pending_correction_count: pendingCorrections.length,
+                  locked_elsewhere_count: lockedElsewhere.length,
+                },
+              } },
+            );
+            return Response.json({
+              success: false,
+              error: `Pay-period readiness changed during finalization: ${activeOverlap.length} active shift(s), ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s). Reload and review before finalizing again.`,
+            }, { status: 409 });
+          }
+
           const latestCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
           if (!Array.isArray(latestCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
           const newlyPending = latestCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
