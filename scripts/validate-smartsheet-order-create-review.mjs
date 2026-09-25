@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { auditOrderCreateAttempts } from '../base44/shared/smartsheetOrderCreateReview.mjs';
+import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../base44/shared/smartsheetOrderCreateReview.mjs';
 import { createSmartsheetOrderPageGuard } from '../base44/shared/smartsheetOrderPageGuard.mjs';
 
 const SHEET = '4963691473987460';
@@ -63,11 +63,20 @@ assert.throws(() => pageGuard.accept(2, { rows: [], version: 2, totalRowCount: 2
 assert.throws(() => { const guard = createSmartsheetOrderPageGuard(); guard.assertComplete(); }, /could not be verified/i);
 console.log('PASS incomplete and moving-sheet evidence cannot justify a missing-row classification');
 
+assert.equal(verifyOrderCreateAuditSheetIdentity({ id: Number(SHEET) }, SHEET), SHEET);
+assert.equal(verifyOrderCreateAuditSheetIdentity({ id: SHEET }, SHEET), SHEET);
+for (const response of [null, {}, { id: null }, { id: '999' }, { id: 'bad-id' }]) {
+  assert.throws(() => verifyOrderCreateAuditSheetIdentity(response, SHEET), /permanent Order Request sheet ID/);
+}
+assert.throws(() => verifyOrderCreateAuditSheetIdentity({ id: SHEET }, ''), /permanent Order Request sheet ID/);
+console.log('PASS each evidence page requires the exact configured permanent sheet ID');
+
 const source = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');
 const action = source.slice(source.indexOf("if (action === 'audit_order_create_attempts')"), source.indexOf("if (action === 'audit_order_requestor_emails')"));
 assert.match(action, /loadAllEntityRows/);
 assert.match(action, /createSmartsheetOrderPageGuard/);
 assert.match(action, /guard\.assertComplete\(\)/);
+assert.match(action, /verifyOrderCreateAuditSheetIdentity\(result\.body, sheetId\)/);
 assert.match(action, /auditOrderCreateAttempts/);
 assert.doesNotMatch(action, /smartsheetWrite|\.create\(|\.update\(|\.delete\(/);
 console.log('PASS review backend remains admin-gated by existing router and performs no writes');
