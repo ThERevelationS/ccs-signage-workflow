@@ -1,16 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
+import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 
-async function authorizeFleetUser(base44: any) {
-  const user = await base44.auth.me().catch(() => null);
-  if (!user?.email) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) };
-  if (user.role === 'admin' || user.role === 'user') return { user };
-  const rows = await base44.asServiceRole.entities.AuthorizedEmail.filter({ email: user.email });
-  const role = rows?.[0]?.role || '';
-  if (!['admin', 'user'].includes(role)) {
-    return { error: Response.json({ error: 'This CCS account is not authorized for Fleet notifications.' }, { status: 403 }) };
+async function authorizeFleetUser(base44: any, sessionToken: unknown) {
+  try {
+    const user = await authenticateSignShopSession(base44, sessionToken);
+    if (!['admin', 'user'].includes(String(user?.role || ''))) {
+      return { error: Response.json({ error: 'This CCS account is not authorized for Fleet notifications.' }, { status: 403 }) };
+    }
+    return { user };
+  } catch (error: any) {
+    const status = Number(error?.status || 500);
+    const safeStatus = [401, 409, 503].includes(status) ? status : 500;
+    return { error: Response.json({ error: safeStatus === 401 ? 'Authentication required' : error?.message || 'Fleet authentication failed.' }, { status: safeStatus }) };
   }
-  return { user };
 }
 
 const normalizeVin = (value: unknown) => String(value || '').trim().toUpperCase();
@@ -18,11 +21,21 @@ const normalizeVin = (value: unknown) => String(value || '').trim().toUpperCase(
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const auth = await authorizeFleetUser(base44);
-    if (auth.error) return auth.error;
     const body = await req.json().catch(() => ({}));
+    const auth = await authorizeFleetUser(base44, body?.session_token);
+    if (auth.error) return auth.error;
     const action = String(body?.action || '').trim();
     const Notification = base44.asServiceRole.entities.BouncieNotification;
+
+    if (action === 'list') {
+      const rows = await loadAllEntityRows({
+        entity: Notification,
+        query: {},
+        sort: '-timestamp',
+        label: 'Bouncie notifications',
+      });
+      return Response.json({ success: true, notifications: rows.slice(0, 200) });
+    }
 
     if (action === 'mark_read') {
       const id = String(body?.id || body?.notification_id || '').trim();
