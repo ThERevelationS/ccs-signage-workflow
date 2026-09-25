@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   AlertTriangle,
@@ -78,6 +78,42 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const previousFocus = useRef(null);
+  const closeCallback = useRef(onClose);
+  const busyState = useRef(busy);
+  closeCallback.current = onClose;
+  busyState.current = busy;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    previousFocus.current = document.activeElement;
+    closeRef.current?.focus();
+    const handleKey = event => {
+      if (event.key === "Escape") {
+        if (!busyState.current) { event.preventDefault(); closeCallback.current?.(); }
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0], last = controls[controls.length - 1], active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      if (previousFocus.current?.isConnected) previousFocus.current.focus();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -372,15 +408,15 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
   const set = (key, value) => setCandidate(prev => ({ ...prev, [key]: value }));
 
   return <div className="fixed inset-0 z-[110] bg-black/60 p-2 sm:p-4 overflow-y-auto">
-    <div role="dialog" aria-modal="true" aria-labelledby="fleet-part-lookup-title" className="mx-auto w-full max-w-6xl min-h-[min(760px,96dvh)] rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 overflow-hidden flex flex-col">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-part-lookup-title" aria-describedby="fleet-part-lookup-description" tabIndex={-1} className="mx-auto w-full max-w-6xl min-h-[min(760px,96dvh)] rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 overflow-hidden flex flex-col">
       <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
-        <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /><h2 id="fleet-part-lookup-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{organizeMode ? "Organize Parts" : "AI Part Finder"}</h2></div><p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Identify → verify → assign equipment → put it in a real location. AI never silently creates inventory.</p></div><button type="button" disabled={busy} onClick={onClose} className="min-h-11 min-w-11 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-slate-800" aria-label="Close part lookup"><X className="w-5 h-5 mx-auto" /></button></div>
+        <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /><h2 id="fleet-part-lookup-title" className="text-lg font-bold text-gray-900 dark:text-slate-100">{organizeMode ? "Organize Parts" : "AI Part Finder"}</h2></div><p id="fleet-part-lookup-description" className="mt-1 text-xs text-gray-500 dark:text-slate-400">Identify → verify → assign equipment → put it in a real location. AI never silently creates inventory.</p></div><button ref={closeRef} type="button" disabled={busy} onClick={onClose} className="min-h-11 min-w-11 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-slate-800" aria-label="Close part lookup"><X className="w-5 h-5 mx-auto" /></button></div>
         <div className="mt-3 flex gap-2 overflow-x-auto">{[["identify","1","Identify"],["verify","2","Verify"],["organize","3","Organize"],["done","✓","Done"]].map(([key,num,label]) => <div key={key} className={`shrink-0 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${step === key ? "bg-indigo-600 text-white" : ["verify","organize","done"].indexOf(step) > ["identify","verify","organize","done"].indexOf(key) ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400"}`}><span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full border border-current px-0.5 text-[9px]">{num}</span>{label}</div>)}</div>
       </div>
 
       <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
-        {savedMessage && <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">{savedMessage}</div>}
+        {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+        {savedMessage && <div role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">{savedMessage}</div>}
 
         {step === "identify" && <div className="grid lg:grid-cols-[1fr_1fr] gap-5">
           <section className="space-y-4">
@@ -389,7 +425,7 @@ export default function FleetPartLookupDialog({ open, equipment = [], parts = []
             <label className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Part number, label text, or description</span><textarea rows={3} value={query} onChange={e => setQuery(e.target.value)} placeholder="Example: WIX 51515, alternator label, Kubota fuel filter…" className="field mt-1" /></label>
             <label className="block"><span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Barcode / UPC / QR value</span><div className="relative mt-1"><Barcode className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={barcodeValue} onChange={e => setBarcodeValue(e.target.value)} className="field pl-9" placeholder="Detected automatically on supported phones, or type it" /></div></label>
             <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-5 text-center hover:border-indigo-400 hover:bg-indigo-50/40 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-indigo-700">
-              <ImagePlus className="w-8 h-8 mx-auto text-indigo-500" /><div className="mt-2 font-semibold text-gray-800 dark:text-slate-200">Take or upload a part photo</div><div className="mt-1 text-xs text-gray-500">Photograph the label, markings, connector/threads and the whole part when possible.</div><input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => { chooseFile(e.target.files?.[0]); e.target.value = ""; }} />
+              <ImagePlus className="w-8 h-8 mx-auto text-indigo-500" /><div className="mt-2 font-semibold text-gray-800 dark:text-slate-200">Take or upload a part photo</div><div className="mt-1 text-xs text-gray-500">Photograph the label, markings, connector/threads and the whole part when possible.</div><input type="file" accept="image/*" capture="environment" className="sr-only" onChange={e => { chooseFile(e.target.files?.[0]); e.target.value = ""; }} />
             </label>
             <button type="button" onClick={analyze} disabled={busy} className="w-full min-h-12 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <WandSparkles className="w-5 h-5" />}{busy ? "Identifying & researching…" : "Identify This Part"}</button>
           </section>
