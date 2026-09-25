@@ -190,11 +190,17 @@ export function parseRowToFields(
       // an object in `value` and the readable name in `display_value`.
       const preferValue = field.type === 'date' || field.type === 'number';
       const display = cell.display_value != null ? cell.display_value : cell.displayValue;
-      const raw = preferValue
-        ? (cell.value != null ? cell.value : (display != null ? display : null))
-        : (dataset === 'orders' && (display === '' || display == null)
-          ? cell.value // Smartsheet sometimes omits displayValue even for populated text cells.
-          : (display != null ? display : cell.value));
+      // Sales Est / Inv # is an identifier displayed as a five-digit number
+      // in Smartsheet. Its raw value can be numeric while displayValue is
+      // omitted. Preserve that raw value as text instead of dropping it.
+      const salesEstInv = dataset === 'sales' && field.key === 'est_inv_at';
+      const raw = salesEstInv
+        ? (cell.value != null && cell.value !== '' ? cell.value : display)
+        : preferValue
+          ? (cell.value != null ? cell.value : (display != null ? display : null))
+          : (dataset === 'orders' && (display === '' || display == null)
+            ? cell.value // Smartsheet sometimes omits displayValue even for populated text cells.
+            : (display != null ? display : cell.value));
       if (raw === null || raw === undefined || raw === "") continue;
       if (field.type === "number") {
         const num = Number(raw);
