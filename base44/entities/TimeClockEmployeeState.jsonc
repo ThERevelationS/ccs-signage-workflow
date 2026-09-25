@@ -147,28 +147,28 @@
         "creating"
       ],
       "default": "idle",
-      "description": "Backend-only serialization state for employee correction-request creation"
+      "description": "Backend-only per-employee serialization gate shared by Clock In, correction creation, manager approval, and pay-period finalization"
     },
     "correction_create_request_id": {
       "type": "string",
-      "description": "Request id currently holding the employee correction-request create lock"
+      "description": "Request id currently holding the shared employee mutation gate"
     },
     "correction_create_time_entry_id": {
       "type": "string",
-      "description": "TimeEntry id bound to the current correction-request create lock"
+      "description": "Operation binding for the shared employee mutation gate (TimeEntry id or internal operation key)"
     },
     "correction_create_payload_hash": {
       "type": "string",
-      "description": "Canonical correction payload hash bound to the current correction-request create lock"
+      "description": "Canonical payload hash bound to the current shared employee mutation gate"
     },
     "correction_create_claim_token": {
       "type": "string",
-      "description": "Opaque backend claim token for the current correction-request create lock"
+      "description": "Opaque backend claim token for the current shared employee mutation gate"
     },
     "correction_create_started_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Trusted backend timestamp when the current correction-request create lock was claimed"
+      "description": "Trusted backend timestamp when the current shared employee mutation gate was claimed"
     }
   },
   "required": [
