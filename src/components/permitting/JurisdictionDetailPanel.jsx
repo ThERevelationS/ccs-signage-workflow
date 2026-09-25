@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
-import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
+import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, documentSearchContentSource, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
@@ -182,12 +182,13 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     try {
       const doc = jurisdiction.documents.find(d => d.id === docId);
       const searchContent = documentSearchContent(doc, searchText);
+      const searchSource = documentSearchContentSource(doc, searchText);
       const searchTerm = searchText.toLowerCase();
       
       const positions = findDocumentMatchPositions(searchContent, searchTerm);
       setDocSearchResults(prev => ({
         ...prev,
-        [docId]: { matches: positions.length, positions, activeIndex: 0, query: searchText }
+        [docId]: { matches: positions.length, positions, activeIndex: 0, query: searchText, source: searchSource }
       }));
     } catch (e) {
       console.error("Search error:", e);
@@ -960,7 +961,7 @@ Answer the question based on the documents and information available. Be specifi
                         <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
                           {docSearchResults[doc.id]
                             ? docSearchResults[doc.id].matches > 0
-                              ? `Match ${docSearchResults[doc.id].activeIndex + 1} of ${docSearchResults[doc.id].matches} in ${doc.title || "document"}`
+                              ? `Match ${docSearchResults[doc.id].activeIndex + 1} of ${docSearchResults[doc.id].matches} in ${doc.title || "document"}, from ${docSearchResults[doc.id].source === "ai_summary" ? "AI summary" : "extracted document text"}`
                               : `No matches found in ${doc.title || "document"}`
                             : clearedDocSearchId === doc.id
                               ? `Search cleared in ${doc.title || "document"}`
@@ -972,9 +973,14 @@ Answer the question based on the documents and information available. Be specifi
                               <p className="text-xs text-gray-500">No matches found</p>
                             ) : (
                               <div className="space-y-1">
-                                <p className="text-sm font-semibold text-blue-700">
-                                  Match {docSearchResults[doc.id].activeIndex + 1} of {docSearchResults[doc.id].matches}
-                                </p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-sm font-semibold text-blue-700">
+                                    Match {docSearchResults[doc.id].activeIndex + 1} of {docSearchResults[doc.id].matches}
+                                  </p>
+                                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${docSearchResults[doc.id].source === "ai_summary" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-700"}`}>
+                                    {docSearchResults[doc.id].source === "ai_summary" ? "AI summary" : "Extracted text"}
+                                  </span>
+                                </div>
                                 <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">
                                   {splitDocumentSearchMatches(
                                     documentMatchSnippet(
