@@ -210,7 +210,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
           <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "est_inv_at", "Est/Inv #", wo.est_inv_at)}>
             <div className="flex items-center gap-1">
               {coreBridgeUrl ? (
-                <button type="button" onClick={() => openExternalHttpUrl(coreBridgeUrl)} className="min-w-0 flex-1 truncate text-left text-xs text-blue-600 hover:underline" title="Open CoreBridge">{wo.corbridge_invoice_number || wo.est_inv_at || "Link"}</button>
+                <button type="button" onClick={() => openExternalHttpUrl(coreBridgeUrl)} className="min-w-0 flex-1 truncate text-left text-xs text-blue-600 hover:underline" title="Open CoreBridge">{wo.est_inv_at || "Link"}</button>
               ) : wo.corbridge_link ? (
                 <span className="min-w-0 flex-1 truncate text-xs font-medium text-amber-700" title="CoreBridge link is present but is not a usable http/https URL. Use the link button to correct it.">{wo.corbridge_invoice_number || wo.est_inv_at || "Invalid link"}</span>
               ) : (
