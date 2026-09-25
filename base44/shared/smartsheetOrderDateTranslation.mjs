@@ -24,20 +24,23 @@ export function translateOrderDateValue(value, field = 'date_received') {
     const date = calendarDate(+match[1], +match[2], +match[3]);
     return date ? { kind: 'date', value: date } : { kind: 'invalid', reason: 'Impossible ISO calendar date' };
   }
-  match = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{4})$/);
+  match = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{3}|\d{4})$/);
   if (match) {
-    const twoDigit = match[3].length === 2;
     let year = +match[3];
-    if (twoDigit) year += year >= 70 ? 1900 : 2000;
+    if (match[3].length === 2) year += year >= 70 ? 1900 : 2000;
+    // Legacy Smartsheet rows contain values such as 03/09/021. Treat a
+    // zero-prefixed three-digit year as the obvious 2000-series typo.
+    if (match[3].length === 3 && match[3].startsWith('0')) year = 2000 + Number(match[3].slice(1));
     const date = calendarDate(year, +match[1], +match[2]);
     return date ? { kind: 'date', value: date } : { kind: 'invalid', reason: 'Impossible US calendar date' };
   }
-  // Date-shaped values are NEVER interpreted as arbitrary receipt options.
+  // Date-shaped values are NEVER interpreted as arbitrary text options.
   if (/^\d/.test(raw) || /\d[\/-]\d/.test(raw) || /\d{4}/.test(raw)) {
     return { kind: 'invalid', reason: 'Unrecognized date format; verify the Smartsheet column locale' };
   }
-  if (field === 'date_received') return { kind: 'text', value: raw.slice(0, 120) };
-  return { kind: 'invalid', reason: 'Text in a date-only Order field' };
+  // The legacy Order Request sheet intentionally mixes dates with choices and
+  // notes in all three date columns (ASAP, N/A, Stock, In Stock, free text).
+  return { kind: 'text', value: raw.slice(0, 120), field };
 }
 
 export function translateOrderDateCell(cell, field) {
