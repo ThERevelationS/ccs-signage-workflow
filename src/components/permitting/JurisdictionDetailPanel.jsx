@@ -776,7 +776,7 @@ Answer the question based on the documents and information available. Be specifi
                         pendingDocNavigationRef.current = result.id;
                         setExpandedDoc(result.id);
                       } else if (result.type === 'jurisdiction') {
-                        // Focus the persistent heading before the selected result disappears.
+                        // Move focus before removing the selected search result button.
                         jurisdictionHeadingRef.current?.focus({ preventScroll: true });
                         jurisdictionHeadingRef.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
                       }
