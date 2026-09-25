@@ -992,8 +992,8 @@ Deno.serve(async (req) => {
         const rowId = String(record?.smartsheet_row_id ?? '').trim();
         const prior = record?.smartsheet_sync_snapshot;
         return record?.smartsheet_sheet_id === sheetId && /^\d+$/.test(rowId) &&
-          (!prior || typeof prior !== 'object' || Array.isArray(prior) ||
-            !Object.prototype.hasOwnProperty.call(prior, columnId));
+          (!String(record?.est_inv_at ?? '').trim() || !prior || typeof prior !== 'object' ||
+            Array.isArray(prior) || !Object.prototype.hasOwnProperty.call(prior, columnId));
       });
       const limit = Math.max(1, Math.min(25, Math.floor(Number(body?.sample_size) || 20)));
       const offset = Math.max(0, Math.min(499, Math.floor(Number(body?.sample_offset) || 0)));
@@ -1005,7 +1005,7 @@ Deno.serve(async (req) => {
           push_window_examined: records.length, candidate_count_in_push_window: candidates.length,
           sample_offset: offset, sample_size: 0,
           next_sample_offset: null, sample_is_complete_archive: false,
-          summary: {}, cases: [],
+          summary: {}, potential_five_digit_backfill_in_sample: 0, cases: [],
         });
       }
       const requestedIds = [...new Set(sample.map((record: any) => String(record.smartsheet_row_id)))];
@@ -1038,9 +1038,18 @@ Deno.serve(async (req) => {
         const rowId = String(record.smartsheet_row_id);
         const remote = byId.get(rowId) as any;
         const cell = remote?.cells?.find((entry: any) => entry.column_id === columnId);
-        const remoteValue = cell ? (cell.display_value || cell.value) : null;
+        // A numeric TEXT_NUMBER cell can lack displayValue. Use the verified
+        // five-digit display when available, otherwise the fixed Sales parser.
+        const parsed = remote ? parseRowToFields(remote, { est_inv_at: columnId }, 'sales') : {};
+        const remoteValue = cell && normalizeSalesNumber(cell.display_value)
+          ? normalizeSalesNumber(cell.display_value) : (parsed.est_inv_at ?? null);
         const comparison = classifySalesEstInvPreview(record.est_inv_at, remoteValue, Boolean(remote));
         const duplicateLinkInWindow = (linkCounts[rowId] || 0) > 1;
+        const fiveDigitNumber = normalizeSalesNumber(remoteValue);
+        const existingInvoiceNumber = String(record?.corbridge_invoice_number ?? '').trim();
+        const potentialNumberToFill = comparison === 'smartsheet_only' && !!fiveDigitNumber &&
+          !duplicateLinkInWindow && (!existingInvoiceNumber || existingInvoiceNumber === fiveDigitNumber)
+          ? fiveDigitNumber : null;
         summary[comparison] = (summary[comparison] || 0) + 1;
         return {
           workorder_id: record.id, smartsheet_row_id: rowId,
@@ -1048,6 +1057,10 @@ Deno.serve(async (req) => {
           base44_est_inv_at: cleanText(record.est_inv_at, 160),
           smartsheet_est_inv_at: remote ? cleanText(remoteValue, 160) : null,
           comparison, duplicate_link_in_push_window: duplicateLinkInWindow,
+          potential_number_to_fill: potentialNumberToFill,
+          full_link_verification_required: !!potentialNumberToFill,
+          existing_invoice_number_conflict: !!fiveDigitNumber && !!existingInvoiceNumber &&
+            existingInvoiceNumber !== fiveDigitNumber,
           review_required: true,
         };
       });
@@ -1059,7 +1072,9 @@ Deno.serve(async (req) => {
         candidate_count_in_push_window: candidates.length,
         sample_offset: offset, sample_size: cases.length,
         next_sample_offset: offset + cases.length < candidates.length ? offset + cases.length : null,
-        sample_is_complete_archive: false, summary, cases,
+        sample_is_complete_archive: false, summary,
+        potential_five_digit_backfill_in_sample: cases.filter((entry: any) => !!entry.potential_number_to_fill).length,
+        cases,
       });
     }
 
