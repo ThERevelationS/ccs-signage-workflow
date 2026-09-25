@@ -267,6 +267,30 @@ test('pending reopen audit prevents a new finalization from overtaking unlock re
   assert.equal((await h.action('finalize', 'later-finalize-001')).status, 200);
 });
 
+test('a losing concurrent reopen leaves no pending audit and does not unlock', async () => {
+  const h = setup();
+  assert.equal((await h.action('finalize', finalizeRequest)).status, 200);
+  let compete = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (compete && entity === 'TimeClockPayPeriod' && update.$set?.reopened_at) {
+      compete = false;
+      h.period().status = 'review';
+      h.period().last_request_id = 'synthetic-winning-reopen-001';
+      h.period().updated_date = '2026-09-20T00:00:01.000Z';
+      h.rows.TimeClockAudit.push({
+        id: 'winning-reopen-audit', action: 'pay_period_status',
+        request_id: 'synthetic-winning-reopen-001', outcome: 'pending',
+        details: { decision: 'reopen', pay_period_id: h.period().id },
+      });
+    }
+  });
+  const loser = await h.action('reopen', 'synthetic-losing-reopen-001', 'Manager correction');
+  assert.equal(loser.status, 409);
+  assert.equal(h.audit('synthetic-losing-reopen-001')[0].outcome, 'blocked');
+  assert.equal(h.audit('synthetic-losing-reopen-001')[0].details.blocked_reason, 'reopen_claim_lost');
+  assert.equal(h.entryLocks().length, 1);
+});
+
 for (const [name, fn] of tests) {
   try { await fn(); console.log('PASS ' + name); }
   catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
