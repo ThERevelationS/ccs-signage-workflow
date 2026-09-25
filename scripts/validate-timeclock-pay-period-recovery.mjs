@@ -92,15 +92,21 @@ function setup({ entryCount = 1 } = {}) {
     email: administrator.email, iat: Date.now() - 1000, exp: Date.now() + 60_000,
   })).toString('base64url');
   const session_token = payload + '.' + createHmac('sha256', secret).update(payload).digest('base64url');
-  async function action(decision, request_id, note = '') {
-    const response = await handler({ json: async () => ({
-      action: 'pay_period_status', decision, request_id, note,
-      pay_period_id: 'synthetic-period', session_token,
-    }) });
+  async function invoke(body) {
+    const response = await handler({ json: async () => ({ ...body, session_token }) });
     return { status: response.status, body: await response.json() };
   }
+  async function action(decision, request_id, note = '') {
+    return invoke({
+      action: 'pay_period_status', decision, request_id, note,
+      pay_period_id: 'synthetic-period',
+    });
+  }
+  async function clockIn(request_id) {
+    return invoke({ action: 'clock_in', request_id, target_email: employee.email });
+  }
   return {
-    rows, action,
+    rows, action, clockIn, invoke,
     setBeforeUpdate(fn) { beforeUpdate = fn; },
     setAfterRowUpdate(fn) { afterRowUpdate = fn; },
     period: () => rows.TimeClockPayPeriod[0],
