@@ -75,12 +75,14 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [newItemText, setNewItemText] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
+  const [newProductTypeName, setNewProductTypeName] = useState("");
   const [editingProductTypeName, setEditingProductTypeName] = useState(null);
   const [editingProductTypeValue, setEditingProductTypeValue] = useState("");
   
   // Conditions Editor
   const [newDropdownName, setNewDropdownName] = useState("");
   const [editingDropdown, setEditingDropdown] = useState(null);
+  const [editingDropdownName, setEditingDropdownName] = useState("");
   
   // Other Dropdown Popup
   const [showOtherPopup, setShowOtherPopup] = useState(null);
@@ -606,6 +608,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   // Product Type Management
+  const createProductType = async () => {
+    const name = newProductTypeName.trim();
+    if (!name) return;
+    try {
+      await saveProductTypes([...productTypes, name]);
+      setNewProductTypeName("");
+    } catch (error) {
+      console.error("Error creating product checklist:", error);
+    }
+  };
+
   const selectProductType = (type, discardUnsaved = false) => {
     if (!discardUnsaved && selectedProductType === type) return;
     if (!discardUnsaved && selectedProductType && (productTypeHasChanges || (activeTab === 'producttypes' && newItemText.trim()))) {
@@ -620,8 +633,25 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setProductTypeSaveStatus('idle');
   };
 
-  // Text in the Add item field is not part of saved checklist data until Add is pressed.
-  const hasUnsavedEditorChanges = subTemplateHasChanges || productTypeHasChanges || Boolean(newItemText.trim());
+  const editingSubTemplateOriginalName = editingSubTemplateId
+    ? (subTemplates.find(st => st.id === editingSubTemplateId)?.name || "")
+    : "";
+  const editingDropdownOriginalName = editingDropdown
+    ? (dropdownConditions.find(condition => condition.id === editingDropdown)?.name || "")
+    : "";
+  const hasUnsavedNameDrafts = Boolean(
+    newSubTemplateName.trim()
+    || newProductTypeName.trim()
+    || newDropdownName.trim()
+    || (editingSubTemplateId && editingSubTemplateName.trim() !== editingSubTemplateOriginalName.trim())
+    || (editingProductTypeName && editingProductTypeValue.trim() !== String(editingProductTypeName).trim())
+    || (editingDropdown && editingDropdownName.trim() !== editingDropdownOriginalName.trim())
+  );
+  // Text in the Add item field and unfinished names are not saved until their actions run.
+  const hasUnsavedEditorChanges = subTemplateHasChanges
+    || productTypeHasChanges
+    || Boolean(newItemText.trim())
+    || hasUnsavedNameDrafts;
   const requestTabChange = (tab) => {
     if (tab === activeTab) return;
     if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'tab', tab });
@@ -646,6 +676,15 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     setSubTemplateHasChanges(false);
     setProductTypeHasChanges(false);
     setNewItemText("");
+    setNewSubTemplateName("");
+    setNewProductTypeName("");
+    setNewDropdownName("");
+    setEditingSubTemplateId(null);
+    setEditingSubTemplateName("");
+    setEditingProductTypeName(null);
+    setEditingProductTypeValue("");
+    setEditingDropdown(null);
+    setEditingDropdownName("");
     setSubTemplateSaveStatus('idle');
     setProductTypeSaveStatus('idle');
     if (next.kind === 'close') onClose();
@@ -1825,8 +1864,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
               <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-4 h-auto lg:h-full">
               <div className="space-y-1 overflow-y-auto">
                 <div className="flex gap-1 mb-2">
-                  <Input id="newPT" placeholder="New product type..." className="h-11 text-sm lg:h-7" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value.trim()) { saveProductTypes([...productTypes, e.target.value.trim()]); e.target.value = ""; } }} />
-                  <Button type="button" size="sm" className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-2" onClick={() => { const input = document.getElementById('newPT'); if (input?.value.trim()) { saveProductTypes([...productTypes, input.value.trim()]); input.value = ""; } }} aria-label="Add product type">
+                  <Input value={newProductTypeName} onChange={(e) => setNewProductTypeName(e.target.value)} placeholder="New product type..." className="h-11 text-sm lg:h-7" onKeyDown={(e) => e.key === 'Enter' && createProductType()} />
+                  <Button type="button" size="sm" disabled={!newProductTypeName.trim()} className="h-11 w-11 shrink-0 px-0 touch-manipulation lg:h-7 lg:w-auto lg:px-2" onClick={createProductType} aria-label="Add product type">
                     <Plus className="w-4 h-4 lg:w-3 lg:h-3" aria-hidden="true" />
                   </Button>
                 </div>
@@ -2348,7 +2387,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
         <AlertDialogContent className="clay-card w-[calc(100vw-1rem)] max-w-lg max-h-[calc(100dvh-1rem)] overflow-y-auto border-none z-[120]">
           <AlertDialogHeader>
             <AlertDialogTitle>Discard unsaved checklist edits?</AlertDialogTitle>
-            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will discard unsaved checklist edits and any new item you haven't added. Add the item and save your changes first, or discard to continue.</AlertDialogDescription>
+            <AlertDialogDescription>{pendingNavigation?.kind === 'close' ? 'Closing the builder' : 'Switching tabs'} will discard unsaved checklist edits, unfinished names, and any new item you haven't added. Save or add your work first, or discard to continue.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-11">Keep editing</AlertDialogCancel>
