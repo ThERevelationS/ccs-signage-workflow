@@ -160,8 +160,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     // The PDF was removed, changed type, or belongs to a previous jurisdiction.
     // The details panel is rendered in this commit, so its controls can receive focus.
     setViewingPDF(null);
-    (documentHeaderRefs.current.get(viewingPDF.id) || jurisdictionSearchInputRef.current || jurisdictionHeadingRef.current)
-      ?.focus({ preventScroll: true });
+    const recoveryTarget = documentHeaderRefs.current.get(viewingPDF.id)
+      || jurisdictionSearchInputRef.current
+      || jurisdictionHeadingRef.current;
+    recoveryTarget?.focus({ preventScroll: true });
+    recoveryTarget?.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [viewingPDF, liveViewingPDF]);
 
   // Returning from the PDF viewer remounts the detail controls. Restore focus to
