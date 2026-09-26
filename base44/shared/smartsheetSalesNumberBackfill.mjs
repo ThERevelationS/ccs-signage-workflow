@@ -35,6 +35,11 @@ export function assessSalesNumberFill({ record, sheetId, rowId, remoteValue, exp
   if (activeLinks !== 1) return 'ambiguous_link';
   if (!number) return 'invalid_smartsheet_number';
   if (number !== normalizeSalesNumber(expectedNumber)) return 'smartsheet_changed_since_preview';
+  // The legacy Corebridge invoice number is also an identity used by Sales
+  // imports. Never fill an Est / Inv # over a different existing identity;
+  // even an unrecognized/non-five-digit value needs manual review.
+  const existingCorebridge = String(record.corbridge_invoice_number ?? '').trim();
+  if (existingCorebridge && existingCorebridge !== number) return 'existing_corebridge_number_differs';
   const stored = String(record.est_inv_at ?? '').trim();
   if (stored === number) return 'already_set';
   if (stored) return 'base44_number_already_populated';
