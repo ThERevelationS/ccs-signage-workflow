@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { SALES_TABLE_COLUMNS, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns, moveVisibleSalesColumn } from "@/components/sales/salesColumnCatalog.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -63,44 +64,7 @@ const OPERATORS = [
   { value: "empty", label: "Is Empty" }
 ];
 
-const ALL_COLUMNS = [
-  { id: "client_name", label: "Customer", visible: true },
-  { id: "sales_status", label: "Sales Status", visible: true },
-  { id: "stage_age", label: "Stage Age", visible: true },
-  { id: "sales_rep", label: "Salesperson / Owner", visible: true },
-  { id: "description", label: "Job Description", visible: true },
-  { id: "lead_source", label: "Source", visible: true },
-  { id: "current_task_deadline", label: "Deadline", visible: true },
-  { id: "current_task_assigned_to", label: "Task Assigned", visible: true },
-  { id: "designer", label: "Designer", visible: true },
-  { id: "project_manager", label: "PM", visible: true },
-  { id: "estimator", label: "Estimator", visible: true },
-  { id: "est_inv_at", label: "Estimate/Invoice # Link", visible: true },
-  { id: "estimate_amount", label: "Estimate Amount", visible: true },
-  { id: "current_task_description", label: "Task Description", visible: true },
-  { id: "date_initial_contact", label: "Est. Requested", visible: true },
-  { id: "site_survey_date", label: "Survey", visible: true },
-  { id: "date_estimate_sent", label: "Est Sent", visible: true },
-  { id: "date_order_created", label: "Order", visible: true },
-  { id: "project_install_date", label: "Install", visible: true },
-  { id: "permit_submitted_date", label: "Permit Sub", visible: true },
-  { id: "title", label: "Notes", visible: true },
-  { id: "permit_receipt_confirmed_date", label: "Permit Conf", visible: true },
-  { id: "permit_number", label: "Permit #", visible: true },
-  { id: "permit_approved_date", label: "Permit App", visible: true },
-  { id: "days_init_today", label: "Days Init→Today", visible: true },
-  { id: "days_req_est", label: "Days Req→Est", visible: true },
-  { id: "days_est_ord", label: "Days Est→Ord", visible: true },
-  { id: "days_ord_prm", label: "Days Ord→Prm", visible: true },
-  { id: "days_prm_app", label: "Days Prm→App", visible: true },
-  { id: "days_ord_ins", label: "Days Ord→Ins", visible: true },
-  { id: "quote_age", label: "Quote Age", visible: true },
-  { id: "follow_up_date", label: "Follow Up", visible: true },
-  { id: "expected_close_date", label: "Expected Close", visible: true },
-  { id: "close_date", label: "Close", visible: true },
-  { id: "start_date", label: "Start", visible: true },
-  { id: "project_type", label: "Project Type", visible: true }
-];
+const ALL_COLUMNS = SALES_TABLE_COLUMNS;
 
 const STANDARD_FILTERS = [
   { name: "All Statuses", value: "all", conditions: [] },
@@ -239,7 +203,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       name: itemName,
       type: activeTab === "filters" ? "filter" : "column_preset",
       conditions: activeTab === "filters" ? filterConditions : [],
-      column_settings: activeTab === "columns" ? columnSettings : [],
+      column_settings: activeTab === "columns" ? preserveLegacySalesColumnEntries(columnSettings, editingItem?.column_settings) : [],
       is_standard: false,
       created_by_name: currentUser?.full_name || currentUser?.email || "Unknown",
       selected_by: editingItem?.selected_by || []
@@ -286,7 +250,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     setEditingItem(item);
     setItemName(item.name);
     setFilterConditions(item.conditions?.length ? item.conditions : [{ field: "", operator: "equals", value: "" }]);
-    setColumnSettings(item.column_settings?.length ? item.column_settings : ALL_COLUMNS);
+    setColumnSettings(normalizeSalesColumnSettings(item.column_settings));
     setActiveSubTab("create");
   };
 
@@ -316,7 +280,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     setEditingItem(null);
     setItemName("");
     setFilterConditions([{ field: "", operator: "equals", value: "" }]);
-    setColumnSettings(ALL_COLUMNS);
+    setColumnSettings(normalizeSalesColumnSettings(null));
     setActiveSubTab("pool");
   };
 
@@ -367,13 +331,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const moveColumn = (index, direction) => {
-    const newSettings = [...columnSettings];
-    if (direction === "up" && index > 0) {
-      [newSettings[index], newSettings[index - 1]] = [newSettings[index - 1], newSettings[index]];
-    } else if (direction === "down" && index < newSettings.length - 1) {
-      [newSettings[index], newSettings[index + 1]] = [newSettings[index + 1], newSettings[index]];
-    }
-    setColumnSettings(newSettings);
+    const id = columnSettings[index]?.id;
+    if (!id) return;
+    setColumnSettings((settings) => moveVisibleSalesColumn(settings, id, direction === "up" ? -1 : 1));
   };
 
   const canDelete = (item) => {
@@ -818,6 +778,12 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                 <div>
                   <Label className="mb-1 block text-sm">Column Settings - Toggle visibility</Label>
+                  {editingItem && getUnavailableSalesColumns(editingItem.column_settings).length > 0 && (
+                    <p role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                      This older preset includes unavailable columns: {getUnavailableSalesColumns(editingItem.column_settings).map((item) => item.label || item.id).join(", ")}.
+                      They are preserved in the saved record for later review but cannot be displayed in the table.
+                    </p>
+                  )}
                   
                   <div className="flex flex-wrap gap-1">
                     {columnSettings.map((column) => (
