@@ -1,0 +1,24 @@
+// Order Form customer picker only. A won job may still be in production;
+// exclude terminal job states, not every closed sales opportunity.
+const TERMINAL = new Set(["lost", "completed", "closed"]);
+const normalized = (value) => String(value ?? "").trim().toLowerCase();
+
+export function isActiveOrderCustomerJob(job) {
+  if (!job?.id || job.deleted === true || job.completed === true || job.is_rider === true) return false;
+  return !TERMINAL.has(normalized(job.current_stage)) &&
+    !TERMINAL.has(normalized(job.sales_status)) &&
+    !TERMINAL.has(normalized(job.status));
+}
+
+export function filterOrderCustomerJobs(jobs, searchTerm, limit = 10) {
+  const terms = normalized(searchTerm).split(/\s+/).filter(Boolean);
+  return (Array.isArray(jobs) ? jobs : [])
+    .filter(isActiveOrderCustomerJob)
+    .filter(job => {
+      if (!terms.length) return true;
+      const searchable = [job.client_name, job.title, job.description]
+        .filter(Boolean).join(" ").toLowerCase();
+      return terms.every(term => searchable.includes(term));
+    })
+    .slice(0, limit);
+}
