@@ -127,12 +127,15 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     }
   }, [jurisdiction.documents, expandedDoc, clearedDocSearchId]);
 
-  // After a search selection expands a document, move keyboard focus and scroll to its header.
+  // After a search selection expands or switches documents, move focus before paint so
+  // removing the selected result never leaves keyboard focus briefly on the document body.
   // Clearing search results also triggers this when the selected document was already expanded.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const header = documentHeaderRefs.current.get(expandedDoc);
     if (pendingDocNavigationRef.current !== expandedDoc || !header) return;
     pendingDocNavigationRef.current = null;
+    focusedDocumentContentRef.current = null;
+    focusedMatchNavigationDocRef.current = null;
     header.focus({ preventScroll: true });
     header.scrollIntoView({ block: "start", behavior: "auto" });
   }, [expandedDoc, searchResults]);
