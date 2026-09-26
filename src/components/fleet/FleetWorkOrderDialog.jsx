@@ -59,21 +59,32 @@ export default function FleetWorkOrderDialog({
   savingRef.current = saving;
   confirmingRef.current = !!confirmComplete;
 
+  const handleEscape = (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (confirmingRef.current) {
+      if (!savingRef.current) setConfirmComplete("");
+    } else if (!savingRef.current) {
+      onCloseRef.current?.();
+    }
+  };
+  const escapeHandlerRef = useRef(handleEscape);
+  escapeHandlerRef.current = handleEscape;
+
   useEffect(() => {
     if (!open) return undefined;
     previousFocusRef.current = document.activeElement;
     closeButtonRef.current?.focus();
     const handleKeyDown = (event) => {
-      // The nested completion confirmation owns keyboard focus while it is open.
-      if (confirmingRef.current) return;
       if (event.key === "Escape") {
-        if (!savingRef.current) {
-          event.preventDefault();
-          onCloseRef.current?.();
-        }
+        // The nested confirmation handles its own Escape. The backdrop handles
+        // keys originating inside this dialog before they reach document listeners.
+        if (confirmingRef.current || dialogRef.current?.contains(event.target)) return;
+        escapeHandlerRef.current(event);
         return;
       }
-      if (event.key !== "Tab" || !dialogRef.current) return;
+      if (confirmingRef.current || event.key !== "Tab" || !dialogRef.current) return;
       const controls = [...dialogRef.current.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')]
         .filter((element) => element.getClientRects().length > 0);
       if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
@@ -265,8 +276,8 @@ export default function FleetWorkOrderDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fleet-work-order-dialog-title" tabIndex={-1} className="max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] mx-auto overflow-x-hidden overflow-y-auto overscroll-contain bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
+    <div className="fixed inset-0 z-[100] bg-black/50 p-3 sm:p-6 overflow-y-auto" onKeyDown={handleEscape}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-hidden={!!confirmComplete} aria-busy={saving} aria-labelledby="fleet-work-order-dialog-title" tabIndex={-1} className="max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] mx-auto overflow-x-hidden overflow-y-auto overscroll-contain bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-2xl">
           <div><div id="fleet-work-order-dialog-title" className="font-semibold text-gray-900 dark:text-slate-100">{mode === "create" ? "New Fleet Work Order" : mode === "complete" ? `Complete ${workOrder?.work_order_number || "Work Order"}` : `Edit ${workOrder?.work_order_number || "Work Order"}`}</div><div className="text-xs text-gray-500">Fleet maintenance only — never enters signage production.</div></div>
           <button ref={closeButtonRef} type="button" onClick={onClose} disabled={saving || !!confirmComplete} aria-label="Close Fleet work order dialog" className="min-h-11 min-w-11 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><X className="w-5 h-5 mx-auto" /></button>
