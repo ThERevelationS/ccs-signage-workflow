@@ -53,7 +53,8 @@ assert.match(action, /method: 'GET'/);
 assert.match(action, /drive\/v3\/about\?fields=kind/);
 assert.match(action, /drive\/v3\/files\?/);
 assert.match(action, /summarizeOrderBackupReadiness/);
-assert.match(action, /read_only/); // through summary return
+assert.match(action, /summarizeOrderBackupReadiness/); // summary owns read_only
+assert.match(action, /driveApiRead && \/\^\\d\+\$\//);
 assert.doesNotMatch(action, /method: 'POST'|smartsheetWrite\(|\.bulkUpdate\(|\.bulkCreate\(|BackupLog\.create|\/upload\//);
 const review = readFileSync(new URL('../src/components/orders/OrderCreateAttemptReview.jsx',import.meta.url),'utf8');
 assert.match(review, /action: "audit_order_backup_readiness"/);
