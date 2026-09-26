@@ -209,6 +209,14 @@ function entryFallsInPeriod(entry: any, startDate: string, endDate: string) {
   return Boolean(key && key >= startDate && key <= endDate);
 }
 
+function activeEntryMayOverlapPeriod(entry: any, endDate: string) {
+  if (entry?.status !== 'clocked_in' || entry.archived_test_data || entry.archived_admin) return false;
+  const clockInDay = dateKeyInCompanyTime(entry.clock_in);
+  // A missing or malformed active punch cannot safely be ruled out of any period.
+  // Require audited manager investigation rather than silently finalizing past it.
+  return !clockInDay || clockInDay <= endDate;
+}
+
 function entryIsPayPeriodLocked(entry: any) {
   return Boolean(String(entry?.pay_period_id || '').trim());
 }
@@ -2166,7 +2174,8 @@ Deno.serve(async (req) => {
         let allEntries = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
         if (!Array.isArray(allEntries)) throw new Error('TimeEntry pay-period readiness lookup did not return a record list.');
         let periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
-        let activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
+        let activeOverlap = allEntries.filter((entry: any) => activeEntryMayOverlapPeriod(entry, endDate));
+        let invalidActiveClockInCount = activeOverlap.filter((entry: any) => !dateKeyInCompanyTime(entry.clock_in)).length;
         let completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
         const previousLocks = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(previousLocks)) throw new Error('Prior pay-period lock lookup did not return a record list.');
@@ -2235,7 +2244,8 @@ Deno.serve(async (req) => {
           allEntries = await entryEntity.filter({ archived_test_data: { $ne: true }, archived_admin: { $ne: true } });
           if (!Array.isArray(allEntries)) throw new Error('Post-gate TimeEntry readiness lookup did not return a record list.');
           periodEntries = allEntries.filter((entry: any) => entryFallsInPeriod(entry, startDate, endDate));
-          activeOverlap = allEntries.filter((entry: any) => entry.status === 'clocked_in' && dateKeyInCompanyTime(entry.clock_in) && dateKeyInCompanyTime(entry.clock_in) <= endDate);
+          activeOverlap = allEntries.filter((entry: any) => activeEntryMayOverlapPeriod(entry, endDate));
+          invalidActiveClockInCount = activeOverlap.filter((entry: any) => !dateKeyInCompanyTime(entry.clock_in)).length;
           completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
           completedIds = new Set(completedEntries.map((entry: any) => entry.id));
           unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
