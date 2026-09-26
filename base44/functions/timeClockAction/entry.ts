@@ -2197,16 +2197,18 @@ Deno.serve(async (req) => {
           await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
             outcome: 'blocked', details: {
               ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note,
-              active_shift_count: activeOverlap.length, unapproved_count: unapproved.length,
-              pending_correction_count: pendingCorrections.length, locked_elsewhere_count: lockedElsewhere.length,
+              active_shift_count: activeOverlap.length, invalid_active_clock_in_count: invalidActiveClockInCount,
+              unapproved_count: unapproved.length, pending_correction_count: pendingCorrections.length,
+              locked_elsewhere_count: lockedElsewhere.length,
             },
           } });
           return Response.json({
             success: false,
-            error: `Pay period is not ready to finalize: ${activeOverlap.length} active shift(s), ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s).`,
+            error: `Pay period is not ready to finalize: ${activeOverlap.length} active shift(s)${invalidActiveClockInCount ? ` (${invalidActiveClockInCount} missing or invalid clock-in timestamp)` : ''}, ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s).`,
             readiness: {
-              active_shift_count: activeOverlap.length, unapproved_count: unapproved.length,
-              pending_correction_count: pendingCorrections.length, locked_elsewhere_count: lockedElsewhere.length,
+              active_shift_count: activeOverlap.length, invalid_active_clock_in_count: invalidActiveClockInCount,
+              unapproved_count: unapproved.length, pending_correction_count: pendingCorrections.length,
+              locked_elsewhere_count: lockedElsewhere.length,
             },
           }, { status: 409 });
         }
@@ -2266,6 +2268,7 @@ Deno.serve(async (req) => {
                   pay_period_id: period.id, decision, note,
                   blocked_reason: 'readiness_changed_after_employee_gates',
                   active_shift_count: activeOverlap.length,
+                  invalid_active_clock_in_count: invalidActiveClockInCount,
                   unapproved_count: unapproved.length,
                   pending_correction_count: pendingCorrections.length,
                   locked_elsewhere_count: lockedElsewhere.length,
@@ -2274,7 +2277,7 @@ Deno.serve(async (req) => {
             );
             return Response.json({
               success: false,
-              error: `Pay-period readiness changed during finalization: ${activeOverlap.length} active shift(s), ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s). Reload and review before finalizing again.`,
+              error: `Pay-period readiness changed during finalization: ${activeOverlap.length} active shift(s)${invalidActiveClockInCount ? ` (${invalidActiveClockInCount} missing or invalid clock-in timestamp)` : ''}, ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s). Reload and review before finalizing again.`,
             }, { status: 409 });
           }
 
