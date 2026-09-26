@@ -37,7 +37,7 @@ import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
-import { getVisibleSalesColumnIds } from "@/components/sales/salesColumnCatalog.mjs";
+import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -2528,165 +2528,165 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
               {visibleColumnIds.map((columnId) => {
                   switch (columnId) {
                     case "client_name": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
-                <div className="flex items-center gap-1">Customer {getSortIcon('client_name')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'client_name' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('client_name')} onContextMenu={(e) => handleHeaderContextMenu(e, 'client_name', 'Customer')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('client_name')}</div>
               </th>
                     );
                     case "sales_status": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_status' ? 'bg-blue-100' : ''}`} style={{ minWidth: '95px' }} onClick={() => handleSort('sales_status')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_status', 'Sales Status')}>
-                <div className="flex items-center gap-1">Status {getSortIcon('sales_status')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_status' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('sales_status')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_status', 'Sales Status')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('sales_status')}</div>
               </th>
                     );
                     case "stage_age": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since the last verified Sales Pipeline stage change. On Hold is tracked but not flagged as stalled.">Stage Age</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days since the last verified Sales Pipeline stage change. On Hold is tracked but not flagged as stalled.">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "sales_rep": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_rep' ? 'bg-blue-100' : ''}`} style={{ minWidth: '115px' }} onClick={() => handleSort('sales_rep')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_rep', 'Salesperson / Owner')}>
-                <div className="flex items-center gap-1">Sales Owner {getSortIcon('sales_rep')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'sales_rep' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('sales_rep')} onContextMenu={(e) => handleHeaderContextMenu(e, 'sales_rep', 'Salesperson / Owner')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('sales_rep')}</div>
               </th>
                     );
                     case "description": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '150px' }} onClick={() => handleSort('description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'description', 'Job Description')}>
-                <div className="flex items-center gap-1">Job Description {getSortIcon('description')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'description' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'description', 'Job Description')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('description')}</div>
               </th>
                     );
                     case "lead_source": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('lead_source')} onContextMenu={(e) => handleHeaderContextMenu(e, 'lead_source', 'Source')}>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'lead_source' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('lead_source')} onContextMenu={(e) => handleHeaderContextMenu(e, 'lead_source', 'Source')}>
                 <div className="flex items-center gap-1">
-                  Source {getSortIcon('lead_source')}
+                  {getSalesColumnLayout(columnId).headerLabel} {getSortIcon('lead_source')}
                 </div>
               </th>
                     );
                     case "current_task_deadline": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_deadline' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('current_task_deadline')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_deadline', 'Deadline')}>
-                <div className="flex items-center gap-1">Deadline {getSortIcon('current_task_deadline')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_deadline' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('current_task_deadline')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_deadline', 'Deadline')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('current_task_deadline')}</div>
               </th>
                     );
                     case "current_task_assigned_to": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_assigned_to' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('current_task_assigned_to')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_assigned_to', 'Task Assigned')}>
-                <div className="flex items-center gap-1">Task Assigned {getSortIcon('current_task_assigned_to')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_assigned_to' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('current_task_assigned_to')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_assigned_to', 'Task Assigned')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('current_task_assigned_to')}</div>
               </th>
                     );
                     case "designer": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'designer' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('designer')} onContextMenu={(e) => handleHeaderContextMenu(e, 'designer', 'Designer')}>
-                <div className="flex items-center gap-1">Designer {getSortIcon('designer')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'designer' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('designer')} onContextMenu={(e) => handleHeaderContextMenu(e, 'designer', 'Designer')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('designer')}</div>
               </th>
                     );
                     case "project_manager": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_manager' ? 'bg-blue-100' : ''}`} style={{ minWidth: '100px' }} onClick={() => handleSort('project_manager')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_manager', 'Project Manager')}>
-                <div className="flex items-center gap-1">Project Manager {getSortIcon('project_manager')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_manager' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('project_manager')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_manager', 'Project Manager')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('project_manager')}</div>
               </th>
                     );
                     case "estimator": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimator' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimator')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimator', 'Estimator')}>
-                <div className="flex items-center gap-1">Estimator {getSortIcon('estimator')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimator' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('estimator')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimator', 'Estimator')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('estimator')}</div>
               </th>
                     );
                     case "est_inv_at": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: '100px' }}>Est/Inv # Link</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }}>{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "estimate_amount": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimate_amount' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('estimate_amount')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimate_amount', 'Estimate Amount')}>
-                <div className="flex items-center gap-1">Amount {getSortIcon('estimate_amount')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'estimate_amount' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('estimate_amount')} onContextMenu={(e) => handleHeaderContextMenu(e, 'estimate_amount', 'Estimate Amount')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('estimate_amount')}</div>
               </th>
                     );
                     case "current_task_description": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_description' ? 'bg-blue-100' : ''}`} style={{ minWidth: '140px' }} onClick={() => handleSort('current_task_description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_description', 'Task Description')}>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'current_task_description' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('current_task_description')} onContextMenu={(e) => handleHeaderContextMenu(e, 'current_task_description', 'Task Description')}>
                 <div className="flex items-center gap-1">
-                  Task Description {getSortIcon('current_task_description')}
+                  {getSalesColumnLayout(columnId).headerLabel} {getSortIcon('current_task_description')}
                 </div>
               </th>
                     );
                     case "date_initial_contact": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_initial_contact' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_initial_contact')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_initial_contact', 'Est. Requested')}>
-                <div className="flex items-center gap-1">Est. Req. {getSortIcon('date_initial_contact')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_initial_contact' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('date_initial_contact')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_initial_contact', 'Est. Requested')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('date_initial_contact')}</div>
               </th>
                     );
                     case "site_survey_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'site_survey_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('site_survey_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'site_survey_date', 'Site Survey')}>
-                <div className="flex items-center gap-1">Survey {getSortIcon('site_survey_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'site_survey_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('site_survey_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'site_survey_date', 'Site Survey')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('site_survey_date')}</div>
               </th>
                     );
                     case "date_estimate_sent": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_estimate_sent' ? 'bg-blue-100' : ''}`} style={{ minWidth: '120px' }} onClick={() => handleSort('date_estimate_sent')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_estimate_sent', 'Estimate Sent')}>
-                <div className="flex items-center gap-1">Date Estimate Sent to Customer {getSortIcon('date_estimate_sent')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_estimate_sent' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('date_estimate_sent')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_estimate_sent', 'Estimate Sent')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('date_estimate_sent')}</div>
               </th>
                     );
                     case "date_order_created": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_order_created' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('date_order_created')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_order_created', 'Order Created')}>
-                <div className="flex items-center gap-1">Order {getSortIcon('date_order_created')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'date_order_created' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('date_order_created')} onContextMenu={(e) => handleHeaderContextMenu(e, 'date_order_created', 'Order Created')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('date_order_created')}</div>
               </th>
                     );
                     case "project_install_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_install_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('project_install_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_install_date', 'Install Date')}>
-                <div className="flex items-center gap-1">Install {getSortIcon('project_install_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_install_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('project_install_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_install_date', 'Install Date')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('project_install_date')}</div>
               </th>
                     );
                     case "permit_submitted_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_submitted_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_submitted_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_submitted_date', 'Permit Submitted')}>
-                <div className="flex items-center gap-1">Permit Sub {getSortIcon('permit_submitted_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_submitted_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('permit_submitted_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_submitted_date', 'Permit Submitted')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('permit_submitted_date')}</div>
               </th>
                     );
                     case "permit_receipt_confirmed_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_receipt_confirmed_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_receipt_confirmed_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_receipt_confirmed_date', 'Permit Confirmed')}>
-                <div className="flex items-center gap-1">Permit Conf {getSortIcon('permit_receipt_confirmed_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_receipt_confirmed_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('permit_receipt_confirmed_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_receipt_confirmed_date', 'Permit Confirmed')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('permit_receipt_confirmed_date')}</div>
               </th>
                     );
                     case "permit_number": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_number' ? 'bg-blue-100' : ''}`} style={{ minWidth: '70px' }} onClick={() => handleSort('permit_number')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_number', 'Permit Number')}>
-                <div className="flex items-center gap-1">Permit # {getSortIcon('permit_number')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_number' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('permit_number')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_number', 'Permit Number')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('permit_number')}</div>
               </th>
                     );
                     case "permit_approved_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_approved_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('permit_approved_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_approved_date', 'Permit Approved')}>
-                <div className="flex items-center gap-1">Permit App {getSortIcon('permit_approved_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'permit_approved_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('permit_approved_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'permit_approved_date', 'Permit Approved')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('permit_approved_date')}</div>
               </th>
                     );
                     case "days_init_today": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Initial Request to Today's Date">Days Init→Today</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Initial Request to Today's Date">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "days_req_est": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Date Requested to Estimate Sent">Days Req→Est</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Date Requested to Estimate Sent">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "days_est_ord": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Estimate Sent to Date Order Created">Days Est→Ord</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Estimate Sent to Date Order Created">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "days_ord_prm": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Permit Submitted">Days Ord→Prm</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Order Created to Permit Submitted">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "days_prm_app": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Permit Submitted to Permit Approved">Days Prm→App</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Permit Submitted to Permit Approved">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "days_ord_ins": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: '90px' }} title="Days from Order Created to Project Install Date">Days Ord→Ins</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-left font-medium text-gray-700 bg-yellow-50" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days from Order Created to Project Install Date">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "quote_age": return (
-                      <th key={columnId} className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: '72px' }} title="Days since the explicit estimate-sent date. Missing means no trustworthy sent date is available.">Quote Age</th>
+                      <th key={columnId} className="px-2 py-2 border-r text-center font-medium text-gray-700" style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} title="Days since the explicit estimate-sent date. Missing means no trustworthy sent date is available.">{getSalesColumnLayout(columnId).headerLabel}</th>
                     );
                     case "follow_up_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
-                <div className="flex items-center gap-1">Follow Up {getSortIcon('follow_up_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'follow_up_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('follow_up_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'follow_up_date', 'Follow Up Date')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('follow_up_date')}</div>
               </th>
                     );
                     case "expected_close_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'expected_close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '92px' }} onClick={() => handleSort('expected_close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'expected_close_date', 'Expected Close Date')}>
-                <div className="flex items-center gap-1">Expected Close {getSortIcon('expected_close_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'expected_close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('expected_close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'expected_close_date', 'Expected Close Date')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('expected_close_date')}</div>
               </th>
                     );
                     case "close_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'close_date', 'Close Date')}>
-                <div className="flex items-center gap-1">Close {getSortIcon('close_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'close_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('close_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'close_date', 'Close Date')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('close_date')}</div>
               </th>
                     );
                     case "start_date": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'start_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: '80px' }} onClick={() => handleSort('start_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'start_date', 'Start Date')}>
-                <div className="flex items-center gap-1">Start {getSortIcon('start_date')}</div>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'start_date' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('start_date')} onContextMenu={(e) => handleHeaderContextMenu(e, 'start_date', 'Start Date')}>
+                <div className="flex items-center gap-1">{getSalesColumnLayout(columnId).headerLabel} {getSortIcon('start_date')}</div>
               </th>
                     );
                     case "project_type": return (
-                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_type' ? 'bg-blue-100' : ''}`} style={{ minWidth: '90px' }} onClick={() => handleSort('project_type')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_type', 'Project Type')}>
+                      <th key={columnId} className={`px-2 py-2 border-r text-left font-medium text-gray-700 cursor-pointer hover:bg-gray-200 ${sortConfig.key === 'project_type' ? 'bg-blue-100' : ''}`} style={{ minWidth: `${getSalesColumnLayout(columnId).minWidth}px` }} onClick={() => handleSort('project_type')} onContextMenu={(e) => handleHeaderContextMenu(e, 'project_type', 'Project Type')}>
                 <div className="flex items-center gap-1">
-                  Project Type {getSortIcon('project_type')}
+                  {getSalesColumnLayout(columnId).headerLabel} {getSortIcon('project_type')}
                   {isRegistered && <Pencil className="w-3 h-3 cursor-pointer text-blue-500" onClick={(e) => { e.stopPropagation(); openEditDialog("project_type", projectTypes, "salesProjectTypes"); }} />}
                 </div>
               </th>
