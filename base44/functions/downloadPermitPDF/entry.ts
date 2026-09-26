@@ -4,6 +4,11 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 
 const MAX_PERMIT_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
+async function permitDocumentSha256(bytes: Uint8Array) {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 // Maps content-type to file extension
 function getExtFromContentType(contentType, fallbackUrl) {
   if (!contentType) contentType = '';
