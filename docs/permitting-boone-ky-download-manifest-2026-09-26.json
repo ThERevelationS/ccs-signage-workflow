@@ -1,0 +1,62 @@
+{
+  "jurisdiction": "Boone County",
+  "state": "KY",
+  "downloadedAt": "2026-09-26T13:22:40.313Z",
+  "files": [
+    {
+      "filename": "sign-permit-application-2024.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/document_center/PlanningCommission/Applications/SignPermit.pdf",
+      "purpose": "sign_permit_application",
+      "bytes": 269468,
+      "sha256": "cfb43fbaef40b4b4f81494e1c8e077b8062d3841e56b467805178c8e4886ac9a",
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-2024.pdf"
+    },
+    {
+      "filename": "sign-permit-checklist.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/document_center/PlanningCommission/Applications/SignPermit_checklist.pdf",
+      "purpose": "sign_permit_checklist",
+      "bytes": 46354,
+      "sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-checklist.pdf"
+    },
+    {
+      "filename": "planning-fee-schedule-2021.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/document_center/PlanningCommission/FeeSchedule.pdf",
+      "purpose": "planning_fee_schedule_verify_currency",
+      "bytes": 281297,
+      "sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-fee-schedule-2021.pdf"
+    },
+    {
+      "filename": "building-sign-permit-guide.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/SIGN%20FEES.pdf",
+      "purpose": "building_sign_permit_instructions_verify_currency",
+      "bytes": 28092,
+      "sha256": "6e0de4c239c136b7831c695b74e92179cd3374218e0e3434ed829b07bcf3ad69",
+      "repositoryPath": "public/permitting/sources/boone-ky/building-sign-permit-guide.pdf"
+    },
+    {
+      "filename": "online-building-permit-instructions.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/Online%20Permit%20Information.pdf",
+      "purpose": "online_building_permit_instructions_verify_portal_currency",
+      "bytes": 38830,
+      "sha256": "15cedad9abbf4abfbb987fd1e78de0a06253b2708edd3874e653367280d1ac94",
+      "repositoryPath": "public/permitting/sources/boone-ky/online-building-permit-instructions.pdf"
+    },
+    {
+      "filename": "encroachment-permit-application-2025.pdf",
+      "sourceUrl": "https://cms7files.revize.com/boonecountyky/Encroachment%20Permit%20REV%2020250715.pdf",
+      "purpose": "right_of_way_sign_related",
+      "bytes": 1335572,
+      "sha256": "109599a9a5fd571f823543de0eba156fb7241caf7eb707e41652f7820c1e2bdc",
+      "repositoryPath": "public/permitting/sources/boone-ky/encroachment-permit-application-2025.pdf"
+    }
+  ],
+  "onlineForms": {
+    "signZoningApplication": "PDF from Planning Commission; no authenticated Planning Commission online submission portal verified",
+    "buildingPermitPortal": "https://app.govwell.com/",
+    "countyPortalPage": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
+    "legacyOraclePortal": "https://fa-erbz-saasfaprod1.fa.ocs.oraclecloud.com/fscmUI/publicSector.html"
+  },
+  "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
+}
