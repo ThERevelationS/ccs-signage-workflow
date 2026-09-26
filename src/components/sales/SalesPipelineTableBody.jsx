@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import { memo } from "react";
 import SalesPipelineRow from "@/components/sales/SalesPipelineRow";
 
 const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
