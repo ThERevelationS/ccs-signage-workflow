@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { SALES_TABLE_COLUMNS, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns, moveVisibleSalesColumn } from "@/components/sales/salesColumnCatalog.mjs";
+import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns, moveVisibleSalesColumn } from "@/components/sales/salesColumnCatalog.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -65,6 +65,21 @@ const OPERATORS = [
 ];
 
 const ALL_COLUMNS = SALES_TABLE_COLUMNS;
+
+// Static illustration only. Never fetch or display actual customer data in the preset editor.
+const SALES_COLUMN_PREVIEW_SAMPLE = Object.freeze({
+  client_name: "Example Customer", sales_status: "Lead", stage_age: "8d", sales_rep: "Brett",
+  description: "Monument sign", lead_source: "Web", current_task_deadline: "09/29/26",
+  current_task_assigned_to: "Carl", designer: "John", project_manager: "Sarah",
+  estimator: "Mike", est_inv_at: "14568", estimate_amount: "$5,000",
+  current_task_description: "Follow up", date_initial_contact: "09/16/26",
+  site_survey_date: "09/17/26", date_estimate_sent: "09/20/26", date_order_created: "—",
+  project_install_date: "—", permit_submitted_date: "—", permit_receipt_confirmed_date: "—",
+  permit_number: "—", permit_approved_date: "—", days_init_today: "9", days_req_est: "4",
+  days_est_ord: "—", days_ord_prm: "—", days_prm_app: "—", days_ord_ins: "—",
+  quote_age: "5d", follow_up_date: "09/28/26", expected_close_date: "10/15/26",
+  close_date: "—", start_date: "—", project_type: "Signage",
+});
 
 const STANDARD_FILTERS = [
   { name: "All Statuses", value: "all", conditions: [] },
@@ -335,6 +350,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     if (!id) return;
     setColumnSettings((settings) => moveVisibleSalesColumn(settings, id, direction === "up" ? -1 : 1));
   };
+
+  const visiblePreviewColumns = columnSettings.filter((column) => column.visible);
 
   const canDelete = (item) => {
     if (item.is_standard) return false;
@@ -808,65 +825,91 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="clay-card p-2 bg-blue-50/50">
-                  <Label className="mb-1 block font-bold text-sm">Preview</Label>
-                  <p className="text-xs text-gray-500 mb-1">Arrows reorder columns. Scroll horizontally →</p>
-                  <div className="border rounded-lg bg-white overflow-x-auto" style={{ maxHeight: '100px' }}>
-                    <table className="border-collapse" style={{ fontSize: '10px', minWidth: 'max-content' }}>
-                      <thead className="bg-gray-100">
-                        <tr className="border-b">
-                          {columnSettings.filter(c => c.visible).map((column, index) => (
-                            <th key={column.id} className="px-1.5 py-1 border-r text-left font-medium text-gray-700 whitespace-nowrap">
-                              <div className="flex items-center gap-0.5">
-                                <span>{column.label}</span>
-                                <div className="flex items-center">
-                                  <button 
+                <div className="clay-card min-w-0 p-2 bg-blue-50/50">
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
+                    <Label className="font-bold text-sm">Preview</Label>
+                    <span className="text-[11px] font-medium text-blue-900">
+                      {visiblePreviewColumns.length} of {SALES_TABLE_COLUMNS.length} data columns visible
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">
+                    Same headers, minimum widths and saved order as the Sales Pipeline table. Use the header arrows to reorder. Scroll horizontally →
+                  </p>
+                  {visiblePreviewColumns.length === 0 && (
+                    <p role="status" className="mb-1 text-xs text-amber-800">No data columns selected. Check a column above to add it.</p>
+                  )}
+                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white" aria-label="Horizontal Sales Pipeline column preview" tabIndex={0}>
+                    <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "12px" }}>
+                      <thead className="bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap">
+                        <tr className="h-7 border-b">
+                          <th className="border-r px-2 py-1 text-center font-medium text-gray-700" style={{ width: "32px", minWidth: "32px" }}>#</th>
+                          {visiblePreviewColumns.map((column, index) => (
+                            <th
+                              key={column.id}
+                              className="border-r px-2 py-1 text-left font-medium text-gray-700"
+                              style={{ minWidth: `${getSalesColumnLayout(column.id).minWidth}px` }}
+                              title={column.label}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="min-w-0 truncate">{getSalesColumnLayout(column.id).headerLabel}</span>
+                                <div className="flex shrink-0 items-center">
+                                  <button
+                                    type="button"
+                                    aria-label={`Move ${column.label} left`}
+                                    title={`Move ${column.label} left`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
                                     disabled={index === 0}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
                                   >
-                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                   </button>
-                                  <button 
+                                  <button
+                                    type="button"
+                                    aria-label={`Move ${column.label} right`}
+                                    title={`Move ${column.label} right`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
-                                    disabled={index === columnSettings.filter(c => c.visible).length - 1}
-                                    className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    disabled={index === visiblePreviewColumns.length - 1}
+                                    className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
                                   >
-                                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                   </button>
                                 </div>
                               </div>
                             </th>
                           ))}
-                          <th className="px-1.5 py-1 text-left font-medium text-gray-700 whitespace-nowrap">Actions</th>
+                          <th className="px-2 py-1 text-left font-medium text-gray-700" style={{ minWidth: "60px" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b hover:bg-gray-50 bg-white">
-                          {columnSettings.filter(c => c.visible).map(column => (
-                            <td key={column.id} className="px-1.5 py-1 border-r text-gray-700 whitespace-nowrap">
-                              {column.id === "client_name" ? "Test" : 
-                               column.id === "lead_source" ? "Web" :
-                               column.id === "designer" ? "John" :
-                               column.id === "project_manager" ? "Sarah" :
-                               column.id === "estimator" ? "Mike" :
-                               column.id === "current_task_assigned_to" ? "Carl" :
-                               column.id === "current_task_description" ? "Follow up" :
-                               column.id === "title" ? "Notes" :
-                               column.id === "project_type" ? "Sign" :
-                               column.id === "est_inv_at" ? "Loc A" :
-                               column.id === "permit_number" ? "P-123" :
-                               column.id.includes("date") && !column.id.includes("days") ? "1/1" : 
-                               column.id.includes("amount") ? "$5k" : 
-                               column.id.includes("days") ? "7" : 
-                               "-"}
-                            </td>
-                          ))}
-                          <td className="px-1.5 py-1 text-gray-500 whitespace-nowrap">•••</td>
+                        <tr className="border-b bg-white">
+                          <td className="border-r px-2 py-1 text-center font-medium text-gray-500">1</td>
+                          {visiblePreviewColumns.map((column) => {
+                            const sample = SALES_COLUMN_PREVIEW_SAMPLE[column.id];
+                            const isEmpty = sample === "—";
+                            return (
+                              <td
+                                key={column.id}
+                                className="border-r px-1 py-0.5 whitespace-nowrap"
+                                style={{ minWidth: `${getSalesColumnLayout(column.id).minWidth}px` }}
+                              >
+                                <span className={column.id === "sales_status"
+                                  ? "rounded bg-blue-50 px-1 py-0.5 text-blue-700"
+                                  : column.id === "client_name" || column.id === "est_inv_at"
+                                    ? "text-blue-600"
+                                    : column.id === "stage_age" || column.id === "quote_age"
+                                      ? "rounded-full bg-slate-100 px-1.5 py-0.5 text-slate-700"
+                                      : isEmpty ? "text-gray-400" : "text-gray-700"}>
+                                  {sample}
+                                </span>
+                              </td>
+                            );
+                          })}
+                          <td className="px-2 py-0.5 text-gray-500 whitespace-nowrap">•••</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
+                  <p className="mt-1 text-[11px] text-gray-500">Example row only. The editor never changes a WorkOrder.</p>
                 </div>
 
                 <div className="flex gap-2">
