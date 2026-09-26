@@ -446,6 +446,98 @@ test('pending or mismatched Clock In audit cannot release completed gate', async
   }
 });
 
+test('archived historical active rows remain untouched and do not block finalization', async () => {
+  const h = setup();
+  const archived = [
+    { id: 'archived-old-server', archived_test_data: true, clock_in: '2026-09-11T10:40:00.349Z' },
+    { id: 'archived-old-legacy', archived_test_data: true, clock_in: '2026-03-06T17:10:51.905Z' },
+    { id: 'archived-by-admin', archived_admin: true, clock_in: '2026-09-20T13:00:00.000Z' },
+  ].map((entry) => ({
+    ...entry, user_email: employee.email, status: 'clocked_in',
+    updated_date: '2026-09-11T10:41:17.972Z',
+  }));
+  h.rows.TimeEntry.push(...archived);
+  const originals = structuredClone(archived);
+  const finalized = await h.action('finalize', 'archived-legacy-finalize-001');
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  assert.equal(h.period().status, 'finalized');
+  assert.equal(h.entryLocks().length, 1);
+  assert.equal(h.period().finalized_summary.entry_count, 1);
+  assert.deepEqual(h.rows.TimeEntry.slice(1), originals);
+});
+
+test('archived historical active entry does not block a new Clock In', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeEntry.push({
+    id: 'archived-legacy-clockin', user_email: employee.email,
+    status: 'clocked_in', clock_in: '2026-03-06T17:10:51.905Z',
+    archived_test_data: true, updated_date: '2026-09-11T02:43:15.754Z',
+  });
+  const response = await h.clockIn('archived-legacy-new-clockin-001');
+  assert.equal(response.status, 200, JSON.stringify(response.body));
+  assert.equal(response.body.status, 'clocked_in');
+  assert.equal(h.rows.TimeEntry[0].archived_test_data, true);
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in' && !row.archived_test_data).length, 1);
+});
+
+test('genuine unarchived orphaned active shift blocks period finalization', async () => {
+  const h = setup();
+  h.rows.TimeEntry.push({
+    id: 'genuine-unarchived-orphan', user_email: employee.email, status: 'clocked_in',
+    clock_in: '2026-09-21T14:00:00.000Z', updated_date: '2026-09-21T14:00:01.000Z',
+  });
+  const blocked = await h.action('finalize', 'unarchived-orphan-finalize-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(blocked.body.readiness.active_shift_count, 1);
+  assert.equal(blocked.body.readiness.invalid_active_clock_in_count, 0);
+  assert.equal(h.period().status, 'review');
+  assert.equal(h.entryLocks().length, 0);
+  assert.equal(h.audit('unarchived-orphan-finalize-001')[0].outcome, 'blocked');
+});
+
+test('malformed or absent live active clock-in blocks finalization with audit evidence', async () => {
+  for (const [name, clockIn] of [['missing', null], ['malformed', 'not-a-timestamp']]) {
+    const h = setup();
+    h.rows.TimeEntry.push({
+      id: 'invalid-active-' + name, user_email: employee.email, status: 'clocked_in',
+      clock_in: clockIn, updated_date: '2026-09-21T14:00:01.000Z',
+    });
+    const request = 'invalid-active-finalize-' + name + '-001';
+    const result = await h.action('finalize', request);
+    assert.equal(result.status, 409, JSON.stringify({ name, result }));
+    assert.equal(result.body.readiness.active_shift_count, 1);
+    assert.equal(result.body.readiness.invalid_active_clock_in_count, 1);
+    assert.match(result.body.error, /invalid clock-in timestamp/);
+    assert.equal(h.period().status, 'review');
+    assert.equal(h.entryLocks().length, 0);
+    assert.equal(h.audit(request)[0].outcome, 'blocked');
+    assert.equal(h.audit(request)[0].details.invalid_active_clock_in_count, 1);
+  }
+});
+
+test('post-gate snapshot catches newly arriving active shift with invalid clock-in', async () => {
+  const h = setup();
+  let injected = false;
+  h.setAfterRowUpdate((entity, _query, update, row) => {
+    if (!injected && entity === 'TimeClockEmployeeState' && row.user_email === administrator.email &&
+        update.$set?.correction_create_time_entry_id === 'pay_period:synthetic-period') {
+      injected = true;
+      h.rows.TimeEntry.push({
+        id: 'invalid-postgate-arrival', user_email: employee.email,
+        status: 'clocked_in', clock_in: '', updated_date: '2026-09-21T14:00:01.000Z',
+      });
+    }
+  });
+  const request = 'invalid-postgate-finalize-001';
+  const result = await h.action('finalize', request);
+  assert.equal(result.status, 409, JSON.stringify(result.body));
+  assert.match(result.body.error, /invalid clock-in timestamp/);
+  assert.equal(h.audit(request)[0].details.blocked_reason, 'readiness_changed_after_employee_gates');
+  assert.equal(h.audit(request)[0].details.invalid_active_clock_in_count, 1);
+  assert.equal(h.entryLocks().length, 0);
+  assert.equal(h.rows.TimeClockEmployeeState.filter((row) => row.correction_create_status === 'creating').length, 0);
+});
+
 for (const [name, fn] of tests) {
   try { await fn(); console.log('PASS ' + name); }
   catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
