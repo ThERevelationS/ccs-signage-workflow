@@ -6,6 +6,7 @@ import {
   preserveLegacySalesColumnEntries,
   getUnavailableSalesColumns,
   salesPresetColumnVisible,
+  getVisibleSalesColumnIds,
   moveVisibleSalesColumn,
 } from "../src/components/sales/salesColumnCatalog.mjs";
 
@@ -15,15 +16,18 @@ const spreadsheet = read("src/components/sales/SalesPipelineSpreadsheet.jsx");
 const editor = read("src/components/sales/CustomFilterDialog.jsx");
 const headers = spreadsheet.split("<thead className=")[1]?.split("</thead>")[0];
 assert.ok(headers, "Sales table headers must be inspectable.");
-const visibleIds = (source) => Array.from(source.matchAll(/isColumnVisible\("([^"]+)"\)/g), ([, id]) => id);
+const columnCases = (source) => Array.from(source.matchAll(/case "([^"]+)": return \(/g), ([, id]) => id);
 const catalogIds = SALES_TABLE_COLUMNS.map((col) => col.id);
-const headerIds = visibleIds(headers);
-const rowIds = visibleIds(row);
+const headerIds = columnCases(headers);
+const rowIds = columnCases(row);
 assert.equal(new Set(catalogIds).size, catalogIds.length, "Catalog must have unique field IDs.");
 assert.deepEqual(headerIds, catalogIds, "The compact editor must expose every rendered header in actual table order.");
 assert.deepEqual(rowIds, catalogIds, "The compact editor must expose every rendered row cell in actual table order.");
 assert.match(editor, /const ALL_COLUMNS = SALES_TABLE_COLUMNS;/);
-assert.match(spreadsheet, /salesPresetColumnVisible\(activeColumnPreset, columnId\)/);
+assert.match(spreadsheet, /getVisibleSalesColumnIds\(activeColumnPreset\)/);
+assert.match(spreadsheet, /visibleColumnIds\.map\(\(columnId\) =>/);
+assert.match(row, /visibleColumnIds\.map\(\(columnId\) =>/);
+assert.match(read("src/components/sales/SalesPipelineTableBody.jsx"), /visibleColumnIds=\{visibleColumnIds\}/);
 
 const legacy = [
   { id: "client_name", label: "Customer", visible: true },
@@ -51,6 +55,13 @@ assert.equal(salesPresetColumnVisible({ column_settings: legacy }, "lead_source"
 assert.equal(salesPresetColumnVisible({ column_settings: legacy }, "client_name"), true);
 assert.equal(salesPresetColumnVisible({ column_settings: legacy }, "quote_date"), false,
   "Unavailable columns must never render.");
+assert.deepEqual(getVisibleSalesColumnIds({ column_settings: legacy }),
+  ["client_name", "description"],
+  "The table must match the editor's checked column order, skipping hidden and retired fields.");
+assert.deepEqual(getVisibleSalesColumnIds(null), catalogIds,
+  "Default View retains the established complete column order.");
+assert.deepEqual(getVisibleSalesColumnIds({ column_settings: [] }), [],
+  "An explicitly empty saved preset must not silently display extra data columns.");
 assert.deepEqual(getUnavailableSalesColumns(legacy).map((col) => col.id),
   ["quote_date", "title", "probability"]);
 assert.deepEqual(preserveLegacySalesColumnEntries(normalized, legacy).slice(-3), legacy.slice(-3),
