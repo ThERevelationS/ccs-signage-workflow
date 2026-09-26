@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle, CheckCircle2, RefreshCw, Loader2, Lock, AlertTriangle } from "lucide-react";
+import { AlertCircle, CheckCircle2, RefreshCw, Loader2, Lock, AlertTriangle, DownloadCloud } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
+
+const PDF_DOWNLOAD_BATCH_LIMIT = 25;
+const needsPDFArchive = (doc) => Boolean(doc?.url && !doc.file_url && /\.pdf(?:[?#]|$)/i.test(doc.url));
 
 export default function PermittingRepositoryAdmin() {
   const [jurisdictions, setJurisdictions] = useState([]);
@@ -36,6 +40,9 @@ export default function PermittingRepositoryAdmin() {
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const [bulkAddError, setBulkAddError] = useState('');
   const [batchActionError, setBatchActionError] = useState('');
+  const [isDownloadingFiles, setIsDownloadingFiles] = useState(false);
+  const [documentDownloadProgress, setDocumentDownloadProgress] = useState(null);
+  const [documentDownloadFailures, setDocumentDownloadFailures] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ processed: 0, total: 0, currentJurisdiction: '' });
@@ -156,6 +163,73 @@ export default function PermittingRepositoryAdmin() {
 
     setBatchActionError("");
     proceedWithUpdate();
+  };
+
+  // Archive actual PDFs without replacing any research, manually entered data, or
+  // operational PermitLocality workflow. The backend patches only the matching
+  // document in the latest version of its JurisdictionProfile.
+  const handleDownloadSelectedPDFs = async () => {
+    if (isDownloadingFiles || isBatchUpdating || isDeleting) return;
+    const seen = new Set();
+    const allMissing = jurisdictions
+      .filter(j => selectedIds.has(j.id))
+      .flatMap(j => (j.documents || []).filter(needsPDFArchive).map(doc => ({
+        jurisdictionId: j.id, jurisdictionName: `${j.name}, ${j.state}`,
+        documentId: doc.id, title: doc.title || 'Permit document', url: doc.url,
+      })))
+      .filter(item => {
+        const key = `${item.jurisdictionId}|${item.url}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    if (!allMissing.length) {
+      setBatchActionError('No selected jurisdictions have direct PDF sources awaiting file storage. Web-only ordinances and online forms remain linked resources.');
+      return;
+    }
+    setBatchActionError('');
+    setDocumentDownloadFailures([]);
+    setIsDownloadingFiles(true);
+    const batch = allMissing.slice(0, PDF_DOWNLOAD_BATCH_LIMIT);
+    let uploaded = 0;
+    let skipped = 0;
+    let failed = 0;
+    const failures = [];
+    setDocumentDownloadProgress({ processed: 0, total: batch.length, remaining: allMissing.length - batch.length, uploaded, skipped, failed, current: '' });
+    try {
+      for (const [index, item] of batch.entries()) {
+        try {
+          const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
+          const currentDoc = (latest.documents || []).find(doc => doc.id === item.documentId && doc.url === item.url);
+          if (!currentDoc || currentDoc.file_url) {
+            skipped++;
+          } else {
+            const res = await downloadPermitPDF({ jurisdiction_id: item.jurisdictionId, document_url: item.url, document_title: item.title });
+            // A returned URL alone is not enough: confirm the correct source now
+            // has a stored file in the latest record before counting a success.
+            const saved = res.data?.jurisdiction || await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
+            const archived = (saved.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && doc.file_url);
+            if (!archived) throw new Error('Upload was not confirmed against the matching document');
+            uploaded++;
+          }
+        } catch (error) {
+          // A timeout may have committed the upload; inspect it once before
+          // reporting failure so an operator can safely rerun the remainder.
+          const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId).catch(() => null);
+          const recovered = (latest?.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && doc.file_url);
+          if (recovered) uploaded++;
+          else {
+            failed++;
+            failures.push(`${item.jurisdictionName}: ${item.title} — ${error?.message || 'Download failed'}`);
+          }
+        }
+        setDocumentDownloadProgress({ processed: index + 1, total: batch.length, remaining: allMissing.length - batch.length, uploaded, skipped, failed, current: `${item.jurisdictionName}: ${item.title}` });
+      }
+    } finally {
+      setDocumentDownloadFailures(failures);
+      await loadJurisdictions();
+      setIsDownloadingFiles(false);
+    }
   };
 
   const proceedWithUpdate = async () => {
@@ -431,7 +505,7 @@ export default function PermittingRepositoryAdmin() {
         <div className="flex gap-2">
           <Button 
             onClick={handleBatchUpdate}
-            disabled={isBatchUpdating || selectedIds.size === 0}
+            disabled={isBatchUpdating || isDownloadingFiles || selectedIds.size === 0}
             className="flex-1 bg-purple-600 hover:bg-purple-700 gap-2"
           >
             {isBatchUpdating ? (
@@ -448,12 +522,36 @@ export default function PermittingRepositoryAdmin() {
           </Button>
           <Button 
             onClick={() => { setDeleteError(''); setShowDeleteConfirm(true); }}
-            disabled={isDeleting || jurisdictions.length === 0}
+            disabled={isDeleting || isDownloadingFiles || isBatchUpdating || jurisdictions.length === 0}
             variant="destructive"
             className="gap-2"
           >
             Delete All
           </Button>
+        </div>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+          <p className="text-xs text-blue-900">Download actual official PDF forms, ordinances and schedules into Base44 File Storage. Each run handles at most {PDF_DOWNLOAD_BATCH_LIMIT} missing files; web-only ordinances and application portals stay linked, not misfiled as PDFs.</p>
+          <Button
+            variant="outline"
+            onClick={handleDownloadSelectedPDFs}
+            disabled={!selectedIds.size || isDownloadingFiles || isBatchUpdating || isDeleting}
+            className="w-full min-h-11 gap-2 border-blue-300"
+          >
+            {isDownloadingFiles ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}
+            {isDownloadingFiles ? 'Archiving official PDFs...' : `Download Missing PDFs (${selectedIds.size} selected localities)`}
+          </Button>
+          {documentDownloadProgress && (
+            <div role="status" aria-live="polite" className="text-xs text-blue-900 space-y-1">
+              <p>{documentDownloadProgress.processed}/{documentDownloadProgress.total} processed; {documentDownloadProgress.uploaded} stored, {documentDownloadProgress.skipped} already changed/stored, {documentDownloadProgress.failed} failed{documentDownloadProgress.remaining ? `; ${documentDownloadProgress.remaining} more queued for another run` : ''}.</p>
+              {isDownloadingFiles && <p className="break-words">{documentDownloadProgress.current}</p>}
+            </div>
+          )}
+          {documentDownloadFailures.length > 0 && (
+            <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+              <p className="font-semibold">Unarchived documents (safe to retry):</p>
+              {documentDownloadFailures.map((failure, i) => <p key={i} className="break-words">{failure}</p>)}
+            </div>
+          )}
         </div>
       </div>
 
