@@ -707,10 +707,12 @@ export default function SIPs() {
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
+                        required
                         selected={parseLocalDate(wo.sip_revisit_date)}
                         disabled={{ before: addDays(today, 1) }}
                         onSelect={(date) => {
-                          updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                          if (!date) return;
+                          updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
                           setOpenDatePopover(null);
                         }}
                       />
@@ -1012,10 +1014,12 @@ export default function SIPs() {
                         <PopoverContent className="w-auto p-0">
                           <Calendar
                             mode="single"
+                            required
                             selected={parseLocalDate(wo.sip_revisit_date)}
                             disabled={{ before: addDays(today, 1) }}
                             onSelect={(date) => {
-                              updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                              if (!date) return;
+                              updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
                               setOpenDatePopover(null);
                             }}
                           />
@@ -1116,10 +1120,12 @@ export default function SIPs() {
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
+                          required
                           selected={parseLocalDate(wo.sip_revisit_date)}
                           disabled={{ before: addDays(today, 1) }}
                           onSelect={(date) => {
-                            updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                            if (!date) return;
+                            updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
                             setOpenDatePopover(null);
                           }}
                         />
@@ -1194,10 +1200,12 @@ export default function SIPs() {
                           <PopoverContent className="w-auto p-0">
                             <Calendar
                               mode="single"
+                              required
                               selected={parseLocalDate(wo.sip_revisit_date)}
                               disabled={{ before: addDays(today, 1) }}
                               onSelect={(date) => {
-                                updateWorkOrder(wo.id, "sip_revisit_date", date ? format(date, "yyyy-MM-dd") : "");
+                                if (!date) return;
+                                updateWorkOrder(wo.id, "sip_revisit_date", format(date, "yyyy-MM-dd"));
                                 setOpenDatePopover(null);
                               }}
                             />
