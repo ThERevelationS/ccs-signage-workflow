@@ -1,0 +1,99 @@
+{
+  "kind": "jurisdiction-primary-source-pilot",
+  "researchDate": "2026-09-26",
+  "sources": [
+    {
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?tocid=003.018.004",
+      "status": "adopted text"
+    },
+    {
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2558",
+      "status": "adopted text"
+    },
+    {
+      "url": "https://www.boonecountyky.org/document_center/PlanningCommission/Applications/SignPermit.pdf",
+      "status": "county-hosted form dated May 2024"
+    },
+    {
+      "url": "https://boonecountyky.org/document_center/PlanningCommission/FeeSchedule.pdf",
+      "status": "county-hosted 2021 edition; prices unverified"
+    },
+    {
+      "url": "https://secure.boonecountygis.com/server/rest/services/ServicesBoone/PlanningAndZoningGroup_Boone/MapServer",
+      "status": "county planning GIS"
+    },
+    {
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky-rewrite/page.aspx?name=Introduction-Schedule",
+      "status": "PROPOSED REWRITE only, excluded from requirements"
+    }
+  ],
+  "record": {
+    "name": "Boone County",
+    "state": "KY",
+    "type": "county",
+    "website_url": "https://www.boonecountyky.org/",
+    "permitting_url": "https://www.boonecountyky.org/document_center/PlanningCommission/Applications/SignPermit.pdf",
+    "ai_summary": "Boone County Planning Commission administers zoning sign permits under the adopted zoning regulations, Article 34. Most signs require a sign permit; Section 3404 lists exemptions, and Section 3405 requires drawings of the sign and its location. Staff must check the exact zoning district, municipality, special sign district, and any separate building/electrical approvals before determining requirements.",
+    "contact_info": {
+      "department": "Boone County Planning Commission",
+      "phone": "859-334-2196",
+      "email": "plancom@boonecountyky.org",
+      "address": "2950 Washington Street, Room 317, Burlington, KY 41005"
+    },
+    "permit_requirements": {
+      "requires_permit": true,
+      "setback_requirements": "Depends on the parcel's zoning district, sign type, and special sign district; check adopted Article 34 and parcel zoning.",
+      "processing_time": "Under adopted Section 3405, staff issues a sign permit or a notice of nonconformance within 10 working days after receiving a complete application; no automatic approval."
+    },
+    "sqft_width_height_rules": "Varies by zoning district, sign type, building/lot frontage, and special sign district; use adopted Article 34, Sections 3407-3408. No single countywide maximum is asserted.",
+    "height_allowances": "Depends on sign type and applicable zoning district; check Article 34 and parcel zoning before design.",
+    "setback_rules": "Consult Article 34 and parcel zoning, rights-of-way and easements; no single countywide setback asserted.",
+    "lighting_allowances": "Check sign type and district under Article 34, including Section 3408.5 electronic message board/screen signs; do not assume a countywide allowance.",
+    "documents": [
+      {
+        "id": "source-boone-ky-article34-20260926",
+        "title": "Adopted Boone County Zoning Regulations — Article 34: Signs",
+        "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?tocid=003.018.004",
+        "doc_type": "sign_ordinance",
+        "source": "ai_discovered",
+        "ai_summary": "Adopted zoning provisions on sign exemptions, permit submissions, district and sign-type limits, electronic message signs, and special sign districts. Use adopted ordinance rather than the separate proposed 2026 rewrite."
+      },
+      {
+        "id": "source-boone-ky-sec3405-20260926",
+        "title": "Article 34 §3405 — Sign permitting and review",
+        "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2558",
+        "doc_type": "zoning_code",
+        "source": "ai_discovered",
+        "ai_summary": "A sign permit is required except for the signs exempted by §3404. Applications identify applicant and owner, sign construction and illumination, lot layout, rights-of-way/easements, sign dimensions and height. Staff responds to a complete application within ten working days; silence is not an approval. Issued permits generally expire if installation has not occurred within one year."
+      },
+      {
+        "id": "source-boone-ky-sign-form-20260926",
+        "title": "Boone County Planning Commission — Sign Permit Application (May 2024)",
+        "url": "https://www.boonecountyky.org/document_center/PlanningCommission/Applications/SignPermit.pdf",
+        "doc_type": "permit_application",
+        "source": "ai_discovered",
+        "ai_summary": "Official five-page sign permit application. Submit completed form, fees, and three copies of drawings showing sign location, height, dimensions/area, illumination, and construction materials. Form records sign types, face changes, building and lot frontage, owner authorization and staff disposition. Planning Commission contact appears on page five."
+      },
+      {
+        "id": "source-boone-ky-fees-20260926",
+        "title": "Planning Commission Fee Schedule — May 2021 edition (RECONFIRM FEES)",
+        "url": "https://boonecountyky.org/document_center/PlanningCommission/FeeSchedule.pdf",
+        "doc_type": "fee_schedule",
+        "source": "ai_discovered",
+        "ai_summary": "Official county-hosted fee schedule last marked revised May 19, 2021; Section X covers sign permit review fees on page eight. This edition is older and amounts MUST be reconfirmed with the Planning Commission before quoting any job."
+      },
+      {
+        "id": "source-boone-ky-gis-20260926",
+        "title": "Boone County GIS — Planning, zoning and special sign districts",
+        "url": "https://secure.boonecountygis.com/server/rest/services/ServicesBoone/PlanningAndZoningGroup_Boone/MapServer",
+        "doc_type": "other",
+        "source": "ai_discovered",
+        "ai_summary": "County Planning Commission GIS resource with zoning district and special sign district map layers. Use the actual parcel/location and its current municipality and overlays before selecting sign limits."
+      }
+    ],
+    "notes": "RESEARCH IMPORT 2026-09-26; NOT STAFF VERIFIED. Sources: current adopted Article 34 online ordinance, county May 2024 sign application, older May 2021 fee PDF, county GIS. The 2026 rewrite is a public proposal with adoption anticipated late 2026; do not treat its changes as law. Confirm later amendments, current fees, parcel jurisdiction, exemptions, design standards, building/electrical permits and source documents with the Planning Commission. Source PDF URLs are linked, not stored copies; extracted full document text has not been imported.",
+    "verification_status": "needs_verification",
+    "auto_refresh": false,
+    "last_updated": "2026-09-26T00:00:00Z"
+  }
+}
