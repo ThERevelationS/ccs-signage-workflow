@@ -4,7 +4,8 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock, Wrench, ChevronDown } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -144,6 +145,14 @@ export default function SalesPipeline() {
     setFilterStatus("all");
   };
 
+  const chooseView = (nextView) => {
+    setViewMode(nextView);
+    if (nextView === "daily" || nextView === "insights") {
+      setAttentionFilter("all");
+      setFilterStatus("all");
+    }
+  };
+
   const formatPipelineValue = (value) => new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -159,37 +168,12 @@ export default function SalesPipeline() {
   return (
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
-        <div className="mb-1.5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
-          <div className="clay-card p-2 flex-shrink-0">
-            <DollarSign className="w-5 h-5 text-green-600" />
-          </div>
-          <div className="flex-shrink-0 leading-none">
-            <h1 className="whitespace-nowrap text-lg font-bold text-gray-800">Sales Pipeline</h1>
-            <span className="sr-only">Manage leads and opportunities</span>
-          </div>
-          {/* Duplicate cleanup */}
-          <button
-            onClick={() => setShowDuplicateCleanup(!showDuplicateCleanup)}
-            className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all flex-shrink-0 ${showDuplicateCleanup ? 'border-green-400 bg-green-50 text-green-800' : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'}`}
-          >
-            <Inbox className="w-4 h-4" />
-            {showDuplicateCleanup ? '← Return' : 'Duplicate Cleanup'}
-          </button>
-
-          <div className="flex-1" />
-
-          <div className="flex shrink-0 items-center gap-1.5">
-            {isRegistered && (
-              <Button 
-                onClick={() => setShowNewClientForm(true)}
-                className="clay-button h-8 border-none px-2.5 text-xs text-gray-800"
-                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Client
-              </Button>
-            )}
-
+        <section aria-label="Sales Pipeline navigation" className="mb-2 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="mr-1 flex shrink-0 items-center gap-1.5">
+              <DollarSign className="h-5 w-5 text-green-600" aria-hidden="true" />
+              <h1 className="whitespace-nowrap text-base font-bold text-gray-800 sm:text-lg">Sales Pipeline</h1>
+            </div>
             <div className="flex items-center">
               <span className="sr-only">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
@@ -198,7 +182,7 @@ export default function SalesPipeline() {
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
-                <SelectTrigger aria-label="Workspace" className="h-8 w-40 text-xs">
+                <SelectTrigger aria-label="Workspace" className="h-9 w-[156px] text-xs">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
@@ -212,22 +196,36 @@ export default function SalesPipeline() {
             </div>
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
-              <div className="flex items-center">
+              <div className="hidden shrink-0 items-center sm:flex">
                 <span className="sr-only">View</span>
-                <div role="group" aria-label="View" className="flex h-8 overflow-hidden rounded-md border border-gray-200 bg-white">
-                  <button type="button" onClick={() => setViewMode("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
-                  <button type="button" onClick={() => setViewMode("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
-                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("daily"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
-                  {recordScope === "current" && <button type="button" onClick={() => { setViewMode("insights"); setAttentionFilter("all"); setFilterStatus("all"); }} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "insights" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />Insights</span></button>}
+                <div role="group" aria-label="View" className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
+                  <button type="button" onClick={() => chooseView("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
+                  <button type="button" onClick={() => chooseView("board")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "board" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Board</button>
+                  {recordScope === "current" && <button type="button" onClick={() => chooseView("daily")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "daily" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" />Daily</span></button>}
+                  {recordScope === "current" && <button type="button" onClick={() => chooseView("insights")} className={`border-l border-gray-200 px-3 text-xs font-medium transition-colors ${viewMode === "insights" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}><span className="flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />Insights</span></button>}
                 </div>
               </div>
+            )}
+
+            {recordScope !== "history" && recordScope !== "outcomes" && (
+              <Select value={viewMode} onValueChange={chooseView}>
+                <SelectTrigger aria-label="Pipeline view" className="h-9 w-[112px] text-xs sm:hidden">
+                  <SelectValue placeholder="View" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="table">Table</SelectItem>
+                  <SelectItem value="board">Board</SelectItem>
+                  {recordScope === "current" && <SelectItem value="daily">Daily</SelectItem>}
+                  {recordScope === "current" && <SelectItem value="insights">Insights</SelectItem>}
+                </SelectContent>
+              </Select>
             )}
 
             {recordScope === "outcomes" && (
               <div className="flex items-center">
                 <span className="sr-only">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
-                  <SelectTrigger aria-label="Outcome Period" className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Outcome Period" className="h-9 w-36 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tracked</SelectItem>
                     <SelectItem value="30">Last 30 Days</SelectItem>
@@ -238,20 +236,64 @@ export default function SalesPipeline() {
               </div>
             )}
 
-            <div className="flex items-center">
+            <div className="min-w-[180px] flex flex-1 items-center sm:min-w-[220px]">
               <span className="sr-only">Search</span>
-              <div className="relative">
+              <div className="relative w-full">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Customer, contact, estimate, address..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search sales pipeline"
-                  className="h-8 w-56 pl-9 text-xs"
+                  className="h-9 w-full pl-9 text-xs"
                 />
               </div>
             </div>
 
+            {isRegistered && (
+              <Button
+                type="button"
+                onClick={() => setShowNewClientForm(true)}
+                className="clay-button h-9 shrink-0 border-none px-3 text-xs text-gray-800"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
+              >
+                <Plus className="mr-1.5 h-4 w-4" /> New Client
+              </Button>
+            )}
+            {showDuplicateCleanup && (
+              <Button type="button" variant="outline" className="h-9 border-green-300 bg-green-50 text-xs text-green-900"
+                onClick={() => setShowDuplicateCleanup(false)}>
+                Return to Pipeline
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="h-9 shrink-0 gap-1.5 px-3 text-xs" aria-label="Sales Pipeline tools">
+                  <Wrench className="h-3.5 w-3.5" /> Tools <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                {canImportExport && (
+                  <>
+                    <DropdownMenuItem onSelect={() => spreadsheetRef.current?.importFromExcel()}>
+                      <Upload className="h-4 w-4" /> Import Sales Pipeline
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => spreadsheetRef.current?.exportToExcel()}>
+                      <Download className="h-4 w-4" /> Export Sales Pipeline
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => spreadsheetRef.current?.openImportHistory()}>
+                      <History className="h-4 w-4" /> Import History
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onSelect={() => setShowDuplicateCleanup((open) => !open)}>
+                  <Inbox className="h-4 w-4" /> {showDuplicateCleanup ? "Return to Pipeline" : "Duplicate Cleanup"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline saved filters and column layouts">
             <div className="flex items-center">
               <span className="sr-only">Information Filters</span>
               <Select value={filterStatus} onValueChange={(value) => {
@@ -261,7 +303,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger aria-label="Information Filters" className="h-8 w-40 text-xs">
+                <SelectTrigger aria-label="Information Filters" className="h-9 w-40 text-xs">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -304,7 +346,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger aria-label="Column Filters" className="h-8 w-40 text-xs">
+              <SelectTrigger aria-label="Column Filters" className="h-9 w-40 text-xs">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
@@ -330,42 +372,8 @@ export default function SalesPipeline() {
             </Select>
             </div>
             
-            {canImportExport && (
-              <div className="flex h-8 items-center gap-0.5">
-                <Button 
-                  onClick={() => spreadsheetRef.current?.importFromExcel()}
-                  size="sm" 
-                  className="h-8 px-2"
-                  variant="ghost"
-                  title="Import Sales Pipeline"
-                  aria-label="Import Sales Pipeline"
-                >
-                  <Upload className="w-3 h-3" />
-                </Button>
-                <Button 
-                  onClick={() => spreadsheetRef.current?.exportToExcel()}
-                  size="sm" 
-                  className="h-8 px-2"
-                  variant="ghost"
-                  title="Export Sales Pipeline"
-                  aria-label="Export Sales Pipeline"
-                >
-                  <Download className="w-3 h-3" />
-                </Button>
-                <Button
-                  onClick={() => spreadsheetRef.current?.openImportHistory()}
-                  size="sm"
-                  className="h-8 px-2"
-                  variant="ghost"
-                  title="Sales import history"
-                  aria-label="Sales import history"
-                >
-                  <History className="w-3 h-3" />
-                </Button>
-              </div>
-            )}
           </div>
-        </div>
+        </section>
 
         {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
           <div className="mb-1 space-y-1">
