@@ -990,7 +990,7 @@ Deno.serve(async (req) => {
           };
           const about = await driveRead('https://www.googleapis.com/drive/v3/about?fields=kind');
           driveApiRead = about?.kind === 'drive#about';
-          if (driveApiRead && /^\\d+$/.test(sheetId)) {
+          if (driveApiRead && /^\d+$/.test(sheetId)) {
             const prefix = `CCS_OrderRequest_${sheetId}_pre_sync_`;
             const params = new URLSearchParams({
               q: `trashed = false and name contains '${prefix}'`,
