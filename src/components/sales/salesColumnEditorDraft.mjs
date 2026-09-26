@@ -2,6 +2,19 @@ import { moveVisibleSalesColumn, normalizeSalesColumnSettings } from "./salesCol
 
 const HISTORY_LIMIT = 40;
 
+// "Hide Optional" is a quick-start view, not a locked set of fields. Users
+// can still uncheck any of these four after applying the shortcut.
+export const SALES_ESSENTIAL_COLUMN_IDS = Object.freeze([
+  "client_name", "sales_status", "current_task_description", "follow_up_date",
+]);
+const essentialIds = new Set(SALES_ESSENTIAL_COLUMN_IDS);
+
+export function salesColumnSettingsEqual(left, right) {
+  return Array.isArray(left) && Array.isArray(right) && left.length === right.length &&
+    left.every((column, index) => column.id === right[index]?.id &&
+      Boolean(column.visible) === Boolean(right[index]?.visible));
+}
+
 export function newSalesColumnDraft(columns = null) {
   return {
     present: normalizeSalesColumnSettings(columns),
@@ -36,10 +49,19 @@ export function salesColumnDraftReducer(state, action) {
       ? { ...column, visible: !column.visible } : column);
   } else if (action.type === "move") {
     next = moveVisibleSalesColumn(state.present, action.id, action.direction);
+  } else if (action.type === "show_all" || action.type === "hide_optional") {
+    next = state.present.map((column) => ({
+      ...column,
+      visible: action.type === "show_all" || essentialIds.has(column.id),
+    }));
+  } else if (action.type === "restore" && Array.isArray(action.columns)) {
+    // Restore the opened/saved preset, not factory defaults. Unlike "reset",
+    // this is a regular undoable edit and never mutates the stored preset.
+    next = normalizeSalesColumnSettings(action.columns);
   } else {
     return state;
   }
-  if (next === state.present) return state;
+  if (next === state.present || salesColumnSettingsEqual(next, state.present)) return state;
   return {
     past: [...state.past, state.present].slice(-HISTORY_LIMIT),
     present: next,
