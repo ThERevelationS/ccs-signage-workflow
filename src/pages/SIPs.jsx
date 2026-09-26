@@ -271,6 +271,7 @@ export default function SIPs() {
     setPendingRevisitClear({
       id: wo.id,
       clientName: wo.client_name || "this Work Order",
+      revisitDate: wo.sip_revisit_date,
       returnsToActive: isRevisitFuture(wo),
     });
   };
@@ -279,9 +280,23 @@ export default function SIPs() {
     if (!pendingRevisitClear || isClearingRevisit) return;
 
     setIsClearingRevisit(true);
+    setQuickEditError("");
     try {
-      await updateWorkOrder(pendingRevisitClear.id, "sip_revisit_date", "");
+      // Guard the date the user actually confirmed, not a newer date from a
+      // background board refresh or another session's scheduling change.
+      const saved = await replaceWorkOrderFieldsIfUnchanged({
+        workOrderId: pendingRevisitClear.id,
+        expectedFields: { sip_revisit_date: pendingRevisitClear.revisitDate },
+        nextFields: { sip_revisit_date: "" },
+        label: "SIPs clear confirmed revisit date",
+      });
+      setWorkOrders(prev => prev.map(wo => wo.id === pendingRevisitClear.id ? { ...wo, ...saved } : wo));
       setPendingRevisitClear(null);
+    } catch (error) {
+      console.error("Error clearing confirmed SIPs revisit date:", error);
+      setQuickEditError(error?.message || "The revisit date may have changed. No newer date was cleared; review the refreshed board before trying again.");
+      setPendingRevisitClear(null);
+      await loadWorkOrders(false);
     } finally {
       setIsClearingRevisit(false);
     }
