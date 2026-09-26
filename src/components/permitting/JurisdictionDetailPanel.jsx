@@ -279,7 +279,11 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
           matches: positions.length,
           positions,
           source,
-          activeIndex: Math.min(result.activeIndex || 0, Math.max(positions.length - 1, 0))
+          // Match indexes are only meaningful within the same source text. If a refresh
+          // moves the query between extracted text and the AI summary, start at match 1.
+          activeIndex: result.source === source
+            ? Math.min(result.activeIndex || 0, Math.max(positions.length - 1, 0))
+            : 0
         };
       }
       return next;
