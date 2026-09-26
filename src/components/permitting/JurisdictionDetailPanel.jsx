@@ -54,6 +54,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [downloadingDocId, setDownloadingDocId] = useState(null);
   const [viewingPDF, setViewingPDF] = useState(null);
   const [docSearchTerm, setDocSearchTerm] = useState("");
+  const [jurisdictionSearchCleared, setJurisdictionSearchCleared] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [docSearching, setDocSearching] = useState(false);
   const [expandedDocSearch, setExpandedDocSearch] = useState({});
@@ -79,6 +80,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setVerificationError("");
     setExpandedDoc(null);
     setDocSearchTerm("");
+    setJurisdictionSearchCleared(false);
     setSearchResults([]);
     setExpandedDocSearch({});
     setDocSearchResults({});
@@ -138,6 +140,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
 
   const searchDocuments = (term) => {
     setDocSearchTerm(term);
+    setJurisdictionSearchCleared(!term.trim());
     if (!term.trim()) {
       setSearchResults([]);
       return;
@@ -795,9 +798,9 @@ Answer the question based on the documents and information available. Be specifi
             <p role="status" aria-live="polite" aria-atomic="true" className="mt-1 text-xs text-gray-600">
               {docSearching ? "Searching..." : docSearchTerm.trim()
                 ? searchResults.length === 0
-                  ? "No matches found"
-                  : `${searchResults.length} result${searchResults.length === 1 ? "" : "s"} found`
-                : ""}
+                  ? `No matches found for "${docSearchTerm}"`
+                  : `${searchResults.length} result${searchResults.length === 1 ? "" : "s"} found for "${docSearchTerm}"`
+                : jurisdictionSearchCleared ? "Search cleared" : ""}
             </p>
             {searchResults.length > 0 && (
               <div role="group" aria-label="Jurisdiction search results" aria-describedby={`jurisdiction-search-instructions-${jurisdiction.id}`} className="mt-2 max-h-40 overflow-y-auto space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
