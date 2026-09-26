@@ -822,7 +822,23 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div>
-                  <Label className="mb-1 block text-sm">Column Settings - Toggle visibility</Label>
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                    <Label className="block text-sm">Column Settings - Toggle visibility</Label>
+                    <div className="flex items-center gap-1" role="group" aria-label="Column arrangement history">
+                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs"
+                        disabled={columnDraft.past.length === 0 || isSaving}
+                        onClick={() => dispatchColumnDraft({ type: "undo" })}
+                        title="Undo the last column visibility or arrangement change">
+                        <Undo2 className="mr-1 h-3.5 w-3.5" />Undo
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs"
+                        disabled={columnDraft.future.length === 0 || isSaving}
+                        onClick={() => dispatchColumnDraft({ type: "redo" })}
+                        title="Redo the last undone column change">
+                        <Redo2 className="mr-1 h-3.5 w-3.5" />Redo
+                      </Button>
+                    </div>
+                  </div>
                   {editingItem && getUnavailableSalesColumns(editingItem.column_settings).length > 0 && (
                     <p role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                       This older preset includes unavailable columns: {getUnavailableSalesColumns(editingItem.column_settings).map((item) => item.label || item.id).join(", ")}.
@@ -954,6 +970,28 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={unsavedConfirm} onOpenChange={(open) => {
+        if (!open) { setUnsavedConfirm(false); pendingLeaveRef.current = null; }
+      }}>
+        <AlertDialogContent className="clay-card max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved {activeTab === "columns" ? "column layout" : "filter"} changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Changes to this {activeTab === "columns" ? "column preset" : "information filter"} have not been saved.
+              Stay here to save, or discard this draft to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { pendingLeaveRef.current = null; }}>
+              Keep editing
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard} className="bg-red-600 text-white" disabled={isSaving}>
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent className="clay-card border-none">
