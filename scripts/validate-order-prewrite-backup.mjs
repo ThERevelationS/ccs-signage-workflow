@@ -118,6 +118,7 @@ assert.match(orderBranch, /connectors\.getConnection\('googledrive'\)/);
 assert.match(orderBranch, /uploadType=multipart/);
 assert.match(orderBranch, /alt=media/);
 assert.match(orderBranch, /BackupLog\.create/);
+assert.match(orderBranch, /!savedLog\?\.id/);
 assert.match(orderBranch, /skipped: true/);
 assert.match(orderBranch, /no Smartsheet rows were written/);
 assert.doesNotMatch(orderBranch, /smartsheetWrite\(|\.bulkCreate\(|\.bulkUpdate\(/);
