@@ -6,6 +6,7 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
+import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
@@ -735,24 +736,78 @@ async function pushDataset(
       conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
   }
 
-  // Backup before write: snapshot the whole target sheet into a BackupLog entry.
-  if (globalConfig?.backup_before_write) {
+  // Order-only: a successful BackupLog without any saved sheet bytes is not
+  // a backup. Read every Smartsheet page, persist a private Google Drive JSON
+  // snapshot and read the exact file back before writing ANY Order row.
+  // The legacy Sales backup path remains unchanged (outside Order scope).
+  if (dataset === 'orders' && globalConfig?.backup_before_write) {
+    try {
+      const connection = await base44.asServiceRole.connectors.getConnection('googledrive');
+      const driveToken = cleanText(connection?.accessToken, 8000);
+      if (!driveToken) throw new Error('Google Drive backup is not connected. No Order rows were written.');
+      const driveFetch = async (url: string, init: any) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30_000);
+        try {
+          const response = await fetch(url, { ...init, signal: controller.signal,
+            headers: { Authorization: `Bearer ${driveToken}`, ...(init?.headers || {}) } });
+          if (!response.ok) throw new Error(`Google Drive backup verification returned HTTP ${response.status}.`);
+          return response;
+        } finally { clearTimeout(timeout); }
+      };
+      await createVerifiedOrderSheetBackup({
+        sheetId,
+        readPage: async (page: number, pageSize: number) =>
+          (await smartsheetGet(`/sheets/${sheetId}?page=${page}&pageSize=${pageSize}`, token)).body,
+        verifySource: async () =>
+          (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body,
+        upload: async ({ filename, content }: any) => {
+          const boundary = `ccsOrderBackup${crypto.randomUUID().replace(/-/g, '')}`;
+          const metadata = { name: filename, mimeType: 'application/json',
+            description: 'CCS Order Request pre-sync row/column backup (attachments excluded)' };
+          const multipart = new Blob([
+            `--${boundary}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n`,
+            JSON.stringify(metadata),
+            `\\r\\n--${boundary}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n`,
+            content, `\\r\\n--${boundary}--\\r\\n`,
+          ]);
+          const response = await driveFetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size',
+            { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipart });
+          return await response.json();
+        },
+        readBack: async (id: string) =>
+          await (await driveFetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`,
+            { method: 'GET' })).text(),
+        log: async (backup: any) => {
+          await base44.asServiceRole.entities.BackupLog.create({
+            backup_type: 'scheduled',
+            data_types: [`smartsheet_orders_sheet_${sheetId}`],
+            results: [{ type: 'smartsheet_orders',
+              filename: `${backup.filename} [Google Drive ID: ${backup.drive_file_id}]`, success: true }],
+            success_count: 1, error_count: 0, triggered_by: 'smartsheet_order_prewrite',
+          });
+        },
+      });
+    } catch (err) {
+      return { dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+        reason: `Recoverable Order backup could not be verified; no Smartsheet rows were written: ${(err as any)?.message || 'unknown error'}`,
+        records_examined: records.length, created: 0, updated: 0, conflicts: 0,
+        errors: 0, error_details: [], conflict_record_ids: [] };
+    }
+  } else if (dataset === 'sales' && globalConfig?.backup_before_write) {
+    // Preserve existing Sales Pipeline behavior; audited in its own project.
     try {
       const backupResult = await smartsheetGet(`/sheets/${sheetId}?pageSize=200`, token);
       const backupRows = normalizeSheetRows(backupResult.body);
       await base44.asServiceRole.entities.BackupLog.create({
         backup_type: 'scheduled',
         data_types: [`smartsheet_${dataset}_sheet_${sheetId}`],
-        results: [{
-          type: `smartsheet_${dataset}`,
-          filename: `sheet_${sheetId}_pre_sync_${new Date().toISOString()}`,
-          success: true,
-        }],
-        success_count: 1,
-        error_count: 0,
-        triggered_by: 'smartsheet_sync',
+        results: [{ type: `smartsheet_${dataset}`,
+          filename: `sheet_${sheetId}_pre_sync_${new Date().toISOString()}`, success: true }],
+        success_count: 1, error_count: 0, triggered_by: 'smartsheet_sync',
       });
-      void backupRows; // backup stored; rows available for audit if needed
+      void backupRows;
     } catch (err) {
       return { dataset, skipped: true, reason: `Backup before write failed: ${(err as any)?.message || 'unknown error'}` };
     }
