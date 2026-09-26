@@ -23,6 +23,11 @@ const uiStub = (tag) => ({ children, ...props }) => React.createElement(tag, {
 const imports = {
   '@/components/ui/badge': { Badge: uiStub('span') },
   '@/components/ui/button': { Button: uiStub('button') },
+  'lucide-react': Object.fromEntries(
+    ['AlertTriangle', 'Briefcase', 'Clock3', 'Coffee', 'FileWarning', 'Pause', 'RefreshCw', 'ShieldAlert']
+      .map((name) => [name, 'span']),
+  ),
+  'date-fns': { parseISO: (value) => new Date(value), format: () => 'Sep 1 at 10:00 AM' },
 };
 const module = { exports: {} };
 vm.runInNewContext(compiled, {
