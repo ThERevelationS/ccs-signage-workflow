@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const jurisdictionSearchInputRef = useRef(null);
   const firstJurisdictionSearchResultRef = useRef(null);
   const jurisdictionSearchResultRefs = useRef(new Map());
+  const focusedJurisdictionSearchResultRef = useRef(null);
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
@@ -94,6 +95,15 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     header.focus({ preventScroll: true });
     header.scrollIntoView({ block: "start", behavior: "auto" });
   }, [expandedDoc, searchResults]);
+
+  // A focused search result may disappear when matches change or the jurisdiction switches.
+  // Restore focus only when that result is gone; never override an explicit selection.
+  useLayoutEffect(() => {
+    const focusedKey = focusedJurisdictionSearchResultRef.current;
+    if (!focusedKey || searchResults.some(result => `${result.type}-${result.id}` === focusedKey)) return;
+    focusedJurisdictionSearchResultRef.current = null;
+    jurisdictionSearchInputRef.current?.focus({ preventScroll: true });
+  }, [searchResults]);
 
   const isPDF = (doc) => {
     const url = doc.file_url || doc.url || "";
@@ -764,6 +774,7 @@ Answer the question based on the documents and information available. Be specifi
                 aria-describedby={`jurisdiction-search-instructions-${jurisdiction.id}`}
                 value={docSearchTerm}
                 onChange={(e) => searchDocuments(e.target.value)}
+                onFocus={() => { focusedJurisdictionSearchResultRef.current = null; }}
                 onKeyDown={(event) => {
                   if (event.nativeEvent?.isComposing) return;
                   if (event.key === "ArrowDown" && searchResults.length > 0) {
@@ -799,6 +810,12 @@ Answer the question based on the documents and information available. Be specifi
                       if (index === 0) firstJurisdictionSearchResultRef.current = node;
                     }}
                     key={`${result.type}-${result.id}`}
+                    onFocus={() => { focusedJurisdictionSearchResultRef.current = `${result.type}-${result.id}`; }}
+                    onBlur={(event) => {
+                      if (event.relatedTarget && !event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                        focusedJurisdictionSearchResultRef.current = null;
+                      }
+                    }}
                     onKeyDown={(event) => {
                       if (event.nativeEvent?.isComposing) return;
                       if (event.key === "Escape") {
@@ -818,6 +835,8 @@ Answer the question based on the documents and information available. Be specifi
                       nextResult.scrollIntoView({ block: "nearest", behavior: "auto" });
                     }}
                     onClick={() => {
+                      // The selected result is intentionally removed; its destination owns focus.
+                      focusedJurisdictionSearchResultRef.current = null;
                       if (result.type === 'document') {
                         pendingDocNavigationRef.current = result.id;
                         setExpandedDoc(result.id);
