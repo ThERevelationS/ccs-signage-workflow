@@ -601,16 +601,26 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveSubTemplateChecklist = async () => {
-    if (!selectedSubTemplate) return;
+    if (!selectedSubTemplate || checklistSaveInFlight.current) return;
+    const snapshot = { kind: 'subTemplate', id: selectedSubTemplate, items: subTemplateChecklistItems };
+    checklistSaveInFlight.current = snapshot;
+    setSavingChecklist(snapshot.kind);
     try {
-      await saveSubTemplateEntry(selectedSubTemplate, { items: subTemplateChecklistItems }, {
-        label: `SIP sub-template checklist ${subTemplates.find(st => st.id === selectedSubTemplate)?.name || selectedSubTemplate}`,
+      await saveSubTemplateEntry(snapshot.id, { items: snapshot.items }, {
+        label: `SIP sub-template checklist ${subTemplates.find(st => st.id === snapshot.id)?.name || snapshot.id}`,
       });
-      setSubTemplateHasChanges(false);
-      setSubTemplateSaveStatus('saved');
+      // A user may keep editing while the request is in flight. Only mark the
+      // exact saved draft clean; never clear the flag for a newer local draft.
+      if (subTemplateDraftRef.current.id === snapshot.id && subTemplateDraftRef.current.items === snapshot.items) {
+        setSubTemplateHasChanges(false);
+        setSubTemplateSaveStatus('saved');
+      }
     } catch (error) {
       console.error("Error saving sub-template checklist:", error);
       setSubTemplateSaveStatus('idle');
+    } finally {
+      checklistSaveInFlight.current = null;
+      setSavingChecklist(null);
     }
   };
 
@@ -755,16 +765,24 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const saveProductTypeTemplate = async () => {
-    if (!selectedProductType) return;
+    if (!selectedProductType || checklistSaveInFlight.current) return;
+    const snapshot = { kind: 'productType', id: selectedProductType, items: productTypeItems };
+    checklistSaveInFlight.current = snapshot;
+    setSavingChecklist(snapshot.kind);
     try {
-      await saveProductTypeTemplateEntry(selectedProductType, { items: productTypeItems }, {
-        label: `SIP Product Type Template ${selectedProductType}`,
+      await saveProductTypeTemplateEntry(snapshot.id, { items: snapshot.items }, {
+        label: `SIP Product Type Template ${snapshot.id}`,
       });
-      setProductTypeHasChanges(false);
-      setProductTypeSaveStatus('saved');
+      if (productTypeDraftRef.current.id === snapshot.id && productTypeDraftRef.current.items === snapshot.items) {
+        setProductTypeHasChanges(false);
+        setProductTypeSaveStatus('saved');
+      }
     } catch (error) {
       console.error("Error saving product type template:", error);
       setProductTypeSaveStatus('idle');
+    } finally {
+      checklistSaveInFlight.current = null;
+      setSavingChecklist(null);
     }
   };
 
