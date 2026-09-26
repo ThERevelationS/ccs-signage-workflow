@@ -18,9 +18,11 @@ const source = [
   block(board, '  const loadWorkOrders = async (showLoading = true) => {', '\n  const updateWorkOrder'),
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
+  block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
+  block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
   block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch'),
   block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
-  'this.actions = { loadWorkOrders, updateWorkOrder, isRevisitFuture };',
+  'this.actions = { loadWorkOrders, updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
 ].join('\n');
 
 const dateOnly = (date) => [
@@ -40,10 +42,10 @@ function deferred() {
   const promise = new Promise((ok, fail) => { resolve = ok; reject = fail; });
   return { promise, resolve, reject };
 }
-function fixture(date = yesterday) {
+function fixture(date = yesterday, { completed = false } = {}) {
   const record = {
     id: 'synthetic-only', updated_date: '1', sip_revisit_date: date,
-    sip_completed: false, deleted: false, is_rider: false, completed: false,
+    sip_completed: completed, deleted: false, is_rider: false, completed: false,
     current_task_assigned_to: 'SIPs', created_date: '2025-01-01',
     notes: 'starting note',
   };
@@ -85,9 +87,15 @@ function fixture(date = yesterday) {
     quickEditError: '',
     isRefreshing: false,
     isLoading: false,
+    pendingRevisitClear: null,
+    isClearingRevisit: false,
     console: { error() {} },
     Date,
   };
+  ctx.openChecklist = () => {};
+  ctx.setOpenDatePopover = () => {};
+  ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
+  ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
   ctx.loadAllEntityRows = ({ entity: requested }) => {
     if (requested === authorizedEmail) return Promise.resolve([]);
     assert.equal(requested, entity);
