@@ -16,6 +16,10 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [category, setCategory] = useState("ambiguous");
+  const [backupReport, setBackupReport] = useState(null);
+  const [backupError, setBackupError] = useState("");
+  const [backupChecking, setBackupChecking] = useState(false);
+  const backupRequestRef = useRef(0);
   const requestRef = useRef(0);
   const activeRef = useRef(null);
 
@@ -52,11 +56,40 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
     }
   }, [sessionToken]);
 
+  const checkBackup = useCallback(async () => {
+    if (!sessionToken || backupChecking) return;
+    const requestId = ++backupRequestRef.current;
+    setBackupChecking(true);
+    setBackupError("");
+    setBackupReport(null);
+    try {
+      const response = await base44.functions.invoke("smartsheetSyncAction", {
+        action: "audit_order_backup_readiness",
+        session_token: sessionToken,
+      });
+      const data = response?.data || response;
+      if (!data?.success || data.read_only !== true) {
+        throw new Error(data?.error || "Could not verify backup readiness.");
+      }
+      if (requestId === backupRequestRef.current) setBackupReport(data);
+    } catch (error) {
+      if (requestId === backupRequestRef.current) {
+        setBackupError(error?.response?.data?.error || error?.message || "Backup readiness check failed.");
+      }
+    } finally {
+      if (requestId === backupRequestRef.current) setBackupChecking(false);
+    }
+  }, [sessionToken, backupChecking]);
+
   useEffect(() => {
     if (open) {
       load();
     } else {
       // Never display an earlier review after closing or rapidly reopening.
+      backupRequestRef.current++;
+      setBackupReport(null);
+      setBackupError("");
+      setBackupChecking(false);
       activeRef.current = null;
       setLoading(false);
       setError("");
@@ -84,12 +117,39 @@ export default function OrderCreateAttemptReview({ open, onOpenChange, sessionTo
           <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
             Evidence only — automatic retries remain blocked
           </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={checkBackup} disabled={backupChecking || !sessionToken}>
+              {backupChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              {backupChecking ? "Checking backup..." : "Check backup"}
+            </Button>
           <Button type="button" size="sm" variant="outline" onClick={load} disabled={loading || !sessionToken}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             {loading ? "Checking..." : "Refresh review"}
           </Button>
+          </div>
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+          {backupError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{backupError}</p>}
+          {backupReport && (
+            <div role="status" className={`rounded-lg border p-3 text-sm ${backupReport.can_attempt_verified_backup
+              ? "border-blue-200 bg-blue-50 text-blue-900"
+              : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+              <p className="font-semibold">{backupReport.can_attempt_verified_backup
+                ? "Drive connection ready for a backup attempt" : "Backup is not ready"}</p>
+              <p className="mt-1 text-xs">
+                Backup protection: {backupReport.backup_before_write ? "On" : "Off"} ·
+                Drive API: {backupReport.drive_metadata_readable && backupReport.drive_listing_readable ? "Readable" : "Unavailable"} ·
+                Existing archive listings: {number(backupReport.candidate_archives_found)} ·
+                Order push: {backupReport.order_push_enabled ? "On" : "Off"}
+              </p>
+              {backupReport.reasons?.length > 0 && (
+                <p className="mt-1 text-xs">{backupReport.reasons.join(" ")}</p>
+              )}
+              <p className="mt-1 text-xs">
+                Read-only connection check. New backup upload and recovery remain unverified until a real pre-write backup succeeds.
+              </p>
+            </div>
+          )}
           {loading && (
             <div role="status" className="flex items-center gap-3 rounded-xl bg-purple-50 p-4 text-sm text-gray-700">
               <Loader2 className="h-5 w-5 shrink-0 animate-spin text-purple-600" />
