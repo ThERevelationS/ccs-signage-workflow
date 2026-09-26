@@ -2,14 +2,14 @@
 // exclude terminal job states, not every closed sales opportunity.
 const TERMINAL = new Set(["lost", "completed", "closed"]);
 const normalized = (value) => String(value ?? "").trim().toLowerCase();
-const LEGACY_CLOSED_TASK = /^(lost\b|completed sale\b|closed\b)/i;
+const TERMINAL_TASK = /^(?:lost\b|completed(?:\s+(?:sale|job|project)\b|$)|closed(?:\s+(?:sale|job|account|project)\b|\s*[-:]|$))/i;
 
 export function isActiveOrderCustomerJob(job) {
   if (!job?.id || job.deleted === true || job.completed === true || job.is_rider === true || job.closed === true) return false;
   // Historical imports may have sales_status='lead' and in_pipeline=true
   // even when their current task explicitly says Completed Sale, Lost, or Closed.
   // Treat that terminal evidence consistently for modern and legacy records.
-  if (LEGACY_CLOSED_TASK.test(String(job.current_task_description ?? "").trim())) return false;
+  if (TERMINAL_TASK.test(String(job.current_task_description ?? "").trim())) return false;
   return !TERMINAL.has(normalized(job.current_stage)) &&
     !TERMINAL.has(normalized(job.sales_status)) &&
     !TERMINAL.has(normalized(job.status));
