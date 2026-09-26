@@ -1,0 +1,262 @@
+{
+  "jurisdictionId": "6ab7c6107f2251a8e8e48b90",
+  "jurisdiction": "Boone County",
+  "state": "KY",
+  "authority": "Adopted Boone County Planning Commission Article 34",
+  "notTheDraftRewrite": true,
+  "fetchedAt": "2026-09-26T23:24:48.572650+00:00",
+  "sources": [
+    {
+      "id": 2553,
+      "title": "SECTION 3400 PURPOSE AND INTENT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2553&ajax=0",
+      "filename": "section-2553.html",
+      "sha256": "6882028b87ca4016d91750c95911bc70e6cf595da464f57b9bd3478000870cae",
+      "bytes": 21953,
+      "characters": 6910
+    },
+    {
+      "id": 2555,
+      "title": "SECTION 3402 GENERAL REQUIREMENTS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2555&ajax=0",
+      "filename": "section-2555.html",
+      "sha256": "00da662fd220474460b18d3d8ed4626d563135d1fef3a206ece4ca162fb0485b",
+      "bytes": 19247,
+      "characters": 4295
+    },
+    {
+      "id": 2558,
+      "title": "SECTION 3405 PERMITTING",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2558&ajax=0",
+      "filename": "section-2558.html",
+      "sha256": "64512733189f9470d3ca2c19d8c13b3c3b567e711f077370df1f3d7d78454fcf",
+      "bytes": 14206,
+      "characters": 2009
+    },
+    {
+      "id": 2559,
+      "title": "SECTION 3404 SIGNS NOT REQUIRING A PERMIT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2559&ajax=0",
+      "filename": "section-2559.html",
+      "sha256": "b3302b0fc01007cdbee3b6e6e01f670fcbe5e7942b4d81f8ae412dca2a6cfe02",
+      "bytes": 25291,
+      "characters": 6330
+    },
+    {
+      "id": 2560,
+      "title": "SECTION 3403 PROHIBITED SIGNS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2560&ajax=0",
+      "filename": "section-2560.html",
+      "sha256": "bdd6c22a3d0806e59a90d2d438b200304538b946fe12a9dc306ce430ac1dc4e3",
+      "bytes": 16489,
+      "characters": 2417
+    },
+    {
+      "id": 2565,
+      "title": "SECTION 3409 TEMPORARY ADVERTISING",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2565&ajax=0",
+      "filename": "section-2565.html",
+      "sha256": "4ba9b3b65fadfa2fc12fa667797fd17b678c7cfcdb25f0249e238861ddcf5a34",
+      "bytes": 14944,
+      "characters": 3366
+    },
+    {
+      "id": 2568,
+      "title": "SECTION 3410 SPECIAL SIGN DISTRICTS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2568&ajax=0",
+      "filename": "section-2568.html",
+      "sha256": "3046d222e602a725e8a8d820ebd4963bce98fdc1f7ef578b47592ce34193bee6",
+      "bytes": 19436,
+      "characters": 4719
+    },
+    {
+      "id": 2570,
+      "title": "SECTION 3411 VIOLATIONS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=2570&ajax=0",
+      "filename": "section-2570.html",
+      "sha256": "7bb0adcfdebeb4bdbbc01f72e96e729ad19a9eedae5a59c3e325d6d0edfec34d",
+      "bytes": 10805,
+      "characters": 838
+    },
+    {
+      "id": 3375,
+      "title": "SECTION 3401 SCOPE, AUTHORITY AND APPLICABILITY",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3375&ajax=0",
+      "filename": "section-3375.html",
+      "sha256": "4667d30bff4374fc0e90d5d08c4cee61ea901465f1f08866f6e3487e72d0f768",
+      "bytes": 32567,
+      "characters": 12158
+    },
+    {
+      "id": 3376,
+      "title": "SECTION 3406 APPEALS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3376&ajax=0",
+      "filename": "section-3376.html",
+      "sha256": "80429082b8e5f95549ccdc54cf5664eae05e230667272dfee20e563a1f2ec77c",
+      "bytes": 10113,
+      "characters": 347
+    },
+    {
+      "id": 3377,
+      "title": "SECTION 3407 SIGNS PERMITTED BY DISTRICT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3377&ajax=0",
+      "filename": "section-3377.html",
+      "sha256": "74735a08afcdeed53ee206184dbbab280839ff0200e5fee7b1464c528ec7fff8",
+      "bytes": 281218,
+      "characters": 80916
+    },
+    {
+      "id": 3378,
+      "title": "Section 3407.1 Florence Main Street",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3378&ajax=0",
+      "filename": "section-3378.html",
+      "sha256": "d95fb1cb3921ff52f8651ee942493b08d995b0a3e3353b5c8f8a5e0eaa512d07",
+      "bytes": 175971,
+      "characters": 37584
+    },
+    {
+      "id": 3379,
+      "title": "Section 3407.2 Walton Downtown and Small Community Overlay",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3379&ajax=0",
+      "filename": "section-3379.html",
+      "sha256": "a55d47790a55080886823230d04fd54380285bc6dfe3e1196237b72e3e73a919",
+      "bytes": 158083,
+      "characters": 32879
+    },
+    {
+      "id": 3380,
+      "title": "Section 3407.3 Union Town Plan",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3380&ajax=0",
+      "filename": "section-3380.html",
+      "sha256": "13ad2474ac5826c057889aa11b64365e00f7e9fcb6cfe00196190b064fe58bba",
+      "bytes": 168232,
+      "characters": 36985
+    },
+    {
+      "id": 3381,
+      "title": "Section 3407.4 Planned Development, Employment Planned Development, and Historic",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3381&ajax=0",
+      "filename": "section-3381.html",
+      "sha256": "2f47754fceacba2d5a6b1ba6137a79696b30e185618ef3e703ce1aa35fe801e8",
+      "bytes": 151695,
+      "characters": 30426
+    },
+    {
+      "id": 3382,
+      "title": "Section 3407.5 Houston-Donaldson",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3382&ajax=0",
+      "filename": "section-3382.html",
+      "sha256": "d64e06ca6af92fe458ba0db1da073932de1eb501b6771158b82bc37a80f5c400",
+      "bytes": 176593,
+      "characters": 40767
+    },
+    {
+      "id": 3383,
+      "title": "Section 3407.6 Parkway Corridor",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3383&ajax=0",
+      "filename": "section-3383.html",
+      "sha256": "329799df517c428ca173118391c916e9dc8113fca47640a744d79b5f0b3b5f69",
+      "bytes": 161544,
+      "characters": 34277
+    },
+    {
+      "id": 3384,
+      "title": "Section 3407.7 Mall Road",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3384&ajax=0",
+      "filename": "section-3384.html",
+      "sha256": "015f3e61dc7a7ad21d026a3342da04c4f1fb8e725744591863e3f018f6e38ac1",
+      "bytes": 175595,
+      "characters": 41244
+    },
+    {
+      "id": 3385,
+      "title": "SECTION 3408 REGULATIONS BY TYPE OF SIGN",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3385&ajax=0",
+      "filename": "section-3385.html",
+      "sha256": "f2da3bead9e3362689ecf0526daa41ebf5f58a2de7f1daa2641b4c16be24454e",
+      "bytes": 86594,
+      "characters": 29608
+    },
+    {
+      "id": 3386,
+      "title": "Section 3408.1 Building Mounted Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3386&ajax=0",
+      "filename": "section-3386.html",
+      "sha256": "a2d7016116d191ebc307540c2654c65f3c9ef3db11554141ecf7b3fbd0f81fe7",
+      "bytes": 15872,
+      "characters": 2203
+    },
+    {
+      "id": 3387,
+      "title": "Section 3408.2 Canopy Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3387&ajax=0",
+      "filename": "section-3387.html",
+      "sha256": "3e1223c2ecd7cfac93d6b5ffcd3c424068d43cbc15a5943322b742890ead7e59",
+      "bytes": 11827,
+      "characters": 1106
+    },
+    {
+      "id": 3388,
+      "title": "Section 3408.3 Directional Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3388&ajax=0",
+      "filename": "section-3388.html",
+      "sha256": "f5ae160d25e1198ee4a9a3d71103bfc8a6374e4788fd4d637750faf71ca4fbe8",
+      "bytes": 11296,
+      "characters": 754
+    },
+    {
+      "id": 3389,
+      "title": "Section 3408.4 Drive-Through Menu Board Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3389&ajax=0",
+      "filename": "section-3389.html",
+      "sha256": "72ae5aa1417101a3e461dbc7d0189f4f7ff76553272f199dcd6427f8e5b826c4",
+      "bytes": 12498,
+      "characters": 1289
+    },
+    {
+      "id": 3390,
+      "title": "Section 3408.5 Electronic Message Board/Screen Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3390&ajax=0",
+      "filename": "section-3390.html",
+      "sha256": "11d76f3657f911edc547f7ef8fb0322e56b4d90b9dd3bc1b64e43425707c16b6",
+      "bytes": 28820,
+      "characters": 9444
+    },
+    {
+      "id": 3391,
+      "title": "Section 3408.6 Free Standing Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3391&ajax=0",
+      "filename": "section-3391.html",
+      "sha256": "34fb4810f26f756e0cc45f6634aa18c65fe4d0e3df5ce56dabcec9906227169d",
+      "bytes": 47224,
+      "characters": 12868
+    },
+    {
+      "id": 3392,
+      "title": "Section 3408.7 Entrance Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3392&ajax=0",
+      "filename": "section-3392.html",
+      "sha256": "7cffaa0f1863eb77ae38f0ebd1554db36b928dd0f38bb9c5d8f90eb53661d47c",
+      "bytes": 15839,
+      "characters": 2349
+    },
+    {
+      "id": 3393,
+      "title": "Section 3408.8 Window Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3393&ajax=0",
+      "filename": "section-3393.html",
+      "sha256": "59fd03bcc70381c945f6dfe263746a8fad0f4d4042d834bdfb568d522edaa669",
+      "bytes": 10619,
+      "characters": 512
+    },
+    {
+      "id": 3462,
+      "title": "Section 3407.8 Graves Road",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-view.aspx?secid=3462&ajax=0",
+      "filename": "section-3462.html",
+      "sha256": "c3bf467b1845d2bac58bea4cd3409cfea0cf9be70595ea62f0ded08f21c19465",
+      "bytes": 170053,
+      "characters": 38028
+    }
+  ]
+}
