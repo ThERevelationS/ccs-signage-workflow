@@ -96,7 +96,13 @@ Deno.serve(async (req) => {
     }
     const expectedSha256 = String(sourceDocument.source_sha256 || '').trim().toLowerCase();
     const expectedBytes = Number(sourceDocument.source_bytes || 0);
-    if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+    // Live storage ingest is only allowed for a fully archived/fingerprinted source.
+    // This prevents an unpinned link (or a partially populated fingerprint) from
+    // being silently treated as a collected document.
+    if (!expectedSha256 || !Number.isSafeInteger(expectedBytes) || expectedBytes <= 0) {
+      return Response.json({ error: 'Document has not been fully archived and fingerprinted; live ingest was blocked' }, { status: 409 });
+    }
+    if (!/^[a-f0-9]{64}$/.test(expectedSha256)) {
       return Response.json({ error: 'Stored source SHA-256 is invalid; live ingest was blocked' }, { status: 409 });
     }
 
