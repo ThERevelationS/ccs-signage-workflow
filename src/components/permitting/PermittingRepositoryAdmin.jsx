@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { assertJurisdictionCatalogStable, createJurisdictionIfAbsent, deleteJurisdictionFromLoadedSnapshot } from "./jurisdictionPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
+import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 
 const PDF_DOWNLOAD_BATCH_LIMIT = 25;
 const needsPDFArchive = (doc) => Boolean(doc?.url && !doc.file_url && /\.pdf(?:[?#]|$)/i.test(doc.url));
@@ -201,14 +202,19 @@ export default function PermittingRepositoryAdmin() {
         try {
           const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
           const currentDoc = (latest.documents || []).find(doc => doc.id === item.documentId && doc.url === item.url);
-          if (!currentDoc || currentDoc.file_url) {
+          if (!currentDoc) {
+            skipped++;
+          } else if (currentDoc.file_url) {
+            if (!isVerifiedPermitPDFArchive(currentDoc)) {
+              throw new Error("An existing file URL has no matching stored SHA-256 and byte-count proof; verify it before marking complete");
+            }
             skipped++;
           } else {
             const res = await downloadPermitPDF({ jurisdiction_id: item.jurisdictionId, document_url: item.url, document_title: item.title });
             // A returned URL alone is not enough: confirm the correct source now
             // has a stored file in the latest record before counting a success.
             const saved = res.data?.jurisdiction || await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
-            const archived = (saved.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && doc.file_url);
+            const archived = (saved.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && isVerifiedPermitPDFArchive(doc));
             if (!archived) throw new Error('Upload was not confirmed against the matching document');
             uploaded++;
           }
@@ -216,7 +222,7 @@ export default function PermittingRepositoryAdmin() {
           // A timeout may have committed the upload; inspect it once before
           // reporting failure so an operator can safely rerun the remainder.
           const latest = await base44.entities.JurisdictionProfile.get(item.jurisdictionId).catch(() => null);
-          const recovered = (latest?.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && doc.file_url);
+          const recovered = (latest?.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && isVerifiedPermitPDFArchive(doc));
           if (recovered) uploaded++;
           else {
             failed++;
