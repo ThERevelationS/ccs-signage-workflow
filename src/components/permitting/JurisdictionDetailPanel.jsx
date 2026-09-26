@@ -43,6 +43,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [asking, setAsking] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState(null);
   const documentHeaderRefs = useRef(new Map());
+  const focusedDocumentHeaderRef = useRef(null);
   const pendingDocNavigationRef = useRef(null);
   const jurisdictionHeadingRef = useRef(null);
   const jurisdictionSearchInputRef = useRef(null);
@@ -88,6 +89,34 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setClearedDocSearchId(null);
     pendingDocNavigationRef.current = null;
   }, [jurisdiction.id]);
+
+  // Same-jurisdiction refreshes can remove an expanded document. Clear its stale UI state
+  // and restore focus to the nearest persistent document control when that happens.
+  useLayoutEffect(() => {
+    if (!expandedDoc || (jurisdiction.documents || []).some(doc => doc.id === expandedDoc)) return;
+    const removedDocId = expandedDoc;
+    const removedHeaderHadFocus = focusedDocumentHeaderRef.current === removedDocId;
+    setExpandedDoc(null);
+    setExpandedDocSearch(prev => {
+      if (!(removedDocId in prev)) return prev;
+      const next = { ...prev };
+      delete next[removedDocId];
+      return next;
+    });
+    setDocSearchResults(prev => {
+      if (!(removedDocId in prev)) return prev;
+      const next = { ...prev };
+      delete next[removedDocId];
+      return next;
+    });
+    if (clearedDocSearchId === removedDocId) setClearedDocSearchId(null);
+    if (pendingDocNavigationRef.current === removedDocId) pendingDocNavigationRef.current = null;
+    if (removedHeaderHadFocus) {
+      focusedDocumentHeaderRef.current = null;
+      const firstRemainingHeader = documentHeaderRefs.current.get(jurisdiction.documents?.[0]?.id);
+      (firstRemainingHeader || jurisdictionSearchInputRef.current)?.focus({ preventScroll: true });
+    }
+  }, [jurisdiction.documents, expandedDoc, clearedDocSearchId]);
 
   // After a search selection expands a document, move keyboard focus and scroll to its header.
   // Clearing search results also triggers this when the selected document was already expanded.
@@ -900,6 +929,10 @@ Answer the question based on the documents and information available. Be specifi
                      else documentHeaderRefs.current.delete(doc.id);
                    }}
                    className="flex min-h-11 w-full scroll-mt-4 items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
+                   onFocus={() => { focusedDocumentHeaderRef.current = doc.id; }}
+                   onBlur={() => {
+                     if (focusedDocumentHeaderRef.current === doc.id) focusedDocumentHeaderRef.current = null;
+                   }}
                    onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
                    onKeyDown={(event) => {
                      if (event.altKey || event.ctrlKey || event.metaKey) return;
