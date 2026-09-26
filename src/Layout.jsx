@@ -926,7 +926,7 @@ function LayoutContent({ children }) {
         </main>
 
         {/* Smartsheet Sync Status Widget — persistent on every page */}
-        <SmartsheetSyncWidget />
+        <SmartsheetSyncWidget compactOrderForm={location.pathname.replace(/\/+$/, '').toLowerCase() === '/orderform'} />
 
         {/* Add Task Dialog */}
         <AddTaskDialog 
