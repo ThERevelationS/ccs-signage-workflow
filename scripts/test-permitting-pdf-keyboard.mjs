@@ -86,18 +86,20 @@ test("opening PDF viewer focuses its Back button once without scrolling", () => 
 });
 
 test("failed PDF preview announces the fallback and focuses its safe open action", () => {
-  const focusAfterFailure = new Function("showIframe", "fallbackOpenButtonRef", sourceBlock(
+  const focusAfterFailure = new Function("showIframe", "safeFileUrl", "fallbackOpenButtonRef", sourceBlock(
     viewer,
-    /\/\/ A failed iframe removes the preview[\s\S]*?useLayoutEffect\(\(\) => \{([\s\S]*?)\}, \[showIframe\]\);/,
+    /\/\/ Focus the replacement action only when[\s\S]*?useLayoutEffect\(\(\) => \{([\s\S]*?)\}, \[showIframe, safeFileUrl\]\);/,
     "PDF preview fallback focus effect"
   ));
   const focusCalls = [];
   const action = { current: { focus: options => focusCalls.push(options) } };
-  focusAfterFailure(true, action);
+  focusAfterFailure(true, "https://example.org/sign.pdf", action);
   assert.deepEqual(focusCalls, [], "Do not steal focus while the preview is available");
-  focusAfterFailure(false, action);
+  focusAfterFailure(false, "https://example.org/sign.pdf", action);
   assert.deepEqual(focusCalls, [{ preventScroll: true }]);
-  assert.doesNotThrow(() => focusAfterFailure(false, { current: null }));
+  focusAfterFailure(false, null, action);
+  assert.deepEqual(focusCalls, [{ preventScroll: true }], "Do not focus an unavailable action");
+  assert.doesNotThrow(() => focusAfterFailure(false, "https://example.org/sign.pdf", { current: null }));
   const iframeError = new Function("setShowIframe", sourceBlock(
     viewer,
     /onError=\{\(\) => ([^}]+)\}/,
@@ -106,8 +108,17 @@ test("failed PDF preview announces the fallback and focuses its safe open action
   let iframeVisible = true;
   iframeError(value => { iframeVisible = value; });
   assert.equal(iframeVisible, false, "Iframe failure must show the fallback");
-  assert.match(viewer, /<p role="status"[^>]*>PDF Preview Not Available<\/p>/);
-  assert.match(viewer, /<Button\s+ref=\{fallbackOpenButtonRef\}[\s\S]*?disabled=\{!safeFileUrl\}/);
+  assert.match(viewer, /<p role="status"[^>]*>[\s\S]*?safeFileUrl \? "PDF Preview Not Available" : "PDF Link Unavailable"/);
+  assert.match(viewer, /\{safeFileUrl \? \(\s*<Button\s+ref=\{fallbackOpenButtonRef\}/);
+});
+
+test("missing or unsafe PDF links offer Back instead of a disabled or unsafe open action", () => {
+  assert.match(viewer, /const safeFileUrl = safeExternalHttpUrl\(fileUrl\)/);
+  assert.match(viewer, /\{safeFileUrl && \(\s*<Button\s+size="sm"\s+onClick=\{\(\) => openExternalHttpUrl\(safeFileUrl\)\}/);
+  assert.match(viewer, /\{safeFileUrl \? \(\s*<Button\s+ref=\{fallbackOpenButtonRef\}/);
+  assert.match(viewer, /\) : \(\s*<Button onClick=\{onBack\} size="lg"/);
+  assert.match(viewer, /This document has no valid PDF link\. Return to document details/);
+  assert.match(viewer, /aria-label=\{!safeFileUrl \? "Back to document details; PDF link unavailable" : undefined\}/);
 });
 
 test("opening a PDF stores only its document and jurisdiction identity", () => {
