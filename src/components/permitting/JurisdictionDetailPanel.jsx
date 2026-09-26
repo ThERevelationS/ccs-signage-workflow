@@ -252,6 +252,35 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
       return; // Jurisdiction changes have their own search reset above.
     }
     if (docSearchTerm.trim()) searchDocuments(docSearchTerm);
+    // Refresh in-document match offsets too: old offsets can point at unrelated text
+    // after a document is re-fetched, even when the document ID stays the same.
+    setDocSearchResults(previous => {
+      let next = previous;
+      const documentsById = new Map((jurisdiction.documents || []).map(doc => [doc.id, doc]));
+      for (const [docId, result] of Object.entries(previous)) {
+        const doc = documentsById.get(docId);
+        if (!doc) {
+          if (next === previous) next = { ...previous };
+          delete next[docId];
+          continue;
+        }
+        if (!result?.query) continue;
+        const content = documentSearchContent(doc, result.query);
+        const positions = findDocumentMatchPositions(content, result.query.toLowerCase());
+        const source = documentSearchContentSource(doc, result.query);
+        if (result.source === source && result.matches === positions.length &&
+            positions.every((position, index) => position === result.positions?.[index])) continue;
+        if (next === previous) next = { ...previous };
+        next[docId] = {
+          ...result,
+          matches: positions.length,
+          positions,
+          source,
+          activeIndex: Math.min(result.activeIndex || 0, Math.max(positions.length - 1, 0))
+        };
+      }
+      return next;
+    });
   }, [jurisdiction.id, jurisdiction.documents]);
 
   const searchWithinDocument = async (docId, searchText) => {
