@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { easternTodayText } from "@/components/fleet/fleetHelpers";
 import { Loader2, Play, X } from "lucide-react";
 
@@ -19,6 +19,51 @@ function defaultProjected(priority) {
 export default function FleetStartWorkDialog({ open, workOrder, busy, onClose, onConfirm }) {
   const [projectedDate, setProjectedDate] = useState("");
   const [planningNotes, setPlanningNotes] = useState("");
+  const dialogRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const openerRef = useRef(null);
+  const closeCallbackRef = useRef(onClose);
+  const busyRef = useRef(busy);
+  closeCallbackRef.current = onClose;
+  busyRef.current = busy;
+  const visible = Boolean(open && workOrder);
+
+  useEffect(() => {
+    if (!visible) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!busyRef.current) closeCallbackRef.current?.();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])')]
+        .filter(element => element instanceof HTMLElement && element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      const active = document.activeElement;
+      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      if (openerRef.current?.isConnected) openerRef.current.focus();
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (!open || !workOrder) return;
@@ -37,14 +82,14 @@ export default function FleetStartWorkDialog({ open, workOrder, busy, onClose, o
   ];
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-labelledby="fleet-start-work-title" aria-describedby="fleet-start-work-description" onKeyDown={event => { if (event.key === "Escape" && !busy) { event.stopPropagation(); onClose(); } }}>
+    <div ref={dialogRef} className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-labelledby="fleet-start-work-title" aria-describedby="fleet-start-work-description" tabIndex={-1}>
       <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-start justify-between gap-3 border-b border-gray-200 p-4 dark:border-slate-800">
           <div>
             <h2 id="fleet-start-work-title" className="flex items-center gap-2 font-bold text-gray-900 dark:text-slate-100"><Play className="h-5 w-5 text-indigo-500"/>Start Work</h2>
             <div className="mt-1 text-xs text-gray-500 dark:text-slate-400">{workOrder.work_order_number} · {workOrder.title}</div>
           </div>
-          <button type="button" onClick={onClose} disabled={busy} aria-label="Close Start Work dialog" autoFocus className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="h-5 w-5"/></button>
+          <button ref={closeButtonRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Start Work dialog" className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="h-5 w-5"/></button>
         </div>
         <div className="space-y-5 p-4 sm:p-5">
           <div id="fleet-start-work-description" className="rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-200">Starting work moves this Fleet maintenance work order to <b>In Progress</b> and stamps the Eastern start date. It does not consume inventory or complete the job.</div>
