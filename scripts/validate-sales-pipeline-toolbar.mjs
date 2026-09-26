@@ -36,9 +36,13 @@ check(count('aria-label="Information Filters"') === 1 && count('aria-label="Colu
 check(page.includes('aria-label="Sales Pipeline saved filters and column layouts"'), "The secondary filter row is separated.");
 check(page.includes('value={outcomePeriod}') && page.includes('recordScope === "outcomes"'),
   "Outcome period is still contextual.");
-check(page.includes('onClick={() => applyAttentionFilter("overdue")}') &&
-  page.includes('onClick={() => applyAttentionFilter("quote_aged")}'),
-  "The existing attention filters are untouched by this phase.");
+check(page.includes('SALES_PRIMARY_ATTENTION.map((option)') &&
+  page.includes('visibleSalesMoreAttentionGroups(pipelineSummary, attentionFilter).map((group, index)') &&
+  page.includes('onSelect={() => applyAttentionFilter(option.key)}'),
+  "The existing attention filters are exposed through compact shortcuts and grouped More Filters.");
+check(page.includes('aria-label="Quick Sales attention filters"') &&
+  page.includes('aria-label="Clear active Sales information and attention filters"'),
+  "Quick attention controls are labeled and active filters can be cleared.");
 check(page.includes('onSummaryChange={setPipelineSummary}') &&
   page.includes('activeColumnPreset={activeColumnPreset}'), "Sales data and saved preset handoff remain unchanged.");
 
