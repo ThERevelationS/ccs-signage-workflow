@@ -505,7 +505,8 @@ Answer the question based on the documents and information available. Be specifi
     return (
       <div className="flex flex-col h-full">
         <PDFViewer key={liveViewingPDF.file_url} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => {
-          pendingPDFReturnFocusRef.current = { id: viewingPDF.id, jurisdictionId: viewingPDF.jurisdictionId };
+          // Capture the current live destination, not the snapshot from when the viewer opened.
+          pendingPDFReturnFocusRef.current = { id: liveViewingPDF.id, jurisdictionId: jurisdiction.id };
           setViewingPDF(null);
         }} />
       </div>
