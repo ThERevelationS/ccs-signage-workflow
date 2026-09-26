@@ -140,6 +140,11 @@ check(ui.includes('checked={column.visible}\n                          disabled=
       ui.includes('disabled={index === visiblePreviewColumns.length - 1 || isSaving}') &&
       ui.includes('placeholder="e.g., My Custom View"\n                    disabled={isSaving}'),
   "Checkboxes, preview arrows and preset names must not race a pending save.");
+check(ui.includes('checked={column.visible}\n                          disabled={isSaving}') &&
+      ui.includes('disabled={index === 0 || isSaving}') &&
+      ui.includes('disabled={index === visiblePreviewColumns.length - 1 || isSaving}') &&
+      ui.includes('placeholder="e.g., My Custom View"\n                    disabled={isSaving}'),
+  "Checkboxes, preview arrows and preset names must not race a pending save.");
 check(ui.includes("if (closeAfterSave) onClose();") &&
       ui.indexOf("await loadData();\n      resetForm();") < ui.indexOf("if (closeAfterSave) onClose();"),
   "Save & Close must wait for verified persistence and reload.");
