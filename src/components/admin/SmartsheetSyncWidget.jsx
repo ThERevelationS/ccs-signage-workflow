@@ -3,14 +3,16 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { RefreshCw, Check, AlertTriangle, GitBranch, X } from "lucide-react";
 import { interpretSmartsheetSyncStatus } from "./smartsheetSyncStatusModel.js";
+import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 
 const STATUS_KEY = 'smartsheetSyncStatus';
 const CONFIG_KEY = 'smartsheetSyncConfig';
 
-export default function SmartsheetSyncWidget() {
+export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const [status, setStatus] = useState(null);
   const [config, setConfig] = useState(null);
   const [dismissed, setDismissed] = useState(false);
+  const [dismissedOrderRun, setDismissedOrderRun] = useState(null);
   const [loading, setLoading] = useState(true);
   const prevRunningRef = useRef(false);
 
