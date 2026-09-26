@@ -49,6 +49,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const firstJurisdictionSearchResultRef = useRef(null);
   const jurisdictionSearchResultRefs = useRef(new Map());
   const focusedJurisdictionSearchResultRef = useRef(null);
+  const searchJurisdictionIdRef = useRef(jurisdiction.id);
   const documentSearchInputRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
@@ -177,6 +178,16 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
 
     setSearchResults(results);
   };
+
+  // Recheck active matches after same-jurisdiction document updates so removed results
+  // disappear and the existing search-result focus recovery can run.
+  useEffect(() => {
+    if (searchJurisdictionIdRef.current !== jurisdiction.id) {
+      searchJurisdictionIdRef.current = jurisdiction.id;
+      return; // Jurisdiction changes have their own search reset above.
+    }
+    if (docSearchTerm.trim()) searchDocuments(docSearchTerm);
+  }, [jurisdiction.id, jurisdiction.documents]);
 
   const searchWithinDocument = async (docId, searchText) => {
     setClearedDocSearchId(searchText.trim() ? null : docId);
