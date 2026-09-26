@@ -1134,6 +1134,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     setCustomerSearch(e.target.value);
                     setShowCustomerDropdown(order.id);
                   }}
+                  onClick={(event) => {
+                    setCustomerSearch(event.currentTarget.value);
+                    setShowCustomerDropdown(order.id);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
                       event.stopPropagation();
