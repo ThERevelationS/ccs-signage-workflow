@@ -72,6 +72,19 @@ test("PDF Open and Back remain native keyboard-activatable buttons", () => {
   assert.match(panel, /<Button\s+ref=\{pdfOpenButtonRef\}/);
 });
 
+test("opening PDF viewer focuses its Back button once without scrolling", () => {
+  assert.match(viewer, /<Button\s+ref=\{backButtonRef\}[\s\S]*?onClick=\{onBack\}/);
+  const focusOnMount = new Function("backButtonRef", sourceBlock(
+    viewer,
+    /useLayoutEffect\(\(\) => \{([\s\S]*?)\}, \[\]\);/,
+    "PDF viewer initial Back focus effect"
+  ));
+  const focusCalls = [];
+  focusOnMount({ current: { focus: options => focusCalls.push(options) } });
+  assert.deepEqual(focusCalls, [{ preventScroll: true }]);
+  assert.doesNotThrow(() => focusOnMount({ current: null }));
+});
+
 test("opening a PDF stores only its document and jurisdiction identity", () => {
   let selected;
   let stopped = false;
