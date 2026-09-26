@@ -93,6 +93,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
+import { filterOrderCustomerJobs } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -146,7 +147,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
+  const activeCustomerPickerRef = useRef(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
+
+  // Only an actual outside interaction, leaving the picker with the keyboard,
+  // Escape, or choosing a job closes it; no delayed blur timer can race focus.
+  useEffect(() => {
+    if (!showCustomerDropdown) return;
+    const closeOnOutsidePointer = (event) => {
+      if (!activeCustomerPickerRef.current?.contains(event.target)) {
+        setShowCustomerDropdown(null);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
+  }, [showCustomerDropdown]);
 
   const [editingRequestTypes, setEditingRequestTypes] = useState(false);
   const [editingVendors, setEditingVendors] = useState(false);
@@ -502,24 +517,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   };
 
-  const getFilteredWorkOrders = React.useCallback((searchTerm) => {
-    // Filter out riders - only show main work orders (no riders)
-    const mainWorkOrders = workOrders.filter(wo => !wo.is_rider);
-
-    if (!searchTerm) return mainWorkOrders.slice(0, 10);
-    const lower = searchTerm.toLowerCase();
-    const terms = lower.split(/\s+/).filter(t => t.length > 0);
-
-    return mainWorkOrders.filter(wo => {
-      const searchable = [
-        wo.client_name,
-        wo.title,
-        wo.description
-      ].filter(Boolean).join(' ').toLowerCase();
-
-      return terms.every(term => searchable.includes(term));
-    }).slice(0, 10);
-  }, [workOrders]);
+  const getFilteredWorkOrders = React.useCallback(
+    (searchTerm) => filterOrderCustomerJobs(workOrders, searchTerm),
+    [workOrders]
+  );
 
   const saveRequestTypes = (types) => {
     setRequestTypes(types);
@@ -1096,9 +1097,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
               </td>
 
               {/* Customer Name with Work Order Link */}
-              <td 
-                className="px-1 py-0.5 border-r relative" 
+              <td
+                ref={showCustomerDropdown === order.id ? activeCustomerPickerRef : null}
+                className="px-1 py-0.5 border-r relative"
                 style={{ overflow: 'visible' }}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setShowCustomerDropdown(current => current === order.id ? null : current);
+                  }
+                }}
                 onContextMenu={(e) => handleContextMenu(e, order, "customer_name", "Customer Name", order.customer_name)}
               >
                 <div className="flex items-center gap-1 h-7">
@@ -1108,12 +1115,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     const val = e.target.value;
                     setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: val } : o));
                     setCustomerSearch(val);
-                    // Show dropdown for work order suggestions if there's text
-                    if (val.length > 1) {
-                      setShowCustomerDropdown(order.id);
-                    } else {
-                      setShowCustomerDropdown(null);
-                    }
+                    setShowCustomerDropdown(order.id);
                   }}
                   onBlur={() => {
                     const currentOrder = orders.find(o => o.id === order.id);
@@ -1124,14 +1126,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                       };
                       setHasUnsavedChanges(true);
                     }
-                    setTimeout(() => {
-                      setShowCustomerDropdown(null);
-                    }, 200);
                   }}
                   onFocus={(e) => {
-                    if (e.target.value.length > 1) {
-                      setCustomerSearch(e.target.value);
-                      setShowCustomerDropdown(order.id);
+                    setCustomerSearch(e.target.value);
+                    setShowCustomerDropdown(order.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.stopPropagation();
+                      setShowCustomerDropdown(null);
                     }
                   }}
                   className="h-7 text-xs border-0 bg-transparent px-1 w-full"
@@ -1151,16 +1154,22 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                   </button>
                 )}
               </div>
-                {showCustomerDropdown === order.id && getFilteredWorkOrders(customerSearch).length > 0 && (
-                  <div 
+                {showCustomerDropdown === order.id && (
+                  <div
+                    role="group"
+                    aria-label="Active jobs"
                     className="absolute left-0 top-full w-72 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto"
                     style={{ zIndex: 9999 }}
                   >
-                    {getFilteredWorkOrders(customerSearch).map(wo => (
-                      <div
+                    {getFilteredWorkOrders(customerSearch).length === 0 ? (
+                      <p className="px-3 py-3 text-xs text-gray-500">No active jobs match.</p>
+                    ) : getFilteredWorkOrders(customerSearch).map(wo => (
+                      <button
                         key={wo.id}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs border-b last:border-0"
-                        onMouseDown={() => {
+                        type="button"
+                        className="block w-full px-3 py-2 text-left hover:bg-gray-100 focus-visible:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 text-xs border-b last:border-0"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
                           setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: wo.client_name, work_order_id: wo.id } : o));
                           pendingChangesRef.current[order.id] = {
                             ...pendingChangesRef.current[order.id],
@@ -1172,9 +1181,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                           setEditingCustomerName(null);
                         }}
                       >
-                        <div className="font-medium text-gray-800">{wo.client_name}</div>
-                        <div className="text-gray-500 truncate">{wo.title}</div>
-                      </div>
+                        <span className="block font-medium text-gray-800">{wo.client_name}</span>
+                        <span className="block text-gray-500 truncate">{wo.title}</span>
+                      </button>
                     ))}
                   </div>
                 )}
