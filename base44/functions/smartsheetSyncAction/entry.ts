@@ -766,10 +766,10 @@ async function pushDataset(
           const metadata = { name: filename, mimeType: 'application/json',
             description: 'CCS Order Request pre-sync row/column backup (attachments excluded)' };
           const multipart = new Blob([
-            `--${boundary}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n`,
+            `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
             JSON.stringify(metadata),
-            `\\r\\n--${boundary}\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n`,
-            content, `\\r\\n--${boundary}--\\r\\n`,
+            `\\r\\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+            content, `\r\n--${boundary}--\r\n`,
           ]);
           const response = await driveFetch(
             'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size',
