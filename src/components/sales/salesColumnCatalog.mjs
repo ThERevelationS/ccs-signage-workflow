@@ -85,6 +85,17 @@ export function salesPresetColumnVisible(preset, id) {
   return knownById.has(id) && settings.some((column) => column?.id === id && column.visible !== false);
 }
 
+// The editor's visible horizontal preview and the actual table use this same
+// persisted order. Unknown/retired fields are preserved in storage but never
+// become a table column. A saved preset with no columns renders no data cells.
+export function getVisibleSalesColumnIds(preset) {
+  if (!preset) return SALES_TABLE_COLUMNS.map((column) => column.id);
+  if (!Array.isArray(preset.column_settings) || !preset.column_settings.length) return [];
+  return normalizeSalesColumnSettings(preset.column_settings)
+    .filter((column) => column.visible)
+    .map((column) => column.id);
+}
+
 // Move between VISIBLE preview neighbors; hidden checkboxes retain their
 // positions. These same updated settings are persisted by the preset editor.
 export function moveVisibleSalesColumn(settings, id, direction) {
