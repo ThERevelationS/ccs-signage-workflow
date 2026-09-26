@@ -165,6 +165,17 @@ export default function TimeClockExceptionCenter({
 
   for (const entry of activeEntries) {
     const age = ageMs(entry.clock_in, nowMs);
+    if (age === null) {
+      exceptions.push({
+        key: `invalid-clock-in:${entry.id}`,
+        severity: "critical",
+        icon: ShieldAlert,
+        title: "Active shift has an invalid clock-in time",
+        employee: entry.user_name || entry.user_email,
+        detail: "An unarchived TimeEntry is marked active, but its original clock-in timestamp is missing or invalid. Pay-period finalization is blocked until a manager investigates its original record. Nothing was corrected automatically.",
+        entry,
+      });
+    }
     if (age !== null && age >= TWENTY_FOUR_HOURS) {
       exceptions.push({
         key: `forgotten:${entry.id}`,
