@@ -17,6 +17,7 @@ import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
 import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
+import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
 import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, documentSearchContentSource, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
@@ -58,6 +59,9 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const pendingPDFReturnFocusRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
+  const [archiveProgress, setArchiveProgress] = useState(null);
+  const archiveInFlightRef = useRef(false);
+  const activeArchiveJurisdictionRef = useRef(jurisdiction.id);
   const [viewingPDF, setViewingPDF] = useState(null);
   const [docSearchTerm, setDocSearchTerm] = useState("");
   const [jurisdictionSearchCleared, setJurisdictionSearchCleared] = useState(false);
@@ -77,9 +81,16 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [verificationError, setVerificationError] = useState("");
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
+  const pdfSources = (jurisdiction.documents || []).filter(doc => /\.pdf(?:[?#]|$)/i.test(doc.url || ""));
+  const pendingPDFs = pdfSources.filter(doc => !doc.file_url && /^[a-f0-9]{64}$/i.test(doc.source_sha256 || "") && Number.isSafeInteger(Number(doc.source_bytes)) && Number(doc.source_bytes) > 0);
+  const archivedPDFCount = pdfSources.filter(isVerifiedPermitPDFArchive).length;
+  const unpinnedPDFCount = pdfSources.filter(doc => !doc.file_url && !pendingPDFs.includes(doc)).length;
+  const unverifiedPDFCount = pdfSources.filter(doc => doc.file_url && !isVerifiedPermitPDFArchive(doc)).length;
 
   // Do not carry document expansion, search results, or pending focus into another jurisdiction.
   useEffect(() => {
+    activeArchiveJurisdictionRef.current = jurisdiction.id;
+    setArchiveProgress(null);
     setViewingPDF(null);
     setVerificationTarget(null);
     setVerificationNote("");
@@ -188,34 +199,56 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     target?.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [viewingPDF, expandedDoc, jurisdiction.id, jurisdiction.documents]);
 
-  // Download actual source files, not live ordinance pages, GIS services, or online
-  // application portals. Keep those resources as links rather than archiving HTML
-  // as misleading PDF/document attachments.
-  useEffect(() => {
-    const autoDownloadDocs = async () => {
-      const docsToDownload = (jurisdiction.documents || []).filter(doc =>
-        doc.url && !doc.file_url && /\.(?:pdf|docx?|xlsx?|csv|txt)(?:[?#]|$)/i.test(doc.url)
-      );
-      for (const doc of docsToDownload) {
+  // Explicit, bounded archive action in the active Permitting view. Do not silently
+  // upload merely because someone opened a jurisdiction, and never count a URL alone
+  // as proof that the official PDF was stored correctly.
+  const archiveMissingPDFs = async () => {
+    if (archiveInFlightRef.current || !pendingPDFs.length) return;
+    const targetId = jurisdiction.id;
+    const batch = pendingPDFs.slice(0, 10);
+    archiveInFlightRef.current = true;
+    const progress = { processed: 0, total: batch.length, stored: 0, skipped: 0, failed: 0, failures: [] };
+    setArchiveProgress({ ...progress });
+    try {
+      for (const doc of batch) {
+        if (activeArchiveJurisdictionRef.current !== targetId) break;
         try {
-          const res = await downloadPermitPDF({
-            jurisdiction_id: jurisdiction.id,
-            document_url: doc.url,
-            document_title: doc.title
-          });
-          if (res.data?.jurisdiction?.id) {
-            onUpdate(res.data.jurisdiction);
-          } else if (res.data?.file_url) {
-            const latest = await base44.entities.JurisdictionProfile.get(jurisdiction.id).catch(() => null);
-            if (latest?.id) onUpdate(latest);
+          const latest = await base44.entities.JurisdictionProfile.get(targetId);
+          const current = (latest.documents || []).find(item => item.id === doc.id && item.url === doc.url);
+          if (!current) {
+            progress.skipped++;
+          } else if (current.file_url) {
+            if (!isVerifiedPermitPDFArchive(current)) throw new Error("An existing file is missing matching upload verification");
+            progress.skipped++;
+          } else if (current.source_sha256 !== doc.source_sha256 || current.source_bytes !== doc.source_bytes) {
+            throw new Error("Official source fingerprint changed; recheck before uploading");
+          } else {
+            await downloadPermitPDF({ jurisdiction_id: targetId, document_url: doc.url, document_title: doc.title });
+            const saved = await base44.entities.JurisdictionProfile.get(targetId);
+            const stored = (saved.documents || []).find(item => item.id === doc.id && item.url === doc.url);
+            if (!isVerifiedPermitPDFArchive(stored)) throw new Error("Stored PDF checksum or byte count could not be verified");
+            progress.stored++;
+            if (activeArchiveJurisdictionRef.current === targetId) onUpdate(saved);
           }
-        } catch (e) {
-          console.error(`Failed to download ${doc.title}:`, e);
+        } catch (error) {
+          // One re-read recovers an upload that succeeded despite a network timeout.
+          const saved = await base44.entities.JurisdictionProfile.get(targetId).catch(() => null);
+          const stored = (saved?.documents || []).find(item => item.id === doc.id && item.url === doc.url);
+          if (isVerifiedPermitPDFArchive(stored)) {
+            progress.stored++;
+            if (activeArchiveJurisdictionRef.current === targetId) onUpdate(saved);
+          } else {
+            progress.failed++;
+            progress.failures.push(`${doc.title}: ${error?.message || "Upload failed"}`);
+          }
         }
+        progress.processed++;
+        if (activeArchiveJurisdictionRef.current === targetId) setArchiveProgress({ ...progress, failures: [...progress.failures] });
       }
-    };
-    autoDownloadDocs();
-  }, [jurisdiction.id]);
+    } finally {
+      archiveInFlightRef.current = false;
+    }
+  };
 
   const searchDocuments = (term) => {
     setDocSearchTerm(term);
@@ -547,6 +580,23 @@ Answer the question based on the documents and information available. Be specifi
               <Badge variant="outline" className="max-w-full break-words">{jurisdiction.state}</Badge>
               <Badge className="max-w-full break-words bg-gray-100 text-gray-600 capitalize text-xs">{jurisdiction.type}</Badge>
             </div>
+            {pdfSources.length > 0 && (
+              <div className="mt-2 space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                <p>{archivedPDFCount} of {pdfSources.length} official PDFs verified in File Storage. {pendingPDFs.length} fingerprinted PDF{pendingPDFs.length === 1 ? "" : "s"} ready to archive.</p>
+                <Button type="button" variant="outline" className="min-h-11 w-full gap-2 border-blue-300 sm:w-auto" disabled={archiveInFlightRef.current || !pendingPDFs.length || downloadingDocId !== null} onClick={archiveMissingPDFs}>
+                  {archiveInFlightRef.current ? <Loader2 className="h-4 w-4 animate-spin" /> : <DownloadCloud className="h-4 w-4" />}
+                  {archiveInFlightRef.current ? "Archiving official PDFs..." : `Archive missing PDFs (${Math.min(pendingPDFs.length, 10)} this batch)`}
+                </Button>
+                {unpinnedPDFCount > 0 && <p>{unpinnedPDFCount} PDF source{unpinnedPDFCount === 1 ? "" : "s"} still require verified source checksums before upload.</p>}
+                {unverifiedPDFCount > 0 && <p role="alert" className="text-red-700">{unverifiedPDFCount} existing PDF upload{unverifiedPDFCount === 1 ? "" : "s"} lack matching checksum/size proof and are not counted as archived.</p>}
+                {archiveProgress && (
+                  <div role="status" aria-live="polite" className="space-y-1">
+                    <p>{archiveProgress.processed}/{archiveProgress.total} processed; {archiveProgress.stored} verified stored, {archiveProgress.skipped} skipped, {archiveProgress.failed} failed.</p>
+                    {archiveProgress.failures.map((failure, index) => <p key={index} className="break-words text-red-700">{failure}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
             {jurisdiction.permitting_url && (
               <a
                 href={jurisdiction.permitting_url}
