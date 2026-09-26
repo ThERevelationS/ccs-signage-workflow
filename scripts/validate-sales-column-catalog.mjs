@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   SALES_TABLE_COLUMNS,
+  getSalesColumnLayout,
   normalizeSalesColumnSettings,
   preserveLegacySalesColumnEntries,
   getUnavailableSalesColumns,
@@ -32,6 +33,40 @@ assert.match(spreadsheet, /getVisibleSalesColumnIds\(activeColumnPreset\)/);
 assert.match(spreadsheet, /visibleColumnIds\.map\(\(columnId\) =>/);
 assert.match(row, /visibleColumnIds\.map\(\(columnId\) =>/);
 assert.match(read("src/components/sales/SalesPipelineTableBody.jsx"), /visibleColumnIds=\{visibleColumnIds\}/);
+
+// The real table and the horizontal preview must consume identical header
+// wording and minimum widths from one catalog, without changing the tiny
+// checkbox layout or inventing production data in the preview.
+assert.equal((headers.match(/getSalesColumnLayout\(columnId\)\.headerLabel/g) || []).length,
+  catalogIds.length, "Every live header must display its shared catalog label.");
+assert.equal((headers.match(/getSalesColumnLayout\(columnId\)\.minWidth/g) || []).length,
+  catalogIds.length, "Every live header must use its shared catalog minimum width.");
+assert.match(editor, /getSalesColumnLayout\(column\.id\)\.headerLabel/);
+assert.equal((editor.match(/getSalesColumnLayout\(column\.id\)\.minWidth/g) || []).length, 2,
+  "Preview headers and sample cells must share the table's minimum widths.");
+assert.match(editor, /visiblePreviewColumns = columnSettings\.filter/);
+assert.match(editor, /<div className="flex flex-wrap gap-1">/,
+  "Existing compact, always-visible checkbox strip must remain.");
+assert.match(editor, /overflow-x-auto.*aria-label="Horizontal Sales Pipeline column preview"/);
+assert.match(editor, /aria-label=\{`Move \$\{column\.label\} left`\}/);
+assert.match(editor, /aria-label=\{`Move \$\{column\.label\} right`\}/);
+assert.match(editor, /minWidth: "32px"/);
+assert.match(editor, /minWidth: "60px"/);
+const sampleSource = editor.split("const SALES_COLUMN_PREVIEW_SAMPLE = Object.freeze({")[1]?.split("});")[0];
+assert.ok(sampleSource, "Preview sample must be a plainly marked static example.");
+const sampleIds = Array.from(sampleSource.matchAll(/\b([a-z][a-z0-9_]*):\s*"/g), ([, id]) => id);
+assert.equal(sampleIds.length, catalogIds.length, "Sample must have exactly one value for every supported column.");
+assert.deepEqual(new Set(sampleIds), new Set(catalogIds), "Every selected column must have a sample cell.");
+for (const id of catalogIds) {
+  const layout = getSalesColumnLayout(id);
+  assert.ok(layout && layout.headerLabel.trim() && Number.isInteger(layout.minWidth) && layout.minWidth >= 60,
+    `Column ${id} requires a real table header label and width.`);
+}
+assert.equal(getSalesColumnLayout("client_name").minWidth, 120);
+assert.equal(getSalesColumnLayout("description").minWidth, 150);
+assert.equal(getSalesColumnLayout("date_estimate_sent").headerLabel, "Date Estimate Sent to Customer");
+assert.equal(getSalesColumnLayout("title"), null, "Obsolete Notes must not reappear in preview.");
+
 
 const legacy = [
   { id: "client_name", label: "Customer", visible: true },
