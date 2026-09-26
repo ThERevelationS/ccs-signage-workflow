@@ -10,6 +10,7 @@ import { ArrowUpDown } from "lucide-react";
 import GanttChart from "../components/workflow/GanttChart";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { hasAnyTimelineSegment, earliestSegmentDue } from "@/components/workflow/workOrderTimelineSegments";
 
 const stageOrder = ['estimating', 'sales', 'permitting', 'design', 'production', 'fabrication', 'installation'];
 
@@ -57,21 +58,20 @@ export default function MainWorkflow() {
         label: "Main Workflow Work Orders",
       });
       const activeOrders = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
-      // Show work orders with at least a due_date (start_date is optional - will default to created_date)
-      const withDates = activeOrders.filter(wo => wo.due_date);
-    
-    // Separate parent work orders and riders
-    // A work order is considered a rider if its `is_rider` property is true.
-    // Otherwise, it's considered a parent.
-    const parents = withDates.filter(wo => !wo.is_rider);
-    const riders = withDates.filter(wo => wo.is_rider);
-    
-    // Attach riders to their parent work orders
-    const groupedWorkOrders = parents.map(parent => ({
-      ...parent,
-      riders: riders.filter(rider => rider.parent_work_order_id === parent.id)
-    }));
-    
+
+      // Separate parent work orders and riders. A work order is a rider if its
+      // `is_rider` property is true; otherwise it is a parent.
+      const parents = activeOrders.filter(wo => !wo.is_rider);
+      const riders = activeOrders.filter(wo => wo.is_rider);
+
+      // Attach riders to their parent work orders, then keep only jobs that
+      // have at least one dated portion (whole-job due date, rider, task, or
+      // Sales Pipeline milestone). Jobs with no assigned due date are hidden.
+      const groupedWorkOrders = parents.map(parent => ({
+        ...parent,
+        riders: riders.filter(rider => rider.parent_work_order_id === parent.id)
+      })).filter(wo => hasAnyTimelineSegment(wo));
+
       setWorkOrders(groupedWorkOrders);
     } catch (error) {
       console.error("Error loading work orders:", error);
@@ -88,7 +88,7 @@ export default function MainWorkflow() {
         sorted.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
         break;
       case "due_date":
-        sorted.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+        sorted.sort((a, b) => earliestSegmentDue(a) - earliestSegmentDue(b));
         break;
       case "stage":
         sorted.sort((a, b) => stageOrder.indexOf(a.current_stage) - stageOrder.indexOf(b.current_stage));
@@ -138,8 +138,8 @@ export default function MainWorkflow() {
             </div>
           ) : workOrders.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No work orders with dates available</p>
-              <p className="text-gray-400 text-sm mt-2">Add start and due dates to work orders to see them here</p>
+              <p className="text-gray-500 text-lg">No dated job portions available</p>
+              <p className="text-gray-400 text-sm mt-2">Add due dates to tasks, riders, or sales milestones to see them here</p>
             </div>
           ) : (
             <GanttChart workOrders={getSortedWorkOrders()} onWorkOrderClick={handleWorkOrderClick} />
