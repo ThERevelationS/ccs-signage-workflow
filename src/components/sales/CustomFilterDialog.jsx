@@ -14,7 +14,7 @@ import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilt
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
-import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges } from "@/components/sales/salesColumnEditorDraft.mjs";
+import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual, SALES_ESSENTIAL_COLUMN_IDS } from "@/components/sales/salesColumnEditorDraft.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -380,6 +380,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const visiblePreviewColumns = columnSettings.filter((column) => column.visible);
+  const allColumnsShown = columnSettings.every((column) => column.visible);
+  const optionalColumnsHidden = columnSettings.every((column) =>
+    column.visible === SALES_ESSENTIAL_COLUMN_IDS.includes(column.id));
+  const columnLayoutMatchesBaseline = salesColumnSettingsEqual(columnSettings, editorBaseline.columns);
 
   const canDelete = (item) => {
     if (item.is_standard) return false;
@@ -824,7 +828,22 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 <div>
                   <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                     <Label className="block text-sm">Column Settings - Toggle visibility</Label>
-                    <div className="flex items-center gap-1" role="group" aria-label="Column arrangement history">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Column layout shortcuts">
+                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                          disabled={allColumnsShown || isSaving}
+                          onClick={() => dispatchColumnDraft({ type: "show_all" })}
+                          title="Show all supported columns without changing their order">Show All</Button>
+                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                          disabled={optionalColumnsHidden || isSaving}
+                          onClick={() => dispatchColumnDraft({ type: "hide_optional" })}
+                          title="Keep Customer, Sales Status, Task Description and Follow Up; you can still change any checkbox">Hide Optional</Button>
+                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                          disabled={columnLayoutMatchesBaseline || isSaving}
+                          onClick={() => dispatchColumnDraft({ type: "restore", columns: editorBaseline.columns })}
+                          title="Restore the original saved layout and visibility; Undo is available">Reset</Button>
+                      </div>
+                      <div className="flex items-center gap-1" role="group" aria-label="Column arrangement history">
                       <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs"
                         disabled={columnDraft.past.length === 0 || isSaving}
                         onClick={() => dispatchColumnDraft({ type: "undo" })}
@@ -837,6 +856,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         title="Redo the last undone column change">
                         <Redo2 className="mr-1 h-3.5 w-3.5" />Redo
                       </Button>
+                      </div>
                     </div>
                   </div>
                   {editingItem && getUnavailableSalesColumns(editingItem.column_settings).length > 0 && (
