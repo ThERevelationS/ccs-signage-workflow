@@ -66,7 +66,7 @@ const DateCell = memo(function DateCell({ woId, field, value, popoverKey, openDa
 });
 
 const SalesPipelineRow = memo(function SalesPipelineRow({
-  wo, index, isColumnVisible, focusedRowId, setFocusedRowId, setFocusedRowIndex,
+  wo, index, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
   handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, onCompleteFollowUp, openCorbridgeDialog,
@@ -109,17 +109,19 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
             {index + 1}
           </button>
         </td>
-        {isColumnVisible("client_name") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}>
+        {visibleColumnIds.map((columnId) => {
+            switch (columnId) {
+              case "client_name": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}>
             <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
               <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{wo.client_name || "Unnamed"}</span>
               {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800" title="Exact placeholder customer name detected. Review before removing from Current Pipeline.">TEST</span>}
               {attentionItems.length > 0 && <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title={`Needs attention: ${attentionItems.map((item) => item.label).join(", ")}`}>!{attentionItems.length}</span>}
             </button>
           </td>
-        )}
-        {isColumnVisible("sales_status") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
+              );
+              case "sales_status": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_status", "Sales Status", wo.sales_status)}>
             <Select value={wo.sales_status || "lead"} onValueChange={(val) => onRequestStatusChange?.(wo, val)} disabled={!isRegistered}>
               <SelectTrigger className={`h-7 text-xs border-0 px-1 ${SALES_STATUSES.find((status) => status.value === (wo.sales_status || "lead"))?.className || "bg-transparent"}`}>
                 <SelectValue />
@@ -129,18 +131,18 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               </SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("stage_age") && (
-          <td className="px-1 py-0.5 border-r text-center">
+              );
+              case "stage_age": return (
+                <td key={columnId} className="px-1 py-0.5 border-r text-center">
             {stageAging.tracked ? (
               <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${stageAging.aged ? "bg-rose-50 text-rose-700" : wo.sales_status === "on_hold" ? "bg-gray-100 text-gray-600" : "bg-slate-50 text-slate-600"}`} title={wo.sales_status === "on_hold" ? "Stage timing tracked; On Hold is not flagged as stalled." : "Days since the last verified Sales Pipeline stage change."}>{stageAging.ageDays}d</span>
             ) : (
               <span className="text-[11px] text-gray-400" title="Stage timing begins with a verified stage change.">—</span>
             )}
           </td>
-        )}
-        {isColumnVisible("sales_rep") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_rep", "Salesperson / Owner", wo.sales_rep)}>
+              );
+              case "sales_rep": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "sales_rep", "Salesperson / Owner", wo.sales_rep)}>
             <Select value={wo.sales_rep || ""} onValueChange={(val) => updateWorkOrder(wo.id, "sales_rep", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="Unassigned">{wo.sales_rep || "Unassigned"}</SelectValue></SelectTrigger>
               <SelectContent>
@@ -149,32 +151,32 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               </SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("description") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "description", "Job Description", wo.description)}>
+              );
+              case "description": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "description", "Job Description", wo.description)}>
             <Input value={wo.description || ""} onChange={(e) => updateWorkOrder(wo.id, "description", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="-" disabled={!isRegistered} />
           </td>
-        )}
-        {isColumnVisible("lead_source") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "lead_source", "Source", wo.lead_source)}>
+              );
+              case "lead_source": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "lead_source", "Source", wo.lead_source)}>
             <Select value={wo.lead_source || ""} onValueChange={(val) => updateWorkOrder(wo.id, "lead_source", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>{leadSources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("current_task_deadline") && (
-          <td className="px-1 py-0.5 border-r" style={{ backgroundColor: getDeadlineCellColor(wo.current_task_deadline) }} onContextMenu={(e) => handleContextMenu(e, wo, "current_task_deadline", "Deadline", wo.current_task_deadline)}>
+              );
+              case "current_task_deadline": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" style={{ backgroundColor: getDeadlineCellColor(wo.current_task_deadline) }} onContextMenu={(e) => handleContextMenu(e, wo, "current_task_deadline", "Deadline", wo.current_task_deadline)}>
             <DateCell woId={wo.id} field="current_task_deadline" value={wo.current_task_deadline} popoverKey={`deadline-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
           </td>
-        )}
-        {isColumnVisible("current_task_assigned_to") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_assigned_to", "Task Assigned", wo.current_task_assigned_to)}>
+              );
+              case "current_task_assigned_to": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_assigned_to", "Task Assigned", wo.current_task_assigned_to)}>
             <TaskAssigneeSelect key={wo.id} value={wo.current_task_assigned_to || ""} users={users} onChange={(val) => updateWorkOrder(wo.id, "current_task_assigned_to", val)} disabled={!isRegistered || !isOpen} className="h-7 text-xs border-0 bg-transparent px-1" context={wo.client_name || "this opportunity"} />
           </td>
-        )}
-        {isColumnVisible("designer") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "designer", "Designer", wo.designer)}>
+              );
+              case "designer": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "designer", "Designer", wo.designer)}>
             <Select value={wo.designer || ""} onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.designer || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
@@ -183,9 +185,9 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               </SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("project_manager") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_manager", "Project Manager", wo.project_manager)}>
+              );
+              case "project_manager": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_manager", "Project Manager", wo.project_manager)}>
             <Select value={wo.project_manager || ""} onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
@@ -194,9 +196,9 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               </SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("estimator") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "estimator", "Estimator", wo.estimator)}>
+              );
+              case "estimator": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "estimator", "Estimator", wo.estimator)}>
             <Select value={wo.estimator || ""} onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
@@ -205,9 +207,9 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               </SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("est_inv_at") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "est_inv_at", "Est/Inv #", wo.est_inv_at)}>
+              );
+              case "est_inv_at": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "est_inv_at", "Est/Inv #", wo.est_inv_at)}>
             <div className="flex items-center gap-1">
               {coreBridgeUrl ? (
                 <button type="button" onClick={() => openExternalHttpUrl(coreBridgeUrl)} className="min-w-0 flex-1 truncate text-left text-xs text-blue-600 hover:underline" title="Open CoreBridge">{wo.est_inv_at || "Link"}</button>
@@ -219,76 +221,88 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               {isRegistered && <button onClick={() => openCorbridgeDialog(wo)} className="flex-shrink-0" title="Add link"><LinkIcon className="w-2.5 h-2.5 text-gray-400 hover:text-blue-600" /></button>}
             </div>
           </td>
-        )}
-        {isColumnVisible("estimate_amount") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "estimate_amount", "Estimate Amount", wo.estimate_amount)}>
+              );
+              case "estimate_amount": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "estimate_amount", "Estimate Amount", wo.estimate_amount)}>
             <div className="relative flex items-center">
               <span className="absolute left-1 text-xs text-gray-500">$</span>
               <Input type="number" value={wo.estimate_amount || ""} onChange={(e) => updateWorkOrder(wo.id, "estimate_amount", parseFloat(e.target.value.replace(/[^0-9.]/g, '')) || 0)} className="h-7 text-xs border-0 bg-transparent pl-3 pr-1" placeholder="0" disabled={!isRegistered} min="0" step="0.01" />
             </div>
           </td>
-        )}
-        {isColumnVisible("current_task_description") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_description", "Task Description", wo.current_task_description)}>
+              );
+              case "current_task_description": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "current_task_description", "Task Description", wo.current_task_description)}>
             <Select value={wo.current_task_description || ""} onValueChange={(val) => updateWorkOrder(wo.id, "current_task_description", val)} disabled={!isRegistered || !isOpen}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>{taskDescriptions.map(desc => <SelectItem key={getTaskDescText(desc)} value={getTaskDescText(desc)}>{getTaskDescText(desc)}</SelectItem>)}</SelectContent>
             </Select>
           </td>
-        )}
-        {isColumnVisible("date_initial_contact") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_initial_contact", "Initial Contact", wo.date_initial_contact)}>
+              );
+              case "date_initial_contact": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_initial_contact", "Initial Contact", wo.date_initial_contact)}>
             <DateCell woId={wo.id} field="date_initial_contact" value={wo.date_initial_contact} popoverKey={`initial-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("site_survey_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "site_survey_date", "Site Survey", wo.site_survey_date)}>
+              );
+              case "site_survey_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "site_survey_date", "Site Survey", wo.site_survey_date)}>
             <DateCell woId={wo.id} field="site_survey_date" value={wo.site_survey_date} popoverKey={`survey-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("date_estimate_sent") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_estimate_sent", "Estimate Sent", wo.date_estimate_sent)}>
+              );
+              case "date_estimate_sent": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_estimate_sent", "Estimate Sent", wo.date_estimate_sent)}>
             <DateCell woId={wo.id} field="date_estimate_sent" value={wo.date_estimate_sent} popoverKey={`estsent-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
           </td>
-        )}
-        {isColumnVisible("date_order_created") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_order_created", "Order Created", wo.date_order_created)}>
+              );
+              case "date_order_created": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "date_order_created", "Order Created", wo.date_order_created)}>
             <DateCell woId={wo.id} field="date_order_created" value={wo.date_order_created} popoverKey={`ordercreated-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("project_install_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_install_date", "Install Date", wo.project_install_date)}>
+              );
+              case "project_install_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_install_date", "Install Date", wo.project_install_date)}>
             <DateCell woId={wo.id} field="project_install_date" value={wo.project_install_date} popoverKey={`install-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("permit_submitted_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_submitted_date", "Permit Submitted", wo.permit_submitted_date)}>
+              );
+              case "permit_submitted_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_submitted_date", "Permit Submitted", wo.permit_submitted_date)}>
             <DateCell woId={wo.id} field="permit_submitted_date" value={wo.permit_submitted_date} popoverKey={`permitsub-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("permit_receipt_confirmed_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_receipt_confirmed_date", "Permit Confirmed", wo.permit_receipt_confirmed_date)}>
+              );
+              case "permit_receipt_confirmed_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_receipt_confirmed_date", "Permit Confirmed", wo.permit_receipt_confirmed_date)}>
             <DateCell woId={wo.id} field="permit_receipt_confirmed_date" value={wo.permit_receipt_confirmed_date} popoverKey={`permitconf-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("permit_number") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_number", "Permit Number", wo.permit_number)}>
+              );
+              case "permit_number": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_number", "Permit Number", wo.permit_number)}>
             <Input value={wo.permit_number || ""} onChange={(e) => updateWorkOrder(wo.id, "permit_number", e.target.value)} className="h-7 text-xs border-0 bg-transparent px-1" placeholder="-" disabled={!isRegistered} />
           </td>
-        )}
-        {isColumnVisible("permit_approved_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_approved_date", "Permit Approved", wo.permit_approved_date)}>
+              );
+              case "permit_approved_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "permit_approved_date", "Permit Approved", wo.permit_approved_date)}>
             <DateCell woId={wo.id} field="permit_approved_date" value={wo.permit_approved_date} popoverKey={`permitappr-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("days_init_today") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>}
-        {isColumnVisible("days_req_est") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>}
-        {isColumnVisible("days_est_ord") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>}
-        {isColumnVisible("days_ord_prm") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>}
-        {isColumnVisible("days_prm_app") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>}
-        {isColumnVisible("days_ord_ins") && <td className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>}
-        {isColumnVisible("quote_age") && (
-          <td className="px-1 py-0.5 border-r text-center">
+              );
+              case "days_init_today": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysFromInitial ?? "-"}</td>
+              );
+              case "days_req_est": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstSent ?? "-"}</td>
+              );
+              case "days_est_ord": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysEstToOrder ?? "-"}</td>
+              );
+              case "days_ord_prm": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToPermit ?? "-"}</td>
+              );
+              case "days_prm_app": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysPermitToApproved ?? "-"}</td>
+              );
+              case "days_ord_ins": return (
+                <td key={columnId} className="px-1 py-0.5 border-r bg-yellow-50 text-center">{daysOrderToInstall ?? "-"}</td>
+              );
+              case "quote_age": return (
+                <td key={columnId} className="px-1 py-0.5 border-r text-center">
             {quoteAging.awaitingResponse ? (
               quoteAging.tracked ? (
                 <span className={`inline-flex min-w-[42px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${quoteAging.veryAged ? "bg-rose-50 text-rose-700" : quoteAging.aged ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`} title={`Days since explicit estimate-sent date (${quoteAging.sentDate}).`}>{quoteAging.ageDays}d</span>
@@ -297,46 +311,49 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               )
             ) : <span className="text-[11px] text-gray-300">—</span>}
           </td>
-        )}
-        {isColumnVisible("follow_up_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "follow_up_date", "Follow Up Date", wo.follow_up_date)}>
+              );
+              case "follow_up_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "follow_up_date", "Follow Up Date", wo.follow_up_date)}>
             <div className="flex items-center gap-0.5">
               <div className="min-w-0 flex-1"><DateCell woId={wo.id} field="follow_up_date" value={wo.follow_up_date} popoverKey={`followup-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} /></div>
               {isRegistered && !["won", "lost"].includes(wo.sales_status) && <button type="button" onClick={() => onCompleteFollowUp?.(wo)} className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50" title="Complete / log sales follow-up"><CheckCircle2 className="h-3.5 w-3.5" /></button>}
             </div>
           </td>
-        )}
-        {isColumnVisible("expected_close_date") && (
-          <td
+              );
+              case "expected_close_date": return (
+                <td key={columnId}
             className={`px-1 py-0.5 border-r ${expectedCloseOverdue ? "bg-rose-50" : expectedCloseNear ? "bg-cyan-50" : ""}`}
             title={expectedCloseOverdue ? "Expected close is overdue. Review the forecast or resolve the opportunity." : expectedCloseNear ? "Expected close is within the next 14 days." : undefined}
             onContextMenu={(e) => handleContextMenu(e, wo, "expected_close_date", "Expected Close Date", wo.expected_close_date)}
           >
             <DateCell woId={wo.id} field="expected_close_date" value={wo.expected_close_date} popoverKey={`expectedclose-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered && isOpen} />
           </td>
-        )}
-        {isColumnVisible("close_date") && (
-          <td
+              );
+              case "close_date": return (
+                <td key={columnId}
             className="px-1 py-0.5 border-r"
             title="Close date is set by the Won/Lost workflow. Active records with a stale close date can be cleared from the cell context menu."
             onContextMenu={(e) => handleContextMenu(e, wo, "close_date", "Close Date", wo.close_date)}
           >
             <DateCell woId={wo.id} field="close_date" value={wo.close_date} popoverKey={`close-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={false} allowClear={false} />
           </td>
-        )}
-        {isColumnVisible("start_date") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "start_date", "Start Date", wo.start_date)}>
+              );
+              case "start_date": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "start_date", "Start Date", wo.start_date)}>
             <DateCell woId={wo.id} field="start_date" value={wo.start_date} popoverKey={`start-${wo.id}`} openDatePopover={openDatePopover} setOpenDatePopover={setOpenDatePopover} setClearDateConfirm={setClearDateConfirm} updateWorkOrder={updateWorkOrder} isRegistered={isRegistered} />
           </td>
-        )}
-        {isColumnVisible("project_type") && (
-          <td className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_type", "Project Type", wo.project_type)}>
+              );
+              case "project_type": return (
+                <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_type", "Project Type", wo.project_type)}>
             <Select value={wo.project_type || ""} onValueChange={(val) => updateWorkOrder(wo.id, "project_type", val)} disabled={!isRegistered}>
               <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>{projectTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
           </td>
-        )}
+              );
+              default: return null;
+            }
+          })}
         <td className="px-1 py-0.5 text-center">
           <div className="flex items-center justify-center gap-0.5">
             {isAdmin && <Checkbox checked={selectedRows.has(wo.id)} onCheckedChange={() => toggleRowSelection(wo.id)} className="h-3.5 w-3.5" />}
@@ -361,7 +378,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
     prevProps.openDatePopover === nextProps.openDatePopover &&
     prevProps.selectedRows === nextProps.selectedRows &&
     prevProps.isRegistered === nextProps.isRegistered &&
-    prevProps.isColumnVisible === nextProps.isColumnVisible &&
+    prevProps.visibleColumnIds === nextProps.visibleColumnIds &&
     prevProps.getTaskDescStyle === nextProps.getTaskDescStyle &&
     prevProps.getDeadlineCellColor === nextProps.getDeadlineCellColor &&
     prevProps.calculateDays === nextProps.calculateDays &&

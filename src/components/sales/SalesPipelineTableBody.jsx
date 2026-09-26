@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import SalesPipelineRow from "@/components/sales/SalesPipelineRow";
 
 const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
-  virtualItems, filteredWorkOrders, isColumnVisible, focusedRowId, setFocusedRowId, setFocusedRowIndex,
+  virtualItems, filteredWorkOrders, visibleColumnIds, focusedRowId, setFocusedRowId, setFocusedRowIndex,
   getTaskDescStyle, getDeadlineCellColor, calculateDays, openDatePopover, setOpenDatePopover,
   setClearDateConfirm, updateWorkOrder, isRegistered, isAdmin, selectedRows, toggleRowSelection,
   handleContextMenu, setSelectedWorkOrder, onRequestStatusChange, onCompleteFollowUp, openCorbridgeDialog, handleDuplicateClient, deleteWorkOrder,
@@ -20,7 +20,7 @@ const SalesPipelineTableBody = memo(function SalesPipelineTableBody({
             key={wo.id}
             wo={wo}
             index={index}
-            isColumnVisible={isColumnVisible}
+            visibleColumnIds={visibleColumnIds}
             focusedRowId={focusedRowId}
             setFocusedRowId={setFocusedRowId}
             setFocusedRowIndex={setFocusedRowIndex}
