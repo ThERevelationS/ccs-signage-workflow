@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useReducer, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 
@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, Pencil, Copy, Users } from "lucide-react";
+import { Plus, Trash2, Save, Pencil, Copy, Users, X, Undo2, Redo2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
-import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns, moveVisibleSalesColumn } from "@/components/sales/salesColumnCatalog.mjs";
+import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
+import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges } from "@/components/sales/salesColumnEditorDraft.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -109,7 +110,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [editingItem, setEditingItem] = useState(null);
   const [itemName, setItemName] = useState("");
   const [filterConditions, setFilterConditions] = useState([{ field: "", operator: "equals", value: "" }]);
-  const [columnSettings, setColumnSettings] = useState(ALL_COLUMNS);
+  const [columnDraft, dispatchColumnDraft] = useReducer(salesColumnDraftReducer, undefined, () => newSalesColumnDraft());
+  const columnSettings = columnDraft.present;
+  const [editorBaseline, setEditorBaseline] = useState(() => salesEditorSnapshot({ columns: ALL_COLUMNS, conditions: [{ field: "", operator: "equals", value: "" }] }));
+  const [unsavedConfirm, setUnsavedConfirm] = useState(false);
+  const pendingLeaveRef = useRef(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
@@ -202,9 +207,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const updateCondition = (index, key, value) => {
-    const updated = [...filterConditions];
-    updated[index][key] = value;
-    setFilterConditions(updated);
+    setFilterConditions((current) => current.map((condition, i) =>
+      i === index ? { ...condition, [key]: value } : condition));
   };
 
   const saveItem = async () => {
@@ -262,10 +266,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const editItem = (item) => {
+    const nextConditions = item.conditions?.length
+      ? item.conditions.map((condition) => ({ ...condition }))
+      : [{ field: "", operator: "equals", value: "" }];
+    const nextColumns = normalizeSalesColumnSettings(item.column_settings);
     setEditingItem(item);
     setItemName(item.name);
-    setFilterConditions(item.conditions?.length ? item.conditions : [{ field: "", operator: "equals", value: "" }]);
-    setColumnSettings(normalizeSalesColumnSettings(item.column_settings));
+    setFilterConditions(nextConditions);
+    dispatchColumnDraft({ type: "reset", columns: nextColumns });
+    setEditorBaseline(salesEditorSnapshot({ name: item.name, columns: nextColumns, conditions: nextConditions }));
     setActiveSubTab("create");
   };
 
@@ -292,11 +301,30 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const resetForm = () => {
+    const blankConditions = [{ field: "", operator: "equals", value: "" }];
     setEditingItem(null);
     setItemName("");
-    setFilterConditions([{ field: "", operator: "equals", value: "" }]);
-    setColumnSettings(normalizeSalesColumnSettings(null));
+    setFilterConditions(blankConditions);
+    dispatchColumnDraft({ type: "reset" });
+    setEditorBaseline(salesEditorSnapshot({ columns: ALL_COLUMNS, conditions: blankConditions }));
     setActiveSubTab("pool");
+  };
+
+  const hasUnsavedEdits = activeSubTab === "create" && salesEditorHasChanges(
+    activeTab, editorBaseline, { name: itemName, columns: columnSettings, conditions: filterConditions });
+  const requestNavigation = (action) => {
+    if (isSaving) return;
+    if (hasUnsavedEdits) {
+      pendingLeaveRef.current = action;
+      setUnsavedConfirm(true);
+    } else action();
+  };
+  const requestClose = () => requestNavigation(onClose);
+  const confirmDiscard = () => {
+    const action = pendingLeaveRef.current;
+    pendingLeaveRef.current = null;
+    setUnsavedConfirm(false);
+    action?.();
   };
 
   const toggleSelection = async (item, isStandard = false) => {
@@ -340,15 +368,13 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const toggleColumnVisibility = (columnId) => {
-    setColumnSettings(columnSettings.map(col => 
-      col.id === columnId ? { ...col, visible: !col.visible } : col
-    ));
+    dispatchColumnDraft({ type: "toggle", id: columnId });
   };
 
   const moveColumn = (index, direction) => {
     const id = columnSettings[index]?.id;
     if (!id) return;
-    setColumnSettings((settings) => moveVisibleSalesColumn(settings, id, direction === "up" ? -1 : 1));
+    dispatchColumnDraft({ type: "move", id, direction: direction === "up" ? -1 : 1 });
   };
 
   const visiblePreviewColumns = columnSettings.filter((column) => column.visible);
