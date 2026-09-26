@@ -227,24 +227,18 @@ export default function SIPs() {
 
   // Completion must go through the checklist dialog so approvals, statuses,
   // child tasks, and concurrency-safe completion are validated consistently.
-  // Reopening a completed WIP item returns it to the active queue. If legacy
-  // completed data still carries a future revisit date, clear that stale date
-  // atomically so reopening cannot immediately move it into Revisit Later.
+  // Reopening a completed WIP item returns it to the active queue. Protect
+  // the loaded Revisit date even when it is absent, today, or past: another
+  // session must not schedule a future revisit while this item is reopening.
+  // Clear a legacy future date atomically with reopening; preserve other dates.
   const toggleSipCompleted = async (wo) => {
     if (!wo.sip_completed) {
       openChecklist(wo);
       return;
     }
 
-    if (!isRevisitFuture(wo)) {
-      await updateWorkOrder(wo.id, "sip_completed", false);
-      return;
-    }
-
+    const reopenedRevisitDate = isRevisitFuture(wo) ? "" : (wo.sip_revisit_date ?? "");
     setQuickEditError("");
-    setWorkOrders(prev => prev.map(item => item.id === wo.id
-      ? { ...item, sip_completed: false, sip_revisit_date: "" }
-      : item));
     try {
       const saved = await replaceWorkOrderFieldsIfUnchanged({
         workOrderId: wo.id,
@@ -254,9 +248,9 @@ export default function SIPs() {
         },
         nextFields: {
           sip_completed: false,
-          sip_revisit_date: "",
+          sip_revisit_date: reopenedRevisitDate,
         },
-        label: "SIPs reopen completed WIP and clear stale revisit",
+        label: "SIPs reopen completed WIP",
       });
       setWorkOrders(prev => prev.map(item => item.id === wo.id ? { ...item, ...saved } : item));
     } catch (error) {
