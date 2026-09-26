@@ -226,4 +226,34 @@ await check('conflicted quick edit releases save lock and refreshes latest state
   assert.equal(h.writes, 0);
 });
 
+
+await check('background refresh cannot resurrect completed WIP after reopen', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const stale = h.loadWorkOrders(false);
+  assert.equal(h.reads.length, 1);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  h.reads[0].finish();
+  await stale;
+  assert.equal(h.ctx.workOrders[0].sip_completed, false);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, '');
+  assert.equal(h.queue(), 'Active');
+  assert.equal(h.writes, 1);
+});
+
+await check('background refresh cannot restore Revisit after confirmed clear', async () => {
+  const h = fixture(tomorrow);
+  h.requestClearRevisit(h.ctx.workOrders[0]);
+  const stale = h.loadWorkOrders(false);
+  assert.equal(h.reads.length, 1);
+  await h.confirmClearRevisit();
+  assert.equal(h.record.sip_revisit_date, '');
+  h.reads[0].finish();
+  await stale;
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, '');
+  assert.equal(h.queue(), 'Active');
+  assert.equal(h.writes, 1);
+});
+
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
