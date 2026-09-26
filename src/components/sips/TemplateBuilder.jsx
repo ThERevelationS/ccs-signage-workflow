@@ -1795,14 +1795,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <h3 className="min-w-0 flex-1 truncate font-bold text-sm">{subTemplates.find(st => st.id === selectedSubTemplate)?.name}</h3>
                       {(subTemplateHasChanges || subTemplateSaveStatus === 'saved') && (
                         <Button 
-                          onClick={saveSubTemplateChecklist} 
-                          size="sm" 
+                          onClick={saveSubTemplateChecklist}
+                          size="sm"
+                          disabled={savingChecklist === 'subTemplate'}
+                          aria-busy={savingChecklist === 'subTemplate'}
                           className={`h-11 shrink-0 ml-2 touch-manipulation lg:h-7 ${subTemplateSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                           type="button"
-                          aria-label={subTemplateSaveStatus === 'saved' ? "Checklist option saved" : "Save checklist option"}
+                          aria-label={savingChecklist === 'subTemplate' ? "Saving checklist option" : subTemplateSaveStatus === 'saved' ? "Checklist option saved" : "Save checklist option"}
                         >
                           <Save className="w-3 h-3 mr-1" />
-                          {subTemplateSaveStatus === 'saved' ? 'Saved' : 'Save'}
+                          {savingChecklist === 'subTemplate' ? 'Saving…' : subTemplateSaveStatus === 'saved' ? 'Saved' : 'Save'}
                         </Button>
                       )}
                     </div>
@@ -2060,14 +2062,16 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                       <h3 className="min-w-0 flex-1 truncate font-bold text-sm">{selectedProductType}</h3>
                       {(productTypeHasChanges || productTypeSaveStatus === 'saved') && (
                         <Button 
-                          onClick={saveProductTypeTemplate} 
-                          size="sm" 
+                          onClick={saveProductTypeTemplate}
+                          size="sm"
+                          disabled={savingChecklist === 'productType'}
+                          aria-busy={savingChecklist === 'productType'}
                           className={`h-11 shrink-0 ml-2 touch-manipulation lg:h-7 ${productTypeSaveStatus === 'saved' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                           type="button"
-                          aria-label={productTypeSaveStatus === 'saved' ? "Product checklist saved" : "Save product checklist"}
+                          aria-label={savingChecklist === 'productType' ? "Saving product checklist" : productTypeSaveStatus === 'saved' ? "Product checklist saved" : "Save product checklist"}
                         >
                           <Save className="w-3 h-3 mr-1" />
-                          {productTypeSaveStatus === 'saved' ? 'Saved' : 'Save'}
+                          {savingChecklist === 'productType' ? 'Saving…' : productTypeSaveStatus === 'saved' ? 'Saved' : 'Save'}
                         </Button>
                       )}
                     </div>
