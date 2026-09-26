@@ -211,13 +211,12 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       i === index ? { ...condition, [key]: value } : condition));
   };
 
-  const saveItem = async () => {
+  const saveItem = async ({ closeAfterSave = false } = {}) => {
     if (!itemName.trim()) {
-      alert("Please enter a name");
-      return;
+      setPersistenceError("Enter a preset or filter name before saving. Your edits are still here.");
+      return false;
     }
 
-    const SalesFilter = base44.entities.SalesFilter;
     const data = {
       name: itemName,
       type: activeTab === "filters" ? "filter" : "column_preset",
@@ -228,7 +227,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       selected_by: editingItem?.selected_by || []
     };
 
-    if (isSaving) return;
+    if (isSaving) return false;
     setIsSaving(true);
     setPersistenceError("");
     try {
@@ -240,10 +239,13 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       }
       await loadData();
       resetForm();
+      if (closeAfterSave) onClose();
+      return true;
     } catch (error) {
       console.error("Saved filter update blocked:", error);
       setPersistenceError(error?.message || "This saved filter changed in another session. Reload before saving.");
-      await loadData();
+      await loadData().catch(() => {});
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -390,7 +392,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) requestClose(); }} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
           className="clay-card border-none [&>button]:hidden" 
           style={{ maxWidth: "90vw", width: "1100px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
@@ -400,9 +402,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
               <DialogTitle className="text-2xl font-bold">
                 {activeTab === "filters" ? "Manage Custom Information Filters" : "Manage Custom Column Filters"}
               </DialogTitle>
-              <Button onClick={onClose} className="clay-button border-none">
-                <Save className="w-4 h-4 mr-2" />
-                Save & Close
+              <Button type="button" onClick={() => hasUnsavedEdits ? saveItem({ closeAfterSave: true }) : requestClose()} className="clay-button border-none" disabled={isSaving}>
+                {hasUnsavedEdits ? <Save className="w-4 h-4 mr-2" /> : <X className="w-4 h-4 mr-2" />}
+                {isSaving ? "Saving…" : hasUnsavedEdits ? "Save & Close" : "Close"}
               </Button>
             </div>
           </DialogHeader>
@@ -422,17 +424,17 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
             <Button
               size="sm"
               variant={activeSubTab === "pool" ? "default" : "outline"}
-              onClick={() => setActiveSubTab("pool")}
+              onClick={() => requestNavigation(resetForm)}
             >
               {activeTab === "filters" ? "Information Filter Pool" : "Preset Pool"}
             </Button>
             <Button
               size="sm"
               variant={activeSubTab === "create" ? "default" : "outline"}
-              onClick={() => {
+              onClick={() => requestNavigation(() => {
                 resetForm();
                 setActiveSubTab("create");
-              }}
+              })}
             >
               {editingItem ? "Edit" : "Create New"}
             </Button>
@@ -574,7 +576,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           className="h-4 w-4 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            editItem(item);
+                            requestNavigation(() => editItem(item));
                           }}
                         >
                           <Pencil className="w-3 h-3" />
@@ -790,11 +792,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none" disabled={isSaving}>
+                  <Button onClick={() => saveItem()} className="clay-button border-none" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingItem ? "Update Information Filter" : "Save Information Filter"}
                   </Button>
-                  <Button variant="outline" onClick={resetForm}>
+                  <Button variant="outline" onClick={() => requestNavigation(resetForm)} disabled={isSaving}>
                     Cancel
                   </Button>
                 </div>
@@ -939,11 +941,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={saveItem} className="clay-button border-none" disabled={isSaving}>
+                  <Button onClick={() => saveItem()} className="clay-button border-none" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingItem ? "Update Preset" : "Save Preset"}
                   </Button>
-                  <Button variant="outline" onClick={resetForm}>
+                  <Button variant="outline" onClick={() => requestNavigation(resetForm)} disabled={isSaving}>
                     Cancel
                   </Button>
                 </div>
