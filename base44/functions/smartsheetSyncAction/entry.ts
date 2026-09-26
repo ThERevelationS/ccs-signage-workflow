@@ -7,6 +7,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
+import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
 import { createOrderSmartsheetRowWithGuard, orderSmartsheetCreateNeedsReview } from '../../shared/smartsheetOrderCreateSafety.mjs';
@@ -955,8 +956,65 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset'],
         write_actions_available: true,
+      });
+    }
+
+    if (action === 'audit_order_backup_readiness') {
+      // Order Form administrator-only diagnostic. Google Drive calls below
+      // are GET metadata/list operations; no backup upload or sync is run.
+      const { config } = await loadSyncConfig(base44);
+      const sheetId = cleanText(config?.orders?.smartsheet_sheet_id, 40);
+      let driveApiRead = false;
+      let driveListRead = false;
+      let backupFiles: any[] = [];
+      try {
+        const connection = await base44.asServiceRole.connectors.getConnection('googledrive');
+        const driveToken = cleanText(connection?.accessToken, 8000);
+        if (driveToken) {
+          const driveRead = async (url: string) => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15_000);
+            try {
+              const response = await fetch(url, {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${driveToken}`, Accept: 'application/json' },
+                signal: controller.signal,
+              });
+              if (!response.ok) throw new Error('Google Drive read-only API check failed.');
+              return await response.json();
+            } finally {
+              clearTimeout(timeout);
+            }
+          };
+          const about = await driveRead('https://www.googleapis.com/drive/v3/about?fields=kind');
+          driveApiRead = about?.kind === 'drive#about';
+          if (driveApiRead && /^\\d+$/.test(sheetId)) {
+            const prefix = `CCS_OrderRequest_${sheetId}_pre_sync_`;
+            const params = new URLSearchParams({
+              q: `trashed = false and name contains '${prefix}'`,
+              fields: 'nextPageToken,files(id,name,mimeType,size)',
+              pageSize: '20', orderBy: 'createdTime desc',
+            });
+            const listing = await driveRead(`https://www.googleapis.com/drive/v3/files?${params.toString()}`);
+            driveListRead = Array.isArray(listing?.files);
+            backupFiles = driveListRead ? listing.files : [];
+          }
+        }
+      } catch {
+        // Connectivity or permission failures are reported as NOT READY.
+        // Do not expose OAuth credentials, raw provider payloads or account data.
+      }
+      const readiness = summarizeOrderBackupReadiness({
+        backupEnabled: config?.backup_before_write === true,
+        sheetId, smartsheetConfigured: configured, driveApiRead, driveListRead,
+        files: backupFiles, checkedAt: new Date().toISOString(),
+      });
+      return Response.json({
+        success: true, ...readiness,
+        order_push_enabled: config?.orders?.push_enabled === true,
+        order_mirror_enabled: config?.orders?.mirror_enabled === true,
       });
     }
 
