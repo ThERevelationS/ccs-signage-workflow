@@ -85,6 +85,31 @@ test("opening PDF viewer focuses its Back button once without scrolling", () => 
   assert.doesNotThrow(() => focusOnMount({ current: null }));
 });
 
+test("failed PDF preview announces the fallback and focuses its safe open action", () => {
+  const focusAfterFailure = new Function("showIframe", "fallbackOpenButtonRef", sourceBlock(
+    viewer,
+    /\/\/ A failed iframe removes the preview[\s\S]*?useLayoutEffect\(\(\) => \{([\s\S]*?)\}, \[showIframe\]\);/,
+    "PDF preview fallback focus effect"
+  ));
+  const focusCalls = [];
+  const action = { current: { focus: options => focusCalls.push(options) } };
+  focusAfterFailure(true, action);
+  assert.deepEqual(focusCalls, [], "Do not steal focus while the preview is available");
+  focusAfterFailure(false, action);
+  assert.deepEqual(focusCalls, [{ preventScroll: true }]);
+  assert.doesNotThrow(() => focusAfterFailure(false, { current: null }));
+  const iframeError = new Function("setShowIframe", sourceBlock(
+    viewer,
+    /onError=\{\(\) => ([^}]+)\}/,
+    "PDF iframe error handler"
+  ));
+  let iframeVisible = true;
+  iframeError(value => { iframeVisible = value; });
+  assert.equal(iframeVisible, false, "Iframe failure must show the fallback");
+  assert.match(viewer, /<p role="status"[^>]*>PDF Preview Not Available<\/p>/);
+  assert.match(viewer, /<Button\s+ref=\{fallbackOpenButtonRef\}[\s\S]*?disabled=\{!safeFileUrl\}/);
+});
+
 test("opening a PDF stores only its document and jurisdiction identity", () => {
   let selected;
   let stopped = false;
