@@ -294,7 +294,7 @@ export default function SalesPipeline() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline saved filters and column layouts">
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline filters and column layouts">
             {quickAttentionVisible && (
               <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick Sales attention filters">
                 {SALES_PRIMARY_ATTENTION.map((option) => (

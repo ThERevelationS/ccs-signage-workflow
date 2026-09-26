@@ -33,7 +33,7 @@ check(page.includes('showDuplicateCleanup && (') &&
   page.includes('setShowDuplicateCleanup(false)'), "An obvious Return to Pipeline action appears during cleanup.");
 check(count('aria-label="Information Filters"') === 1 && count('aria-label="Column Filters"') === 1,
   "Existing filters and column presets retained.");
-check(page.includes('aria-label="Sales Pipeline saved filters and column layouts"'), "The secondary filter row is separated.");
+check(page.includes('aria-label="Sales Pipeline filters and column layouts"'), "The secondary filter row is separated.");
 check(page.includes('value={outcomePeriod}') && page.includes('recordScope === "outcomes"'),
   "Outcome period is still contextual.");
 check(page.includes('SALES_PRIMARY_ATTENTION.map((option)') &&

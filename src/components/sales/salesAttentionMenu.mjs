@@ -63,7 +63,7 @@ export function salesMoreAttentionSelected(key) {
 
 export function salesAttentionCount(summary, key) {
   const countKey = byKey.get(key)?.countKey;
-  return countKey && typeof summary?.[countKey] === "number"
+  return countKey && Number.isFinite(summary?.[countKey])
     ? Math.max(0, summary[countKey])
     : 0;
 }

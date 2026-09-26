@@ -51,6 +51,7 @@ check(SALES_MORE_ATTENTION_GROUPS.every((group) => group.items.every((item) =>
 check(!salesMoreAttentionSelected("nonexistent"), "Unknown filters must never pretend to be selected.");
 check(salesAttentionCount({ overdueCount: 6 }, "overdue") === 6 &&
   salesAttentionCount({ overdueCount: -1 }, "overdue") === 0 &&
+  salesAttentionCount({ overdueCount: Infinity }, "overdue") === 0 &&
   salesAttentionCount({}, "overdue") === 0,
   "Counts must use existing finite nonnegative scoped values; missing data must not be fabricated.");
 check(salesAttentionCount({ quoteTimingMissingCount: 12 }, "quote_timing_missing") === 12,
