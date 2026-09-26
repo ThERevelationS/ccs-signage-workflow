@@ -146,6 +146,21 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     return url.toLowerCase().includes('.pdf') || title.toLowerCase().includes('.pdf');
   };
 
+  // Resolve the viewer against current jurisdiction data, never the document snapshot
+  // captured when Open was clicked. A replaced PDF uses its new URL immediately.
+  const liveViewingPDF = viewingPDF?.jurisdictionId === jurisdiction.id
+    ? (jurisdiction.documents || []).find(doc => doc.id === viewingPDF.id && doc.file_url && isPDF(doc))
+    : null;
+
+  useLayoutEffect(() => {
+    if (!viewingPDF || liveViewingPDF) return;
+    // The PDF was removed, changed type, or belongs to a previous jurisdiction.
+    // The details panel is rendered in this commit, so its controls can receive focus.
+    setViewingPDF(null);
+    (documentHeaderRefs.current.get(viewingPDF.id) || jurisdictionSearchInputRef.current || jurisdictionHeadingRef.current)
+      ?.focus({ preventScroll: true });
+  }, [viewingPDF, liveViewingPDF]);
+
   // Auto-download all docs on load — attempt every doc with a URL
   useEffect(() => {
     const autoDownloadDocs = async () => {
@@ -436,10 +451,10 @@ Answer the question based on the documents and information available. Be specifi
     setDownloadingDocId(null);
   };
 
-  if (viewingPDF) {
+  if (liveViewingPDF) {
     return (
       <div className="flex flex-col h-full">
-        <PDFViewer fileUrl={viewingPDF.file_url} fileName={viewingPDF.title} onBack={() => setViewingPDF(null)} />
+        <PDFViewer key={liveViewingPDF.file_url} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => setViewingPDF(null)} />
       </div>
     );
   }
@@ -1153,7 +1168,7 @@ Answer the question based on the documents and information available. Be specifi
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setViewingPDF(doc);
+                            setViewingPDF({ id: doc.id, jurisdictionId: jurisdiction.id });
                           }}
                           className="mt-3 min-h-11 h-auto w-full gap-2 whitespace-normal break-words bg-green-600 px-3 py-3 text-center font-semibold text-white hover:bg-green-700"
                         >
