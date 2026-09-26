@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
+import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 
 Deno.serve(async (req) => {
   try {
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
             last_fetched: new Date().toISOString()
           }));
 
-          updateData.documents = [...(jurisdiction.documents || []).filter(d => d.source === 'manual'), ...newDocs, ...countyDocs];
+          updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, [...newDocs, ...countyDocs]);
         }
 
         if (settings.updateRequirements && (!settings.skipManualData || !jurisdiction._manual_requirements)) {
