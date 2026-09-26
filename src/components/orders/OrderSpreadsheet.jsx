@@ -93,7 +93,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
-import { filterOrderCustomerJobs } from "@/components/orders/orderCustomerJobPicker.mjs";
+import { filterOrderCustomerJobs, isActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -148,6 +148,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(null);
   const activeCustomerPickerRef = useRef(null);
+  const customerSelectionInFlightRef = useRef(false);
+  const [checkingCustomerJobId, setCheckingCustomerJobId] = useState(null);
   const [showRequestorDropdown, setShowRequestorDropdown] = useState(null);
 
   // Only an actual outside interaction, leaving the picker with the keyboard,
@@ -1175,21 +1177,45 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                         key={wo.id}
                         type="button"
                         className="block w-full px-3 py-2 text-left hover:bg-gray-100 focus-visible:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 text-xs border-b last:border-0"
+                        disabled={checkingCustomerJobId !== null}
                         onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          setOrders(prev => prev.map(o => o.id === order.id ? { ...o, customer_name: wo.client_name, work_order_id: wo.id } : o));
-                          pendingChangesRef.current[order.id] = {
-                            ...pendingChangesRef.current[order.id],
-                            customer_name: wo.client_name,
-                            work_order_id: wo.id
-                          };
-                          setHasUnsavedChanges(true);
-                          setShowCustomerDropdown(null);
-                          setEditingCustomerName(null);
+                        onClick={async () => {
+                          if (customerSelectionInFlightRef.current) return;
+                          customerSelectionInFlightRef.current = true;
+                          setCheckingCustomerJobId(wo.id);
+                          try {
+                            // A job may have been closed since the latest 60-second refresh.
+                            // Never link a stale suggestion without a fresh read.
+                            const latest = await WorkOrder.get(wo.id);
+                            if (latest?.id !== wo.id || !isActiveOrderCustomerJob(latest)) {
+                              if (latest?.id === wo.id) {
+                                setWorkOrders(prev => prev.map(w => w.id === latest.id ? latest : w));
+                              }
+                              setSaveError("This job is no longer active. Choose another active job.");
+                              return;
+                            }
+                            setSaveError("");
+                            setOrders(prev => prev.map(o => o.id === order.id ? {
+                              ...o, customer_name: latest.client_name, work_order_id: latest.id
+                            } : o));
+                            pendingChangesRef.current[order.id] = {
+                              ...pendingChangesRef.current[order.id],
+                              customer_name: latest.client_name,
+                              work_order_id: latest.id
+                            };
+                            setHasUnsavedChanges(true);
+                            setShowCustomerDropdown(null);
+                            setEditingCustomerName(null);
+                          } catch (error) {
+                            setSaveError(error?.message || "Could not verify this job is active. Try again.");
+                          } finally {
+                            customerSelectionInFlightRef.current = false;
+                            setCheckingCustomerJobId(null);
+                          }
                         }}
                       >
                         <span className="block font-medium text-gray-800">{wo.client_name}</span>
-                        <span className="block text-gray-500 truncate">{wo.title}</span>
+                        <span className="block text-gray-500 truncate">{checkingCustomerJobId === wo.id ? "Checking active job…" : orderCustomerJobSubtitle(wo)}</span>
                       </button>
                     ))}
                   </div>
