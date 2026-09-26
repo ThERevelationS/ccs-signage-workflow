@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -108,6 +108,22 @@ export default function SIPs() {
   const [actionError, setActionError] = useState(null);
   const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
   const [isClearingRevisit, setIsClearingRevisit] = useState(false);
+  const boardLoadSequenceRef = useRef(0);
+  const boardSaveEpochRef = useRef(0);
+  const boardSavesPendingRef = useRef(0);
+
+  // Track the three quick board-save paths so a slower background refresh
+  // cannot replace a newer optimistic edit or a freshly confirmed save.
+  const saveBoardFields = async (options) => {
+    boardSaveEpochRef.current += 1;
+    boardSavesPendingRef.current += 1;
+    try {
+      return await replaceWorkOrderFieldsIfUnchanged(options);
+    } finally {
+      boardSavesPendingRef.current -= 1;
+      boardSaveEpochRef.current += 1;
+    }
+  };
 
   // Set document title
   useEffect(() => {
@@ -121,6 +137,10 @@ export default function SIPs() {
   }, []);
 
   const loadWorkOrders = async (showLoading = true) => {
+    const loadSequence = ++boardLoadSequenceRef.current;
+    const saveEpochAtStart = boardSaveEpochRef.current;
+    const isCurrentBoardSnapshot = () => loadSequence === boardLoadSequenceRef.current &&
+      saveEpochAtStart === boardSaveEpochRef.current && boardSavesPendingRef.current === 0;
     if (showLoading) setIsLoading(true);
     if (!showLoading) setIsRefreshing(true);
     setBoardError("");
@@ -147,7 +167,10 @@ export default function SIPs() {
           .then(setting => ({ setting, error: null }))
           .catch(error => ({ setting: null, error }))
       ]);
-      
+      // Ignore a response superseded by another refresh or by any local save.
+      // The next scheduled/manual refresh will get a fresh snapshot if needed.
+      if (!isCurrentBoardSnapshot()) return;
+
       // Get task descriptions that have SIPs page assigned OR have WIP flag
       const sipTaskDescriptions = [];
       const wipDescs = [];
@@ -182,11 +205,15 @@ export default function SIPs() {
       setUsers(usersData);
       setLastUpdated(new Date());
     } catch (error) {
-      console.error("Error loading work orders:", error);
-      setBoardError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
+      if (isCurrentBoardSnapshot()) {
+        console.error("Error loading work orders:", error);
+        setBoardError(error?.message || "SIPs could not refresh. The last loaded board is still shown.");
+      }
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (loadSequence === boardLoadSequenceRef.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
   };
 
@@ -197,7 +224,7 @@ export default function SIPs() {
     setQuickEditError("");
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
     try {
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
+      const saved = await saveBoardFields({
         workOrderId: orderId,
         expectedFields: { [field]: expectedValue },
         nextFields: { [field]: value },
@@ -240,7 +267,7 @@ export default function SIPs() {
     const reopenedRevisitDate = isRevisitFuture(wo) ? "" : (wo.sip_revisit_date ?? "");
     setQuickEditError("");
     try {
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
+      const saved = await saveBoardFields({
         workOrderId: wo.id,
         expectedFields: {
           sip_completed: wo.sip_completed,
@@ -278,7 +305,7 @@ export default function SIPs() {
     try {
       // Guard the date the user actually confirmed, not a newer date from a
       // background board refresh or another session's scheduling change.
-      const saved = await replaceWorkOrderFieldsIfUnchanged({
+      const saved = await saveBoardFields({
         workOrderId: pendingRevisitClear.id,
         expectedFields: { sip_revisit_date: pendingRevisitClear.revisitDate },
         nextFields: { sip_revisit_date: "" },
