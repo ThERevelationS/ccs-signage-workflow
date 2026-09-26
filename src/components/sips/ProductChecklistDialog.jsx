@@ -615,12 +615,15 @@ export default function ProductChecklistDialog({
         expectedFields.sip_completed = loadedSipCompletedSnapshot;
         nextFields.sip_completed = true;
 
-        // A completed SIP should not keep a future queue-return date. Clear only
-        // future revisit dates, atomically with completion, so reopening later
-        // cannot unexpectedly drop the item back into Revisit Later.
-        if (revisitDate === undefined && isFutureRevisitDate(loadedRevisitDateSnapshot)) {
+        // Completion must also compare the loaded revisit date when it is not
+        // future. Otherwise another session can schedule a future revisit while
+        // this checklist is open, leaving a completed SIP with a stale return
+        // date. Keep today/past dates unchanged; clear future dates atomically.
+        if (revisitDate === undefined) {
           expectedFields.sip_revisit_date = loadedRevisitDateSnapshot;
-          nextFields.sip_revisit_date = "";
+          nextFields.sip_revisit_date = isFutureRevisitDate(loadedRevisitDateSnapshot)
+            ? ""
+            : (loadedRevisitDateSnapshot || "");
         }
       }
 
