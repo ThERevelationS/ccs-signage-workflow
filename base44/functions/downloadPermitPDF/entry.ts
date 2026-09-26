@@ -102,10 +102,18 @@ Deno.serve(async (req) => {
     const contentType = fileResponse.headers.get('content-type') || '';
     const ext = getExtFromContentType(contentType, document_url);
 
-    // Accept any non-empty file type, but cap bytes before buffering/uploading.
+    // A removed form may redirect to an HTTP 200 HTML error page. Never store it
+    // as a downloaded permit document or report the source file as complete.
+    if (/\b(?:text\/html|application\/xhtml\+xml)\b/i.test(contentType)) {
+      return Response.json({ error: 'Source returned a web page instead of a downloadable document' }, { status: 415 });
+    }
     const fileBytes = await readResponseBytes(fileResponse);
     if (fileBytes.byteLength === 0) {
       return Response.json({ error: 'Downloaded file is empty' }, { status: 400 });
+    }
+    if ((ext === 'pdf' || /application\/pdf/i.test(contentType)) &&
+        new TextDecoder().decode(fileBytes.slice(0, 5)) !== '%PDF-') {
+      return Response.json({ error: 'Source did not return a valid PDF document' }, { status: 415 });
     }
 
     const safeTitle = (document_title || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
