@@ -37,6 +37,7 @@ import SalesOpportunityDialog from "@/components/sales/SalesOpportunityDialog";
 import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitionDialog";
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
+import { salesPresetColumnVisible } from "@/components/sales/salesColumnCatalog.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -2117,11 +2118,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     overscan: 5,
   });
 
-  const isColumnVisible = useCallback((columnId) => {
-    if (!activeColumnPreset?.column_settings) return true;
-    const setting = activeColumnPreset.column_settings.find(c => c.id === columnId);
-    return setting?.visible !== false;
-  }, [activeColumnPreset]);
+  const isColumnVisible = useCallback(
+    (columnId) => salesPresetColumnVisible(activeColumnPreset, columnId),
+    [activeColumnPreset],
+  );
 
   const handleContextMenu = useCallback((e, wo, fieldName, fieldLabel, currentValue) => {
     e.preventDefault();
