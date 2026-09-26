@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number(error?.status || 500);
-    const safeStatus = [400, 401, 413, 415].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 409, 413, 415].includes(status) ? status : 500;
     console.error('downloadPermitPDF error:', error?.message || error);
     return Response.json({
       error: safeStatus === 500 ? 'Permit document could not be downloaded safely' : error.message,
