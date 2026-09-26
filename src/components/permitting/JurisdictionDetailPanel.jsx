@@ -53,6 +53,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const focusedJurisdictionSearchResultRef = useRef(null);
   const searchJurisdictionIdRef = useRef(jurisdiction.id);
   const documentSearchInputRef = useRef(null);
+  const focusedMatchNavigationDocRef = useRef(null);
   const pdfOpenButtonRef = useRef(null);
   const pendingPDFReturnFocusRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
@@ -323,6 +324,15 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     }
     setSearchingDocId(null);
   };
+
+  // Refreshes can reduce a multi-match search to one or zero matches, which removes
+  // its Previous/Next buttons. Keep keyboard focus in the same document search.
+  useLayoutEffect(() => {
+    const docId = focusedMatchNavigationDocRef.current;
+    if (!docId || (docSearchResults[docId]?.matches || 0) > 1) return;
+    focusedMatchNavigationDocRef.current = null;
+    if (expandedDoc === docId) documentSearchInputRef.current?.focus({ preventScroll: true });
+  }, [docSearchResults, expandedDoc]);
 
   const moveDocumentMatch = (docId, direction) => {
     setDocSearchResults(prev => {
@@ -1202,6 +1212,12 @@ Answer the question based on the documents and information available. Be specifi
                                       variant="outline"
                                       className="min-h-11 flex-1 sm:flex-none"
                                       disabled={docSearchResults[doc.id].activeIndex === 0}
+                                      onFocus={() => { focusedMatchNavigationDocRef.current = doc.id; }}
+                                      onBlur={(event) => {
+                                        if (event.relatedTarget && !event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                                          focusedMatchNavigationDocRef.current = null;
+                                        }
+                                      }}
                                       onClick={() => moveDocumentMatch(doc.id, -1)}
                                     >Previous match</Button>
                                     <Button
@@ -1210,6 +1226,12 @@ Answer the question based on the documents and information available. Be specifi
                                       variant="outline"
                                       className="min-h-11 flex-1 sm:flex-none"
                                       disabled={docSearchResults[doc.id].activeIndex === docSearchResults[doc.id].matches - 1}
+                                      onFocus={() => { focusedMatchNavigationDocRef.current = doc.id; }}
+                                      onBlur={(event) => {
+                                        if (event.relatedTarget && !event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                                          focusedMatchNavigationDocRef.current = null;
+                                        }
+                                      }}
                                       onClick={() => moveDocumentMatch(doc.id, 1)}
                                     >Next match</Button>
                                   </div>
