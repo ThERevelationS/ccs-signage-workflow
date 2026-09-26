@@ -630,6 +630,7 @@ async function releaseCompletedCorrectionCreateLock(
 async function recoverCompletedClockInMutationGate(
   stateEntity: any,
   entryEntity: any,
+  auditEntity: any,
   state: any,
   target: any,
 ) {
@@ -645,6 +646,14 @@ async function recoverCompletedClockInMutationGate(
 
   const expectedHash = await payloadHash({ action: 'clock_in', user_email: asEmail(target.email) });
   if (!constantTimeEqual(String(state.correction_create_payload_hash || ''), expectedHash)) return state;
+  // A saved active state is not enough to certify an interrupted Clock In.
+  // Keep its shared mutation gate held until the exact entry's audit exists.
+  const clockInAudit = await uniqueRow(auditEntity, {
+    action: 'clock_in', request_id: heldRequestId, time_entry_id: entry.id,
+  }, 'Completed Clock In recovery audit');
+  if (!clockInAudit?.id || !['confirmed', 'recovered'].includes(String(clockInAudit.outcome || '')) ||
+      asEmail(clockInAudit.user_email) !== asEmail(target.email) ||
+      String(clockInAudit.server_timestamp || '') !== String(entry.clock_in || '')) return state;
   const released = await releaseCompletedCorrectionCreateLock(
     stateEntity, state.id, heldRequestId, gateEntryId, expectedHash,
   );
@@ -1692,7 +1701,7 @@ Deno.serve(async (req) => {
     state = await recoverBreakTransition({ stateEntity, breakEntity, auditEntity, state, target, actor });
     state = await recoverWorkPauseTransition({ stateEntity, workPauseEntity, auditEntity, state, target, actor });
     state = await recoverLaborTransition({ stateEntity, laborEntity, auditEntity, state, target, actor });
-    state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, state, target);
+    state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, state, target);
 
     if (action === 'status') {
       if (state.status === 'clocked_in' && state.active_entry_id) {
