@@ -4,13 +4,14 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock, Wrench, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock, Wrench, ChevronDown, SlidersHorizontal, Check, X } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const EMPTY_PIPELINE_SUMMARY = {
@@ -159,11 +160,11 @@ export default function SalesPipeline() {
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-  const attentionChipClass = (value) => `shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition-colors ${
-    attentionFilter === value
-      ? "border-blue-500 bg-blue-50 text-blue-800"
-      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-  }`;
+  const quickAttentionVisible = !showDuplicateCleanup && !["insights", "daily"].includes(viewMode) &&
+    (recordScope === "current" || recordScope === "all");
+  const moreAttentionSelected = salesMoreAttentionSelected(attentionFilter);
+  const selectedMoreAttention = moreAttentionSelected ? salesAttentionOption(attentionFilter) : null;
+  const hasActiveFilters = attentionFilter !== "all" || filterStatus !== "all";
 
   return (
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
@@ -294,6 +295,70 @@ export default function SalesPipeline() {
             </DropdownMenu>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline saved filters and column layouts">
+            {quickAttentionVisible && (
+              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick Sales attention filters">
+                {SALES_PRIMARY_ATTENTION.map((option) => (
+                  <button
+                    key={option.key}
+                    type="button"
+                    aria-pressed={attentionFilter === option.key}
+                    onClick={() => applyAttentionFilter(option.key)}
+                    className={`inline-flex min-h-9 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      attentionFilter === option.key
+                        ? "border-slate-700 bg-slate-800 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {option.key === "needs_attention" && <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {option.label}
+                    {option.key !== "all" && salesAttentionCount(pipelineSummary, option.key) > 0 && (
+                      <span className={`rounded px-1 text-[10px] tabular-nums ${attentionFilter === option.key ? "bg-slate-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+                        {salesAttentionCount(pipelineSummary, option.key)}
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline"
+                      aria-label={selectedMoreAttention ? `More filters, selected: ${selectedMoreAttention.label}` : "More Sales attention filters"}
+                      title={selectedMoreAttention?.label || "All other Sales attention filters"}
+                      className={`h-9 max-w-full gap-1.5 px-2.5 text-xs ${moreAttentionSelected ? "border-blue-400 bg-blue-50 text-blue-800" : "border-slate-200"}`}>
+                      <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="max-w-[160px] truncate">{selectedMoreAttention ? `More: ${selectedMoreAttention.label}` : "More Filters"}</span>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-[65vh] w-[min(92vw,280px)] overflow-y-auto">
+                    {visibleSalesMoreAttentionGroups(pipelineSummary, attentionFilter).map((group, index) => (
+                      <DropdownMenuGroup key={group.label}>
+                        {index > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</DropdownMenuLabel>
+                        {group.items.map((option) => (
+                          <DropdownMenuItem key={option.key}
+                            onSelect={() => applyAttentionFilter(option.key)}
+                            aria-current={attentionFilter === option.key ? "true" : undefined}
+                            className={attentionFilter === option.key ? "bg-blue-50 text-blue-800" : ""}>
+                            <span className="flex min-w-0 flex-1 items-center gap-2">
+                              <span className="w-3.5 shrink-0">{attentionFilter === option.key && <Check className="h-3.5 w-3.5" aria-hidden="true" />}</span>
+                              <span className="min-w-0 flex-1">{option.label}</span>
+                              <span className="ml-auto text-xs tabular-nums text-slate-500">{salesAttentionCount(pipelineSummary, option.key)}</span>
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {hasActiveFilters && (
+                  <button type="button" onClick={() => applyAttentionFilter("all")}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    aria-label="Clear active Sales information and attention filters">
+                    <X className="h-3.5 w-3.5" aria-hidden="true" /> Clear filters
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex items-center">
               <span className="sr-only">Information Filters</span>
               <Select value={filterStatus} onValueChange={(value) => {
@@ -422,41 +487,6 @@ export default function SalesPipeline() {
               </button>
             </div>
 
-            <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-white/80 px-2 py-1" title="Sales attention filters. Swipe or scroll horizontally to see every filter.">
-              <button type="button" onClick={() => applyAttentionFilter("needs_attention")} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-1 text-left transition-colors ${attentionFilter === "needs_attention" ? "bg-amber-200/70" : "hover:bg-amber-100"}`}>
-                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-amber-700" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-800">Needs Attention</span>
-                <span className="text-[10px] text-amber-700">{pipelineSummary.needsAttentionCount}/{pipelineSummary.openCount}</span>
-              </button>
-              <button type="button" onClick={() => applyAttentionFilter("no_next_action")} className={attentionChipClass("no_next_action")}>Next Action {pipelineSummary.noNextActionCount > 0 ? `(${pipelineSummary.noNextActionCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("owner_unassigned")} className={attentionChipClass("owner_unassigned")}>Owner {pipelineSummary.unassignedOwnerCount > 0 ? `(${pipelineSummary.unassignedOwnerCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("source_missing")} className={attentionChipClass("source_missing")}>Source {pipelineSummary.sourceMissingCount > 0 ? `(${pipelineSummary.sourceMissingCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("quote_timing_missing")} className={attentionChipClass("quote_timing_missing")}>Quote Timing {pipelineSummary.quoteTimingMissingCount > 0 ? `(${pipelineSummary.quoteTimingMissingCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("stage_untracked")} className={attentionChipClass("stage_untracked")}>Stage Timing {pipelineSummary.stageAgeMissingCount > 0 ? `(${pipelineSummary.stageAgeMissingCount})` : ""}</button>
-              {pipelineSummary.placeholderCount > 0 && (
-                <button
-                  type="button"
-                  title={`${pipelineSummary.placeholderCount}/${pipelineSummary.openCount} exact-name test placeholders (Test/asdf), representing ${formatPipelineValue(pipelineSummary.placeholderValue)} of ${formatPipelineValue(pipelineSummary.openValue)} raw pipeline value. Raw totals include them until explicitly removed from Current Pipeline.`}
-                  onClick={() => applyAttentionFilter("placeholder")}
-                  className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[11px] font-semibold leading-none transition-colors ${attentionFilter === "placeholder" ? "border-rose-400 bg-rose-100 text-rose-900" : "border-rose-300 bg-white text-rose-800 hover:bg-rose-100"}`}
-                >
-                  Test Records {pipelineSummary.placeholderCount > 0 ? `(${pipelineSummary.placeholderCount})` : ""} · {formatPipelineValue(pipelineSummary.placeholderValue)}
-                </button>
-              )}
-              <span className="ml-1 shrink-0 whitespace-nowrap border-l border-gray-200 pl-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Operational</span>
-              <button type="button" onClick={() => applyAttentionFilter("all")} className={attentionChipClass("all")}>All</button>
-              <button type="button" onClick={() => applyAttentionFilter("overdue")} className={attentionChipClass("overdue")}>Overdue {pipelineSummary.overdueCount > 0 ? `(${pipelineSummary.overdueCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("today")} className={attentionChipClass("today")}>Today {pipelineSummary.dueTodayCount > 0 ? `(${pipelineSummary.dueTodayCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("upcoming")} className={attentionChipClass("upcoming")}>Next 7 Days {pipelineSummary.upcomingCount > 0 ? `(${pipelineSummary.upcomingCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("quote_aged")} className={attentionChipClass("quote_aged")}>Quote Aged 14+ Days {pipelineSummary.quoteAgedCount > 0 ? `(${pipelineSummary.quoteAgedCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("near_close")} className={attentionChipClass("near_close")}>Closing ≤14 Days {pipelineSummary.nearCloseCount > 0 ? `(${pipelineSummary.nearCloseCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("close_overdue")} className={attentionChipClass("close_overdue")}>Expected Close Overdue {pipelineSummary.overdueCloseCount > 0 ? `(${pipelineSummary.overdueCloseCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("stale")} className={attentionChipClass("stale")}>Stale 14+ Days {pipelineSummary.staleCount > 0 ? `(${pipelineSummary.staleCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("activity_untracked")} className={attentionChipClass("activity_untracked")}>Activity Baseline Missing {pipelineSummary.untrackedActivityCount > 0 ? `(${pipelineSummary.untrackedActivityCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("stage_aged")} className={attentionChipClass("stage_aged")}>Stage Aged 14+ Days {pipelineSummary.stageAgedCount > 0 ? `(${pipelineSummary.stageAgedCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("mine")} className={attentionChipClass("mine")}>My Opportunities {pipelineSummary.myOpportunityCount > 0 ? `(${pipelineSummary.myOpportunityCount})` : ""}</button>
-              <button type="button" onClick={() => applyAttentionFilter("age_90_plus")} className={attentionChipClass("age_90_plus")}>Age 90+ Days {pipelineSummary.age90PlusCount > 0 ? `(${pipelineSummary.age90PlusCount})` : ""}</button>
-            </div>
           </div>
         )}
 
