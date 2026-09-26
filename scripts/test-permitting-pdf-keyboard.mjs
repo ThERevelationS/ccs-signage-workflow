@@ -116,3 +116,76 @@ test("active viewer and stale jurisdiction must never steal focus", () => {
   assert.deepEqual(focusScenario({ pending: null }).events, []);
   assert.match(panel, /pendingPDFReturnFocusRef\.current = null;\s*focusedDocumentContentRef\.current = null;/);
 });
+
+const isPDF = new Function("doc", sourceBlock(
+  panel,
+  /  const isPDF = \(doc\) => \{([\s\S]*?)\n  \};/,
+  "PDF eligibility check"
+));
+const currentPDF = new Function("viewingPDF", "jurisdiction", "isPDF", "return (" + sourceBlock(
+  panel,
+  /  const liveViewingPDF = ([\s\S]*?);\n\n  useLayoutEffect\(\(\) => \{/,
+  "live PDF resolution"
+) + ");");
+const closeInvalidPDF = new Function(
+  "viewingPDF", "liveViewingPDF", "setViewingPDF", "documentHeaderRefs",
+  "jurisdictionSearchInputRef", "jurisdictionHeadingRef",
+  sourceBlock(
+    panel,
+    /  const liveViewingPDF = [\s\S]*?;\n\n  useLayoutEffect\(\(\) => \{([\s\S]*?)\}, \[viewingPDF, liveViewingPDF\]\);/,
+    "stale PDF invalidation effect"
+  )
+);
+
+test("active PDF resolves replacements from current document data, never a stale snapshot", () => {
+  const selection = { id: "doc-1", jurisdictionId: "jur-1" };
+  const original = { id: "doc-1", title: "Original PDF", file_url: "https://example.org/old.pdf" };
+  const updated = { id: "doc-1", title: "Updated PDF", file_url: "https://example.org/new.pdf" };
+  const oldJurisdiction = { id: "jur-1", documents: [original] };
+  const refreshed = { ...oldJurisdiction, documents: [updated] };
+  assert.equal(currentPDF(selection, oldJurisdiction, isPDF), original);
+  assert.equal(currentPDF(selection, refreshed, isPDF), updated);
+  assert.equal(currentPDF(selection, refreshed, isPDF).file_url, updated.file_url);
+  assert.equal(currentPDF(selection, refreshed, isPDF).title, updated.title);
+  assert.match(panel, /<PDFViewer key=\{liveViewingPDF\.file_url\} fileUrl=\{liveViewingPDF\.file_url\} fileName=\{liveViewingPDF\.title\}/);
+});
+
+test("removed, inaccessible or non-PDF documents cannot remain open", () => {
+  const selection = { id: "doc-1", jurisdictionId: "jur-1" };
+  const jurisdiction = { id: "jur-1", documents: [{ id: "doc-1", file_url: "https://example.org/sign.pdf" }] };
+  assert.equal(currentPDF(selection, { ...jurisdiction, documents: [] }, isPDF) ?? null, null);
+  assert.equal(currentPDF(selection, { ...jurisdiction, documents: [{ id: "doc-2", file_url: "https://example.org/sign.pdf" }] }, isPDF) ?? null, null);
+  assert.equal(currentPDF(selection, { ...jurisdiction, documents: [{ id: "doc-1", file_url: null, title: "PDF" }] }, isPDF) ?? null, null);
+  assert.equal(currentPDF(selection, { ...jurisdiction, documents: [{ id: "doc-1", file_url: "https://example.org/sign.jpg", title: "Sign image" }] }, isPDF) ?? null, null);
+  assert.equal(currentPDF(selection, { ...jurisdiction, id: "jur-2" }, isPDF) ?? null, null);
+  assert.equal(currentPDF(null, jurisdiction, isPDF) ?? null, null);
+});
+
+function invalidationScenario({ viewingPDF = { id: "doc-1" }, liveViewingPDF = null,
+  header = true, search = true, heading = true } = {}) {
+  const events = [];
+  const control = name => ({ focus: options => events.push(["focus", name, options]) });
+  const documentHeaderRefs = { current: new Map(header ? [["doc-1", control("header")]] : []) };
+  const jurisdictionSearchInputRef = { current: search ? control("search") : null };
+  const jurisdictionHeadingRef = { current: heading ? control("heading") : null };
+  closeInvalidPDF(viewingPDF, liveViewingPDF, next => events.push(["close", next]),
+    documentHeaderRefs, jurisdictionSearchInputRef, jurisdictionHeadingRef);
+  return events;
+}
+
+test("invalidated viewer closes and restores keyboard focus to a surviving control", () => {
+  const header = invalidationScenario();
+  assert.deepEqual(header, [["close", null], ["focus", "header", { preventScroll: true }]]);
+  assert.deepEqual(invalidationScenario({ header: false }), [
+    ["close", null], ["focus", "search", { preventScroll: true }]
+  ]);
+  assert.deepEqual(invalidationScenario({ header: false, search: false }), [
+    ["close", null], ["focus", "heading", { preventScroll: true }]
+  ]);
+  assert.deepEqual(invalidationScenario({ header: false, search: false, heading: false }), [
+    ["close", null]
+  ]);
+  assert.deepEqual(invalidationScenario({ viewingPDF: null }), []);
+  assert.deepEqual(invalidationScenario({ liveViewingPDF: { id: "doc-1" } }), []);
+});
+
