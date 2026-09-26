@@ -11,7 +11,7 @@ Completed and checkpointed: `6ab7c086ab9544ba3bc7a368`, Git `d37da278d0739e18479
 Workspace, views, search, New Client and permission-gated Tools are visible and separated from saved information/column filters. On phones, the desktop view tabs become one selector.
 
 ## Phase 2 — Compact attention controls and grouped More Filters
-Current phase; verification/checkpoint must be recorded after completion.
+Implemented and tested: 30/30 toolbar checks, 86/86 attention menu checks, Sales column catalog checks, targeted lint without errors, and production build. Exact checkpoint is recorded in the verified handoff.
 Keep All, Overdue, Today, Next 7 Days and Needs Attention visible without horizontal swiping; group the other existing filters into More Filters. Preserve every original filter key, existing counts and click behavior, and expose the active selection and Clear Filters. Do not change the underlying trustworthy Sales summary or WorkOrders.
 
 ## Phase 3 — Progressive KPI summary
