@@ -245,4 +245,97 @@ await check('deleted Work Order cannot have its confirmed date cleared', async (
   assert.match(h.ctx.quickEditError, /Trash/);
 });
 
+
+function completedHarness(date = tomorrow) {
+  const h = harness(date);
+  h.record.sip_completed = true;
+  h.ctx.workOrders = [structuredClone(h.record)];
+  return h;
+}
+
+await check('completed WIP with no Revisit returns to active queue', async () => {
+  const h = completedHarness('');
+  const reopening = h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.workOrders[0].sip_completed, true, 'No premature UI success');
+  await reopening;
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
+await check('missing Revisit field reopens safely without a date', async () => {
+  const h = completedHarness('');
+  delete h.record.sip_revisit_date;
+  delete h.ctx.workOrders[0].sip_revisit_date;
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
+for (const date of [yesterday, todayDate]) {
+  await check('completed WIP preserves ' + (date === todayDate ? 'today' : 'past') + ' Revisit when reopening', async () => {
+    const h = completedHarness(date);
+    await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+    assert.equal(h.record.sip_completed, false);
+    assert.equal(h.record.sip_revisit_date, date);
+    assert.equal(h.handlers.isRevisitFuture(h.ctx.workOrders[0]), false);
+    assert.equal(h.writes, 1);
+  });
+}
+
+await check('completed WIP with legacy future Revisit clears date atomically', async () => {
+  const h = completedHarness(tomorrow);
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
+await check('reopen rejects future date added to previously undated WIP', async () => {
+  const h = completedHarness('');
+  h.mutate({ sip_revisit_date: tomorrow });
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, true);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 0);
+  assert.equal(h.ctx.reloads, 1);
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+});
+
+await check('reopen rejects future Revisit added mid-save at CAS boundary', async () => {
+  const h = completedHarness(todayDate);
+  h.beforeCommit((record) => {
+    record.sip_revisit_date = tomorrow;
+    record.updated_date = String(Number(record.updated_date) + 1);
+  });
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, true);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 0);
+  assert.equal(h.ctx.reloads, 1);
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+});
+
+await check('reopen retries unrelated concurrent edit without losing it', async () => {
+  const h = completedHarness(todayDate);
+  h.beforeCommit((record) => {
+    record.notes = 'concurrent team note';
+    record.updated_date = String(Number(record.updated_date) + 1);
+  });
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, todayDate);
+  assert.equal(h.record.notes, 'concurrent team note');
+  assert.equal(h.writes, 1);
+  assert.equal(h.attemptedWrites, 2);
+});
+
+await check('incomplete WIP still opens checklist, not direct completion', async () => {
+  const h = harness(todayDate);
+  await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.checklistOpened, 1);
+  assert.equal(h.writes, 0);
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
