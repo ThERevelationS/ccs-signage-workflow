@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
@@ -35,6 +35,7 @@ export default function FleetWorkOrders() {
   const [startWorkOrder, setStartWorkOrder] = useState(null);
   const [startingId, setStartingId] = useState("");
   const [estimateWorkOrder, setEstimateWorkOrder] = useState(null);
+  const pendingBoardFocusRef = useRef(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -123,6 +124,18 @@ export default function FleetWorkOrders() {
       return [w.work_order_number, w.title, w.description, w.assigned_to, equipmentNames[w.equipment_id], w.corrective_action, w.public_reporter_name, w.public_reporter_contact].some(v => String(v || "").toLowerCase().includes(q));
     });
   }, [orders, search, status, priority, attention, equipmentFilter, equipmentNames]);
+
+  // Board cards become unmounted when opening the list; move focus to the
+  // matching disclosure once the list is rendered.
+  useEffect(() => {
+    const id = pendingBoardFocusRef.current;
+    if (!id || viewMode !== "list" || loading) return;
+    const toggle = document.getElementById(`fleet-work-order-toggle-${id}`);
+    if (toggle) {
+      toggle.focus();
+      pendingBoardFocusRef.current = null;
+    }
+  }, [viewMode, expanded, loading, rows]);
 
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
@@ -246,7 +259,7 @@ export default function FleetWorkOrders() {
             rows={rows}
             equipmentNames={equipmentNames}
             startingId={startingId}
-            onOpen={(workOrder) => { setViewMode("list"); setStatus("all"); setExpanded(workOrder.id); }}
+            onOpen={(workOrder) => { pendingBoardFocusRef.current = workOrder.id; setViewMode("list"); setStatus("all"); setExpanded(workOrder.id); }}
             onStart={(workOrder) => setStartWorkOrder(workOrder)}
             onComplete={(workOrder) => setDialog({ mode: "complete", workOrder })}
           />
