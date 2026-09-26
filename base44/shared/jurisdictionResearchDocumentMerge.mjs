@@ -29,7 +29,10 @@ export function mergeJurisdictionResearchDocuments(existingDocuments, researched
   for (const researched of Array.isArray(researchedDocuments) ? researchedDocuments : []) {
     if (!researched || typeof researched !== 'object') continue;
     const key = jurisdictionDocumentSourceKey(researched);
-    const index = key ? sourceIndexes.get(key) : undefined;
+    // An unlinked research suggestion is not a retrievable source document.
+    // Keep existing unlinked records, but never accumulate new unverified ones.
+    if (!key) continue;
+    const index = sourceIndexes.get(key);
     if (index === undefined) {
       if (key) sourceIndexes.set(key, retained.length);
       retained.push({ ...researched });
