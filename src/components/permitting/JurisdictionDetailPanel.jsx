@@ -188,10 +188,14 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     target?.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [viewingPDF, expandedDoc, jurisdiction.id, jurisdiction.documents]);
 
-  // Auto-download all docs on load — attempt every doc with a URL
+  // Download actual source files, not live ordinance pages, GIS services, or online
+  // application portals. Keep those resources as links rather than archiving HTML
+  // as misleading PDF/document attachments.
   useEffect(() => {
     const autoDownloadDocs = async () => {
-      const docsToDownload = (jurisdiction.documents || []).filter(doc => doc.url && !doc.file_url);
+      const docsToDownload = (jurisdiction.documents || []).filter(doc =>
+        doc.url && !doc.file_url && /\.(?:pdf|docx?|xlsx?|csv|txt)(?:[?#]|$)/i.test(doc.url)
+      );
       for (const doc of docsToDownload) {
         try {
           const res = await downloadPermitPDF({
