@@ -106,6 +106,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Stored source SHA-256 is invalid; live ingest was blocked' }, { status: 409 });
     }
 
+    // Make retries idempotent at the backend boundary, not just in the UI. A
+    // timeout after UploadFile can otherwise tempt an operator to retry and create
+    // duplicate File Storage objects. Only treat an existing file as complete when
+    // its stored proof exactly matches the archived source fingerprint.
+    if (sourceDocument.file_url) {
+      const storedSha256 = String(sourceDocument.stored_sha256 || '').trim().toLowerCase();
+      const storedBytes = Number(sourceDocument.stored_bytes || 0);
+      if (storedSha256 === expectedSha256 && storedBytes === expectedBytes) {
+        return Response.json({
+          success: true,
+          already_stored: true,
+          file_url: sourceDocument.file_url,
+          jurisdiction,
+        });
+      }
+      return Response.json({
+        error: 'Document already has a File Storage URL without matching stored fingerprint proof; live ingest was blocked',
+      }, { status: 409 });
+    }
+
     // Download the file with browser-like headers
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
