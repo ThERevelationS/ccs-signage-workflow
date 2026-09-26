@@ -768,7 +768,7 @@ async function pushDataset(
           const multipart = new Blob([
             `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
             JSON.stringify(metadata),
-            `\\r\\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+            `\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
             content, `\r\n--${boundary}--\r\n`,
           ]);
           const response = await driveFetch(
