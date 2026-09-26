@@ -39,7 +39,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     return () => clearInterval(interval);
   }, [loadStatus]);
 
-  // Reset dismissed when a new sync starts
+  // Reset dismissed when a new sync starts on other pages.
   useEffect(() => {
     const isRunning = status?.status === 'running';
     if (isRunning && !prevRunningRef.current) {
@@ -48,12 +48,24 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     prevRunningRef.current = isRunning;
   }, [status?.status]);
 
+  // Order Form only: a successful run disappears nine seconds after its actual
+  // completion timestamp, not nine seconds after opening a page six hours later.
+  // Failures and reviews never auto-dismiss. Re-key for each new completed run.
+  const orderToast = orderSyncToastState(status);
+  useEffect(() => {
+    if (!compactOrderForm || !orderToast.compact || !orderToast.visible) return;
+    const delay = Math.max(0, orderToast.expiresAt - Date.now());
+    const timeout = setTimeout(() => setDismissedOrderRun(orderToast.key), delay);
+    return () => clearTimeout(timeout);
+  }, [compactOrderForm, orderToast.compact, orderToast.visible, orderToast.expiresAt, orderToast.key]);
+
   if (loading) return null;
   if (!config?.global_enabled) return null;
 
   const { isRunning, isStale, ageMinutes } = interpretSmartsheetSyncStatus(status);
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
+  const hasSkipped = results.some(r => r.skipped);
   const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
@@ -64,10 +76,14 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const currentStepLabel = status?.current_step_label || '';
   const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
-  // Only show the widget when a sync is running, or briefly after completion
-  if (!isRunning && dismissed) return null;
+  // The Order Form's close state belongs to a particular run, so a new
+  // completion is visible even if polling missed its short running phase.
+  if (!isRunning && (compactOrderForm
+    ? Boolean(orderToast.key && dismissedOrderRun === orderToast.key)
+    : dismissed)) return null;
+  if (compactOrderForm && orderToast.compact && !orderToast.visible) return null;
   if (!isRunning && !isStale && !status?.completed_at) return null;
-  if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded) return null;
+  if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded && !(compactOrderForm && hasSkipped)) return null;
 
   const lastSync = status?.completed_at || status?.started_at;
   const lastSyncDate = lastSync ? new Date(lastSync) : null;
