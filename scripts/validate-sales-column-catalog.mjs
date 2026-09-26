@@ -23,6 +23,10 @@ const rowIds = columnCases(row);
 assert.equal(new Set(catalogIds).size, catalogIds.length, "Catalog must have unique field IDs.");
 assert.deepEqual(headerIds, catalogIds, "The compact editor must expose every rendered header in actual table order.");
 assert.deepEqual(rowIds, catalogIds, "The compact editor must expose every rendered row cell in actual table order.");
+assert.equal((headers.match(/<th key=\{columnId\}/g) || []).length, catalogIds.length,
+  "All dynamically ordered header cells must have stable React keys.");
+assert.equal((row.match(/<td key=\{columnId\}/g) || []).length, catalogIds.length,
+  "All dynamically ordered row cells must have stable React keys.");
 assert.match(editor, /const ALL_COLUMNS = SALES_TABLE_COLUMNS;/);
 assert.match(spreadsheet, /getVisibleSalesColumnIds\(activeColumnPreset\)/);
 assert.match(spreadsheet, /visibleColumnIds\.map\(\(columnId\) =>/);
@@ -76,6 +80,9 @@ const reordered = moveVisibleSalesColumn([
 assert.deepEqual(reordered.map((col) => col.id),
   ["description", "lead_source", "client_name", "sales_status"],
   "Preview arrows must swap only visible neighbors.");
+assert.deepEqual(getVisibleSalesColumnIds({ column_settings: reordered }),
+  ["description", "client_name", "sales_status"],
+  "After the preview is reordered, the live table must render the same checked columns in the same order.");
 assert.equal(moveVisibleSalesColumn(reordered, "description", -1), reordered,
   "Moving past the left edge must be a no-op.");
 console.log("Sales column catalog, legacy preservation, strict visibility and visible reordering: PASS.");
