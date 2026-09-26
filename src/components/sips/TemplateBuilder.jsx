@@ -142,6 +142,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   const [productTypeSaveStatus, setProductTypeSaveStatus] = useState('idle'); // 'idle' | 'saved'
   const [subTemplateHasChanges, setSubTemplateHasChanges] = useState(false);
   const [subTemplateSaveStatus, setSubTemplateSaveStatus] = useState('idle'); // 'idle' | 'saved'
+  const [savingChecklist, setSavingChecklist] = useState(null);
+  const checklistSaveInFlight = useRef(null);
+  const subTemplateDraftRef = useRef(null);
+  const productTypeDraftRef = useRef(null);
+  subTemplateDraftRef.current = { id: selectedSubTemplate, items: subTemplateChecklistItems };
+  productTypeDraftRef.current = { id: selectedProductType, items: productTypeItems };
 
   useEffect(() => {
     if (isOpen) loadData();
@@ -525,7 +531,17 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     }
   };
 
+  const blockNavigationWhileSaving = () => {
+    if (!checklistSaveInFlight.current) return false;
+    setNoticeDialog({
+      title: "Checklist save in progress",
+      message: "Finish saving your checklist before switching editors, changing tabs, or closing the builder.",
+    });
+    return true;
+  };
+
   const selectSubTemplateForEditing = (subTemplate, discardUnsaved = false) => {
+    if (blockNavigationWhileSaving()) return;
     if (!discardUnsaved && selectedSubTemplate === subTemplate.id) return;
     if (!discardUnsaved && selectedSubTemplate && (subTemplateHasChanges || (activeTab === 'subtemplates' && newItemText.trim()))) {
       setPendingEditorSwitch({ kind: 'subtemplate', id: subTemplate.id, name: subTemplate.name });
@@ -653,6 +669,7 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
   };
 
   const selectProductType = (type, discardUnsaved = false) => {
+    if (blockNavigationWhileSaving()) return;
     if (!discardUnsaved && selectedProductType === type) return;
     if (!discardUnsaved && selectedProductType && (productTypeHasChanges || (activeTab === 'producttypes' && newItemText.trim()))) {
       setPendingEditorSwitch({ kind: 'producttype', id: type, name: type });
@@ -686,11 +703,12 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
     || Boolean(newItemText.trim())
     || hasUnsavedNameDrafts;
   const requestTabChange = (tab) => {
-    if (tab === activeTab) return;
+    if (tab === activeTab || blockNavigationWhileSaving()) return;
     if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'tab', tab });
     else setActiveTab(tab);
   };
   const requestClose = () => {
+    if (blockNavigationWhileSaving()) return;
     if (hasUnsavedEditorChanges) setPendingNavigation({ kind: 'close' });
     else onClose();
   };
