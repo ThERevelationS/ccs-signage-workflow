@@ -16,6 +16,7 @@ function block(source, start, end) {
 
 const source = [
   block(board, 'const parseLocalDate = ', '\n};') + '\n};',
+  block(board, '  const saveBoardFields = async (options) => {', '\n  // Set document title'),
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
@@ -75,6 +76,8 @@ function harness(initialDate = tomorrow) {
   const ctx = {
     base44: { entities: { WorkOrder: entity } },
     today,
+    boardSaveEpochRef: { current: 0 },
+    boardSavesPendingRef: { current: 0 },
     pendingRevisitClear: null,
     isClearingRevisit: false,
     workOrders: [structuredClone(record)],
@@ -369,6 +372,8 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
     const ctx = {
       base44: { entities: { WorkOrder: entity } },
       today,
+      boardSaveEpochRef: { current: 0 },
+      boardSavesPendingRef: { current: 0 },
       workOrders: [structuredClone(live)],
       pendingRevisitClear: null,
       isClearingRevisit: false,
