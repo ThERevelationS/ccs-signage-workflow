@@ -1102,7 +1102,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                 className="px-1 py-0.5 border-r relative"
                 style={{ overflow: 'visible' }}
                 onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                  // A scrollbar click inside the dropdown can blur the input
+                  // with relatedTarget=null. Outside pointerdown handles that
+                  // case; do not mistake it for leaving the picker.
+                  if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
                     setShowCustomerDropdown(current => current === order.id ? null : current);
                   }
                 }}
