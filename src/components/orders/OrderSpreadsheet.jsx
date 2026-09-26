@@ -93,7 +93,7 @@ import { NotificationTriggers } from "@/components/workflow/NotificationService"
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/CellContextMenu";
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
-import { filterOrderCustomerJobs, isActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
+import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -1186,8 +1186,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                           try {
                             // A job may have been closed since the latest 60-second refresh.
                             // Never link a stale suggestion without a fresh read.
-                            const latest = await WorkOrder.get(wo.id);
-                            if (latest?.id !== wo.id || !isActiveOrderCustomerJob(latest)) {
+                            const { latest, eligible } = await verifyActiveOrderCustomerJob(WorkOrder, wo.id);
+                            if (!eligible) {
                               if (latest?.id === wo.id) {
                                 setWorkOrders(prev => prev.map(w => w.id === latest.id ? latest : w));
                               }
