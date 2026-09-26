@@ -21,6 +21,10 @@ test({}, 'eligible', 'Five-digit Smartsheet values fill only blank matched WorkO
 test({ record: { ...record, est_inv_at: '14568' } }, 'already_set', 'Retry is idempotent');
 test({ record: { ...record, est_inv_at: '14589' } }, 'base44_number_already_populated', 'Existing estimate number must not be overwritten');
 test({ record: { ...record, corbridge_invoice_number: '14589' } }, 'existing_corebridge_number_differs', 'Conflicting existing invoice number blocks fill');
+test({ record: { ...record, corbridge_invoice_number: '14568' } }, 'eligible', 'Matching Corebridge identity permits only the otherwise-safe blank fill');
+test({ record: { ...record, corbridge_invoice_number: ' 14568 ' } }, 'eligible', 'Harmless whitespace in a matching Corebridge identity is normalized');
+test({ record: { ...record, corbridge_invoice_number: 'INV-14568' } }, 'existing_corebridge_number_differs', 'Unrecognized invoice formats require review rather than guessing identities');
+test({ record: { ...record, est_inv_at: '14568', corbridge_invoice_number: '14589' } }, 'existing_corebridge_number_differs', 'An already-populated Est/Inv must not conceal a conflicting Corebridge identity');
 test({ expectedNumber: '14589' }, 'smartsheet_changed_since_preview', 'Stale preview blocks fill');
 test({ remoteValue: 'INV-14568' }, 'invalid_smartsheet_number', 'Invalid Smartsheet number blocks fill');
 test({ activeLinks: 2 }, 'ambiguous_link', 'Duplicate permanent row link blocks fill');
@@ -28,4 +32,4 @@ test({ record: { ...record, smartsheet_row_id: '999' } }, 'link_changed', 'Moved
 test({ record: { ...record, deleted: true } }, 'link_changed', 'Deleted records cannot be filled');
 assert.equal(record.corbridge_link, 'https://example.com/keep-base44-only', 'Link is never included in number classification');
 assert.equal(SALES_NUMBER_BACKFILL_CONFIRMATION, 'FILL_BLANK_SALES_NUMBERS_BY_VERIFIED_ROW_ID');
-console.log('Sales five-digit number backfill safety: 19/19 PASS.');
+console.log('Sales five-digit number backfill safety including Corebridge identity: PASS.');
