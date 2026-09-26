@@ -6,12 +6,18 @@ import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUr
 export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [showIframe, setShowIframe] = useState(true);
   const backButtonRef = useRef(null);
+  const fallbackOpenButtonRef = useRef(null);
   const safeFileUrl = safeExternalHttpUrl(fileUrl);
 
   // The viewer replaces the detail panel; give keyboard users a predictable starting point.
   useLayoutEffect(() => {
     backButtonRef.current?.focus({ preventScroll: true });
   }, []);
+
+  // A failed iframe removes the preview from the tab order. Focus the replacement action.
+  useLayoutEffect(() => {
+    if (!showIframe) fallbackOpenButtonRef.current?.focus({ preventScroll: true });
+  }, [showIframe]);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -54,10 +60,11 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
           <div className="w-full h-full flex items-center justify-center bg-gray-800">
             <div className="flex flex-col items-center gap-4 p-6 text-center max-w-sm">
               <div className="text-yellow-400">
-                <p className="font-medium mb-2">PDF Preview Not Available</p>
+                <p role="status" className="font-medium mb-2">PDF Preview Not Available</p>
                 <p className="text-xs text-gray-400 mb-6">This PDF cannot be previewed in the browser. Click the button below to open it.</p>
               </div>
               <Button
+                ref={fallbackOpenButtonRef}
                 onClick={() => openExternalHttpUrl(safeFileUrl)}
                 disabled={!safeFileUrl}
                 size="lg"
