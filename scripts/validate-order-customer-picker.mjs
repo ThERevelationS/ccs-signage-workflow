@@ -45,6 +45,7 @@ assert.match(ui, /document\.addEventListener\("pointerdown", closeOnOutsidePoint
 assert.match(ui, /activeCustomerPickerRef\.current\?\.contains\(event\.target\)/);
 assert.match(ui, /event\.relatedTarget && !event\.currentTarget\.contains\(event\.relatedTarget\)/);
 assert.match(ui, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
+assert.match(ui, /onClick=\{\(event\) => \{\s*setCustomerSearch\(event\.currentTarget\.value\);\s*setShowCustomerDropdown\(order\.id\)/);
 assert.match(ui, /onKeyDown=\{\(event\) => \{\s*if \(event\.key === "Escape"\)/);
 assert.match(ui, /onClick=\{\(\) => \{\s*setOrders\(prev => prev\.map\(o => o\.id === order\.id/);
 assert.match(ui, /pendingChangesRef\.current\[order\.id\] =/);
