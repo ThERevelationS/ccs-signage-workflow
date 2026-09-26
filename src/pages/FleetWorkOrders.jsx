@@ -30,15 +30,21 @@ export default function FleetWorkOrders() {
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
   const [actionError, setActionError] = useState("");
+  const [focusNotice, setFocusNotice] = useState("");
   const [reopeningId, setReopeningId] = useState("");
   const [confirmReopen, setConfirmReopen] = useState(null);
   const [startWorkOrder, setStartWorkOrder] = useState(null);
   const [startingId, setStartingId] = useState("");
   const [estimateWorkOrder, setEstimateWorkOrder] = useState(null);
   const pendingBoardFocusRef = useRef(null);
+  const pendingReopenFocusRef = useRef(null);
+  const statusFilterRef = useRef(null);
+  const hasLoadedRef = useRef(false);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    // Retain keyed work-order controls during subsequent refreshes so a
+    // keyboard user's focus is not removed by the loading placeholder.
+    if (!hasLoadedRef.current) setLoading(true);
     try {
       const [w, e, t, p, f, u] = await Promise.all([
         listAllFleetRows(base44.entities.FleetMaintenanceWorkOrder, "-created_date", { label: "Fleet work-order history" }),
@@ -54,6 +60,7 @@ export default function FleetWorkOrders() {
       setParts(p || []);
       setFluids(f || []);
       setCurrentUser(u || null);
+      hasLoadedRef.current = true;
     } finally {
       setLoading(false);
     }
@@ -137,6 +144,27 @@ export default function FleetWorkOrders() {
     }
   }, [viewMode, expanded, loading, rows]);
 
+  // A successful reopen can remove its triggering button (for example, when
+  // viewing Completed work). Wait until the confirmation closes before
+  // restoring focus to the refreshed row or, if filtered out, the status filter.
+  useEffect(() => {
+    const pending = pendingReopenFocusRef.current;
+    if (!pending || confirmReopen || loading || viewMode !== "list") return undefined;
+    const focusTimer = window.setTimeout(() => {
+      if (pendingReopenFocusRef.current !== pending) return;
+      const visible = rows.some(row => row.id === pending.id);
+      const toggle = visible ? document.getElementById(`fleet-work-order-toggle-${pending.id}`) : null;
+      if (toggle) {
+        toggle.focus();
+      } else {
+        statusFilterRef.current?.focus();
+        setFocusNotice(`Reopened ${pending.label}. It no longer matches the current filters.`);
+      }
+      pendingReopenFocusRef.current = null;
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [confirmReopen, loading, rows, viewMode]);
+
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
@@ -205,10 +233,12 @@ export default function FleetWorkOrders() {
     if (!workOrder) return;
     setReopeningId(workOrder.id);
     setActionError("");
+    setFocusNotice("");
     try {
       const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id, expected_updated_date: workOrder.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
+      pendingReopenFocusRef.current = { id: workOrder.id, label: workOrder.work_order_number || workOrder.title || "work order" };
     } catch (error) {
       setActionError(error?.message || "Failed to reopen Fleet work order.");
     } finally {
@@ -227,7 +257,8 @@ export default function FleetWorkOrders() {
         </div>
 
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet maintenance is live in CCS. Creates/completions use Fleet-only server actions, durable idempotency receipts, inventory/history updates, recurring schedule advancement, and queued notifications.</div>
-        {actionError && <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
+        {actionError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
+        {focusNotice && <div role="status" className="rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-900 dark:text-indigo-200 px-3 py-2 text-sm">{focusNotice}</div>}
 
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
           <Summary label="Active" value={summary.active} selected={status === "active" && attention === "all" && priority === "all"} onClick={() => applySummaryFilter("active")} />
@@ -248,7 +279,7 @@ export default function FleetWorkOrders() {
 
         <div className="grid sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_150px_150px_180px_240px] gap-3">
           <div className="relative"><Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" /><input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search Fleet work orders" placeholder="Search work orders..." className="w-full min-h-11 pl-9 pr-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700" /></div>
-          <select value={status} onChange={e => setStatus(e.target.value)} aria-label="Filter by work order status" className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All statuses</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+          <select ref={statusFilterRef} value={status} onChange={e => { setStatus(e.target.value); setFocusNotice(""); }} aria-label="Filter by work order status" className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="active">Active</option><option value="all">All statuses</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
           <select value={priority} onChange={e => setPriority(e.target.value)} aria-label="Filter by priority" className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All priorities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
           <select value={attention} onChange={e => setAttention(e.target.value)} aria-label="Filter by attention state" className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All attention states</option><option value="high_priority">High / critical active</option><option value="stale30">Stale 30+ days</option><option value="past_projected">Past projected completion</option><option value="unassigned">Unassigned active</option></select>
           <select value={equipmentFilter} onChange={e => setEquipmentFilter(e.target.value)} aria-label="Filter by equipment" className="min-h-11 px-3 py-2 rounded-lg border border-gray-300 bg-white dark:bg-slate-900 dark:border-slate-700"><option value="all">All equipment</option>{equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
