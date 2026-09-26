@@ -838,7 +838,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   {visiblePreviewColumns.length === 0 && (
                     <p role="status" className="mb-1 text-xs text-amber-800">No data columns selected. Check a column above to add it.</p>
                   )}
-                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white" aria-label="Horizontal Sales Pipeline column preview" tabIndex={0}>
+                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white" role="region" aria-label="Horizontal Sales Pipeline column preview" tabIndex={0}>
                     <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "12px" }}>
                       <thead className="bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap">
                         <tr className="h-7 border-b">
