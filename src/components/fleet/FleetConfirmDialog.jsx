@@ -20,38 +20,49 @@ export default function FleetConfirmDialog({
   cancelRef.current = onCancel;
   busyRef.current = busy;
 
+  // Handle keys inside the topmost confirmation before they reach document
+  // listeners owned by the underlying Fleet dialog or page.
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!busyRef.current) cancelRef.current?.();
+      return;
+    }
+    if (event.key !== "Tab" || !dialogRef.current) return;
+    event.stopPropagation();
+    const controls = [...dialogRef.current.querySelectorAll("button:not(:disabled)")]
+      .filter((element) => element.getClientRects().length > 0);
+    if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    const active = document.activeElement;
+    if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    } else if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  const keyboardHandlerRef = useRef(handleKeyDown);
+  keyboardHandlerRef.current = handleKeyDown;
+
   useEffect(() => {
     if (!open) return undefined;
     previousFocusRef.current = document.activeElement;
     cancelButtonRef.current?.focus();
-    const onKey = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!busyRef.current) cancelRef.current?.();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const controls = [...dialogRef.current.querySelectorAll("button:not(:disabled)")]
-        .filter((element) => element.getClientRects().length > 0);
-      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      const active = document.activeElement;
-      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-      } else if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
+    // Fallback if focus moves outside the confirmation while it is open.
+    const onDocumentKey = (event) => {
+      if (dialogRef.current?.contains(event.target)) return;
+      keyboardHandlerRef.current(event);
     };
-    document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onDocumentKey);
     return () => {
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onDocumentKey);
       if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
     };
   }, [open]);
@@ -68,7 +79,7 @@ export default function FleetConfirmDialog({
     : "bg-amber-100 dark:bg-amber-950/50 text-amber-600";
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel?.(); }}>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4" onKeyDown={handleKeyDown} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onCancel?.(); }}>
       <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="fleet-confirm-title" aria-describedby="fleet-confirm-description" tabIndex={-1} className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconClass}`}><AlertTriangle className="w-5 h-5" /></div>
