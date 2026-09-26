@@ -780,14 +780,15 @@ async function pushDataset(
           await (await driveFetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`,
             { method: 'GET' })).text(),
         log: async (backup: any) => {
-          await base44.asServiceRole.entities.BackupLog.create({
+          const savedLog = await base44.asServiceRole.entities.BackupLog.create({
             backup_type: 'scheduled',
             data_types: [`smartsheet_orders_sheet_${sheetId}`],
             results: [{ type: 'smartsheet_orders',
               filename: `${backup.filename} [Google Drive ID: ${backup.drive_file_id}]`, success: true }],
             success_count: 1, error_count: 0, triggered_by: 'smartsheet_order_prewrite',
           });
-        },
+          if (!savedLog?.id) throw new Error('Order backup file was verified but its BackupLog record was not confirmed.');
+        }
       });
     } catch (err) {
       return { dataset, direction: 'push', sheet_id: sheetId, skipped: true,
