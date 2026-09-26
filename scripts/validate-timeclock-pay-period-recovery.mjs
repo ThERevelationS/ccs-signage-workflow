@@ -377,18 +377,19 @@ test('post-gate resnapshot catches a newly completed unapproved shift', async ()
   assert.equal(h.audit('resnapshot-finalize-001')[0].details.blocked_reason, 'readiness_changed_after_employee_gates');
 });
 
-test('completed Clock In recovers a stranded employee mutation gate', async () => {
+async function strandedCompletedClockIn() {
   const h = setup();
   const requestId = 'stranded-clockin-001';
   const encoded = new TextEncoder().encode(JSON.stringify({ action: 'clock_in', user_email: employee.email }));
   const digest = await webcrypto.subtle.digest('SHA-256', encoded);
   const payloadHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
   const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  // After this synthetic period, so only the outstanding gate can block finalization.
   const entry = {
     id: 'stranded-clockin-entry', user_email: employee.email, user_name: employee.full_name,
-    status: 'clocked_in', clock_in: '2026-09-21T15:00:00.000Z',
+    status: 'clocked_in', clock_in: '2026-09-27T15:00:00.000Z',
     clock_in_request_id: requestId, clock_source: 'server',
-    updated_date: '2026-09-21T15:00:01.000Z',
+    updated_date: '2026-09-27T15:00:01.000Z',
   };
   h.rows.TimeEntry.push(entry);
   Object.assign(state, {
@@ -398,12 +399,51 @@ test('completed Clock In recovers a stranded employee mutation gate', async () =
     correction_create_payload_hash: payloadHash, correction_create_claim_token: 'stranded-token',
     correction_create_started_at: '2026-09-21T15:00:00.000Z',
   });
+  const goodAudit = {
+    id: 'synthetic-committed-clockin-audit', action: 'clock_in', request_id: requestId,
+    time_entry_id: entry.id, user_email: employee.email, outcome: 'confirmed',
+    server_timestamp: entry.clock_in,
+  };
+  return { h, state, entry, requestId, goodAudit };
+}
 
+test('completed Clock In releases stranded gate only with its confirmed audit', async () => {
+  const { h, state, requestId, goodAudit } = await strandedCompletedClockIn();
+  h.rows.TimeClockAudit.push(goodAudit);
   const retry = await h.clockIn(requestId);
   assert.equal(retry.status, 200, JSON.stringify(retry.body));
   assert.equal(retry.body.status, 'already_clocked_in');
   assert.equal(state.correction_create_status, 'idle');
   assert.equal(state.correction_create_request_id, '');
+});
+
+test('missing Clock In audit retains gate and blocks unrelated finalization until recovered', async () => {
+  const { h, state, requestId, goodAudit } = await strandedCompletedClockIn();
+  assert.equal((await h.clockIn(requestId)).status, 200);
+  assert.equal(state.correction_create_status, 'creating');
+  const blocked = await h.action('finalize', 'missing-clockin-audit-finalize-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(h.entryLocks().length, 0);
+  h.rows.TimeClockAudit.push(goodAudit);
+  assert.equal((await h.clockIn(requestId)).status, 200);
+  assert.equal(state.correction_create_status, 'idle');
+  const finalized = await h.action('finalize', 'missing-clockin-audit-finalize-001');
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+});
+
+test('pending or mismatched Clock In audit cannot release completed gate', async () => {
+  for (const badAudit of [
+    { outcome: 'pending' },
+    { outcome: 'blocked' },
+    { user_email: 'other@synthetic.invalid' },
+    { server_timestamp: '2026-09-27T15:01:00.000Z' },
+  ]) {
+    const { h, state, requestId, goodAudit } = await strandedCompletedClockIn();
+    h.rows.TimeClockAudit.push({ ...goodAudit, ...badAudit });
+    const retry = await h.clockIn(requestId);
+    assert.equal(retry.status, 200, JSON.stringify({ badAudit, response: retry.body }));
+    assert.equal(state.correction_create_status, 'creating', JSON.stringify(badAudit));
+  }
 });
 
 for (const [name, fn] of tests) {
