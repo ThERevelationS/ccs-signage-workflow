@@ -57,7 +57,11 @@ export default function MainWorkflow() {
         sort: "-updated_date",
         label: "Main Workflow Work Orders",
       });
-      const activeOrders = allWorkOrders.filter(wo => !wo.completed && !wo.deleted);
+      // Only active jobs belong on the Main Workflow board — exclude anything
+      // completed, closed (completed stage), lost, or soft-deleted.
+      const activeOrders = allWorkOrders.filter(
+        wo => !wo.completed && !wo.deleted && wo.current_stage !== "completed" && wo.sales_status !== "lost"
+      );
 
       // Separate parent work orders and riders. A work order is a rider if its
       // `is_rider` property is true; otherwise it is a parent.
