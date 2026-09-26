@@ -338,4 +338,213 @@ await check('incomplete WIP still opens checklist, not direct completion', async
   assert.equal(h.writes, 0);
 });
 
+
+// Two independent SIPS component instances sharing one isolated, versioned
+// Work Order. Tests exercise the real handlers and conditional-write logic,
+// not browser rendering or a live Base44 record.
+function twoSessionHarness({ date = todayDate, completed = false } = {}) {
+  const live = {
+    id: 'synthetic-two-session',
+    updated_date: '1',
+    sip_revisit_date: date,
+    sip_completed: completed,
+    deleted: false,
+    client_name: 'Synthetic acceptance job',
+    notes: 'original',
+  };
+  let writes = 0;
+  const entity = {
+    get: async (id) => id === live.id ? structuredClone(live) : null,
+    updateMany: async (query, patch) => {
+      if (query.id !== live.id || query.updated_date !== live.updated_date || live.deleted) {
+        return { updated: 0 };
+      }
+      Object.assign(live, structuredClone(patch.$set));
+      live.updated_date = String(Number(live.updated_date) + 1);
+      writes++;
+      return { updated: 1 };
+    },
+  };
+  function createSession() {
+    const ctx = {
+      base44: { entities: { WorkOrder: entity } },
+      today,
+      workOrders: [structuredClone(live)],
+      pendingRevisitClear: null,
+      isClearingRevisit: false,
+      quickEditError: '',
+      reloads: 0,
+      checklistOpened: 0,
+      console: { error() {} },
+    };
+    ctx.openChecklist = () => { ctx.checklistOpened++; };
+    ctx.setOpenDatePopover = () => {};
+    ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
+    ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
+    ctx.setQuickEditError = (value) => { ctx.quickEditError = value; };
+    ctx.setWorkOrders = (updater) => {
+      ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
+    };
+    ctx.loadWorkOrders = async () => {
+      ctx.reloads++;
+      ctx.workOrders = [structuredClone(live)];
+    };
+    vm.createContext(ctx);
+    vm.runInContext(source, ctx);
+    return {
+      ctx,
+      ...ctx.handlers,
+      refresh: ctx.loadWorkOrders,
+      queue: () => {
+        const wo = ctx.workOrders[0];
+        return wo.sip_completed ? 'Completed WIP' :
+          ctx.handlers.isRevisitFuture(wo) ? 'Revisit Later' : 'Active';
+      },
+      clear: () => ctx.handlers.requestClearRevisit(ctx.workOrders[0]),
+      reopen: () => ctx.handlers.toggleSipCompleted(ctx.workOrders[0]),
+      editRevisit: (dateValue) =>
+        ctx.handlers.updateWorkOrder(live.id, 'sip_revisit_date', dateValue),
+    };
+  }
+  const A = createSession();
+  const B = createSession();
+  return {
+    live, A, B,
+    get writes() { return writes; },
+    mutate(fields) {
+      Object.assign(live, fields);
+      live.updated_date = String(Number(live.updated_date) + 1);
+    },
+  };
+}
+
+await check('two sessions classify no-date, today, and future Revisit consistently', async () => {
+  const h = twoSessionHarness({ date: '' });
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  await h.A.editRevisit(todayDate);
+  await h.B.refresh();
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  await h.B.editRevisit(tomorrow);
+  await h.A.refresh();
+  assert.equal(h.A.queue(), 'Revisit Later');
+  assert.equal(h.B.queue(), 'Revisit Later');
+  assert.equal(h.writes, 2);
+});
+
+await check('stale second-session date edit cannot overwrite new future Revisit', async () => {
+  const h = twoSessionHarness({ date: todayDate });
+  await h.A.editRevisit(tomorrow);
+  await h.B.editRevisit(later);
+  assert.equal(h.live.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+  assert.equal(h.B.queue(), 'Revisit Later');
+  assert.equal(h.B.ctx.reloads, 1);
+  assert.match(h.B.ctx.quickEditError, /changed in another session/);
+});
+
+await check('simultaneous conflicting Revisit quick edits produce one winner', async () => {
+  const h = twoSessionHarness({ date: todayDate });
+  await Promise.all([h.A.editRevisit(tomorrow), h.B.editRevisit(later)]);
+  assert.ok([tomorrow, later].includes(h.live.sip_revisit_date));
+  assert.equal(h.writes, 1);
+  assert.equal(h.A.queue(), 'Revisit Later');
+  assert.equal(h.B.queue(), 'Revisit Later');
+  assert.equal(Number(Boolean(h.A.ctx.quickEditError)) + Number(Boolean(h.B.ctx.quickEditError)), 1);
+});
+
+await check('second-session confirmation cannot clear newer date after first-session edit', async () => {
+  const h = twoSessionHarness({ date: tomorrow });
+  h.B.clear();
+  assert.equal(h.B.ctx.pendingRevisitClear.revisitDate, tomorrow);
+  await h.A.editRevisit(later);
+  await h.B.confirmClearRevisit();
+  assert.equal(h.live.sip_revisit_date, later);
+  assert.equal(h.writes, 1);
+  assert.equal(h.B.queue(), 'Revisit Later');
+  assert.equal(h.B.ctx.pendingRevisitClear, null);
+  assert.match(h.B.ctx.quickEditError, /changed in another session/);
+});
+
+await check('stale future edit cannot reschedule after another session clears Revisit', async () => {
+  const h = twoSessionHarness({ date: tomorrow });
+  h.A.clear();
+  await h.A.confirmClearRevisit();
+  await h.B.editRevisit(later);
+  assert.equal(h.live.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  assert.match(h.B.ctx.quickEditError, /changed in another session/);
+});
+
+await check('future Revisit clears into Active in both sessions after reload', async () => {
+  const h = twoSessionHarness({ date: tomorrow });
+  assert.equal(h.A.queue(), 'Revisit Later');
+  h.A.clear();
+  await h.A.confirmClearRevisit();
+  await h.B.refresh();
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  assert.equal(h.writes, 1);
+});
+
+await check('completed WIP cannot reopen stale no-date snapshot after future scheduling', async () => {
+  const h = twoSessionHarness({ date: '', completed: true });
+  assert.equal(h.A.queue(), 'Completed WIP');
+  await h.B.editRevisit(tomorrow);
+  await h.A.reopen();
+  assert.equal(h.live.sip_completed, true);
+  assert.equal(h.live.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+  assert.equal(h.A.queue(), 'Completed WIP');
+  assert.match(h.A.ctx.quickEditError, /changed in another session/);
+});
+
+await check('reopening legacy future WIP prevents stale other-session reschedule', async () => {
+  const h = twoSessionHarness({ date: tomorrow, completed: true });
+  await h.A.reopen();
+  assert.equal(h.A.queue(), 'Active');
+  await h.B.editRevisit(later);
+  assert.equal(h.live.sip_completed, false);
+  assert.equal(h.live.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+  assert.equal(h.B.queue(), 'Active');
+  assert.match(h.B.ctx.quickEditError, /changed in another session/);
+});
+
+await check('simultaneous reopening is idempotent and leaves one active WIP item', async () => {
+  const h = twoSessionHarness({ date: tomorrow, completed: true });
+  await Promise.all([h.A.reopen(), h.B.reopen()]);
+  assert.equal(h.live.sip_completed, false);
+  assert.equal(h.live.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  assert.equal(h.A.ctx.quickEditError, '');
+  assert.equal(h.B.ctx.quickEditError, '');
+});
+
+await check('reopening today-dated WIP preserves date across both sessions', async () => {
+  const h = twoSessionHarness({ date: todayDate, completed: true });
+  await h.A.reopen();
+  await h.B.refresh();
+  assert.equal(h.live.sip_completed, false);
+  assert.equal(h.live.sip_revisit_date, todayDate);
+  assert.equal(h.A.queue(), 'Active');
+  assert.equal(h.B.queue(), 'Active');
+  assert.equal(h.writes, 1);
+});
+
+await check('other-session unrelated note update does not block WIP reopening', async () => {
+  const h = twoSessionHarness({ date: yesterday, completed: true });
+  h.mutate({ notes: 'other editor retained' });
+  await h.A.reopen();
+  assert.equal(h.live.sip_completed, false);
+  assert.equal(h.live.sip_revisit_date, yesterday);
+  assert.equal(h.live.notes, 'other editor retained');
+  assert.equal(h.writes, 1);
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
