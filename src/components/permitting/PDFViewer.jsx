@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 export default function PDFViewer({ fileUrl, fileName, onBack }) {
   const [showIframe, setShowIframe] = useState(true);
+  const backButtonRef = useRef(null);
   const safeFileUrl = safeExternalHttpUrl(fileUrl);
+
+  // The viewer replaces the detail panel; give keyboard users a predictable starting point.
+  useLayoutEffect(() => {
+    backButtonRef.current?.focus({ preventScroll: true });
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -13,6 +19,7 @@ export default function PDFViewer({ fileUrl, fileName, onBack }) {
       <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center gap-3">
           <Button
+            ref={backButtonRef}
             variant="outline"
             size="sm"
             onClick={onBack}
