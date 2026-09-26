@@ -86,6 +86,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing jurisdiction_id or document_url' }, { status: 400 });
     }
 
+    // Re-read the live document before downloading. A source that has already
+    // been archived and fingerprinted must match that exact archive before it can
+    // be copied into live File Storage.
+    const jurisdiction = await base44.entities.JurisdictionProfile.get(jurisdiction_id);
+    const sourceDocument = (jurisdiction?.documents || []).find(doc => doc.url === document_url);
+    if (!sourceDocument) {
+      return Response.json({ error: 'Document source is no longer present on this jurisdiction' }, { status: 409 });
+    }
+    const expectedSha256 = String(sourceDocument.source_sha256 || '').trim().toLowerCase();
+    const expectedBytes = Number(sourceDocument.source_bytes || 0);
+    if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+      return Response.json({ error: 'Stored source SHA-256 is invalid; live ingest was blocked' }, { status: 409 });
+    }
+
     // Download the file with browser-like headers
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -121,6 +135,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Source did not return a valid PDF document' }, { status: 415 });
     }
 
+    if (expectedBytes > 0 && fileBytes.byteLength !== expectedBytes) {
+      return Response.json({ error: `Official source changed size since archival (${fileBytes.byteLength} bytes received; ${expectedBytes} expected). Re-verify before live ingest.` }, { status: 409 });
+    }
+    const sourceSha256 = await permitDocumentSha256(fileBytes);
+    if (expectedSha256 && sourceSha256 !== expectedSha256) {
+      return Response.json({ error: 'Official source SHA-256 changed since archival. Re-verify before live ingest.' }, { status: 409 });
+    }
+
     const safeTitle = (document_title || 'document').replace(/[^a-zA-Z0-9_\- ]/g, '_');
     const fileName = `${safeTitle}.${ext}`;
     const mimeType = contentType.split(';')[0].trim() || 'application/octet-stream';
@@ -143,6 +165,8 @@ Deno.serve(async (req) => {
       patch: {
         file_url: uploadResult.file_url,
         downloaded_at: downloadedAt,
+        stored_sha256: sourceSha256,
+        stored_bytes: fileBytes.byteLength,
       },
       label: `Jurisdiction document download ${document_title || document_url}`,
     });
