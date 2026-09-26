@@ -5,6 +5,7 @@ import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocation
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
+import { findExistingJurisdictionDocument, mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -152,9 +153,9 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       updateData.parent_county = researchData.parent_county;
     }
 
-    // Handle documents — preserve manual docs, replace AI docs
+    // Retain every previously sourced document, especially downloaded forms and
+    // searchable text. AI omissions are not evidence that official files vanished.
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
-      const manualDocs = (jurisdiction.documents || []).filter(d => d.source === 'manual');
       const newAiDocs = (researchData.documents || []).map((d, i) => ({
         id: `ai_${Date.now()}_${i}`,
         title: d.title || "Untitled",
@@ -168,7 +169,10 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       // Download and extract text from all new docs
       const processedDocs = [];
       for (const doc of newAiDocs) {
-        if (!doc.url) {
+        const existing = findExistingJurisdictionDocument(jurisdiction.documents, doc);
+        // Do not download a new copy over a pinned archive or a manual source.
+        // Staff can separately verify whether the original official file changed.
+        if (!doc.url || existing?.source === 'manual' || existing?.file_url || existing?.source_sha256) {
           processedDocs.push(doc);
           continue;
         }
@@ -223,7 +227,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         }
       }
 
-      updateData.documents = [...manualDocs, ...processedDocs];
+      updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, processedDocs);
     }
 
     updateData.last_updated = new Date().toISOString();
