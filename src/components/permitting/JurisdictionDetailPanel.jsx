@@ -94,6 +94,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     pendingDocNavigationRef.current = null;
     pendingPDFReturnFocusRef.current = null;
     focusedDocumentContentRef.current = null;
+    focusedMatchNavigationDocRef.current = null;
   }, [jurisdiction.id]);
 
   // Same-jurisdiction refreshes can remove an expanded document. Clear its stale UI state
@@ -118,6 +119,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     if (clearedDocSearchId === removedDocId) setClearedDocSearchId(null);
     if (pendingDocNavigationRef.current === removedDocId) pendingDocNavigationRef.current = null;
     if (focusedDocumentContentRef.current === removedDocId) focusedDocumentContentRef.current = null;
+    if (focusedMatchNavigationDocRef.current === removedDocId) focusedMatchNavigationDocRef.current = null;
     if (removedDocumentHadFocus) {
       focusedDocumentHeaderRef.current = null;
       const firstRemainingHeader = documentHeaderRefs.current.get(jurisdiction.documents?.[0]?.id);
@@ -1022,7 +1024,20 @@ Answer the question based on the documents and information available. Be specifi
                    onBlur={() => {
                      if (focusedDocumentHeaderRef.current === doc.id) focusedDocumentHeaderRef.current = null;
                    }}
-                   onClick={() => setExpandedDoc(expandedDoc === doc.id ? null : doc.id)}
+                   onClick={() => {
+                     if (expandedDoc === doc.id) {
+                       // If collapse removes the currently focused document content, move
+                       // focus to the persistent heading before unmounting that content.
+                       if (focusedDocumentContentRef.current === doc.id) {
+                         focusedDocumentContentRef.current = null;
+                         focusedMatchNavigationDocRef.current = null;
+                         documentHeaderRefs.current.get(doc.id)?.focus({ preventScroll: true });
+                       }
+                       setExpandedDoc(null);
+                     } else {
+                       setExpandedDoc(doc.id);
+                     }
+                   }}
                    onKeyDown={(event) => {
                      if (event.altKey || event.ctrlKey || event.metaKey) return;
                      const documents = jurisdiction.documents || [];
