@@ -53,6 +53,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const focusedJurisdictionSearchResultRef = useRef(null);
   const searchJurisdictionIdRef = useRef(jurisdiction.id);
   const documentSearchInputRef = useRef(null);
+  const pdfOpenButtonRef = useRef(null);
+  const pendingPDFReturnFocusRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [downloadingDocId, setDownloadingDocId] = useState(null);
   const [viewingPDF, setViewingPDF] = useState(null);
@@ -89,6 +91,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setDocSearchResults({});
     setClearedDocSearchId(null);
     pendingDocNavigationRef.current = null;
+    pendingPDFReturnFocusRef.current = null;
     focusedDocumentContentRef.current = null;
   }, [jurisdiction.id]);
 
@@ -160,6 +163,21 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     (documentHeaderRefs.current.get(viewingPDF.id) || jurisdictionSearchInputRef.current || jurisdictionHeadingRef.current)
       ?.focus({ preventScroll: true });
   }, [viewingPDF, liveViewingPDF]);
+
+  // Returning from the PDF viewer remounts the detail controls. Restore focus to
+  // the Open button after that render, or to a stable control if it no longer exists.
+  useLayoutEffect(() => {
+    const destination = pendingPDFReturnFocusRef.current;
+    if (viewingPDF || !destination) return;
+    pendingPDFReturnFocusRef.current = null;
+    if (destination.jurisdictionId !== jurisdiction.id) return;
+    const target = (expandedDoc === destination.id ? pdfOpenButtonRef.current : null)
+      || documentHeaderRefs.current.get(destination.id)
+      || jurisdictionSearchInputRef.current
+      || jurisdictionHeadingRef.current;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "nearest", behavior: "auto" });
+  }, [viewingPDF, expandedDoc, jurisdiction.id, jurisdiction.documents]);
 
   // Auto-download all docs on load — attempt every doc with a URL
   useEffect(() => {
@@ -454,7 +472,10 @@ Answer the question based on the documents and information available. Be specifi
   if (liveViewingPDF) {
     return (
       <div className="flex flex-col h-full">
-        <PDFViewer key={liveViewingPDF.file_url} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => setViewingPDF(null)} />
+        <PDFViewer key={liveViewingPDF.file_url} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => {
+          pendingPDFReturnFocusRef.current = { id: viewingPDF.id, jurisdictionId: viewingPDF.jurisdictionId };
+          setViewingPDF(null);
+        }} />
       </div>
     );
   }
@@ -1166,6 +1187,7 @@ Answer the question based on the documents and information available. Be specifi
                     {doc.file_url ? (
                       isPDF(doc) ? (
                         <Button
+                          ref={pdfOpenButtonRef}
                           onClick={(e) => {
                             e.stopPropagation();
                             setViewingPDF({ id: doc.id, jurisdictionId: jurisdiction.id });
