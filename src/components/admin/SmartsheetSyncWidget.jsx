@@ -66,6 +66,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
   const hasSkipped = results.some(r => r.skipped);
+  const hasConflicts = results.some(r => Number(r.conflicts) > 0);
   const hasReviewNeeded = status?.status === 'needs_review' || status?.needs_review === true;
   const totalCreated = results.reduce((sum, r) => sum + (r.created || 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.updated || 0), 0);
@@ -93,8 +94,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   // height, with no redundant footer or multi-row result list. Error/review
   // detail keeps the expanded presentation so important warnings remain clear.
   if (compactOrderForm && (orderToast.compact ||
-    (isRunning && !isStale && !hasErrors && !hasSkipped &&
-      !results.some(r => Number(r.conflicts) > 0)))) {
+    (isRunning && !isStale && !hasErrors && !hasSkipped && !hasConflicts))) {
     const orderResults = results.filter(r => r.dataset === 'orders');
     const displayResults = orderResults.length ? orderResults : results;
     const created = displayResults.reduce((sum, r) => sum + (Number(r.created) || 0), 0);
@@ -159,7 +159,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             </div>
             <div className="text-xs min-w-0">
               <div className="font-semibold text-gray-800 truncate">
-                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sales sync needs review" : hasErrors ? "Sync has errors" : "Sync Complete"}
+                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sales sync needs review" : hasErrors ? "Sync has errors" : compactOrderForm && (hasSkipped || hasConflicts) ? "Sync needs review" : "Sync Complete"}
               </div>
               <div className="text-gray-500 truncate">
                 {isRunning
@@ -242,6 +242,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             {(totalCreated > 0 || totalUpdated > 0) && (
               <div className="text-[10px] text-gray-500 pt-1 border-t border-gray-100">
                 +{totalCreated} created · ↑{totalUpdated} updated
+              </div>
+            )}
+            {compactOrderForm && (hasSkipped || hasConflicts) && !hasReviewNeeded && !hasErrors && (
+              <div className="text-[11px] text-amber-700 pt-1" role="status">
+                Some stages were skipped or had conflicts. Review the sync results before relying on this run.
               </div>
             )}
             {hasReviewNeeded && (
