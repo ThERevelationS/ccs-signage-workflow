@@ -504,7 +504,7 @@ Answer the question based on the documents and information available. Be specifi
   if (liveViewingPDF) {
     return (
       <div className="flex flex-col h-full">
-        <PDFViewer key={liveViewingPDF.file_url} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => {
+        <PDFViewer key={`${liveViewingPDF.id}:${liveViewingPDF.file_url}:${liveViewingPDF.last_fetched || ""}`} fileUrl={liveViewingPDF.file_url} fileName={liveViewingPDF.title} onBack={() => {
           // Capture the current live destination, not the snapshot from when the viewer opened.
           pendingPDFReturnFocusRef.current = { id: liveViewingPDF.id, jurisdictionId: jurisdiction.id };
           setViewingPDF(null);
