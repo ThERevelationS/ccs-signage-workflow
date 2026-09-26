@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { filterOrderCustomerJobs, isActiveOrderCustomerJob, cleanOrderJobTitle, orderCustomerJobSubtitle } from '../src/components/orders/orderCustomerJobPicker.mjs';
+import { filterOrderCustomerJobs, isActiveOrderCustomerJob, cleanOrderJobTitle, orderCustomerJobSubtitle, verifyActiveOrderCustomerJob } from '../src/components/orders/orderCustomerJobPicker.mjs';
 
 const job = (id, overrides = {}) => ({
   id, client_name: 'Advantage Storage', title: 'Self Storage sign',
@@ -60,6 +60,17 @@ assert.equal(orderCustomerJobSubtitle({ title: 'Smartsheet row 4456987745249156'
 assert.deepEqual(filterOrderCustomerJobs([job('placeholder', {title: 'Smartsheet row 4456987745249156', description: ''})], '4456987745249156'), []);
 console.log('PASS Sunrise live-shaped examples leave one WIP job; fabricated Smartsheet IDs cannot display as project titles');
 
+const expectedId = 'permanent-job-id';
+const activeEntity = { get: async (id) => job(id, { current_task_description: 'WIP - Production' }) };
+const closedEntity = { get: async (id) => job(id, { in_pipeline: true, sales_status: 'lead', current_task_description: 'Completed Sale' }) };
+assert.equal((await verifyActiveOrderCustomerJob(activeEntity, expectedId)).eligible, true);
+assert.equal((await verifyActiveOrderCustomerJob(closedEntity, expectedId)).eligible, false);
+assert.equal((await verifyActiveOrderCustomerJob({ get: async () => job('wrong-id') }, expectedId)).eligible, false);
+assert.equal((await verifyActiveOrderCustomerJob({ get: async () => null }, expectedId)).eligible, false);
+await assert.rejects(verifyActiveOrderCustomerJob({ get: async () => { throw new Error('read failed'); } }, expectedId), /read failed/);
+await assert.rejects(verifyActiveOrderCustomerJob({}, expectedId), /unavailable/);
+console.log('PASS permanent-ID selection revalidates active status and fails closed on stale, missing, mismatched and failed reads');
+
 const ui = readFileSync(new URL('../src/components/orders/OrderSpreadsheet.jsx', import.meta.url), 'utf8');
 assert.match(ui, /filterOrderCustomerJobs\(workOrders, searchTerm\)/);
 assert.match(ui, /getFilteredWorkOrders\(customerSearch\)\.map\(wo =>/);
@@ -70,8 +81,8 @@ assert.match(ui, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
 assert.match(ui, /onClick=\{\(event\) => \{\s*setCustomerSearch\(event\.currentTarget\.value\);\s*setShowCustomerDropdown\(order\.id\)/);
 assert.match(ui, /onKeyDown=\{\(event\) => \{\s*if \(event\.key === "Escape"\)/);
 assert.match(ui, /onClick=\{async \(\) => \{/);
-assert.match(ui, /const latest = await WorkOrder\.get\(wo\.id\)/);
-assert.match(ui, /!isActiveOrderCustomerJob\(latest\)/);
+assert.match(ui, /verifyActiveOrderCustomerJob\(WorkOrder, wo\.id\)/);
+assert.match(ui, /if \(!eligible\)/);
 assert.match(ui, /customerSelectionInFlightRef\.current/);
 assert.match(ui, /orderCustomerJobSubtitle\(wo\)/);
 assert.match(ui, /setOrders\(prev => prev\.map\(o => o\.id === order\.id \? \{/);
