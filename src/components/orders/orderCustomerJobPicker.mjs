@@ -29,6 +29,14 @@ export function orderCustomerJobSubtitle(job) {
       ? `Current task: ${String(job.current_task_description).trim()}` : "No project title");
 }
 
+// Recheck the permanent WorkOrder ID at selection time: an item may have
+// closed since the latest picker refresh. Read-only; never changes the job.
+export async function verifyActiveOrderCustomerJob(entity, id) {
+  if (!id || typeof entity?.get !== "function") throw new Error("Job verification is unavailable.");
+  const latest = await entity.get(id);
+  return { latest, eligible: latest?.id === id && isActiveOrderCustomerJob(latest) };
+}
+
 export function filterOrderCustomerJobs(jobs, searchTerm, limit = 10) {
   const terms = normalized(searchTerm).split(/\s+/).filter(Boolean);
   return (Array.isArray(jobs) ? jobs : [])
