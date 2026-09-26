@@ -34,7 +34,7 @@ function makeFields({ loadedDate, revisitDate, markComplete = true } = {}) {
   };
   vm.createContext(ctx);
   vm.runInContext(fieldBuilder, ctx);
-  return JSON.parse(JSON.stringify(ctx.fields, (k,v) => v === undefined ? '__UNDEFINED__' : v));
+  return ctx.fields;
 }
 function simulatedStore(record) {
   const current = structuredClone(record);
@@ -63,8 +63,7 @@ function buildRecord(revisit) {
   return record;
 }
 async function persist(store, fields) {
-  const decode = x => JSON.parse(JSON.stringify(x), (k,v) => v==='__UNDEFINED__' ? undefined : v);
-  return store.replace({workOrderId:'test-only',expectedFields:decode(fields.expectedFields),nextFields:decode(fields.nextFields),label:'SIPS regression'});
+  return store.replace({workOrderId:'test-only',expectedFields:fields.expectedFields,nextFields:fields.nextFields,label:'SIPS regression'});
 }
 let passed=0;
 async function check(label,run){await run();console.log('PASS '+label);passed++;}
