@@ -27,6 +27,10 @@ assert.equal((headers.match(/<th key=\{columnId\}/g) || []).length, catalogIds.l
   "All dynamically ordered header cells must have stable React keys.");
 assert.equal((row.match(/<td key=\{columnId\}/g) || []).length, catalogIds.length,
   "All dynamically ordered row cells must have stable React keys.");
+assert.equal((headers.match(/<th key=\{columnId\}/g) || []).length, catalogIds.length,
+  "All dynamically ordered header cells must have stable React keys.");
+assert.equal((row.match(/<td key=\{columnId\}/g) || []).length, catalogIds.length,
+  "All dynamically ordered row cells must have stable React keys.");
 assert.match(editor, /const ALL_COLUMNS = SALES_TABLE_COLUMNS;/);
 assert.match(spreadsheet, /getVisibleSalesColumnIds\(activeColumnPreset\)/);
 assert.match(spreadsheet, /visibleColumnIds\.map\(\(columnId\) =>/);
@@ -80,6 +84,9 @@ const reordered = moveVisibleSalesColumn([
 assert.deepEqual(reordered.map((col) => col.id),
   ["description", "lead_source", "client_name", "sales_status"],
   "Preview arrows must swap only visible neighbors.");
+assert.deepEqual(getVisibleSalesColumnIds({ column_settings: reordered }),
+  ["description", "client_name", "sales_status"],
+  "After the preview is reordered, the live table must render the same checked columns in the same order.");
 assert.deepEqual(getVisibleSalesColumnIds({ column_settings: reordered }),
   ["description", "client_name", "sales_status"],
   "After the preview is reordered, the live table must render the same checked columns in the same order.");
