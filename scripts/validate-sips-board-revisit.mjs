@@ -18,10 +18,11 @@ const source = [
   block(board, 'const parseLocalDate = ', '\n};') + '\n};',
   block(board, '  const updateWorkOrder = async (orderId, field, value) => {', '\n  // Check if a work order is a WIP item'),
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
+  block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
   block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch'),
   block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
-  'this.handlers = { updateWorkOrder, isRevisitFuture, requestClearRevisit, confirmClearRevisit };',
+  'this.handlers = { updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
 ].join('\n');
 
 const dateOnly = (date) => [
@@ -79,8 +80,10 @@ function harness(initialDate = tomorrow) {
     workOrders: [structuredClone(record)],
     quickEditError: '',
     reloads: 0,
+    checklistOpened: 0,
     console: { error() {} },
   };
+  ctx.openChecklist = () => { ctx.checklistOpened++; };
   ctx.setOpenDatePopover = () => {};
   ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
