@@ -44,6 +44,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [expandedDoc, setExpandedDoc] = useState(null);
   const documentHeaderRefs = useRef(new Map());
   const focusedDocumentHeaderRef = useRef(null);
+  const focusedDocumentContentRef = useRef(null);
   const pendingDocNavigationRef = useRef(null);
   const jurisdictionHeadingRef = useRef(null);
   const jurisdictionSearchInputRef = useRef(null);
@@ -88,6 +89,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setDocSearchResults({});
     setClearedDocSearchId(null);
     pendingDocNavigationRef.current = null;
+    focusedDocumentContentRef.current = null;
   }, [jurisdiction.id]);
 
   // Same-jurisdiction refreshes can remove an expanded document. Clear its stale UI state
@@ -95,7 +97,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   useLayoutEffect(() => {
     if (!expandedDoc || (jurisdiction.documents || []).some(doc => doc.id === expandedDoc)) return;
     const removedDocId = expandedDoc;
-    const removedHeaderHadFocus = focusedDocumentHeaderRef.current === removedDocId;
+    const removedDocumentHadFocus = focusedDocumentHeaderRef.current === removedDocId || focusedDocumentContentRef.current === removedDocId;
     setExpandedDoc(null);
     setExpandedDocSearch(prev => {
       if (!(removedDocId in prev)) return prev;
@@ -111,7 +113,8 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     });
     if (clearedDocSearchId === removedDocId) setClearedDocSearchId(null);
     if (pendingDocNavigationRef.current === removedDocId) pendingDocNavigationRef.current = null;
-    if (removedHeaderHadFocus) {
+    if (focusedDocumentContentRef.current === removedDocId) focusedDocumentContentRef.current = null;
+    if (removedDocumentHadFocus) {
       focusedDocumentHeaderRef.current = null;
       const firstRemainingHeader = documentHeaderRefs.current.get(jurisdiction.documents?.[0]?.id);
       (firstRemainingHeader || jurisdictionSearchInputRef.current)?.focus({ preventScroll: true });
@@ -929,7 +932,10 @@ Answer the question based on the documents and information available. Be specifi
                      else documentHeaderRefs.current.delete(doc.id);
                    }}
                    className="flex min-h-11 w-full scroll-mt-4 items-center gap-2 p-3 text-left transition-colors hover:bg-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
-                   onFocus={() => { focusedDocumentHeaderRef.current = doc.id; }}
+                   onFocus={() => {
+                     focusedDocumentHeaderRef.current = doc.id;
+                     focusedDocumentContentRef.current = null;
+                   }}
                    onBlur={() => {
                      if (focusedDocumentHeaderRef.current === doc.id) focusedDocumentHeaderRef.current = null;
                    }}
@@ -963,7 +969,17 @@ Answer the question based on the documents and information available. Be specifi
                    {expandedDoc === doc.id ? <ChevronUp className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} /> : <ChevronDown className={`w-3.5 h-3.5 flex-shrink-0 ${doc.source === 'ai_discovered' ? 'text-purple-500' : 'text-amber-500'}`} />}
                  </button>
                 {expandedDoc === doc.id && (
-                  <div id={`jurisdiction-document-${doc.id}`} className="px-3 pb-3 border-t space-y-3" style={{ background: doc.source === 'ai_discovered' ? '#f3e8ff' : '#fef3c7' }}>
+                  <div
+                    id={`jurisdiction-document-${doc.id}`}
+                    className="px-3 pb-3 border-t space-y-3"
+                    style={{ background: doc.source === 'ai_discovered' ? '#f3e8ff' : '#fef3c7' }}
+                    onFocusCapture={() => { focusedDocumentContentRef.current = doc.id; }}
+                    onBlurCapture={(event) => {
+                      if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget) && focusedDocumentContentRef.current === doc.id) {
+                        focusedDocumentContentRef.current = null;
+                      }
+                    }}
+                  >
                     {/* Action Buttons */}
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       {(doc.file_url || doc.url) && (
