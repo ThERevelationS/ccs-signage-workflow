@@ -821,6 +821,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder="e.g., My Custom View"
+                    disabled={isSaving}
                     className="mt-1"
                   />
                 </div>
@@ -878,6 +879,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         <input
                           type="checkbox"
                           checked={column.visible}
+                          disabled={isSaving}
                           onChange={() => toggleColumnVisibility(column.id)}
                           className="w-3 h-3 flex-shrink-0"
                         />
@@ -922,7 +924,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     aria-label={`Move ${column.label} left`}
                                     title={`Move ${column.label} left`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
-                                    disabled={index === 0}
+                                    disabled={index === 0 || isSaving}
                                     className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
                                   >
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -932,7 +934,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     aria-label={`Move ${column.label} right`}
                                     title={`Move ${column.label} right`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
-                                    disabled={index === visiblePreviewColumns.length - 1}
+                                    disabled={index === visiblePreviewColumns.length - 1 || isSaving}
                                     className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
                                   >
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
