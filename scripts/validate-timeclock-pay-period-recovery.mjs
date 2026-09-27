@@ -129,6 +129,30 @@ function test(name, fn) { tests.push([name, fn]); }
 const finalizeRequest = 'synthetic-finalize-001';
 
 
+test('two initial idle snapshots cannot both claim the pay-period CAS gate', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  let waiting = 0;
+  let releaseClaims;
+  const bothWaiting = new Promise((resolve) => { releaseClaims = resolve; });
+  h.setBeforeUpdate(async (name, _query, update) => {
+    if (name === 'TimeClockPayPeriodCreateGate' && update.$set?.status === 'creating') {
+      waiting += 1;
+      if (waiting === 2) releaseClaims();
+      await bothWaiting;
+    }
+  });
+  const [one, two] = await Promise.all([
+    h.invoke({ action: 'pay_period_create', request_id: 'both-read-idle-one-001',
+      label: 'First idle snapshot', start_date: '2026-10-01', end_date: '2026-10-14' }),
+    h.invoke({ action: 'pay_period_create', request_id: 'both-read-idle-two-001',
+      label: 'Second idle snapshot', start_date: '2026-10-08', end_date: '2026-10-21' }),
+  ]);
+  assert.deepEqual([one.status, two.status].sort(), [200, 409]);
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+  assert.equal(h.rows.TimeClockPayPeriodCreateGate[0].status, 'idle');
+});
+
 test('simultaneous overlapping creates serialize on the shared backend gate', async () => {
   const h = setup({ entryCount: 0 });
   h.rows.TimeClockPayPeriod = [];
