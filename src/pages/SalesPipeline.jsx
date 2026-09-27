@@ -173,12 +173,12 @@ export default function SalesPipeline() {
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
         <section aria-label="Sales Pipeline navigation" className="mb-2 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="mr-1 flex shrink-0 items-center gap-1.5">
-              <DollarSign className="h-5 w-5 text-green-600" aria-hidden="true" />
-              <h1 className="whitespace-nowrap text-base font-bold text-gray-800 sm:text-lg">Sales Pipeline</h1>
+          <div className="grid min-w-0 grid-cols-12 items-center gap-2 sm:flex sm:flex-wrap">
+            <div className={`order-1 flex min-w-0 items-center gap-1.5 sm:mr-1 sm:shrink-0 ${isRegistered && !showDuplicateCleanup || showDuplicateCleanup ? "col-span-7" : "col-span-12"}`}>
+              <DollarSign className="h-4 w-4 shrink-0 text-green-600 sm:h-5 sm:w-5" aria-hidden="true" />
+              <h1 className="min-w-0 truncate text-sm font-bold text-gray-800 sm:text-lg" title="Sales Pipeline">Sales Pipeline</h1>
             </div>
-            <div className="flex items-center">
+            <div className={`order-3 flex min-w-0 items-center sm:order-2 ${recordScope === "history" ? "col-span-12" : "col-span-7"}`}>
               <span className="sr-only">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
@@ -186,7 +186,7 @@ export default function SalesPipeline() {
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
-                <SelectTrigger aria-label="Workspace" className="h-9 w-[156px] text-xs">
+                <SelectTrigger aria-label="Workspace" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-[156px]">
                   {recordScope === "current" ? <BriefcaseBusiness className="w-4 h-4 mr-2" /> : recordScope === "outcomes" ? <Trophy className="w-4 h-4 mr-2" /> : recordScope === "history" ? <Archive className="w-4 h-4 mr-2" /> : <Database className="w-4 h-4 mr-2" />}
                   <SelectValue />
                 </SelectTrigger>
@@ -200,7 +200,7 @@ export default function SalesPipeline() {
             </div>
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
-              <div className="hidden shrink-0 items-center sm:flex">
+              <div className="order-4 hidden shrink-0 items-center sm:order-3 sm:flex">
                 <span className="sr-only">View</span>
                 <div role="group" aria-label="View" className="flex h-9 overflow-hidden rounded-md border border-gray-200 bg-white">
                   <button type="button" onClick={() => chooseView("table")} className={`px-3 text-xs font-medium transition-colors ${viewMode === "table" ? "bg-slate-800 text-white" : "text-gray-600 hover:bg-gray-50"}`}>Table</button>
@@ -213,7 +213,7 @@ export default function SalesPipeline() {
 
             {recordScope !== "history" && recordScope !== "outcomes" && (
               <Select value={viewMode} onValueChange={chooseView}>
-                <SelectTrigger aria-label="Pipeline view" className="h-9 w-[112px] text-xs sm:hidden">
+                <SelectTrigger aria-label="Pipeline view" className="order-4 col-span-5 h-11 w-full min-w-0 text-xs sm:hidden">
                   <SelectValue placeholder="View" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,10 +226,10 @@ export default function SalesPipeline() {
             )}
 
             {recordScope === "outcomes" && (
-              <div className="flex items-center">
+              <div className="order-4 col-span-5 flex min-w-0 items-center sm:order-3">
                 <span className="sr-only">Outcome Period</span>
                 <Select value={outcomePeriod} onValueChange={setOutcomePeriod}>
-                  <SelectTrigger aria-label="Outcome Period" className="h-9 w-36 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Outcome Period" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-36"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tracked</SelectItem>
                     <SelectItem value="30">Last 30 Days</SelectItem>
@@ -240,7 +240,7 @@ export default function SalesPipeline() {
               </div>
             )}
 
-            <div className="min-w-[180px] flex flex-1 items-center sm:min-w-[220px]">
+            <div className="order-5 col-span-9 flex min-w-0 items-center sm:order-4 sm:min-w-[220px] sm:flex-1">
               <span className="sr-only">Search</span>
               <div className="relative w-full">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -249,7 +249,7 @@ export default function SalesPipeline() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   aria-label="Search sales pipeline"
-                  className="h-9 w-full pl-9 text-xs"
+                  className="h-11 w-full pl-9 text-xs sm:h-9"
                 />
               </div>
             </div>
@@ -258,22 +258,23 @@ export default function SalesPipeline() {
               <Button
                 type="button"
                 onClick={() => setShowNewClientForm(true)}
-                className="clay-button h-9 shrink-0 border-none px-3 text-xs text-gray-800"
+                className={`clay-button col-span-5 h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3 ${showDuplicateCleanup ? "order-8 col-span-12" : "order-2"}`} 
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="mr-1.5 h-4 w-4" /> New Client
               </Button>
             )}
             {showDuplicateCleanup && (
-              <Button type="button" variant="outline" className="h-9 border-green-300 bg-green-50 text-xs text-green-900"
+              <Button type="button" variant="outline" className="order-2 col-span-5 h-11 min-w-0 border-green-300 bg-green-50 px-2 text-xs text-green-900 sm:order-6 sm:h-9"
                 onClick={() => setShowDuplicateCleanup(false)}>
                 Return to Pipeline
               </Button>
             )}
+            <div className="order-6 col-span-3 flex min-w-0 justify-end sm:order-7">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="h-9 shrink-0 gap-1.5 px-3 text-xs" aria-label="Sales Pipeline tools">
-                  <Wrench className="h-3.5 w-3.5" /> Tools <ChevronDown className="h-3.5 w-3.5" />
+                <Button type="button" variant="outline" className="h-11 shrink-0 gap-1.5 px-2.5 text-xs sm:h-9 sm:px-3" aria-label="Sales Pipeline tools" title="Sales Pipeline tools">
+                  <Wrench className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" /> <span className="hidden sm:inline">Tools</span> <ChevronDown className="hidden h-3.5 w-3.5 sm:block" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -296,6 +297,7 @@ export default function SalesPipeline() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline filters and column layouts">
             {quickAttentionVisible && (
