@@ -111,6 +111,7 @@ export default function SIPs() {
   const boardLoadSequenceRef = useRef(0);
   const boardSaveEpochRef = useRef(0);
   const boardSavesPendingRef = useRef(0);
+  const quickEditsInFlightRef = useRef(new Map());
 
   // Track the three quick board-save paths so a slower background refresh
   // cannot replace a newer optimistic edit or a freshly confirmed save.
