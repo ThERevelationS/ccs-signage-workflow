@@ -125,7 +125,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           {attentionItems.slice(0, 2).map((item) => item.shortLabel).join(" · ")}{attentionItems.length > 2 ? ` · +${attentionItems.length - 2}` : ""}
                           {isRegistered && (
                             <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-amber-200 pt-2" onClick={(event) => event.stopPropagation()}>
-                              {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "sales_rep", currentSalesOwnerLabel)} className="min-h-11 rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100 sm:min-h-8">Assign to me</button>}
+                              {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <button type="button" aria-label={`Assign ${workOrder.client_name || 'Unnamed opportunity'} to me`} onClick={() => onUpdateWorkOrder?.(workOrder.id, "sales_rep", currentSalesOwnerLabel)} className="min-h-11 rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100 sm:min-h-8">Assign to me</button>}
                               {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
                                 <Select onValueChange={(value) => onUpdateWorkOrder?.(workOrder.id, "lead_source", value)}>
                                   <SelectTrigger aria-label={`Set lead source for ${workOrder.client_name || 'Unnamed opportunity'}`} className="h-11 w-[108px] border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-900 sm:h-8"><SelectValue placeholder="Set source" /></SelectTrigger>
@@ -194,7 +194,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                                 className="h-11 min-w-0 flex-1 rounded-md border border-amber-200 bg-white px-2 text-xs text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 sm:h-8"
                                 aria-label={`Actual quote sent date for ${workOrder.client_name || "opportunity"}`}
                               />
-                              <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", futureDateStamp(0))} className="h-11 shrink-0 rounded-md border border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-800 hover:bg-amber-100 sm:h-8">Today</button>
+                              <button type="button" aria-label={`Set actual quote sent date to today for ${workOrder.client_name || 'Unnamed opportunity'}`} onClick={() => onUpdateWorkOrder?.(workOrder.id, "date_estimate_sent", futureDateStamp(0))} className="h-11 shrink-0 rounded-md border border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-800 hover:bg-amber-100 sm:h-8">Today</button>
                             </div>
                           </label>
                           <p className="mt-1 text-[10px] text-amber-700">Use the real sent date; future dates are blocked.</p>
