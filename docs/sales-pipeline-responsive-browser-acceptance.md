@@ -1,6 +1,8 @@
 # Sales Pipeline — Phase 5 authenticated responsive browser acceptance
 
-Status: **NOT RUN**. Code-level regression tests and builds do not substitute for authenticated browser/device testing. No live records should be changed solely for this checklist.
+Status: **BLOCKED — authenticated browser acceptance NOT RUN**. On 2026-09-27, the Base44 sandbox had no resolvable `playwright`, `@playwright/test`, or `puppeteer` package and no `chromium`, `chromium-browser`, `google-chrome`, or `firefox` executable on PATH. No authenticated test session was established. Code-level regression tests and builds do not substitute for authenticated browser/device testing. No live records should be changed solely for this checklist.
+
+Readiness verification on that date: mobile/contextual 32/32, Table/Board continuity 12/12, column-draft 45/45 and column-catalog PASS. These are source-level checks only. Next, obtain an authorized nonproduction authenticated browser/test account and execute the viewport/role matrix below without publishing or mutating live customer records.
 
 ## Preconditions
 - Confirm fresh Git HEAD, production-versus-preview environment, and a test account with appropriate permissions. Do not publish to perform acceptance.
