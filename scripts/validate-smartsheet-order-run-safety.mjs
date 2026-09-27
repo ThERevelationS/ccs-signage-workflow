@@ -19,6 +19,7 @@ for (const failure of [
   { direction: 'push', skipped: true, reason: 'Verified backup unavailable' },
   { direction: 'pull', errors: 1 },
   { direction: 'pull', snapshot_write_failures: 100 },
+  { direction: 'pull', unlinked_smartsheet_rows_flagged_for_review: 2, unlinked_row_ids: ['103', '104'] },
   { direction: 'push', conflicts: 1 },
   { direction: 'pull', orphans_flagged_for_review: 1 },
   { direction: 'pull', duplicate_groups_flagged_for_review: 1 },
