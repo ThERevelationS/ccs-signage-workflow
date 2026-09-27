@@ -299,16 +299,16 @@ export default function SalesPipeline() {
               </DropdownMenu>
             </div>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline filters and column layouts">
+          <div className="mt-2 grid min-w-0 grid-cols-2 items-start gap-2 border-t border-slate-100 pt-2 sm:flex sm:flex-wrap sm:items-center" aria-label="Sales Pipeline filters and column layouts">
             {quickAttentionVisible && (
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick Sales attention filters">
+              <div className="col-span-2 grid min-w-0 grid-cols-2 items-stretch gap-1.5 sm:flex sm:flex-wrap sm:items-center" role="group" aria-label="Quick Sales attention filters">
                 {SALES_PRIMARY_ATTENTION.map((option) => (
                   <button
                     key={option.key}
                     type="button"
                     aria-pressed={attentionFilter === option.key}
                     onClick={() => applyAttentionFilter(option.key)}
-                    className={`inline-flex min-h-9 items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    className={`inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:justify-start sm:px-2.5 ${
                       attentionFilter === option.key
                         ? "border-slate-700 bg-slate-800 text-white"
                         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
@@ -328,7 +328,7 @@ export default function SalesPipeline() {
                     <Button type="button" variant="outline"
                       aria-label={selectedMoreAttention ? `More filters, selected: ${selectedMoreAttention.label}` : "More Sales attention filters"}
                       title={selectedMoreAttention?.label || "All other Sales attention filters"}
-                      className={`h-9 max-w-full gap-1.5 px-2.5 text-xs ${moreAttentionSelected ? "border-blue-400 bg-blue-50 text-blue-800" : "border-slate-200"}`}>
+                      className={`h-11 min-w-0 max-w-full justify-center gap-1.5 px-2 text-xs sm:h-9 sm:justify-start sm:px-2.5 ${moreAttentionSelected ? "border-blue-400 bg-blue-50 text-blue-800" : "border-slate-200"}`}>
                       <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span className="max-w-[160px] truncate">{selectedMoreAttention ? `More: ${selectedMoreAttention.label}` : "More Filters"}</span>
                       <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -357,14 +357,14 @@ export default function SalesPipeline() {
                 </DropdownMenu>
                 {hasActiveFilters && (
                   <button type="button" onClick={() => applyAttentionFilter("all")}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:justify-start"
                     aria-label="Clear active Sales information and attention filters">
                     <X className="h-3.5 w-3.5" aria-hidden="true" /> Clear filters
                   </button>
                 )}
               </div>
             )}
-            <div className="flex items-center">
+            <div className="min-w-0">
               <span className="sr-only">Information Filters</span>
               <Select value={filterStatus} onValueChange={(value) => {
                 if (value === "manage_filters") {
@@ -373,7 +373,7 @@ export default function SalesPipeline() {
                   setFilterStatus(value);
                 }
               }}>
-                <SelectTrigger aria-label="Information Filters" className="h-9 w-40 text-xs">
+                <SelectTrigger aria-label="Information Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Select filter" />
                 </SelectTrigger>
@@ -401,7 +401,7 @@ export default function SalesPipeline() {
             </Select>
             </div>
 
-            <div className="flex items-center">
+            <div className="min-w-0">
               <span className="sr-only">Column Filters</span>
               <Select 
               value={activeColumnPreset?.id || "default"} 
@@ -416,7 +416,7 @@ export default function SalesPipeline() {
                 }
               }}
             >
-              <SelectTrigger aria-label="Column Filters" className="h-9 w-40 text-xs">
+              <SelectTrigger aria-label="Column Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40">
                 <Settings className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Column Filters" />
               </SelectTrigger>
