@@ -13,7 +13,13 @@ export function workOrderSaveFocusNotice({ verb, label, visible }) {
     : `${verb} ${label}. It no longer matches the current filters.`;
 }
 
-export function restoreWorkOrderFocusAfterSave({ rows, pending, viewMode, root, statusFilter, onNotice }) {
+export function restoreWorkOrderFocusAfterSave({ rows, pending, viewMode, root, statusFilter, onNotice, refreshButton }) {
+  if (pending.refreshFailed) {
+    // The old rows might still be visible but are not authoritative. Focus the
+    // recovery action instead of sending the user to a potentially stale row.
+    (refreshButton?.isConnected ? refreshButton : statusFilter)?.focus();
+    return "refresh";
+  }
   const target = findWorkOrderFocusTarget(rows, pending.id, viewMode, root);
   if (target) {
     target.focus();
