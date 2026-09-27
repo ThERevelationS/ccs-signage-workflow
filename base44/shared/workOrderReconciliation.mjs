@@ -71,7 +71,7 @@ export function buildWorkOrderReconciliation(records, sampleLimit = 12) {
     duplicate_sheet_link_samples: duplicateLinks.slice(0,limit).map(([link,ids])=>({ link, ids })),
     review_only_name_samples: similarNames.slice(0,limit).map(members=>({
       client: members[0].client, title: members[0].title,
-      count: members.length, jobs: members.map(({id,sheet_row_id})=>({id,sheet_row_id})),
+      count: members.length, jobs: members.slice(0, 20).map(({id,sheet_row_id})=>({id,sheet_row_id})),
     })),
   };
 }
