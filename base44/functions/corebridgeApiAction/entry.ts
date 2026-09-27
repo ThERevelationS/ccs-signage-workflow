@@ -2,12 +2,31 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { buildJobRegisterCsv } from '../../shared/corebridgeOfflineCsv.mjs';
 import { buildWorkOrderReconciliation } from '../../shared/workOrderReconciliation.mjs';
+import { summarizeWorkOrderHistory } from '../../shared/workOrderHistoricalEvidence.mjs';
 
 // Retained function name for compatibility with existing CCS installations.
 // External CoreBridge API access is intentionally retired, even if an old secret remains.
 // Historical CorebridgeApiAudit, CorebridgeLog, and PendingImport records are not touched.
 const PAGE_SIZE = 500;
 const MAX_ROWS = 10000;
+const MAX_HISTORY_ROWS = 3000;
+
+async function loadHistoryRows(entity: any, label: string) {
+  const records: any[] = [];
+  const seen = new Set<string>();
+  for (let skip = 0; skip < MAX_HISTORY_ROWS; skip += PAGE_SIZE) {
+    const page = await entity.list('id', PAGE_SIZE, skip);
+    if (!Array.isArray(page)) throw new Error(label + ' history could not be verified.');
+    for (const row of page) {
+      const id = String(row?.id || '').trim();
+      if (!id || seen.has(id)) throw new Error(label + ' historical record identity was inconsistent.');
+      seen.add(id);
+      records.push(row);
+    }
+    if (page.length < PAGE_SIZE) return records;
+  }
+  throw new Error(label + ' history exceeded its safety limit; no partial audit was returned.');
+}
 
 Deno.serve(async (req) => {
   try {
@@ -57,11 +76,17 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === 'audit_workorders') {
+      const audit = buildWorkOrderReconciliation(records);
+      // Summarize metadata only. Do not fetch Google Drive backup bytes,
+      // contact CoreBridge, or read old PendingImport document bodies.
+      const backups = await loadHistoryRows(base44.asServiceRole.entities.BackupLog, 'BackupLog');
+      const imports = await loadHistoryRows(base44.asServiceRole.entities.ImportJob, 'ImportJob');
       return Response.json({
         success: true,
         api_disabled: true,
         audited_at: new Date().toISOString(),
-        audit: buildWorkOrderReconciliation(records),
+        audit,
+        history: summarizeWorkOrderHistory(backups, imports, audit),
       });
     }
 
