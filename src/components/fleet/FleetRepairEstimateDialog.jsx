@@ -50,7 +50,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
       const first = controls[0], last = controls[controls.length - 1];
       const active = document.activeElement;
-      if (!dialogRef.current.contains(active) || active === dialogRef.current) {
+      if (!dialogRef.current.contains(active) || active === dialogRef.current || active === resultRef.current || active === warningRef.current) {
         event.preventDefault();
         (event.shiftKey ? last : first).focus();
       } else if (event.shiftKey && active === first) { event.preventDefault(); last.focus(); }
