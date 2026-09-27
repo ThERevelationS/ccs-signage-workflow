@@ -126,6 +126,21 @@ export default function SIPs() {
     }
   };
 
+  // A Work Order can have independent board fields saving concurrently. A
+  // slower full-record response must not revert a newer optimistic/saved field
+  // or replace the newer revision used by the next checklist action.
+  const applySavedBoardFields = (orderId, saved, fields) => {
+    setWorkOrders(prev => prev.map(wo => {
+      if (wo.id !== orderId) return wo;
+      const next = { ...wo };
+      fields.forEach(field => { next[field] = saved[field]; });
+      if (saved.updated_date && String(saved.updated_date) > String(wo.updated_date || "")) {
+        next.updated_date = saved.updated_date;
+      }
+      return next;
+    }));
+  };
+
   // Set document title
   useEffect(() => {
     document.title = "SIPs - Workflow Manager";
@@ -241,7 +256,7 @@ export default function SIPs() {
         nextFields: { [field]: value },
         label: `SIPs ${field}`,
       });
-      setWorkOrders((prev) => prev.map((wo) => wo.id === orderId ? { ...wo, ...saved } : wo));
+      applySavedBoardFields(orderId, saved, [field]);
     } catch (error) {
       console.error("Error updating SIPs Work Order field:", error);
       setQuickEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
@@ -292,7 +307,7 @@ export default function SIPs() {
         },
         label: "SIPs reopen completed WIP",
       });
-      setWorkOrders(prev => prev.map(item => item.id === wo.id ? { ...item, ...saved } : item));
+      applySavedBoardFields(wo.id, saved, ["sip_completed", "sip_revisit_date"]);
     } catch (error) {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
@@ -324,7 +339,7 @@ export default function SIPs() {
         nextFields: { sip_revisit_date: "" },
         label: "SIPs clear confirmed revisit date",
       });
-      setWorkOrders(prev => prev.map(wo => wo.id === pendingRevisitClear.id ? { ...wo, ...saved } : wo));
+      applySavedBoardFields(pendingRevisitClear.id, saved, ["sip_revisit_date"]);
       setPendingRevisitClear(null);
     } catch (error) {
       console.error("Error clearing confirmed SIPs revisit date:", error);
