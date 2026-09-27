@@ -64,6 +64,31 @@ export default function CorebridgeApiSettings({ sessionToken }) {
       setVerifyingBackup(false);
     }
   };
+  const [verifyingBackup, setVerifyingBackup] = useState(false);
+  const [backupError, setBackupError] = useState("");
+  const [backupComparison, setBackupComparison] = useState(null);
+
+  const verifyBackup = async () => {
+    if (!sessionToken || busy || auditing || verifyingBackup) return;
+    setVerifyingBackup(true);
+    setBackupError("");
+    setBackupComparison(null);
+    try {
+      const response = await base44.functions.invoke("corebridgeApiAction", {
+        action: "verify_sept22_backup",
+        session_token: sessionToken,
+      });
+      const data = response?.data || response;
+      if (!data?.success || !data?.comparison?.backup_file_verified) {
+        throw new Error(data?.error || "The original backup file could not be verified.");
+      }
+      setBackupComparison(data.comparison);
+    } catch (err) {
+      setBackupError(err?.response?.data?.error || err?.message || "Backup comparison failed safely.");
+    } finally {
+      setVerifyingBackup(false);
+    }
+  };
 
   const runAudit = async () => {
     if (!sessionToken || busy || auditing || verifyingBackup) return;
