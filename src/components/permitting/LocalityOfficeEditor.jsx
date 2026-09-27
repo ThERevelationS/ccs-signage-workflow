@@ -137,6 +137,16 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700"><ShieldCheck className="w-3 h-3" /> Staff verified</span>
               )}
             </div>
+            {(office.authority_roles || []).some(role => !LOCALITY_AUTHORITY_ROLES.some(([value]) => value === role)) && (
+              <div className="rounded border border-amber-200 bg-amber-50 p-2">
+                <p className="text-[10px] font-medium text-amber-900">Legacy authority roles need review. They cannot be newly assigned; remove them before verifying.</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {[...new Set((office.authority_roles || []).filter(role => !LOCALITY_AUTHORITY_ROLES.some(([value]) => value === role)))].map(role => (
+                    <Button key={role} type="button" variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => onChange(setLocalityOfficeAuthorityRole(office, role, false))}>Remove legacy role: {role}</Button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-x-3 gap-y-1.5">
               {LOCALITY_AUTHORITY_ROLES.map(([value, label]) => (
                 <label key={value} className="flex items-center gap-1.5 text-xs cursor-pointer">
