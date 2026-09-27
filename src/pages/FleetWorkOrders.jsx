@@ -388,6 +388,7 @@ export default function FleetWorkOrders() {
         </div>
 
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200 px-3 py-2 text-xs">Fleet maintenance is live in CCS. Creates/completions use Fleet-only server actions, durable idempotency receipts, inventory/history updates, recurring schedule advancement, and queued notifications.</div>
+        {refreshError && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-200 p-3 text-sm flex flex-wrap items-center gap-3"><span className="flex-1 min-w-0">{refreshError}</span><button ref={retryRefreshButtonRef} type="button" onClick={retryRefresh} disabled={retryingRefresh} className="min-h-11 px-3 py-2 rounded-lg border border-amber-500 font-semibold disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{retryingRefresh ? "Refreshing…" : "Retry refresh"}</button></div>}
         {actionError && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 text-red-700 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300 px-3 py-2 text-sm">{actionError}</div>}
         {focusNotice && <div role="status" className="rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-800 dark:bg-indigo-950/30 dark:border-indigo-900 dark:text-indigo-200 px-3 py-2 text-sm">{focusNotice}</div>}
 
