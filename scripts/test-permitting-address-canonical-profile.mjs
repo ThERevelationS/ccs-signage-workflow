@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { findRepositoryJurisdictionMatches } from '../src/components/permitting/jurisdictionPermitBridge.js';
 import { normalizeAddressState } from '../base44/shared/permittingAddressState.js';
+import { summarizeMatchedLocalityAuthority } from '../base44/shared/permittingAddressLocality.js';
 
 const profiles = [
   { id: 'profile-canonical', name: 'Example City', state: 'OH', type: 'city' },
@@ -56,6 +57,60 @@ test('address resolver treats Google administrative level 3 as township-only evi
   assert.match(source, /locality, source_kind: 'municipality'/);
   assert.match(source, /postal_town, source_kind: 'municipality'/);
   assert.match(source, /addressLocalityIdentityMatches\(locality, candidate\)/);
+});
+
+test('unmatched or unconfigured geographic identity does not assert verified authority', () => {
+  assert.deepEqual(summarizeMatchedLocalityAuthority(null), {
+    status: 'unresolved', verified_roles: [], verified_office_count: 0, other_office_count: 0,
+  });
+  assert.deepEqual(summarizeMatchedLocalityAuthority({ id: 'loc-1', offices: [
+    { office_type: 'Zoning', authority_roles: ['zoning'] },
+    { office_type: 'Building' },
+  ] }), {
+    status: 'no_staff_verified_roles', verified_roles: [], verified_office_count: 0, other_office_count: 2,
+  });
+});
+
+test('address authority review reports only explicitly staff-verified roles on selected locality', () => {
+  const result = summarizeMatchedLocalityAuthority({ id: 'loc-2', offices: [
+    { authority_verification_status: 'staff_verified', authority_roles: ['sign_permit', 'zoning', 'sign_permit'] },
+    { authority_verification_status: 'needs_verification', authority_roles: ['electrical'] },
+    { authority_verification_status: 'staff_verified', authority_roles: ['building'] },
+  ] });
+  assert.equal(result.status, 'staff_verified_roles');
+  assert.deepEqual(result.verified_roles, ['sign_permit', 'zoning', 'building']);
+  assert.equal(result.verified_office_count, 2);
+  assert.equal(result.other_office_count, 1);
+  assert.equal(result.verified_roles.includes('electrical'), false);
+});
+
+test('unsupported or empty staff-labeled authority roles never become verified evidence', () => {
+  const result = summarizeMatchedLocalityAuthority({ id: 'loc-3', offices: [
+    { authority_verification_status: 'staff_verified', authority_roles: ['zoning', 'legacy_unknown'] },
+    { authority_verification_status: 'staff_verified', authority_roles: [] },
+    { authority_verification_status: 'staff_verified', authority_roles: [''] },
+  ] });
+  assert.equal(result.status, 'no_staff_verified_roles');
+  assert.deepEqual(result.verified_roles, []);
+  assert.equal(result.verified_office_count, 0);
+  assert.equal(result.other_office_count, 3);
+});
+
+test('address authority vocabulary matches the locality office schema', () => {
+  const schema = JSON.parse(readFileSync(new URL('../base44/entities/PermitLocality.jsonc', import.meta.url)));
+  const roles = schema.properties.offices.items.properties.authority_roles.items.enum;
+  const result = summarizeMatchedLocalityAuthority({ id: 'loc', offices: [
+    { authority_verification_status: 'staff_verified', authority_roles: roles },
+  ] });
+  assert.deepEqual(result.verified_roles, roles);
+});
+
+test('resolver separates geographic match confidence from stored office authority verification', () => {
+  const source = readFileSync(new URL('../base44/functions/findLocalityByAddress/entry.ts', import.meta.url), 'utf8');
+  assert.match(source, /authority_review: summarizeMatchedLocalityAuthority\(/);
+  assert.match(source, /matchedLocality \? localities\.find\(row => row\.id === matchedLocality\.id\) : null/);
+  assert.match(source, /match_confidence: matchConfidence/);
+  assert.ok(source.indexOf('authority_review:') > source.indexOf('suggested_locality: matchedLocality'));
 });
 
 test('canonical tracker link wins over ambiguous repository name/state matches', () => {
