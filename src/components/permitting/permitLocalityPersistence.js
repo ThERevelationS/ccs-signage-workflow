@@ -3,6 +3,11 @@ function normalizeIdentity(value) {
 }
 
 export function permitLocalityIdentityMatches(record, data) {
+  const recordProfileId = normalizeIdentity(record?.jurisdiction_profile_id);
+  const dataProfileId = normalizeIdentity(data?.jurisdiction_profile_id);
+  if (recordProfileId || dataProfileId) {
+    return Boolean(recordProfileId && dataProfileId && recordProfileId === dataProfileId);
+  }
   return normalizeIdentity(record?.name) === normalizeIdentity(data?.name)
     && normalizeIdentity(record?.state) === normalizeIdentity(data?.state);
 }
