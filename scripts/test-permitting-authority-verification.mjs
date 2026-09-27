@@ -125,6 +125,38 @@ test("verified locality authority is revoked after material identity/contact edi
   assert.equal(office.authority_verification_status, "staff_verified");
 });
 
+test("changing a canonical office relationship revokes locality authority verification without losing review evidence", () => {
+  const office = {
+    id: "local-relationship", catalog_office_id: "catalog-1", government_office_id: "gov-1",
+    authority_roles: ["zoning", "building"], authority_verification_status: "staff_verified",
+    authority_verified_at: "2026-09-27T10:00:00.000Z", authority_verified_by: "Reviewer",
+    authority_verification_notes: "Verified against county responsibility page",
+    workflow_steps: [{ id: "submit", name: "Submit" }],
+  };
+  for (const [field, replacement] of [["catalog_office_id", "catalog-2"], ["government_office_id", "gov-2"]]) {
+    const edited = updateLocalityOfficeIdentity(office, { [field]: replacement });
+    assert.equal(edited[field], replacement, field);
+    assert.equal(edited.authority_verification_status, "needs_verification", field);
+    assert.equal(edited.authority_verified_at, undefined, field);
+    assert.equal(edited.authority_verified_by, undefined, field);
+    assert.deepEqual(edited.authority_roles, office.authority_roles, field);
+    assert.equal(edited.authority_verification_notes, office.authority_verification_notes, field);
+    assert.deepEqual(edited.workflow_steps, office.workflow_steps, field);
+  }
+});
+
+test("unchanged or whitespace-only canonical relationship IDs preserve verified authority", () => {
+  const office = {
+    catalog_office_id: "catalog-1", government_office_id: "gov-1", authority_roles: ["zoning"],
+    authority_verification_status: "staff_verified", authority_verified_at: "2026-09-27T10:00:00.000Z", authority_verified_by: "Reviewer",
+  };
+  for (const patch of [{ catalog_office_id: " catalog-1 " }, { government_office_id: " gov-1 " }]) {
+    const edited = updateLocalityOfficeIdentity(office, patch);
+    assert.equal(edited.authority_verification_status, "staff_verified");
+    assert.equal(edited.authority_verified_by, "Reviewer");
+  }
+});
+
 test("formatting-only edits and workflow, office-type or note edits preserve verified authority", () => {
   const office = {
     name: "County Zoning", contact_phone: "555-0100", authority_roles: ["zoning"],
