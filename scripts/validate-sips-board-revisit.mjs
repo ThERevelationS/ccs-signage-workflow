@@ -84,6 +84,7 @@ function harness(initialDate = tomorrow) {
     reopeningWipIds: new Set(),
     reopeningWipInFlightRef: { current: new Set() },
     pendingRevisitClear: null,
+    revisitClearFailure: null,
     isClearingRevisit: false,
     workOrders: [structuredClone(record)],
     quickEditError: '',
@@ -94,6 +95,7 @@ function harness(initialDate = tomorrow) {
   ctx.openChecklist = () => { ctx.checklistOpened++; };
   ctx.setOpenDatePopover = () => {};
   ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
+  ctx.setRevisitClearFailure = (value) => { ctx.revisitClearFailure = value; };
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
   ctx.setQuickEditError = (value) => { ctx.quickEditError = value; };
   ctx.setSavingRevisitIds = (updater) => {
@@ -392,6 +394,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       reopeningWipInFlightRef: { current: new Set() },
       workOrders: [structuredClone(live)],
       pendingRevisitClear: null,
+      revisitClearFailure: null,
       isClearingRevisit: false,
       quickEditError: '',
       reloads: 0,
@@ -401,6 +404,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
     ctx.openChecklist = () => { ctx.checklistOpened++; };
     ctx.setOpenDatePopover = () => {};
     ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
+    ctx.setRevisitClearFailure = (value) => { ctx.revisitClearFailure = value; };
     ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
     ctx.setQuickEditError = (value) => { ctx.quickEditError = value; };
     ctx.setSavingRevisitIds = (updater) => {
