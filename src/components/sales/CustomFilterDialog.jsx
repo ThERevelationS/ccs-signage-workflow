@@ -871,7 +871,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 ${
+                        className={`min-h-11 px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-0 ${
                           column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
                         }`}
                         style={{ fontSize: '11px' }}
