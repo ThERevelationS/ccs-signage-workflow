@@ -31,7 +31,7 @@ test('address backend uses the same normalized state for geocoder and validated 
   assert.match(source, /import \{ normalizeAddressState as normalizeState \} from '\.\.\/\.\.\/shared\/permittingAddressState\.js'/);
   assert.match(source, /normalizeState\(state\)/);
   assert.match(source, /normalizeState\(locality\.state\) === targetState/);
-  assert.match(source, /localityIdentityMatches\(locality, candidate, geocodeState\)/);
+  assert.match(source, /addressLocalityIdentityMatches\(locality, candidate\)/);
   assert.match(source, /localityIdentityMatches\(found, aiResult\.ai_locality_name, aiResult\.ai_state \|\| geocodeState\)/);
 });
 
