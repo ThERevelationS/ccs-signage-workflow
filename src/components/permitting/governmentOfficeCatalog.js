@@ -52,7 +52,16 @@ export function updateGovernmentOfficeCatalogEntry(office, patch) {
   for (const [legacyField, metadataField] of Object.entries(fieldMap)) {
     if (Object.hasOwn(patch || {}, legacyField)) metadata[metadataField] = clean(patch[legacyField]);
   }
-  return normalizeGovernmentOfficeCatalogEntry({ ...next, government_office: metadata });
+  const before = normalizeGovernmentOfficeCatalogEntry(source).government_office;
+  const updated = normalizeGovernmentOfficeCatalogEntry({ ...next, government_office: metadata });
+  // Changing the identity/contact details invalidates only this shared office's
+  // verification claim. Keep the official source and reviewer notes for re-review.
+  const identityFields = ["name", "phone", "email", "website", "address"];
+  if (before.verification_status === "staff_verified" &&
+    identityFields.some((field) => before[field] !== updated.government_office[field])) {
+    return updateGovernmentOfficeVerification(updated, { verification_status: "needs_verification" });
+  }
+  return updated;
 }
 
 export function updateGovernmentOfficeVerification(office, patch, reviewer = "", now = () => new Date().toISOString()) {
