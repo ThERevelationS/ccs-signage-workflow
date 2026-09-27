@@ -17,6 +17,7 @@ import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
+import { summarizePermitGroupAuthorityCoverage } from "../../../base44/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",
@@ -64,6 +65,7 @@ export default function PermitClientGroup({
   const hasLines = group.lines.length > 0;
   const readiness = group.readiness || { blockers: [], reviews: [], issueCount: 0, hasBlockers: false, hasIssues: false };
   const progress = getPermitGroupProgress(group, today);
+  const authorityCoverage = summarizePermitGroupAuthorityCoverage(group.lines, localities);
 
   // Est/Inv # — prefer corbridge_invoice_number, else est_inv_at
   const estInvNumber = wo?.corbridge_invoice_number || wo?.est_inv_at || "";
@@ -288,6 +290,39 @@ export default function PermitClientGroup({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Authority review is derived from the saved permit-line locality IDs, so it
+          persists across Apply/reload and reflects subsequent staff verification. */}
+      {authorityCoverage.length > 0 && (
+        <div className="border-b border-amber-200 bg-amber-50/70 px-3 py-2 text-xs" role="status">
+          <div className="mb-1 flex items-center gap-1.5 font-semibold text-amber-950">
+            <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+            Authority review — configured offices only, not complete legal coverage
+          </div>
+          {authorityCoverage.map(({ locality_id, locality_name, authority }) => (
+            <div key={locality_id || 'unlinked'} className="mt-1 text-amber-950">
+              <strong>{locality_name}:</strong>{' '}
+              {authority.coverage_status === 'configured_offices_reviewed' ? (
+                <span>All configured offices staff-reviewed; additional required authorities may still exist.</span>
+              ) : authority.coverage_status === 'partial' ? (
+                <span>{authority.verified_office_count} configured office(s) verified; {authority.other_office_count} still need review.</span>
+              ) : authority.coverage_status === 'not_verified' ? (
+                <span>No staff-verified authority; configured offices still need review.</span>
+              ) : authority.coverage_status === 'not_configured' ? (
+                <span>No configured offices; permitting authority not established.</span>
+              ) : (
+                <span>Locality link missing or unavailable; review this permit line.</span>
+              )}
+              {authority.verified_roles.length > 0 && (
+                <span className="ml-1">Verified roles: {authority.verified_roles.join(', ').replaceAll('_', ' ')}.</span>
+              )}
+              {authority.roles_needing_review.length > 0 && (
+                <span className="ml-1">Roles on offices needing review: {authority.roles_needing_review.join(', ').replaceAll('_', ' ')}.</span>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
