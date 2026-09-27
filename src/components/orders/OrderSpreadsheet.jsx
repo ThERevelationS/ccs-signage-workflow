@@ -95,6 +95,7 @@ import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/Cell
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
+import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -474,14 +475,9 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     });
     originalOrdersRef.current[orderId] = { ...saved };
 
-    const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
-    for (const [field, value] of Object.entries(nextFields)) {
-      // A deliberate Date Needed selection supersedes an older unsaved date
-      // or text option. Keep any newer edit made while this write was in flight.
-      const superseded = supersedePendingFields.includes(field) &&
-        Object.hasOwn(pendingAtStart, field) && Object.is(latestPending[field], pendingAtStart[field]);
-      if (Object.is(latestPending[field], value) || superseded) delete latestPending[field];
-    }
+    const latestPending = remainingOrderPendingAfterImmediateSave(
+      pendingChangesRef.current[orderId] || {}, pendingAtStart, nextFields, supersedePendingFields
+    );
     if (Object.keys(latestPending).length > 0) pendingChangesRef.current[orderId] = latestPending;
     else delete pendingChangesRef.current[orderId];
 
