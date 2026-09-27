@@ -170,6 +170,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const [archiveLoadingMore, setArchiveLoadingMore] = useState(false);
   const archiveSkipRef = useRef(0);
   const loadRequestRef = useRef(0);
+  const activeRecordScopeRef = useRef(recordScope);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const selectedQueueIndexRef = useRef(null);
   const [showFullWorkOrderDetails, setShowFullWorkOrderDetails] = useState(false);
@@ -270,6 +271,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, []);
 
   useEffect(() => {
+    // Invalidate the previous workspace immediately. Without this, a slow
+    // request from the old scope can briefly repopulate the new workspace.
+    activeRecordScopeRef.current = recordScope;
+    loadRequestRef.current += 1;
     setSelectedWorkOrder(null);
     setShowFullWorkOrderDetails(false);
     archiveSkipRef.current = 0;
@@ -408,6 +413,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const loadWorkOrders = async (showLoading = true, scope = recordScope) => {
     const requestId = ++loadRequestRef.current;
+    const scopeAtStart = scope;
     if (showLoading) setIsLoading(true);
     try {
       const usersPromise = loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" });
@@ -456,7 +462,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
 
       const usersData = await usersPromise;
-      if (requestId !== loadRequestRef.current) return;
+      if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return;
       archiveSkipRef.current = pagedCount;
       setArchiveHasMore(hasMore);
       setWorkOrders(mergeLoadedRows(rows));
