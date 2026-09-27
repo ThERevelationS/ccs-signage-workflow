@@ -117,6 +117,50 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
             </div>
           </div>
 
+          <div className="border-t pt-2 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h5 className="text-xs font-semibold">Authority for this locality</h5>
+                <p className="text-[10px] text-gray-500">Office type is descriptive only. Select roles only after staff confirms responsibility.</p>
+              </div>
+              {office.authority_verification_status === "staff_verified" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700"><ShieldCheck className="w-3 h-3" /> Staff verified</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {LOCALITY_AUTHORITY_ROLES.map(([value, label]) => (
+                <label key={value} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox checked={(office.authority_roles || []).includes(value)}
+                    onCheckedChange={(checked) => onChange(setLocalityOfficeAuthorityRole(office, value, checked === true))} />
+                  {label}
+                </label>
+              ))}
+            </div>
+            <div>
+              <Label className="text-[10px] text-gray-500">Verification notes / source</Label>
+              <Input value={office.authority_verification_notes || ""}
+                onChange={e => update({ authority_verification_notes: e.target.value })}
+                placeholder="Official page, ordinance, staff confirmation, or caveat..." className="h-7 text-xs" />
+            </div>
+            <div className="flex items-center gap-2">
+              {office.authority_verification_status === "staff_verified" ? (
+                <>
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                    onClick={() => onChange(revokeLocalityOfficeAuthorityVerification(office))}>Revoke verification</Button>
+                  <span className="text-[10px] text-gray-500">
+                    {office.authority_verified_by || "CCS Staff"}{office.authority_verified_at ? ` · ${new Date(office.authority_verified_at).toLocaleDateString()}` : ""}
+                  </span>
+                </>
+              ) : (
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                  disabled={!(office.authority_roles || []).length}
+                  onClick={() => onChange(verifyLocalityOfficeAuthority(office, verificationActor))}>
+                  <ShieldCheck className="w-3 h-3 mr-1" /> Mark authority verified
+                </Button>
+              )}
+            </div>
+          </div>
+
           {/* Workflow Steps */}
           <div className="border-t pt-2">
             <h5 className="text-xs font-semibold mb-2">Workflow Steps</h5>
