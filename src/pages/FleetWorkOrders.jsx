@@ -289,6 +289,11 @@ export default function FleetWorkOrders() {
     }
   };
 
+  const openStartWork = (workOrder) => {
+    setActionError("");
+    setStartWorkOrder(workOrder);
+  };
+
   const createFollowUp = (workOrder) => {
     if (!workOrder?.equipment_id) {
       setActionError("This historical work order has no linked Fleet equipment, so a follow-up cannot be prelinked safely.");
@@ -372,7 +377,7 @@ export default function FleetWorkOrders() {
             equipmentNames={equipmentNames}
             startingId={startingId}
             onOpen={(workOrder) => { pendingBoardFocusRef.current = workOrder.id; setViewMode("list"); setStatus("all"); setExpanded(workOrder.id); }}
-            onStart={(workOrder) => setStartWorkOrder(workOrder)}
+            onStart={openStartWork}
             onComplete={(workOrder) => setDialog({ mode: "complete", workOrder })}
           />
         ) : (
@@ -392,7 +397,7 @@ export default function FleetWorkOrders() {
                   <div className="flex flex-wrap gap-2">
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="min-h-11 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
                     {currentUser?.role === "admin" && <button onClick={() => setEstimateWorkOrder(w)} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><DollarSign className="w-4 h-4" />Estimate / Approval</button>}
-                    {["open", "assigned"].includes(w.status) && <button onClick={() => setStartWorkOrder(w)} disabled={startingId === w.id} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 disabled:opacity-50">{startingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}Start Work</button>}
+                    {["open", "assigned"].includes(w.status) && <button onClick={() => openStartWork(w)} disabled={startingId === w.id} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 disabled:opacity-50">{startingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}Start Work</button>}
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="min-h-11 px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
                     {w.status === "completed" && <button onClick={() => createFollowUp(w)} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><CornerUpRight className="w-4 h-4" />Follow-up Work Order</button>}
                     {w.status === "completed" && <button onClick={() => setConfirmReopen(w)} disabled={reopeningId === w.id} className="min-h-11 px-3 py-1.5 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 flex items-center gap-1.5 disabled:opacity-50">{reopeningId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}Reopen</button>}
@@ -439,6 +444,7 @@ export default function FleetWorkOrders() {
         open={!!startWorkOrder}
         workOrder={startWorkOrder}
         busy={!!startingId}
+        error={actionError}
         onClose={() => !startingId && setStartWorkOrder(null)}
         onConfirm={startWork}
       />
