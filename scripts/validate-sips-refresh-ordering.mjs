@@ -318,4 +318,24 @@ await check('late confirmed clear response does not undo concurrent saved note',
   assert.equal(h.ctx.workOrders[0].updated_date, h.record.updated_date);
 });
 
+await check('conflict refresh is deferred until another field finishes saving', async () => {
+  const h = fixture(yesterday);
+  h.externalUpdate({ sip_revisit_date: later });
+  const releaseNoteRead = h.holdGet();
+  const noteSave = h.updateWorkOrder(h.record.id, 'notes', 'local note');
+  const dateSave = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  for (let i = 0; i < 25 && h.reads.length === 0; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1, 'Conflicted date asks to reload while note save is pending');
+  h.reads[0].finish();
+  await dateSave;
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow, 'Optimistic date remains until safe reload');
+  releaseNoteRead();
+  await noteSave;
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.record.notes, 'local note');
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, later, 'Failed date edit is corrected without waiting 60 seconds');
+  assert.equal(h.ctx.workOrders[0].notes, 'local note');
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+});
+
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
