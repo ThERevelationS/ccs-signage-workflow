@@ -29,6 +29,20 @@ test("staff verification requires an explicit role and records actor/time", () =
   assert.equal(next.authority_verified_at, "2026-09-27T11:00:00.000Z");
 });
 
+test("staff verification fails closed for unsupported roles and does not mutate the source office", () => {
+  const office = { authority_roles: ["zoning", "legacy_unknown"], authority_verification_status: "needs_verification", authority_verification_notes: "Needs migration review" };
+  assert.throws(() => verifyLocalityOfficeAuthority(office, "Reviewer"), /Unsupported authority role: legacy_unknown/);
+  assert.equal(office.authority_verification_status, "needs_verification");
+  assert.deepEqual(office.authority_roles, ["zoning", "legacy_unknown"]);
+  assert.equal(office.authority_verification_notes, "Needs migration review");
+});
+
+test("staff verification deduplicates supported roles without changing their order", () => {
+  const next = verifyLocalityOfficeAuthority({ authority_roles: ["zoning", "building", "zoning"] }, "Reviewer", "2026-09-27T11:30:00.000Z");
+  assert.deepEqual(next.authority_roles, ["zoning", "building"]);
+  assert.equal(next.authority_verification_status, "staff_verified");
+});
+
 test("revocation preserves roles and notes but removes verified state", () => {
   const next = revokeLocalityOfficeAuthorityVerification({ authority_roles: ["right_of_way"], authority_verification_notes: "County source", authority_verification_status: "staff_verified", authority_verified_by: "Reviewer" });
   assert.deepEqual(next.authority_roles, ["right_of_way"]);
