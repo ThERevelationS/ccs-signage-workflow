@@ -10,6 +10,25 @@ export function canonicalGovernmentOfficeId(office) {
   return String(source.government_office_id || source.id || "").trim();
 }
 
+/**
+ * Resolve shared office provenance by stable IDs only. Duplicate or stale
+ * canonical IDs fail closed; names and copied contact values never establish
+ * verification or locality-specific permitting authority.
+ */
+export function resolveCatalogOfficeProvenance(catalog, localityOffice) {
+  if (!Array.isArray(catalog) || !localityOffice) return null;
+  const templateId = String(localityOffice.catalog_office_id || "").trim();
+  const governmentId = String(localityOffice.government_office_id || "").trim();
+  if (!templateId && !governmentId) return null;
+  const templateMatches = templateId ? catalog.filter(entry => String(entry?.id || "").trim() === templateId) : [];
+  if (templateId && templateMatches.length !== 1) return null;
+  const canonicalId = governmentId || canonicalGovernmentOfficeId(templateMatches[0]);
+  if (!canonicalId) return null;
+  const matches = catalog.filter(entry => canonicalGovernmentOfficeId(entry) === canonicalId);
+  if (matches.length !== 1 || (templateId && matches[0] !== templateMatches[0])) return null;
+  return { government_office_id: canonicalId, metadata: governmentOfficeMetadata(matches[0]) };
+}
+
 export function copyCatalogOfficeToLocality(catalogOffice, order, makeId = () => `${Date.now()}-${Math.random()}`) {
   const source = catalogOffice && typeof catalogOffice === "object" ? catalogOffice : {};
   const catalogId = String(source.id || "").trim();
