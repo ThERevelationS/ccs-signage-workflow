@@ -635,6 +635,87 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
+// Exactly one backend-only coordinator row must be provisioned before this action
+// can run. Never create it on demand: simultaneous bootstraps would not be atomic.
+async function acquirePayPeriodCreateGate(gateEntity: any, auditEntity: any, periodEntity: any, requestId: string, hash: string) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const rows = await gateEntity.filter({});
+    if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.scope !== 'company' || !rows[0]?.id) {
+      return { acquired: false, error: 'Pay-period creation coordinator is missing or ambiguous. Admin setup or investigation is required.' };
+    }
+    const gate = rows[0];
+    if (gate.status === 'idle') {
+      const token = crypto.randomUUID();
+      const claimed = await gateEntity.updateMany(
+        { id: gate.id, updated_date: gate.updated_date, scope: 'company', status: 'idle' },
+        { $set: { status: 'creating', request_id: requestId, payload_hash: hash,
+          claim_token: token, started_at: new Date().toISOString() } },
+      );
+      if (!claimed || typeof claimed.updated !== 'number') throw new Error('Pay-period create gate claim was not verified.');
+      if (claimed.updated === 1) return { acquired: true, id: gate.id, token };
+      continue;
+    }
+    if (gate.status !== 'creating' || !gate.request_id || !gate.payload_hash || !gate.claim_token) {
+      return { acquired: false, error: 'Pay-period creation coordinator has an invalid lock. Admin investigation is required.' };
+    }
+    const sameRequest = gate.request_id === requestId;
+    if (sameRequest && !constantTimeEqual(String(gate.payload_hash), hash)) {
+      return { acquired: false, error: 'This pay-period request id is already bound to different details.' };
+    }
+    const prior = await periodEntity.filter({ last_request_id: gate.request_id });
+    const audits = await auditEntity.filter({ action: 'pay_period_create', request_id: gate.request_id });
+    if (!Array.isArray(prior) || !Array.isArray(audits) || prior.length > 1 || audits.length > 1) {
+      return { acquired: false, error: 'The held pay-period creation has ambiguous records. Admin investigation is required.' };
+    }
+    const saved = prior[0];
+    const audit = audits[0];
+    const details = audit?.details || {};
+    const consistent = saved && audit && constantTimeEqual(String(details.payload_hash || ''), String(gate.payload_hash)) &&
+      details.label === saved.label && details.start_date === saved.start_date && details.end_date === saved.end_date;
+    // A same-request retry may finish the pending audit ONLY after the saved
+    // period is visible; never re-enter the create path on an uncertain write.
+    if (sameRequest && consistent && ['pending', 'confirmed', 'recovered'].includes(audit.outcome)) {
+      return { acquired: true, id: gate.id, token: gate.claim_token };
+    }
+    const completed = consistent && ['confirmed', 'recovered'].includes(audit.outcome) &&
+      details.pay_period_id === saved.id;
+    const safelyBlocked = !saved && audit?.outcome === 'blocked' &&
+      constantTimeEqual(String(details.payload_hash || ''), String(gate.payload_hash));
+    if (completed || safelyBlocked) {
+      const released = await gateEntity.updateMany(
+        { id: gate.id, updated_date: gate.updated_date, scope: 'company', status: 'creating',
+          request_id: gate.request_id, payload_hash: gate.payload_hash, claim_token: gate.claim_token },
+        { $set: { status: 'idle', request_id: '', payload_hash: '', claim_token: '', started_at: null } },
+      );
+      if (!released || typeof released.updated !== 'number') throw new Error('Completed pay-period gate recovery could not be verified.');
+      if (released.updated === 1) continue;
+      continue;
+    }
+    return { acquired: false, retry_same_request: sameRequest,
+      error: sameRequest
+        ? 'This pay-period request is still processing or its create result is uncertain. Retry the same request after recovery or request admin investigation.'
+        : 'Another pay-period creation is in progress or has an uncertain result. Finish or investigate that request first.' };
+  }
+  return { acquired: false, retry_same_request: true, error: 'Pay-period creation gate changed concurrently. Retry the request.' };
+}
+
+async function releasePayPeriodCreateGate(gateEntity: any, id: string, requestId: string, hash: string, token: string) {
+  const gate = await gateEntity.get(id);
+  if (!gate?.id) return false;
+  // A concurrent exact-request retry may already have released the completed
+  // gate; never clear a later request's claim.
+  if (gate.status === 'idle' || (gate.status === 'creating' && gate.request_id !== requestId)) return true;
+  if (gate.status !== 'creating' || gate.request_id !== requestId ||
+      !constantTimeEqual(String(gate.payload_hash || ''), hash) || gate.claim_token !== token) return false;
+  const released = await gateEntity.updateMany(
+    { id, updated_date: gate.updated_date, scope: 'company', status: 'creating',
+      request_id: requestId, payload_hash: hash, claim_token: token },
+    { $set: { status: 'idle', request_id: '', payload_hash: '', claim_token: '', started_at: null } },
+  );
+  if (!released || typeof released.updated !== 'number') throw new Error('Pay-period create gate release was not verified.');
+  return released.updated === 1;
+}
+
 async function recoverCompletedClockInMutationGate(
   stateEntity: any,
   entryEntity: any,
