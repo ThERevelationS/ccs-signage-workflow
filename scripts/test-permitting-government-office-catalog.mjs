@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from '../src/components/permitting/governmentOfficeCatalog.js';
+import { normalizeGovernmentOfficeCatalogEntry, safeGovernmentOfficeSourceUrl, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from '../src/components/permitting/governmentOfficeCatalog.js';
 import { copyCatalogOfficeToLocality } from '../src/components/permitting/localityOfficeCatalogBridge.js';
 
 test('legacy catalog office gains stable canonical identity and explicit contact metadata', () => {
@@ -143,6 +143,15 @@ test('changing source while explicitly re-verifying records the new review', () 
   assert.equal(reverified.government_office.verification_status, 'staff_verified');
   assert.equal(reverified.government_office.verified_by, 'reviewer-b');
   assert.equal(reverified.government_office.verified_at, '2026-09-27T13:00:00.000Z');
+});
+
+test('official source links allow only absolute credential-free HTTPS URLs', () => {
+  assert.equal(safeGovernmentOfficeSourceUrl(' https://county.example.gov/zoning '), 'https://county.example.gov/zoning');
+  assert.equal(safeGovernmentOfficeSourceUrl('http://county.example.gov/zoning'), '');
+  assert.equal(safeGovernmentOfficeSourceUrl('javascript:alert(1)'), '');
+  assert.equal(safeGovernmentOfficeSourceUrl('/relative/source'), '');
+  assert.equal(safeGovernmentOfficeSourceUrl('https://user:secret@county.example.gov/source'), '');
+  assert.equal(safeGovernmentOfficeSourceUrl('https://county.example.gov/source\nmalformed'), '');
 });
 
 test('editing an unverified legacy office does not fabricate verification', () => {
