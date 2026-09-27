@@ -5101,6 +5101,35 @@ Deno.serve(async (req) => {
         const officialClockIn = resumingClockIn && state.pending_started_at
           ? state.pending_started_at
           : new Date().toISOString();
+        // Use the same trusted punch instant and company-local day for both
+        // the closed-period check and any subsequently created TimeEntry. This
+        // check must follow the shared employee gate: finalization holds that
+        // gate through its commit, so a freshly finalized period cannot slip
+        // between this read and the Clock In write.
+        const clockInDay = dateKeyInCompanyTime(officialClockIn);
+        if (!clockInDay) {
+          return Response.json({ success: false, error: 'The trusted Clock In timestamp is invalid. Admin review is required before this request can continue.' }, { status: 409 });
+        }
+        const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' });
+        if (!Array.isArray(finalizedPeriods)) throw new Error('Finalized pay-period lookup did not return a record list.');
+        const invalidFinalizedPeriod = finalizedPeriods.find((period: any) => {
+          const start = validDateKey(period.start_date);
+          const end = validDateKey(period.end_date);
+          return !start || !end || start > end;
+        });
+        if (invalidFinalizedPeriod) {
+          return Response.json({ success: false, error: 'A finalized pay period has invalid date boundaries. Admin review is required before Clock In can continue.' }, { status: 409 });
+        }
+        const closedPeriod = finalizedPeriods.find((period: any) =>
+          clockInDay >= period.start_date && clockInDay <= period.end_date,
+        );
+        if (closedPeriod) {
+          return Response.json({
+            success: false,
+            error: `Clock In is blocked because ${clockInDay} belongs to finalized pay period ${closedPeriod.label || 'a closed period'} (${closedPeriod.start_date} to ${closedPeriod.end_date}). An administrator must reopen the period before a new shift can begin on that date.`,
+            finalized_pay_period_id: closedPeriod.id,
+          }, { status: 409 });
+        }
         const claimed = resumingClockIn
           ? state
           : await setState(stateEntity, state, 'clocked_out', null, {
