@@ -845,13 +845,13 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           title="Restore the original saved layout and visibility; Undo is available">Reset</Button>
                       </div>
                       <div className="flex items-center gap-1" role="group" aria-label="Column arrangement history">
-                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs"
+                      <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                         disabled={columnDraft.past.length === 0 || isSaving}
                         onClick={() => dispatchColumnDraft({ type: "undo" })}
                         title="Undo the last column visibility or arrangement change">
                         <Undo2 className="mr-1 h-3.5 w-3.5" />Undo
                       </Button>
-                      <Button type="button" variant="outline" size="sm" className="h-8 px-2 text-xs"
+                      <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                         disabled={columnDraft.future.length === 0 || isSaving}
                         onClick={() => dispatchColumnDraft({ type: "redo" })}
                         title="Redo the last undone column change">
