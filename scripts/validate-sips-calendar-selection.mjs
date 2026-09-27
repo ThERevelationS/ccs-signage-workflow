@@ -72,6 +72,17 @@ for (const [index, pickerLine] of pickers.entries()) {
       location + ' has the explicit Clear Revisit route',
     );
   });
+
+  check(location + ': date trigger shows saving feedback and cannot reopen during save', () => {
+    const preceding = lines.slice(Math.max(0, pickerLine - 35), pickerLine).join('\n');
+    const triggerIndex = preceding.lastIndexOf('<PopoverTrigger asChild');
+    assert.ok(triggerIndex >= 0, location + ' Revisit trigger is present');
+    const trigger = preceding.slice(triggerIndex);
+    assert.match(trigger, /disabled=\{!isRegistered \|\| savingRevisitIds\.has\(wo\.id\)\}/);
+    assert.match(trigger, /disabled=\{savingRevisitIds\.has\(wo\.id\)\}/);
+    assert.match(trigger, /aria-busy=\{savingRevisitIds\.has\(wo\.id\)\}/);
+    assert.match(trigger, /Saving/, 'Saving status is shown while the date field is locked');
+  });
 }
 
 console.log(passed + '/' + passed + ' SIPS calendar-selection regression checks passed');
