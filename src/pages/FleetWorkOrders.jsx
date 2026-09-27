@@ -270,20 +270,25 @@ export default function FleetWorkOrders() {
       : { action, id: dialog.workOrder.id, expected_updated_date: dialog.workOrder.updated_date || "", work_order: workOrderData, ...(action === "complete" ? { equipment_status: equipmentStatus, equipment_expected_updated_date: selectedEquipment?.updated_date || "" } : {}) };
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
-    await loadData();
+    const refreshed = await attemptPostMutationRefresh(loadData);
+    const saved = response?.data?.work_order;
+    const verb = action === "create" ? "Created" : action === "complete" ? "Completed" : "Saved";
+    const label = saved?.work_order_number || dialog.workOrder?.work_order_number || workOrderData.title || "work order";
+    if (!refreshed) setRefreshError(verb + " " + label + " successfully, but the list could not refresh. Use Retry refresh; do not repeat the operation.");
     if (action === "complete") {
       setFocusNotice("");
       pendingCompletionFocusRef.current = {
         id: dialog.workOrder.id,
         label: dialog.workOrder.work_order_number || dialog.workOrder.title || "work order",
+        refreshFailed: !refreshed,
       };
     } else {
-      const saved = response?.data?.work_order;
       setFocusNotice("");
       pendingSaveFocusRef.current = {
         id: saved?.id || dialog.workOrder?.id || "",
-        label: saved?.work_order_number || dialog.workOrder?.work_order_number || workOrderData.title || "work order",
-        verb: action === "create" ? "Created" : "Saved",
+        label,
+        verb,
+        refreshFailed: !refreshed,
       };
     }
     closeDialog();
