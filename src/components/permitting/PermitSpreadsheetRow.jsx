@@ -110,6 +110,7 @@ export default function PermitSpreadsheetRow({
   onShowLocalityInfo,
   onShowJurisdictionInfo,
   localityState,
+  officeAuthority,
   onDeleteLine,
   isRegistered,
   users,
@@ -397,6 +398,22 @@ export default function PermitSpreadsheetRow({
                 </Popover>
               )}
             </div>
+            {officeAuthority && (
+              <div
+                role="status"
+                title={officeAuthority.reason || "Only these configured-office authority roles have staff verification; additional legal responsibilities may exist."}
+                className={`mt-1 rounded border px-1.5 py-1 text-[10px] leading-snug break-words ${officeAuthority.status === 'staff_verified' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}
+              >
+                <span className="font-semibold">{officeAuthority.office_name}: </span>
+                {officeAuthority.status === 'staff_verified' ? (
+                  <span>Staff-verified roles: {officeAuthority.verified_roles.join(', ').replaceAll('_', ' ')}.</span>
+                ) : officeAuthority.status === 'needs_verification' ? (
+                  <span>Authority needs staff review{officeAuthority.roles_needing_review.length > 0 ? `: ${officeAuthority.roles_needing_review.join(', ').replaceAll('_', ' ')}` : '.'}</span>
+                ) : (
+                  <span>Office mapping needs review. {officeAuthority.reason}</span>
+                )}
+              </div>
+            )}
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
               <span className="flex-shrink-0">Owner:</span>
               <Select
