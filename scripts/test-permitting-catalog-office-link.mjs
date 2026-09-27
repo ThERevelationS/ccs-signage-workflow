@@ -47,7 +47,16 @@ test('optional provenance field coexists with existing locality and workflow sch
   const schema = JSON.parse(readFileSync(new URL('../base44/entities/PermitLocality.jsonc', import.meta.url)));
   assert.equal(schema.properties.offices.items.properties.catalog_office_id.type, 'string');
   assert.deepEqual(schema.required, ['name']);
-  assert.ok(schema.properties.offices.items.properties.workflow_steps);
+  const officeSchema = schema.properties.offices.items.properties;
+  assert.ok(officeSchema.workflow_steps);
+  assert.deepEqual(officeSchema.authority_roles.items.enum, [
+    'sign_permit', 'zoning', 'building', 'electrical', 'right_of_way',
+    'historic_review', 'planning', 'transportation', 'other',
+  ]);
+  assert.deepEqual(officeSchema.authority_verification_status.enum, ['needs_verification', 'staff_verified']);
+  assert.equal(officeSchema.authority_verified_at.format, 'date-time');
+  assert.ok(officeSchema.authority_verified_by);
+  assert.ok(officeSchema.authority_verification_notes);
   assert.ok(schema.properties.workflow_steps);
   const picker = readFileSync(new URL('../src/components/permitting/PermitSettingsDialog.jsx', import.meta.url), 'utf8');
   assert.match(picker, /copyCatalogOfficeToLocality\(catalogOffice, form\.offices\.length\)/);
