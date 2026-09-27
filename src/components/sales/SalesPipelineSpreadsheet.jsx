@@ -299,6 +299,21 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return () => interval && clearInterval(interval);
   }, [recordScope]);
 
+  useEffect(() => {
+    if (!["insights", "daily"].includes(viewMode)) return;
+    // Insights and Daily are task/report surfaces rather than the row-detail
+    // queue that opened these dialogs. Do not carry a row-bound action over
+    // a view transition where its originating row is no longer visible.
+    setSelectedWorkOrder(null);
+    setShowFullWorkOrderDetails(false);
+    setStatusTransition(null);
+    setFollowUpCompletion(null);
+    setCorbridgeDialog({ open: false, workOrder: null });
+    setCorbridgeDraft({ invoiceNumber: "", link: "" });
+    setCorbridgeSaveError("");
+    selectedQueueIndexRef.current = null;
+  }, [viewMode]);
+
   const loadTaskAssignmentRules = async () => {
     try {
       const setting = await loadSingleGlobalSetting({
