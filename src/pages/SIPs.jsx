@@ -221,6 +221,16 @@ export default function SIPs() {
   const updateWorkOrder = async (orderId, field, value) => {
     const currentWo = workOrders.find((wo) => wo.id === orderId);
     if (!currentWo) return;
+    const editKey = JSON.stringify([orderId, field]);
+    // A rapid second selection must not silently race the first save. Other
+    // fields and other Work Orders remain independently editable.
+    if (quickEditsInFlightRef.current.has(editKey)) {
+      if (quickEditsInFlightRef.current.get(editKey) !== value) {
+        setQuickEditError("This field is still saving. Wait for the current change to finish before choosing another value.");
+      }
+      return;
+    }
+    quickEditsInFlightRef.current.set(editKey, value);
     const expectedValue = currentWo[field];
     setQuickEditError("");
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
@@ -236,6 +246,8 @@ export default function SIPs() {
       console.error("Error updating SIPs Work Order field:", error);
       setQuickEditError(error?.message || "This Work Order field changed in another session. The latest value was reloaded.");
       await loadWorkOrders(false);
+    } finally {
+      quickEditsInFlightRef.current.delete(editKey);
     }
   };
 
