@@ -18,6 +18,7 @@ import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitio
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
+import { legacyOfficeLinkOptions } from "../../base44/shared/permittingAddressLocality.js";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -173,7 +174,7 @@ export default function Permitting() {
     if (showLoading) setIsLoading(false);
   };
 
-  const persistPermitLineItemFields = useCallback((lineItemId, nextFields, label = "Permit line update") => {
+  const persistPermitLineItemFields = useCallback((lineItemId, nextFields, label = "Permit line update", guardFields = {}) => {
     const id = String(lineItemId || "").trim();
     if (!id || !nextFields || Object.keys(nextFields).length === 0) return Promise.resolve(null);
 
@@ -194,6 +195,7 @@ export default function Permitting() {
           id,
           expectedFields: expectedEntityFields(baseline, nextFields),
           nextFields,
+          guardFields,
           label,
         });
 
@@ -541,6 +543,36 @@ export default function Permitting() {
     }
   }, [localities, workOrders]);
 
+  // Staff-approved, one-line legacy repair. No bulk update or inferred verification.
+  const linkLegacyPermitLineOffice = useCallback(async (lineItemId, officeId) => {
+    const line = lineItems.find(item => item.id === lineItemId);
+    const selectedId = String(officeId || "").trim();
+    if (!isRegistered || !line?.id || !selectedId || !line.locality_id || String(line.locality_office_id || "").trim()) {
+      setPermitLineEditError("This legacy line cannot be linked. Reload and review the permit line.");
+      return false;
+    }
+    try {
+      const liveLocality = await PermitLocality.get(line.locality_id);
+      if (!liveLocality?.id || String(liveLocality.id) !== String(line.locality_id)) {
+        throw new Error("The selected locality is unavailable.");
+      }
+      if (legacyOfficeLinkOptions(line, [liveLocality]).filter(office => office.id === selectedId).length !== 1) {
+        throw new Error("The chosen office ID is unavailable or ambiguous. Review current locality settings.");
+      }
+    } catch (error) {
+      setPermitLineEditError(error?.message || "Could not recheck the office. Nothing was linked.");
+      return false;
+    }
+    const saved = await persistPermitLineItemFields(
+      line.id, { locality_office_id: selectedId }, "Staff-selected legacy office link",
+      {
+        locality_id: line.locality_id, locality_office_id: line.locality_office_id,
+        row_name: line.row_name, office_type: line.office_type,
+      }
+    );
+    return !!saved?.id && String(saved.locality_office_id || "") === selectedId;
+  }, [isRegistered, lineItems, persistPermitLineItemFields]);
+
   // Update locality on an existing line — replaces steps using the office this line represents
   const updateLocality = useCallback(async (lineItemId, localityId) => {
     const locality = localities.find(l => l.id === localityId);
@@ -874,6 +906,7 @@ export default function Permitting() {
                 onUpdateNotes={updateNotesAndSync}
                 onUpdateLocality={updateLocality}
                 onSelectLocalityForWorkOrder={selectLocalityForWorkOrder}
+                    onLinkLegacyOffice={linkLegacyPermitLineOffice}
                 onOpenWorkOrder={openWorkOrder}
                 onShowLocalityInfo={setLocalityInfoId}
                 onShowJurisdictionInfo={openJurisdictionKnowledge}

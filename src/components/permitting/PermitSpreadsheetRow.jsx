@@ -111,6 +111,8 @@ export default function PermitSpreadsheetRow({
   onShowJurisdictionInfo,
   localityState,
   officeAuthority,
+  legacyOfficeOptions = [],
+  onLinkLegacyOffice,
   onDeleteLine,
   isRegistered,
   users,
@@ -119,6 +121,10 @@ export default function PermitSpreadsheetRow({
 }) {
   const [openDatePopover, setOpenDatePopover] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [linkOfficeOpen, setLinkOfficeOpen] = useState(false);
+  const [selectedOfficeId, setSelectedOfficeId] = useState("");
+  const [linkSaving, setLinkSaving] = useState(false);
+  const [linkError, setLinkError] = useState("");
   const [jurisdictionPreviewOpen, setJurisdictionPreviewOpen] = useState(false);
   const [jurisdictionPreviewLoading, setJurisdictionPreviewLoading] = useState(false);
   const [jurisdictionPreviewError, setJurisdictionPreviewError] = useState("");
@@ -414,6 +420,12 @@ export default function PermitSpreadsheetRow({
                 )}
               </div>
             )}
+            {isRegistered && !lineItem.locality_office_id && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
+              <button type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
+                onClick={() => { setSelectedOfficeId(""); setLinkError(""); setLinkOfficeOpen(true); }}>
+                Link legacy line to office
+              </button>
+            )}
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
               <span className="flex-shrink-0">Owner:</span>
               <Select
@@ -529,6 +541,53 @@ export default function PermitSpreadsheetRow({
         isRegistered={isRegistered}
         today={today}
       />
+
+      <AlertDialog open={linkOfficeOpen} onOpenChange={open => {
+        if (linkSaving) return;
+        setLinkOfficeOpen(open);
+        if (!open) { setSelectedOfficeId(""); setLinkError(""); }
+      }}>
+        <AlertDialogContent className="clay-card border-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Link this existing permit line to an office?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirm which configured office represents this line. Only this line's stable office
+              reference changes. This does not verify permitting authority or change workflow
+              steps, other lines, notes, or historical permits.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="text-sm font-semibold" htmlFor={"office-link-" + lineItem.id}>Configured office</label>
+          <select id={"office-link-" + lineItem.id} value={selectedOfficeId}
+            onChange={event => setSelectedOfficeId(event.target.value)}
+            disabled={linkSaving} className="min-h-10 w-full rounded border px-2 text-sm">
+            <option value="">Choose the exact office</option>
+            {legacyOfficeOptions.map(office =>
+              <option key={office.id} value={office.id}>{office.label}</option>
+            )}
+          </select>
+          {linkError && <p role="alert" className="text-sm text-red-700">{linkError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={linkSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={!selectedOfficeId || linkSaving || !isRegistered}
+              onClick={async event => {
+                event.preventDefault();
+                if (!selectedOfficeId || linkSaving) return;
+                setLinkSaving(true); setLinkError("");
+                try {
+                  const saved = await onLinkLegacyOffice(lineItem.id, selectedOfficeId);
+                  if (saved) setLinkOfficeOpen(false);
+                  else setLinkError("Office link was not saved. Review the latest permit line and locality.");
+                } catch (error) {
+                  setLinkError(error?.message || "Office link could not be saved.");
+                } finally {
+                  setLinkSaving(false);
+                }
+              }}>
+              {linkSaving ? "Linking..." : "Confirm this office link"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent className="clay-card border-none">

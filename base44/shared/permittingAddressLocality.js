@@ -75,6 +75,29 @@ export function summarizePermitGroupAuthorityCoverage(lines, localities) {
   return [...byLocality.values()];
 }
 
+/** Offer only stable, unique, locality-scoped office choices for manual legacy linking.
+ * Never infer a choice from an old line name or claim the office is verified.
+ */
+export function legacyOfficeLinkOptions(line, localities) {
+  if (!line?.id || String(line.locality_office_id || '').trim()) return [];
+  const id = String(line.locality_id || '').trim();
+  const matches = id && Array.isArray(localities)
+    ? localities.filter(locality => String(locality?.id || '').trim() === id) : [];
+  if (matches.length !== 1 || !Array.isArray(matches[0].offices)) return [];
+  const seen = new Set();
+  const choices = [];
+  for (const office of matches[0].offices) {
+    const officeId = String(office?.id || '').trim();
+    if (!officeId || seen.has(officeId)) return [];
+    seen.add(officeId);
+    const types = Array.isArray(office?.office_types) && office.office_types.length
+      ? office.office_types : office?.office_type ? [office.office_type] : [];
+    const name = String(office?.name || types[0] || 'Office').trim();
+    choices.push({ id: officeId, label: name + ' — ID: ' + officeId, name });
+  }
+  return choices;
+}
+
 /** Resolve an office by its locality-scoped stable ID when present. Legacy
  * lines without that ID retain strict name/type matching. Missing or duplicate
  * explicit IDs fail closed instead of inheriting authority from a namesake.

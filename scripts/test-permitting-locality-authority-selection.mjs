@@ -188,3 +188,34 @@ test('address result authority labels come from backend verified roles, not AI t
   assert.match(ui, /addressAuthorityLabels\.join/);
   assert.match(ui, /addressAuthority\?\.status === 'staff_verified_roles'/);
 });
+
+test('legacy office linking offers unique IDs only within the selected locality', async () => {
+  const { legacyOfficeLinkOptions } = await import('../base44/shared/permittingAddressLocality.js');
+  const line = { id: 'line', locality_id: 'loc' };
+  const office = { id: 'o1', name: 'Sign Office' };
+  const loc = { id: 'loc', offices: [office] };
+  assert.deepEqual(legacyOfficeLinkOptions(line, [loc]).map(o => o.id), ['o1']);
+  assert.match(legacyOfficeLinkOptions(line, [loc])[0].label, /ID: o1/);
+  assert.deepEqual(legacyOfficeLinkOptions({ ...line, locality_office_id: 'o1' }, [loc]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'elsewhere', offices: [office] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [loc, loc]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'loc', offices: [office, office] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'loc', offices: [{ name: 'No ID' }] }]), []);
+});
+
+test('legacy link requires explicit staff confirmation and guarded single-line persistence', () => {
+  const page = readFileSync(new URL('../src/pages/Permitting.jsx', import.meta.url), 'utf8');
+  const group = readFileSync(new URL('../src/components/permitting/PermitClientGroup.jsx', import.meta.url), 'utf8');
+  const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
+  assert.match(page, /PermitLocality\.get\(line\.locality_id\)/);
+  assert.match(page, /legacyOfficeLinkOptions\(line, \[liveLocality\]\)/);
+  assert.match(page, /guardFields,/);
+  assert.match(page, /row_name: line\.row_name/);
+  assert.match(page, /locality_office_id: line\.locality_office_id/);
+  assert.match(page, /onLinkLegacyOffice=\{linkLegacyPermitLineOffice\}/);
+  assert.match(group, /legacyOfficeOptions=\{legacyOfficeLinkOptions\(li, localities\)\}/);
+  assert.match(row, /Link legacy line to office/);
+  assert.match(row, /Confirm this office link/);
+  assert.match(row, /onLinkLegacyOffice\(lineItem\.id, selectedOfficeId\)/);
+  assert.match(row, /This does not verify permitting authority/);
+});
