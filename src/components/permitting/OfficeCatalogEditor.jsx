@@ -18,7 +18,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
-import { normalizeGovernmentOfficeCatalogEntry } from "./governmentOfficeCatalog";
+import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -96,7 +96,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
 
-  const update = (patch) => onChange(normalizeGovernmentOfficeCatalogEntry({ ...office, ...patch }));
+  const update = (patch) => onChange(updateGovernmentOfficeCatalogEntry(office, patch));
 
   const selectedTypes = getOfficeTypes(office);
 
