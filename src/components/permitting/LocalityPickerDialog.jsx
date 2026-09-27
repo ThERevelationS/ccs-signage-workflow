@@ -26,6 +26,30 @@ import {
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
+const AUTHORITY_ROLE_LABELS = {
+  sign_permit: "Sign permit",
+  zoning: "Zoning",
+  building: "Building",
+  electrical: "Electrical",
+  right_of_way: "ROW / public works",
+  historic_review: "Historic review",
+  planning: "Planning",
+  transportation: "Transportation",
+  other: "Other",
+};
+
+function verifiedAuthoritySummary(locality) {
+  const verified = (locality?.offices || []).filter(office =>
+    office?.authority_verification_status === "staff_verified" &&
+    Array.isArray(office?.authority_roles) && office.authority_roles.length > 0
+  );
+  const roles = [...new Set(verified.flatMap(office => office.authority_roles))];
+  return {
+    officeCount: verified.length,
+    labels: roles.map(role => AUTHORITY_ROLE_LABELS[role] || role),
+  };
+}
+
 export default function LocalityPickerDialog({
   isOpen,
   onClose,
@@ -105,6 +129,9 @@ export default function LocalityPickerDialog({
     }
     setSearching(false);
   };
+
+  const selectedLocality = localities.find(locality => locality.id === selectedLocalityId);
+  const selectedAuthority = verifiedAuthoritySummary(selectedLocality);
 
   const handleApply = () => {
     if (!selectedLocalityId) return;
@@ -372,6 +399,25 @@ export default function LocalityPickerDialog({
                         </option>
                       ))}
                     </select>
+                    {selectedLocality && (
+                      selectedAuthority.officeCount > 0 ? (
+                        <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-900">
+                          <div className="flex items-center gap-1 font-semibold">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {selectedAuthority.officeCount} staff-verified authorit{selectedAuthority.officeCount === 1 ? "y" : "ies"}
+                          </div>
+                          <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
+                          <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
+                          <div className="flex items-center gap-1 font-semibold">
+                            <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
+                          </div>
+                          <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
 
