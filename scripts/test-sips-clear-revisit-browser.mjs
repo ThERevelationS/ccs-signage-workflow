@@ -168,8 +168,9 @@ async function checkDialogOnScreen(page) {
   assert.ok(rect.y + rect.height <= size.height + 1, "Dialog cannot overflow mobile height");
 }
 
-async function caseRun(name, origin, sizes, run) {
+async function caseRun(name, origin, sizes, run, setup = () => {}) {
   reset();
+  setup(fixture);
   const sessions = [];
   const failures = [];
   try {
@@ -271,6 +272,60 @@ try {
         await a.getByText("Showing 1 of 1 active item").waitFor();
       });
   }
+  await caseRun("Mobile: reopening legacy future-dated WIP atomically returns it to Active",
+    origin, [mobile], async ([page]) => {
+      await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+      await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+      await waitFor(1, "");
+      await page.getByText("Showing 1 of 1 active item").waitFor();
+      assert.equal(fixture.row.sip_completed, false);
+      assert.deepEqual(fixture.writes, [{ sip_completed: false, sip_revisit_date: "" }]);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }, (state) => { state.row.sip_completed = true; });
+
+  await caseRun("Two browsers: concurrent completed-WIP reopen writes once and returns both boards to Active",
+    origin, [desktop, mobile], async ([a, b]) => {
+      await Promise.all([
+        a.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor(),
+        b.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor(),
+      ]);
+      await Promise.all([
+        a.getByRole("checkbox", { name: "Reopen Synthetic Revisit QA in active SIPs" }).click(),
+        b.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click(),
+      ]);
+      await waitFor(1, "");
+      await Promise.all([
+        a.getByText("Showing 1 of 1 active item").waitFor(),
+        b.getByText("Showing 1 of 1 active item").waitFor(),
+      ]);
+      assert.equal(fixture.row.sip_completed, false);
+      assert.equal(fixture.row.sip_revisit_date, "");
+      assert.equal(fixture.writes.length, 1, "The conditional second reopen must not make a duplicate write");
+    }, (state) => { state.row.sip_completed = true; });
+
+  await caseRun("Mobile: stale undated WIP reopen cannot erase a different session's future Revisit",
+    origin, [mobile], async ([page]) => {
+      await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+      // Simulate a distinct scheduler saving between the mobile page's load
+      // and its Reopen click; the normal browser mock uses the same shared CAS
+      // state but cannot date-edit a completed item directly from this board.
+      fixture.row.sip_revisit_date = newerDate;
+      fixture.row.updated_date = String(Number(fixture.row.updated_date) + 1).padStart(9, "0");
+      await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+      await page.getByRole("alert").filter({ hasText: "changed in another session (sip_revisit_date)" }).waitFor();
+      await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+      assert.equal(fixture.row.sip_revisit_date, newerDate);
+      assert.equal(fixture.row.sip_completed, true);
+      assert.equal(fixture.writes.length, 0, "The stale reopen must not write anything");
+      await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+      await waitFor(1, "");
+      await page.getByText("Showing 1 of 1 active item").waitFor();
+      assert.equal(fixture.row.sip_completed, false);
+    }, (state) => {
+      state.row.sip_completed = true;
+      state.row.sip_revisit_date = "";
+    });
+
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
 } finally {
