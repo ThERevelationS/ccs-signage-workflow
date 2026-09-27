@@ -35,7 +35,7 @@ function localityIdentityMatches(locality: any, name: unknown, state: unknown) {
  * Response: {
  *   success: boolean,
  *   geocode: { lat, lon, display_name } | null,
- *   suggested_locality: { id, name, state, zip } | null,
+ *   suggested_locality: { id, name, state, zip, jurisdiction_profile_id? } | null,
  *   ai_locality_name: string,
  *   ai_state: string,
  *   ai_county: string,
@@ -179,7 +179,8 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
         id: found.id,
         name: found.name,
         state: found.state || "",
-        zip: found.zip || ""
+        zip: found.zip || "",
+        ...(found.jurisdiction_profile_id ? { jurisdiction_profile_id: found.jurisdiction_profile_id } : {})
       };
       matchMethod = 'geocode_exact';
       matchConfidence = 'high';
