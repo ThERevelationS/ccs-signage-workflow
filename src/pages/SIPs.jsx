@@ -782,10 +782,19 @@ export default function SIPs() {
                     open={openDatePopover === `revisit-active-mobile-${wo.id}`}
                     onOpenChange={(open) => setOpenDatePopover(open ? `revisit-active-mobile-${wo.id}` : null)}
                   >
-                    <PopoverTrigger asChild disabled={!isRegistered}>
-                      <Button variant="ghost" size="sm" className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-50 touch-manipulation">
-                        <CalendarClock className="w-4 h-4 mr-2" />
-                        {wo.sip_revisit_date ? "Change Revisit Date" : "Set Revisit Date"}
+                    <PopoverTrigger asChild disabled={!isRegistered || savingRevisitIds.has(wo.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={savingRevisitIds.has(wo.id)}
+                        aria-busy={savingRevisitIds.has(wo.id)}
+                        className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-50 touch-manipulation"
+                      >
+                        {savingRevisitIds.has(wo.id) ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving revisit date…</>
+                        ) : (
+                          <><CalendarClock className="w-4 h-4 mr-2" />{wo.sip_revisit_date ? "Change Revisit Date" : "Set Revisit Date"}</>
+                        )}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -1198,8 +1207,18 @@ export default function SIPs() {
                       open={openDatePopover === `revisit-future-mobile-${wo.id}`}
                       onOpenChange={(open) => setOpenDatePopover(open ? `revisit-future-mobile-${wo.id}` : null)}
                     >
-                      <PopoverTrigger asChild disabled={!isRegistered}>
-                        <Button variant="ghost" size="sm" className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-100 touch-manipulation">Change Revisit Date</Button>
+                      <PopoverTrigger asChild disabled={!isRegistered || savingRevisitIds.has(wo.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={savingRevisitIds.has(wo.id)}
+                          aria-busy={savingRevisitIds.has(wo.id)}
+                          className="w-full min-h-11 mt-2 text-amber-700 hover:bg-amber-100 touch-manipulation"
+                        >
+                          {savingRevisitIds.has(wo.id) ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving revisit date…</>
+                          ) : "Change Revisit Date"}
+                        </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
