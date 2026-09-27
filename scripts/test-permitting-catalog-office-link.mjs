@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { copyCatalogOfficeToLocality } from '../src/components/permitting/localityOfficeCatalogBridge.js';
+import { copyCatalogOfficeToLocality, resolveCatalogOfficeProvenance } from '../src/components/permitting/localityOfficeCatalogBridge.js';
 
 const catalog = {
   id: 'catalog-zoning-42', name: 'Regional Zoning', office_type: 'Zoning',
@@ -66,4 +66,42 @@ test('optional provenance field coexists with existing locality and workflow sch
   assert.ok(schema.properties.workflow_steps);
   const picker = readFileSync(new URL('../src/components/permitting/PermitSettingsDialog.jsx', import.meta.url), 'utf8');
   assert.match(picker, /copyCatalogOfficeToLocality\(catalogOffice, form\.offices\.length\)/);
+});
+
+test('staff-verified catalog identity and official source resolve for locality review', () => {
+  const shared = {
+    id: 'template-1', government_office_id: 'government-1', name: 'County Office',
+    government_office: { verification_status: 'staff_verified', verified_by: 'Staff', source_url: 'https://county.example.gov/office' },
+  };
+  const local = { id: 'local-1', catalog_office_id: 'template-1', government_office_id: 'government-1' };
+  const result = resolveCatalogOfficeProvenance([shared], local);
+  assert.equal(result.government_office_id, 'government-1');
+  assert.equal(result.metadata.verification_status, 'staff_verified');
+  assert.equal(result.metadata.source_url, 'https://county.example.gov/office');
+  assert.equal(Object.hasOwn(result, 'authority_roles'), false);
+});
+
+test('legacy catalog and ID-only links resolve but never fabricate verification', () => {
+  const legacy = { id: 'catalog-legacy', name: 'Regional Office' };
+  const result = resolveCatalogOfficeProvenance([legacy], { government_office_id: 'catalog-legacy' });
+  assert.equal(result.metadata.verification_status, 'needs_verification');
+  assert.equal(result.metadata.source_url, '');
+  assert.equal(resolveCatalogOfficeProvenance([legacy], { name: 'Regional Office' }), null);
+});
+
+test('stale, contradictory or duplicate canonical catalog links fail closed', () => {
+  const record = { id: 'template-1', government_office_id: 'government-1', name: 'Office' };
+  assert.equal(resolveCatalogOfficeProvenance([record], { catalog_office_id: 'missing' }), null);
+  assert.equal(resolveCatalogOfficeProvenance([record], { catalog_office_id: 'template-1', government_office_id: 'different' }), null);
+  assert.equal(resolveCatalogOfficeProvenance([record, { ...record, id: 'template-2' }], { catalog_office_id: 'template-1' }), null);
+  assert.equal(resolveCatalogOfficeProvenance([record, record], { catalog_office_id: 'template-1' }), null);
+});
+
+test('locality selection and linked office review display provenance without legal-authority claims', () => {
+  const ui = readFileSync(new URL('../src/components/permitting/PermitSettingsDialog.jsx', import.meta.url), 'utf8');
+  assert.match(ui, /resolveCatalogOfficeProvenance\(officeCatalog, \{ catalog_office_id: o\.id \}\)/);
+  assert.match(ui, /resolveCatalogOfficeProvenance\(officeCatalog, office\)/);
+  assert.match(ui, /Shared office identity: staff verified/);
+  assert.match(ui, /Official source: /);
+  assert.match(ui, /Locality authority must be verified separately/);
 });
