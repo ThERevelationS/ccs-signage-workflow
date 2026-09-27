@@ -18,7 +18,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
-import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry } from "./governmentOfficeCatalog";
+import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -97,6 +97,8 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const [newStepType, setNewStepType] = useState("checkbox");
 
   const update = (patch) => onChange(updateGovernmentOfficeCatalogEntry(office, patch));
+  const officeMetadata = normalizeGovernmentOfficeCatalogEntry(office).government_office;
+  const updateVerification = (patch) => onChange(updateGovernmentOfficeVerification(office, patch, "staff"));
 
   const selectedTypes = getOfficeTypes(office);
 
@@ -191,6 +193,37 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
               <Label className="text-[10px] text-gray-500">Notes</Label>
               <Input value={office.contact_notes || ""} onChange={e => update({ contact_notes: e.target.value })} className="h-7 text-xs" />
             </div>
+          </div>
+
+          <div className="border-t pt-2 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h5 className="text-xs font-semibold">Canonical office verification</h5>
+                <p className="text-[10px] text-gray-500">Verifies this shared office identity/contact source only — not its legal authority for any locality.</p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={officeMetadata.verification_status === "staff_verified" ? "outline" : "default"}
+                className="h-7 text-xs"
+                onClick={() => updateVerification({ verification_status: officeMetadata.verification_status === "staff_verified" ? "needs_verification" : "staff_verified" })}
+              >
+                {officeMetadata.verification_status === "staff_verified" ? "Revoke verification" : "Mark staff verified"}
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] text-gray-500">Official source URL</Label>
+                <Input value={officeMetadata.source_url || ""} onChange={e => updateVerification({ source_url: e.target.value })} className="h-7 text-xs" />
+              </div>
+              <div>
+                <Label className="text-[10px] text-gray-500">Verification notes</Label>
+                <Input value={officeMetadata.verification_notes || ""} onChange={e => updateVerification({ verification_notes: e.target.value })} className="h-7 text-xs" />
+              </div>
+            </div>
+            {officeMetadata.verification_status === "staff_verified" && (
+              <p className="text-[10px] text-emerald-700">Staff verified{officeMetadata.verified_at ? ` · ${new Date(officeMetadata.verified_at).toLocaleString()}` : ""}</p>
+            )}
           </div>
 
           <div className="border-t pt-2">
