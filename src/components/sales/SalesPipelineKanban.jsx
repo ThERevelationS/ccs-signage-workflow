@@ -207,11 +207,11 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           aria-label="Kanban follow-up quick actions. Swipe horizontally for more actions."
                           onClick={(event) => event.stopPropagation()}
                         >
-                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">Tomorrow</button>
-                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+3d</button>
-                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(7))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+7d</button>
-                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(14))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-7">+14d</button>
-                          <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex h-11 shrink-0 items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 sm:h-7"><CheckCircle2 className="mr-1 h-3 w-3" />Done</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-8">Tomorrow</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(3))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-8">+3d</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(7))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-8">+7d</button>
+                          <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(14))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-8">+14d</button>
+                          <button type="button" onClick={() => onCompleteFollowUp?.(workOrder)} className="inline-flex h-11 shrink-0 items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 sm:h-8"><CheckCircle2 className="mr-1 h-3 w-3" />Done</button>
                         </div>
                       )}
 
