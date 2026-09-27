@@ -563,23 +563,6 @@ test('an overnight active shift still blocks finalizing its original company-loc
   assert.equal(h.audit('overnight-active-finalize-001')[0].outcome, 'blocked');
 });
 
-test('an overnight active shift still blocks finalizing its original company-local day', async () => {
-  // The server is already on Sep 27 in New York, but this open shift began
-  // at 11:59 PM on Sep 26 and still overlaps the period ending Sep 26.
-  const h = setup({ entryCount: 0, serverNow: '2026-09-27T04:10:00.000Z' });
-  h.rows.TimeEntry.push({
-    id: 'synthetic-overnight-active', user_email: employee.email,
-    status: 'clocked_in', clock_in: '2026-09-27T03:59:00.000Z',
-    updated_date: '2026-09-27T04:00:00.000Z',
-  });
-  const result = await h.action('finalize', 'overnight-active-finalize-001');
-  assert.equal(result.status, 409, JSON.stringify(result.body));
-  assert.equal(result.body.readiness.active_shift_count, 1);
-  assert.equal(h.period().status, 'review');
-  assert.equal(h.entryLocks().length, 0);
-  assert.equal(h.audit('overnight-active-finalize-001')[0].outcome, 'blocked');
-});
-
 test('Clock In on a finalized company-local date is denied before creating any shift', async () => {
   const h = setup({ serverNow: '2026-09-26T14:00:00.000Z' });
   assert.equal((await h.action('finalize', 'closed-day-finalize-001')).status, 200);
