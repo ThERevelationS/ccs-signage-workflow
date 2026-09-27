@@ -10,6 +10,7 @@ const GROUPS = [
   { key: "invalid_values", label: "Unrecognized values", note: "The source value could not be safely translated; resolve these before any pull." },
   { key: "text_choices", label: "Text choices and notes", note: "Date Needed and Date Ordered may contain scheduling notes such as ASAP or N/A. Date Received may contain choices such as Stock or In Stock. These are preserved separately from calendar dates." },
   { key: "ambiguous_links", label: "Duplicate permanent links", note: "Multiple Base44 Orders refer to one Smartsheet row; never choose one by row position or name." },
+  { key: "unlinked_rows", label: "Unlinked Smartsheet rows", note: "These permanent Smartsheet row IDs have no matching active Base44 Order. Review them before enabling record creation; no automatic match or deletion is performed." },
 ];
 const count = value => (Number(value) || 0).toLocaleString();
 const FIELD_LABELS = { date_needed: "Date Needed", date_ordered: "Date Ordered", date_received: "Date Received" };
@@ -71,6 +72,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
     .reduce((sum, field) => sum + (Number(field?.text_choices) || 0), 0);
   const blockedByTranslation = (Number(totals.invalid_date_values) || 0) > 0 ||
     (Number(totals.duplicate_base44_links) || 0) > 0;
+  const unlinkedCount = Number(totals.unlinked_smartsheet_rows) || 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] max-w-5xl max-h-[90vh] flex flex-col p-4 sm:p-6">
@@ -81,7 +83,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
           </DialogTitle>
           <DialogDescription className="text-left">
             Admin-only, read-only comparison using permanent Order and Smartsheet row IDs.
-            No sync is enabled, no missing dates are applied, and no records are changed by this review.
+            Opening this review does not change existing sync settings, apply missing dates or modify production records.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -119,10 +121,11 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
               {report.sync_global_enabled ? " Global sync is enabled." : " Global sync is OFF."}
               {report.sync_observation_mode ? " Observation mode is ON." : " Observation mode is OFF."}
             </p>
-            <div className={`rounded-xl border p-3 text-sm ${blockedByTranslation ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
+            <div className={`rounded-xl border p-3 text-sm ${blockedByTranslation || unlinkedCount ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
               {blockedByTranslation
                 ? `${count(totals.invalid_date_values)} untranslatable date cells and ${count(totals.duplicate_base44_links)} duplicate permanent row links block a full-sheet Order pull. Review the examples below; no data was changed.`
-                : "Date translation and permanent row matching passed this read-only comparison. A verified recoverable backup and deployed-code check are still required before a full-sheet pull."}
+                : "Date translation and duplicate-link checks passed this read-only comparison. A verified recoverable backup and deployed-code check are still required before a full-sheet pull."}
+              {unlinkedCount > 0 && <p className="mt-2 font-medium">{count(unlinkedCount)} Smartsheet rows have no matching active Base44 Order. Linked Orders may still sync, but these row IDs need review; no new records are created by this audit.</p>}
             </div>
             <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[625px] text-left text-xs">
