@@ -560,4 +560,54 @@ await check('confirmed Revisit clear cannot overlap a pending WIP reopen', async
   assert.equal(h.writes, 1);
 });
 
+
+await check('Revisit change cannot race a pending completed-WIP reopen on the same job', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const releaseReopenRead = h.holdGet();
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.reopeningWipIds.has(h.record.id), true);
+  await h.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  assert.equal(h.record.sip_revisit_date, tomorrow, 'No second same-field write while reopening');
+  assert.equal(h.ctx.savingRevisitIds.size, 0, 'Rejected date edit does not leave a busy indicator');
+  assert.match(h.ctx.quickEditError, /reopening/);
+  releaseReopenRead();
+  await reopening;
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
+await check('completed WIP cannot reopen while the same job Revisit change is saving', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const releaseDateRead = h.holdGet();
+  const editing = h.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.reopeningWipIds.size, 0, 'Reopen does not launch during pending Revisit edit');
+  assert.match(h.ctx.quickEditError, /Revisit date.*saving/);
+  releaseDateRead();
+  await Promise.all([editing, reopening]);
+  assert.equal(h.record.sip_completed, true);
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.writes, 1);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 2);
+});
+
+await check('confirmed Revisit clear cannot overlap a pending WIP reopen', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  h.requestClearRevisit(h.ctx.workOrders[0]);
+  const releaseReopenRead = h.holdGet();
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  const clearing = h.confirmClearRevisit();
+  assert.equal(h.ctx.isClearingRevisit, false, 'Clear confirmation stays idle while reopening');
+  assert.match(h.ctx.quickEditError, /reopening/);
+  releaseReopenRead();
+  await Promise.all([reopening, clearing]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
