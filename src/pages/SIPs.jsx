@@ -117,6 +117,16 @@ export default function SIPs() {
   const boardRefreshDeferredRef = useRef(false);
   const quickEditsInFlightRef = useRef(new Map());
   const reopeningWipInFlightRef = useRef(new Set());
+  const revisitClearCancelRef = useRef(null);
+  const revisitClearBoardRef = useRef(null);
+
+  // A failed clear disables the confirmation button; move keyboard focus to
+  // the enabled review action only after the in-flight save finishes.
+  useEffect(() => {
+    if (pendingRevisitClear && revisitClearFailure?.requiresReview && !isClearingRevisit) {
+      revisitClearCancelRef.current?.focus();
+    }
+  }, [pendingRevisitClear, revisitClearFailure, isClearingRevisit]);
 
   // Track the three quick board-save paths so a slower background refresh
   // cannot replace a newer optimistic edit or a freshly confirmed save.
@@ -596,7 +606,7 @@ export default function SIPs() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">SIPs Meeting Board</h1>
+                <h1 ref={revisitClearBoardRef} tabIndex={-1} className="text-2xl sm:text-3xl font-bold text-gray-800 rounded-sm focus:outline-2 focus:outline-offset-2 focus:outline-blue-600">SIPs Meeting Board</h1>
                 <Badge variant="outline" className="bg-white">{workOrders.length} total</Badge>
               </div>
               <p className="text-gray-500 mt-1">
@@ -1608,13 +1618,22 @@ export default function SIPs() {
           }
         }}
       >
-        <AlertDialogContent className="clay-card border-none">
+        <AlertDialogContent
+          className="clay-card w-[calc(100vw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto border-none p-4 sm:p-6"
+          onCloseAutoFocus={(event) => {
+            // There is no Radix AlertDialogTrigger: the request came from a
+            // calendar popover that closes before this dialog. Return keyboard
+            // users to a stable, visible board heading after dismissal.
+            event.preventDefault();
+            revisitClearBoardRef.current?.focus();
+          }}
+        >
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+            <AlertDialogTitle className="flex min-w-0 items-center gap-2">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500" />
               {pendingRevisitClear?.returnsToActive ? "Return this item to active SIPs?" : "Clear revisit date?"}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="break-words">
               {pendingRevisitClear?.returnsToActive
                 ? `Clearing the revisit date for ${pendingRevisitClear.clientName} will move it out of Revisit Later and back into the active SIPs queue.`
                 : `This removes the saved revisit date for ${pendingRevisitClear?.clientName || "this Work Order"}. The item will remain in the active SIPs queue.`}
@@ -1630,7 +1649,7 @@ export default function SIPs() {
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isClearingRevisit} className="min-h-11 touch-manipulation">
+            <AlertDialogCancel ref={revisitClearCancelRef} disabled={isClearingRevisit} className="min-h-11 touch-manipulation">
               {revisitClearFailure?.requiresReview ? "Close & review board" : "Keep revisit date"}
             </AlertDialogCancel>
             <Button
