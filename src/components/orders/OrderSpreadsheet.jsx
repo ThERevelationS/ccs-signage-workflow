@@ -199,6 +199,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const saveInFlightRef = useRef(false);
+  const dateNeededSaveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
   const importInFlightRef = useRef(false);
@@ -253,7 +254,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   }, [hasUnsavedChanges, isSaving, lastSaved]);
 
   const loadData = async (showLoading = true) => {
-    if (!showLoading && (saveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
+    if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
     if (showLoading && orders.length === 0) setIsLoading(true);
     setReadError("");
     try {
@@ -289,7 +290,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const saveAllChanges = async () => {
-    if (saveInFlightRef.current) return;
+    if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return;
     const changes = Object.fromEntries(
       Object.entries(pendingChangesRef.current).map(([orderId, updates]) => [orderId, { ...updates }])
     );
