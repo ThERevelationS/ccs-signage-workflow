@@ -10,7 +10,6 @@ import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { findWorkOrderFocusTarget, restoreWorkOrderFocusAfterSave } from "@/components/fleet/fleetWorkOrderFocus";
 import { attemptPostMutationRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
-import { attemptPostMutationRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
 
@@ -79,6 +78,21 @@ export default function FleetWorkOrders() {
     }
   }, []);
 
+  const retryRefresh = async () => {
+    if (retryingRefresh) return;
+    setRetryingRefresh(true);
+    try {
+      await loadData();
+      setFocusNotice("Fleet work orders refreshed.");
+      // The retry button unmounts on success; focus a surviving control.
+      window.setTimeout(() => statusFilterRef.current?.focus(), 0);
+    } catch {
+      // loadData already shows the refresh error and retains existing rows.
+    } finally {
+      setRetryingRefresh(false);
+    }
+  };
+
   const openCreateDialog = useCallback((workOrder = null) => {
     setDialog({ mode: "create", workOrder, createKey: `${easternTodayText()}-${crypto.randomUUID()}` });
   }, []);
@@ -89,7 +103,7 @@ export default function FleetWorkOrders() {
   };
   const closeDialog = () => { setDialog(null); clearNewFlag(); };
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData().catch(() => {}); }, [loadData]);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const equipmentId = params.get("equipment") || "";
