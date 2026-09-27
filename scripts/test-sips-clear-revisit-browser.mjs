@@ -143,13 +143,12 @@ async function changeDate(page, mobile) {
   }
   const calendar = page.locator(".rdp:visible").last();
   await calendar.waitFor();
-  console.log('DEBUG calendar: ' + (await calendar.evaluate((node) => node.outerHTML)).slice(0, 3500));
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const caption = (await calendar.locator(".rdp-caption_label").innerText()).trim();
+    const caption = (await calendar.locator('[aria-live="polite"][role="presentation"]').innerText()).trim();
     if (caption === targetMonth) break;
     await calendar.getByRole("button", { name: /next month/i }).click();
   }
-  assert.equal((await calendar.locator(".rdp-caption_label").innerText()).trim(), targetMonth);
+  assert.equal((await calendar.locator('[aria-live="polite"][role="presentation"]').innerText()).trim(), targetMonth);
   await calendar.locator('button[name="day"]').filter({ hasText: /^3$/ }).last().click();
   await waitFor(1, newerDate);
 }
