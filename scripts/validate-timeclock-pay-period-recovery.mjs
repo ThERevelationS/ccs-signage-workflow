@@ -46,6 +46,10 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
       break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
       correction_create_status: 'idle', updated_date: '2026-09-20T00:00:00.000Z',
     })),
+    TimeClockPayPeriodCreateGate: [{
+      id: 'synthetic-period-gate', scope: 'company', status: 'idle',
+      request_id: '', payload_hash: '', claim_token: '', updated_date: '2026-09-20T00:00:00.000Z',
+    }],
     TimeClockPayPeriod: [{
       id: 'synthetic-period', label: 'Synthetic Review Period', start_date: '2026-09-20',
       end_date: '2026-09-26', status: 'review', last_request_id: '',
