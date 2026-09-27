@@ -1602,7 +1602,10 @@ export default function SIPs() {
       <AlertDialog
         open={!!pendingRevisitClear}
         onOpenChange={(open) => {
-          if (!open && !isClearingRevisit) setPendingRevisitClear(null);
+          if (!open && !isClearingRevisit) {
+            setPendingRevisitClear(null);
+            setRevisitClearFailure(null);
+          }
         }}
       >
         <AlertDialogContent className="clay-card border-none">
@@ -1617,13 +1620,24 @@ export default function SIPs() {
                 : `This removes the saved revisit date for ${pendingRevisitClear?.clientName || "this Work Order"}. The item will remain in the active SIPs queue.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {revisitClearFailure && (
+            <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+              <p className="font-semibold">{revisitClearFailure.requiresReview ? "Revisit date could not be cleared" : "Clear Revisit is temporarily blocked"}</p>
+              <p className="mt-1 break-words">{revisitClearFailure.message}</p>
+              {revisitClearFailure.requiresReview && (
+                <p className="mt-2 text-xs font-medium">No newer date was cleared. Close this dialog and review the refreshed board before confirming a new change.</p>
+              )}
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isClearingRevisit} className="min-h-11 touch-manipulation">Keep revisit date</AlertDialogCancel>
+            <AlertDialogCancel disabled={isClearingRevisit} className="min-h-11 touch-manipulation">
+              {revisitClearFailure?.requiresReview ? "Close & review board" : "Keep revisit date"}
+            </AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
               onClick={confirmClearRevisit}
-              disabled={isClearingRevisit}
+              disabled={isClearingRevisit || revisitClearFailure?.requiresReview}
               className="min-h-11 touch-manipulation"
             >
               {isClearingRevisit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
