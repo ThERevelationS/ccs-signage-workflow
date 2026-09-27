@@ -1099,9 +1099,9 @@ export default function SIPs() {
                         open={openDatePopover === `revisit-${wo.id}`}
                         onOpenChange={(open) => setOpenDatePopover(open ? `revisit-${wo.id}` : null)}
                       >
-                        <PopoverTrigger asChild disabled={!isRegistered}>
-                          <button className={`h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-medium ${wo.sip_revisit_date ? 'text-amber-700' : 'text-gray-400'}`}>
-                            {wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
+                        <PopoverTrigger asChild disabled={!isRegistered || savingRevisitIds.has(wo.id)}>
+                          <button type="button" disabled={savingRevisitIds.has(wo.id)} aria-busy={savingRevisitIds.has(wo.id)} className={`h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-medium disabled:opacity-60 ${wo.sip_revisit_date ? 'text-amber-700' : 'text-gray-400'}`}>
+                            {savingRevisitIds.has(wo.id) ? "Saving…" : (wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-")}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -1295,9 +1295,9 @@ export default function SIPs() {
                           open={openDatePopover === `revisit-future-${wo.id}`}
                           onOpenChange={(open) => setOpenDatePopover(open ? `revisit-future-${wo.id}` : null)}
                         >
-                          <PopoverTrigger asChild disabled={!isRegistered}>
-                            <button className="h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-bold text-amber-700">
-                              {wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-"}
+                          <PopoverTrigger asChild disabled={!isRegistered || savingRevisitIds.has(wo.id)}>
+                            <button type="button" disabled={savingRevisitIds.has(wo.id)} aria-busy={savingRevisitIds.has(wo.id)} className="h-8 w-full text-sm text-left px-1 hover:bg-yellow-100 rounded font-bold text-amber-700 disabled:opacity-60">
+                              {savingRevisitIds.has(wo.id) ? "Saving…" : (wo.sip_revisit_date ? (() => { const d = parseLocalDate(wo.sip_revisit_date); return d && !isNaN(d) ? format(d, "MM/dd/yy") : "-"; })() : "-")}
                             </button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
