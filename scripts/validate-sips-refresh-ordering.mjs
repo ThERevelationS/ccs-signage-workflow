@@ -102,6 +102,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     isRefreshing: false,
     isLoading: false,
     pendingRevisitClear: null,
+    revisitClearFailure: null,
     isClearingRevisit: false,
     console: { error() {} },
     Date,
@@ -110,6 +111,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
   ctx.openChecklist = () => { ctx.checklistOpened++; };
   ctx.setOpenDatePopover = () => {};
   ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
+  ctx.setRevisitClearFailure = (value) => { ctx.revisitClearFailure = value; };
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
   ctx.setSavingRevisitIds = (updater) => {
     ctx.savingRevisitIds = typeof updater === 'function' ? updater(ctx.savingRevisitIds) : updater;
