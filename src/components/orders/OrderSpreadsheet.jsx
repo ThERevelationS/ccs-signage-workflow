@@ -1894,12 +1894,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     } catch (error) {
                       setSaveError(error?.message || 'Could not clear Date Ordered. Reload before retrying.');
                     }
-                  } else {
-                    const optionField = clearDateConfirm.field === 'date_needed'
-                      ? 'date_needed_option' : '';
-                    updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, '');
-                    if (optionField) updateOrder(clearDateConfirm.orderId, optionField, '');
-                    await saveAllChanges();
+                  } else if (clearDateConfirm.field === 'date_needed') {
+                    try {
+                      setSaveError('');
+                      await persistDateNeeded(clearDateConfirm.orderId, '', 'Clear Date Needed');
+                    } catch (error) {
+                      setSaveError(error?.message || 'Date Needed was not cleared. Reload before retrying.');
+                    }
                   }
                 }
                 setClearDateConfirm(null);
