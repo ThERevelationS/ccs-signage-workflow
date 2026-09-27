@@ -179,6 +179,52 @@ test('missing or duplicate pay-period coordinator fails closed without writing r
   }
 });
 
+test('interrupted pay-period audit finalization retains the gate until exact-request recovery', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  const payload = { action: 'pay_period_create', request_id: 'interrupted-period-create-001',
+    label: 'Interrupted create', start_date: '2026-10-01', end_date: '2026-10-14' };
+  h.setBeforeUpdate((name, _query, update) => {
+    if (name === 'TimeClockAudit' && update.$set?.outcome === 'confirmed') {
+      throw new Error('Synthetic audit-write interruption');
+    }
+  });
+  const interrupted = await h.invoke(payload);
+  assert.equal(interrupted.status, 500, JSON.stringify(interrupted.body));
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+  assert.equal(h.rows.TimeClockPayPeriodCreateGate[0].status, 'creating');
+  assert.equal(h.audit(payload.request_id)[0].outcome, 'pending');
+  const competing = await h.invoke({ ...payload, request_id: 'competing-during-recovery-001',
+    label: 'Competing period', start_date: '2026-10-08', end_date: '2026-10-21' });
+  assert.equal(competing.status, 409, JSON.stringify(competing.body));
+  h.setBeforeUpdate(null);
+  const recovered = await h.invoke(payload);
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.reused, true);
+  assert.equal(h.audit(payload.request_id)[0].outcome, 'confirmed');
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+  assert.equal(h.rows.TimeClockPayPeriodCreateGate[0].status, 'idle');
+});
+
+test('a completed create with lost lock-release acknowledgement can be safely reclaimed', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  const request_id = 'completed-create-lost-release-001';
+  const first = await h.invoke({ action: 'pay_period_create', request_id,
+    label: 'Already created', start_date: '2026-10-01', end_date: '2026-10-14' });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  const gate = h.rows.TimeClockPayPeriodCreateGate[0];
+  Object.assign(gate, { status: 'creating', request_id,
+    payload_hash: h.audit(request_id)[0].details.payload_hash,
+    claim_token: 'synthetic-lost-ack-token', started_at: new Date().toISOString() });
+  const next = await h.invoke({ action: 'pay_period_create',
+    request_id: 'after-completed-recovery-001', label: 'Next adjacent',
+    start_date: '2026-10-15', end_date: '2026-10-28' });
+  assert.equal(next.status, 200, JSON.stringify(next.body));
+  assert.equal(h.rows.TimeClockPayPeriod.length, 2);
+  assert.equal(gate.status, 'idle');
+});
+
 test('ordinary pay-period create is audited and exact retry reuses one period', async () => {
   const h = setup({ entryCount: 0 });
   h.rows.TimeClockPayPeriod = [];
