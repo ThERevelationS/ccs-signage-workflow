@@ -25,6 +25,7 @@ import {
   jurisdictionToDraftPermitLocality,
 } from "./jurisdictionPermitBridge";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
+import { summarizeMatchedLocalityAuthority } from "../../../base44/shared/permittingAddressLocality.js";
 
 const AUTHORITY_ROLE_LABELS = {
   sign_permit: "Sign permit",
@@ -39,14 +40,12 @@ const AUTHORITY_ROLE_LABELS = {
 };
 
 function verifiedAuthoritySummary(locality) {
-  const verified = (locality?.offices || []).filter(office =>
-    office?.authority_verification_status === "staff_verified" &&
-    Array.isArray(office?.authority_roles) && office.authority_roles.length > 0
-  );
-  const roles = [...new Set(verified.flatMap(office => office.authority_roles))];
+  const review = summarizeMatchedLocalityAuthority(locality);
   return {
-    officeCount: verified.length,
-    labels: roles.map(role => AUTHORITY_ROLE_LABELS[role] || role),
+    ...review,
+    officeCount: review.verified_office_count,
+    labels: review.verified_roles.map(role => AUTHORITY_ROLE_LABELS[role] || role),
+    reviewLabels: review.roles_needing_review.map(role => AUTHORITY_ROLE_LABELS[role] || role),
   };
 }
 
@@ -439,6 +438,15 @@ export default function LocalityPickerDialog({
                           </div>
                           <p className="mt-0.5">{selectedAuthority.labels.join(" • ")}</p>
                           <p className="mt-1 text-emerald-800">Only these roles are confirmed authority relationships; other configured offices remain workflow references.</p>
+                          {selectedAuthority.coverage_status === "partial" && (
+                            <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
+                              <p className="font-semibold">Partial office-authority review: {selectedAuthority.other_office_count} configured office(s) still need review.</p>
+                              {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Roles on offices awaiting review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
+                            </div>
+                          )}
+                          {selectedAuthority.coverage_status === "configured_offices_reviewed" && (
+                            <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                          )}
                         </div>
                       ) : (
                         <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-900">
@@ -446,6 +454,7 @@ export default function LocalityPickerDialog({
                             <AlertTriangle className="h-3.5 w-3.5" /> No staff-verified office authority
                           </div>
                           <p className="mt-1">Configured offices can still be applied with the existing workflow, but none are confirmed here as the legal authority for this locality.</p>
+                          {selectedAuthority.reviewLabels.length > 0 && <p className="mt-1">Configured roles awaiting staff review: {selectedAuthority.reviewLabels.join(" • ")}</p>}
                         </div>
                       )
                     )}
