@@ -262,6 +262,30 @@ try {
       ["get","save","submit","get"]);
   });
 
+  await run("Desktop: an old in-flight GET cannot overwrite a reopened estimate",1440,async page=>{
+    await page.locator("#fleet-work-order-toggle-wo-open").click();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.delayNextGetMs=350;});
+    await page.getByRole("button",{name:"Estimate / Approval"}).click();
+    const dialog=page.getByRole("dialog",{name:"Repair Estimate & Approval"});
+    await dialog.getByRole("status",{name:"Loading repair estimate"}).waitFor();
+    await dialog.getByRole("button",{name:"Close repair estimate"}).click();
+    await dialog.waitFor({state:"hidden"});
+    await page.evaluate(()=>{
+      window.__fleetEstimateFixture.estimates["wo-open"]={
+        id:"estimate-wo-open",work_order_id:"wo-open",status:"submitted",
+        updated_date:"synthetic-reopened-version",estimated_total:280,approval_required:true,
+      };
+    });
+    await page.getByRole("button",{name:"Estimate / Approval"}).click();
+    await dialog.getByRole("button",{name:"Approve",exact:true}).waitFor();
+    await page.waitForTimeout(450);
+    assert.equal(await dialog.getByRole("button",{name:"Save & Submit"}).count(),0);
+    assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).count(),1);
+    assert.match(await dialog.innerText(),/submitted/i);
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","get"]);
+  });
+
   console.log("REPAIR_ESTIMATE_BROWSER_PASS="+passed);
 } finally {
   if(browser) await browser.close();
