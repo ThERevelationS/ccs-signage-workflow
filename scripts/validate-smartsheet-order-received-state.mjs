@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { orderHistoryLayout } from '../src/components/orders/orderHistoryLayout.js';
 import {
   effectiveOrderStatus, orderMatchesReceivedFilter, orderStatusFromPulledDates,
+  orderStatusAfterOrderedDateChange,
 } from '../base44/shared/smartsheetOrderReceivedState.mjs';
 
 const liveShape = [
@@ -44,6 +45,19 @@ assert.deepEqual(orderStatusFromPulledDates({}, { status: 'cancelled' }, false),
 assert.deepEqual(orderStatusFromPulledDates({}, { date_received: '2026-09-25', status: 'received' }, false), {});
 assert.deepEqual(orderStatusFromPulledDates({ status: 'cancelled' }, null, true), { status: 'cancelled' });
 console.log('PASS Order pull derives receipt state but never clears existing dates, cancelled Orders or explicit bound status');
+
+// Date Ordered edits must keep the same receipt semantics as the History filter.
+for (const nextDate of ['2026-09-27', '']) {
+  assert.equal(orderStatusAfterOrderedDateChange({ status: 'received', date_received: '2026-09-25' }, nextDate), 'received');
+  for (const option of ['Stock', 'In Stock', 'Ordered Kit', 'N/A']) {
+    assert.equal(orderStatusAfterOrderedDateChange({ status: 'received', receipt_option: option }, nextDate), 'received');
+  }
+  assert.equal(orderStatusAfterOrderedDateChange({ status: 'cancelled' }, nextDate), 'cancelled');
+}
+assert.equal(orderStatusAfterOrderedDateChange({ status: 'pending' }, '2026-09-27'), 'ordered');
+assert.equal(orderStatusAfterOrderedDateChange({ status: 'ordered', date_ordered: '2026-09-24' }, ''), 'pending');
+assert.equal(orderStatusAfterOrderedDateChange({ status: 'received' }, '2026-09-27'), 'ordered');
+console.log('PASS changing or clearing Date Ordered never demotes received markers, reopens cancelled Orders or retains stale Ordered status');
 
 // The virtual History header must not shift real Order IDs, indexes or exports.
 const splitOrders = [
@@ -98,6 +112,10 @@ assert.match(mobile, /effectiveOrderStatus\(order\)/);
 assert.match(mobile, /order\.receipt_option/);
 assert.match(spreadsheet, /localStorage\.setItem\('orderReceiptOptions'/);
 assert.match(spreadsheet, /receipt_option: option/);
+assert.match(spreadsheet, /status: orderStatusAfterOrderedDateChange\(order, dateStr\)/);
+assert.match(spreadsheet, /status: orderStatusAfterOrderedDateChange\(order, ""\)/);
+assert.match(spreadsheet, /clearDateConfirm\.field === 'date_ordered'[\s\S]*?await persistImmediateOrderFields\(order\.id, \{[\s\S]*?date_ordered: '', date_ordered_option: '',[\s\S]*?status: orderStatusAfterOrderedDateChange\(order, ''\)/);
+assert.doesNotMatch(spreadsheet, /date_ordered: dateStr, date_ordered_option: "", status: "ordered"/);
 assert.match(spreadsheet, /date_received: dateStr, receipt_option: ''/);
 assert.match(backend, /dataset === 'orders'\) \{\s*Object\.assign\(fieldValues, orderStatusFromPulledDates/);
 assert.match(backend, /record\.date_needed_option && !record\.date_needed/);
