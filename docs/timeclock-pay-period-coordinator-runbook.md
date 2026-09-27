@@ -1,6 +1,6 @@
 # Time Clock pay-period creation coordinator — operator runbook
 
-**Status:** prepublication prerequisite; this is not an automatic migration. Time entries, historical pay periods, audits, and payroll locks must remain untouched.
+**Status:** one-time production coordinator provisioning completed on 2026-09-27. Independent read-back returned exactly one clean idle company record (ID `6ab9aadd0d7161cf840af039`). This is a dated observation, not a substitute for a fresh complete read before publication or recovery. **Do not provision a second row.** Time entries, historical pay periods, audits, and payroll locks must remain untouched. No Time Clock code was published as part of this step.
 
 ## Preconditions and provisioning
 
@@ -40,4 +40,4 @@ Never manually set `status=idle` merely because a request is old. Never delete/r
 
 ## Release checklist
 
-Run synthetic recovery/concurrency tests, backend bundle, focused lint, management rendering checks, full CCS production build, clean diff/status review, and read-only live integrity queries. Then obtain explicit authorization for the single coordinator provisioning write, verify it, perform guarded two-session acceptance, and obtain separate publication approval. Code changes/checkpoints alone do not establish live deployment.
+Run synthetic recovery/concurrency tests, backend bundle, focused lint, management rendering checks, full CCS production build, clean diff/status review, and read-only live integrity queries. Initial provisioning was completed and verified on 2026-09-27; verify exactly one clean idle row again before release, and never bootstrap another. Next, perform guarded two-session acceptance on an authorized nonproduction Base44 environment (or an explicitly approved controlled operational window with a documented rollback and no real payroll test records). Obtain separate publication approval. Code changes/checkpoints alone do not establish live deployment.
