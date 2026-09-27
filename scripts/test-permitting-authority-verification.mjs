@@ -21,13 +21,16 @@ test("role changes invalidate prior staff verification without changing office i
   assert.equal(next.catalog_office_id, "catalog-1");
 });
 
-test("role assignment rejects unsupported roles while preserving legacy values for explicit review", () => {
+test("role assignment rejects new unsupported roles while preserving legacy values until explicit removal", () => {
   const legacy = {
     id: "legacy-local", authority_roles: ["zoning", "legacy_unknown"],
     authority_verification_status: "needs_verification", authority_verification_notes: "Review legacy import",
   };
   assert.throws(() => setLocalityOfficeAuthorityRole(legacy, "new_unknown", true), /Unsupported authority role: new_unknown/);
-  assert.throws(() => setLocalityOfficeAuthorityRole(legacy, "legacy_unknown", false), /Unsupported authority role: legacy_unknown/);
+  const cleaned = setLocalityOfficeAuthorityRole(legacy, "legacy_unknown", false);
+  assert.deepEqual(cleaned.authority_roles, ["zoning"]);
+  assert.equal(cleaned.authority_verification_status, "needs_verification");
+  assert.equal(cleaned.authority_verification_notes, "Review legacy import");
   assert.deepEqual(legacy.authority_roles, ["zoning", "legacy_unknown"]);
   assert.equal(legacy.authority_verification_notes, "Review legacy import");
 
