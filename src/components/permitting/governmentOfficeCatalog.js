@@ -67,8 +67,17 @@ export function updateGovernmentOfficeCatalogEntry(office, patch) {
 export function updateGovernmentOfficeVerification(office, patch, reviewer = "", now = () => new Date().toISOString()) {
   const source = normalizeGovernmentOfficeCatalogEntry(office);
   const metadata = { ...source.government_office };
+  const previousSourceUrl = metadata.source_url;
   if (Object.hasOwn(patch || {}, "source_url")) metadata.source_url = clean(patch.source_url);
   if (Object.hasOwn(patch || {}, "verification_notes")) metadata.verification_notes = clean(patch.verification_notes);
+  // A verified claim is tied to the official source staff reviewed. Changing that
+  // source requires a fresh verification, while retaining the new URL and notes.
+  if (metadata.verification_status === "staff_verified" &&
+    previousSourceUrl !== metadata.source_url && !Object.hasOwn(patch || {}, "verification_status")) {
+    metadata.verification_status = "needs_verification";
+    metadata.verified_at = "";
+    metadata.verified_by = "";
+  }
   if (patch?.verification_status === "staff_verified") {
     metadata.verification_status = "staff_verified";
     metadata.verified_at = clean(patch.verified_at) || clean(now());
