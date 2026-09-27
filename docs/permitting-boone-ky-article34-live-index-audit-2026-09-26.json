@@ -1,0 +1,210 @@
+{
+  "jurisdiction_id": "6ab7c6107f2251a8e8e48b90",
+  "jurisdiction": "Boone County",
+  "verification_status": "needs_verification",
+  "audit_date": "2026-09-26",
+  "scope": "Adopted Article 34 section/subsection live searchable-text completeness",
+  "expected_archived_sections": 28,
+  "live_section_entries": 28,
+  "indexed_section_entries": 28,
+  "missing_searchable_text": [],
+  "sections": [
+    {
+      "id": "source-boone-ky-sec3405-20260926",
+      "title": "Article 34 §3405 — Sign permitting and review",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2558",
+      "searchable_characters": 2009,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-sec3404-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3404 SIGNS NOT REQUIRING A PERMIT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2559",
+      "searchable_characters": 6330,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-sec3408-5-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.5 Electronic Message Board/Screen Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3390",
+      "searchable_characters": 9444,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2553-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3400 PURPOSE AND INTENT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2553",
+      "searchable_characters": 6910,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2555-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3402 GENERAL REQUIREMENTS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2555",
+      "searchable_characters": 4295,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2560-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3403 PROHIBITED SIGNS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2560",
+      "searchable_characters": 2417,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2565-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3409 TEMPORARY ADVERTISING",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2565",
+      "searchable_characters": 3366,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2568-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3410 SPECIAL SIGN DISTRICTS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2568",
+      "searchable_characters": 4719,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-2570-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3411 VIOLATIONS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=2570",
+      "searchable_characters": 838,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3375-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3401 SCOPE, AUTHORITY AND APPLICABILITY",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3375",
+      "searchable_characters": 12158,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3376-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3406 APPEALS",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3376",
+      "searchable_characters": 347,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3377-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3407 SIGNS PERMITTED BY DISTRICT",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3377",
+      "searchable_characters": 80916,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3378-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.1 Florence Main Street",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3378",
+      "searchable_characters": 37584,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3379-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.2 Walton Downtown and Small Community Overlay",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3379",
+      "searchable_characters": 32879,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3380-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.3 Union Town Plan",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3380",
+      "searchable_characters": 36985,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3381-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.4 Planned Development, Employment Planned Development, and Historic",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3381",
+      "searchable_characters": 30426,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3382-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.5 Houston-Donaldson",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3382",
+      "searchable_characters": 40767,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3383-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.6 Parkway Corridor",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3383",
+      "searchable_characters": 34277,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3384-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.7 Mall Road",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3384",
+      "searchable_characters": 41244,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3385-20260926",
+      "title": "Adopted Boone County Article 34 — SECTION 3408 REGULATIONS BY TYPE OF SIGN",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3385",
+      "searchable_characters": 29608,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3386-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.1 Building Mounted Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3386",
+      "searchable_characters": 2203,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3387-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.2 Canopy Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3387",
+      "searchable_characters": 1106,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3388-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.3 Directional Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3388",
+      "searchable_characters": 754,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3389-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.4 Drive-Through Menu Board Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3389",
+      "searchable_characters": 1289,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3391-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.6 Free Standing Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3391",
+      "searchable_characters": 12868,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3392-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.7 Entrance Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3392",
+      "searchable_characters": 2349,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3393-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3408.8 Window Signs",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3393",
+      "searchable_characters": 512,
+      "indexed": true
+    },
+    {
+      "id": "source-boone-ky-article34-section-3462-20260926",
+      "title": "Adopted Boone County Article 34 — Section 3407.8 Graves Road",
+      "url": "https://online.encodeplus.com/regs/boonecounty-ky/doc-viewer.aspx?secid=3462",
+      "searchable_characters": 38028,
+      "indexed": true
+    }
+  ],
+  "note": "The separate Article 34 table-of-contents/parent source is not counted as one of the 28 archived sections. File Storage status for the six PDF sources is a separate verification gate."
+}
