@@ -330,7 +330,9 @@ test('finalization gate wins and a concurrent Clock In cannot create a shift', a
 });
 
 test('Clock In gate wins and finalization retries into an active-shift block', async () => {
-  const h = setup();
+  // Keep the authoritative punch within the period being finalized; a shift
+  // starting after its end date is correctly excluded from that period.
+  const h = setup({ serverNow: '2026-09-25T14:00:00.000Z' });
   let releaseGate;
   let reachedGate;
   const gateHeld = new Promise((resolve) => { reachedGate = resolve; });
@@ -625,25 +627,33 @@ test('malformed finalized boundaries fail closed before employee state or shift 
   }
 });
 
-test('interrupted Clock In uses original trusted punch day when retrying against a finalized period', async () => {
-  const h = setup({ entryCount: 0, serverNow: '2026-09-27T04:01:00.000Z' });
+test('interrupted Clock In preserves its original trusted punch after closed-period rejection and reopen', async () => {
+  // A pending transition older than five real minutes is legitimately rolled
+  // back by recoverTransition, so keep this synthetic pending action fresh.
+  const originalPunch = new Date(Date.now() - 30_000).toISOString();
+  const laterServerNow = new Date(Date.now() + 30_000).toISOString();
+  const h = setup({ entryCount: 0, serverNow: laterServerNow });
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(originalPunch));
+  const part = (type) => parts.find((item) => item.type === type).value;
+  const originalDay = `${part('year')}-${part('month')}-${part('day')}`;
+  Object.assign(h.period(), { status: 'finalized', start_date: originalDay, end_date: originalDay });
   const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
   Object.assign(state, {
-    status: 'clocking_in', last_request_id: 'old-pending-clockin-001',
-    pending_started_at: '2026-09-27T03:59:00.000Z',
+    status: 'clocking_in', last_request_id: 'old-pending-clockin-001', pending_started_at: originalPunch,
   });
-  h.period().status = 'finalized';
   const blocked = await h.clockIn('old-pending-clockin-001');
   assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
   assert.equal(blocked.body.finalized_pay_period_id, 'synthetic-period');
   assert.equal(h.rows.TimeEntry.length, 0);
   assert.equal(state.status, 'clocking_in');
-  assert.equal(state.pending_started_at, '2026-09-27T03:59:00.000Z');
+  assert.equal(state.pending_started_at, originalPunch);
   assert.equal(state.correction_create_status, 'idle');
   h.period().status = 'review';
   const recovered = await h.clockIn('old-pending-clockin-001');
   assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
-  assert.equal(recovered.body.entry.clock_in, '2026-09-27T03:59:00.000Z');
+  assert.equal(recovered.body.entry.clock_in, originalPunch);
 });
 
 for (const [name, fn] of tests) {
