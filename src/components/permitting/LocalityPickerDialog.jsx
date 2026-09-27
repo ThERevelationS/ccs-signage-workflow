@@ -132,6 +132,8 @@ export default function LocalityPickerDialog({
 
   const selectedLocality = localities.find(locality => locality.id === selectedLocalityId);
   const selectedAuthority = verifiedAuthoritySummary(selectedLocality);
+  const addressAuthority = result?.authority_review;
+  const addressAuthorityLabels = (addressAuthority?.verified_roles || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
 
   const handleApply = () => {
     if (!selectedLocalityId) return;
@@ -280,6 +282,20 @@ export default function LocalityPickerDialog({
                       {result.suggested_locality.zip && (
                         <p className="text-xs text-green-700">ZIP: {result.suggested_locality.zip}</p>
                       )}
+                      <div className={`mt-2 rounded border px-2.5 py-2 text-[11px] ${addressAuthority?.status === 'staff_verified_roles' ? 'border-emerald-200 bg-white/70 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+                        <div className="flex items-center gap-1 font-semibold">
+                          {addressAuthority?.status === 'staff_verified_roles' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                          Permitting authority: {addressAuthority?.status === 'staff_verified_roles' ? 'staff-verified roles' : 'not staff-verified'}
+                        </div>
+                        {addressAuthority?.status === 'staff_verified_roles' ? (
+                          <>
+                            <p className="mt-0.5">{addressAuthorityLabels.join(" • ")}</p>
+                            <p className="mt-1 text-emerald-800">The locality match confidence above identifies geography only. These roles come separately from staff-reviewed office relationships.</p>
+                          </>
+                        ) : (
+                          <p className="mt-1">The address can match this locality without proving which office has sign, zoning, building, or electrical authority.</p>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div>
