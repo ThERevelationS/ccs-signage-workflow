@@ -124,18 +124,19 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
               {report.sync_global_enabled ? " Global sync is enabled." : " Global sync is OFF."}
               {report.sync_observation_mode ? " Observation mode is ON." : " Observation mode is OFF."}
             </p>
-            <div className={`rounded-xl border p-3 text-sm ${blockedByTranslation || unlinkedCount ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
+            <div className={`rounded-xl border p-3 text-sm ${blockedByTranslation || unlinkedCount || staleTextCount ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
               {blockedByTranslation
                 ? `${count(totals.invalid_date_values)} untranslatable date cells and ${count(totals.duplicate_base44_links)} duplicate permanent row links block a full-sheet Order pull. Review the examples below; no data was changed.`
                 : "Date translation and duplicate-link checks passed this read-only comparison. A verified recoverable backup and deployed-code check are still required before a full-sheet pull."}
               {unlinkedCount > 0 && <p className="mt-2 font-medium">{count(unlinkedCount)} Smartsheet rows have no matching active Base44 Order. Linked Orders may still sync, but these row IDs need review; no new records are created by this audit.</p>}
+              {staleTextCount > 0 && <p className="mt-2 font-medium">{count(staleTextCount)} old Base44 text options remain beside dated or blank Smartsheet cells. They may override displayed dates. Blank source cells require review and are not cleared automatically.</p>
             </div>
             <div className="overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-[625px] text-left text-xs">
+              <table className="w-full min-w-[745px] text-left text-xs">
                 <thead className="bg-gray-50 text-gray-700"><tr>
                   <th className="p-2">Mapped column</th><th className="p-2">Smartsheet type / ID</th>
                   <th className="p-2 text-right">Source dates</th><th className="p-2 text-right">Missing in Base44</th>
-                  <th className="p-2 text-right">Text / notes</th><th className="p-2 text-right">Invalid</th>
+                  <th className="p-2 text-right">Text / notes</th><th className="p-2 text-right">Stale options</th><th className="p-2 text-right">Invalid</th>
                 </tr></thead>
                 <tbody>{report.date_columns.map(column => {
                   const field = report.by_field?.[column.field] || {};
@@ -145,6 +146,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
                     <td className="p-2 text-right tabular-nums">{count(field.smartsheet_dates)}</td>
                     <td className="p-2 text-right tabular-nums">{count(field.missing_base44)}</td>
                     <td className="p-2 text-right tabular-nums">{count(field.text_choices)}</td>
+                    <td className="p-2 text-right tabular-nums">{count(field.stale_text_options)}</td>
                     <td className="p-2 text-right tabular-nums">{count(field.invalid)}</td>
                   </tr>;
                 })}</tbody>
@@ -172,6 +174,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
                       {item.base44_order_ids && <p className="break-all">Conflicting Base44 IDs: {item.base44_order_ids.join(", ")}</p>}
                       {item.field && <p>Field: {FIELD_LABELS[item.field] || item.field}</p>}
                       {item.smartsheet_date && <p>Smartsheet date: {item.smartsheet_date}</p>}
+                      {item.smartsheet_blank && <p>Smartsheet cell: blank (preserve and review)</p>}
                       {item.base44_date && <p>Base44 date: {item.base44_date}</p>}
                       {item.smartsheet_value && <p>Smartsheet text: {item.smartsheet_value}</p>}
                       {item.base44_value && <p>Base44 date / text: {item.base44_value}</p>}
