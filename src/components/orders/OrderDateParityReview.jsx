@@ -129,7 +129,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
                 ? `${count(totals.invalid_date_values)} untranslatable date cells and ${count(totals.duplicate_base44_links)} duplicate permanent row links block a full-sheet Order pull. Review the examples below; no data was changed.`
                 : "Date translation and duplicate-link checks passed this read-only comparison. A verified recoverable backup and deployed-code check are still required before a full-sheet pull."}
               {unlinkedCount > 0 && <p className="mt-2 font-medium">{count(unlinkedCount)} Smartsheet rows have no matching active Base44 Order. Linked Orders may still sync, but these row IDs need review; no new records are created by this audit.</p>}
-              {staleTextCount > 0 && <p className="mt-2 font-medium">{count(staleTextCount)} old Base44 text options remain beside dated or blank Smartsheet cells. They may override displayed dates. Blank source cells require review and are not cleared automatically.</p>
+              {staleTextCount > 0 && <p className="mt-2 font-medium">{count(staleTextCount)} old Base44 text options remain beside dated or blank Smartsheet cells. They may override displayed dates. Blank source cells require review and are not cleared automatically.</p>}
             </div>
             <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[745px] text-left text-xs">
