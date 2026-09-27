@@ -27,6 +27,7 @@ const AUTHORITY_ROLES = new Set([
 export function summarizeMatchedLocalityAuthority(locality) {
   if (!locality?.id) return {
     status: 'unresolved', verified_roles: [], verified_office_count: 0, other_office_count: 0,
+    coverage_status: 'unresolved', roles_needing_review: [],
   };
   const offices = Array.isArray(locality.offices) ? locality.offices : [];
   const verified = offices.filter(office =>
@@ -34,11 +35,22 @@ export function summarizeMatchedLocalityAuthority(locality) {
     Array.isArray(office.authority_roles) && office.authority_roles.length > 0 &&
     office.authority_roles.every(role => AUTHORITY_ROLES.has(role))
   );
+  const needsReview = offices.filter(office => !verified.includes(office));
+  const rolesNeedingReview = needsReview.flatMap(office =>
+    Array.isArray(office?.authority_roles)
+      ? office.authority_roles.filter(role => AUTHORITY_ROLES.has(role))
+      : []
+  );
   return {
     status: verified.length > 0 ? 'staff_verified_roles' : 'no_staff_verified_roles',
     verified_roles: [...new Set(verified.flatMap(office => office.authority_roles))],
     verified_office_count: verified.length,
-    other_office_count: offices.length - verified.length,
+    other_office_count: needsReview.length,
+    // This describes only configured office review, never complete legal coverage.
+    coverage_status: offices.length === 0 ? 'not_configured'
+      : verified.length === 0 ? 'not_verified'
+        : needsReview.length > 0 ? 'partial' : 'configured_offices_reviewed',
+    roles_needing_review: [...new Set(rolesNeedingReview)],
   };
 }
 
