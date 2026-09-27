@@ -32,6 +32,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const resultRef = useRef(null);
   const warningRef = useRef(null);
   const retryLoadRef = useRef(null);
+  const retrySucceededFocusRef = useRef(false);
   const recheckRef = useRef(null);
   const loadEpochRef = useRef(0);
   const focusResultOnSettle = useRef(false);
@@ -128,6 +129,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     if (open) {
       setEstimate(null); setForm(EMPTY); setDecisionNotes("");
       focusResultOnSettle.current = false;
+      retrySucceededFocusRef.current = false;
       setSubmissionUncertain(false); setLoadFailed(false);
       load();
     }
@@ -139,6 +141,11 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   useEffect(() => {
     if (open && submissionUncertain && error && !loading) recheckRef.current?.focus();
   }, [open, submissionUncertain, error, loading]);
+  useEffect(() => {
+    if (!open || loading || loadFailed || !retrySucceededFocusRef.current || loadedWorkOrderId !== workOrder?.id) return;
+    closeRef.current?.focus();
+    retrySucceededFocusRef.current = false;
+  }, [open, loading, loadFailed, loadedWorkOrderId, workOrder?.id]);
   const preview = useMemo(() => {
     const labor = Number(form.estimated_labor_hours || 0) * Number(form.labor_rate || 0);
     const partsTotal = (form.parts_estimate || []).reduce((sum,line)=>sum + Number(line.quantity||0)*Number(line.estimated_cost||0),0);
@@ -218,7 +225,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
         {error&&<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
         {message&&<div ref={resultRef} tabIndex={-1} role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-indigo-500">{message}</div>}
         {refreshWarning&&<div ref={warningRef} tabIndex={-1} role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200 focus-visible:outline-2 focus-visible:outline-indigo-500">{refreshWarning}</div>}
-        {loading || (!verified && !loadFailed) ? <div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div> : loadFailed ? <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm text-amber-900 dark:text-amber-200">Estimate data is unavailable. Editing and approval are disabled until the current server record loads.</p><button ref={retryLoadRef} type="button" onClick={() => load()} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Retry loading estimate</button></div> : <>
+        {loading || (!verified && !loadFailed) ? <div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div> : loadFailed ? <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm text-amber-900 dark:text-amber-200">Estimate data is unavailable. Editing and approval are disabled until the current server record loads.</p><button ref={retryLoadRef} type="button" onClick={() => { retrySucceededFocusRef.current = true; load(); }} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Retry loading estimate</button></div> : <>
           {submissionUncertain && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-200">Submission status is unconfirmed. Changes and approval are paused until the server is checked.</p><button ref={recheckRef} type="button" onClick={() => load(true)} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Check current server status</button></div>}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Estimate status" value={pretty(estimate?.status||"draft")} /><Stat label="Approval tier" value={estimate?.approval_tier||"No matching tier"}/><Stat label="Approval required" value={estimate?.approval_required?"Yes":"No"} attention={estimate?.approval_required&&estimate?.status!=="approved"}/><Stat label="Estimated total" value={money(estimate?.estimated_total ?? preview.total)} /></div>
           {estimate?.approval_required&&estimate.status!=="approved"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 flex items-start gap-2"><AlertTriangle className="w-5 h-5 shrink-0"/><div><b>Approval gate active.</b> This work order cannot be started or completed until this estimate is approved.</div></div>}
