@@ -23,11 +23,14 @@ import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./pe
 import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
 import { copyCatalogOfficeToLocality } from "./localityOfficeCatalogBridge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useAuth } from "@/components/auth/EmailGate";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
 
 export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes }) {
+  const { currentUser } = useAuth();
+  const verificationActor = currentUser?.full_name || currentUser?.email || "CCS Staff";
   const [activeTab, setActiveTab] = useState("localities");
   const [localities, setLocalities] = useState(initialLocalities || []);
   const [officeTypes, setOfficeTypes] = useState(initialOfficeTypes || []);
@@ -660,6 +663,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                             key={office.id}
                             office={office}
                             officeTypes={officeTypes}
+                            verificationActor={verificationActor}
                             onChange={(updated) => updateOffice(office.id, updated)}
                             onDelete={() => requestDeleteOffice(office.id)}
                           />
