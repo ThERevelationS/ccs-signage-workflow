@@ -117,9 +117,9 @@ test('all configured roles reviewed does not imply all required jurisdictions co
 
 test('address UI distinguishes partial review from all configured roles reviewed', () => {
   const ui = readFileSync(new URL('../src/components/permitting/LocalityPickerDialog.jsx', import.meta.url), 'utf8');
-  assert.match(ui, /addressAuthority\\?\\.coverage_status === 'partial'/);
-  assert.match(ui, /addressAuthority\\?\\.coverage_status === 'configured_offices_reviewed'/);
-  assert.match(ui, /addressRolesNeedingReview\\.join/);
+  assert.ok(ui.includes("addressAuthority?.coverage_status === 'partial'"));
+  assert.ok(ui.includes("addressAuthority?.coverage_status === 'configured_offices_reviewed'"));
+  assert.ok(ui.includes("addressRolesNeedingReview.join"));
   assert.match(ui, /does not establish that every legally required authority is represented/);
 });
 
