@@ -461,7 +461,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setHasUnsavedChanges(true);
   };
 
-  const persistImmediateOrderFields = async (orderId, nextFields, label) => {
+  const persistImmediateOrderFields = async (orderId, nextFields, label, { supersedePendingFields = [] } = {}) => {
+    const pendingAtStart = { ...(pendingChangesRef.current[orderId] || {}) };
     const baseline = originalOrdersRef.current[orderId];
     if (!baseline?.id) throw new Error(`${label} is missing its loaded Order baseline. Reload before saving.`);
     const saved = await replaceOrderFieldsIfUnchanged({
@@ -474,7 +475,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
     const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
     for (const [field, value] of Object.entries(nextFields)) {
-      if (Object.is(latestPending[field], value)) delete latestPending[field];
+      // A deliberate Date Needed selection supersedes an older unsaved date
+      // or text option. Keep any newer edit made while this write was in flight.
+      const superseded = supersedePendingFields.includes(field) &&
+        Object.hasOwn(pendingAtStart, field) && Object.is(latestPending[field], pendingAtStart[field]);
+      if (Object.is(latestPending[field], value) || superseded) delete latestPending[field];
     }
     if (Object.keys(latestPending).length > 0) pendingChangesRef.current[orderId] = latestPending;
     else delete pendingChangesRef.current[orderId];
