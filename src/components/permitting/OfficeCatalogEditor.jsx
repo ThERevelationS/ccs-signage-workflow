@@ -16,9 +16,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
+import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X, ExternalLink } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
-import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
+import { normalizeGovernmentOfficeCatalogEntry, safeGovernmentOfficeSourceUrl, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -98,6 +98,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
 
   const update = (patch) => onChange(updateGovernmentOfficeCatalogEntry(office, patch));
   const officeMetadata = normalizeGovernmentOfficeCatalogEntry(office).government_office;
+  const sourceHref = safeGovernmentOfficeSourceUrl(officeMetadata.source_url);
   const updateVerification = (patch) => onChange(updateGovernmentOfficeVerification(office, patch, "staff"));
 
   const selectedTypes = getOfficeTypes(office);
@@ -165,6 +166,23 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
           onChange={setSelectedTypes}
         />
         <span className="text-[10px] text-gray-400">{steps.length} steps</span>
+        <span
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap ${officeMetadata.verification_status === "staff_verified" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}
+          title="Shared office identity/contact verification only; locality permitting authority is verified separately."
+        >
+          {officeMetadata.verification_status === "staff_verified" ? "Identity verified" : "Identity needs review"}
+        </span>
+        {sourceHref ? (
+          <a href={sourceHref} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-[10px] text-blue-700 underline whitespace-nowrap"
+            aria-label={`Open recorded office source for ${office.name || "this office"} in a new tab`}
+            title="Recorded office source; not proof of locality-specific authority"
+          >
+            Source <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        ) : officeMetadata.source_url ? (
+          <span className="text-[10px] text-amber-800" title="Only absolute HTTPS URLs are linked">Source link needs review</span>
+        ) : null}
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete} title="Delete office">
           <Trash2 className="w-3 h-3 text-red-500" />
         </Button>
