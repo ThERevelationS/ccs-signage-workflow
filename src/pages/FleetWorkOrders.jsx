@@ -209,6 +209,22 @@ export default function FleetWorkOrders() {
     return () => window.clearTimeout(focusTimer);
   }, [dialog, loading, rows, viewMode]);
 
+  // Starting work can move a board card to In Progress or remove it from a
+  // projected-date filter. Wait for its dialog to close before moving focus.
+  useEffect(() => {
+    const pending = pendingStartFocusRef.current;
+    if (!pending || startWorkOrder || loading) return undefined;
+    const focusTimer = window.setTimeout(() => {
+      if (pendingStartFocusRef.current !== pending) return;
+      restoreWorkOrderFocusAfterSave({
+        rows, pending, viewMode, root: document,
+        statusFilter: statusFilterRef.current, onNotice: setFocusNotice,
+      });
+      pendingStartFocusRef.current = null;
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [startWorkOrder, loading, rows, viewMode]);
+
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
@@ -259,6 +275,12 @@ export default function FleetWorkOrders() {
       });
       if (response?.data?.error) throw new Error(response.data.error);
       await loadData();
+      setFocusNotice("");
+      pendingStartFocusRef.current = {
+        id: startWorkOrder.id,
+        label: startWorkOrder.work_order_number || startWorkOrder.title || "work order",
+        verb: "Started",
+      };
       setStartWorkOrder(null);
     } catch (error) {
       setActionError(error?.message || "Failed to start Fleet work order.");
