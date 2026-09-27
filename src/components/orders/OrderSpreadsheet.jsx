@@ -1843,12 +1843,23 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     } catch (error) {
                       setSaveError(error?.message || 'Could not clear the received value. Reload before retrying.');
                     }
+                  } else if (clearDateConfirm.field === 'date_ordered') {
+                    const order = orders.find(o => o.id === clearDateConfirm.orderId);
+                    try {
+                      if (!order?.id) throw new Error('The Order is no longer loaded. Reload before clearing its date.');
+                      setSaveError('');
+                      // Clear the date, companion option and derived status in
+                      // one concurrency-checked write, just like calendar edits.
+                      await persistImmediateOrderFields(order.id, {
+                        date_ordered: '', date_ordered_option: '',
+                        status: orderStatusAfterOrderedDateChange(order, ''),
+                      }, 'Clear ordered date');
+                    } catch (error) {
+                      setSaveError(error?.message || 'Could not clear Date Ordered. Reload before retrying.');
+                    }
                   } else {
                     const optionField = clearDateConfirm.field === 'date_needed'
-                      ? 'date_needed_option'
-                      : clearDateConfirm.field === 'date_ordered'
-                        ? 'date_ordered_option'
-                        : '';
+                      ? 'date_needed_option' : '';
                     updateOrder(clearDateConfirm.orderId, clearDateConfirm.field, '');
                     if (optionField) updateOrder(clearDateConfirm.orderId, optionField, '');
                     await saveAllChanges();
