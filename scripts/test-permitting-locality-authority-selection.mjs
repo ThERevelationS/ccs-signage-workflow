@@ -26,6 +26,15 @@ test('authority display covers the canonical role vocabulary', () => {
 test('selection derives authority from the selected configured locality, not AI claims', () => {
   assert.match(ui, /localities\.find\(locality => locality\.id === selectedLocalityId\)/);
   assert.match(ui, /verifiedAuthoritySummary\(selectedLocality\)/);
+  assert.match(ui, /summarizeMatchedLocalityAuthority\(locality\)/);
+});
+
+test('manual locality selection uses the same partial authority coverage language as address resolution', () => {
+  assert.match(ui, /selectedAuthority\.coverage_status === "partial"/);
+  assert.match(ui, /selectedAuthority\.coverage_status === "configured_offices_reviewed"/);
+  assert.match(ui, /selectedAuthority\.reviewLabels\.join/);
+  assert.match(ui, /Partial office-authority review/);
+  assert.match(ui, /does not establish that every legally required authority is represented/);
 });
 
 test('address result visually separates geographic confidence from staff-verified authority', () => {
