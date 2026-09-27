@@ -7,7 +7,7 @@ let checks = 0;
 const check = (condition, description) => { assert.ok(condition, description); checks += 1; };
 
 check(count('aria-label="Sales Pipeline navigation"') === 1, "One clear toolbar region.");
-check(page.includes('className="flex flex-wrap items-center gap-2"'), "Primary controls wrap rather than disappearing offscreen.");
+check(page.includes('className="grid min-w-0 grid-cols-12 items-center gap-2 sm:flex sm:flex-wrap"'), "Primary controls use a deliberate 12-column phone layout and wrap on desktop.");
 check(count('aria-label="Workspace"') === 1, "Workspace selector is retained.");
 for (const label of ["Current Pipeline", "Won / Lost Outcomes", "Legacy History", "All Records"]) {
   check(page.includes('>' + label + '</SelectItem>'), "Workspace option retained: " + label);
