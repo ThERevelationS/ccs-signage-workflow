@@ -1,10 +1,13 @@
-// Order-only verification after Base44 bulkUpdate. Some date fields have been
-// silently omitted by bulk writes. Do not mark an Order synced on write ACK alone.
+// Order-only verification after Base44 bulkUpdate. Verify ISO dates AND their
+// companion text options: a silent drop of either leaves the UI and snapshot
+// inconsistent with Smartsheet. Do not mark an Order synced on write ACK alone.
 export const ORDER_DATE_FIELDS = ['date_needed', 'date_ordered', 'date_received'];
+export const ORDER_DATE_OPTION_FIELDS = ['date_needed_option', 'date_ordered_option', 'receipt_option'];
+export const ORDER_DATE_CELL_FIELDS = [...ORDER_DATE_FIELDS, ...ORDER_DATE_OPTION_FIELDS];
 const value = input => String(input ?? '').trim();
 
 export function changedPulledOrderDates(previous, incoming) {
-  return Object.fromEntries(ORDER_DATE_FIELDS.filter(field =>
+  return Object.fromEntries(ORDER_DATE_CELL_FIELDS.filter(field =>
     Object.hasOwn(incoming ?? {}, field) && value(previous?.[field]) !== value(incoming[field])
   ).map(field => [field, value(incoming[field])]));
 }
