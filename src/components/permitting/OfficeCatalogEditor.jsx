@@ -18,6 +18,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, Search, ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import AIOfficeResearchDialog from "./AIOfficeResearchDialog";
+import { normalizeGovernmentOfficeCatalogEntry } from "./governmentOfficeCatalog";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -95,7 +96,7 @@ function OfficeEditor({ office, officeTypes, onChange, onDelete }) {
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
 
-  const update = (patch) => onChange({ ...office, ...patch });
+  const update = (patch) => onChange(normalizeGovernmentOfficeCatalogEntry({ ...office, ...patch }));
 
   const selectedTypes = getOfficeTypes(office);
 
@@ -300,18 +301,18 @@ export default function OfficeCatalogEditor({ catalog, officeTypes, onChange }) 
   const [officeToDelete, setOfficeToDelete] = useState(null);
 
   const addBlank = () => {
-    const newOffice = {
+    const newOffice = normalizeGovernmentOfficeCatalogEntry({
       id: `${Date.now()}-${Math.random()}`,
       name: "",
       office_types: [],
       office_type: "",
       workflow_steps: [],
-    };
+    });
     onChange([newOffice, ...catalog]);
   };
 
   const addFromAI = (office) => {
-    onChange([office, ...catalog]);
+    onChange([normalizeGovernmentOfficeCatalogEntry(office), ...catalog]);
   };
 
   const updateOffice = (officeId, updated) => {
