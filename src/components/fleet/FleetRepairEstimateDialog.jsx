@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { attemptEstimateChangeRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { AlertTriangle, CheckCircle2, DollarSign, Loader2, Plus, Send, ThumbsDown, Trash2, X } from "lucide-react";
 
 const EMPTY = {
@@ -108,9 +109,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   // A list refresh is not part of the server mutation. Never tell an admin to
   // repeat an acknowledged save or approval just because the list is stale.
   const reportChanged = async (row, verb) => {
-    let refreshed = true;
-    try { refreshed = (await onChanged?.(row)) !== false; }
-    catch { refreshed = false; }
+    const refreshed = await attemptEstimateChangeRefresh(onChanged, row);
     if (!refreshed) {
       setRefreshWarning(`${verb}, but the Fleet work-order list could not refresh. Close this estimate and use Retry refresh; do not repeat the operation.`);
     }
