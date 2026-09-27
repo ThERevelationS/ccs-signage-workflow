@@ -23,7 +23,7 @@ const money = (value) => new Intl.NumberFormat("en-US", {
 }).format(Number(value) || 0);
 
 const localDate = (value) => {
-  if (!value) return null;
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return null;
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return null;
   const date = new Date(year, month - 1, day);
