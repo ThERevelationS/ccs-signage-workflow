@@ -14,6 +14,10 @@
       "type": "string",
       "description": "ZIP / postal code"
     },
+    "jurisdiction_profile_id": {
+      "type": "string",
+      "description": "Optional canonical JurisdictionProfile ID this tracker locality was explicitly created from. Existing legacy localities may remain unlinked until staff verifies the relationship."
+    },
     "governing_body": {
       "type": "string",
       "description": "LEGACY \u2014 Governing body name"
