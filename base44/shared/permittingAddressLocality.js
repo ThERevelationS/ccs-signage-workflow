@@ -29,7 +29,7 @@ export function addressLocalityIdentityMatches(locality, candidate) {
   if (targetState && locality.state && normalizeAddressState(locality.state) !== targetState) return false;
 
   const sourceKind = cleanPlace(candidate.source_kind);
-  if (sourceKind === 'township') return incoming.kind === 'township';
+  if (sourceKind === 'township') return incoming.kind === 'township' && stored.kind === 'township';
   if (sourceKind === 'municipality') return stored.kind !== 'township' && incoming.kind !== 'township';
   return stored.kind === incoming.kind;
 }
