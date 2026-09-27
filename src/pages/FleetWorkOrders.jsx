@@ -178,7 +178,7 @@ export default function FleetWorkOrders() {
       const visible = rows.some(row => row.id === pending.id);
       const target = !visible ? null : viewMode === "list"
         ? document.getElementById(`fleet-work-order-toggle-${pending.id}`)
-        : [...document.querySelectorAll("button[data-fleet-board-open]")]
+        : Array.from(document.querySelectorAll("button[data-fleet-board-open]"))
           .find(button => button.getAttribute("data-fleet-board-open") === pending.id && button.getClientRects().length > 0);
       if (target) {
         target.focus();
