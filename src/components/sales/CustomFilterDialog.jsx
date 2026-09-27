@@ -467,8 +467,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         >
                           {item.name}
                           <button 
+                            type="button"
+                            aria-label={`Remove ${item.name} from My Presets`}
                             onClick={() => toggleSelection(item, true)}
-                            className="hover:text-purple-600"
+                            className="rounded px-1 hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
                           >
                             ×
                           </button>
@@ -481,8 +483,10 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         >
                           {item.name}
                           <button 
+                            type="button"
+                            aria-label={`Remove ${item.name} from My Presets`}
                             onClick={() => toggleSelection(item)}
-                            className="hover:text-purple-600"
+                            className="rounded px-1 hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
                           >
                             ×
                           </button>
@@ -503,26 +507,29 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   {(activeTab === "filters" ? STANDARD_FILTERS : STANDARD_COLUMN_PRESETS).map(item => (
                     <div 
                       key={item.value || item.name} 
-                      className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 cursor-pointer border transition-colors ${
+                      className={`max-w-full px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 border transition-colors ${
                         isSelected(item, true) 
                           ? 'bg-blue-100 border-blue-300 text-blue-800' 
                           : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
                       }`}
-                      onClick={() => toggleSelection(item, true)}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected(item, true)}
-                        onChange={() => {}}
-                        className="w-3 h-3"
-                      />
-                      {item.name}
+                      <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected(item, true)}
+                          onChange={() => toggleSelection(item, true)}
+                          className="h-3 w-3 shrink-0"
+                        />
+                        <span className="break-words">{item.name}</span>
+                      </label>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-4 w-4 p-0 ml-0.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        type="button"
+                        aria-label={`Duplicate ${item.name}`}
+                        title={`Duplicate ${item.name}`}
+                        className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
+                        onClick={() => {
                           duplicateItem({ 
                             ...item, 
                             type: activeTab === "filters" ? "filter" : "column_preset",
@@ -549,26 +556,29 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     {(activeTab === "filters" ? filters : columnPresets).map(item => (
                       <div 
                         key={item.id} 
-                        className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 cursor-pointer border transition-colors ${
+                        className={`max-w-full px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 border transition-colors ${
                           isSelected(item) 
                             ? 'bg-green-100 border-green-300 text-green-800' 
                             : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
                         }`}
-                        onClick={() => toggleSelection(item)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected(item)}
-                          onChange={() => {}}
-                          className="w-3 h-3"
-                        />
-                        {item.name}
+                        >
+                        <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected(item)}
+                            onChange={() => toggleSelection(item)}
+                            className="h-3 w-3 shrink-0"
+                          />
+                          <span className="break-words">{item.name}</span>
+                        </label>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-4 w-4 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          type="button"
+                          aria-label={`Duplicate ${item.name}`}
+                          title={`Duplicate ${item.name}`}
+                          className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
+                          onClick={() => {
                             duplicateItem(item);
                           }}
                         >
@@ -577,9 +587,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-4 w-4 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          type="button"
+                          aria-label={`Edit ${item.name}`}
+                          title={`Edit ${item.name}`}
+                          className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
+                          onClick={() => {
                             requestNavigation(() => editItem(item));
                           }}
                         >
@@ -589,9 +601,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-4 w-4 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            type="button"
+                            aria-label={`Delete ${item.name}`}
+                            title={`Delete ${item.name}`}
+                            className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
+                            onClick={() => {
                               deleteItem(item);
                             }}
                           >
