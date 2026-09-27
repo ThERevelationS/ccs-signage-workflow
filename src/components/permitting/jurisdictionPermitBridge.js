@@ -120,6 +120,7 @@ export function jurisdictionToDraftPermitLocality(jurisdiction) {
     name,
     state,
     zip: "",
+    ...(id !== "repository" ? { jurisdiction_profile_id: id } : {}),
     offices: [office],
     order: 0,
   };
