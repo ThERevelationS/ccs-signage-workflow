@@ -21,6 +21,7 @@ import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 import PDFViewer from "./PDFViewer";
 import CAGISSearchBar from "./CAGISSearchBar";
 import { documentSearchSnippet, splitDocumentSearchMatches, documentSearchContent, documentSearchContentSource, findDocumentMatchPositions, documentMatchSnippet, stepDocumentMatchIndex } from "./documentSearchSnippet";
+import { buildJurisdictionQuestionContext } from "./jurisdictionQuestionContext";
 import { documentHeaderTargetIndex } from "./documentHeaderNavigation";
 import DocumentAnalysisPanel from "./DocumentAnalysisPanel";
 import ExtractedContentDisplay from "./ExtractedContentDisplay";
@@ -504,17 +505,15 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
     setChatHistory(newHistory);
 
     try {
-      const docContext = (jurisdiction.documents || [])
-        .map(d => `[${d.title}]: ${d.extracted_text || d.ai_summary || "No content extracted"}`)
-        .join("\n\n");
+      const docContext = buildJurisdictionQuestionContext(jurisdiction.documents, q);
 
       const prompt = `You are a permitting expert assistant for sign companies. 
       
 Jurisdiction: ${jurisdiction.name}, ${jurisdiction.state} (${jurisdiction.type})
 ${jurisdiction.ai_summary ? `Summary: ${jurisdiction.ai_summary}` : ""}
 
-Available documents and their content:
-${docContext || "No documents loaded yet."}
+Relevant source-linked document excerpts (not the full jurisdiction archive):
+${docContext}
 
 ${jurisdiction.permit_requirements ? `Known requirements: ${JSON.stringify(jurisdiction.permit_requirements, null, 2)}` : ""}
 
@@ -523,7 +522,7 @@ ${newHistory.slice(-4).map(m => `${m.role === 'user' ? 'Question' : 'Answer'}: $
 
 Current question: ${q}
 
-Answer the question based on the documents and information available. Be specific and cite which document you're referencing. If the information isn't available in the documents, say so clearly.`;
+Answer only from the provided excerpts and cite the document title and official source URL for each material rule. These are selected excerpts, not the entire ordinance. If a requested condition, jurisdiction boundary, district, or sign type cannot be established from these excerpts, say so; do not generalize a special district's requirements to another location or invent missing limits. Direct the user to the cited complete official source and permitting office for unresolved questions.`;
 
       const res = await base44.integrations.Core.InvokeLLM({ prompt, add_context_from_internet: false });
       const aiAnswer = typeof res === 'string' ? res : res?.response || "Unable to get answer.";
