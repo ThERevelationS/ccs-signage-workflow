@@ -70,6 +70,10 @@ export default function FleetWorkOrders() {
       setFluids(f || []);
       setCurrentUser(u || null);
       hasLoadedRef.current = true;
+      setRefreshError("");
+    } catch (error) {
+      setRefreshError("Unable to refresh Fleet work orders. The list may be out of date; retry the refresh instead of repeating a saved action.");
+      throw error;
     } finally {
       setLoading(false);
     }
