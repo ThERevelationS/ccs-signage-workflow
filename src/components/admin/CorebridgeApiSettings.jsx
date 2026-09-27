@@ -14,9 +14,34 @@ export default function CorebridgeApiSettings({ sessionToken }) {
   const [auditing, setAuditing] = useState(false);
   const [auditError, setAuditError] = useState("");
   const [auditReport, setAuditReport] = useState(null);
+  const [verifyingBackup, setVerifyingBackup] = useState(false);
+  const [backupError, setBackupError] = useState("");
+  const [backupComparison, setBackupComparison] = useState(null);
+
+  const verifyBackup = async () => {
+    if (!sessionToken || busy || auditing || verifyingBackup) return;
+    setVerifyingBackup(true);
+    setBackupError("");
+    setBackupComparison(null);
+    try {
+      const response = await base44.functions.invoke("corebridgeApiAction", {
+        action: "verify_sept22_backup",
+        session_token: sessionToken,
+      });
+      const data = response?.data || response;
+      if (!data?.success || !data?.comparison?.backup_file_verified) {
+        throw new Error(data?.error || "The original backup file could not be verified.");
+      }
+      setBackupComparison(data.comparison);
+    } catch (err) {
+      setBackupError(err?.response?.data?.error || err?.message || "Backup comparison failed safely.");
+    } finally {
+      setVerifyingBackup(false);
+    }
+  };
 
   const runAudit = async () => {
-    if (!sessionToken || busy || auditing) return;
+    if (!sessionToken || busy || auditing || verifyingBackup) return;
     setAuditing(true);
     setAuditError("");
     setAuditReport(null);
@@ -37,7 +62,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
   };
 
   const exportJobs = async () => {
-    if (!sessionToken || busy || auditing) return;
+    if (!sessionToken || busy || auditing || verifyingBackup) return;
     setBusy(true);
     setError("");
     setResult(null);
@@ -105,7 +130,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
               <option value="completed">Completed jobs</option>
             </select>
           </div>
-          <Button type="button" onClick={exportJobs} disabled={busy || auditing || !sessionToken}>
+          <Button type="button" onClick={exportJobs} disabled={busy || auditing || verifyingBackup || !sessionToken}>
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             {busy ? "Preparing full register..." : "Download Job Register CSV"}
           </Button>
@@ -130,7 +155,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
               and possible matching customer/job titles. Read-only; no record merging or cleanup.
             </p>
           </div>
-          <Button type="button" variant="outline" disabled={auditing || busy || !sessionToken} onClick={runAudit}>
+          <Button type="button" variant="outline" disabled={auditing || busy || verifyingBackup || !sessionToken} onClick={runAudit}>
             {auditing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ClipboardCheck className="w-4 h-4 mr-2" />}
             {auditing ? "Checking every WorkOrder..." : "Run WorkOrder Audit"}
           </Button>
@@ -223,10 +248,68 @@ export default function CorebridgeApiSettings({ sessionToken }) {
                     WorkOrder backup day. A historic backup comparison is needed to establish any overlap.
                   </p>
                 )}
+                <div className="rounded-lg border border-blue-200 bg-white p-3 space-y-3">
+                  <div className="font-medium">Verify the September 22 WorkOrder backup file</div>
+                  <p className="text-xs text-gray-600">
+                    Read the exact logged Excel file through the existing app Google Drive connection,
+                    verify its original WorkOrder ID column, and compare it to every current WorkOrder.
+                    The file remains in Drive; CCS records are never modified.
+                  </p>
+                  <Button type="button" variant="outline" onClick={verifyBackup}
+                    disabled={!sessionToken || busy || auditing || verifyingBackup}>
+                    {verifyingBackup ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ClipboardCheck className="w-4 h-4 mr-2" />}
+                    {verifyingBackup ? "Verifying historical file..." : "Verify September 22 Backup"}
+                  </Button>
+                  {backupError && (
+                    <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">{backupError}</p>
+                  )}
+                  {backupComparison && (
+                    <div role="status" className="space-y-3">
+                      <p className="font-medium text-emerald-800">
+                        Exact historical file verified: {backupComparison.backup_filename}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {[
+                          ["IDs in verified backup", backupComparison.backup_record_count],
+                          ["Current WorkOrder IDs", backupComparison.current_record_count],
+                          ["Original IDs still non-deleted", backupComparison.backup_ids_found_non_deleted],
+                          ["Original IDs currently deleted", backupComparison.backup_ids_found_deleted],
+                          ["Original IDs absent", backupComparison.backup_ids_absent_from_current],
+                          ["Current non-deleted IDs not in backup", backupComparison.current_non_deleted_ids_absent_from_backup],
+                        ].map(([name, count]) => (
+                          <div key={name} className="rounded-md border bg-white p-2">
+                            <div className="font-semibold text-lg">{Number(count).toLocaleString()}</div>
+                            <div className="text-xs text-gray-600">{name}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {backupComparison.backup_ids_absent_from_current > 0 && (
+                        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                          Some historical IDs are not in the current database. This does not authorize
+                          restoring the old backup or deleting current Smartsheet-linked records.
+                        </p>
+                      )}
+                      <details className="text-xs border rounded-md p-2">
+                        <summary className="cursor-pointer font-medium">Sample record IDs for manual reconciliation</summary>
+                        <div className="space-y-2 mt-2">
+                          {[
+                            ["Original IDs absent", backupComparison.missing_backup_ids],
+                            ["Original IDs still present", backupComparison.matched_backup_ids],
+                            ["Current IDs absent from backup", backupComparison.new_current_ids],
+                          ].map(([label, ids]) => (
+                            <div key={label}><div className="font-medium">{label}</div>
+                              <p className="break-all text-gray-600">{ids?.length ? ids.join(", ") : "None in sample"}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
+                  )}
+                </div>
                 <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-                  BackupLog metadata cannot prove the referenced Google Drive file still exists or
-                  contains the historical 1,100 WorkOrders. No restore, matching, deletion, or
-                  historical email import was performed.
+                  BackupLog entries alone do not prove file availability or completeness.
+                  Only a successful file verification can establish the actual historical ID overlap.
+                  No restore, deletion, or email import is performed.
                 </p>
               </div>
             </details>
