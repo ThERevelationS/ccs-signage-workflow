@@ -109,6 +109,7 @@ export default function SIPs() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
+  const [revisitClearFailure, setRevisitClearFailure] = useState(null);
   const [isClearingRevisit, setIsClearingRevisit] = useState(false);
   const boardLoadSequenceRef = useRef(0);
   const boardSaveEpochRef = useRef(0);
@@ -369,6 +370,7 @@ export default function SIPs() {
 
   const requestClearRevisit = (wo) => {
     setOpenDatePopover(null);
+    setRevisitClearFailure(null);
     if (reopeningWipInFlightRef.current.has(wo.id)) {
       setQuickEditError("This WIP item is reopening. Wait for it to finish before clearing Revisit.");
       return;
@@ -382,16 +384,20 @@ export default function SIPs() {
   };
 
   const confirmClearRevisit = async () => {
-    if (!pendingRevisitClear || isClearingRevisit) return;
+    if (!pendingRevisitClear || isClearingRevisit || revisitClearFailure?.requiresReview) return;
     const clearingRequest = pendingRevisitClear;
     const editKey = JSON.stringify([clearingRequest.id, "sip_revisit_date"]);
     if (reopeningWipInFlightRef.current.has(clearingRequest.id)) {
-      setQuickEditError("This WIP item is reopening. Wait for it to finish before clearing Revisit.");
+      const message = "This WIP item is reopening. Wait for it to finish before clearing Revisit.";
+      setQuickEditError(message);
+      setRevisitClearFailure({ message, requiresReview: false });
       return;
     }
     if (quickEditsInFlightRef.current.has(editKey)) {
       if (quickEditsInFlightRef.current.get(editKey) !== "") {
-        setQuickEditError("The Revisit date is still saving. Wait for it to finish before clearing it.");
+        const message = "The Revisit date is still saving. Wait for it to finish before clearing it.";
+        setQuickEditError(message);
+        setRevisitClearFailure({ message, requiresReview: false });
       }
       return;
     }
@@ -400,6 +406,7 @@ export default function SIPs() {
     quickEditsInFlightRef.current.set(editKey, "");
     setSavingRevisitIds(prev => new Set(prev).add(clearingRequest.id));
     setIsClearingRevisit(true);
+    setRevisitClearFailure(null);
     setQuickEditError("");
     try {
       // Guard the date the user actually confirmed, not a newer date from a
@@ -411,11 +418,15 @@ export default function SIPs() {
         label: "SIPs clear confirmed revisit date",
       });
       applySavedBoardFields(clearingRequest.id, saved, ["sip_revisit_date"]);
+      setRevisitClearFailure(null);
       setPendingRevisitClear(null);
     } catch (error) {
       console.error("Error clearing confirmed SIPs revisit date:", error);
-      setQuickEditError(error?.message || "The revisit date may have changed. No newer date was cleared; review the refreshed board before trying again.");
-      setPendingRevisitClear(null);
+      const message = error?.message || "The revisit date may have changed. No newer date was cleared; review the refreshed board before trying again.";
+      setQuickEditError(message);
+      // Keep the dialog visible so its error is readable. Never permit a
+      // second clear against the confirmed, potentially stale date.
+      setRevisitClearFailure({ message, requiresReview: true });
       await loadWorkOrders(false);
     } finally {
       quickEditsInFlightRef.current.delete(editKey);
