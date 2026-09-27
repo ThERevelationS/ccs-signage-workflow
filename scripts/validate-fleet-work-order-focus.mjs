@@ -155,7 +155,7 @@ const boardButtons = [
   { id: "wo1", visible: true, focused: 0 },
   { id: "wo-other", visible: true, focused: 0 },
 ].map(entry => ({
-  getAttribute: name => name === "data-fleet-board-open" ? entry.id : null,
+  dataset: { fleetBoardOpen: entry.id },
   getClientRects: () => entry.visible ? [1] : [],
   focus() { entry.focused++; },
   entry,
@@ -173,7 +173,7 @@ const completionContext = {
     getElementById: id => id === "fleet-work-order-toggle-wo1"
       ? { focus() { listFocused++; } } : null,
     querySelectorAll: selector => {
-      assert.equal(selector, "button[data-fleet-board-open]");
+      assert.equal(selector, "button");
       return boardButtons;
     },
   },
