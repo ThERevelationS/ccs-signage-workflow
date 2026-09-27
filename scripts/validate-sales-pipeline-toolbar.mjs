@@ -19,11 +19,11 @@ for (const name of ["table", "board", "daily", "insights"]) {
 }
 check(page.includes('if (nextView === "daily" || nextView === "insights")'), "Daily and Insights still clear incompatible filters.");
 check(count('aria-label="Search sales pipeline"') === 1, "Search remains directly accessible.");
-check(count('setShowNewClientForm(true)') === 1 && page.includes('{isRegistered && ('), "New Client action remains registration-gated.");
+check(count('setShowNewClientForm(true)') === 1 && page.includes('{isRegistered && !showDuplicateCleanup && ('), "New Client remains registered-user only and unavailable while the spreadsheet is unmounted.");
 check(count('aria-label="Sales Pipeline tools"') === 1, "One labeled Tools control.");
 const tools = page.split('<DropdownMenuContent align="end" className="w-52">')[1]?.split('</DropdownMenuContent>')[0];
 check(Boolean(tools), "Tools menu exists.");
-check(tools.indexOf('{canImportExport && (') >= 0, "Import/export actions retain their permission gate.");
+check(tools.indexOf('{canImportExport && !showDuplicateCleanup && (') >= 0, "Import/export actions retain their permission gate and are hidden while Duplicate Cleanup unmounts the spreadsheet.");
 for (const action of ["importFromExcel()", "exportToExcel()", "openImportHistory()"]) {
   check(count('spreadsheetRef.current?.' + action) === 1 &&
     tools.includes('spreadsheetRef.current?.' + action), "Original ref action moved, not duplicated: " + action);
