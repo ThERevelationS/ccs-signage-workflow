@@ -5,8 +5,8 @@ import { readFileSync } from 'node:fs';
 const ui = readFileSync(new URL('../src/components/permitting/LocalityPickerDialog.jsx', import.meta.url), 'utf8');
 
 test('locality picker only presents staff-verified explicit authority relationships as confirmed', () => {
-  assert.match(ui, /authority_verification_status === "staff_verified"/);
-  assert.match(ui, /Array\.isArray\(office\?\.authority_roles\)/);
+  assert.match(ui, /summarizeMatchedLocalityAuthority\(locality\)/);
+  assert.match(ui, /review\.verified_roles/);
   assert.match(ui, /Only these roles are confirmed authority relationships/);
   assert.match(ui, /other configured offices remain workflow references/);
 });
