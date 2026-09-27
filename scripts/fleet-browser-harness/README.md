@@ -19,4 +19,6 @@ node scripts/test-fleet-work-order-browser.mjs
 
 Use `FLEET_PLAYWRIGHT_PATH=/absolute/path/to/playwright/index.mjs` if the package was installed elsewhere. The suite creates and removes a temporary Vite harness under `/tmp`. The runner verifies both desktop and narrow mobile viewports; creation/editing, filtered-out results, board migration, completion and reopen confirmations, keyboard Escape/Tab, and refresh retry following a successful synthetic mutation.
 
+For the **real Fleet Repair Estimate dialog** (rather than the stub in the work-order suite), run `node scripts/test-fleet-repair-estimate-browser.mjs` after the build. It uses the same external Playwright installation and an in-memory synthetic `fleetRepairEstimateAction` fixture. The recovery scenarios cover failed loads, keyboard retry, lost submission acknowledgments, server-status reconciliation, conflicting drafts and late GET responses across reopen. Every outside-origin request is blocked. Never point either suite at live records.
+
 Retain real, authenticated production browser acceptance as a separate manual check: do not save or complete a live Fleet work order just for testing.
