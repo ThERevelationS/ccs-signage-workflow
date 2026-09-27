@@ -492,6 +492,33 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return saved;
   };
 
+  // Date Needed is one verified write of its ISO value and text companion.
+  const persistDateNeeded = async (orderId, nextDate, label) => {
+    if (dateNeededSaveInFlightRef.current || saveInFlightRef.current) {
+      throw new Error('An Order save is already running. Retry Date Needed when it finishes.');
+    }
+    const before = originalOrdersRef.current[orderId];
+    dateNeededSaveInFlightRef.current = true;
+    setIsSaving(true);
+    try {
+      const saved = await persistImmediateOrderFields(
+        orderId, { date_needed: nextDate, date_needed_option: '' }, label,
+        { supersedePendingFields: ['date_needed', 'date_needed_option'] }
+      );
+      if (before?.date_needed !== nextDate) {
+        void trackChange(orderId, 'date_needed', before?.date_needed, nextDate);
+      }
+      if (before?.date_needed_option) {
+        void trackChange(orderId, 'date_needed_option', before.date_needed_option, '');
+      }
+      if (Object.keys(pendingChangesRef.current).length === 0) setLastSaved(new Date());
+      return saved;
+    } finally {
+      dateNeededSaveInFlightRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const deleteOrder = async (order) => {
