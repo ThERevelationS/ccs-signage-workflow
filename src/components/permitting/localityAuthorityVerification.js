@@ -48,6 +48,21 @@ export function setLocalityOfficeAuthorityRole(office, role, enabled) {
   };
 }
 
+/** A material locality office identity/contact edit needs renewed authority review.
+ * Preserve the canonical office link, selected roles and source/review notes.
+ */
+export function updateLocalityOfficeIdentity(office, patch) {
+  const next = { ...office, ...patch };
+  const reviewedFields = ["name", "contact_phone", "contact_email", "contact_website", "contact_address"];
+  const changed = reviewedFields.some(field =>
+    Object.hasOwn(patch || {}, field) &&
+    String(office?.[field] || "").trim() !== String(next[field] || "").trim()
+  );
+  return changed && office?.authority_verification_status === "staff_verified"
+    ? revokeLocalityOfficeAuthorityVerification(next)
+    : next;
+}
+
 export function verifyLocalityOfficeAuthority(office, actor, verifiedAt = new Date().toISOString()) {
   const roles = Array.isArray(office?.authority_roles) ? office.authority_roles.filter(Boolean) : [];
   if (roles.length === 0) throw new Error("Choose at least one authority role before verifying this office.");
