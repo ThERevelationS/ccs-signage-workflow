@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
+import { normalizeAddressState as normalizeState } from '../../shared/permittingAddressState.js';
 
 function normalizePlace(value: unknown) {
   return String(value || '')
@@ -9,10 +10,6 @@ function normalizePlace(value: unknown) {
     .replace(/\b(city of|village of|town of)\b/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function normalizeState(value: unknown) {
-  return String(value || '').trim().toLowerCase();
 }
 
 function localityIdentityMatches(locality: any, name: unknown, state: unknown) {
