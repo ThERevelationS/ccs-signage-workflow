@@ -78,6 +78,7 @@ function harness(initialDate = tomorrow) {
     today,
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
+    quickEditsInFlightRef: { current: new Map() },
     pendingRevisitClear: null,
     isClearingRevisit: false,
     workOrders: [structuredClone(record)],
@@ -374,6 +375,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       today,
       boardSaveEpochRef: { current: 0 },
       boardSavesPendingRef: { current: 0 },
+    quickEditsInFlightRef: { current: new Map() },
       workOrders: [structuredClone(live)],
       pendingRevisitClear: null,
       isClearingRevisit: false,
@@ -550,6 +552,59 @@ await check('other-session unrelated note update does not block WIP reopening', 
   assert.equal(h.live.sip_revisit_date, yesterday);
   assert.equal(h.live.notes, 'other editor retained');
   assert.equal(h.writes, 1);
+});
+
+
+await check('rapid duplicate Revisit selection makes only one write', async () => {
+  const h = harness(todayDate);
+  const first = h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  const duplicate = h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  await Promise.all([first, duplicate]);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+  assert.equal(h.ctx.quickEditError, '');
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+});
+
+await check('rapid different Revisit selection is blocked visibly, then retry succeeds', async () => {
+  const h = harness(todayDate);
+  const first = h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  const competing = h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow);
+  assert.match(h.ctx.quickEditError, /still saving/);
+  await Promise.all([first, competing]);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+  await h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.writes, 2);
+  assert.equal(h.ctx.quickEditError, '');
+});
+
+await check('different Work Order fields can save concurrently without losing data', async () => {
+  const h = harness(todayDate);
+  await Promise.all([
+    h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow),
+    h.handlers.updateWorkOrder(h.record.id, 'notes', 'independent edit'),
+  ]);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.record.notes, 'independent edit');
+  assert.equal(h.writes, 2);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+});
+
+await check('failed stale quick edit releases field so retry after refresh works', async () => {
+  const h = harness(todayDate);
+  h.mutate({ sip_revisit_date: later });
+  await h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  assert.equal(h.writes, 0);
+  assert.equal(h.ctx.reloads, 1);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+  await h.handlers.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+  assert.equal(h.ctx.quickEditError, '');
 });
 
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');

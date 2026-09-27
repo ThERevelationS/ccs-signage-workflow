@@ -80,6 +80,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     boardLoadSequenceRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
+    quickEditsInFlightRef: { current: new Map() },
     today,
     workOrders: [structuredClone(record)],
     users: [],
