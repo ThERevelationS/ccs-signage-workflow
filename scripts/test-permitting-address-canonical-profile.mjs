@@ -2,11 +2,38 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { findRepositoryJurisdictionMatches } from '../src/components/permitting/jurisdictionPermitBridge.js';
+import { normalizeAddressState } from '../base44/shared/permittingAddressState.js';
 
 const profiles = [
   { id: 'profile-canonical', name: 'Example City', state: 'OH', type: 'city' },
   { id: 'profile-name-collision', name: 'Example City', state: 'OH', type: 'municipality' },
 ];
+
+test('Google long-form OH/KY state names match tracker abbreviation without conflating states', () => {
+  for (const [input, expected] of [
+    ['Ohio', 'oh'], ['OH', 'oh'], ['  ohio  ', 'oh'],
+    ['Kentucky', 'ky'], ['KY', 'ky'], ['  kentucky  ', 'ky'],
+  ]) {
+    assert.equal(normalizeAddressState(input), expected);
+  }
+  assert.notEqual(normalizeAddressState('Ohio'), normalizeAddressState('Kentucky'));
+});
+
+test('unknown or missing geocoder states are not guessed as OH/KY', () => {
+  assert.equal(normalizeAddressState('Indiana'), 'indiana');
+  assert.equal(normalizeAddressState('IN'), 'in');
+  assert.equal(normalizeAddressState(''), '');
+  assert.equal(normalizeAddressState(null), '');
+});
+
+test('address backend uses the same normalized state for geocoder and validated AI matching', () => {
+  const source = readFileSync(new URL('../base44/functions/findLocalityByAddress/entry.ts', import.meta.url), 'utf8');
+  assert.match(source, /import \{ normalizeAddressState as normalizeState \} from '\.\.\/\.\.\/shared\/permittingAddressState\.js'/);
+  assert.match(source, /normalizeState\(state\)/);
+  assert.match(source, /normalizeState\(locality\.state\) === targetState/);
+  assert.match(source, /localityIdentityMatches\(locality, candidate, geocodeState\)/);
+  assert.match(source, /localityIdentityMatches\(found, aiResult\.ai_locality_name, aiResult\.ai_state \|\| geocodeState\)/);
+});
 
 test('canonical tracker link wins over ambiguous repository name/state matches', () => {
   const matches = findRepositoryJurisdictionMatches(profiles, {
