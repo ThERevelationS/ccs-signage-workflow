@@ -41,6 +41,7 @@ export default function FleetWorkOrders() {
   const pendingReopenFocusRef = useRef(null);
   const pendingCompletionFocusRef = useRef(null);
   const pendingSaveFocusRef = useRef(null);
+  const pendingStartFocusRef = useRef(null);
   const statusFilterRef = useRef(null);
   const hasLoadedRef = useRef(false);
 
