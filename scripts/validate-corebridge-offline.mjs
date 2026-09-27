@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildJobRegisterCsv, csvCell, selectJobRegisterRows, JOB_REGISTER_COLUMNS } from "../base44/shared/corebridgeOfflineCsv.mjs";
 
 const rows = [
@@ -27,4 +28,11 @@ for (const dangerous of ["=1+1", "+SUM(A1:A2)", "-2+3", "@SUM(1)", "\t=1"]) {
 assert.equal(csvCell("Safe, text"), '"Safe, text"');
 assert.equal(buildJobRegisterCsv(rows, "completed").count, 2);
 assert.equal(rows[0].contact_email, "=cmd|' /C calc'!A0", "source data must remain untouched");
-console.log("CoreBridge offline CSV checks: 17 PASS");
+// Static defense: this retired gateway must never gain an outbound CoreBridge path.
+const gateway = readFileSync(new URL("../base44/functions/corebridgeApiAction/entry.ts", import.meta.url), "utf8");
+const adminUi = readFileSync(new URL("../src/components/admin/CorebridgeApiSettings.jsx", import.meta.url), "utf8");
+assert(gateway.includes("actor?.role !== 'admin'"), "server-side sign-shop admin check required");
+assert(gateway.includes("body?.action !== 'export_jobs_csv'"), "all retired API actions must be blocked");
+assert(!gateway.includes("safeExternalFetch") && !gateway.includes("COREBRIDGE_SUBSCRIPTION_KEY"), "no external CoreBridge API path or subscription secret allowed");
+assert(!adminUi.includes("testCorebridgeApiConnection") && !adminUi.includes("getCorebridgeApiAccountSummary"), "retired API buttons must not return");
+console.log("CoreBridge offline CSV and retired-gateway checks PASS");
