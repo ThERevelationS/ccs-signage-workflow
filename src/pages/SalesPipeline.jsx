@@ -105,23 +105,27 @@ export default function SalesPipeline() {
   }, [currentUser]);
 
   useEffect(() => {
+    let cancelled = false;
     const checkImportExportPermission = async () => {
+      // Permission must fail closed while identity changes or authorization is rechecked.
+      setCanImportExport(false);
       if (currentUser?.role === "admin") {
-        setCanImportExport(true);
+        if (!cancelled) setCanImportExport(true);
         return;
       }
-      if (currentUser?.email) {
-        try {
-          const users = await AuthorizedEmail.filter({ email: currentUser.email.toLowerCase() });
-          if (users.length > 0 && users[0].can_import_export) {
-            setCanImportExport(true);
-          }
-        } catch (e) {
-          // ignore
-        }
+      if (!currentUser?.email) return;
+      try {
+        const users = await AuthorizedEmail.filter({ email: currentUser.email.toLowerCase() });
+        if (!cancelled) setCanImportExport(Boolean(users[0]?.can_import_export));
+      } catch (error) {
+        console.error("Could not verify Sales Pipeline import/export permission:", error);
+        if (!cancelled) setCanImportExport(false);
       }
     };
     checkImportExportPermission();
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser]);
 
   const loadActiveFilters = async () => {
