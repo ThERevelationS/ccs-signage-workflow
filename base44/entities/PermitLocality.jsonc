@@ -55,6 +55,10 @@
           "id": {
             "type": "string"
           },
+          "catalog_office_id": {
+            "type": "string",
+            "description": "Optional ID of the reusable office catalog entry copied into this locality. Provenance only; not verification of legal permitting authority."
+          },
           "name": {
             "type": "string",
             "description": "Display name for this office (e.g. 'Hamilton County Zoning')"
