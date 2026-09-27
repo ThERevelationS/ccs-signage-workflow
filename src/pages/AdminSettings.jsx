@@ -953,7 +953,7 @@ export default function AdminSettings() {
                   </TabsTrigger>
                   <TabsTrigger value="corebridge" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <Bot className="w-4 h-4 mr-2" />
-                    CoreBridge API
+                    CoreBridge Migration
                   </TabsTrigger>
                   <TabsTrigger value="smartsheet" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <GitBranch className="w-4 h-4 mr-2" />
