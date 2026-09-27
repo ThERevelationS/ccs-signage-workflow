@@ -16,7 +16,7 @@ function defaultProjected(priority) {
   return addDaysText(today, 7);
 }
 
-export default function FleetStartWorkDialog({ open, workOrder, busy, onClose, onConfirm }) {
+export default function FleetStartWorkDialog({ open, workOrder, busy, error, onClose, onConfirm }) {
   const [projectedDate, setProjectedDate] = useState("");
   const [planningNotes, setPlanningNotes] = useState("");
   const dialogRef = useRef(null);
@@ -92,6 +92,7 @@ export default function FleetStartWorkDialog({ open, workOrder, busy, onClose, o
           <button ref={closeButtonRef} type="button" onClick={onClose} disabled={busy} aria-label="Close Start Work dialog" className="min-h-11 min-w-11 rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"><X className="h-5 w-5"/></button>
         </div>
         <div className="space-y-5 p-4 sm:p-5">
+          {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</div>}
           <div id="fleet-start-work-description" className="rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-200">Starting work moves this Fleet maintenance work order to <b>In Progress</b> and stamps the Eastern start date. It does not consume inventory or complete the job.</div>
           <div>
             <div className="mb-2 text-xs font-medium text-gray-600 dark:text-slate-300">Quick projected completion</div>
