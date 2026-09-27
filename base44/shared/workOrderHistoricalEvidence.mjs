@@ -48,11 +48,12 @@ export function summarizeWorkOrderHistory(backupLogs, importJobs, workOrderAudit
     importStatus[status] = (importStatus[status] || 0) + 1;
     importTypes[type] = (importTypes[type] || 0) + 1;
   }
-  const lastBackup = successfulWorkOrder[0] || null;
-  const cohort = [...workOrderAudit.creation_days].sort((a,b)=>a.name.localeCompare(b.name));
+  const lastBackup = successfulWorkOrder.find(x => /^\d{4}-\d{2}-\d{2}/.test(x.created_date)) || null;
+  const cohort = workOrderAudit.creation_days
+    .filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.name))
+    .sort((a,b)=>a.name.localeCompare(b.name));
   const afterLastBackup = lastBackup
-    ? cohort.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.name) &&
-        x.name > lastBackup.created_date.slice(0,10))
+    ? cohort.filter(x => x.name > lastBackup.created_date.slice(0,10))
       .reduce((n,x)=>n+Number(x.count||0),0)
     : null;
   return {
