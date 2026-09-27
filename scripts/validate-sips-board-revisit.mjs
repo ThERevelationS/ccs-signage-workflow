@@ -81,6 +81,8 @@ function harness(initialDate = tomorrow) {
     boardRefreshDeferredRef: { current: false },
     quickEditsInFlightRef: { current: new Map() },
     savingRevisitIds: new Set(),
+    reopeningWipIds: new Set(),
+    reopeningWipInFlightRef: { current: new Set() },
     pendingRevisitClear: null,
     isClearingRevisit: false,
     workOrders: [structuredClone(record)],
@@ -96,6 +98,9 @@ function harness(initialDate = tomorrow) {
   ctx.setQuickEditError = (value) => { ctx.quickEditError = value; };
   ctx.setSavingRevisitIds = (updater) => {
     ctx.savingRevisitIds = typeof updater === 'function' ? updater(ctx.savingRevisitIds) : updater;
+  };
+  ctx.setReopeningWipIds = (updater) => {
+    ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
   };
   ctx.setWorkOrders = (updater) => {
     ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
@@ -383,6 +388,8 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
       boardRefreshDeferredRef: { current: false },
       quickEditsInFlightRef: { current: new Map() },
       savingRevisitIds: new Set(),
+    reopeningWipIds: new Set(),
+    reopeningWipInFlightRef: { current: new Set() },
       workOrders: [structuredClone(live)],
       pendingRevisitClear: null,
       isClearingRevisit: false,
