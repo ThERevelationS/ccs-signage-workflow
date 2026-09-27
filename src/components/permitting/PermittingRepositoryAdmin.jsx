@@ -22,7 +22,9 @@ import { downloadPermitPDF } from "@/functions/downloadPermitPDF";
 import { isVerifiedPermitPDFArchive } from "./permitArchiveVerification";
 
 const PDF_DOWNLOAD_BATCH_LIMIT = 25;
-const needsPDFArchive = (doc) => Boolean(doc?.url && !doc.file_url && /\.pdf(?:[?#]|$)/i.test(doc.url));
+const needsPDFArchive = (doc) => Boolean(doc?.url && !doc.file_url && /\.pdf(?:[?#]|$)/i.test(doc.url)
+  && /^[a-f0-9]{64}$/i.test(doc.source_sha256 || '')
+  && Number.isSafeInteger(Number(doc.source_bytes)) && Number(doc.source_bytes) > 0);
 
 export default function PermittingRepositoryAdmin() {
   const [jurisdictions, setJurisdictions] = useState([]);
@@ -213,7 +215,7 @@ export default function PermittingRepositoryAdmin() {
             const res = await downloadPermitPDF({ jurisdiction_id: item.jurisdictionId, document_url: item.url, document_title: item.title });
             // A returned URL alone is not enough: confirm the correct source now
             // has a stored file in the latest record before counting a success.
-            const saved = res.data?.jurisdiction || await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
+            const saved = await base44.entities.JurisdictionProfile.get(item.jurisdictionId);
             const archived = (saved.documents || []).some(doc => doc.id === item.documentId && doc.url === item.url && isVerifiedPermitPDFArchive(doc));
             if (!archived) throw new Error('Upload was not confirmed against the matching document');
             uploaded++;
