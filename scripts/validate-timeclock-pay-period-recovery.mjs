@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { createHmac, webcrypto } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { transformSync } from 'esbuild';
 
 const secret = 'synthetic-session-signing-key';
@@ -928,8 +930,13 @@ test('interrupted Clock In preserves its original trusted punch after closed-per
   assert.equal(recovered.body.entry.clock_in, originalPunch);
 });
 
-for (const [name, fn] of tests) {
-  try { await fn(); console.log('PASS ' + name); }
-  catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
+// Export the same real backend VM for isolated browser acceptance. Test registration
+// has no side effects against live Base44; execute the CLI suite only when direct.
+export { setup as setupSyntheticTimeClock };
+if (import.meta.url === pathToFileURL(resolve(process.argv[1] || '')).href) {
+  for (const [name, fn] of tests) {
+    try { await fn(); console.log('PASS ' + name); }
+    catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
+  }
+  if (!process.exitCode) console.log('PASS ' + tests.length + '/' + tests.length + ' Time Clock synthetic recovery scenarios');
 }
-if (!process.exitCode) console.log('PASS ' + tests.length + '/' + tests.length + ' Time Clock synthetic recovery scenarios');
