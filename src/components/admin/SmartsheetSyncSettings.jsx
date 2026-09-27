@@ -761,13 +761,13 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           <div className="flex items-center justify-between">
             <div className="font-semibold text-sm text-gray-900 flex items-center gap-2">
               {syncResult.needs_review ? <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Check className="h-4 w-4 text-emerald-600" />}
-              {syncResult.needs_review ? "Sales sync needs review" : "Sync results"}
+              {syncResult.needs_review ? "Sync needs review" : "Sync results"}
             </div>
             <span className="text-xs text-gray-500">Finished {new Date().toLocaleTimeString()}</span>
           </div>
           {syncResult.needs_review && (
             <p role="alert" className="text-xs text-amber-800">
-              An attempted Sales stage was blocked or reported conflicts. The run finished processing, but synchronization is not fully complete.
+              A requested sync stage was blocked or reported errors, conflicts or incomplete verification. The run finished processing, but synchronization is not fully complete.
             </p>
           )}
           {syncResult.results.map((r, i) => (
