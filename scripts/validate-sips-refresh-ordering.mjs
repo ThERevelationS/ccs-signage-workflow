@@ -93,6 +93,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     quickEditsInFlightRef: { current: new Map() },
     savingRevisitIds: new Set(),
     reopeningWipIds: new Set(),
+    reopenedFocusWorkOrderId: null,
     reopeningWipInFlightRef: { current: new Set() },
     today,
     workOrders: [structuredClone(record)],
@@ -119,6 +120,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
   ctx.setReopeningWipIds = (updater) => {
     ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
   };
+  ctx.setReopenedFocusWorkOrderId = (value) => { ctx.reopenedFocusWorkOrderId = value; };
   ctx.loadAllEntityRows = ({ entity: requested }) => {
     if (requested === authorizedEmail) return Promise.resolve([]);
     assert.equal(requested, entity);
