@@ -635,4 +635,49 @@ await check('failed stale quick edit releases field so retry after refresh works
   assert.equal(h.ctx.quickEditError, '');
 });
 
+
+await check('failed clear stays visible in dialog and cannot retry a stale confirmation', async () => {
+  const h = harness(tomorrow);
+  h.openClear();
+  h.mutate({ sip_revisit_date: later });
+  await h.handlers.confirmClearRevisit();
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.ctx.pendingRevisitClear.revisitDate, tomorrow, 'Dialog remains visible with confirmed date');
+  assert.match(h.ctx.revisitClearFailure.message, /changed in another session/);
+  assert.equal(h.ctx.revisitClearFailure.requiresReview, true);
+  const writesBeforeRetry = h.attemptedWrites;
+  await h.handlers.confirmClearRevisit();
+  assert.equal(h.attemptedWrites, writesBeforeRetry, 'A stale confirmation cannot submit twice');
+  assert.equal(h.record.sip_revisit_date, later);
+});
+
+await check('new clear confirmation resets old conflict after reviewing refreshed date', async () => {
+  const h = harness(tomorrow);
+  h.openClear();
+  h.mutate({ sip_revisit_date: later });
+  await h.handlers.confirmClearRevisit();
+  assert.equal(h.ctx.revisitClearFailure.requiresReview, true);
+  h.openClear();
+  assert.equal(h.ctx.pendingRevisitClear.revisitDate, later);
+  assert.equal(h.ctx.revisitClearFailure, null);
+  await h.handlers.confirmClearRevisit();
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.ctx.pendingRevisitClear, null);
+  assert.equal(h.ctx.revisitClearFailure, null);
+  assert.equal(h.writes, 1);
+});
+
+await check('clear confirmation renders inline accessible failure and requires review after conflict', async () => {
+  const start = board.indexOf('open={!!pendingRevisitClear}');
+  const end = board.indexOf('open={!!actionError}', start);
+  assert.ok(start > 0 && end > start, 'Clear Revisit dialog can be inspected');
+  const dialog = board.slice(start, end);
+  assert.match(dialog, /revisitClearFailure &&/);
+  assert.match(dialog, /role="alert"/);
+  assert.match(dialog, /\{revisitClearFailure.message\}/);
+  assert.match(dialog, /revisitClearFailure\.requiresReview \? "Close & review board"/);
+  assert.match(dialog, /disabled=\{isClearingRevisit \|\| revisitClearFailure\?\.requiresReview\}/);
+  assert.match(dialog, /setRevisitClearFailure\(null\)/);
+});
+
 console.log(passed + '/' + passed + ' SIPS board Revisit regression checks passed');
