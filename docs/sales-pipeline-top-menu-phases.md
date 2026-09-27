@@ -11,11 +11,11 @@ Completed and checkpointed: `6ab7c086ab9544ba3bc7a368`, Git `d37da278d0739e18479
 Workspace, views, search, New Client and permission-gated Tools are visible and separated from saved information/column filters. On phones, the desktop view tabs become one selector.
 
 ## Phase 2 — Compact attention controls and grouped More Filters
-Implemented and tested: 30/30 toolbar checks, 86/86 attention menu checks, Sales column catalog checks, targeted lint without errors, and production build. Exact checkpoint is recorded in the verified handoff.
+Completed and checkpointed: `6ab8555e463f5ec8f2e89306`, Git `d7ee36afc01a75fb84df7530f5cbe9ef80783239`. 30/30 toolbar and 86/86 attention menu checks, column checks, targeted lint and production build passed.
 Keep All, Overdue, Today, Next 7 Days and Needs Attention visible without horizontal swiping; group the other existing filters into More Filters. Preserve every original filter key, existing counts and click behavior, and expose the active selection and Clear Filters. Do not change the underlying trustworthy Sales summary or WorkOrders.
 
 ## Phase 3 — Progressive KPI summary
-Planned. Retain four directly visible KPI cards (Open Opportunities, Open Pipeline Value, Follow-ups Due and Needs Attention). Place the existing secondary KPIs in an expandable More Metrics area with their original click-to-filter behavior, titles, coverage and date limitations intact. Do not invent metrics or change calculations.
+Implemented and tested; record the final checkpoint after verification. Four KPI cards are directly visible (Open Opportunities, Open Pipeline Value, Follow-ups Due and Needs Attention), with the original four secondary cards under an accessible, initially collapsed More Metrics control. All seven original card implementations, tooltip coverage, values and click handlers are unchanged. Needs Attention reuses its existing summary count and filter. An active secondary filter remains named in the More Metrics button. No changes to metric calculations, data or permissions.
 
 ## Phase 4 — Responsive and contextual finishing
 Planned. Test small phones, tablets and wide desktop; avoid horizontal toolbars that hide important controls. Retain Outcome Period only in Outcomes, appropriate views by workspace, real active filter labels and keyboard/touch accessibility. Protect the separate compact checkbox editor and horizontal column preview.
