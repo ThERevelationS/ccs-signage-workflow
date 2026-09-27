@@ -91,6 +91,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     boardSavesPendingRef: { current: 0 },
     boardRefreshDeferredRef: { current: false },
     quickEditsInFlightRef: { current: new Map() },
+    savingRevisitIds: new Set(),
     today,
     workOrders: [structuredClone(record)],
     users: [],
@@ -107,6 +108,9 @@ function fixture(date = yesterday, { completed = false } = {}) {
   ctx.setOpenDatePopover = () => {};
   ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
+  ctx.setSavingRevisitIds = (updater) => {
+    ctx.savingRevisitIds = typeof updater === 'function' ? updater(ctx.savingRevisitIds) : updater;
+  };
   ctx.loadAllEntityRows = ({ entity: requested }) => {
     if (requested === authorizedEmail) return Promise.resolve([]);
     assert.equal(requested, entity);
@@ -349,6 +353,68 @@ await check('conflict refresh is deferred until another field finishes saving', 
   assert.equal(h.ctx.workOrders[0].sip_revisit_date, later, 'Failed date edit is corrected without waiting 60 seconds');
   assert.equal(h.ctx.workOrders[0].notes, 'local note');
   assert.match(h.ctx.quickEditError, /changed in another session/);
+});
+
+
+await check('Revisit quick edit shows pending state until save completes', async () => {
+  const h = fixture(yesterday);
+  const releaseGet = h.holdGet();
+  const saving = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), true);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 1);
+  assert.equal(h.queue(), 'Revisit Later');
+  releaseGet();
+  await saving;
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), false);
+  assert.equal(h.ctx.quickEditsInFlightRef.current.size, 0);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+});
+
+await check('duplicate Revisit selections keep one pending save without duplicate writes', async () => {
+  const h = fixture(yesterday);
+  const releaseGet = h.holdGet();
+  const saving = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  await h.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), true);
+  assert.match(h.ctx.quickEditError, /still saving/);
+  assert.equal(h.queue(), 'Revisit Later');
+  releaseGet();
+  await saving;
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.writes, 1);
+});
+
+await check('failed Revisit save stays pending through latest-data reload, then clears state', async () => {
+  const h = fixture(yesterday);
+  h.externalUpdate({ sip_revisit_date: later });
+  const failed = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  for (let i = 0; i < 25 && h.reads.length === 0; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1, 'Conflict starts latest-data reload');
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), true);
+  h.reads[0].finish();
+  await failed;
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, later);
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+  assert.equal(h.writes, 0);
+});
+
+await check('a different field remains editable while Revisit shows pending', async () => {
+  const h = fixture(yesterday);
+  const releaseGet = h.holdGet();
+  const saving = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  await h.updateWorkOrder(h.record.id, 'notes', 'independent edit');
+  assert.equal(h.record.notes, 'independent edit');
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), true);
+  assert.equal(h.ctx.savingRevisitIds.size, 1);
+  releaseGet();
+  await saving;
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  assert.equal(h.record.sip_revisit_date, tomorrow);
+  assert.equal(h.record.notes, 'independent edit');
+  assert.equal(h.writes, 2);
 });
 
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
