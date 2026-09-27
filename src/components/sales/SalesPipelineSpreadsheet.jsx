@@ -184,6 +184,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingChangesRef = useRef({});
   const pendingBaselinesRef = useRef({});
   const pendingHistoryFieldsRef = useRef({});
+  const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
   const [quickEditError, setQuickEditError] = useState("");
   const [destructiveActionError, setDestructiveActionError] = useState("");
@@ -410,8 +411,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return page;
   };
 
-  const mergeLoadedRows = (rows) => [...new Map(rows.map((order) => [order.id, order])).values()]
-    .map((order) => ({ ...order, ...(pendingChangesRef.current[order.id] || {}) }))
+  const mergeLoadedRows = (rows, scope = activeRecordScopeRef.current) => [...new Map(rows.map((order) => [order.id, order])).values()]
+    .map((order) => ({
+      ...order,
+      ...(pendingRecordScopesRef.current[order.id] === scope ? (pendingChangesRef.current[order.id] || {}) : {}),
+    }))
     .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
 
   const loadWorkOrders = async (showLoading = true, scope = recordScope) => {
@@ -468,10 +472,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return;
       archiveSkipRef.current = pagedCount;
       setArchiveHasMore(hasMore);
-      const loadedRows = scopeAtStart === recordScope
-        ? mergeLoadedRows(rows)
-        : rows;
-      setWorkOrders(loadedRows);
+      setWorkOrders(mergeLoadedRows(rows, scopeAtStart));
       setUsers(usersData);
     } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
@@ -651,6 +652,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
     });
     pendingBaselinesRef.current[orderId] = baselines;
+    pendingRecordScopesRef.current[orderId] = activeRecordScopeRef.current;
     pendingChangesRef.current[orderId] = {
       ...(pendingChangesRef.current[orderId] || {}),
       ...mergedUpdates,
@@ -716,6 +718,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingChangesRef.current[orderId];
           delete pendingBaselinesRef.current[orderId];
           delete pendingHistoryFieldsRef.current[orderId];
+          delete pendingRecordScopesRef.current[orderId];
         }
         setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, updated_date: saved.updated_date } : row));
         setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, updated_date: saved.updated_date } : selected);
@@ -808,6 +811,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     pendingChangesRef.current = {};
     pendingBaselinesRef.current = {};
     pendingHistoryFieldsRef.current = {};
+    pendingRecordScopesRef.current = {};
     setQuickEditError("");
     await loadWorkOrders(false);
   };
