@@ -80,4 +80,8 @@ check(page.includes('activeColumnPreset={activeColumnPreset}') &&
   page.includes('onSummaryChange={setPipelineSummary}'),
   "Existing Sales data flow and selected column preset remain untouched.");
 
+const kanban = readFileSync("src/components/sales/SalesPipelineKanban.jsx", "utf8");
+check(/role="group"\s+aria-label=\{`Follow-up quick actions for \$\{workOrder\.client_name/.test(kanban),
+  "Kanban follow-up quick actions expose their customer-specific label as an accessible group.");
+
 console.log(`Sales Pipeline mobile toolbar structure and contextual actions: ${checks}/${checks} PASS.`);
