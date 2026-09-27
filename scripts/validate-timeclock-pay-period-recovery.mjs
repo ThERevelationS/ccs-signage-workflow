@@ -31,8 +31,14 @@ function matches(row, query = {}) {
     return actual === value || (actual == null && value == null);
   });
 }
-function setup({ entryCount = 1 } = {}) {
+function setup({ entryCount = 1, serverNow = null } = {}) {
   revision = 0;
+  // Inject only the backend wall-clock constructor for company-day boundary
+  // acceptance; retain real Date.now() for session validation and lock ages.
+  const ServerDate = serverNow ? class extends Date {
+    constructor(...args) { super(...(args.length ? args : [serverNow])); }
+    static now() { return Date.now(); }
+  } : Date;
   const rows = {
     AuthorizedEmail: [administrator, employee].map(clone),
     TimeClockEmployeeState: [administrator, employee].map((user) => ({
@@ -84,7 +90,7 @@ function setup({ entryCount = 1 } = {}) {
     __syntheticClient: () => client,
     Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
-    console: { error: () => {} },
+    Date: ServerDate, console: { error: () => {} },
   });
   vm.runInContext(compiled, context, { filename: 'synthetic-time-clock-handler.js' });
   assert.equal(typeof handler, 'function');
