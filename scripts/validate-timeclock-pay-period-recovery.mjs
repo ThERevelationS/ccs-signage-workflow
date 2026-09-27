@@ -128,6 +128,57 @@ const tests = [];
 function test(name, fn) { tests.push([name, fn]); }
 const finalizeRequest = 'synthetic-finalize-001';
 
+
+test('simultaneous overlapping creates serialize on the shared backend gate', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  let gateEntered;
+  const entered = new Promise((resolve) => { gateEntered = resolve; });
+  let releaseFirst;
+  h.setAfterRowUpdate(async (name, _query, _update, row) => {
+    if (name === 'TimeClockPayPeriodCreateGate' && row.status === 'creating' &&
+        row.request_id === 'parallel-first-001') {
+      gateEntered();
+      await new Promise((resolve) => { releaseFirst = resolve; });
+    }
+  });
+  const firstRequest = { action: 'pay_period_create', request_id: 'parallel-first-001',
+    label: 'First concurrent period', start_date: '2026-10-01', end_date: '2026-10-14' };
+  const secondRequest = { action: 'pay_period_create', request_id: 'parallel-second-001',
+    label: 'Overlapping concurrent period', start_date: '2026-10-08', end_date: '2026-10-21' };
+  const firstPromise = h.invoke(firstRequest);
+  await entered;
+  const competing = await h.invoke(secondRequest);
+  assert.equal(competing.status, 409, JSON.stringify(competing.body));
+  assert.match(competing.body.error, /Another pay-period creation/);
+  assert.equal(h.rows.TimeClockPayPeriod.length, 0);
+  releaseFirst();
+  const first = await firstPromise;
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  const retried = await h.invoke(secondRequest);
+  assert.equal(retried.status, 409, JSON.stringify(retried.body));
+  assert.match(retried.body.error, /overlaps/);
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+  assert.equal(h.rows.TimeClockPayPeriodCreateGate[0].status, 'idle');
+});
+
+test('missing or duplicate pay-period coordinator fails closed without writing records', async () => {
+  for (const gates of [[], [
+    { id: 'gate-one', scope: 'company', status: 'idle' },
+    { id: 'gate-two', scope: 'company', status: 'idle' },
+  ]]) {
+    const h = setup({ entryCount: 0 });
+    h.rows.TimeClockPayPeriod = [];
+    h.rows.TimeClockPayPeriodCreateGate = gates;
+    const result = await h.invoke({ action: 'pay_period_create', request_id: 'missing-coordinator-001',
+      label: 'Should not create', start_date: '2026-10-01', end_date: '2026-10-14' });
+    assert.equal(result.status, 409, JSON.stringify(result.body));
+    assert.match(result.body.error, /coordinator.*missing or ambiguous/);
+    assert.equal(h.rows.TimeClockPayPeriod.length, 0);
+    assert.equal(h.rows.TimeClockAudit.length, 0);
+  }
+});
+
 test('ordinary pay-period create is audited and exact retry reuses one period', async () => {
   const h = setup({ entryCount: 0 });
   h.rows.TimeClockPayPeriod = [];
