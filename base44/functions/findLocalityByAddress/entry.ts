@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { normalizeAddressState as normalizeState } from '../../shared/permittingAddressState.js';
-import { addressLocalityIdentityMatches } from '../../shared/permittingAddressLocality.js';
+import { addressLocalityIdentityMatches, summarizeMatchedLocalityAuthority } from '../../shared/permittingAddressLocality.js';
 
 function normalizePlace(value: unknown) {
   return String(value || '')
@@ -216,6 +216,11 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       success: true,
       geocode,
       suggested_locality: matchedLocality,
+      // A geographic identity match is not a verified permitting-authority claim.
+      // Derive role verification only from the stored, staff-reviewed locality offices.
+      authority_review: summarizeMatchedLocalityAuthority(
+        matchedLocality ? localities.find(row => row.id === matchedLocality.id) : null
+      ),
       not_matched: !matchedLocality,
       ai_locality_name: aiResult.ai_locality_name || "",
       ai_state: aiResult.ai_state || "",
