@@ -143,6 +143,7 @@ async function changeDate(page, mobile) {
   }
   const calendar = page.locator(".rdp:visible").last();
   await calendar.waitFor();
+  console.log('DEBUG calendar: ' + (await calendar.evaluate((node) => node.outerHTML)).slice(0, 3500));
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const caption = (await calendar.locator(".rdp-caption_label").innerText()).trim();
     if (caption === targetMonth) break;
