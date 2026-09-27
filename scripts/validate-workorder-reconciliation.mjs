@@ -45,7 +45,7 @@ assert(!JSON.stringify(result).includes("999"),"internal costs must not appear i
 const gateway=readFileSync(new URL("../base44/functions/corebridgeApiAction/entry.ts",import.meta.url),"utf8");
 const page=readFileSync(new URL("../src/components/admin/CorebridgeApiSettings.jsx",import.meta.url),"utf8");
 assert(gateway.includes("actor?.role !== 'admin'"),"server-side authorization required");
-assert(gateway.includes("'export_jobs_csv', 'audit_workorders'"),"read-only actions explicitly allowlisted");
+assert(gateway.includes("'export_jobs_csv', 'audit_workorders', 'verify_sept22_backup'"),"read-only actions explicitly allowlisted");
 assert(!/WorkOrder\.(create|update|delete|bulkCreate|bulkUpdate)\s*\(/.test(gateway),"no WorkOrder writes allowed");
 assert(!gateway.includes("safeExternalFetch")&&!gateway.includes("COREBRIDGE_SUBSCRIPTION_KEY"),"no retired CoreBridge API access");
 assert(page.includes("action: \"audit_workorders\""),"admin page must use read-only action");
