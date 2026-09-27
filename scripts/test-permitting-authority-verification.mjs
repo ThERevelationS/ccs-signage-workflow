@@ -6,6 +6,7 @@ import {
   revokeLocalityOfficeAuthorityVerification,
   setLocalityOfficeAuthorityRole,
   summarizeLocalityOfficeAuthority,
+  updateLocalityOfficeIdentity,
   verifyLocalityOfficeAuthority,
 } from "../src/components/permitting/localityAuthorityVerification.js";
 
@@ -93,4 +94,68 @@ test("locality office summary remains visible outside the expandable editor", ()
   assert.ok(ui.indexOf("authoritySummary.relationship") < ui.indexOf("{/* Expanded content */}"));
   assert.ok(ui.indexOf("authoritySummary.authority") < ui.indexOf("{/* Expanded content */}"));
   assert.ok(ui.indexOf("authoritySummary.roleLabels.join") < ui.indexOf("{/* Expanded content */}"));
+});
+
+test("verified locality authority is revoked after material identity/contact edits, preserving provenance", () => {
+  const office = {
+    id: "local-1", catalog_office_id: "catalog-1", government_office_id: "gov-1",
+    name: "County Zoning", contact_phone: "555-0100", contact_email: "office@example.gov",
+    contact_website: "https://example.gov", contact_address: "1 Main Street",
+    authority_roles: ["sign_permit", "zoning"], authority_verification_notes: "Ordinance and staff review",
+    authority_verification_status: "staff_verified", authority_verified_at: "2026-09-27T10:00:00.000Z",
+    authority_verified_by: "Reviewer", workflow_steps: [{ id: "submit", name: "Submit application" }],
+  };
+  for (const [field, replacement] of [
+    ["name", "County Planning"], ["contact_phone", "555-0200"],
+    ["contact_email", "planning@example.gov"], ["contact_website", "https://planning.example.gov"],
+    ["contact_address", "2 Main Street"],
+  ]) {
+    const edited = updateLocalityOfficeIdentity(office, { [field]: replacement });
+    assert.equal(edited[field], replacement, field);
+    assert.equal(edited.authority_verification_status, "needs_verification", field);
+    assert.equal(edited.authority_verified_at, undefined, field);
+    assert.equal(edited.authority_verified_by, undefined, field);
+    assert.equal(edited.id, office.id, field);
+    assert.equal(edited.catalog_office_id, office.catalog_office_id, field);
+    assert.equal(edited.government_office_id, office.government_office_id, field);
+    assert.deepEqual(edited.authority_roles, office.authority_roles, field);
+    assert.equal(edited.authority_verification_notes, office.authority_verification_notes, field);
+    assert.deepEqual(edited.workflow_steps, office.workflow_steps, field);
+  }
+  assert.equal(office.authority_verification_status, "staff_verified");
+});
+
+test("formatting-only edits and workflow, office-type or note edits preserve verified authority", () => {
+  const office = {
+    name: "County Zoning", contact_phone: "555-0100", authority_roles: ["zoning"],
+    authority_verification_status: "staff_verified", authority_verified_by: "Reviewer",
+    authority_verified_at: "2026-09-27T10:00:00.000Z",
+  };
+  for (const patch of [
+    { name: "  County Zoning  " }, { contact_phone: " 555-0100 " },
+    { office_type: "Building" }, { contact_notes: "New hours" },
+    { authority_verification_notes: "Expanded citation" },
+    { workflow_steps: [{ id: "next", name: "Follow up" }] },
+  ]) {
+    const edited = updateLocalityOfficeIdentity(office, patch);
+    assert.equal(edited.authority_verification_status, "staff_verified");
+    assert.equal(edited.authority_verified_by, "Reviewer");
+    assert.equal(edited.authority_verified_at, office.authority_verified_at);
+  }
+});
+
+test("unverified legacy office edits do not manufacture review status or change office links", () => {
+  const office = { id: "local-2", name: "Legacy", catalog_office_id: "template-2", authority_roles: ["zoning"] };
+  const edited = updateLocalityOfficeIdentity(office, { name: "Updated", contact_email: "mail@example.gov" });
+  assert.equal(edited.name, "Updated");
+  assert.equal(edited.authority_verification_status, undefined);
+  assert.equal(edited.catalog_office_id, "template-2");
+});
+
+test("locality editor routes direct identity/contact edits through verification invalidation", () => {
+  const ui = readFileSync(new URL("../src/components/permitting/LocalityOfficeEditor.jsx", import.meta.url), "utf8");
+  assert.match(ui, /onChange\(updateLocalityOfficeIdentity\(office, patch\)\)/);
+  for (const field of ["name", "contact_phone", "contact_email", "contact_website", "contact_address"]) {
+    assert.match(ui, new RegExp(`update\\(\\{ ${field}: e\\.target\\.value \\}\\)`));
+  }
 });
