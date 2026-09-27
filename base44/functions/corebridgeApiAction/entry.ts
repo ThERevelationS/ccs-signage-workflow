@@ -3,6 +3,7 @@ import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { buildJobRegisterCsv } from '../../shared/corebridgeOfflineCsv.mjs';
 import { buildWorkOrderReconciliation } from '../../shared/workOrderReconciliation.mjs';
 import { summarizeWorkOrderHistory } from '../../shared/workOrderHistoricalEvidence.mjs';
+import { verifySeptember22WorkOrderBackup } from '../../shared/verifySeptember22WorkOrderBackup.ts';
 
 // Retained function name for compatibility with existing CCS installations.
 // External CoreBridge API access is intentionally retired, even if an old secret remains.
@@ -40,7 +41,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access is required.' }, { status: 403 });
     }
 
-    if (!['export_jobs_csv', 'audit_workorders'].includes(body?.action)) {
+    if (!['export_jobs_csv', 'audit_workorders', 'verify_sept22_backup'].includes(body?.action)) {
       return Response.json({
         error: 'CoreBridge API access has been retired. Use CCS native reports and reviewed file imports.',
         api_disabled: true,
@@ -90,6 +91,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (body.action === 'verify_sept22_backup') {
+      const comparison = await verifySeptember22WorkOrderBackup(base44, records);
+      return Response.json({ success: true, api_disabled: true, comparison });
+    }
+
     const result = buildJobRegisterCsv(records, scope);
     return Response.json({
       success: true,
@@ -101,7 +107,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const status = Number((error as any)?.status || 500);
-    const safeStatus = [400, 401, 403, 405, 410].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 405, 409, 410, 502].includes(status) ? status : 500;
     console.error('CCS offline job register failed:', (error as any)?.message || error);
     return Response.json({
       error: safeStatus === 500
