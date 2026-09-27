@@ -1817,9 +1817,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     })).sort((a, b) => SALES_STATUSES.findIndex((status) => status.value === a.stage) - SALES_STATUSES.findIndex((status) => status.value === b.stage));
 
     const allTrustedOutcomes = workOrders.filter(isTrustedSalesOutcome);
+    // Outcome Period is a control of the dedicated Outcomes workspace only.
+    // Do not let a previously selected period silently narrow Current → Insights,
+    // where there is no visible period control and reporting is intentionally all-time.
+    const reportingOutcomeCutoffStamp = recordScope === "outcomes" ? outcomeCutoffStamp : "";
     const reportingOutcomes = allTrustedOutcomes.filter((wo) => {
-      if (!outcomeCutoffStamp) return true;
-      return Boolean(wo.close_date) && wo.close_date >= outcomeCutoffStamp && wo.close_date <= todayStamp;
+      if (!reportingOutcomeCutoffStamp) return true;
+      return Boolean(wo.close_date) && wo.close_date >= reportingOutcomeCutoffStamp && wo.close_date <= todayStamp;
     });
     summary.totalTrackedOutcomeCount = allTrustedOutcomes.length;
     summary.trackedOutcomeCount = reportingOutcomes.length;
@@ -1872,7 +1876,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     summary.ownerOutcomePerformance = buildOutcomePerformance("sales_rep", "Unassigned");
     summary.sourceOutcomePerformance = buildOutcomePerformance("lead_source", "Unspecified");
     return summary;
-  }, [scopedWorkOrders, workOrders, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp]);
+  }, [scopedWorkOrders, workOrders, recordScope, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
