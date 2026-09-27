@@ -1401,7 +1401,7 @@ export default function SIPs() {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleSipCompleted(wo)}
-                      disabled={!isRegistered || reopeningWipIds.has(wo.id)}
+                      disabled={!isRegistered || reopeningWipIds.has(wo.id) || savingRevisitIds.has(wo.id)}
                       aria-busy={reopeningWipIds.has(wo.id)}
                       className="min-h-11 px-2.5 shrink-0 text-xs bg-white border-green-200 text-green-700 hover:bg-green-50 touch-manipulation"
                       aria-label={`${reopeningWipIds.has(wo.id) ? "Reopening" : "Reopen"} ${wo.client_name || "this Work Order"} in the active SIPs queue`}
@@ -1471,7 +1471,7 @@ export default function SIPs() {
                       <Checkbox
                         checked={true}
                         onCheckedChange={() => toggleSipCompleted(wo)}
-                        disabled={!isRegistered || reopeningWipIds.has(wo.id)}
+                        disabled={!isRegistered || reopeningWipIds.has(wo.id) || savingRevisitIds.has(wo.id)}
                         aria-busy={reopeningWipIds.has(wo.id)}
                         aria-label={`${reopeningWipIds.has(wo.id) ? "Reopening" : "Reopen"} ${wo.client_name || "this Work Order"} in active SIPs`}
                         className="h-4 w-4"
