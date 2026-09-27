@@ -144,4 +144,140 @@ old();
 assert.ok(source.includes('ref={statusFilterRef}'), "fallback filter is focusable");
 assert.ok(source.includes('role="status"'), "filtered-out outcome is announced");
 assert.ok(source.includes('role="alert"'), "reopen failures are announced");
-console.log("PASS: initial and repeat refresh, confirmation/loading/view guards, visible and filtered focus, canceled and superseded requests, and status announcements.");
+console.log("PASS: initial and repeat refresh, confirmation/loading/view guards, visible and filtered reopen focus.");
+
+const pendingCompletionFocusRef = { current: null };
+const completedRows = [];
+const completionNotices = [];
+const completionStatusFilter = { focused: 0, focus() { this.focused++; } };
+const boardButtons = [
+  { id: "wo1", visible: false, focused: 0 },
+  { id: "wo1", visible: true, focused: 0 },
+  { id: "wo-other", visible: true, focused: 0 },
+].map(entry => ({
+  getAttribute: name => name === "data-fleet-board-open" ? entry.id : null,
+  getClientRects: () => entry.visible ? [1] : [],
+  focus() { entry.focused++; },
+  entry,
+}));
+let listFocused = 0;
+const completionContext = {
+  pendingCompletionFocusRef,
+  dialog: { mode: "complete" },
+  loading: false,
+  viewMode: "list",
+  rows: [],
+  statusFilterRef: { current: completionStatusFilter },
+  setFocusNotice: notice => completionNotices.push(notice),
+  document: {
+    getElementById: id => id === "fleet-work-order-toggle-wo1"
+      ? { focus() { listFocused++; } } : null,
+    querySelectorAll: selector => {
+      assert.equal(selector, "button[data-fleet-board-open]");
+      return boardButtons;
+    },
+  },
+  window: focusContext.window,
+};
+const restoreCompletionFocus = extract(
+  "  useEffect(() => {\n    const pending = pendingCompletionFocusRef.current;",
+  "\n  }, [dialog, loading, rows, viewMode]);",
+  "() => { const pending = pendingCompletionFocusRef.current;",
+  completionContext
+);
+
+// The modal must close before focus restoration, including the server-save path.
+pendingCompletionFocusRef.current = { id: "wo1", label: "WO-1" };
+assert.equal(restoreCompletionFocus(), undefined);
+assert.equal(timers.size, 0);
+completionContext.dialog = null;
+completionContext.loading = true;
+assert.equal(restoreCompletionFocus(), undefined);
+completionContext.loading = false;
+
+// A completed order absent from Active returns focus to the status filter.
+const filteredCleanup = restoreCompletionFocus();
+assert.equal(completionStatusFilter.focused, 0);
+runTimers();
+assert.equal(completionStatusFilter.focused, 1);
+assert.equal(completionNotices.at(-1), "Completed WO-1. It no longer matches the current filters.");
+assert.equal(pendingCompletionFocusRef.current, null);
+filteredCleanup();
+
+// An order still visible under All statuses focuses its own list disclosure.
+pendingCompletionFocusRef.current = { id: "wo1", label: "WO-1" };
+completionContext.rows = [{ id: "wo1" }];
+restoreCompletionFocus();
+runTimers();
+assert.equal(listFocused, 1);
+assert.equal(completionStatusFilter.focused, 1);
+
+// Board completion moves the card to another column: select only the visible copy.
+pendingCompletionFocusRef.current = { id: "wo1", label: "WO-1" };
+completionContext.viewMode = "board";
+restoreCompletionFocus();
+runTimers();
+assert.deepEqual(boardButtons.map(button => button.entry.focused), [0, 1, 0]);
+
+// If a board filter hides the completed card, use the same safe fallback.
+pendingCompletionFocusRef.current = { id: "wo1", label: "WO-1" };
+completionContext.rows = [];
+restoreCompletionFocus();
+runTimers();
+assert.equal(completionStatusFilter.focused, 2);
+
+// An abandoned or superseded effect must not steal focus from a newer action.
+pendingCompletionFocusRef.current = { id: "wo1", label: "WO-1" };
+completionContext.rows = [{ id: "wo1" }];
+const abortedCompletion = restoreCompletionFocus();
+abortedCompletion();
+runTimers();
+assert.equal(boardButtons[1].entry.focused, 1);
+assert.equal(pendingCompletionFocusRef.current.id, "wo1");
+const replacedCompletion = restoreCompletionFocus();
+pendingCompletionFocusRef.current = { id: "newer", label: "WO-2" };
+runTimers();
+assert.equal(boardButtons[1].entry.focused, 1);
+assert.equal(pendingCompletionFocusRef.current.id, "newer");
+replacedCompletion();
+
+// Exercise the submit boundary using synthetic inputs, never live records.
+const completionRequests = [];
+const submission = {
+  dialog: { mode: "complete", workOrder: { id: "wo1", work_order_number: "WO-1", updated_date: "synthetic" } },
+  equipment: [],
+  tasks: [],
+  pendingCompletionFocusRef,
+  setFocusNotice: notice => completionNotices.push(notice),
+  setActionError() {},
+  closeDialog() { this.closed = true; },
+  closed: false,
+  base44: { functions: { invoke: async (_name, payload) => {
+    completionRequests.push(payload);
+    return { data: {} };
+  } } },
+  async loadData() { completedRows.push("refreshed"); },
+};
+const submitCompleted = extract(
+  "  const submitDialog = async (workOrderData, equipmentStatus) => {",
+  "\n  };\n\n  const startWork",
+  "async (workOrderData, equipmentStatus) => {",
+  submission
+);
+pendingCompletionFocusRef.current = null;
+await submitCompleted({ equipment_id: "synthetic-eq" }, "operational");
+assert.equal(completionRequests.length, 1);
+assert.equal(completionRequests[0].action, "complete");
+assert.equal(completionRequests[0].id, "wo1");
+assert.deepEqual(completedRows, ["refreshed"]);
+assert.equal(pendingCompletionFocusRef.current.id, "wo1");
+
+// Failed completion or failed post-save refresh cannot queue focus restoration.
+submission.dialog = { mode: "complete", workOrder: { id: "failed", work_order_number: "WO-F" } };
+submission.base44.functions.invoke = async () => ({ data: { error: "synthetic rejection" } });
+pendingCompletionFocusRef.current = null;
+await assert.rejects(() => submitCompleted({}, "operational"), /synthetic rejection/);
+assert.equal(pendingCompletionFocusRef.current, null);
+assert.ok(source.includes("data-fleet-board-open={workOrder.id}"), "board cards expose stable focus targets");
+console.log("PASS: 11 completion focus scenarios, synthetic successful and rejected submissions, plus existing reopening and refresh coverage.");
+
