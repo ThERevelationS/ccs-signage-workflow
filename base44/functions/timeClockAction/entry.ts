@@ -1752,7 +1752,6 @@ Deno.serve(async (req) => {
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
     const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
-    const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
