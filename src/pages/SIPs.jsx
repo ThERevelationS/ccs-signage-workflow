@@ -369,6 +369,10 @@ export default function SIPs() {
 
   const requestClearRevisit = (wo) => {
     setOpenDatePopover(null);
+    if (reopeningWipInFlightRef.current.has(wo.id)) {
+      setQuickEditError("This WIP item is reopening. Wait for it to finish before clearing Revisit.");
+      return;
+    }
     setPendingRevisitClear({
       id: wo.id,
       clientName: wo.client_name || "this Work Order",
@@ -379,7 +383,21 @@ export default function SIPs() {
 
   const confirmClearRevisit = async () => {
     if (!pendingRevisitClear || isClearingRevisit) return;
-
+    const editKey = JSON.stringify([pendingRevisitClear.id, "sip_revisit_date"]);
+    if (reopeningWipInFlightRef.current.has(pendingRevisitClear.id)) {
+      setQuickEditError("This WIP item is reopening. Wait for it to finish before clearing Revisit.");
+      return;
+    }
+    if (quickEditsInFlightRef.current.has(editKey)) {
+      if (quickEditsInFlightRef.current.get(editKey) !== "") {
+        setQuickEditError("The Revisit date is still saving. Wait for it to finish before clearing it.");
+      }
+      return;
+    }
+    // Share the date-edit guard with calendar saves. The confirmation keeps
+    // its original expected date so a later session cannot be cleared.
+    quickEditsInFlightRef.current.set(editKey, "");
+    setSavingRevisitIds(prev => new Set(prev).add(pendingRevisitClear.id));
     setIsClearingRevisit(true);
     setQuickEditError("");
     try {
@@ -399,6 +417,12 @@ export default function SIPs() {
       setPendingRevisitClear(null);
       await loadWorkOrders(false);
     } finally {
+      quickEditsInFlightRef.current.delete(editKey);
+      setSavingRevisitIds(prev => {
+        const next = new Set(prev);
+        next.delete(pendingRevisitClear.id);
+        return next;
+      });
       setIsClearingRevisit(false);
     }
   };
