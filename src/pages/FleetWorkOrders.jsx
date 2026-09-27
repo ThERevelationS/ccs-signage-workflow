@@ -45,6 +45,7 @@ export default function FleetWorkOrders() {
   const pendingCompletionFocusRef = useRef(null);
   const pendingSaveFocusRef = useRef(null);
   const pendingStartFocusRef = useRef(null);
+  const pendingEstimateFocusRef = useRef(null);
   const statusFilterRef = useRef(null);
   const retryRefreshButtonRef = useRef(null);
   const hasLoadedRef = useRef(false);
@@ -262,6 +263,17 @@ export default function FleetWorkOrders() {
     return () => window.clearTimeout(focusTimer);
   }, [startWorkOrder, loading, rows, viewMode]);
 
+  // Estimate mutations are committed before list refresh; a failed refresh
+  // must offer a retry rather than asking the admin to repeat the mutation.
+  const estimateChanged = async (estimate) => {
+    const refreshed = await attemptPostMutationRefresh(loadData);
+    const id = estimate?.work_order_id || estimateWorkOrder?.id || "";
+    const label = estimateWorkOrder?.work_order_number || estimateWorkOrder?.title || "work order";
+    if (!refreshed) setRefreshError(`Updated the repair estimate for ${label} successfully, but the list could not refresh. Use Retry refresh; do not repeat the operation.`);
+    pendingEstimateFocusRef.current = { id, label, refreshFailed: !refreshed };
+    return refreshed;
+  };
+
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
@@ -444,7 +456,7 @@ export default function FleetWorkOrders() {
                 {isOpen && <div id={`fleet-work-order-panel-${w.id}`} role="region" aria-label={`Details for ${w.work_order_number || w.title}`} className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 text-sm">
                   <div className="flex flex-wrap gap-2">
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "edit", workOrder: w })} className="min-h-11 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center gap-1.5"><Pencil className="w-4 h-4" />Edit</button>}
-                    {currentUser?.role === "admin" && <button onClick={() => setEstimateWorkOrder(w)} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><DollarSign className="w-4 h-4" />Estimate / Approval</button>}
+                    {currentUser?.role === "admin" && <button data-fleet-estimate-open={w.id} onClick={() => setEstimateWorkOrder(w)} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><DollarSign className="w-4 h-4" />Estimate / Approval</button>}
                     {["open", "assigned"].includes(w.status) && <button onClick={() => openStartWork(w)} disabled={startingId === w.id} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5 disabled:opacity-50">{startingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}Start Work</button>}
                     {!["completed", "cancelled"].includes(w.status) && <button onClick={() => setDialog({ mode: "complete", workOrder: w })} className="min-h-11 px-3 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" />Complete</button>}
                     {w.status === "completed" && <button onClick={() => createFollowUp(w)} className="min-h-11 px-3 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5"><CornerUpRight className="w-4 h-4" />Follow-up Work Order</button>}
@@ -486,7 +498,7 @@ export default function FleetWorkOrders() {
         parts={parts}
         fluids={fluids}
         onClose={() => setEstimateWorkOrder(null)}
-        onChanged={loadData}
+        onChanged={estimateChanged}
       />
       <FleetStartWorkDialog
         open={!!startWorkOrder}
