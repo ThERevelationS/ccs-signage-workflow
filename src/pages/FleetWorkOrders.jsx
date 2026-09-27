@@ -38,6 +38,7 @@ export default function FleetWorkOrders() {
   const [estimateWorkOrder, setEstimateWorkOrder] = useState(null);
   const pendingBoardFocusRef = useRef(null);
   const pendingReopenFocusRef = useRef(null);
+  const pendingCompletionFocusRef = useRef(null);
   const statusFilterRef = useRef(null);
   const hasLoadedRef = useRef(false);
 
@@ -166,6 +167,32 @@ export default function FleetWorkOrders() {
     return () => window.clearTimeout(focusTimer);
   }, [confirmReopen, loading, rows, viewMode]);
 
+  // Completion may move a work order out of Active or into another board
+  // column. Only restore focus after the dialog has unmounted and the refreshed
+  // row is rendered; never change the user's filters to locate it.
+  useEffect(() => {
+    const pending = pendingCompletionFocusRef.current;
+    if (!pending || dialog || loading) return undefined;
+    const focusTimer = window.setTimeout(() => {
+      if (pendingCompletionFocusRef.current !== pending) return;
+      const visible = rows.some(row => row.id === pending.id);
+      const target = !visible ? null : viewMode === "list"
+        ? document.getElementById(`fleet-work-order-toggle-${pending.id}`)
+        : [...document.querySelectorAll("button[data-fleet-board-open]")]
+          .find(button => button.getAttribute("data-fleet-board-open") === pending.id && button.getClientRects().length > 0);
+      if (target) {
+        target.focus();
+      } else {
+        statusFilterRef.current?.focus();
+        setFocusNotice(visible
+          ? `Completed ${pending.label}. Use the filters to locate the updated work order.`
+          : `Completed ${pending.label}. It no longer matches the current filters.`);
+      }
+      pendingCompletionFocusRef.current = null;
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [dialog, loading, rows, viewMode]);
+
   const submitDialog = async (workOrderData, equipmentStatus) => {
     if (!dialog) return;
     const action = dialog.mode === "create" ? "create" : dialog.mode === "complete" ? "complete" : "update";
@@ -177,6 +204,13 @@ export default function FleetWorkOrders() {
     const response = await base44.functions.invoke("fleetWorkOrderAction", payload);
     if (response?.data?.error) throw new Error(response.data.error);
     await loadData();
+    if (action === "complete") {
+      setFocusNotice("");
+      pendingCompletionFocusRef.current = {
+        id: dialog.workOrder.id,
+        label: dialog.workOrder.work_order_number || dialog.workOrder.title || "work order",
+      };
+    }
     closeDialog();
     setActionError("");
   };
@@ -418,7 +452,7 @@ function BoardCard({ workOrder, equipmentName, starting, onOpen, onStart, onComp
   const projectedLate = isWorkOrderPastProjected(workOrder);
   const orderLabel = [workOrder.work_order_number, workOrder.title].filter(Boolean).join(" — ");
   return <article className={`rounded-xl border bg-white dark:bg-slate-900 p-3 shadow-sm ${workOrder.priority === "critical" ? "border-red-300 dark:border-red-900" : workOrder.priority === "high" ? "border-orange-300 dark:border-orange-900" : "border-gray-200 dark:border-slate-700"}`}>
-    <div className="flex items-start justify-between gap-2"><button type="button" onClick={onOpen} aria-label={`Open details for ${orderLabel}`} className="min-h-11 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"><div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{workOrder.work_order_number}</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 mt-1 line-clamp-2">{workOrder.title}</div></button><PriorityBadge priority={workOrder.priority} /></div>
+    <div className="flex items-start justify-between gap-2"><button type="button" onClick={onOpen} data-fleet-board-open={workOrder.id} aria-label={`Open details for ${orderLabel}`} className="min-h-11 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"><div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300">{workOrder.work_order_number}</div><div className="font-semibold text-sm text-gray-900 dark:text-slate-100 mt-1 line-clamp-2">{workOrder.title}</div></button><PriorityBadge priority={workOrder.priority} /></div>
     <div className="mt-2 text-xs text-gray-500 dark:text-slate-400 space-y-1"><div className="truncate">{equipmentName || (workOrder.source_equipment_id ? "Unresolved equipment" : "No equipment")}</div><div className={!String(workOrder.assigned_to || "").trim() && active ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>{workOrder.assigned_to || "Unassigned"}</div></div>
     {(ageDays != null || projectedLate) && <div className="mt-2 flex flex-wrap gap-1.5">{ageDays != null && <span className={`text-[10px] rounded-full px-2 py-1 ${ageDays >= 30 ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"}`}>{ageDays} day{ageDays === 1 ? "" : "s"} open</span>}{projectedLate && <span className="text-[10px] rounded-full px-2 py-1 bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300">Past projected</span>}</div>}
     <div className="mt-3 flex flex-wrap gap-1.5"><button type="button" onClick={onOpen} aria-label={`Open details for ${orderLabel}`} className="min-h-11 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-700 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Open</button>{["open", "assigned"].includes(workOrder.status) && <button type="button" onClick={onStart} aria-label={`Start work on ${orderLabel}`} disabled={starting} className="min-h-11 px-2.5 py-1.5 rounded-lg border border-indigo-300 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300 text-xs font-semibold inline-flex items-center gap-1 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{starting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}Start</button>}{active && <button type="button" onClick={onComplete} aria-label={`Complete ${orderLabel}`} className="min-h-11 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"><CheckCircle2 className="w-3.5 h-3.5" />Complete</button>}</div>
