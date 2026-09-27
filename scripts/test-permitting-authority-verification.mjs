@@ -5,6 +5,7 @@ import {
   LOCALITY_AUTHORITY_ROLES,
   revokeLocalityOfficeAuthorityVerification,
   setLocalityOfficeAuthorityRole,
+  summarizeLocalityOfficeAuthority,
   verifyLocalityOfficeAuthority,
 } from "../src/components/permitting/localityAuthorityVerification.js";
 
@@ -43,4 +44,53 @@ test("UI exposes every schema authority role and verification controls", () => {
   assert.match(ui, /Mark authority verified/);
   assert.match(ui, /Revoke verification/);
   assert.match(ui, /authority_verification_notes/);
+});
+
+test("canonical reference is not mistaken for locality authority", () => {
+  const summary = summarizeLocalityOfficeAuthority({ government_office_id: "gov-1", office_type: "Zoning" });
+  assert.equal(summary.relationship, "Canonical office ID recorded");
+  assert.equal(summary.authority, "Locality authority not established");
+  assert.equal(summary.verified, false);
+  assert.deepEqual(summary.roleLabels, []);
+});
+
+test("proposed roles remain unverified until staff confirms this locality", () => {
+  const summary = summarizeLocalityOfficeAuthority({
+    catalog_office_id: "catalog-1", authority_roles: ["zoning", "building", "zoning"],
+    authority_verification_status: "needs_verification",
+  });
+  assert.equal(summary.relationship, "Office catalog reference recorded");
+  assert.equal(summary.authority, "Locality roles not verified");
+  assert.deepEqual(summary.roleLabels, ["Zoning", "Building"]);
+  assert.equal(summary.verified, false);
+});
+
+test("staff-verified roles are distinct from standalone office identity", () => {
+  const summary = summarizeLocalityOfficeAuthority({
+    authority_roles: ["sign_permit", "right_of_way"], authority_verification_status: "staff_verified",
+  });
+  assert.equal(summary.relationship, "Standalone office");
+  assert.equal(summary.authority, "Locality authority staff verified");
+  assert.deepEqual(summary.roleLabels, ["Sign permit", "ROW / Public Works"]);
+  assert.equal(summary.verified, true);
+});
+
+test("unsupported or empty roles cannot display staff-verified authority", () => {
+  const invalid = summarizeLocalityOfficeAuthority({
+    authority_roles: ["zoning", "unrecognized_role"], authority_verification_status: "staff_verified",
+  });
+  assert.equal(invalid.authority, "Authority roles need review");
+  assert.equal(invalid.verified, false);
+  const empty = summarizeLocalityOfficeAuthority({ authority_verification_status: "staff_verified" });
+  assert.equal(empty.authority, "Locality authority not established");
+  assert.equal(empty.verified, false);
+});
+
+test("locality office summary remains visible outside the expandable editor", () => {
+  const ui = readFileSync(new URL("../src/components/permitting/LocalityOfficeEditor.jsx", import.meta.url), "utf8");
+  assert.match(ui, /const authoritySummary = summarizeLocalityOfficeAuthority\(office\)/);
+  assert.match(ui, /Office relationship and locality authority/);
+  assert.ok(ui.indexOf("authoritySummary.relationship") < ui.indexOf("{/* Expanded content */}"));
+  assert.ok(ui.indexOf("authoritySummary.authority") < ui.indexOf("{/* Expanded content */}"));
+  assert.ok(ui.indexOf("authoritySummary.roleLabels.join") < ui.indexOf("{/* Expanded content */}"));
 });
