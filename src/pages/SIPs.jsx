@@ -106,6 +106,7 @@ export default function SIPs() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [savingRevisitIds, setSavingRevisitIds] = useState(() => new Set());
   const [reopeningWipIds, setReopeningWipIds] = useState(() => new Set());
+  const [reopenedFocusWorkOrderId, setReopenedFocusWorkOrderId] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
@@ -127,6 +128,19 @@ export default function SIPs() {
       revisitClearCancelRef.current?.focus();
     }
   }, [pendingRevisitClear, revisitClearFailure, isClearingRevisit]);
+
+  // Reopen removes its original completed-WIP control from the DOM. Once the
+  // successful save reaches the board, focus the same Work Order in Active.
+  // Search/filter may hide it; the board heading is then the safe fallback.
+  useEffect(() => {
+    if (!reopenedFocusWorkOrderId) return;
+    const reopened = workOrders.find(wo => wo.id === reopenedFocusWorkOrderId);
+    if (reopened?.sip_completed) return; // Wait for the saved board snapshot.
+    const activeButton = Array.from(document.querySelectorAll("[data-sips-active-focus-id]"))
+      .find(node => node.dataset.sipsActiveFocusId === reopenedFocusWorkOrderId && node.getClientRects().length > 0);
+    (activeButton || revisitClearBoardRef.current)?.focus();
+    setReopenedFocusWorkOrderId(null);
+  }, [reopenedFocusWorkOrderId, workOrders, searchQuery, statusFilter]);
 
   // Track the three quick board-save paths so a slower background refresh
   // cannot replace a newer optimistic edit or a freshly confirmed save.
@@ -364,6 +378,7 @@ export default function SIPs() {
         label: "SIPs reopen completed WIP",
       });
       applySavedBoardFields(wo.id, saved, ["sip_completed", "sip_revisit_date"]);
+      setReopenedFocusWorkOrderId(wo.id);
     } catch (error) {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
@@ -817,7 +832,7 @@ export default function SIPs() {
                       {index + 1}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <button onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
+                      <button data-sips-active-focus-id={wo.id} onClick={() => setSelectedWorkOrder(wo)} className="min-h-11 font-semibold text-gray-900 hover:text-blue-600 text-left flex items-center gap-1 max-w-full touch-manipulation">
                         <LinkIcon className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                         <span className="truncate">{wo.client_name || "Unnamed"}</span>
                       </button>
@@ -1002,6 +1017,7 @@ export default function SIPs() {
                     {/* Customer */}
                      <td className="px-2 py-2 border-r">
                        <button
+                         data-sips-active-focus-id={wo.id}
                          onClick={() => setSelectedWorkOrder(wo)}
                          className="text-sm text-left hover:text-blue-600 flex items-center gap-1 font-medium w-full truncate"
                        >
