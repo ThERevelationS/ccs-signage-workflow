@@ -105,6 +105,7 @@ export default function SIPs() {
   const [sortMode, setSortMode] = useState("meeting");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [savingRevisitIds, setSavingRevisitIds] = useState(() => new Set());
+  const [reopeningWipIds, setReopeningWipIds] = useState(() => new Set());
   const [lastUpdated, setLastUpdated] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
@@ -114,6 +115,7 @@ export default function SIPs() {
   const boardSavesPendingRef = useRef(0);
   const boardRefreshDeferredRef = useRef(false);
   const quickEditsInFlightRef = useRef(new Map());
+  const reopeningWipInFlightRef = useRef(new Set());
 
   // Track the three quick board-save paths so a slower background refresh
   // cannot replace a newer optimistic edit or a freshly confirmed save.
@@ -321,6 +323,11 @@ export default function SIPs() {
       return;
     }
 
+    // Prevent a second click from issuing a duplicate request before React
+    // has rendered the disabled control; leave other jobs independently usable.
+    if (reopeningWipInFlightRef.current.has(wo.id)) return;
+    reopeningWipInFlightRef.current.add(wo.id);
+    setReopeningWipIds(prev => new Set(prev).add(wo.id));
     const reopenedRevisitDate = isRevisitFuture(wo) ? "" : (wo.sip_revisit_date ?? "");
     setQuickEditError("");
     try {
@@ -341,6 +348,13 @@ export default function SIPs() {
       console.error("Error reopening completed SIP WIP item:", error);
       setQuickEditError(error?.message || "This Work Order changed in another session. The latest value was reloaded.");
       await loadWorkOrders(false);
+    } finally {
+      reopeningWipInFlightRef.current.delete(wo.id);
+      setReopeningWipIds(prev => {
+        const next = new Set(prev);
+        next.delete(wo.id);
+        return next;
+      });
     }
   };
 
@@ -1353,11 +1367,14 @@ export default function SIPs() {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleSipCompleted(wo)}
-                      disabled={!isRegistered}
+                      disabled={!isRegistered || reopeningWipIds.has(wo.id)}
+                      aria-busy={reopeningWipIds.has(wo.id)}
                       className="min-h-11 px-2.5 shrink-0 text-xs bg-white border-green-200 text-green-700 hover:bg-green-50 touch-manipulation"
-                      aria-label={`Reopen ${wo.client_name || "this Work Order"} in the active SIPs queue`}
+                      aria-label={`${reopeningWipIds.has(wo.id) ? "Reopening" : "Reopen"} ${wo.client_name || "this Work Order"} in the active SIPs queue`}
                     >
-                      Reopen
+                      {reopeningWipIds.has(wo.id) ? (
+                        <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Reopening…</>
+                      ) : "Reopen"}
                     </Button>
                   </div>
 
@@ -1420,9 +1437,12 @@ export default function SIPs() {
                       <Checkbox
                         checked={true}
                         onCheckedChange={() => toggleSipCompleted(wo)}
-                        disabled={!isRegistered}
+                        disabled={!isRegistered || reopeningWipIds.has(wo.id)}
+                        aria-busy={reopeningWipIds.has(wo.id)}
+                        aria-label={`${reopeningWipIds.has(wo.id) ? "Reopening" : "Reopen"} ${wo.client_name || "this Work Order"} in active SIPs`}
                         className="h-4 w-4"
                       />
+                      {reopeningWipIds.has(wo.id) && <Loader2 className="w-3.5 h-3.5 mx-auto mt-1 animate-spin text-green-700" aria-hidden="true" />}
                     </td>
                     <td className="px-2 py-2 border-r" style={{ maxWidth: '150px' }}>
                       <button
