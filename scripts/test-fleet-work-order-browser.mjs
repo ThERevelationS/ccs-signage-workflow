@@ -25,13 +25,6 @@ const alias = [
   { find: /^@\//, replacement: path.join(appRoot, "src") + "/" },
 ];
 
-function focusMatches(selector) {
-  return () => {
-    const target = document.querySelector(selector);
-    return Boolean(target && document.activeElement === target);
-  };
-}
-
 try {
   // Serve the actual Fleet Work Orders page and dialogs, not a reconstructed UI.
   await symlink(path.join(appRoot, "node_modules"), path.join(scratch, "node_modules"), "dir");
@@ -49,7 +42,7 @@ try {
     'import React from "react";',
     'import { createRoot } from "react-dom/client";',
     'import { MemoryRouter } from "react-router-dom";',
-    'import FleetWorkOrders from "/app/src/pages/FleetWorkOrders.jsx";',
+    'import FleetWorkOrders from "/@fs/app/src/pages/FleetWorkOrders.jsx";',
     'createRoot(document.getElementById("root")).render(',
     '  <MemoryRouter><FleetWorkOrders /></MemoryRouter>',
     ');',
@@ -105,7 +98,7 @@ try {
     await dialog.getByRole("textbox", { name: "Title" }).fill("Created in browser acceptance");
     await dialog.getByRole("button", { name: "Create Work Order" }).click();
     await dialog.waitFor({ state: "hidden" });
-    await page.waitForFunction(focusMatches('[aria-label="Filter by work order status"]'));
+    await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
     assert.match(await page.getByRole("status").innerText(), /Created WO-SYNTH-NEW-1.*no longer matches/);
     assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
     await page.getByRole("combobox", { name: "Filter by work order status" }).selectOption("all");
@@ -119,7 +112,7 @@ try {
     await dialog.getByRole("combobox", { name: "Status" }).selectOption("cancelled");
     await dialog.getByRole("button", { name: "Save Changes" }).click();
     await dialog.waitFor({ state: "hidden" });
-    await page.waitForFunction(focusMatches('[aria-label="Filter by work order status"]'));
+    await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
     assert.match(await page.getByRole("status").innerText(), /Saved WO-SYNTH-OPEN.*no longer matches/);
   });
 
@@ -148,13 +141,13 @@ try {
       await dialog.waitFor({ state: "hidden" });
       const retry = page.getByRole("button", { name: "Retry refresh" });
       await retry.waitFor();
-      await page.waitForFunction(focusMatches("button"));
+      await page.waitForFunction(() => document.activeElement?.textContent?.includes("Retry refresh"));
       assert.equal(await retry.evaluate((el) => document.activeElement === el), true);
       assert.match(await page.getByRole("alert").innerText(), /Saved WO-SYNTH-OPEN successfully.*do not repeat/);
       assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
       await retry.click();
       await retry.waitFor({ state: "hidden" });
-      await page.waitForFunction(focusMatches('[aria-label="Filter by work order status"]'));
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
       assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
       assert.equal(await page.locator("#fleet-work-order-toggle-wo-open").innerText()
         .then((text) => text.includes("Saved despite synthetic refresh failure")), true);
