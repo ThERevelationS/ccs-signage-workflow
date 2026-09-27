@@ -59,7 +59,7 @@ check(overview.includes('className={showMoreMetrics ? "grid min-w-0 grid-cols-2 
   "The secondary metrics are initially collapsed, expanding into two columns on phones and four on desktop.");
 check(overview.includes('className="grid min-w-0 grid-cols-2 gap-1.5 pb-0.5 md:grid-cols-4"'),
   "All four primary KPIs appear together as two rows on narrow phones without horizontal swiping.");
-check((overview.match(/className={[`"]min-w-0 rounded-md border/g) || []).length === 8 &&
+check((overview.match(/className=(?:"|\{`)min-w-0 rounded-md border/g) || []).length === 8 &&
   !overview.includes('min-w-[150px]') && !overview.includes('overflow-x-auto'),
   "All eight KPI cards may shrink with their grid cells; mobile does not require hidden horizontal metric scrolling.");
 check(overview.includes('min-h-10 max-w-[65%]') && overview.includes('sm:min-h-8'),
