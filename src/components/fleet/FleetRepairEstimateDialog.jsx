@@ -19,6 +19,9 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const [estimate, setEstimate] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [submissionUncertain, setSubmissionUncertain] = useState(false);
+  const [loadedWorkOrderId, setLoadedWorkOrderId] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -28,6 +31,9 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const closeRef = useRef(null);
   const resultRef = useRef(null);
   const warningRef = useRef(null);
+  const retryLoadRef = useRef(null);
+  const recheckRef = useRef(null);
+  const loadEpochRef = useRef(0);
   const focusResultOnSettle = useRef(false);
   const previousFocus = useRef(null);
   const closeCallback = useRef(onClose);
@@ -69,13 +75,25 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     if (target) { target.focus(); focusResultOnSettle.current = false; }
   }, [open, busy, refreshWarning, message]);
 
-  const load = async () => {
+  // A failed GET must never expose blank/stale fields for mutation. Discard
+  // responses from a prior dialog session or an older verification request.
+  const load = async (recheckSubmission = false) => {
     if (!workOrder?.id) return;
-    setLoading(true); setError(""); setMessage(""); setRefreshWarning("");
+    const epoch = ++loadEpochRef.current;
+    setLoading(true); setError(""); setRefreshWarning("");
+    if (!recheckSubmission) { setLoadedWorkOrderId(""); setLoadFailed(false); setMessage(""); }
     try {
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "get", work_order_id: workOrder.id });
+      if (epoch !== loadEpochRef.current) return;
       if (data?.error) throw new Error(data.error);
-      const row = data?.estimate || null;
+      if (!data || !Object.prototype.hasOwnProperty.call(data, "estimate")) throw new Error("The server did not return an estimate status.");
+      const row = data.estimate || null;
+      // A transport failure during submit can mean the server committed it.
+      // Confirm the precise draft version before unlocking a retry.
+      if (recheckSubmission && (!row || row.id !== estimate?.id ||
+          (row.status === "draft" && row.updated_date !== estimate?.updated_date))) {
+        throw new Error("The saved estimate cannot be reconciled with the current server version. Close and reopen to review it.");
+      }
       setEstimate(row);
       setDecisionNotes(row?.decision_notes || "");
       setForm(row ? {
@@ -87,11 +105,39 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
         fluids_estimate: Array.isArray(row.fluids_estimate) ? row.fluids_estimate.map(line => ({...line})) : [],
         notes: row.notes || "",
       } : EMPTY);
-    } catch (err) { setError(err?.message || "Unable to load the Fleet repair estimate."); }
-    finally { setLoading(false); }
+      setLoadedWorkOrderId(workOrder.id);
+      setLoadFailed(false);
+      if (recheckSubmission) {
+        setSubmissionUncertain(false);
+        setMessage(row.status === "draft"
+          ? "Server confirms this estimate remains a draft. Review it before submitting again."
+          : `Server confirms this estimate is ${pretty(row.status)}. No submission was repeated.`);
+        focusResultOnSettle.current = true;
+        await reportChanged(row, "Estimate status confirmed");
+      }
+    } catch (err) {
+      if (epoch !== loadEpochRef.current) return;
+      setError(recheckSubmission
+        ? `${err?.message || "Unable to check submission status."} Submission remains unconfirmed; do not repeat it.`
+        : `${err?.message || "Unable to load the Fleet repair estimate."} Retry loading before making changes.`);
+      if (!recheckSubmission) setLoadFailed(true);
+    } finally { if (epoch === loadEpochRef.current) setLoading(false); }
   };
 
-  useEffect(() => { if (open) load(); }, [open, workOrder?.id]);
+  useEffect(() => {
+    if (open) {
+      setEstimate(null); setForm(EMPTY); setDecisionNotes("");
+      setSubmissionUncertain(false); setLoadFailed(false);
+      load();
+    }
+    return () => { loadEpochRef.current += 1; };
+  }, [open, workOrder?.id]);
+  useEffect(() => {
+    if (open && loadFailed && !loading) retryLoadRef.current?.focus();
+  }, [open, loadFailed, loading]);
+  useEffect(() => {
+    if (open && submissionUncertain && error && !loading) recheckRef.current?.focus();
+  }, [open, submissionUncertain, error, loading]);
   const preview = useMemo(() => {
     const labor = Number(form.estimated_labor_hours || 0) * Number(form.labor_rate || 0);
     const partsTotal = (form.parts_estimate || []).reduce((sum,line)=>sum + Number(line.quantity||0)*Number(line.estimated_cost||0),0);
