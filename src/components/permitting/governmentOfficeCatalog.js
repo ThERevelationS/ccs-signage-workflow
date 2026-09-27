@@ -90,6 +90,20 @@ export function updateGovernmentOfficeVerification(office, patch, reviewer = "",
   return normalizeGovernmentOfficeCatalogEntry({ ...source, government_office: metadata });
 }
 
+/** Only provide navigable links to absolute HTTPS source URLs without credentials. */
+export function safeGovernmentOfficeSourceUrl(value) {
+  const raw = clean(value);
+  if (!raw || /[\u0000-\u001f\u007f]/.test(raw)) return "";
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" && url.hostname && !url.username && !url.password
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 export function governmentOfficeMetadata(office) {
   return normalizeGovernmentOfficeCatalogEntry(office).government_office;
 }
