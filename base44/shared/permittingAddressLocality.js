@@ -101,7 +101,7 @@ export function summarizePermitLineOfficeAuthority(line, localities) {
       ? office.office_types : office?.office_type ? [office.office_type] : [];
     const expectedName = String(office?.name || types[0] || 'Office').trim();
     if (expectedName.toLowerCase() !== rowName.toLowerCase()) return false;
-    return !lineType || types.length === 0 || types.some(type => String(type).trim().toLowerCase() === lineType);
+    return !lineType || types.some(type => String(type).trim().toLowerCase() === lineType);
   });
   if (officeMatches.length !== 1) return unresolved(officeMatches.length > 1
     ? 'Multiple configured offices match this line. Review the office mapping.'
