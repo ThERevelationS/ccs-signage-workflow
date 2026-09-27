@@ -3,12 +3,19 @@
  * catalog_office_id records which reusable catalog office it came from.
  * A catalog match alone does not verify that office's legal authority.
  */
+export function canonicalGovernmentOfficeId(office) {
+  const source = office && typeof office === "object" ? office : {};
+  return String(source.government_office_id || source.id || "").trim();
+}
+
 export function copyCatalogOfficeToLocality(catalogOffice, order, makeId = () => `${Date.now()}-${Math.random()}`) {
   const source = catalogOffice && typeof catalogOffice === "object" ? catalogOffice : {};
   const catalogId = String(source.id || "").trim();
+  const governmentOfficeId = canonicalGovernmentOfficeId(source);
   return {
     id: makeId(),
     ...(catalogId ? { catalog_office_id: catalogId } : {}),
+    ...(governmentOfficeId ? { government_office_id: governmentOfficeId } : {}),
     name: source.name || "",
     office_type: source.office_type || "",
     contact_phone: source.contact_phone || "",
