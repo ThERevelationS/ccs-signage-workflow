@@ -159,7 +159,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             </div>
             <div className="text-xs min-w-0">
               <div className="font-semibold text-gray-800 truncate">
-                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sync needs review"  : hasErrors ? "Sync has errors" : compactOrderForm && (hasSkipped || hasConflicts) ? "Sync needs review" : "Sync Complete"}
+                {isRunning ? "Smartsheet Sync" : isStale ? "Sync status needs review" : hasReviewNeeded ? "Sync needs review" : hasErrors ? "Sync has errors" : compactOrderForm && (hasSkipped || hasConflicts) ? "Sync needs review" : "Sync Complete"}
               </div>
               <div className="text-gray-500 truncate">
                 {isRunning
