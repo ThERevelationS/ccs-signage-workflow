@@ -18,6 +18,12 @@ export const base44 = {
       updateMany: (query, patch) => fixture("updateMany", { query, patch }),
     },
     AuthorizedEmail: { list: async () => [] },
-    GlobalSettings: { filter: async () => [] },
+    GlobalSettings: {
+      filter: async (query) => query?.setting_key === "salesTaskDescriptions"
+        ? [{ setting_key: "salesTaskDescriptions", setting_value: { items: [
+          { text: "Synthetic install", page: "SIPs", wip: true },
+        ] } }]
+        : [],
+    },
   },
 };
