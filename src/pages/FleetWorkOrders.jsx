@@ -180,6 +180,11 @@ export default function FleetWorkOrders() {
     if (!pending || confirmReopen || loading || viewMode !== "list") return undefined;
     const focusTimer = window.setTimeout(() => {
       if (pendingReopenFocusRef.current !== pending) return;
+      if (pending.refreshFailed) {
+        (retryRefreshButtonRef.current || statusFilterRef.current)?.focus();
+        pendingReopenFocusRef.current = null;
+        return;
+      }
       const visible = rows.some(row => row.id === pending.id);
       const toggle = visible ? document.getElementById(`fleet-work-order-toggle-${pending.id}`) : null;
       if (toggle) {
@@ -201,6 +206,11 @@ export default function FleetWorkOrders() {
     if (!pending || dialog || loading) return undefined;
     const focusTimer = window.setTimeout(() => {
       if (pendingCompletionFocusRef.current !== pending) return;
+      if (pending.refreshFailed) {
+        (retryRefreshButtonRef.current || statusFilterRef.current)?.focus();
+        pendingCompletionFocusRef.current = null;
+        return;
+      }
       const visible = rows.some(row => row.id === pending.id);
       const target = findWorkOrderFocusTarget(rows, pending.id, viewMode, document);
       if (target) {
@@ -226,6 +236,7 @@ export default function FleetWorkOrders() {
       restoreWorkOrderFocusAfterSave({
         rows, pending, viewMode, root: document,
         statusFilter: statusFilterRef.current, onNotice: setFocusNotice,
+        refreshButton: retryRefreshButtonRef.current,
       });
       pendingSaveFocusRef.current = null;
     }, 0);
@@ -242,6 +253,7 @@ export default function FleetWorkOrders() {
       restoreWorkOrderFocusAfterSave({
         rows, pending, viewMode, root: document,
         statusFilter: statusFilterRef.current, onNotice: setFocusNotice,
+        refreshButton: retryRefreshButtonRef.current,
       });
       pendingStartFocusRef.current = null;
     }, 0);
