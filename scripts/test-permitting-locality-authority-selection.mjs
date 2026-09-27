@@ -72,6 +72,50 @@ test('Work Order group recomputes live authority status from saved permit line l
   assert.match(page, /locality_id: locality\.id/);
 });
 
+test('permit lines identify the exact staff-reviewed office, not other offices in the locality', async () => {
+  const { summarizePermitLineOfficeAuthority } = await import('../base44/shared/permittingAddressLocality.js');
+  const localities = [{ id: 'deerfield', offices: [
+    { id: 'sign-office', name: 'Sign Department', office_type: 'Zoning', authority_verification_status: 'staff_verified', authority_roles: ['sign_permit', 'zoning'] },
+    { id: 'electrical-office', name: 'Electrical Inspector', office_type: 'Electrical', authority_verification_status: 'needs_verification', authority_roles: ['electrical'] },
+  ] }];
+  const sign = summarizePermitLineOfficeAuthority({ locality_id: 'deerfield', row_name: 'Sign Department', office_type: 'Zoning' }, localities);
+  assert.equal(sign.status, 'staff_verified');
+  assert.deepEqual(sign.verified_roles, ['sign_permit', 'zoning']);
+  const electrical = summarizePermitLineOfficeAuthority({ locality_id: 'deerfield', row_name: 'Electrical Inspector', office_type: 'Electrical' }, localities);
+  assert.equal(electrical.status, 'needs_verification');
+  assert.equal(electrical.office_name, 'Electrical Inspector');
+  assert.deepEqual(electrical.roles_needing_review, ['electrical']);
+  assert.deepEqual(electrical.verified_roles, []);
+  // A later staff revocation must be reflected when the group re-renders.
+  localities[0].offices[0].authority_verification_status = 'needs_verification';
+  assert.equal(summarizePermitLineOfficeAuthority({ locality_id: 'deerfield', row_name: 'Sign Department', office_type: 'Zoning' }, localities).status, 'needs_verification');
+});
+
+test('renamed, duplicate, mismatched-type and missing offices fail closed', async () => {
+  const { summarizePermitLineOfficeAuthority } = await import('../base44/shared/permittingAddressLocality.js');
+  const verified = { name: 'Sign Department', office_type: 'Zoning', authority_verification_status: 'staff_verified', authority_roles: ['sign_permit'] };
+  const line = { locality_id: 'locality', row_name: 'Sign Department', office_type: 'Zoning' };
+  const lookup = offices => summarizePermitLineOfficeAuthority(line, [{ id: 'locality', offices }]);
+  assert.equal(lookup([verified, { ...verified }]).status, 'unresolved');
+  assert.match(lookup([verified, { ...verified }]).reason, /Multiple configured offices/);
+  assert.equal(lookup([{ ...verified, name: 'Renamed Department' }]).status, 'unresolved');
+  assert.equal(lookup([{ ...verified, office_type: 'Electrical' }]).status, 'unresolved');
+  assert.equal(lookup([]).status, 'unresolved');
+  assert.equal(summarizePermitLineOfficeAuthority(line, [{ id: 'locality', offices: [verified] }, { id: 'locality', offices: [verified] }]).status, 'unresolved');
+  assert.equal(summarizePermitLineOfficeAuthority({ ...line, locality_id: '' }, [{ id: 'locality', offices: [verified] }]).status, 'unresolved');
+});
+
+test('permit line row shows an accessible office-specific review badge from current configured offices', () => {
+  const group = readFileSync(new URL('../src/components/permitting/PermitClientGroup.jsx', import.meta.url), 'utf8');
+  const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
+  assert.match(group, /officeAuthority={summarizePermitLineOfficeAuthority\(li, localities\)}/);
+  assert.match(row, /officeAuthority\.office_name/);
+  assert.match(row, /officeAuthority\.status === 'needs_verification'/);
+  assert.match(row, /Office mapping needs review/);
+  assert.match(row, /Staff-verified roles/);
+  assert.match(row, /role="status"/);
+});
+
 test('manual locality selection uses the same partial authority coverage language as address resolution', () => {
   assert.match(ui, /selectedAuthority\.coverage_status === "partial"/);
   assert.match(ui, /selectedAuthority\.coverage_status === "configured_offices_reviewed"/);
