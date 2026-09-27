@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { normalizeAddressState as normalizeState } from '../../shared/permittingAddressState.js';
+import { addressLocalityIdentityMatches } from '../../shared/permittingAddressLocality.js';
 
 function normalizePlace(value: unknown) {
   return String(value || '')
@@ -102,13 +103,13 @@ Deno.serve(async (req) => {
     // authority for accepting an arbitrary locality id.
     const geocodeState = geocode?.address_parts?.administrative_area_level_1 || '';
     const geocodeCandidates = [
-      geocode?.address_parts?.locality,
-      geocode?.address_parts?.postal_town,
-      geocode?.address_parts?.administrative_area_level_3,
-      geocode?.address_parts?.sublocality,
-    ].filter(Boolean);
+      { name: geocode?.address_parts?.locality, source_kind: 'municipality' },
+      { name: geocode?.address_parts?.postal_town, source_kind: 'municipality' },
+      { name: geocode?.address_parts?.administrative_area_level_3, source_kind: 'township' },
+      { name: geocode?.address_parts?.sublocality, source_kind: 'municipality' },
+    ].filter((candidate) => candidate.name).map((candidate) => ({ ...candidate, state: geocodeState }));
     const directMatches = localities.filter((locality) =>
-      geocodeCandidates.some((candidate) => localityIdentityMatches(locality, candidate, geocodeState))
+      geocodeCandidates.some((candidate) => addressLocalityIdentityMatches(locality, candidate))
     );
 
     // 3) Ask AI for permitting details — zoning district, parcel info, locality match
@@ -226,7 +227,7 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
       match_confidence: matchConfidence,
       match_method: matchMethod,
       match_reason: matchReason,
-      geocode_locality_candidates: geocodeCandidates
+      geocode_locality_candidates: geocodeCandidates.map((candidate) => candidate.name)
     });
   } catch (error) {
     const status = Number(error?.status || 500);
