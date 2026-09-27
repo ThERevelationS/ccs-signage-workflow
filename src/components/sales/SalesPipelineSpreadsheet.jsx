@@ -281,6 +281,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // from the next workspace load so old-scope values cannot bleed into it.
     setSelectedWorkOrder(null);
     setShowFullWorkOrderDetails(false);
+    // Row-bound dialogs must not survive a workspace change. Otherwise a
+    // confirmation opened in Current Pipeline can act on that old row after
+    // the user has already moved to Outcomes, History, or All Records.
+    setStatusTransition(null);
+    setFollowUpCompletion(null);
+    setCorbridgeDialog({ open: false, workOrder: null });
+    setCorbridgeDraft({ invoiceNumber: "", link: "" });
+    setCorbridgeSaveError("");
     archiveSkipRef.current = 0;
     setArchiveHasMore(false);
     setArchiveLoadingMore(false);
