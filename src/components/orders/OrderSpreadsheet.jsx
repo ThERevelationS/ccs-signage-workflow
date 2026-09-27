@@ -95,7 +95,7 @@ import { CellContextMenu, useCellHistoryTracker } from "@/components/shared/Cell
 import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
-import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
+import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
 
@@ -1442,7 +1442,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_ordered: dateStr, date_ordered_option: "", status: "ordered" },
+                                      { date_ordered: dateStr, date_ordered_option: "", status: orderStatusAfterOrderedDateChange(order, dateStr) },
                                       "Order date ordered"
                                     );
                                   } catch (error) {
@@ -1454,7 +1454,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                                     setSaveError("");
                                     await persistImmediateOrderFields(
                                       order.id,
-                                      { date_ordered: "", date_ordered_option: "", status: isFulfilledOrder(order) ? "received" : "pending" },
+                                      { date_ordered: "", date_ordered_option: "", status: orderStatusAfterOrderedDateChange(order, "") },
                                       "Order date ordered clear"
                                     );
                                   } catch (error) {
