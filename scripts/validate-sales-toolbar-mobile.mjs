@@ -50,9 +50,9 @@ check(section.includes('order-5 col-span-8 flex min-w-0 items-center sm:order-4 
 check(section.includes('order-2 col-span-5') &&
   section.includes('sm:order-5 sm:h-9') &&
   section.includes('onClick={() => setShowNewClientForm(true)}') &&
-  section.includes('{isRegistered && ('),
-  "New Client remains prominent beside the mobile title and registration-gated.");
-check(section.includes('showDuplicateCleanup ? "order-8 col-span-12" : "order-2 col-span-5"') &&
+  section.includes('{isRegistered && !showDuplicateCleanup && ('),
+  "New Client stays prominent and registration-gated, but is hidden when the spreadsheet is unmounted.");
+check(section.includes('className="clay-button order-2 col-span-5 h-11 min-w-0') &&
   section.includes('className="order-2 col-span-5 h-11 min-w-0 border-green-300') &&
   section.includes('onClick={() => setShowDuplicateCleanup(false)}'),
   "Return to Pipeline replaces the first-row shortcut during Duplicate Cleanup.");
@@ -61,7 +61,7 @@ check(section.includes('order-6 col-span-4 flex min-w-0 justify-end sm:order-7')
   section.includes('<span>Tools</span>') &&
   section.includes('sm:h-9 sm:gap-1.5'),
   "Tools stays visibly labeled next to Search on phones and compact on desktop.");
-check(section.includes('{canImportExport && (') &&
+check(section.includes('{canImportExport && !showDuplicateCleanup && (') &&
   ["importFromExcel()", "exportToExcel()", "openImportHistory()"].every(
     (action) => section.includes("spreadsheetRef.current?." + action)),
   "Existing import/export tools remain behind their permission gate.");
