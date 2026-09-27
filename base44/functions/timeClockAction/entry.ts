@@ -645,6 +645,10 @@ async function acquirePayPeriodCreateGate(gateEntity: any, auditEntity: any, per
     }
     const gate = rows[0];
     if (gate.status === 'idle') {
+      // Only a clean preprovisioned or released coordinator is safe to claim.
+      if (gate.request_id || gate.payload_hash || gate.claim_token || gate.started_at) {
+        return { acquired: false, error: 'Idle pay-period creation coordinator has stale lock metadata. Admin investigation is required.' };
+      }
       const token = crypto.randomUUID();
       const claimed = await gateEntity.updateMany(
         { id: gate.id, updated_date: gate.updated_date, scope: 'company', status: 'idle' },
