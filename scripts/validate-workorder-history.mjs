@@ -51,5 +51,5 @@ assert(!gateway.includes("safeExternalFetch")&&!gateway.includes("COREBRIDGE_SUB
 assert(!/\.(create|update|delete|bulkCreate|bulkUpdate)\s*\(/.test(gateway),"no entity writes on retired gateway");
 const ui=readFileSync(new URL("../src/components/admin/CorebridgeApiSettings.jsx",import.meta.url),"utf8");
 assert(ui.includes("Historical backup and import evidence"),"admin UI must display provenance");
-assert(ui.includes("metadata cannot prove"),"UI must disclose unverified backup bytes");
+assert(ui.includes("BackupLog entries alone do not prove file availability"),"UI must disclose unverified backup bytes");
 console.log("WorkOrder historical metadata: synthetic safety and integration checks PASS");
