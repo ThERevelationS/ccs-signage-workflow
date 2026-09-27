@@ -92,6 +92,8 @@ function fixture(date = yesterday, { completed = false } = {}) {
     boardRefreshDeferredRef: { current: false },
     quickEditsInFlightRef: { current: new Map() },
     savingRevisitIds: new Set(),
+    reopeningWipIds: new Set(),
+    reopeningWipInFlightRef: { current: new Set() },
     today,
     workOrders: [structuredClone(record)],
     users: [],
@@ -110,6 +112,9 @@ function fixture(date = yesterday, { completed = false } = {}) {
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
   ctx.setSavingRevisitIds = (updater) => {
     ctx.savingRevisitIds = typeof updater === 'function' ? updater(ctx.savingRevisitIds) : updater;
+  };
+  ctx.setReopeningWipIds = (updater) => {
+    ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
   };
   ctx.loadAllEntityRows = ({ entity: requested }) => {
     if (requested === authorizedEmail) return Promise.resolve([]);
