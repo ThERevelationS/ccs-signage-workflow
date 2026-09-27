@@ -21,6 +21,7 @@ import OfficeCatalogEditor from "./OfficeCatalogEditor";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
 import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
+import { copyCatalogOfficeToLocality } from "./localityOfficeCatalogBridge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const PermitLocality = base44.entities.PermitLocality;
@@ -270,23 +271,9 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
     }
   };
 
-  // Add an office to the locality from the full office catalog (deep copy)
+  // Preserve the reusable catalog office link without sharing editable workflow IDs.
   const addOfficeFromCatalog = (catalogOffice) => {
-    const copy = {
-      id: `${Date.now()}-${Math.random()}`,
-      name: catalogOffice.name || "",
-      office_type: catalogOffice.office_type || "",
-      contact_phone: catalogOffice.contact_phone || "",
-      contact_email: catalogOffice.contact_email || "",
-      contact_website: catalogOffice.contact_website || "",
-      contact_address: catalogOffice.contact_address || "",
-      contact_notes: catalogOffice.contact_notes || "",
-      workflow_steps: (catalogOffice.workflow_steps || []).map(s => ({
-        ...s,
-        id: `${Date.now()}-${Math.random()}-${s.id}`
-      })),
-      order: form.offices.length
-    };
+    const copy = copyCatalogOfficeToLocality(catalogOffice, form.offices.length);
     setForm(prev => ({ ...prev, offices: [...prev.offices, copy] }));
     setCatalogSearch("");
   };
