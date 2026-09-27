@@ -257,6 +257,11 @@ export default function SIPs() {
   const updateWorkOrder = async (orderId, field, value) => {
     const currentWo = workOrders.find((wo) => wo.id === orderId);
     if (!currentWo) return;
+    // Reopen also changes Revisit; a same-job date edit must wait for it.
+    if (field === "sip_revisit_date" && reopeningWipInFlightRef.current.has(orderId)) {
+      setQuickEditError("This WIP item is reopening. Wait for it to finish before changing Revisit.");
+      return;
+    }
     const editKey = JSON.stringify([orderId, field]);
     // A rapid second selection must not silently race the first save. Other
     // fields and other Work Orders remain independently editable.
@@ -326,6 +331,10 @@ export default function SIPs() {
     // Prevent a second click from issuing a duplicate request before React
     // has rendered the disabled control; leave other jobs independently usable.
     if (reopeningWipInFlightRef.current.has(wo.id)) return;
+    if (quickEditsInFlightRef.current.has(JSON.stringify([wo.id, "sip_revisit_date"]))) {
+      setQuickEditError("The Revisit date is still saving. Wait for it to finish before reopening this WIP item.");
+      return;
+    }
     reopeningWipInFlightRef.current.add(wo.id);
     setReopeningWipIds(prev => new Set(prev).add(wo.id));
     const reopenedRevisitDate = isRevisitFuture(wo) ? "" : (wo.sip_revisit_date ?? "");
