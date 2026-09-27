@@ -26,7 +26,11 @@ const localDate = (value) => {
   if (!value) return null;
   const [year, month, day] = String(value).split("-").map(Number);
   if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day);
+  const date = new Date(year, month - 1, day);
+  // Reject malformed or impossible dates instead of rolling them into another month.
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+    ? date
+    : null;
 };
 
 const futureDateStamp = (days) => {
