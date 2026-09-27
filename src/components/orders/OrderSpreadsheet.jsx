@@ -1396,7 +1396,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                     <Calendar
                       mode="single"
                       selected={parseLocalDate(order.date_needed)}
-                      onSelect={(date) => {
+                      onSelect={async (date) => {
                         if (date) {
                           const missingFields = validateOrderForDateNeeded(order);
                           if (missingFields.length > 0) {
@@ -1412,13 +1412,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
                             setOpenDatePopover(null);
                             return;
                           }
-                          updateOrder(order.id, "date_needed", format(date, "yyyy-MM-dd"));
-                          updateOrder(order.id, "date_needed_option", "");
-                        } else {
-                          updateOrder(order.id, "date_needed", "");
-                          updateOrder(order.id, "date_needed_option", "");
                         }
-                        setOpenDatePopover(null);
+                        try {
+                          setSaveError('');
+                          await persistDateNeeded(
+                            order.id, date ? format(date, 'yyyy-MM-dd') : '',
+                            date ? 'Set Date Needed' : 'Clear Date Needed'
+                          );
+                          setOpenDatePopover(null);
+                        } catch (error) {
+                          setSaveError(error?.message || 'Date Needed was not saved. Reload before retrying.');
+                        }
                       }}
                       disabled={(date) => {
                         const today = new Date();
