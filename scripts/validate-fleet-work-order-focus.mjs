@@ -280,4 +280,3 @@ await assert.rejects(() => submitCompleted({}, "operational"), /synthetic reject
 assert.equal(pendingCompletionFocusRef.current, null);
 assert.ok(source.includes("data-fleet-board-open={workOrder.id}"), "board cards expose stable focus targets");
 console.log("PASS: 11 completion focus scenarios, synthetic successful and rejected submissions, plus existing reopening and refresh coverage.");
-
