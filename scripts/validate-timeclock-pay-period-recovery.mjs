@@ -203,6 +203,64 @@ test('missing or duplicate pay-period coordinator fails closed without writing r
   }
 });
 
+test('unclean idle coordinator blocks creation without overwriting unresolved metadata', async () => {
+  for (const stale of [
+    { request_id: 'unresolved-old-request' },
+    { payload_hash: 'unresolved-hash' },
+    { claim_token: 'unresolved-token' },
+    { started_at: '2026-09-27T12:00:00.000Z' },
+  ]) {
+    const h = setup({ entryCount: 0 });
+    h.rows.TimeClockPayPeriod = [];
+    Object.assign(h.rows.TimeClockPayPeriodCreateGate[0], stale);
+    const original = structuredClone(h.rows.TimeClockPayPeriodCreateGate[0]);
+    const response = await h.invoke({
+      action: 'pay_period_create', request_id: 'unclean-idle-attempt-001',
+      label: 'Must not create', start_date: '2026-10-01', end_date: '2026-10-14',
+    });
+    assert.equal(response.status, 409, JSON.stringify(response.body));
+    assert.match(response.body.error, /stale lock metadata/);
+    assert.deepEqual(h.rows.TimeClockPayPeriodCreateGate[0], original);
+    assert.equal(h.rows.TimeClockPayPeriod.length, 0);
+    assert.equal(h.rows.TimeClockAudit.length, 0);
+  }
+});
+
+test('a mismatched confirmed audit cannot turn an exact retry into success', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  const payload = { action: 'pay_period_create', request_id: 'wrong-confirmed-audit-id-001',
+    label: 'Recorded once', start_date: '2026-10-01', end_date: '2026-10-14' };
+  const created = await h.invoke(payload);
+  assert.equal(created.status, 200, JSON.stringify(created.body));
+  h.audit(payload.request_id)[0].details.pay_period_id = 'wrong-period';
+  const retry = await h.invoke(payload);
+  assert.equal(retry.status, 409, JSON.stringify(retry.body));
+  assert.match(retry.body.error, /audit does not confirm the exact period/);
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+  assert.equal(h.rows.TimeClockPayPeriodCreateGate[0].status, 'idle');
+});
+
+test('corrupt confirmed audit leaves a held coordinator locked for investigation', async () => {
+  const h = setup({ entryCount: 0 });
+  h.rows.TimeClockPayPeriod = [];
+  const payload = { action: 'pay_period_create', request_id: 'held-wrong-audit-id-001',
+    label: 'Held record', start_date: '2026-10-01', end_date: '2026-10-14' };
+  const created = await h.invoke(payload);
+  assert.equal(created.status, 200, JSON.stringify(created.body));
+  const audit = h.audit(payload.request_id)[0];
+  const gate = h.rows.TimeClockPayPeriodCreateGate[0];
+  Object.assign(gate, { status: 'creating', request_id: payload.request_id,
+    payload_hash: audit.details.payload_hash, claim_token: 'held-corrupt-audit-token',
+    started_at: '2026-09-27T12:00:00.000Z' });
+  audit.details.pay_period_id = 'wrong-period';
+  const retry = await h.invoke(payload);
+  assert.equal(retry.status, 409, JSON.stringify(retry.body));
+  assert.equal(gate.status, 'creating');
+  assert.equal(gate.claim_token, 'held-corrupt-audit-token');
+  assert.equal(h.rows.TimeClockPayPeriod.length, 1);
+});
+
 test('interrupted pay-period audit finalization retains the gate until exact-request recovery', async () => {
   const h = setup({ entryCount: 0 });
   h.rows.TimeClockPayPeriod = [];
