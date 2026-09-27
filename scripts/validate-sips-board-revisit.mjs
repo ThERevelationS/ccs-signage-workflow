@@ -675,7 +675,7 @@ await check('clear confirmation renders inline accessible failure and requires r
   assert.match(dialog, /revisitClearFailure &&/);
   assert.match(dialog, /role="alert"/);
   assert.match(dialog, /\{revisitClearFailure.message\}/);
-  assert.match(dialog, /revisitClearFailure\.requiresReview \? "Close & review board"/);
+  assert.match(dialog, /revisitClearFailure\?\.requiresReview \? "Close & review board"/);
   assert.match(dialog, /disabled=\{isClearingRevisit \|\| revisitClearFailure\?\.requiresReview\}/);
   assert.match(dialog, /setRevisitClearFailure\(null\)/);
 });
