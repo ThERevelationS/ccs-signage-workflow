@@ -18,6 +18,7 @@ function ids(...values) {
 test('locality office retains canonical catalog provenance with independent workflow IDs', () => {
   const copy = copyCatalogOfficeToLocality(catalog, 2, ids('local-office', 'local-step'));
   assert.equal(copy.catalog_office_id, catalog.id);
+  assert.equal(copy.government_office_id, catalog.id);
   assert.equal(copy.id, 'local-office');
   assert.equal(copy.order, 2);
   assert.equal(copy.office_type, 'Zoning');
@@ -34,6 +35,7 @@ test('same catalog office can serve multiple localities without sharing editable
   const a = copyCatalogOfficeToLocality(catalog, 0, ids('loc-A', 'step-A'));
   const b = copyCatalogOfficeToLocality(catalog, 0, ids('loc-B', 'step-B'));
   assert.equal(a.catalog_office_id, b.catalog_office_id);
+  assert.equal(a.government_office_id, b.government_office_id);
   assert.notEqual(a.id, b.id);
   assert.notEqual(a.workflow_steps[0].id, b.workflow_steps[0].id);
 });
@@ -42,12 +44,14 @@ test('legacy catalog entries without IDs still copy without inventing a link', (
   const copy = copyCatalogOfficeToLocality({ name: 'Legacy office' }, 0, ids('local'));
   assert.equal(copy.name, 'Legacy office');
   assert.equal(Object.hasOwn(copy, 'catalog_office_id'), false);
+  assert.equal(Object.hasOwn(copy, 'government_office_id'), false);
   assert.deepEqual(copy.workflow_steps, []);
 });
 
 test('optional provenance field coexists with existing locality and workflow schema', () => {
   const schema = JSON.parse(readFileSync(new URL('../base44/entities/PermitLocality.jsonc', import.meta.url)));
   assert.equal(schema.properties.offices.items.properties.catalog_office_id.type, 'string');
+  assert.equal(schema.properties.offices.items.properties.government_office_id.type, 'string');
   assert.deepEqual(schema.required, ['name']);
   const officeSchema = schema.properties.offices.items.properties;
   assert.ok(officeSchema.workflow_steps);
