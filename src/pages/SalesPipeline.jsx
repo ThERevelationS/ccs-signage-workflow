@@ -93,6 +93,7 @@ export default function SalesPipeline() {
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [canImportExport, setCanImportExport] = useState(false);
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
+  const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -165,6 +166,8 @@ export default function SalesPipeline() {
   const moreAttentionSelected = salesMoreAttentionSelected(attentionFilter);
   const selectedMoreAttention = moreAttentionSelected ? salesAttentionOption(attentionFilter) : null;
   const hasActiveFilters = attentionFilter !== "all" || filterStatus !== "all";
+  const secondaryMetricLabel = ["quote_no_followup", "no_next_action", "near_close", "stale"].includes(attentionFilter)
+    ? salesAttentionOption(attentionFilter)?.label : null;
 
   return (
     <div className="flex flex-col p-2 sm:p-3" style={{ height: '100%', overflow: 'hidden' }}>
@@ -441,8 +444,19 @@ export default function SalesPipeline() {
         </section>
 
         {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
-          <div className="mb-1 space-y-1">
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5" title="Pipeline summary. Swipe or scroll horizontally on smaller screens.">
+          <section aria-label="Sales Pipeline overview" className="mb-1 space-y-1">
+            <div className="flex min-h-7 items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pipeline overview</span>
+              <button type="button" id="sales-more-metrics-toggle"
+                aria-expanded={showMoreMetrics}
+                aria-controls="sales-secondary-metrics"
+                onClick={() => setShowMoreMetrics((open) => !open)}
+                className={`inline-flex min-h-8 max-w-[65%] items-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${secondaryMetricLabel ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                <span className="truncate">{showMoreMetrics ? "Fewer Metrics" : secondaryMetricLabel ? `More Metrics · ${secondaryMetricLabel}` : "More Metrics"}</span>
+                <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${showMoreMetrics ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5" title="Four primary Sales metrics. Swipe or scroll horizontally on smaller screens.">
               <button type="button" title={`${Math.max(0, pipelineSummary.openCount - pipelineSummary.placeholderCount)} non-test · ${pipelineSummary.placeholderCount} test · ${pipelineSummary.assignedOwnerCount} owned · ${pipelineSummary.unassignedOwnerCount} unassigned`} onClick={() => applyAttentionFilter("all")} className="min-w-[150px] flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-slate-500">Open Opportunities</span>
@@ -461,6 +475,19 @@ export default function SalesPipeline() {
                   <span className="shrink-0 text-base font-bold leading-none text-red-800">{pipelineSummary.dueCount}</span>
                 </div>
               </button>
+              <button type="button"
+                title={`${pipelineSummary.needsAttentionCount} of ${pipelineSummary.openCount} active opportunities need attention, using existing Sales attention rules.`}
+                aria-pressed={attentionFilter === "needs_attention"}
+                onClick={() => applyAttentionFilter("needs_attention")}
+                className={`min-w-[150px] flex-1 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "needs_attention" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-amber-700">Needs Attention</span>
+                  <span className="shrink-0 text-base font-bold leading-none text-amber-900">{pipelineSummary.needsAttentionCount}</span>
+                </div>
+              </button>
+            </div>
+            <div id="sales-secondary-metrics" aria-labelledby="sales-more-metrics-toggle"
+              className={showMoreMetrics ? "flex gap-1.5 overflow-x-auto pb-0.5" : "hidden"}>
               <button type="button" title={`${pipelineSummary.quoteAwaitingResponseCount} awaiting response · ${pipelineSummary.quoteTimingMissingCount} missing trusted quote timing`} onClick={() => applyAttentionFilter("quote_no_followup")} className={`min-w-[150px] flex-1 rounded-md border px-2 py-1 text-left shadow-sm transition ${attentionFilter === "quote_no_followup" ? "border-amber-400 bg-amber-50" : "border-amber-200 bg-white hover:border-amber-300"}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-[9px] font-semibold uppercase tracking-wide text-amber-700">Quotes Need Follow-up</span>
@@ -486,8 +513,7 @@ export default function SalesPipeline() {
                 </div>
               </button>
             </div>
-
-          </div>
+          </section>
         )}
 
         {!showDuplicateCleanup && recordScope === "outcomes" && (
