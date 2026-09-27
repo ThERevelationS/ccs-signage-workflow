@@ -46,7 +46,7 @@ for (const label of ["Duplicate", "Edit", "Delete"]) {
 }
 check(standard.includes("aria-label={`Duplicate ${item.name}`}"),
   "Standard duplicate button needs an accessible name");
-check((selected.match(/aria-label={`Remove ${item.name} from My Presets`}/g) || []).length === 2,
+check(selected.split('aria-label={`Remove ${item.name} from My Presets`}').length - 1 === 2,
   "Both selected-chip remove buttons need explicit accessible names");
 check((selected.match(/onClick=\{\(\) => toggleSelection\(item(?:, true)?\)\}/g) || []).length === 2,
   "My Presets remove actions must retain standard and custom selection paths");
