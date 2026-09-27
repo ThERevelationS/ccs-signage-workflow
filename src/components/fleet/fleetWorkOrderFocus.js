@@ -12,3 +12,18 @@ export function workOrderSaveFocusNotice({ verb, label, visible }) {
     ? `${verb} ${label}. Use the view controls to locate the updated work order.`
     : `${verb} ${label}. It no longer matches the current filters.`;
 }
+
+export function restoreWorkOrderFocusAfterSave({ rows, pending, viewMode, root, statusFilter, onNotice }) {
+  const target = findWorkOrderFocusTarget(rows, pending.id, viewMode, root);
+  if (target) {
+    target.focus();
+    return "work-order";
+  }
+  statusFilter?.focus();
+  onNotice(workOrderSaveFocusNotice({
+    verb: pending.verb,
+    label: pending.label,
+    visible: rows.some((row) => row.id === pending.id),
+  }));
+  return "filter";
+}
