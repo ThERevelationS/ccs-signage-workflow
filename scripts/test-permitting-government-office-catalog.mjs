@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry } from '../src/components/permitting/governmentOfficeCatalog.js';
+import { normalizeGovernmentOfficeCatalogEntry, updateGovernmentOfficeCatalogEntry, updateGovernmentOfficeVerification } from '../src/components/permitting/governmentOfficeCatalog.js';
 import { copyCatalogOfficeToLocality } from '../src/components/permitting/localityOfficeCatalogBridge.js';
 
 test('legacy catalog office gains stable canonical identity and explicit contact metadata', () => {
@@ -33,4 +33,31 @@ test('locality copy reads canonical metadata but owns independent workflow ids',
 test('existing explicit canonical identity survives catalog normalization', () => {
   const row = normalizeGovernmentOfficeCatalogEntry({ id: 'template-9', government_office_id: 'gov-office-2', name: 'Office' });
   assert.equal(row.government_office_id, 'gov-office-2');
+  assert.equal(row.government_office.verification_status, 'needs_verification');
+});
+
+test('staff verification records independent office source provenance', () => {
+  const row = normalizeGovernmentOfficeCatalogEntry({ id: 'catalog-1', name: 'County Zoning' });
+  const verified = updateGovernmentOfficeVerification(row, {
+    verification_status: 'staff_verified',
+    source_url: 'https://county.example.gov/zoning',
+    verification_notes: 'Official department page confirms contact details.',
+  }, 'staff@example.com', () => '2026-09-27T12:00:00.000Z');
+  assert.equal(verified.government_office.verification_status, 'staff_verified');
+  assert.equal(verified.government_office.verified_at, '2026-09-27T12:00:00.000Z');
+  assert.equal(verified.government_office.verified_by, 'staff@example.com');
+  assert.equal(verified.government_office.source_url, 'https://county.example.gov/zoning');
+  assert.equal(Object.hasOwn(verified, 'authority_roles'), false);
+});
+
+test('revoking office verification preserves provenance notes but clears reviewer claim', () => {
+  const verified = updateGovernmentOfficeVerification({ id: 'catalog-1', name: 'Office' }, {
+    verification_status: 'staff_verified', source_url: 'https://official.example.gov', verification_notes: 'Checked'
+  }, 'reviewer', () => '2026-09-27T12:00:00.000Z');
+  const revoked = updateGovernmentOfficeVerification(verified, { verification_status: 'needs_verification' });
+  assert.equal(revoked.government_office.verification_status, 'needs_verification');
+  assert.equal(revoked.government_office.verified_at, '');
+  assert.equal(revoked.government_office.verified_by, '');
+  assert.equal(revoked.government_office.source_url, 'https://official.example.gov');
+  assert.equal(revoked.government_office.verification_notes, 'Checked');
 });
