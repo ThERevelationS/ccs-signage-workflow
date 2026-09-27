@@ -15,6 +15,7 @@ import { orderStatusFromPulledDates } from '../../shared/smartsheetOrderReceived
 import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '../../shared/smartsheetOrderCreateReview.mjs';
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
+import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -575,14 +576,22 @@ async function pullDataset(
     }
   }
 
-  // Write snapshots in bulk so the next push sync doesn't see false conflicts.
+  // Order sync metadata is part of verified success, not a best-effort log.
+  // Failed batches may have applied fields or some metadata: report them for
+  // review rather than falsely declaring every Order fully synchronized.
+  let snapshotWriteFailures = 0;
   const snapshotBatchSize = 100;
   for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
     const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
-    } catch {
-      // non-critical — snapshot is only for conflict detection
+    } catch (error: any) {
+      if (dataset === 'orders') {
+        snapshotWriteFailures += batch.length;
+        updatedCount = Math.max(0, updatedCount - batch.length);
+        errors.push(`Order sync metadata was not confirmed for ${batch.length} records (IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). Review before treating this pull as complete: ${error?.message || 'unknown error'}`);
+      }
+      // Preserve the existing Sales metadata behavior (separate project).
     }
   }
 
@@ -631,6 +640,7 @@ async function pullDataset(
     created: createdCount,
     updated: updatedCount,
     unchanged_skipped: unchangedSkipped,
+    ...(dataset === 'orders' ? { snapshot_write_failures: snapshotWriteFailures } : {}),
     errors: errors.length,
     error_details: errors.slice(0, 10),
     orphans_soft_deleted: 0,
@@ -1590,15 +1600,17 @@ Deno.serve(async (req) => {
             completedSteps++;
           }
         } catch (err) {
-          results.push({ dataset, ...(dataset === 'sales' && activeDirection ? { direction: activeDirection } : {}), skipped: true, reason: (err as any)?.message || 'Sync failed.' });
+          results.push({ dataset, ...(activeDirection ? { direction: activeDirection } : {}), skipped: true, reason: (err as any)?.message || 'Sync failed.' });
           completedSteps++;
         }
       }
 
-      const salesNeedsReview = salesRunRequiresReview(results);
+      // Both datasets must report blocked stages and partial writes honestly.
+      // Sales review rules remain unchanged; Order review is strictly isolated.
+      const runNeedsReview = salesRunRequiresReview(results) || orderRunRequiresReview(results);
       await saveSyncStatus(base44, {
-        status: salesNeedsReview ? 'needs_review' : 'completed',
-        needs_review: salesNeedsReview,
+        status: runNeedsReview ? 'needs_review' : 'completed',
+        needs_review: runNeedsReview,
         completed_at: new Date().toISOString(),
         total_steps: steps.length,
         completed_steps: steps.length,
@@ -1610,8 +1622,8 @@ Deno.serve(async (req) => {
         success: true,
         configured: true,
         write_actions_available: true,
-        sync_complete: !salesNeedsReview,
-        needs_review: salesNeedsReview,
+        sync_complete: !runNeedsReview,
+        needs_review: runNeedsReview,
         results,
       });
     }
