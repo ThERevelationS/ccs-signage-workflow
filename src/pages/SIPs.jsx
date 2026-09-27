@@ -111,6 +111,7 @@ export default function SIPs() {
   const boardLoadSequenceRef = useRef(0);
   const boardSaveEpochRef = useRef(0);
   const boardSavesPendingRef = useRef(0);
+  const boardRefreshDeferredRef = useRef(false);
   const quickEditsInFlightRef = useRef(new Map());
 
   // Track the three quick board-save paths so a slower background refresh
@@ -123,6 +124,12 @@ export default function SIPs() {
     } finally {
       boardSavesPendingRef.current -= 1;
       boardSaveEpochRef.current += 1;
+      if (boardSavesPendingRef.current === 0 && boardRefreshDeferredRef.current) {
+        // A refresh dropped during a save must retry once all local writes
+        // settle, including when one of those writes encountered a conflict.
+        boardRefreshDeferredRef.current = false;
+        void loadWorkOrders(false);
+      }
     }
   };
 
@@ -183,9 +190,20 @@ export default function SIPs() {
           .then(setting => ({ setting, error: null }))
           .catch(error => ({ setting: null, error }))
       ]);
-      // Ignore a response superseded by another refresh or by any local save.
-      // The next scheduled/manual refresh will get a fresh snapshot if needed.
-      if (!isCurrentBoardSnapshot()) return;
+      // Never display a snapshot captured during a local save or superseded
+      // by a later save. If this is still the latest refresh, retry after
+      // active saves settle rather than leaving a failed optimistic edit shown.
+      if (!isCurrentBoardSnapshot()) {
+        if (loadSequence === boardLoadSequenceRef.current &&
+            (saveEpochAtStart !== boardSaveEpochRef.current || boardSavesPendingRef.current > 0)) {
+          if (boardSavesPendingRef.current > 0) {
+            boardRefreshDeferredRef.current = true;
+          } else {
+            void loadWorkOrders(false);
+          }
+        }
+        return;
+      }
 
       // Get task descriptions that have SIPs page assigned OR have WIP flag
       const sipTaskDescriptions = [];
