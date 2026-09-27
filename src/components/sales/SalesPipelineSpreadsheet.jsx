@@ -275,6 +275,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // request from the old scope can briefly repopulate the new workspace.
     activeRecordScopeRef.current = recordScope;
     loadRequestRef.current += 1;
+    // A pending quick edit belongs to the row/workspace where it was made.
+    // Keep its conflict-safe save alive, but remove its optimistic overlay
+    // from the next workspace load so old-scope values cannot bleed into it.
     setSelectedWorkOrder(null);
     setShowFullWorkOrderDetails(false);
     archiveSkipRef.current = 0;
@@ -465,7 +468,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return;
       archiveSkipRef.current = pagedCount;
       setArchiveHasMore(hasMore);
-      setWorkOrders(mergeLoadedRows(rows));
+      const loadedRows = scopeAtStart === recordScope
+        ? mergeLoadedRows(rows)
+        : rows;
+      setWorkOrders(loadedRows);
       setUsers(usersData);
     } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
