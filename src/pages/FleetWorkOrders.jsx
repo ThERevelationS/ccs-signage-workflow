@@ -34,6 +34,8 @@ export default function FleetWorkOrders() {
   const [dialog, setDialog] = useState(null);
   const [actionError, setActionError] = useState("");
   const [focusNotice, setFocusNotice] = useState("");
+  const [refreshError, setRefreshError] = useState("");
+  const [retryingRefresh, setRetryingRefresh] = useState(false);
   const [reopeningId, setReopeningId] = useState("");
   const [confirmReopen, setConfirmReopen] = useState(null);
   const [startWorkOrder, setStartWorkOrder] = useState(null);
@@ -45,6 +47,7 @@ export default function FleetWorkOrders() {
   const pendingSaveFocusRef = useRef(null);
   const pendingStartFocusRef = useRef(null);
   const statusFilterRef = useRef(null);
+  const retryRefreshButtonRef = useRef(null);
   const hasLoadedRef = useRef(false);
 
   const loadData = useCallback(async () => {
