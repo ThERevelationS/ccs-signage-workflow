@@ -314,12 +314,15 @@ export default function FleetWorkOrders() {
         },
       });
       if (response?.data?.error) throw new Error(response.data.error);
-      await loadData();
+      const refreshed = await attemptPostMutationRefresh(loadData);
+      const label = startWorkOrder.work_order_number || startWorkOrder.title || "work order";
+      if (!refreshed) setRefreshError("Started " + label + " successfully, but the list could not refresh. Use Retry refresh; do not repeat the operation.");
       setFocusNotice("");
       pendingStartFocusRef.current = {
         id: startWorkOrder.id,
-        label: startWorkOrder.work_order_number || startWorkOrder.title || "work order",
+        label,
         verb: "Started",
+        refreshFailed: !refreshed,
       };
       setStartWorkOrder(null);
     } catch (error) {
@@ -363,8 +366,10 @@ export default function FleetWorkOrders() {
     try {
       const response = await base44.functions.invoke("fleetWorkOrderAction", { action: "reopen", id: workOrder.id, expected_updated_date: workOrder.updated_date || "" });
       if (response?.data?.error) throw new Error(response.data.error);
-      await loadData();
-      pendingReopenFocusRef.current = { id: workOrder.id, label: workOrder.work_order_number || workOrder.title || "work order" };
+      const refreshed = await attemptPostMutationRefresh(loadData);
+      const label = workOrder.work_order_number || workOrder.title || "work order";
+      if (!refreshed) setRefreshError("Reopened " + label + " successfully, but the list could not refresh. Use Retry refresh; do not repeat the operation.");
+      pendingReopenFocusRef.current = { id: workOrder.id, label, refreshFailed: !refreshed };
     } catch (error) {
       setActionError(error?.message || "Failed to reopen Fleet work order.");
     } finally {
