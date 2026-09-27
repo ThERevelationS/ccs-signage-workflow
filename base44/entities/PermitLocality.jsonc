@@ -63,6 +63,45 @@
             "type": "string",
             "description": "Optional ID of the reusable office catalog entry copied into this locality. Provenance only; not verification of legal permitting authority."
           },
+          "authority_roles": {
+            "type": "array",
+            "description": "Explicit staff-reviewed authority roles this office performs for this locality. Empty or absent means authority has not been established; office_type/office_types must not be treated as legal authority.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "sign_permit",
+                "zoning",
+                "building",
+                "electrical",
+                "right_of_way",
+                "historic_review",
+                "planning",
+                "transportation",
+                "other"
+              ]
+            }
+          },
+          "authority_verification_status": {
+            "type": "string",
+            "enum": [
+              "needs_verification",
+              "staff_verified"
+            ],
+            "description": "Review state for this locality-to-office authority relationship. staff_verified means staff confirmed the listed authority_roles; it does not verify unrelated office contact or repository facts."
+          },
+          "authority_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When staff last verified this locality-to-office authority relationship."
+          },
+          "authority_verified_by": {
+            "type": "string",
+            "description": "Employee who last verified this locality-to-office authority relationship."
+          },
+          "authority_verification_notes": {
+            "type": "string",
+            "description": "Optional staff notes or source context supporting this locality-to-office authority relationship."
+          },
           "name": {
             "type": "string",
             "description": "Display name for this office (e.g. 'Hamilton County Zoning')"
