@@ -6,7 +6,10 @@ import { copyCatalogOfficeToLocality } from '../src/components/permitting/locali
 test('legacy catalog office gains stable canonical identity and explicit contact metadata', () => {
   const row = normalizeGovernmentOfficeCatalogEntry({ id: 'catalog-1', name: 'County Zoning', contact_phone: '555-0100', workflow_steps: [] });
   assert.equal(row.government_office_id, 'catalog-1');
-  assert.deepEqual(row.government_office, { name: 'County Zoning', phone: '555-0100', email: '', website: '', address: '', notes: '' });
+  assert.deepEqual(row.government_office, {
+    name: 'County Zoning', phone: '555-0100', email: '', website: '', address: '', notes: '',
+    verification_status: 'needs_verification', verified_at: '', verified_by: '', verification_notes: '', source_url: ''
+  });
   assert.equal(row.contact_phone, '555-0100');
 });
 
