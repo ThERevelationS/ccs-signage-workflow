@@ -204,7 +204,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       {isRegistered && isOpen && (
                         <div
                           className="mt-2 flex items-center gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0"
-                          aria-label="Kanban follow-up quick actions. Swipe horizontally for more actions."
+                          aria-label={`Follow-up quick actions for ${workOrder.client_name || 'Unnamed opportunity'}. Swipe horizontally for more actions.`}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "follow_up_date", futureDateStamp(1))} className="h-11 shrink-0 rounded-md border border-gray-200 px-2.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 sm:h-8">Tomorrow</button>
