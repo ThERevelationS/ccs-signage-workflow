@@ -196,7 +196,9 @@ await check('confirmed clear refuses newer Revisit after board refresh', async (
   assert.equal(h.record.sip_revisit_date, later);
   assert.equal(h.writes, 0);
   assert.equal(h.ctx.reloads, 1);
-  assert.equal(h.ctx.pendingRevisitClear, null);
+  assert.equal(h.ctx.pendingRevisitClear.revisitDate, tomorrow);
+  assert.equal(h.ctx.revisitClearFailure.requiresReview, true);
+  assert.match(h.ctx.revisitClearFailure.message, /changed in another session/);
   assert.match(h.ctx.quickEditError, /changed in another session/);
 });
 
@@ -494,7 +496,9 @@ await check('second-session confirmation cannot clear newer date after first-ses
   assert.equal(h.live.sip_revisit_date, later);
   assert.equal(h.writes, 1);
   assert.equal(h.B.queue(), 'Revisit Later');
-  assert.equal(h.B.ctx.pendingRevisitClear, null);
+  assert.equal(h.B.ctx.pendingRevisitClear.revisitDate, tomorrow);
+  assert.equal(h.B.ctx.revisitClearFailure.requiresReview, true);
+  assert.match(h.B.ctx.revisitClearFailure.message, /changed in another session/);
   assert.match(h.B.ctx.quickEditError, /changed in another session/);
 });
 
