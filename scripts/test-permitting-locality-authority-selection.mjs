@@ -116,6 +116,43 @@ test('permit line row shows an accessible office-specific review badge from curr
   assert.match(row, /role="status"/);
 });
 
+test('stable office ID survives office rename and type changes within its locality', async () => {
+  const { summarizePermitLineOfficeAuthority } = await import('../base44/shared/permittingAddressLocality.js');
+  const locality = { id: 'township', offices: [
+    { id: 'office-1', name: 'New Permit Department', office_type: 'Building', authority_verification_status: 'staff_verified', authority_roles: ['sign_permit'] },
+    { id: 'office-2', name: 'Old Permit Department', office_type: 'Zoning', authority_verification_status: 'needs_verification', authority_roles: ['zoning'] },
+  ] };
+  const line = { locality_id: 'township', locality_office_id: 'office-1', row_name: 'Old Permit Department', office_type: 'Zoning' };
+  const review = summarizePermitLineOfficeAuthority(line, [locality]);
+  assert.equal(review.status, 'staff_verified');
+  assert.equal(review.office_name, 'New Permit Department');
+  assert.deepEqual(review.verified_roles, ['sign_permit']);
+  locality.offices[0].authority_verification_status = 'needs_verification';
+  assert.equal(summarizePermitLineOfficeAuthority(line, [locality]).status, 'needs_verification');
+});
+
+test('missing or duplicate stable office IDs fail closed without legacy name fallback', async () => {
+  const { summarizePermitLineOfficeAuthority } = await import('../base44/shared/permittingAddressLocality.js');
+  const office = { id: 'office-1', name: 'Sign Office', office_type: 'Zoning', authority_verification_status: 'staff_verified', authority_roles: ['sign_permit'] };
+  const linked = { locality_id: 'township', locality_office_id: 'missing-id', row_name: 'Sign Office', office_type: 'Zoning' };
+  const lookup = offices => summarizePermitLineOfficeAuthority(linked, [{ id: 'township', offices }]);
+  assert.equal(lookup([office]).status, 'unresolved');
+  assert.match(lookup([office]).reason, /saved office ID/);
+  assert.equal(summarizePermitLineOfficeAuthority({ ...linked, locality_office_id: 'office-1' }, [{ id: 'township', offices: [office, { ...office }] }]).status, 'unresolved');
+  assert.equal(lookup([{ ...office, id: 'missing-id', authority_verification_status: 'needs_verification' }]).status, 'needs_verification');
+  assert.equal(summarizePermitLineOfficeAuthority({ ...linked, locality_office_id: '' }, [{ id: 'township', offices: [office] }]).status, 'staff_verified');
+});
+
+test('new permit lines persist locality office IDs and locality changes clear unsafe old IDs', () => {
+  const schema = JSON.parse(readFileSync(new URL('../base44/entities/PermitLineItem.jsonc', import.meta.url), 'utf8'));
+  const page = readFileSync(new URL('../src/pages/Permitting.jsx', import.meta.url), 'utf8');
+  assert.equal(schema.properties.locality_office_id.type, 'string');
+  assert.ok(!schema.required?.includes('locality_office_id'));
+  assert.match(page, /locality_office_id: String\(office\.office_id \|\| ""\)\.trim\(\)/);
+  assert.match(page, /locality_office_id: "", \/\/ A previous locality's office ID is never reusable/);
+  assert.match(page, /previousMatches\.length === 1/);
+  assert.match(page, /updates\.locality_office_id = String\(exactOffice\.id\)\.trim\(\)/);
+});
 test('manual locality selection uses the same partial authority coverage language as address resolution', () => {
   assert.match(ui, /selectedAuthority\.coverage_status === "partial"/);
   assert.match(ui, /selectedAuthority\.coverage_status === "configured_offices_reviewed"/);

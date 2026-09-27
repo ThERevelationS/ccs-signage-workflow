@@ -75,10 +75,9 @@ export function summarizePermitGroupAuthorityCoverage(lines, localities) {
   return [...byLocality.values()];
 }
 
-/** Review the specific configured office represented by an existing permit line.
- * PermitLineItem has no stable office_id yet, so only a unique exact name plus
- * compatible recorded office type can inherit staff verification. Changed or
- * duplicate office names fail closed, and legacy lines remain usable.
+/** Resolve an office by its locality-scoped stable ID when present. Legacy
+ * lines without that ID retain strict name/type matching. Missing or duplicate
+ * explicit IDs fail closed instead of inheriting authority from a namesake.
  */
 export function summarizePermitLineOfficeAuthority(line, localities) {
   const rowName = String(line?.row_name || '').trim();
@@ -94,7 +93,15 @@ export function summarizePermitLineOfficeAuthority(line, localities) {
   if (matches.length !== 1) return unresolved('Locality link is missing or ambiguous.');
   const offices = Array.isArray(matches[0].offices) ? matches[0].offices : [];
   if (!offices.length) return unresolved('No configured offices exist for this locality.');
-  if (!rowName) return unresolved('This permit line has no recorded office name.');
+  const stableId = String(line?.locality_office_id || '').trim();
+  if (stableId) {
+    const linked = offices.filter(office => String(office?.id || '').trim() === stableId);
+    if (linked.length !== 1) return unresolved(linked.length > 1
+      ? 'Multiple configured offices share this saved office ID. Review the duplicate mapping.'
+      : 'The saved office ID is missing from this locality. Review the office mapping.');
+    return summarizeResolvedOfficeAuthority(linked[0], matches[0], fallbackName);
+  }
+  if (!rowName) return unresolved('This legacy permit line has no recorded office name.');
   const lineType = String(line?.office_type || '').trim().toLowerCase();
   const officeMatches = offices.filter(office => {
     const types = Array.isArray(office?.office_types) && office.office_types.length
@@ -106,14 +113,17 @@ export function summarizePermitLineOfficeAuthority(line, localities) {
   if (officeMatches.length !== 1) return unresolved(officeMatches.length > 1
     ? 'Multiple configured offices match this line. Review the office mapping.'
     : 'The recorded office name or type no longer matches a configured office.');
-  const office = officeMatches[0];
-  const authority = summarizeMatchedLocalityAuthority({ id: matches[0].id, offices: [office] });
+  return summarizeResolvedOfficeAuthority(officeMatches[0], matches[0], fallbackName);
+}
+
+function summarizeResolvedOfficeAuthority(office, locality, fallbackName) {
+  const authority = summarizeMatchedLocalityAuthority({ id: locality.id, offices: [office] });
   return {
     status: authority.verified_office_count === 1 ? 'staff_verified' : 'needs_verification',
-    office_name: String(office?.name || rowName).trim(),
+    office_name: String(office?.name || fallbackName).trim(),
     verified_roles: authority.verified_roles,
     roles_needing_review: authority.roles_needing_review,
-    reason: authority.verified_office_count === 1 ? '' : 'This office\'s locality authority needs staff review.',
+    reason: authority.verified_office_count === 1 ? '' : "This office's locality authority needs staff review.",
   };
 }
 

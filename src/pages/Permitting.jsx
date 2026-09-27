@@ -35,6 +35,7 @@ const PERMIT_HISTORY_FIELDS = new Set([
   "row_name",
   "locality_id",
   "locality_name",
+  "locality_office_id",
   "office_type",
   "office_types",
   "assigned_to",
@@ -484,6 +485,7 @@ export default function Permitting() {
           office_types: office.office_types,
           locality_id: locality.id,
           locality_name: locality.name || "",
+          locality_office_id: String(office.office_id || "").trim(),
           status: "active",
           assigned_to: wo.current_task_assigned_to || wo.assigned_to || "",
           steps: office.steps,
@@ -545,12 +547,30 @@ export default function Permitting() {
     const updates = {
       locality_id: localityId || "",
       locality_name: locality?.name || "",
+      locality_office_id: "", // A previous locality's office ID is never reusable.
     };
     if (locality) {
-      // Try to match an office by office_type on the existing line
       const item = lineItems.find(li => li.id === lineItemId);
-      const matchingOffice = locality.offices?.find(o => o.office_type === item?.office_type)
-        || locality.offices?.[0];
+      const offices = Array.isArray(locality.offices) ? locality.offices : [];
+      const previousId = item?.locality_id === localityId
+        ? String(item?.locality_office_id || "").trim() : "";
+      const previousMatches = previousId
+        ? offices.filter(o => String(o?.id || "").trim() === previousId) : [];
+      const exactMatches = offices.filter(o => {
+        const types = Array.isArray(o?.office_types) && o.office_types.length
+          ? o.office_types : o?.office_type ? [o.office_type] : [];
+        return String(o?.name || types[0] || "Office").trim().toLowerCase() === String(item?.row_name || "").trim().toLowerCase()
+          && (!item?.office_type || types.some(type => String(type).trim().toLowerCase() === String(item.office_type).trim().toLowerCase()));
+      });
+      const exactOffice = previousMatches.length === 1 ? previousMatches[0]
+        : previousId ? null : exactMatches.length === 1 ? exactMatches[0] : null;
+      if (exactOffice?.id && offices.filter(o => String(o?.id || "").trim() === String(exactOffice.id).trim()).length === 1) {
+        updates.locality_office_id = String(exactOffice.id).trim();
+      }
+      // Preserve the legacy workflow fallback, but never claim an arbitrary office ID.
+      const matchingOffice = exactOffice
+        || offices.find(o => o.office_type === item?.office_type)
+        || offices[0];
       if (matchingOffice) {
         updates.steps = (matchingOffice.workflow_steps || []).map(s => ({ ...s, value: "", checked: false }));
       } else if (locality.workflow_steps?.length > 0) {
