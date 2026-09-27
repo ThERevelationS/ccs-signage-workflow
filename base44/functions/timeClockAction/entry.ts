@@ -1751,6 +1751,7 @@ Deno.serve(async (req) => {
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
+    const payPeriodGateEntity = base44.asServiceRole.entities.TimeClockPayPeriodCreateGate;
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
@@ -1941,6 +1942,15 @@ Deno.serve(async (req) => {
       if (!startDate || !endDate || startDate > endDate) return Response.json({ success: false, error: 'A valid pay-period start and end date are required.' }, { status: 400 });
 
       const createPayloadHash = await payloadHash({ label, start_date: startDate, end_date: endDate });
+      const createGate = await acquirePayPeriodCreateGate(
+        payPeriodGateEntity, auditEntity, payPeriodEntity, requestId, createPayloadHash,
+      );
+      if (!createGate.acquired) return Response.json({ success: false, retry_same_request: !!createGate.retry_same_request,
+        error: createGate.error }, { status: 409 });
+      // An uncertain create must retain the gate until the same request recovers
+      // its persisted period and confirms the audit. Never unlock in that case.
+      let retainCreateGate = false;
+      try {
       const createAudits = await auditEntity.filter({ action: 'pay_period_create', request_id: requestId });
       if (!Array.isArray(createAudits)) throw new Error('Pay-period create audit lookup did not return a record list.');
       if (createAudits.length > 1) return Response.json({ success: false, error: 'This pay-period create request has multiple audit records. Admin investigation is required.' }, { status: 409 });
@@ -2037,6 +2047,7 @@ Deno.serve(async (req) => {
       }
       if (!createIntent?.id) throw new Error('Pay-period audit intent could not be persisted. No period was created.');
 
+      retainCreateGate = true; // The create response itself may be interrupted after persistence.
       const period = await payPeriodEntity.create({
         label, start_date: startDate, end_date: endDate, status: 'open',
         created_at: now, created_by: actorEmail, last_request_id: requestId,
@@ -2052,7 +2063,16 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, retry_same_request: true, error: 'The pay period was created but audit finalization was interrupted. Retry the same create action.' }, { status: 409 });
         }
       }
+      retainCreateGate = false; // Created period and confirmed audit have both been verified.
       return Response.json({ success: true, period, audit_id: createIntent.id });
+      } finally {
+        if (!retainCreateGate) {
+          const released = await releasePayPeriodCreateGate(
+            payPeriodGateEntity, createGate.id, requestId, createPayloadHash, createGate.token,
+          );
+          if (!released) throw new Error('Pay-period create gate release could not be verified. Retry the same request or request admin investigation.');
+        }
+      }
     }
 
     if (action === 'pay_period_status') {
