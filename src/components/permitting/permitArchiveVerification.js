@@ -8,9 +8,11 @@ export function isVerifiedPermitPDFArchive(document) {
   if (!/^[a-f0-9]{64}$/.test(storedHash) || !Number.isSafeInteger(storedBytes) || storedBytes < 1) return false;
 
   const expectedHash = String(document.source_sha256 || '').trim().toLowerCase();
-  if (expectedHash && expectedHash !== storedHash) return false;
-  const expectedBytes = document.source_bytes == null ? null : Number(document.source_bytes);
-  if (expectedBytes !== null && expectedBytes !== storedBytes) return false;
+  // A live URL and stored fingerprint alone cannot prove which official source
+  // was collected. Require the independently archived source fingerprint too.
+  if (!/^[a-f0-9]{64}$/.test(expectedHash) || expectedHash !== storedHash) return false;
+  const expectedBytes = Number(document.source_bytes);
+  if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 1 || expectedBytes !== storedBytes) return false;
 
   return true;
 }
