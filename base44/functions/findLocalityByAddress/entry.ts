@@ -193,7 +193,8 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
           id: found.id,
           name: found.name,
           state: found.state || "",
-          zip: found.zip || ""
+          zip: found.zip || "",
+          ...(found.jurisdiction_profile_id ? { jurisdiction_profile_id: found.jurisdiction_profile_id } : {})
         };
         matchMethod = 'ai_identity_validated';
         matchConfidence = directMatches.some((row) => row.id === found.id) ? 'high' : 'medium';
