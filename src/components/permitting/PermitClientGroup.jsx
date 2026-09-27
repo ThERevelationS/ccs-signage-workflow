@@ -17,7 +17,7 @@ import PermitJobDocuments from "./PermitJobDocuments";
 import InlineEditField from "./InlineEditField";
 import LocalityPickerDialog from "./LocalityPickerDialog";
 import { getPermitGroupProgress, PERMIT_QUEUE_META } from "./permitQueue";
-import { summarizePermitGroupAuthorityCoverage } from "../../../base44/shared/permittingAddressLocality.js";
+import { summarizePermitGroupAuthorityCoverage, summarizePermitLineOfficeAuthority } from "../../../base44/shared/permittingAddressLocality.js";
 
 const LIFECYCLE_PROGRESS_TONES = {
   neutral: "border-slate-200 bg-white text-slate-600",
@@ -354,6 +354,7 @@ export default function PermitClientGroup({
                     onShowLocalityInfo={onShowLocalityInfo}
                     onShowJurisdictionInfo={onShowJurisdictionInfo}
                     localityState={localities?.find((locality) => locality.id === li.locality_id)?.state || ""}
+                    officeAuthority={summarizePermitLineOfficeAuthority(li, localities)}
                     onDeleteLine={onDeleteLine}
                     isRegistered={isRegistered}
                     users={users}
