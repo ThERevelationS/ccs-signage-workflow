@@ -15,10 +15,6 @@ function placeIdentity(value) {
   return { name, kind };
 }
 
-/** Match a configured locality only when name, state and government-place kind agree.
- * This allows "Deerfield Township" -> "Deerfield" while preventing a city/postal
- * locality named Deerfield from being treated as the township's permitting authority.
- */
 // Mirrors the explicit locality-office authority roles, never descriptive office types.
 const AUTHORITY_ROLES = new Set([
   'sign_permit', 'zoning', 'building', 'electrical', 'right_of_way',
@@ -46,6 +42,10 @@ export function summarizeMatchedLocalityAuthority(locality) {
   };
 }
 
+/** Match a configured locality only when name, state and government-place kind agree.
+ * This allows "Deerfield Township" -> "Deerfield" while preventing a city/postal
+ * locality named Deerfield from being treated as the township's permitting authority.
+ */
 export function addressLocalityIdentityMatches(locality, candidate) {
   if (!locality?.id || !candidate?.name) return false;
   const stored = placeIdentity(locality.name);
