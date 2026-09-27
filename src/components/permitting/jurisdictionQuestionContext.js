@@ -29,11 +29,7 @@ export function rankJurisdictionQuestionDocuments(documents, question) {
         (title.includes(term) ? 16 : 0) +
         (summary.includes(term) ? 5 : 0) +
         (body.includes(term) ? 2 : 0), 0);
-      if (terms.includes("permit") && (
-        /\bpermitting\b/.test(title)
-        || /\bsigns?\b.{0,32}\bpermits?\b/.test(title)
-        || /\bpermits?\b.{0,32}\b(signs?|applications?)\b/.test(title)
-      )) score += 18;
+      if (terms.includes('permit') && (title.includes('permitting') || /\bsigns?\b.{0,32}\bpermits?\b/.test(title) || /\bpermits?\b.{0,32}\b(signs?|applications?)\b/.test(title))) score += 18;
       if (query.length >= 6 && title.includes(query)) score += 25;
       if (query.length >= 6 && body.includes(query)) score += 5;
       return { doc, score };
