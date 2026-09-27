@@ -626,11 +626,11 @@ test('malformed finalized boundaries fail closed before employee state or shift 
 });
 
 test('interrupted Clock In uses original trusted punch day when retrying against a finalized period', async () => {
-  const h = setup({ entryCount: 0, serverNow: '2026-09-27T14:00:00.000Z' });
+  const h = setup({ entryCount: 0, serverNow: '2026-09-27T04:01:00.000Z' });
   const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
   Object.assign(state, {
     status: 'clocking_in', last_request_id: 'old-pending-clockin-001',
-    pending_started_at: '2026-09-26T15:00:00.000Z',
+    pending_started_at: '2026-09-27T03:59:00.000Z',
   });
   h.period().status = 'finalized';
   const blocked = await h.clockIn('old-pending-clockin-001');
@@ -638,12 +638,12 @@ test('interrupted Clock In uses original trusted punch day when retrying against
   assert.equal(blocked.body.finalized_pay_period_id, 'synthetic-period');
   assert.equal(h.rows.TimeEntry.length, 0);
   assert.equal(state.status, 'clocking_in');
-  assert.equal(state.pending_started_at, '2026-09-26T15:00:00.000Z');
+  assert.equal(state.pending_started_at, '2026-09-27T03:59:00.000Z');
   assert.equal(state.correction_create_status, 'idle');
   h.period().status = 'review';
   const recovered = await h.clockIn('old-pending-clockin-001');
   assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
-  assert.equal(recovered.body.entry.clock_in, '2026-09-26T15:00:00.000Z');
+  assert.equal(recovered.body.entry.clock_in, '2026-09-27T03:59:00.000Z');
 });
 
 for (const [name, fn] of tests) {
