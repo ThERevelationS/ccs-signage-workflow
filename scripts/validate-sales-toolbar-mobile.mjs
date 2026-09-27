@@ -88,4 +88,14 @@ check(kanban.includes("aria-label={`Assign ${workOrder.client_name || 'Unnamed o
 check(kanban.includes("aria-label={`Set actual quote sent date to today for ${workOrder.client_name || 'Unnamed opportunity'}`}"),
   "Kanban quote Today shortcut identifies the affected opportunity to assistive technology.");
 
+const dateHelper = kanban.match(/const localDate = \(value\) => \{[\s\S]*?\n\};/)?.[0];
+check(Boolean(dateHelper), "Kanban has a local calendar-date parser.");
+if (dateHelper) {
+  const parse = new Function(`${dateHelper}; return localDate;`)();
+  check(parse("2026-02-28")?.getDate() === 28 && parse("2024-02-29")?.getDate() === 29,
+    "Kanban preserves valid ordinary and leap-year dates.");
+  check(["2026-02-29", "2026-04-31", "2026-13-01", "2026-02-28-extra", "not-a-date"].every((date) => parse(date) === null),
+    "Kanban rejects impossible and malformed dates rather than rolling into another month.");
+}
+
 console.log(`Sales Pipeline mobile toolbar structure and contextual actions: ${checks}/${checks} PASS.`);
