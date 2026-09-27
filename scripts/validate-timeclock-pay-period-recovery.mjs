@@ -544,6 +544,108 @@ test('post-gate snapshot catches newly arriving active shift with invalid clock-
   assert.equal(h.rows.TimeClockEmployeeState.filter((row) => row.correction_create_status === 'creating').length, 0);
 });
 
+test('Clock In on a finalized company-local date is denied before creating any shift', async () => {
+  const h = setup({ serverNow: '2026-09-26T14:00:00.000Z' });
+  assert.equal((await h.action('finalize', 'closed-day-finalize-001')).status, 200);
+  const previousEntryCount = h.rows.TimeEntry.length;
+  const blocked = await h.clockIn('closed-day-clock-in-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(blocked.body.finalized_pay_period_id, 'synthetic-period');
+  assert.match(blocked.body.error, /2026-09-26.*finalized pay period/);
+  assert.equal(h.rows.TimeEntry.length, previousEntryCount);
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.equal(state.status, 'clocked_out');
+  assert.equal(state.correction_create_status, 'idle');
+  assert.equal(h.audit('closed-day-clock-in-001').length, 0);
+  const retry = await h.clockIn('closed-day-clock-in-001');
+  assert.equal(retry.status, 409);
+  assert.equal(h.rows.TimeEntry.length, previousEntryCount);
+});
+
+test('audited reopen permits a retried Clock In and then active-shift readiness blocks re-finalization', async () => {
+  const h = setup({ serverNow: '2026-09-26T14:00:00.000Z' });
+  assert.equal((await h.action('finalize', 'reopen-clockin-finalize-001')).status, 200);
+  const clockRequest = 'reopen-clockin-request-001';
+  assert.equal((await h.clockIn(clockRequest)).status, 409);
+  const reopened = await h.action('reopen', 'reopen-before-clockin-001', 'Shift was not yet started');
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
+  assert.equal(h.period().status, 'review');
+  assert.equal(h.entryLocks().length, 0);
+  const clockedIn = await h.clockIn(clockRequest);
+  assert.equal(clockedIn.status, 200, JSON.stringify(clockedIn.body));
+  assert.equal(clockedIn.body.entry.clock_in, '2026-09-26T14:00:00.000Z');
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 1);
+  assert.equal((await h.action('finalize', 'reopened-period-refinalize-001')).status, 409);
+});
+
+test('Eastern Time midnight boundary honors the company date, not UTC', async () => {
+  const beforeMidnight = setup({ serverNow: '2026-09-27T03:59:59.000Z' });
+  assert.equal((await beforeMidnight.action('finalize', 'midnight-before-finalize-001')).status, 200);
+  const blocked = await beforeMidnight.clockIn('midnight-before-clockin-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /2026-09-26/);
+
+  const afterMidnight = setup({ serverNow: '2026-09-27T04:00:00.000Z' });
+  assert.equal((await afterMidnight.action('finalize', 'midnight-after-finalize-001')).status, 200);
+  const allowed = await afterMidnight.clockIn('midnight-after-clockin-001');
+  assert.equal(allowed.status, 200, JSON.stringify(allowed.body));
+  assert.equal(allowed.body.entry.clock_in, '2026-09-27T04:00:00.000Z');
+  assert.equal(afterMidnight.period().status, 'finalized');
+  assert.equal(afterMidnight.entryLocks().length, 1);
+});
+
+test('Clock In checks every finalized period, including a consecutive closed period', async () => {
+  const h = setup({ serverNow: '2026-09-27T14:00:00.000Z' });
+  assert.equal((await h.action('finalize', 'consecutive-first-finalize-001')).status, 200);
+  h.rows.TimeClockPayPeriod.push({
+    id: 'next-finalized-period', label: 'Consecutive Closed Period',
+    start_date: '2026-09-27', end_date: '2026-09-28', status: 'finalized',
+    updated_date: '2026-09-27T12:00:00.000Z',
+  });
+  const blocked = await h.clockIn('consecutive-clockin-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(blocked.body.finalized_pay_period_id, 'next-finalized-period');
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 0);
+});
+
+test('malformed finalized boundaries fail closed before employee state or shift changes', async () => {
+  for (const [start, end] of [
+    ['2026-09-31', '2026-10-02'], ['2026-10-02', '2026-09-20'],
+    ['2026-09-20', 'not-a-date'],
+  ]) {
+    const h = setup({ entryCount: 0, serverNow: '2026-09-27T14:00:00.000Z' });
+    Object.assign(h.period(), { status: 'finalized', start_date: start, end_date: end });
+    const blocked = await h.clockIn('invalid-closed-period-001');
+    assert.equal(blocked.status, 409, JSON.stringify({ start, end, blocked: blocked.body }));
+    assert.match(blocked.body.error, /invalid date boundaries/);
+    assert.equal(h.rows.TimeEntry.length, 0);
+    const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+    assert.equal(state.status, 'clocked_out');
+    assert.equal(state.correction_create_status, 'idle');
+  }
+});
+
+test('interrupted Clock In uses original trusted punch day when retrying against a finalized period', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-27T14:00:00.000Z' });
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(state, {
+    status: 'clocking_in', last_request_id: 'old-pending-clockin-001',
+    pending_started_at: '2026-09-26T15:00:00.000Z',
+  });
+  h.period().status = 'finalized';
+  const blocked = await h.clockIn('old-pending-clockin-001');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(blocked.body.finalized_pay_period_id, 'synthetic-period');
+  assert.equal(h.rows.TimeEntry.length, 0);
+  assert.equal(state.status, 'clocking_in');
+  assert.equal(state.pending_started_at, '2026-09-26T15:00:00.000Z');
+  assert.equal(state.correction_create_status, 'idle');
+  h.period().status = 'review';
+  const recovered = await h.clockIn('old-pending-clockin-001');
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.entry.clock_in, '2026-09-26T15:00:00.000Z');
+});
+
 for (const [name, fn] of tests) {
   try { await fn(); console.log('PASS ' + name); }
   catch (error) { console.error('FAIL ' + name, error); process.exitCode = 1; }
