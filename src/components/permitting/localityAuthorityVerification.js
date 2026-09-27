@@ -10,6 +10,30 @@ export const LOCALITY_AUTHORITY_ROLES = [
   ["other", "Other"],
 ];
 
+/** Show locality-specific authority separately from a reusable office reference. */
+export function summarizeLocalityOfficeAuthority(office) {
+  const roleNames = new Map(LOCALITY_AUTHORITY_ROLES);
+  const roles = Array.isArray(office?.authority_roles)
+    ? [...new Set(office.authority_roles.filter(Boolean))]
+    : [];
+  const supported = roles.length > 0 && roles.every(role => roleNames.has(role));
+  const verified = supported && office?.authority_verification_status === "staff_verified";
+  const relationship = office?.government_office_id
+    ? "Canonical office ID recorded"
+    : office?.catalog_office_id
+      ? "Office catalog reference recorded"
+      : "Standalone office";
+  const roleLabels = roles.map(role => roleNames.get(role) || role);
+  const authority = verified
+    ? "Locality authority staff verified"
+    : !supported && roles.length > 0
+      ? "Authority roles need review"
+      : roles.length > 0
+        ? "Locality roles not verified"
+        : "Locality authority not established";
+  return { relationship, authority, roleLabels, verified };
+}
+
 export function setLocalityOfficeAuthorityRole(office, role, enabled) {
   const current = Array.isArray(office?.authority_roles) ? office.authority_roles : [];
   const nextRoles = enabled
