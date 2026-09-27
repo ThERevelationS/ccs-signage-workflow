@@ -1,5 +1,4 @@
-import React from "react";
-import { Loader2, CheckCircle2, XCircle, X } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 export default function SalesPipelineImportProgress({ importProgress, importStateRef }) {
