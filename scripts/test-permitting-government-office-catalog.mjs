@@ -64,3 +64,55 @@ test('revoking office verification preserves provenance notes but clears reviewe
   assert.equal(revoked.government_office.source_url, 'https://official.example.gov');
   assert.equal(revoked.government_office.verification_notes, 'Checked');
 });
+
+test('editing any verified identity/contact field invalidates office verification but preserves sources', () => {
+  const verified = updateGovernmentOfficeVerification({
+    id: 'catalog-1', name: 'County Zoning', contact_phone: '555-0100',
+    contact_email: 'zoning@example.gov', contact_website: 'https://example.gov',
+    contact_address: '1 Main Street', workflow_steps: [{ id: 'submit', name: 'Submit' }],
+  }, { verification_status: 'staff_verified', source_url: 'https://official.example.gov', verification_notes: 'Reviewed original contact page' },
+  'reviewer', () => '2026-09-27T12:00:00.000Z');
+
+  for (const [field, value, canonicalField] of [
+    ['name', 'County Planning', 'name'],
+    ['contact_phone', '555-0200', 'phone'],
+    ['contact_email', 'planning@example.gov', 'email'],
+    ['contact_website', 'https://planning.example.gov', 'website'],
+    ['contact_address', '2 Main Street', 'address'],
+  ]) {
+    const edited = updateGovernmentOfficeCatalogEntry(verified, { [field]: value });
+    assert.equal(edited.government_office[canonicalField], value, field);
+    assert.equal(edited.government_office.verification_status, 'needs_verification', field);
+    assert.equal(edited.government_office.verified_at, '', field);
+    assert.equal(edited.government_office.verified_by, '', field);
+    assert.equal(edited.government_office.source_url, 'https://official.example.gov', field);
+    assert.equal(edited.government_office.verification_notes, 'Reviewed original contact page', field);
+    assert.deepEqual(edited.workflow_steps, verified.workflow_steps, field);
+  }
+  assert.equal(verified.government_office.verification_status, 'staff_verified');
+});
+
+test('workflow changes, formatting-only contact edits, and verification notes do not revoke office identity verification', () => {
+  const verified = updateGovernmentOfficeVerification({ id: 'catalog-1', name: 'County Zoning', contact_phone: '555-0100' }, {
+    verification_status: 'staff_verified', source_url: 'https://official.example.gov', verification_notes: 'Reviewed'
+  }, 'reviewer', () => '2026-09-27T12:00:00.000Z');
+  for (const patch of [
+    { name: '  County Zoning  ' },
+    { contact_phone: ' 555-0100 ' },
+    { office_types: ['Building'] },
+    { workflow_steps: [{ id: 'next', name: 'Track submission' }] },
+    { contact_notes: 'Staff memo about office hours' },
+  ]) {
+    const edited = updateGovernmentOfficeCatalogEntry(verified, patch);
+    assert.equal(edited.government_office.verification_status, 'staff_verified');
+    assert.equal(edited.government_office.verified_by, 'reviewer');
+    assert.equal(edited.government_office.verified_at, '2026-09-27T12:00:00.000Z');
+  }
+});
+
+test('editing an unverified legacy office does not fabricate verification', () => {
+  const edited = updateGovernmentOfficeCatalogEntry({ id: 'legacy', name: 'Old office' }, { name: 'New office' });
+  assert.equal(edited.government_office.verification_status, 'needs_verification');
+  assert.equal(edited.government_office.verified_at, '');
+  assert.equal(edited.government_office.verified_by, '');
+});
