@@ -82,6 +82,7 @@ function harness(initialDate = tomorrow) {
     quickEditsInFlightRef: { current: new Map() },
     savingRevisitIds: new Set(),
     reopeningWipIds: new Set(),
+    reopenedFocusWorkOrderId: null,
     reopeningWipInFlightRef: { current: new Set() },
     pendingRevisitClear: null,
     revisitClearFailure: null,
@@ -104,6 +105,7 @@ function harness(initialDate = tomorrow) {
   ctx.setReopeningWipIds = (updater) => {
     ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
   };
+  ctx.setReopenedFocusWorkOrderId = (value) => { ctx.reopenedFocusWorkOrderId = value; };
   ctx.setWorkOrders = (updater) => {
     ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
   };
@@ -415,6 +417,7 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
     ctx.setReopeningWipIds = (updater) => {
       ctx.reopeningWipIds = typeof updater === 'function' ? updater(ctx.reopeningWipIds) : updater;
     };
+    ctx.setReopenedFocusWorkOrderId = (value) => { ctx.reopenedFocusWorkOrderId = value; };
     ctx.setWorkOrders = (updater) => {
       ctx.workOrders = typeof updater === 'function' ? updater(ctx.workOrders) : updater;
     };
