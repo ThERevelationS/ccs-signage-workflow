@@ -15,6 +15,14 @@ export function effectiveOrderStatus(order) {
   return order?.status === 'received' ? 'pending' : (order?.status || 'pending');
 }
 
+// Order Form Date Ordered edits must not demote a received Order or reopen a
+// cancelled Order. Clearing an ordered date without a receipt restores Pending.
+export function orderStatusAfterOrderedDateChange(order, nextOrderedDate) {
+  if (isFulfilledOrder(order)) return 'received';
+  if (order?.status === 'cancelled') return 'cancelled';
+  return nextOrderedDate ? 'ordered' : 'pending';
+}
+
 export function orderMatchesReceivedFilter(order, filter) {
   if (filter === 'not_received' || filter === 'open_only') return !isFulfilledOrder(order);
   if (filter === 'received') return isFulfilledOrder(order);
