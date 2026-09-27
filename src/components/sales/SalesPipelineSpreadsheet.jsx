@@ -2042,7 +2042,22 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return;
     }
     const currentIndex = filteredWorkOrders.findIndex((row) => row.id === selectedWorkOrder.id);
-    if (currentIndex >= 0) selectedQueueIndexRef.current = currentIndex;
+    if (currentIndex >= 0) {
+      selectedQueueIndexRef.current = currentIndex;
+      return;
+    }
+
+    // Filters/search can remove the row that owns an open details/action dialog.
+    // Close that row-bound surface rather than leaving a hidden, no-longer-visible
+    // opportunity actionable against the newly filtered queue.
+    setSelectedWorkOrder(null);
+    setShowFullWorkOrderDetails(false);
+    setStatusTransition(null);
+    setFollowUpCompletion(null);
+    setCorbridgeDialog({ open: false, workOrder: null });
+    setCorbridgeDraft({ invoiceNumber: "", link: "" });
+    setCorbridgeSaveError("");
+    selectedQueueIndexRef.current = null;
   }, [selectedWorkOrder?.id, filteredWorkOrders]);
 
   const selectedQueueIndex = selectedWorkOrder?.id
