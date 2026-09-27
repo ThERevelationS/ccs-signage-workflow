@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
-import { LOCALITY_AUTHORITY_ROLES, revokeLocalityOfficeAuthorityVerification, setLocalityOfficeAuthorityRole, verifyLocalityOfficeAuthority } from "./localityAuthorityVerification";
+import { LOCALITY_AUTHORITY_ROLES, revokeLocalityOfficeAuthorityVerification, setLocalityOfficeAuthorityRole, summarizeLocalityOfficeAuthority, verifyLocalityOfficeAuthority } from "./localityAuthorityVerification";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -27,6 +27,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
   const [expanded, setExpanded] = useState(true);
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
+  const authoritySummary = summarizeLocalityOfficeAuthority(office);
 
   const update = (patch) => onChange({ ...office, ...patch });
 
@@ -88,6 +89,15 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete} title="Delete office">
           <Trash2 className="w-3 h-3 text-red-500" />
         </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b bg-gray-50 px-3 py-1.5 text-[10px]" role="note" aria-label="Office relationship and locality authority">
+        <span className="font-medium text-gray-600">{authoritySummary.relationship}</span>
+        <span className={authoritySummary.verified ? "font-semibold text-emerald-700" : "font-medium text-amber-800"}>
+          {authoritySummary.authority}
+        </span>
+        {authoritySummary.roleLabels.length > 0 && (
+          <span className="min-w-0 text-gray-600">Roles: {authoritySummary.roleLabels.join(", ")}</span>
+        )}
       </div>
 
       {/* Expanded content */}
