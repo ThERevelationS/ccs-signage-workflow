@@ -95,14 +95,21 @@ export default function SalesPipeline() {
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const spreadsheetRef = useRef(null);
+  const activeFiltersLoadRef = useRef(0);
 
   useEffect(() => {
     document.title = "Sales Pipeline - Workflow Manager";
   }, []);
 
   useEffect(() => {
+    // Saved-filter selections are user-specific. Fail closed while identity
+    // changes so a previous user's filters/preset cannot remain visible.
+    activeFiltersLoadRef.current += 1;
+    setActiveFilters([]);
+    setActiveColumnPreset(null);
+    setFilterStatus((current) => current.startsWith("custom_") ? "all" : current);
     loadActiveFilters();
-  }, [currentUser]);
+  }, [currentUser?.email]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,15 +136,29 @@ export default function SalesPipeline() {
   }, [currentUser]);
 
   const loadActiveFilters = async () => {
+    const requestId = ++activeFiltersLoadRef.current;
+    const userEmail = currentUser?.email?.toLowerCase() || "";
+    if (!userEmail) {
+      setActiveFilters([]);
+      setActiveColumnPreset(null);
+      setFilterStatus((current) => current.startsWith("custom_") ? "all" : current);
+      return;
+    }
     const SalesFilter = base44.entities.SalesFilter;
     const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" });
-    const userEmail = currentUser?.email || "";
-    const selected = allFilters.filter(f => f.selected_by?.includes(userEmail));
+    if (requestId !== activeFiltersLoadRef.current) return;
+    const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
     setActiveFilters(selected);
-    
-    // Load active column preset
+
+    // Load active column preset and discard custom selections that were
+    // unselected/deleted while the management dialog was open.
     const columnPreset = selected.find(f => f.type === "column_preset");
     setActiveColumnPreset(columnPreset || null);
+    setFilterStatus((current) => {
+      if (!current.startsWith("custom_")) return current;
+      const selectedId = current.slice("custom_".length);
+      return selected.some(f => f.type === "filter" && f.id === selectedId) ? current : "all";
+    });
   };
 
   const isStandardFilterEnabled = (value) => {
