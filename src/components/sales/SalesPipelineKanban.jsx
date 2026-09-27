@@ -204,6 +204,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       {isRegistered && isOpen && (
                         <div
                           className="mt-2 flex items-center gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0"
+                          role="group"
                           aria-label={`Follow-up quick actions for ${workOrder.client_name || 'Unnamed opportunity'}. Swipe horizontally for more actions.`}
                           onClick={(event) => event.stopPropagation()}
                         >
