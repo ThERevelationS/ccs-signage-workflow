@@ -177,6 +177,91 @@ try {
     assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
       ["get","save","submit"]);
   });
+  await run("Desktop: failed GET blocks all estimate mutations until retry succeeds",1440,async page=>{
+    await page.locator("#fleet-work-order-toggle-wo-open").click();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
+    await page.getByRole("button",{name:"Estimate / Approval"}).click();
+    const dialog=page.getByRole("dialog",{name:"Repair Estimate & Approval"});
+    const retry=dialog.getByRole("button",{name:"Retry loading estimate"});
+    await retry.waitFor();
+    assert.match(await dialog.getByRole("alert").innerText(),/Retry loading before making changes/);
+    assert.equal(await dialog.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await retry.evaluate(el=>document.activeElement===el),true);
+    await page.keyboard.press("Enter");
+    await dialog.getByRole("button",{name:"Save Draft"}).waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Close repair estimate"})
+      .evaluate(el=>document.activeElement===el),true,"Focus returns to a surviving control after retry");
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","get"],"Failed loading cannot create an estimate");
+  });
+
+  await run("Mobile: failed GET allows safe Escape and a clean reopen",390,async page=>{
+    await page.locator("#fleet-work-order-toggle-wo-open").click();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
+    await page.getByRole("button",{name:"Estimate / Approval"}).click();
+    const dialog=page.getByRole("dialog",{name:"Repair Estimate & Approval"});
+    await dialog.getByRole("button",{name:"Retry loading estimate"}).waitFor();
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({state:"hidden"});
+    await page.waitForFunction(()=>document.activeElement?.dataset?.fleetEstimateOpen==="wo-open");
+    await page.getByRole("button",{name:"Estimate / Approval"}).click();
+    await dialog.getByRole("button",{name:"Save Draft"}).waitFor();
+    assert.equal(await dialog.getByRole("alert").count(),0);
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","get"]);
+  });
+
+  await run("Desktop: uncertain submit and failed status GET never replay save or submit",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextSubmit=true;});
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    const check=dialog.getByRole("button",{name:"Check current server status"});
+    await check.waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Save & Submit"}).count(),0);
+    assert.equal(await dialog.getByRole("spinbutton",{name:"Labor hours"}).isDisabled(),true);
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
+    await check.click();
+    await dialog.getByRole("alert").getByText(/Submission remains unconfirmed/).waitFor();
+    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    assert.equal(await dialog.getByRole("button",{name:"Save Draft"}).count(),0);
+    await check.click();
+    await dialog.getByRole("status").getByText(/Server confirms this estimate remains a draft/).waitFor();
+    await dialog.getByRole("button",{name:"Save & Submit"}).waitFor();
+    await focusedRole(page,"status");
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","save","submit","get","get"]);
+  });
+
+  await run("Desktop: lost acknowledgment after committed submit reconciles as submitted",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await page.evaluate(()=>{window.__fleetEstimateFixture.submitThenLoseAck=true;});
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    const check=dialog.getByRole("button",{name:"Check current server status"});
+    await check.waitFor();
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.estimates["wo-open"].status),"submitted");
+    await check.click();
+    await dialog.getByRole("status").getByText(/Server confirms this estimate is submitted/).waitFor();
+    await dialog.getByRole("button",{name:"Approve",exact:true}).waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Save & Submit"}).count(),0);
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","save","submit","get"]);
+  });
+
+  await run("Desktop: conflicting draft version keeps uncertain submission blocked",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextSubmit=true;});
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    const check=dialog.getByRole("button",{name:"Check current server status"});
+    await check.waitFor();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.estimates["wo-open"].updated_date="concurrent-synthetic-version";});
+    await check.click();
+    await dialog.getByRole("alert").getByText(/cannot be reconciled/).waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Save & Submit"}).count(),0);
+    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","save","submit","get"]);
+  });
+
   console.log("REPAIR_ESTIMATE_BROWSER_PASS="+passed);
 } finally {
   if(browser) await browser.close();
