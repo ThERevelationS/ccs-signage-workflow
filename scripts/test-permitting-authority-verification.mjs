@@ -84,6 +84,30 @@ test("UI exposes every schema authority role and verification controls", () => {
   assert.match(ui, /authority_verification_notes/);
 });
 
+test("staff can remove an existing legacy role but cannot newly assign unsupported roles", () => {
+  const office = {
+    authority_roles: ["zoning", "legacy_board_review", "legacy_board_review"],
+    authority_verification_status: "staff_verified", authority_verified_by: "Reviewer",
+    authority_verified_at: "2026-09-27T10:00:00.000Z", authority_verification_notes: "Preserve review evidence",
+  };
+  const cleaned = setLocalityOfficeAuthorityRole(office, "legacy_board_review", false);
+  assert.deepEqual(cleaned.authority_roles, ["zoning"]);
+  assert.equal(cleaned.authority_verification_status, "needs_verification");
+  assert.equal(cleaned.authority_verified_by, undefined);
+  assert.equal(cleaned.authority_verified_at, undefined);
+  assert.equal(cleaned.authority_verification_notes, "Preserve review evidence");
+  assert.throws(() => setLocalityOfficeAuthorityRole({ authority_roles: ["zoning"] }, "legacy_board_review", true), /Unsupported authority role/);
+  assert.throws(() => setLocalityOfficeAuthorityRole({ authority_roles: ["zoning"] }, "legacy_board_review", false), /Unsupported authority role/);
+});
+
+test("locality editor exposes legacy roles only as removable review items", () => {
+  const ui = readFileSync(new URL("../src/components/permitting/LocalityOfficeEditor.jsx", import.meta.url), "utf8");
+  assert.match(ui, /Legacy authority roles need review/);
+  assert.match(ui, /They cannot be newly assigned; remove them before verifying/);
+  assert.match(ui, /setLocalityOfficeAuthorityRole\(office, role, false\)/);
+  assert.doesNotMatch(ui, /setLocalityOfficeAuthorityRole\(office, role, true\)/);
+});
+
 test("canonical reference is not mistaken for locality authority", () => {
   const summary = summarizeLocalityOfficeAuthority({ government_office_id: "gov-1", office_type: "Zoning" });
   assert.equal(summary.relationship, "Canonical office ID recorded");
