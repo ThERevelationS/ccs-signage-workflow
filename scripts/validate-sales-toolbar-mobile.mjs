@@ -83,5 +83,9 @@ check(page.includes('activeColumnPreset={activeColumnPreset}') &&
 const kanban = readFileSync("src/components/sales/SalesPipelineKanban.jsx", "utf8");
 check(/role="group"\s+aria-label=\{`Follow-up quick actions for \$\{workOrder\.client_name/.test(kanban),
   "Kanban follow-up quick actions expose their customer-specific label as an accessible group.");
+check(kanban.includes("aria-label={`Assign ${workOrder.client_name || 'Unnamed opportunity'} to me`}"),
+  "Kanban Assign to me identifies the affected opportunity to assistive technology.");
+check(kanban.includes("aria-label={`Set actual quote sent date to today for ${workOrder.client_name || 'Unnamed opportunity'}`}"),
+  "Kanban quote Today shortcut identifies the affected opportunity to assistive technology.");
 
 console.log(`Sales Pipeline mobile toolbar structure and contextual actions: ${checks}/${checks} PASS.`);
