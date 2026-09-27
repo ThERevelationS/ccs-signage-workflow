@@ -188,6 +188,11 @@ await check('refresh finishing during pending quick edit cannot undo optimistic 
   assert.equal(h.queue(), 'Revisit Later');
   releaseGet();
   await saving;
+  assert.equal(h.reads.length, 2, 'The discarded refresh automatically retries after saving');
+  assert.equal(h.reads[1].snapshot[0].sip_revisit_date, tomorrow);
+  h.reads[1].finish();
+  for (let i = 0; i < 10 && !h.ctx.lastUpdated; i++) await Promise.resolve();
+  assert.ok(h.ctx.lastUpdated, 'Fresh board data was applied');
   assert.equal(h.record.sip_revisit_date, tomorrow);
   assert.equal(h.ctx.boardSavesPendingRef.current, 0);
   assert.equal(h.writes, 1);
@@ -200,6 +205,10 @@ await check('refresh begun before save cannot replace persisted result after sav
   assert.equal(h.record.sip_revisit_date, tomorrow);
   h.reads[0].finish();
   await older;
+  assert.equal(h.reads.length, 2, 'The stale refresh automatically retries after the save');
+  h.reads[1].finish();
+  for (let i = 0; i < 10 && !h.ctx.lastUpdated; i++) await Promise.resolve();
+  assert.ok(h.ctx.lastUpdated, 'Fresh board data was applied');
   assert.equal(h.queue(), 'Revisit Later');
   assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow);
   assert.equal(h.writes, 1);
