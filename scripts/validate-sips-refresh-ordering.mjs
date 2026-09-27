@@ -89,6 +89,7 @@ function fixture(date = yesterday, { completed = false } = {}) {
     boardLoadSequenceRef: { current: 0 },
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
+    boardRefreshDeferredRef: { current: false },
     quickEditsInFlightRef: { current: new Map() },
     today,
     workOrders: [structuredClone(record)],
@@ -331,6 +332,9 @@ await check('conflict refresh is deferred until another field finishes saving', 
   assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow, 'Optimistic date remains until safe reload');
   releaseNoteRead();
   await noteSave;
+  assert.equal(h.reads.length, 2, 'Latest board reload starts once the other save finishes');
+  h.reads[1].finish();
+  for (let i = 0; i < 10 && h.ctx.workOrders[0].sip_revisit_date !== later; i++) await Promise.resolve();
   assert.equal(h.record.sip_revisit_date, later);
   assert.equal(h.record.notes, 'local note');
   assert.equal(h.ctx.workOrders[0].sip_revisit_date, later, 'Failed date edit is corrected without waiting 60 seconds');
