@@ -27,7 +27,7 @@ check(section.includes('order-4 col-span-5 h-11 w-full min-w-0 text-xs sm:hidden
 check(section.includes('order-4 hidden shrink-0 items-center sm:order-3 sm:flex'),
   "Desktop retains the visible segmented view controls.");
 for (const view of ["table", "board", "daily", "insights"]) {
-  check(section.includes('chooseView("' + view + '") aria-pressed={viewMode === "' + view + '"}'),
+  check(section.includes('chooseView("' + view + '")} aria-pressed={viewMode === "' + view + '"}'),
     "Desktop view announces its selected state: " + view);
 }
 check((section.match(/focus-visible:ring-inset focus-visible:ring-blue-500/g) || []).length === 4,
