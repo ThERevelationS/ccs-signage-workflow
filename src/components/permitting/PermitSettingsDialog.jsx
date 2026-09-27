@@ -21,12 +21,29 @@ import OfficeCatalogEditor from "./OfficeCatalogEditor";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "./permitGlobalSettingsPersistence";
 import { createPermitLocalityIfAbsent } from "./permitLocalityPersistence";
-import { copyCatalogOfficeToLocality } from "./localityOfficeCatalogBridge";
+import { copyCatalogOfficeToLocality, resolveCatalogOfficeProvenance } from "./localityOfficeCatalogBridge";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { useAuth } from "@/components/auth/EmailGate";
 
 const PermitLocality = base44.entities.PermitLocality;
 const GlobalSettings = base44.entities.GlobalSettings;
+
+// Catalog office verification is distinct from an office's legal authority for a locality.
+function OfficeSourceStatus({ provenance }) {
+  const metadata = provenance?.metadata;
+  const verified = metadata?.verification_status === "staff_verified";
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-600" role="note">
+      <span className={verified ? "font-semibold text-emerald-700" : "font-medium text-amber-700"}>
+        {!provenance ? "Catalog identity unlinked or ambiguous" : verified ? "Shared office identity: staff verified" : "Shared office identity: needs verification"}
+      </span>
+      <span className="min-w-0 max-w-full truncate" title={metadata?.source_url || ""}>
+        {metadata?.source_url ? `Official source: ${metadata.source_url}` : "Official source not recorded"}
+      </span>
+      <span className="text-gray-500">Locality authority must be verified separately.</span>
+    </div>
+  );
+}
 
 export default function PermitSettingsDialog({ isOpen, onClose, localities: initialLocalities, officeTypes: initialOfficeTypes }) {
   const { currentUser } = useAuth();
@@ -638,6 +655,7 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                                     <div className="text-[10px] text-gray-500">
                                       {o.office_type || '—'} · {(o.workflow_steps || []).length} step{(o.workflow_steps || []).length === 1 ? '' : 's'}
                                     </div>
+                                    <OfficeSourceStatus provenance={resolveCatalogOfficeProvenance(officeCatalog, { catalog_office_id: o.id })} />
                                   </div>
                                   <Plus className="w-3 h-3 text-purple-600 flex-shrink-0" />
                                 </button>
@@ -659,14 +677,16 @@ export default function PermitSettingsDialog({ isOpen, onClose, localities: init
                           </div>
                         )}
                         {form.offices.map(office => (
-                          <LocalityOfficeEditor
-                            key={office.id}
-                            office={office}
-                            officeTypes={officeTypes}
-                            verificationActor={verificationActor}
-                            onChange={(updated) => updateOffice(office.id, updated)}
-                            onDelete={() => requestDeleteOffice(office.id)}
-                          />
+                          <div key={office.id} className="space-y-1">
+                            <OfficeSourceStatus provenance={resolveCatalogOfficeProvenance(officeCatalog, office)} />
+                            <LocalityOfficeEditor
+                              office={office}
+                              officeTypes={officeTypes}
+                              verificationActor={verificationActor}
+                              onChange={(updated) => updateOffice(office.id, updated)}
+                              onDelete={() => requestDeleteOffice(office.id)}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
