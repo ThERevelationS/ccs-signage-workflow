@@ -75,6 +75,48 @@ export function summarizePermitGroupAuthorityCoverage(lines, localities) {
   return [...byLocality.values()];
 }
 
+/** Review the specific configured office represented by an existing permit line.
+ * PermitLineItem has no stable office_id yet, so only a unique exact name plus
+ * compatible recorded office type can inherit staff verification. Changed or
+ * duplicate office names fail closed, and legacy lines remain usable.
+ */
+export function summarizePermitLineOfficeAuthority(line, localities) {
+  const rowName = String(line?.row_name || '').trim();
+  const fallbackName = rowName || String(line?.office_type || 'Unidentified office').trim();
+  const unresolved = (reason) => ({
+    status: 'unresolved', office_name: fallbackName, verified_roles: [],
+    roles_needing_review: [], reason,
+  });
+  const localityId = String(line?.locality_id || '').trim();
+  const matches = localityId && Array.isArray(localities)
+    ? localities.filter(row => String(row?.id || '').trim() === localityId)
+    : [];
+  if (matches.length !== 1) return unresolved('Locality link is missing or ambiguous.');
+  const offices = Array.isArray(matches[0].offices) ? matches[0].offices : [];
+  if (!offices.length) return unresolved('No configured offices exist for this locality.');
+  if (!rowName) return unresolved('This permit line has no recorded office name.');
+  const lineType = String(line?.office_type || '').trim().toLowerCase();
+  const officeMatches = offices.filter(office => {
+    const types = Array.isArray(office?.office_types) && office.office_types.length
+      ? office.office_types : office?.office_type ? [office.office_type] : [];
+    const expectedName = String(office?.name || types[0] || 'Office').trim();
+    if (expectedName.toLowerCase() !== rowName.toLowerCase()) return false;
+    return !lineType || types.length === 0 || types.some(type => String(type).trim().toLowerCase() === lineType);
+  });
+  if (officeMatches.length !== 1) return unresolved(officeMatches.length > 1
+    ? 'Multiple configured offices match this line. Review the office mapping.'
+    : 'The recorded office name or type no longer matches a configured office.');
+  const office = officeMatches[0];
+  const authority = summarizeMatchedLocalityAuthority({ id: matches[0].id, offices: [office] });
+  return {
+    status: authority.verified_office_count === 1 ? 'staff_verified' : 'needs_verification',
+    office_name: String(office?.name || rowName).trim(),
+    verified_roles: authority.verified_roles,
+    roles_needing_review: authority.roles_needing_review,
+    reason: authority.verified_office_count === 1 ? '' : 'This office\'s locality authority needs staff review.',
+  };
+}
+
 /** Match a configured locality only when name, state and government-place kind agree.
  * This allows "Deerfield Township" -> "Deerfield" while preventing a city/postal
  * locality named Deerfield from being treated as the township's permitting authority.
