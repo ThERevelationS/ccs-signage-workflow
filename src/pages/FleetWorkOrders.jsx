@@ -87,7 +87,9 @@ export default function FleetWorkOrders() {
       // The retry button unmounts on success; focus a surviving control.
       window.setTimeout(() => statusFilterRef.current?.focus(), 0);
     } catch {
-      // loadData already shows the refresh error and retains existing rows.
+      // Keep the retry action keyboard-accessible after an unsuccessful retry.
+      // loadData already shows the error and retains existing rows.
+      window.setTimeout(() => (retryRefreshButtonRef.current || statusFilterRef.current)?.focus(), 0);
     } finally {
       setRetryingRefresh(false);
     }
