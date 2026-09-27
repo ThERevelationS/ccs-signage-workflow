@@ -831,15 +831,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     <Label className="block text-sm">Column Settings - Toggle visibility</Label>
                     <div className="flex flex-wrap items-center gap-1">
                       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Column layout shortcuts">
-                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                        <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                           disabled={allColumnsShown || isSaving}
                           onClick={() => dispatchColumnDraft({ type: "show_all" })}
                           title="Show all supported columns without changing their order">Show All</Button>
-                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                        <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                           disabled={optionalColumnsHidden || isSaving}
                           onClick={() => dispatchColumnDraft({ type: "hide_optional" })}
                           title="Keep Customer, Sales Status, Task Description and Follow Up; you can still change any checkbox">Hide Optional</Button>
-                        <Button type="button" variant="outline" size="sm" className="h-8 min-h-10 px-2 text-xs sm:min-h-8"
+                        <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
                           disabled={columnLayoutMatchesBaseline || isSaving}
                           onClick={() => dispatchColumnDraft({ type: "restore", columns: editorBaseline.columns })}
                           title="Restore the original saved layout and visibility; Undo is available">Reset</Button>
