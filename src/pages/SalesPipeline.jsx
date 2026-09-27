@@ -173,6 +173,10 @@ export default function SalesPipeline() {
   };
 
   const chooseView = (nextView) => {
+    // Search is a row-navigation aid. Insights has no visible result list, so
+    // do not let a hidden search silently narrow its reporting or reappear
+    // later when returning to a row-based view.
+    if (nextView === "insights") setSearchTerm("");
     setViewMode(nextView);
     if (nextView === "daily" || nextView === "insights") {
       setAttentionFilter("all");
@@ -207,6 +211,7 @@ export default function SalesPipeline() {
               <span className="sr-only">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
+                setSearchTerm("");
                 setAttentionFilter("all");
                 setFilterStatus("all");
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
