@@ -2,6 +2,21 @@ function clean(value) {
   return String(value || "").trim();
 }
 
+const OFFICE_VERIFICATION_STATUSES = new Set(["needs_verification", "staff_verified"]);
+
+function normalizeVerification(metadata) {
+  const status = OFFICE_VERIFICATION_STATUSES.has(metadata?.verification_status)
+    ? metadata.verification_status
+    : "needs_verification";
+  return {
+    verification_status: status,
+    verified_at: status === "staff_verified" ? clean(metadata?.verified_at) : "",
+    verified_by: status === "staff_verified" ? clean(metadata?.verified_by) : "",
+    verification_notes: clean(metadata?.verification_notes),
+    source_url: clean(metadata?.source_url),
+  };
+}
+
 export function normalizeGovernmentOfficeCatalogEntry(office) {
   const source = office && typeof office === "object" ? office : {};
   const id = clean(source.id);
@@ -17,6 +32,7 @@ export function normalizeGovernmentOfficeCatalogEntry(office) {
       website: clean(metadata.website) || clean(source.contact_website),
       address: clean(metadata.address) || clean(source.contact_address),
       notes: clean(metadata.notes) || clean(source.contact_notes),
+      ...normalizeVerification(metadata),
     },
   };
 }
@@ -37,6 +53,23 @@ export function updateGovernmentOfficeCatalogEntry(office, patch) {
     if (Object.hasOwn(patch || {}, legacyField)) metadata[metadataField] = clean(patch[legacyField]);
   }
   return normalizeGovernmentOfficeCatalogEntry({ ...next, government_office: metadata });
+}
+
+export function updateGovernmentOfficeVerification(office, patch, reviewer = "", now = () => new Date().toISOString()) {
+  const source = normalizeGovernmentOfficeCatalogEntry(office);
+  const metadata = { ...source.government_office };
+  if (Object.hasOwn(patch || {}, "source_url")) metadata.source_url = clean(patch.source_url);
+  if (Object.hasOwn(patch || {}, "verification_notes")) metadata.verification_notes = clean(patch.verification_notes);
+  if (patch?.verification_status === "staff_verified") {
+    metadata.verification_status = "staff_verified";
+    metadata.verified_at = clean(patch.verified_at) || clean(now());
+    metadata.verified_by = clean(patch.verified_by) || clean(reviewer);
+  } else if (patch?.verification_status === "needs_verification") {
+    metadata.verification_status = "needs_verification";
+    metadata.verified_at = "";
+    metadata.verified_by = "";
+  }
+  return normalizeGovernmentOfficeCatalogEntry({ ...source, government_office: metadata });
 }
 
 export function governmentOfficeMetadata(office) {
