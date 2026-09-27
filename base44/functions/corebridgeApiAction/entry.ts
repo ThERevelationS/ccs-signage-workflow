@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { buildJobRegisterCsv } from '../../shared/corebridgeOfflineCsv.mjs';
+import { buildWorkOrderReconciliation } from '../../shared/workOrderReconciliation.mjs';
 
 // Retained function name for compatibility with existing CCS installations.
 // External CoreBridge API access is intentionally retired, even if an old secret remains.
@@ -20,7 +21,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access is required.' }, { status: 403 });
     }
 
-    if (body?.action !== 'export_jobs_csv') {
+    if (!['export_jobs_csv', 'audit_workorders'].includes(body?.action)) {
       return Response.json({
         error: 'CoreBridge API access has been retired. Use CCS native reports and reviewed file imports.',
         api_disabled: true,
@@ -53,6 +54,15 @@ Deno.serve(async (req) => {
     }
     if (!complete) {
       throw new Error('The WorkOrder export exceeded its safety limit. No partial export was returned.');
+    }
+
+    if (body.action === 'audit_workorders') {
+      return Response.json({
+        success: true,
+        api_disabled: true,
+        audited_at: new Date().toISOString(),
+        audit: buildWorkOrderReconciliation(records),
+      });
     }
 
     const result = buildJobRegisterCsv(records, scope);
