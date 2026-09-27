@@ -21,6 +21,29 @@ test("role changes invalidate prior staff verification without changing office i
   assert.equal(next.catalog_office_id, "catalog-1");
 });
 
+test("role assignment rejects unsupported roles while preserving legacy values for explicit review", () => {
+  const legacy = {
+    id: "legacy-local", authority_roles: ["zoning", "legacy_unknown"],
+    authority_verification_status: "needs_verification", authority_verification_notes: "Review legacy import",
+  };
+  assert.throws(() => setLocalityOfficeAuthorityRole(legacy, "new_unknown", true), /Unsupported authority role: new_unknown/);
+  assert.throws(() => setLocalityOfficeAuthorityRole(legacy, "legacy_unknown", false), /Unsupported authority role: legacy_unknown/);
+  assert.deepEqual(legacy.authority_roles, ["zoning", "legacy_unknown"]);
+  assert.equal(legacy.authority_verification_notes, "Review legacy import");
+
+  const supported = setLocalityOfficeAuthorityRole(legacy, "building", true);
+  assert.deepEqual(supported.authority_roles, ["zoning", "legacy_unknown", "building"]);
+  assert.equal(supported.authority_verification_status, "needs_verification");
+  assert.equal(supported.authority_verification_notes, "Review legacy import");
+});
+
+test("role assignment accepts every canonical schema role", () => {
+  for (const [role] of LOCALITY_AUTHORITY_ROLES) {
+    const next = setLocalityOfficeAuthorityRole({ authority_roles: [] }, role, true);
+    assert.deepEqual(next.authority_roles, [role]);
+  }
+});
+
 test("staff verification requires an explicit role and records actor/time", () => {
   assert.throws(() => verifyLocalityOfficeAuthority({ authority_roles: [] }, "Brett"), /at least one authority role/);
   const next = verifyLocalityOfficeAuthority({ authority_roles: ["sign_permit"] }, "Reviewer", "2026-09-27T11:00:00.000Z");
