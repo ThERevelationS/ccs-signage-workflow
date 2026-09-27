@@ -250,7 +250,7 @@ const submission = {
   pendingCompletionFocusRef,
   setFocusNotice: notice => completionNotices.push(notice),
   setActionError() {},
-  closeDialog() { this.closed = true; },
+  closeDialog() { submission.closed = true; },
   closed: false,
   base44: { functions: { invoke: async (_name, payload) => {
     completionRequests.push(payload);
