@@ -258,7 +258,7 @@ export default function SalesPipeline() {
               <Button
                 type="button"
                 onClick={() => setShowNewClientForm(true)}
-                className={`clay-button col-span-5 h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3 ${showDuplicateCleanup ? "order-8 col-span-12" : "order-2"}`} 
+                className={`clay-button h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3 ${showDuplicateCleanup ? "order-8 col-span-12" : "order-2 col-span-5"}`}
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="mr-1.5 h-4 w-4" /> New Client

@@ -1,0 +1,44 @@
+{
+  "jurisdiction": "Unincorporated Kenton County",
+  "state": "KY",
+  "savedAt": "2026-09-27T02:41:48.903Z",
+  "sources": [
+    {
+      "filename": "commercial-joint-zoning-building-application.pdf",
+      "url": "https://www.pdskc.org/Portals/pdskc/Documents/applications_forms/AdditionalForms/Commercial_Joint_Application_Fillable.pdf",
+      "type": "permit_application",
+      "title": "PDS commercial joint zoning/building permit application — includes new signs and sign face changes",
+      "caveat": "County-hosted legacy form; confirm PDS still accepts it. The live online submission portal is preferred.",
+      "bytes": 255113,
+      "sha256": "8e33715c04fcdd2b60517230f35a077c9f14a4f68c9c9af0f5c6c6d13b1cf86f",
+      "repositoryPath": "public/permitting/sources/kenton-ky/commercial-joint-zoning-building-application.pdf",
+      "savedAt": "2026-09-27T02:41:48.114Z"
+    },
+    {
+      "filename": "commercial-permit-checklist-2024.pdf",
+      "url": "https://cdn.pdskc.org/Documents/applications_forms/checklists/Checklist_Comm%20Project.pdf?ver=2024-10-10-141613-683",
+      "type": "checklist",
+      "title": "PDS commercial building/zoning application checklist — October 2024",
+      "caveat": "General commercial construction checklist, not a sign-specific checklist. Confirm applicability to each sign installation.",
+      "bytes": 172203,
+      "sha256": "27895fb85b11f503f492f518746ac8472b2cea76e88de5b9895cc7f3560d7573",
+      "repositoryPath": "public/permitting/sources/kenton-ky/commercial-permit-checklist-2024.pdf",
+      "savedAt": "2026-09-27T02:41:48.280Z"
+    },
+    {
+      "filename": "adopted-unincorporated-kenton-article-xiv.html",
+      "url": "https://online.encodeplus.com/regs/kentoncounty-ky/doc-view.aspx?secid=480&ajax=0",
+      "type": "sign_ordinance",
+      "title": "Unincorporated Kenton County zoning ordinance — Article XIV Sign Regulations",
+      "caveat": "Applies to the unincorporated county. Separate city ordinances may govern properties inside incorporated municipalities.",
+      "bytes": 135997,
+      "sha256": "cf9fe65099964e4e3067d843a757d12b0ad2aee3ce7a18f5294c2eb417f140b5",
+      "repositoryPath": "public/permitting/sources/kenton-ky/adopted-unincorporated-kenton-article-xiv.html",
+      "savedAt": "2026-09-27T02:41:48.646Z"
+    }
+  ],
+  "portal": "https://pdskc.govbuilt.com/",
+  "formLibrary": "https://pdskc.govbuilt.com/downloadable-forms",
+  "provider": "Planning and Development Services of Kenton County",
+  "status": "source repository archive only — not Base44 live File Storage"
+}
