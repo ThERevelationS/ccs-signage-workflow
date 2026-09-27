@@ -173,8 +173,10 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
     let matchConfidence = 'low';
     let matchReason = 'No configured locality could be verified for this address.';
 
-    if (directMatches.length === 1) {
-      const found = directMatches[0];
+    const canonicalDirectMatches = directMatches.filter((row) => String(row?.jurisdiction_profile_id || '').trim());
+
+    if (directMatches.length === 1 || (directMatches.length > 1 && canonicalDirectMatches.length === 1)) {
+      const found = directMatches.length === 1 ? directMatches[0] : canonicalDirectMatches[0];
       matchedLocality = {
         id: found.id,
         name: found.name,
@@ -182,9 +184,15 @@ ${localityOptions.map(l => `- id: ${l.id} | ${l.name}${l.state ? `, ${l.state}` 
         zip: found.zip || "",
         ...(found.jurisdiction_profile_id ? { jurisdiction_profile_id: found.jurisdiction_profile_id } : {})
       };
-      matchMethod = 'geocode_exact';
+      matchMethod = directMatches.length === 1 ? 'geocode_exact' : 'geocode_canonical_profile';
       matchConfidence = 'high';
-      matchReason = 'Google address components uniquely match this configured locality.';
+      matchReason = directMatches.length === 1
+        ? 'Google address components uniquely match this configured locality.'
+        : 'Multiple configured localities matched the Google address components; the only locality with an explicit canonical jurisdiction profile link was selected.';
+    } else if (directMatches.length > 1) {
+      matchReason = canonicalDirectMatches.length > 1
+        ? 'Multiple configured localities match this address and more than one has a canonical jurisdiction profile link. Review the duplicate locality configuration before selecting one.'
+        : 'Multiple configured localities match this address and none has a unique canonical jurisdiction profile link. Review the duplicate locality configuration before selecting one.';
     } else if (aiResult.suggested_locality_id) {
       const found = localities.find(l => l.id === aiResult.suggested_locality_id);
       const aiIdentityMatches = found && localityIdentityMatches(found, aiResult.ai_locality_name, aiResult.ai_state || geocodeState);
