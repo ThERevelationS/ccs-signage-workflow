@@ -263,6 +263,31 @@ export default function FleetWorkOrders() {
     return () => window.clearTimeout(focusTimer);
   }, [startWorkOrder, loading, rows, viewMode]);
 
+  // The original Estimate / Approval button may disappear after a refresh or
+  // filter change. Recover focus only after the dialog has unmounted.
+  useEffect(() => {
+    const pending = pendingEstimateFocusRef.current;
+    if (!pending || estimateWorkOrder || loading) return undefined;
+    const focusTimer = window.setTimeout(() => {
+      if (pendingEstimateFocusRef.current !== pending) return;
+      if (pending.refreshFailed) {
+        (retryRefreshButtonRef.current || statusFilterRef.current)?.focus();
+      } else {
+        const visible = rows.some(row => row.id === pending.id);
+        const opener = visible ? [...document.querySelectorAll("button[data-fleet-estimate-open]")]
+          .find(button => button.dataset.fleetEstimateOpen === pending.id && button.getClientRects().length) : null;
+        const target = opener || findWorkOrderFocusTarget(rows, pending.id, viewMode, document);
+        if (target) target.focus();
+        else {
+          statusFilterRef.current?.focus();
+          setFocusNotice(`Updated the estimate for ${pending.label}. The work order no longer matches the current filters.`);
+        }
+      }
+      pendingEstimateFocusRef.current = null;
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [estimateWorkOrder, loading, rows, viewMode]);
+
   // Estimate mutations are committed before list refresh; a failed refresh
   // must offer a retry rather than asking the admin to repeat the mutation.
   const estimateChanged = async (estimate) => {
