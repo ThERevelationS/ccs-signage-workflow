@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
-import { normalizeAddressState as normalizeState } from '../../shared/permittingAddressState.js';
+import { addressLocalityIdentityMatches } from '../../shared/permittingAddressLocality.js';
 
 function normalizePlace(value: unknown) {
   return String(value || '')
