@@ -101,11 +101,11 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   return (
     <React.Fragment>
       {isFocused && <tr><td colSpan={100} className="h-3 bg-transparent border-none"></td></tr>}
-      <tr className={`border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'ring-2 ring-purple-400 ring-inset bg-purple-50/50' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
+      <tr className={`border-b ${!taskStyle.backgroundColor && !isFocused ? 'hover:bg-gray-50' : ''} ${isFocused ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/60' : ''} ${taskStyle.markOut ? 'line-through' : ''}`}
         style={{ backgroundColor: !isFocused && taskStyle.backgroundColor ? taskStyle.backgroundColor : undefined }}>
         <td className="px-0 py-0 border-r">
           <button onClick={() => { if (isFocused) { setFocusedRowId(null); setFocusedRowIndex(null); } else { setFocusedRowId(wo.id); setFocusedRowIndex(index); } }}
-            className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${isFocused ? 'bg-purple-500 text-white' : 'text-gray-500 hover:bg-purple-100 hover:text-purple-700'}`}>
+            className={`w-full h-full px-2 py-1.5 text-center font-medium transition-colors ${isFocused ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700'}`}>
             {index + 1}
           </button>
         </td>
