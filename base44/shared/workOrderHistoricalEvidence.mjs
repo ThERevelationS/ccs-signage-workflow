@@ -51,7 +51,7 @@ export function summarizeWorkOrderHistory(backupLogs, importJobs, workOrderAudit
   const lastBackup = successfulWorkOrder[0] || null;
   const cohort = [...workOrderAudit.creation_days].sort((a,b)=>a.name.localeCompare(b.name));
   const afterLastBackup = lastBackup
-    ? cohort.filter(x => /^\\d{4}-\\d{2}-\\d{2}$/.test(x.name) &&
+    ? cohort.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x.name) &&
         x.name > lastBackup.created_date.slice(0,10))
       .reduce((n,x)=>n+Number(x.count||0),0)
     : null;
