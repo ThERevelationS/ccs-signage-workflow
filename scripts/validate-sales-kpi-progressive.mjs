@@ -7,7 +7,7 @@ const check = (condition, message) => { assert.ok(condition, message); checks++;
 
 const overview = source.split('<section aria-label="Sales Pipeline overview"')[1]?.split("</section>")[0];
 check(Boolean(overview), "Current/All pipeline summary must exist.");
-const primary = overview?.split('title="Four primary Sales metrics. Swipe or scroll horizontally on smaller screens.">')[1]
+const primary = overview?.split('title="Four primary Sales metrics displayed together, including on phones.">')[1]
   ?.split('<div id="sales-secondary-metrics"')[0];
 const secondary = overview?.split('<div id="sales-secondary-metrics"')[1]?.split("</section>")[0];
 check(Boolean(primary) && Boolean(secondary), "Primary and secondary metrics must have separate sections.");
@@ -55,8 +55,15 @@ check(overview.includes('aria-expanded={showMoreMetrics}') &&
   overview.includes('id="sales-secondary-metrics"') &&
   overview.includes('aria-labelledby="sales-more-metrics-toggle"'),
   "More Metrics expansion exposes its controlled region accessibly.");
-check(overview.includes('className={showMoreMetrics ? "flex gap-1.5 overflow-x-auto pb-0.5" : "hidden"}'),
-  "The secondary row is visibly collapsed instead of hiding its data or changing summaries.");
+check(overview.includes('className={showMoreMetrics ? "grid min-w-0 grid-cols-2 gap-1.5 pb-0.5 md:grid-cols-4" : "hidden"}'),
+  "The secondary metrics are initially collapsed, expanding into two columns on phones and four on desktop.");
+check(overview.includes('className="grid min-w-0 grid-cols-2 gap-1.5 pb-0.5 md:grid-cols-4"'),
+  "All four primary KPIs appear together as two rows on narrow phones without horizontal swiping.");
+check((overview.match(/className={[`"]min-w-0 rounded-md border/g) || []).length === 8 &&
+  !overview.includes('min-w-[150px]') && !overview.includes('overflow-x-auto'),
+  "All eight KPI cards may shrink with their grid cells; mobile does not require hidden horizontal metric scrolling.");
+check(overview.includes('min-h-10 max-w-[65%]') && overview.includes('sm:min-h-8'),
+  "More Metrics has a larger touch target on phones while staying compact on desktop.");
 check(source.includes('["quote_no_followup", "no_next_action", "near_close", "stale"].includes(attentionFilter)'),
   "All secondary KPI filter states are recognized when More Metrics is collapsed.");
 check(overview.includes('secondaryMetricLabel ? `More Metrics · ${secondaryMetricLabel}`'),
