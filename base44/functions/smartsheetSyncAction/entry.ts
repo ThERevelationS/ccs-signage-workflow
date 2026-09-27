@@ -412,6 +412,17 @@ async function pullDataset(
           continue;
         }
       }
+      // A real date must also clear an old text choice (ASAP, N/A, Stock,
+      // etc.). Generic normalization drops empty strings, so handle this
+      // paired clear explicitly before normalizing the remaining fields.
+      if (dataset === 'orders' && val === '') {
+        const dateField = ['date_needed', 'date_ordered', 'date_received']
+          .find(candidate => orderDateOptionField(candidate) === key);
+        if (dateField && rawFields[dateField]) {
+          fieldValues[key] = '';
+          continue;
+        }
+      }
       const normalized = normalizePullValue(key, val);
       if (normalized !== undefined) fieldValues[key] = normalized;
     }
@@ -465,11 +476,11 @@ async function pullDataset(
   }
 
   // Hybrid update strategy:
-  // 1. bulkUpdate for all fields (fast, no rate limits) — but it silently
-  //    drops date fields for some records.
-  // 2. Second pass: individual update() calls for records where dates should
-  //    exist but don't after the bulk update. This is a small subset (~150-260
-  //    records) so individual calls stay within rate limits.
+  // 1. bulkUpdate for all fields (fast, no rate limits) — but it can silently
+  //    drop Order dates or their companion text choices.
+  // 2. Order-only verified read-back repairs changed date and text-option
+  //    fields before advancing the sync snapshot. Existing Sales behavior
+  //    remains unchanged.
   const snapshotUpdates: any[] = [];
   const orderDateVerifications: any[] = [];
   const bulkBatchSize = 100;
@@ -548,9 +559,9 @@ async function pullDataset(
     }
   }
 
-  // Order-only read-after-write: Base44 bulkUpdate may acknowledge dates it
-  // omitted. Repair only fields whose previous value is still safe, verify
-  // the permanent Order again, then and only then record sync evidence.
+  // Order-only read-after-write: Base44 bulkUpdate may acknowledge dates or
+  // text choices that it omitted. Repair only fields whose previous value
+  // remains safe, verify the permanent Order, then record sync evidence.
   if (dataset === 'orders') {
     for (const item of orderDateVerifications) {
       try {
@@ -558,7 +569,7 @@ async function pullDataset(
         snapshotUpdates.push({ id: item.id, smartsheet_sync_snapshot: item.snapshot,
           smartsheet_last_synced_at: new Date().toISOString() });
       } catch (error: any) {
-        errors.push(`Order ${item.id} date verification: ${error?.message || 'unknown error'}. Snapshot not advanced.`);
+        errors.push(`Order ${item.id} date/text verification: ${error?.message || 'unknown error'}. Snapshot not advanced.`);
         updatedCount--;
       }
     }
