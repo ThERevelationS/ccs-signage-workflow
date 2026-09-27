@@ -153,6 +153,66 @@ try {
         .then((text) => text.includes("Saved despite synthetic refresh failure")), true);
     });
 
+  await caseRun("Desktop: nested completion Escape stays in dialog; confirmed completion restores filtered focus",
+    { width: 1440, height: 900 }, async (page) => {
+      await page.locator("#fleet-work-order-toggle-wo-open").click();
+      await page.getByRole("button", { name: "Complete", exact: true }).click();
+      const dialog = page.getByRole("dialog", { name: "Complete WO-SYNTH-OPEN" });
+      await dialog.getByRole("textbox", { name: "Corrective Action *" }).fill("Synthetic completed work");
+      await dialog.getByRole("button", { name: "Complete Work Order" }).click();
+      const confirmation = page.getByRole("alertdialog", { name: /Complete WO-SYNTH-OPEN/ });
+      await confirmation.waitFor();
+      assert.equal(await confirmation.getByRole("button", { name: "Cancel" })
+        .evaluate((el) => document.activeElement === el), true);
+      await page.keyboard.press("Shift+Tab");
+      assert.equal(await confirmation.getByRole("button", { name: "Complete Work Order" })
+        .evaluate((el) => document.activeElement === el), true);
+      await page.keyboard.press("Escape");
+      await confirmation.waitFor({ state: "hidden" });
+      await dialog.waitFor();
+      assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 0);
+      await dialog.getByRole("button", { name: "Complete Work Order" }).click();
+      await confirmation.getByRole("button", { name: "Complete Work Order" }).click();
+      await dialog.waitFor({ state: "hidden" });
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
+      assert.match(await page.getByRole("status").innerText(), /Completed WO-SYNTH-OPEN.*no longer matches/);
+      assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
+    });
+
+  await caseRun("Desktop: reopening a Completed work order restores filtered focus",
+    { width: 1440, height: 900 }, async (page) => {
+      await page.getByRole("combobox", { name: "Filter by work order status" }).selectOption("completed");
+      await page.locator("#fleet-work-order-toggle-wo-done").click();
+      await page.getByRole("button", { name: "Reopen", exact: true }).click();
+      const confirmation = page.getByRole("alertdialog", { name: /Reopen WO-SYNTH-DONE/ });
+      await confirmation.waitFor();
+      await confirmation.getByRole("button", { name: "Reopen Work Order" }).click();
+      await confirmation.waitFor({ state: "hidden" });
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
+      assert.match(await page.getByRole("status").innerText(), /Reopened WO-SYNTH-DONE.*no longer matches/);
+      assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
+      assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.orders.find((w) => w.id === "wo-done").status), "in_progress");
+    });
+
+  await caseRun("Mobile: refresh failure retry stays keyboard-accessible without duplicating edit",
+    { width: 390, height: 844 }, async (page) => {
+      await page.locator("#fleet-work-order-toggle-wo-open").click();
+      await page.getByRole("button", { name: "Edit", exact: true }).click();
+      const dialog = page.getByRole("dialog", { name: "Edit WO-SYNTH-OPEN" });
+      await dialog.getByRole("textbox", { name: "Title" }).fill("Synthetic mobile refresh recovery");
+      await page.evaluate(() => { window.__fleetBrowserFixture.failNextWorkOrderList = true; });
+      await dialog.getByRole("button", { name: "Save Changes" }).click();
+      await dialog.waitFor({ state: "hidden" });
+      const retry = page.getByRole("button", { name: "Retry refresh" });
+      await retry.waitFor();
+      await page.waitForFunction(() => document.activeElement?.textContent?.includes("Retry refresh"));
+      assert.equal(await retry.evaluate((el) => document.activeElement === el), true);
+      await page.keyboard.press("Enter");
+      await retry.waitFor({ state: "hidden" });
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Filter by work order status");
+      assert.equal(await page.evaluate(() => window.__fleetBrowserFixture.actions.length), 1);
+    });
+
   await caseRun("Desktop: dialog keyboard trap and Escape return to opener", { width: 1440, height: 900 },
     async (page) => {
       const opener = page.getByRole("button", { name: "New Fleet Work Order" });
