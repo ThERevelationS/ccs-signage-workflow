@@ -160,6 +160,10 @@ function boardHeadingFocused(page) {
   });
 }
 
+function reopenedWorkOrderFocused(page) {
+  return page.waitForFunction(() => document.activeElement?.dataset?.sipsActiveFocusId === "synthetic-sips-order");
+}
+
 async function checkDialogOnScreen(page) {
   const rect = await page.getByRole("alertdialog").boundingBox();
   const size = page.viewportSize();
@@ -279,7 +283,7 @@ try {
       await waitFor(1, "");
       await page.getByText("Showing 1 of 1 active item").waitFor();
       assert.equal(fixture.row.sip_completed, false);
-      console.log("WIP_REOPEN_CURRENT_FOCUS", await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 150)));
+      await reopenedWorkOrderFocused(page);
       assert.deepEqual(fixture.writes, [{ sip_completed: false, sip_revisit_date: "" }]);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     }, (state) => { state.row.sip_completed = true; });
@@ -299,6 +303,7 @@ try {
         a.getByText("Showing 1 of 1 active item").waitFor(),
         b.getByText("Showing 1 of 1 active item").waitFor(),
       ]);
+      await Promise.all([reopenedWorkOrderFocused(a), reopenedWorkOrderFocused(b)]);
       assert.equal(fixture.row.sip_completed, false);
       assert.equal(fixture.row.sip_revisit_date, "");
       assert.equal(fixture.writes.length, 1, "The conditional second reopen must not make a duplicate write");
@@ -321,11 +326,25 @@ try {
       await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
       await waitFor(1, "");
       await page.getByText("Showing 1 of 1 active item").waitFor();
+      await reopenedWorkOrderFocused(page);
       assert.equal(fixture.row.sip_completed, false);
     }, (state) => {
       state.row.sip_completed = true;
       state.row.sip_revisit_date = "";
     });
+
+  await caseRun("Mobile: when filters hide a reopened WIP, focus falls back to the board heading",
+    origin, [mobile], async ([page]) => {
+      await page.getByRole("button", { name: /Needs attention/ }).click();
+      await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+      await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+      await waitFor(1, "");
+      await page.getByText("Showing 0 of 1 active item").waitFor();
+      await boardHeadingFocused(page);
+      assert.equal(fixture.row.sip_completed, false);
+      assert.equal(fixture.row.sip_revisit_date, "");
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }, (state) => { state.row.sip_completed = true; });
 
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
