@@ -42,6 +42,15 @@ function possibleResultNames(result) {
 
 export function findRepositoryJurisdictionMatches(jurisdictions, result) {
   if (!Array.isArray(jurisdictions) || !result) return [];
+
+  // An explicitly linked tracker locality is stronger than legacy name/state
+  // compatibility. Never fall back to names when that canonical ID is present:
+  // a stale/broken link must be reviewed instead of silently choosing a profile.
+  const linkedProfileId = cleanText(result?.suggested_locality?.jurisdiction_profile_id);
+  if (linkedProfileId) {
+    return jurisdictions.filter((jurisdiction) => cleanText(jurisdiction?.id) === linkedProfileId);
+  }
+
   const names = possibleResultNames(result);
   if (names.size === 0) return [];
 
