@@ -136,6 +136,12 @@ export default function SIPs() {
     if (!reopenedFocusWorkOrderId) return;
     const reopened = workOrders.find(wo => wo.id === reopenedFocusWorkOrderId);
     if (reopened?.sip_completed) return; // Wait for the saved board snapshot.
+    // Another control may have received focus during the asynchronous save.
+    // Respect that intentional navigation instead of stealing focus back.
+    if (document.activeElement && document.activeElement !== document.body && document.activeElement.isConnected) {
+      setReopenedFocusWorkOrderId(null);
+      return;
+    }
     const activeButton = Array.from(document.querySelectorAll("[data-sips-active-focus-id]"))
       .find(node => node.dataset.sipsActiveFocusId === reopenedFocusWorkOrderId && node.getClientRects().length > 0);
     (activeButton || revisitClearBoardRef.current)?.focus();
