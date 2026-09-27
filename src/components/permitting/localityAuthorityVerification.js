@@ -64,8 +64,11 @@ export function updateLocalityOfficeIdentity(office, patch) {
 }
 
 export function verifyLocalityOfficeAuthority(office, actor, verifiedAt = new Date().toISOString()) {
-  const roles = Array.isArray(office?.authority_roles) ? office.authority_roles.filter(Boolean) : [];
+  const roles = Array.isArray(office?.authority_roles) ? [...new Set(office.authority_roles.filter(Boolean))] : [];
   if (roles.length === 0) throw new Error("Choose at least one authority role before verifying this office.");
+  const supportedRoles = new Set(LOCALITY_AUTHORITY_ROLES.map(([value]) => value));
+  const unsupported = roles.filter(role => !supportedRoles.has(role));
+  if (unsupported.length > 0) throw new Error(`Unsupported authority role${unsupported.length === 1 ? "" : "s"}: ${unsupported.join(", ")}. Review the office before verification.`);
   return {
     ...office,
     authority_roles: roles,
