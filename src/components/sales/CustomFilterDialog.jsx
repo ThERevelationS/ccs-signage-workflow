@@ -899,12 +899,12 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 mb-1">
-                    Same headers, minimum widths and saved order as the Sales Pipeline table. Use the header arrows to reorder. Scroll horizontally →
+                    Same headers, minimum widths and saved order as the Sales Pipeline table. Use the header arrows to reorder. Scroll horizontally → Keyboard: Tab into the preview and use the arrow keys to scroll.
                   </p>
                   {visiblePreviewColumns.length === 0 && (
                     <p role="status" className="mb-1 text-xs text-amber-800">No data columns selected. Check a column above to add it.</p>
                   )}
-                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white" role="region" aria-label="Horizontal Sales Pipeline column preview" tabIndex={0}>
+                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2" role="region" aria-label="Horizontal Sales Pipeline column preview" tabIndex={0}>
                     <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "12px" }}>
                       <thead className="bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap">
                         <tr className="h-7 border-b">
