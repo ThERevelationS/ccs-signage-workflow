@@ -134,6 +134,7 @@ export default function LocalityPickerDialog({
   const selectedAuthority = verifiedAuthoritySummary(selectedLocality);
   const addressAuthority = result?.authority_review;
   const addressAuthorityLabels = (addressAuthority?.verified_roles || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
+  const addressRolesNeedingReview = (addressAuthority?.roles_needing_review || []).map(role => AUTHORITY_ROLE_LABELS[role] || role);
 
   const handleApply = () => {
     if (!selectedLocalityId) return;
@@ -294,6 +295,20 @@ export default function LocalityPickerDialog({
                           </>
                         ) : (
                           <p className="mt-1">The address can match this locality without proving which office has sign, zoning, building, or electrical authority.</p>
+                        )}
+                        {addressAuthority?.coverage_status === 'partial' && (
+                          <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
+                            <p className="font-semibold">Partial office-authority review: {addressAuthority.other_office_count} configured office(s) still need review.</p>
+                            {addressRolesNeedingReview.length > 0 && (
+                              <p className="mt-1">Roles on offices awaiting review: {addressRolesNeedingReview.join(" • ")}</p>
+                            )}
+                          </div>
+                        )}
+                        {addressAuthority?.coverage_status === 'configured_offices_reviewed' && (
+                          <p className="mt-2 text-gray-700">All configured office roles have staff review. This does not establish that every legally required authority is represented.</p>
+                        )}
+                        {addressAuthority?.coverage_status === 'not_verified' && addressRolesNeedingReview.length > 0 && (
+                          <p className="mt-2 text-amber-900">Configured roles awaiting staff review: {addressRolesNeedingReview.join(" • ")}</p>
                         )}
                       </div>
                     </div>

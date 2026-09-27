@@ -62,12 +62,14 @@ test('address resolver treats Google administrative level 3 as township-only evi
 test('unmatched or unconfigured geographic identity does not assert verified authority', () => {
   assert.deepEqual(summarizeMatchedLocalityAuthority(null), {
     status: 'unresolved', verified_roles: [], verified_office_count: 0, other_office_count: 0,
+    coverage_status: 'unresolved', roles_needing_review: [],
   });
   assert.deepEqual(summarizeMatchedLocalityAuthority({ id: 'loc-1', offices: [
     { office_type: 'Zoning', authority_roles: ['zoning'] },
     { office_type: 'Building' },
   ] }), {
     status: 'no_staff_verified_roles', verified_roles: [], verified_office_count: 0, other_office_count: 2,
+    coverage_status: 'not_verified', roles_needing_review: ['zoning'],
   });
 });
 
@@ -81,6 +83,8 @@ test('address authority review reports only explicitly staff-verified roles on s
   assert.deepEqual(result.verified_roles, ['sign_permit', 'zoning', 'building']);
   assert.equal(result.verified_office_count, 2);
   assert.equal(result.other_office_count, 1);
+  assert.equal(result.coverage_status, 'partial');
+  assert.deepEqual(result.roles_needing_review, ['electrical']);
   assert.equal(result.verified_roles.includes('electrical'), false);
 });
 
@@ -94,6 +98,29 @@ test('unsupported or empty staff-labeled authority roles never become verified e
   assert.deepEqual(result.verified_roles, []);
   assert.equal(result.verified_office_count, 0);
   assert.equal(result.other_office_count, 3);
+  assert.equal(result.coverage_status, 'not_verified');
+  assert.deepEqual(result.roles_needing_review, ['zoning']);
+});
+
+test('all configured roles reviewed does not imply all required jurisdictions covered', () => {
+  const all = summarizeMatchedLocalityAuthority({ id: 'loc', offices: [
+    { authority_verification_status: 'staff_verified', authority_roles: ['sign_permit'] },
+    { authority_verification_status: 'staff_verified', authority_roles: ['zoning'] },
+  ] });
+  assert.equal(all.coverage_status, 'configured_offices_reviewed');
+  assert.deepEqual(all.roles_needing_review, []);
+  assert.equal(all.other_office_count, 0);
+  const empty = summarizeMatchedLocalityAuthority({ id: 'loc', offices: [] });
+  assert.equal(empty.coverage_status, 'not_configured');
+  assert.deepEqual(empty.verified_roles, []);
+});
+
+test('address UI distinguishes partial review from all configured roles reviewed', () => {
+  const ui = readFileSync(new URL('../src/components/permitting/LocalityPickerDialog.jsx', import.meta.url), 'utf8');
+  assert.match(ui, /addressAuthority\\?\\.coverage_status === 'partial'/);
+  assert.match(ui, /addressAuthority\\?\\.coverage_status === 'configured_offices_reviewed'/);
+  assert.match(ui, /addressRolesNeedingReview\\.join/);
+  assert.match(ui, /does not establish that every legally required authority is represented/);
 });
 
 test('address authority vocabulary matches the locality office schema', () => {
