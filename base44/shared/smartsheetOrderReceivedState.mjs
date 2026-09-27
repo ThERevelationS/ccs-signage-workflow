@@ -29,11 +29,10 @@ export function orderMatchesReceivedFilter(order, filter) {
 // an existing receipt date or a locally cancelled Order.
 export function orderStatusFromPulledDates(fields, existing, hasStatusBinding) {
   if (hasStatusBinding) return fields;
-  // A verified nonempty Smartsheet text choice replaces a previously dated
-  // receipt. A custom choice stays open; In Stock counts as received.
+  // A verified nonempty Smartsheet Date Received choice replaces a prior date;
+  // every nonempty choice is a received marker, not just "In Stock".
   if (fields?.receipt_option && fields?.date_received === '') {
-    return { ...fields, status: String(fields.receipt_option).trim().toLowerCase() === 'in stock'
-      ? 'received' : ((fields?.date_ordered || existing?.date_ordered) ? 'ordered' : 'pending') };
+    return { ...fields, status: 'received' };
   }
   if (isFulfilledOrder(fields)) return { ...fields, status: 'received' };
   if (existing?.status === 'cancelled' || isFulfilledOrder(existing)) return fields;
