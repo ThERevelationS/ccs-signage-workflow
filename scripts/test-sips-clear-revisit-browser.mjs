@@ -279,6 +279,7 @@ try {
       await waitFor(1, "");
       await page.getByText("Showing 1 of 1 active item").waitFor();
       assert.equal(fixture.row.sip_completed, false);
+      console.log("WIP_REOPEN_CURRENT_FOCUS", await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 150)));
       assert.deepEqual(fixture.writes, [{ sip_completed: false, sip_revisit_date: "" }]);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     }, (state) => { state.row.sip_completed = true; });
