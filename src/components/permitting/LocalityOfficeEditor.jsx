@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
-import { LOCALITY_AUTHORITY_ROLES, revokeLocalityOfficeAuthorityVerification, setLocalityOfficeAuthorityRole, summarizeLocalityOfficeAuthority, verifyLocalityOfficeAuthority } from "./localityAuthorityVerification";
+import { LOCALITY_AUTHORITY_ROLES, revokeLocalityOfficeAuthorityVerification, setLocalityOfficeAuthorityRole, summarizeLocalityOfficeAuthority, updateLocalityOfficeIdentity, verifyLocalityOfficeAuthority } from "./localityAuthorityVerification";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -29,7 +29,7 @@ export default function LocalityOfficeEditor({ office, officeTypes, onChange, on
   const [newStepType, setNewStepType] = useState("checkbox");
   const authoritySummary = summarizeLocalityOfficeAuthority(office);
 
-  const update = (patch) => onChange({ ...office, ...patch });
+  const update = (patch) => onChange(updateLocalityOfficeIdentity(office, patch));
 
   const addStep = () => {
     if (!newStepName.trim()) return;
