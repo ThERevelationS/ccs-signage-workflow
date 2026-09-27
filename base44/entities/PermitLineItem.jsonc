@@ -26,6 +26,10 @@
       "type": "string",
       "description": "Cached locality display name"
     },
+    "locality_office_id": {
+      "type": "string",
+      "description": "Optional stable ID of the office in PermitLocality.offices. Blank for legacy or unresolved rows; never a shared government office/catalog ID."
+    },
     "office_type": {
       "type": "string",
       "description": "LEGACY \u2014 single office type. Use office_types (array) instead."
