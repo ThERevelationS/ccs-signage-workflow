@@ -75,14 +75,18 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId) {
     text_option_differences: 0, text_receipt_differences: 0, base44_date_missing_in_smartsheet: 0 };
   const byField = Object.fromEntries(DATE_FIELDS.map(field => [field,
     { smartsheet_dates: 0, missing_base44: 0, different: 0, invalid: 0, text_choices: 0 }]));
-  const samples = { missing_dates: [], different_dates: [], invalid_values: [], text_choices: [], ambiguous_links: [] };
+  const samples = { missing_dates: [], different_dates: [], invalid_values: [], text_choices: [], ambiguous_links: [], unlinked_rows: [] };
   const sample = (key, item) => { if (samples[key].length < 20) samples[key].push(item); };
   for (const row of rows) {
     const rowId = numericId(row?.id);
     if (!rowId) throw new Error('Smartsheet evidence includes an invalid permanent row ID.');
     const matches = byRow.get(rowId) || [];
-    if (matches.length === 0) counts.unlinked_smartsheet_rows++;
-    else if (matches.length > 1) {
+    if (matches.length === 0) {
+      counts.unlinked_smartsheet_rows++;
+      // Preserve source identity for admin review. Never infer a Base44 link
+      // from the row's position, customer name, or neighboring rows.
+      sample('unlinked_rows', { row_id: rowId });
+    } else if (matches.length > 1) {
       counts.duplicate_base44_links++;
       sample('ambiguous_links', { row_id: rowId, base44_order_ids: matches.map(o => o.id).slice(0, 5) });
     } else counts.matched++;
