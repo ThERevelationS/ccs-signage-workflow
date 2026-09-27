@@ -22,6 +22,8 @@ test('locality office retains canonical catalog provenance with independent work
   assert.equal(copy.order, 2);
   assert.equal(copy.office_type, 'Zoning');
   assert.equal(copy.contact_phone, '555-0100');
+  assert.equal(Object.hasOwn(copy, 'authority_roles'), false);
+  assert.equal(Object.hasOwn(copy, 'authority_verification_status'), false);
   assert.equal(copy.workflow_steps[0].id, 'local-step-submit');
   assert.equal(copy.workflow_steps[0].type, catalog.workflow_steps[0].type);
   copy.workflow_steps[0].name = 'Staff-customized step';
