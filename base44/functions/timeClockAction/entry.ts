@@ -678,7 +678,10 @@ async function acquirePayPeriodCreateGate(gateEntity: any, auditEntity: any, per
       details.label === saved.label && details.start_date === saved.start_date && details.end_date === saved.end_date;
     // A same-request retry may finish the pending audit ONLY after the saved
     // period is visible; never re-enter the create path on an uncertain write.
-    if (sameRequest && consistent && ['pending', 'confirmed', 'recovered'].includes(audit.outcome)) {
+    if (sameRequest && consistent && (
+      (audit.outcome === 'pending' && !details.pay_period_id) ||
+      (['confirmed', 'recovered'].includes(audit.outcome) && details.pay_period_id === saved.id)
+    )) {
       return { acquired: true, id: gate.id, token: gate.claim_token };
     }
     const completed = consistent && ['confirmed', 'recovered'].includes(audit.outcome) &&
