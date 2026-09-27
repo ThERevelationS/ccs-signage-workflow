@@ -63,6 +63,10 @@
             "type": "string",
             "description": "Optional ID of the reusable office catalog entry copied into this locality. Provenance only; not verification of legal permitting authority."
           },
+          "government_office_id": {
+            "type": "string",
+            "description": "Stable canonical identity of the government office represented by this locality-specific workflow copy. This identity does not itself prove that the office has authority for this locality."
+          },
           "authority_roles": {
             "type": "array",
             "description": "Explicit staff-reviewed authority roles this office performs for this locality. Empty or absent means authority has not been established; office_type/office_types must not be treated as legal authority.",
