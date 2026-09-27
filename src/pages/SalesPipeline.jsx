@@ -174,7 +174,7 @@ export default function SalesPipeline() {
       <div className="w-full max-w-[99%] mx-auto flex flex-col min-h-0" style={{ flex: 1, minHeight: 0 }}>
         <section aria-label="Sales Pipeline navigation" className="mb-2 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-sm">
           <div className="grid min-w-0 grid-cols-12 items-center gap-2 sm:flex sm:flex-wrap">
-            <div className={`order-1 flex min-w-0 items-center gap-1.5 sm:mr-1 sm:shrink-0 ${isRegistered && !showDuplicateCleanup || showDuplicateCleanup ? "col-span-7" : "col-span-12"}`}>
+            <div className={`order-1 flex min-w-0 items-center gap-1.5 sm:mr-1 sm:shrink-0 ${isRegistered || showDuplicateCleanup ? "col-span-7" : "col-span-12"}`}>
               <DollarSign className="h-4 w-4 shrink-0 text-green-600 sm:h-5 sm:w-5" aria-hidden="true" />
               <h1 className="min-w-0 truncate text-sm font-bold text-gray-800 sm:text-lg" title="Sales Pipeline">Sales Pipeline</h1>
             </div>
@@ -240,7 +240,7 @@ export default function SalesPipeline() {
               </div>
             )}
 
-            <div className="order-5 col-span-9 flex min-w-0 items-center sm:order-4 sm:min-w-[220px] sm:flex-1">
+            <div className="order-5 col-span-8 flex min-w-0 items-center sm:order-4 sm:min-w-[220px] sm:flex-1">
               <span className="sr-only">Search</span>
               <div className="relative w-full">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -270,11 +270,11 @@ export default function SalesPipeline() {
                 Return to Pipeline
               </Button>
             )}
-            <div className="order-6 col-span-3 flex min-w-0 justify-end sm:order-7">
-            <DropdownMenu>
+            <div className="order-6 col-span-4 flex min-w-0 justify-end sm:order-7">
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="h-11 shrink-0 gap-1.5 px-2.5 text-xs sm:h-9 sm:px-3" aria-label="Sales Pipeline tools" title="Sales Pipeline tools">
-                  <Wrench className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" /> <span className="hidden sm:inline">Tools</span> <ChevronDown className="hidden h-3.5 w-3.5 sm:block" aria-hidden="true" />
+                <Button type="button" variant="outline" className="h-11 shrink-0 gap-1 px-1.5 text-xs sm:h-9 sm:gap-1.5 sm:px-3" aria-label="Sales Pipeline tools" title="Sales Pipeline tools">
+                  <Wrench className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" /> <span>Tools</span> <ChevronDown className="hidden h-3.5 w-3.5 sm:block" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -296,7 +296,7 @@ export default function SalesPipeline() {
                   <Inbox className="h-4 w-4" /> {showDuplicateCleanup ? "Return to Pipeline" : "Duplicate Cleanup"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
             </div>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2" aria-label="Sales Pipeline filters and column layouts">
