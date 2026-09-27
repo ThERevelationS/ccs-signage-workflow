@@ -106,7 +106,8 @@ function fixture(date = yesterday, { completed = false } = {}) {
     console: { error() {} },
     Date,
   };
-  ctx.openChecklist = () => {};
+  ctx.checklistOpened = 0;
+  ctx.openChecklist = () => { ctx.checklistOpened++; };
   ctx.setOpenDatePopover = () => {};
   ctx.setPendingRevisitClear = (value) => { ctx.pendingRevisitClear = value; };
   ctx.setIsClearingRevisit = (value) => { ctx.isClearingRevisit = value; };
@@ -420,6 +421,93 @@ await check('a different field remains editable while Revisit shows pending', as
   assert.equal(h.record.sip_revisit_date, tomorrow);
   assert.equal(h.record.notes, 'independent edit');
   assert.equal(h.writes, 2);
+});
+
+
+await check('rapid same-session completed WIP reopening has one pending write', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const releaseGet = h.holdGet();
+  const first = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.reopeningWipIds.has(h.record.id), true);
+  assert.equal(h.ctx.reopeningWipInFlightRef.current.has(h.record.id), true);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.boardSavesPendingRef.current, 1, 'Duplicate reopening did not launch a second request');
+  releaseGet();
+  await first;
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+  assert.equal(h.ctx.reopeningWipIds.size, 0);
+  assert.equal(h.ctx.reopeningWipInFlightRef.current.size, 0);
+});
+
+await check('conflicted WIP reopening stays busy through reload and then allows retry', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  h.externalUpdate({ sip_revisit_date: later });
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  for (let i = 0; i < 25 && h.reads.length === 0; i++) await Promise.resolve();
+  assert.equal(h.reads.length, 1, 'Conflicted reopening reloads the current board');
+  assert.equal(h.ctx.reopeningWipIds.has(h.record.id), true);
+  assert.equal(h.ctx.reopeningWipInFlightRef.current.has(h.record.id), true);
+  h.reads[0].finish();
+  await reopening;
+  assert.equal(h.record.sip_completed, true);
+  assert.equal(h.record.sip_revisit_date, later);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, later);
+  assert.equal(h.writes, 0);
+  assert.match(h.ctx.quickEditError, /changed in another session/);
+  assert.equal(h.ctx.reopeningWipIds.size, 0);
+  assert.equal(h.ctx.reopeningWipInFlightRef.current.size, 0);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+});
+
+await check('other fields remain editable while completed WIP is reopening', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const releaseGet = h.holdGet();
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  await h.updateWorkOrder(h.record.id, 'notes', 'saved during reopening');
+  assert.equal(h.record.notes, 'saved during reopening');
+  assert.equal(h.ctx.reopeningWipIds.has(h.record.id), true);
+  releaseGet();
+  await reopening;
+  assert.equal(h.record.notes, 'saved during reopening');
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.ctx.workOrders[0].notes, 'saved during reopening');
+  assert.equal(h.ctx.reopeningWipIds.size, 0);
+  assert.equal(h.writes, 2);
+});
+
+await check('incomplete WIP opens checklist without starting reopening save', async () => {
+  const h = fixture(yesterday);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.checklistOpened, 1);
+  assert.equal(h.ctx.reopeningWipIds.size, 0);
+  assert.equal(h.ctx.reopeningWipInFlightRef.current.size, 0);
+  assert.equal(h.writes, 0);
+});
+
+await check('mobile completed WIP Reopen shows busy state and blocks repeat taps', async () => {
+  const anchor = board.indexOf('className="min-h-11 px-2.5 shrink-0 text-xs bg-white border-green-200');
+  assert.ok(anchor > 0, 'Mobile completed WIP Reopen button exists');
+  const markup = board.slice(anchor - 260, anchor + 650);
+  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /aria-busy=\{reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /Reopening…/);
+  assert.match(markup, /aria-label=/);
+});
+
+await check('desktop completed WIP checkbox disables and announces pending reopen', async () => {
+  const anchor = board.indexOf('checked={true}\n                        onCheckedChange={() => toggleSipCompleted(wo)}');
+  assert.ok(anchor > 0, 'Completed WIP desktop reopening checkbox exists');
+  const markup = board.slice(anchor, anchor + 670);
+  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /aria-busy=\{reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /aria-label=/);
+  assert.match(markup, /Loader2/);
 });
 
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
