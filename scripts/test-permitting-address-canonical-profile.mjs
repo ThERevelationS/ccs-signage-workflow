@@ -36,6 +36,17 @@ test('address resolver returns canonical profile id for both accepted match path
   const source = readFileSync(new URL('../base44/functions/findLocalityByAddress/entry.ts', import.meta.url), 'utf8');
   const projection = '...(found.jurisdiction_profile_id ? { jurisdiction_profile_id: found.jurisdiction_profile_id } : {})';
   assert.equal(source.split(projection).length - 1, 2);
-  assert.match(source, /if \(directMatches\.length === 1\)/);
+  assert.match(source, /directMatches\.length === 1 \|\| \(directMatches\.length > 1 && canonicalDirectMatches\.length === 1\)/);
   assert.match(source, /if \(aiIdentityMatches && aiResult\.confidence !== 'low'\)/);
+});
+
+test('ambiguous geocoder matches use exactly one canonical profile link and otherwise fail closed before AI selection', () => {
+  const source = readFileSync(new URL('../base44/functions/findLocalityByAddress/entry.ts', import.meta.url), 'utf8');
+  assert.match(source, /canonicalDirectMatches = directMatches\.filter/);
+  assert.match(source, /matchMethod = directMatches\.length === 1 \? 'geocode_exact' : 'geocode_canonical_profile'/);
+  assert.match(source, /else if \(directMatches\.length > 1\)/);
+  assert.match(source, /canonicalDirectMatches\.length > 1/);
+  const ambiguousGuard = source.indexOf("} else if (directMatches.length > 1) {");
+  const aiFallback = source.indexOf("} else if (aiResult.suggested_locality_id) {");
+  assert.ok(ambiguousGuard > 0 && aiFallback > ambiguousGuard, 'ambiguous geocoder matches must be handled before AI id fallback');
 });
