@@ -780,11 +780,18 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
                 <div className="text-amber-700 mt-1">Skipped: {r.reason}</div>
               ) : (
                 <div className="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-4">
-                  <span>{r.direction === "pull" ? "Rows: " : "Examined: "}<strong>{r.records_examined}</strong></span>
+                  <span>{r.direction === "pull" ? "Rows: " : "Examined: "}<strong>{r.direction === "pull" ? (r.rows_examined ?? r.records_examined) : r.records_examined}</strong></span>
                   <span className="text-green-700">Created: <strong>{r.created}</strong></span>
                   <span className="text-blue-700">Updated: <strong>{r.updated}</strong></span>
                   {r.direction !== "pull" && <span className="text-amber-700">Conflicts: <strong>{r.conflicts}</strong></span>}
                   {r.errors > 0 && <span className="text-red-700">Errors: <strong>{r.errors}</strong></span>}
+                </div>
+              )}
+              {r.dataset === "orders" && Number(r.unlinked_smartsheet_rows_flagged_for_review) > 0 && (
+                <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-amber-900" role="alert">
+                  <strong>{r.unlinked_smartsheet_rows_flagged_for_review} Smartsheet rows have no confirmed Base44 Order link.</strong>
+                  <p>Existing linked Orders may have been updated. Review these permanent row IDs before enabling record creation; no unmatched rows were deleted.</p>
+                  {r.unlinked_row_ids?.length > 0 && <p className="mt-1 break-words font-mono">Row IDs: {r.unlinked_row_ids.join(', ')}</p>}
                 </div>
               )}
               {r.error_details?.length > 0 && (
