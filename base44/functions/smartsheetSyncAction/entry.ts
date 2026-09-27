@@ -339,16 +339,22 @@ async function pullDataset(
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
 
+  let orderUnlinkedRowCount = 0;
+  let orderUnlinkedRowIds: string[] = [];
   // Order-only date preflight: do not mutate any Order if a legacy cell has
   // an untranslatable date or a duplicate permanent Base44 row link.
   // A received text choice is valid; an impossible date is not.
   if (dataset === 'orders') {
     const audit = auditOrderDateParity(existingRecords, allRows, bindings, sheetId);
+    orderUnlinkedRowCount = audit.counts.unlinked_smartsheet_rows;
+    orderUnlinkedRowIds = audit.samples.unlinked_rows.map((sample: any) => sample.row_id);
     if (audit.counts.invalid_date_values || audit.counts.duplicate_base44_links) {
       return { dataset, direction: 'pull', sheet_id: sheetId, skipped: true,
         reason: 'Order Request date translation or permanent row links require review before pull. No Orders were changed.',
         date_translation_invalid: audit.counts.invalid_date_values,
         duplicate_order_row_links: audit.counts.duplicate_base44_links,
+        unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
+        unlinked_row_ids: orderUnlinkedRowIds,
         samples: { invalid_values: audit.samples.invalid_values, ambiguous_links: audit.samples.ambiguous_links },
       };
     }
@@ -636,7 +642,14 @@ async function pullDataset(
     direction: 'pull',
     sheet_id: sheetId,
     rows_examined: allRows.length,
-    records_examined: allRows.length,
+    records_examined: dataset === 'orders' ? existingRecords.length : allRows.length,
+    ...(dataset === 'orders' ? {
+      // A bulk-create ACK does not prove the exact permanent links were saved.
+      // Keep originally unlinked rows visible for admin review; never delete
+      // or recreate them merely to make the row counts agree.
+      unlinked_smartsheet_rows_flagged_for_review: orderUnlinkedRowCount,
+      unlinked_row_ids: orderUnlinkedRowIds,
+    } : {}),
     created: createdCount,
     updated: updatedCount,
     unchanged_skipped: unchangedSkipped,
