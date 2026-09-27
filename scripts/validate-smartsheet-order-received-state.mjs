@@ -24,6 +24,15 @@ assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Backordered' }, 'rece
 assert.equal(orderMatchesReceivedFilter({ receipt_option: 'Stock', status: 'pending' }, 'received'), true);
 assert.deepEqual(orderStatusFromPulledDates({ receipt_option: 'In Stock' }, null, false),
   { receipt_option: 'In Stock', status: 'received' });
+for (const option of ['Stock', 'stock', 'Ordered Kit', 'N/A', 'Backordered', 'In House']) {
+  assert.deepEqual(
+    orderStatusFromPulledDates({ date_received: '', receipt_option: option },
+      { date_received: '2026-09-20', date_ordered: '2026-09-18', status: 'received' }, false),
+    { date_received: '', receipt_option: option, status: 'received' },
+    `Smartsheet receipt option ${option} must not revert a received Order to Pending/Ordered`);
+}
+assert.deepEqual(orderStatusFromPulledDates({ date_received: '', receipt_option: 'Stock' },
+  { status: 'pending' }, true), { date_received: '', receipt_option: 'Stock' });
 console.log('PASS Date Received and nonempty receipt options enter History; stale status alone stays open');
 
 assert.deepEqual(orderStatusFromPulledDates({ date_received: '2026-09-25' }, { status: 'pending' }, false),
