@@ -21,6 +21,24 @@ export function normalizeGovernmentOfficeCatalogEntry(office) {
   };
 }
 
+export function updateGovernmentOfficeCatalogEntry(office, patch) {
+  const source = office && typeof office === "object" ? office : {};
+  const next = { ...source, ...patch };
+  const metadata = { ...(source.government_office || {}) };
+  const fieldMap = {
+    name: "name",
+    contact_phone: "phone",
+    contact_email: "email",
+    contact_website: "website",
+    contact_address: "address",
+    contact_notes: "notes",
+  };
+  for (const [legacyField, metadataField] of Object.entries(fieldMap)) {
+    if (Object.hasOwn(patch || {}, legacyField)) metadata[metadataField] = clean(patch[legacyField]);
+  }
+  return normalizeGovernmentOfficeCatalogEntry({ ...next, government_office: metadata });
+}
+
 export function governmentOfficeMetadata(office) {
   return normalizeGovernmentOfficeCatalogEntry(office).government_office;
 }
