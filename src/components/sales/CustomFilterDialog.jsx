@@ -925,7 +925,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     title={`Move ${column.label} left`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "up")}
                                     disabled={index === 0 || isSaving}
-                                    className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-6 sm:w-5"
                                   >
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                   </button>
@@ -935,7 +935,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     title={`Move ${column.label} right`}
                                     onClick={() => moveColumn(columnSettings.indexOf(column), "down")}
                                     disabled={index === visiblePreviewColumns.length - 1 || isSaving}
-                                    className="inline-flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded text-gray-500 hover:bg-blue-100 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-30 sm:h-6 sm:w-5"
                                   >
                                     <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                   </button>
