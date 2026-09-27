@@ -383,8 +383,9 @@ export default function SIPs() {
 
   const confirmClearRevisit = async () => {
     if (!pendingRevisitClear || isClearingRevisit) return;
-    const editKey = JSON.stringify([pendingRevisitClear.id, "sip_revisit_date"]);
-    if (reopeningWipInFlightRef.current.has(pendingRevisitClear.id)) {
+    const clearingRequest = pendingRevisitClear;
+    const editKey = JSON.stringify([clearingRequest.id, "sip_revisit_date"]);
+    if (reopeningWipInFlightRef.current.has(clearingRequest.id)) {
       setQuickEditError("This WIP item is reopening. Wait for it to finish before clearing Revisit.");
       return;
     }
@@ -397,19 +398,19 @@ export default function SIPs() {
     // Share the date-edit guard with calendar saves. The confirmation keeps
     // its original expected date so a later session cannot be cleared.
     quickEditsInFlightRef.current.set(editKey, "");
-    setSavingRevisitIds(prev => new Set(prev).add(pendingRevisitClear.id));
+    setSavingRevisitIds(prev => new Set(prev).add(clearingRequest.id));
     setIsClearingRevisit(true);
     setQuickEditError("");
     try {
       // Guard the date the user actually confirmed, not a newer date from a
       // background board refresh or another session's scheduling change.
       const saved = await saveBoardFields({
-        workOrderId: pendingRevisitClear.id,
-        expectedFields: { sip_revisit_date: pendingRevisitClear.revisitDate },
+        workOrderId: clearingRequest.id,
+        expectedFields: { sip_revisit_date: clearingRequest.revisitDate },
         nextFields: { sip_revisit_date: "" },
         label: "SIPs clear confirmed revisit date",
       });
-      applySavedBoardFields(pendingRevisitClear.id, saved, ["sip_revisit_date"]);
+      applySavedBoardFields(clearingRequest.id, saved, ["sip_revisit_date"]);
       setPendingRevisitClear(null);
     } catch (error) {
       console.error("Error clearing confirmed SIPs revisit date:", error);
@@ -420,7 +421,7 @@ export default function SIPs() {
       quickEditsInFlightRef.current.delete(editKey);
       setSavingRevisitIds(prev => {
         const next = new Set(prev);
-        next.delete(pendingRevisitClear.id);
+        next.delete(clearingRequest.id);
         return next;
       });
       setIsClearingRevisit(false);
