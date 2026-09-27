@@ -32,7 +32,7 @@ assert.equal(rows[0].contact_email, "=cmd|' /C calc'!A0", "source data must rema
 const gateway = readFileSync(new URL("../base44/functions/corebridgeApiAction/entry.ts", import.meta.url), "utf8");
 const adminUi = readFileSync(new URL("../src/components/admin/CorebridgeApiSettings.jsx", import.meta.url), "utf8");
 assert(gateway.includes("actor?.role !== 'admin'"), "server-side sign-shop admin check required");
-assert(gateway.includes("body?.action !== 'export_jobs_csv'"), "all retired API actions must be blocked");
+assert(gateway.includes("'export_jobs_csv', 'audit_workorders'"), "only the two read-only CCS actions may be allowed");
 assert(!gateway.includes("safeExternalFetch") && !gateway.includes("COREBRIDGE_SUBSCRIPTION_KEY"), "no external CoreBridge API path or subscription secret allowed");
 assert(!adminUi.includes("testCorebridgeApiConnection") && !adminUi.includes("getCorebridgeApiAccountSummary"), "retired API buttons must not return");
 console.log("CoreBridge offline CSV and retired-gateway checks PASS");
