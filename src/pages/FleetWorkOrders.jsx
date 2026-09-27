@@ -9,6 +9,7 @@ import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
 import { findWorkOrderFocusTarget, restoreWorkOrderFocusAfterSave } from "@/components/fleet/fleetWorkOrderFocus";
+import { attemptPostMutationRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
 
