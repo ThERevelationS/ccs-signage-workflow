@@ -8,8 +8,8 @@ const check = (condition, label) => { assert.ok(condition, label); checks += 1; 
 check(source.includes("const activeRecordScopeRef = useRef(recordScope);"),
   "Tracks the currently selected Sales workspace independently of async requests.");
 
-const scopeEffect = source.split("useEffect(() => {")[2]?.split("}, [recordScope]);")[0] || "";
-check(scopeEffect.includes("activeRecordScopeRef.current = recordScope;"),
+const scopeEffect = source.split("activeRecordScopeRef.current = recordScope;")[1]?.split("}, [recordScope]);")[0] || "";
+check(source.includes("activeRecordScopeRef.current = recordScope;"),
   "Workspace transition updates the active scope before loading.");
 check(scopeEffect.includes("loadRequestRef.current += 1;"),
   "Workspace transition immediately invalidates requests from the previous scope.");
