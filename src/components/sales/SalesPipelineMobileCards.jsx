@@ -63,6 +63,11 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                   {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-800">TEST</span>}
                 </div>
                 {wo.title && <p className="text-gray-500 text-sm truncate">{wo.title}</p>}
+                <button type="button" onClick={(event) => { event.stopPropagation(); onOpenDetails?.(wo); }}
+                  className="mt-1 inline-flex min-h-11 items-center rounded-md px-1 text-xs font-semibold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  aria-label={`Open sales details for ${wo.client_name || 'Unnamed opportunity'}`}>
+                  Open details
+                </button>
               </div>
               {status && (
                 <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
