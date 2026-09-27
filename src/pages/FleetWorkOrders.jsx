@@ -8,6 +8,7 @@ import FleetRepairEstimateDialog from "@/components/fleet/FleetRepairEstimateDia
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
+import { findWorkOrderFocusTarget, workOrderSaveFocusNotice } from "@/components/fleet/fleetWorkOrderFocus";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
 
@@ -39,6 +40,7 @@ export default function FleetWorkOrders() {
   const pendingBoardFocusRef = useRef(null);
   const pendingReopenFocusRef = useRef(null);
   const pendingCompletionFocusRef = useRef(null);
+  const pendingSaveFocusRef = useRef(null);
   const statusFilterRef = useRef(null);
   const hasLoadedRef = useRef(false);
 
@@ -176,10 +178,7 @@ export default function FleetWorkOrders() {
     const focusTimer = window.setTimeout(() => {
       if (pendingCompletionFocusRef.current !== pending) return;
       const visible = rows.some(row => row.id === pending.id);
-      const target = !visible ? null : viewMode === "list"
-        ? document.getElementById(`fleet-work-order-toggle-${pending.id}`)
-        : Array.from(document.querySelectorAll("button"))
-          .find(button => button.dataset.fleetBoardOpen === pending.id && button.getClientRects().length > 0);
+      const target = findWorkOrderFocusTarget(rows, pending.id, viewMode, document);
       if (target) {
         target.focus();
       } else {
@@ -189,6 +188,29 @@ export default function FleetWorkOrders() {
           : `Completed ${pending.label}. It no longer matches the current filters.`);
       }
       pendingCompletionFocusRef.current = null;
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [dialog, loading, rows, viewMode]);
+
+  // Create/edit saves can replace the row or filter it out. The dialog first
+  // restores its opener on unmount; focus the refreshed result one tick later.
+  useEffect(() => {
+    const pending = pendingSaveFocusRef.current;
+    if (!pending || dialog || loading) return undefined;
+    const focusTimer = window.setTimeout(() => {
+      if (pendingSaveFocusRef.current !== pending) return;
+      const target = findWorkOrderFocusTarget(rows, pending.id, viewMode, document);
+      if (target) {
+        target.focus();
+      } else {
+        statusFilterRef.current?.focus();
+        setFocusNotice(workOrderSaveFocusNotice({
+          verb: pending.verb,
+          label: pending.label,
+          visible: rows.some((row) => row.id === pending.id),
+        }));
+      }
+      pendingSaveFocusRef.current = null;
     }, 0);
     return () => window.clearTimeout(focusTimer);
   }, [dialog, loading, rows, viewMode]);
@@ -209,6 +231,14 @@ export default function FleetWorkOrders() {
       pendingCompletionFocusRef.current = {
         id: dialog.workOrder.id,
         label: dialog.workOrder.work_order_number || dialog.workOrder.title || "work order",
+      };
+    } else {
+      const saved = response?.data?.work_order;
+      setFocusNotice("");
+      pendingSaveFocusRef.current = {
+        id: saved?.id || dialog.workOrder?.id || "",
+        label: saved?.work_order_number || dialog.workOrder?.work_order_number || workOrderData.title || "work order",
+        verb: action === "create" ? "Created" : "Saved",
       };
     }
     closeDialog();
