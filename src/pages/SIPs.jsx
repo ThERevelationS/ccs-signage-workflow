@@ -104,6 +104,7 @@ export default function SIPs() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortMode, setSortMode] = useState("meeting");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [savingRevisitIds, setSavingRevisitIds] = useState(() => new Set());
   const [lastUpdated, setLastUpdated] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [pendingRevisitClear, setPendingRevisitClear] = useState(null);
@@ -264,6 +265,9 @@ export default function SIPs() {
       return;
     }
     quickEditsInFlightRef.current.set(editKey, value);
+    if (field === "sip_revisit_date") {
+      setSavingRevisitIds(prev => new Set(prev).add(orderId));
+    }
     const expectedValue = currentWo[field];
     setQuickEditError("");
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, [field]: value } : wo));
@@ -281,6 +285,13 @@ export default function SIPs() {
       await loadWorkOrders(false);
     } finally {
       quickEditsInFlightRef.current.delete(editKey);
+      if (field === "sip_revisit_date") {
+        setSavingRevisitIds(prev => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
+      }
     }
   };
 
