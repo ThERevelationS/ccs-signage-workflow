@@ -53,7 +53,7 @@ export function setLocalityOfficeAuthorityRole(office, role, enabled) {
  */
 export function updateLocalityOfficeIdentity(office, patch) {
   const next = { ...office, ...patch };
-  const reviewedFields = ["name", "contact_phone", "contact_email", "contact_website", "contact_address"];
+  const reviewedFields = ["catalog_office_id", "government_office_id", "name", "contact_phone", "contact_email", "contact_website", "contact_address"];
   const changed = reviewedFields.some(field =>
     Object.hasOwn(patch || {}, field) &&
     String(office?.[field] || "").trim() !== String(next[field] || "").trim()
