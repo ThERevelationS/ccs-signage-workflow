@@ -110,6 +110,41 @@ test('workflow changes, formatting-only contact edits, and verification notes do
   }
 });
 
+test('changing a verified official source requires re-verification but preserves the new provenance', () => {
+  const verified = updateGovernmentOfficeVerification({ id: 'catalog-1', name: 'Office' }, {
+    verification_status: 'staff_verified', source_url: 'https://official.example.gov/old', verification_notes: 'Original review'
+  }, 'reviewer', () => '2026-09-27T12:00:00.000Z');
+  const changed = updateGovernmentOfficeVerification(verified, { source_url: ' https://official.example.gov/new ' });
+  assert.equal(changed.government_office.source_url, 'https://official.example.gov/new');
+  assert.equal(changed.government_office.verification_notes, 'Original review');
+  assert.equal(changed.government_office.verification_status, 'needs_verification');
+  assert.equal(changed.government_office.verified_at, '');
+  assert.equal(changed.government_office.verified_by, '');
+});
+
+test('formatting-only source edits and note edits keep a verified source claim', () => {
+  const verified = updateGovernmentOfficeVerification({ id: 'catalog-1', name: 'Office' }, {
+    verification_status: 'staff_verified', source_url: 'https://official.example.gov', verification_notes: 'Original review'
+  }, 'reviewer', () => '2026-09-27T12:00:00.000Z');
+  const sameSource = updateGovernmentOfficeVerification(verified, { source_url: '  https://official.example.gov  ' });
+  assert.equal(sameSource.government_office.verification_status, 'staff_verified');
+  const notesOnly = updateGovernmentOfficeVerification(verified, { verification_notes: 'Expanded review notes' });
+  assert.equal(notesOnly.government_office.verification_status, 'staff_verified');
+  assert.equal(notesOnly.government_office.verified_by, 'reviewer');
+});
+
+test('changing source while explicitly re-verifying records the new review', () => {
+  const verified = updateGovernmentOfficeVerification({ id: 'catalog-1', name: 'Office' }, {
+    verification_status: 'staff_verified', source_url: 'https://official.example.gov/old'
+  }, 'reviewer-a', () => '2026-09-27T12:00:00.000Z');
+  const reverified = updateGovernmentOfficeVerification(verified, {
+    source_url: 'https://official.example.gov/new', verification_status: 'staff_verified'
+  }, 'reviewer-b', () => '2026-09-27T13:00:00.000Z');
+  assert.equal(reverified.government_office.verification_status, 'staff_verified');
+  assert.equal(reverified.government_office.verified_by, 'reviewer-b');
+  assert.equal(reverified.government_office.verified_at, '2026-09-27T13:00:00.000Z');
+});
+
 test('editing an unverified legacy office does not fabricate verification', () => {
   const edited = updateGovernmentOfficeCatalogEntry({ id: 'legacy', name: 'Old office' }, { name: 'New office' });
   assert.equal(edited.government_office.verification_status, 'needs_verification');
