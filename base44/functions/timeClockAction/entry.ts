@@ -1918,11 +1918,28 @@ Deno.serve(async (req) => {
 
       const existingPeriods = await payPeriodEntity.filter({});
       if (!Array.isArray(existingPeriods)) throw new Error('Pay period lookup did not return a record list.');
-      const overlap = existingPeriods.find((period: any) => {
+      // A malformed historical period cannot safely be ruled out of overlap.
+      // Preserve it for administrative review instead of creating ambiguity.
+      const invalidExistingPeriod = existingPeriods.find((period: any) => {
         const existingStart = validDateKey(period.start_date);
         const existingEnd = validDateKey(period.end_date);
-        return existingStart && existingEnd && !(endDate < existingStart || startDate > existingEnd);
+        return !existingStart || !existingEnd || existingStart > existingEnd;
       });
+      if (invalidExistingPeriod) {
+        if (createIntent?.id && createIntent.outcome === 'pending') {
+          await auditEntity.updateMany(
+            { id: createIntent.id, outcome: 'pending', request_id: requestId },
+            { $set: { outcome: 'blocked' } },
+          );
+        }
+        return Response.json({
+          success: false,
+          error: 'An existing pay period has invalid date boundaries. Admin review is required before another period can be created.',
+        }, { status: 409 });
+      }
+      const overlap = existingPeriods.find((period: any) =>
+        !(endDate < period.start_date || startDate > period.end_date),
+      );
       if (overlap?.id) {
         if (createIntent?.id && createIntent.outcome === 'pending') await auditEntity.updateMany({ id: createIntent.id, outcome: 'pending' }, { $set: { outcome: 'blocked' } });
         return Response.json({ success: false, error: `Pay period overlaps ${overlap.label || 'an existing period'} (${overlap.start_date} to ${overlap.end_date}).` }, { status: 409 });
