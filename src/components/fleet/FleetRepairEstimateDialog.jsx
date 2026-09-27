@@ -21,9 +21,13 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [refreshWarning, setRefreshWarning] = useState("");
   const [decisionNotes, setDecisionNotes] = useState("");
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
+  const resultRef = useRef(null);
+  const warningRef = useRef(null);
+  const focusResultOnSettle = useRef(false);
   const previousFocus = useRef(null);
   const closeCallback = useRef(onClose);
   const busyState = useRef(busy);
@@ -58,9 +62,15 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || busy || !focusResultOnSettle.current) return;
+    const target = refreshWarning ? warningRef.current : message ? resultRef.current : null;
+    if (target) { target.focus(); focusResultOnSettle.current = false; }
+  }, [open, busy, refreshWarning, message]);
+
   const load = async () => {
     if (!workOrder?.id) return;
-    setLoading(true); setError(""); setMessage("");
+    setLoading(true); setError(""); setMessage(""); setRefreshWarning("");
     try {
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "get", work_order_id: workOrder.id });
       if (data?.error) throw new Error(data.error);
@@ -95,31 +105,56 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const removeLine = (kind,index) => setForm(prev=>({...prev,[kind]:prev[kind].filter((_,i)=>i!==index)}));
   const addPart = () => set("parts_estimate",[...form.parts_estimate,{description:"",quantity:1,estimated_cost:0}]);
   const addFluid = () => set("fluids_estimate",[...form.fluids_estimate,{description:"",quantity:1,unit:"quarts",estimated_cost:0}]);
+  // A list refresh is not part of the server mutation. Never tell an admin to
+  // repeat an acknowledged save or approval just because the list is stale.
+  const reportChanged = async (row, verb) => {
+    let refreshed = true;
+    try { refreshed = (await onChanged?.(row)) !== false; }
+    catch { refreshed = false; }
+    if (!refreshed) {
+      setRefreshWarning(`${verb}, but the Fleet work-order list could not refresh. Close this estimate and use Retry refresh; do not repeat the operation.`);
+    }
+    return refreshed;
+  };
   const save = async submitAfter => {
-    setBusy(submitAfter?"submit":"save"); setError(""); setMessage("");
+    setBusy(submitAfter ? "submit" : "save"); setError(""); setMessage(""); setRefreshWarning("");
     try {
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action:"save", work_order_id:workOrder.id, expected_updated_date:estimate?.updated_date || "", estimate:form });
       if (data?.error) throw new Error(data.error);
-      let row = data.estimate;
-      if (submitAfter) {
-        const response = await base44.functions.invoke("fleetRepairEstimateAction", { action:"submit", work_order_id:workOrder.id, expected_updated_date:row.updated_date || "" });
-        if (response?.data?.error) throw new Error(response.data.error);
-        row = response.data.estimate;
-        setMessage(response.data.auto_approved ? "Estimate saved and automatically approved by the Fleet approval policy." : "Estimate submitted for approval.");
-      } else setMessage("Repair estimate draft saved.");
+      let row = data?.estimate;
+      if (!row) throw new Error("The save response did not include an estimate. Refresh before attempting another save.");
+      // Record the acknowledged draft immediately: submit can fail independently.
       setEstimate(row);
-      await onChanged?.(row);
+      if (submitAfter) {
+        try {
+          const response = await base44.functions.invoke("fleetRepairEstimateAction", { action:"submit", work_order_id:workOrder.id, expected_updated_date:row.updated_date || "" });
+          if (response?.data?.error) throw new Error(response.data.error);
+          if (!response?.data?.estimate) throw new Error("Submission response did not include the updated estimate.");
+          row = response.data.estimate;
+          setEstimate(row);
+          setMessage(response.data.auto_approved ? "Estimate saved and automatically approved by the Fleet approval policy." : "Estimate submitted for approval.");
+        } catch {
+          setMessage("Repair estimate draft saved; submission could not be confirmed. Close and reopen the estimate to check its status before attempting another submission.");
+          focusResultOnSettle.current = true;
+          if (!(await reportChanged(row, "Draft saved"))) focusResultOnSettle.current = true;
+          return;
+        }
+      } else setMessage("Repair estimate draft saved.");
+      if (submitAfter) focusResultOnSettle.current = true;
+      if (!(await reportChanged(row, submitAfter ? "Estimate submitted" : "Draft saved"))) focusResultOnSettle.current = true;
     } catch (err) { setError(err?.message || "Unable to save the Fleet repair estimate."); }
     finally { setBusy(""); }
   };
   const decide = async decision => {
-    setBusy(decision); setError(""); setMessage("");
+    setBusy(decision); setError(""); setMessage(""); setRefreshWarning("");
     try {
       const {data}=await base44.functions.invoke("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:estimate?.updated_date||"",decision,decision_notes:decisionNotes});
       if(data?.error)throw new Error(data.error);
+      if (!data?.estimate) throw new Error("The approval response did not include an estimate. Refresh before retrying.");
       setEstimate(data.estimate);
       setMessage(`Estimate ${pretty(decision)}.`);
-      await onChanged?.(data.estimate);
+      focusResultOnSettle.current = true;
+      if (!(await reportChanged(data.estimate, `Estimate ${pretty(decision)}`))) focusResultOnSettle.current = true;
     } catch(err){setError(err?.message||"Unable to record the approval decision.");}
     finally{setBusy("");}
   };
@@ -129,7 +164,8 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       <div className="sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-gray-200 dark:border-slate-800 px-4 sm:px-5 py-4 flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><DollarSign className="w-5 h-5 text-indigo-600"/><h2 id="fleet-repair-estimate-title" className="text-lg font-bold">Repair Estimate & Approval</h2></div><p id="fleet-repair-estimate-description" className="text-xs text-gray-500 dark:text-slate-400 mt-1">{workOrder?.work_order_number} · {equipmentName || "Fleet equipment"} · Fleet-only financial planning</p></div><button ref={closeRef} type="button" onClick={onClose} disabled={!!busy} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800" aria-label="Close repair estimate"><X className="w-5 h-5 mx-auto"/></button></div>
       <div className="p-4 sm:p-5 space-y-5">
         {error&&<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
-        {message&&<div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">{message}</div>}
+        {message&&<div ref={resultRef} tabIndex={-1} role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-indigo-500">{message}</div>}
+        {refreshWarning&&<div ref={warningRef} tabIndex={-1} role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200 focus-visible:outline-2 focus-visible:outline-indigo-500">{refreshWarning}</div>}
         {loading?<div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div>:<>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Estimate status" value={pretty(estimate?.status||"draft")} /><Stat label="Approval tier" value={estimate?.approval_tier||"No matching tier"}/><Stat label="Approval required" value={estimate?.approval_required?"Yes":"No"} attention={estimate?.approval_required&&estimate?.status!=="approved"}/><Stat label="Estimated total" value={money(estimate?.estimated_total ?? preview.total)} /></div>
           {estimate?.approval_required&&estimate.status!=="approved"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 flex items-start gap-2"><AlertTriangle className="w-5 h-5 shrink-0"/><div><b>Approval gate active.</b> This work order cannot be started or completed until this estimate is approved.</div></div>}
