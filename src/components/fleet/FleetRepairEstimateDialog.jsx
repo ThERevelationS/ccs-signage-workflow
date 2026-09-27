@@ -70,10 +70,10 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   }, [open]);
 
   useEffect(() => {
-    if (!open || busy || !focusResultOnSettle.current) return;
+    if (!open || busy || loading || !focusResultOnSettle.current) return;
     const target = refreshWarning ? warningRef.current : message ? resultRef.current : null;
     if (target) { target.focus(); focusResultOnSettle.current = false; }
-  }, [open, busy, refreshWarning, message]);
+  }, [open, busy, loading, refreshWarning, message]);
 
   // A failed GET must never expose blank/stale fields for mutation. Discard
   // responses from a prior dialog session or an older verification request.
@@ -127,6 +127,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   useEffect(() => {
     if (open) {
       setEstimate(null); setForm(EMPTY); setDecisionNotes("");
+      focusResultOnSettle.current = false;
       setSubmissionUncertain(false); setLoadFailed(false);
       load();
     }
@@ -147,6 +148,9 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   },[form]);
   if (!open) return null;
   const locked = ["submitted","approved","rejected"].includes(estimate?.status);
+  const verified = loadedWorkOrderId === workOrder?.id;
+  const decisionBlocked = loading || loadFailed || !verified || submissionUncertain || !!busy;
+  const editBlocked = locked || decisionBlocked;
   const set = (key,value) => { setMessage(""); setForm(prev=>({...prev,[key]:value})); };
   const setLine = (kind,index,key,value) => setForm(prev=>({...prev,[kind]:prev[kind].map((line,i)=>i===index?{...line,[key]:value}:line)}));
   const removeLine = (kind,index) => setForm(prev=>({...prev,[kind]:prev[kind].filter((_,i)=>i!==index)}));
@@ -162,6 +166,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     return refreshed;
   };
   const save = async submitAfter => {
+    if (editBlocked) return;
     setBusy(submitAfter ? "submit" : "save"); setError(""); setMessage(""); setRefreshWarning("");
     try {
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action:"save", work_order_id:workOrder.id, expected_updated_date:estimate?.updated_date || "", estimate:form });
@@ -179,7 +184,8 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
           setEstimate(row);
           setMessage(response.data.auto_approved ? "Estimate saved and automatically approved by the Fleet approval policy." : "Estimate submitted for approval.");
         } catch {
-          setMessage("Repair estimate draft saved; submission could not be confirmed. Close and reopen the estimate to check its status before attempting another submission.");
+          setSubmissionUncertain(true);
+          setMessage("Repair estimate draft saved; submission could not be confirmed. Check current server status before attempting any further changes.");
           focusResultOnSettle.current = true;
           if (!(await reportChanged(row, "Draft saved"))) focusResultOnSettle.current = true;
           return;
@@ -191,6 +197,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     finally { setBusy(""); }
   };
   const decide = async decision => {
+    if (decisionBlocked) return;
     setBusy(decision); setError(""); setMessage(""); setRefreshWarning("");
     try {
       const {data}=await base44.functions.invoke("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:estimate?.updated_date||"",decision,decision_notes:decisionNotes});
@@ -211,17 +218,18 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
         {error&&<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
         {message&&<div ref={resultRef} tabIndex={-1} role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-indigo-500">{message}</div>}
         {refreshWarning&&<div ref={warningRef} tabIndex={-1} role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200 focus-visible:outline-2 focus-visible:outline-indigo-500">{refreshWarning}</div>}
-        {loading?<div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div>:<>
+        {loading || (!verified && !loadFailed) ? <div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div> : loadFailed ? <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm text-amber-900 dark:text-amber-200">Estimate data is unavailable. Editing and approval are disabled until the current server record loads.</p><button ref={retryLoadRef} type="button" onClick={() => load()} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Retry loading estimate</button></div> : <>
+          {submissionUncertain && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-200">Submission status is unconfirmed. Changes and approval are paused until the server is checked.</p><button ref={recheckRef} type="button" onClick={() => load(true)} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Check current server status</button></div>}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Estimate status" value={pretty(estimate?.status||"draft")} /><Stat label="Approval tier" value={estimate?.approval_tier||"No matching tier"}/><Stat label="Approval required" value={estimate?.approval_required?"Yes":"No"} attention={estimate?.approval_required&&estimate?.status!=="approved"}/><Stat label="Estimated total" value={money(estimate?.estimated_total ?? preview.total)} /></div>
           {estimate?.approval_required&&estimate.status!=="approved"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 flex items-start gap-2"><AlertTriangle className="w-5 h-5 shrink-0"/><div><b>Approval gate active.</b> This work order cannot be started or completed until this estimate is approved.</div></div>}
-          <section className="rounded-xl border border-gray-200 dark:border-slate-700 p-4 space-y-4"><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Field label="Labor hours"><input type="number" min="0" step="0.1" value={form.estimated_labor_hours} disabled={locked} onChange={e=>set("estimated_labor_hours",e.target.value)} className="field"/></Field><Field label="Labor rate"><input type="number" min="0" step="0.01" value={form.labor_rate} disabled={locked} onChange={e=>set("labor_rate",e.target.value)} className="field"/></Field><Field label="Miscellaneous"><input type="number" min="0" step="0.01" value={form.misc_total} disabled={locked} onChange={e=>set("misc_total",e.target.value)} className="field"/></Field><Field label="Estimated completion"><input type="date" value={form.estimated_completion_date} disabled={locked} onChange={e=>set("estimated_completion_date",e.target.value)} className="field"/></Field></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-2"><MoneyMini label="Labor" value={preview.labor}/><MoneyMini label="Parts" value={preview.partsTotal}/><MoneyMini label="Fluids" value={preview.fluidsTotal}/><MoneyMini label="Total" value={preview.total} strong/></div></section>
-          <EstimateLines title="Parts estimate" rows={form.parts_estimate} kind="parts_estimate" disabled={locked} suggestions={parts.map(p=>[p.part_name,p.part_number,p.manufacturer].filter(Boolean).join(" · "))} onAdd={addPart} onSet={setLine} onRemove={removeLine}/>
-          <EstimateLines title="Fluids estimate" rows={form.fluids_estimate} kind="fluids_estimate" fluid disabled={locked} suggestions={fluids.map(f=>[f.fluid_name,f.brand,f.viscosity].filter(Boolean).join(" · "))} onAdd={addFluid} onSet={setLine} onRemove={removeLine}/>
-          <Field label="Estimate notes"><textarea rows={4} value={form.notes} disabled={locked} onChange={e=>set("notes",e.target.value)} className="field" placeholder="Scope assumptions, vendor quote references, exclusions, expected turnaround…"/></Field>
+          <section className="rounded-xl border border-gray-200 dark:border-slate-700 p-4 space-y-4"><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Field label="Labor hours"><input type="number" min="0" step="0.1" value={form.estimated_labor_hours} disabled={editBlocked} onChange={e=>set("estimated_labor_hours",e.target.value)} className="field"/></Field><Field label="Labor rate"><input type="number" min="0" step="0.01" value={form.labor_rate} disabled={editBlocked} onChange={e=>set("labor_rate",e.target.value)} className="field"/></Field><Field label="Miscellaneous"><input type="number" min="0" step="0.01" value={form.misc_total} disabled={editBlocked} onChange={e=>set("misc_total",e.target.value)} className="field"/></Field><Field label="Estimated completion"><input type="date" value={form.estimated_completion_date} disabled={editBlocked} onChange={e=>set("estimated_completion_date",e.target.value)} className="field"/></Field></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-2"><MoneyMini label="Labor" value={preview.labor}/><MoneyMini label="Parts" value={preview.partsTotal}/><MoneyMini label="Fluids" value={preview.fluidsTotal}/><MoneyMini label="Total" value={preview.total} strong/></div></section>
+          <EstimateLines title="Parts estimate" rows={form.parts_estimate} kind="parts_estimate" disabled={editBlocked} suggestions={parts.map(p=>[p.part_name,p.part_number,p.manufacturer].filter(Boolean).join(" · "))} onAdd={addPart} onSet={setLine} onRemove={removeLine}/>
+          <EstimateLines title="Fluids estimate" rows={form.fluids_estimate} kind="fluids_estimate" fluid disabled={editBlocked} suggestions={fluids.map(f=>[f.fluid_name,f.brand,f.viscosity].filter(Boolean).join(" · "))} onAdd={addFluid} onSet={setLine} onRemove={removeLine}/>
+          <Field label="Estimate notes"><textarea rows={4} value={form.notes} disabled={editBlocked} onChange={e=>set("notes",e.target.value)} className="field" placeholder="Scope assumptions, vendor quote references, exclusions, expected turnaround…"/></Field>
           {estimate?.submitted_at&&<div className="rounded-xl border border-gray-200 dark:border-slate-700 p-3 text-xs text-gray-500 dark:text-slate-400">Submitted {new Date(estimate.submitted_at).toLocaleString()} by {estimate.submitted_by_email||"—"}{estimate.decision_at?` · Decision ${new Date(estimate.decision_at).toLocaleString()} by ${estimate.decision_by_email||"—"}`:""}{estimate.decision_notes?<div className="mt-2 text-sm text-gray-700 dark:text-slate-200">{estimate.decision_notes}</div>:null}</div>}
-          {estimate?.status==="submitted"&&<section className="rounded-xl border border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/20 p-4"><label htmlFor="fleet-estimate-decision-notes" className="block font-bold text-indigo-900 dark:text-indigo-100">Approval decision notes (optional)</label><textarea id="fleet-estimate-decision-notes" rows={3} value={decisionNotes} onChange={e=>setDecisionNotes(e.target.value)} className="field mt-2" placeholder="Optional approval/rejection notes"/><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={()=>decide("approved")} disabled={!!busy} className="min-h-11 px-4 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>Approve</button><button type="button" onClick={()=>decide("changes_requested")} disabled={!!busy} className="min-h-11 px-4 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 font-semibold">Request Changes</button><button type="button" onClick={()=>decide("rejected")} disabled={!!busy} className="min-h-11 px-4 rounded-lg border border-red-300 text-red-700 dark:text-red-300 font-semibold inline-flex items-center gap-2"><ThumbsDown className="w-4 h-4"/>Reject</button></div></section>}
+          {estimate?.status==="submitted"&&<section className="rounded-xl border border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/20 p-4"><label htmlFor="fleet-estimate-decision-notes" className="block font-bold text-indigo-900 dark:text-indigo-100">Approval decision notes (optional)</label><textarea id="fleet-estimate-decision-notes" rows={3} value={decisionNotes} onChange={e=>setDecisionNotes(e.target.value)} className="field mt-2" placeholder="Optional approval/rejection notes"/><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={()=>decide("approved")} disabled={decisionBlocked} className="min-h-11 px-4 rounded-lg bg-emerald-600 text-white font-semibold inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/>Approve</button><button type="button" onClick={()=>decide("changes_requested")} disabled={decisionBlocked} className="min-h-11 px-4 rounded-lg border border-amber-300 text-amber-700 dark:text-amber-300 font-semibold">Request Changes</button><button type="button" onClick={()=>decide("rejected")} disabled={decisionBlocked} className="min-h-11 px-4 rounded-lg border border-red-300 text-red-700 dark:text-red-300 font-semibold inline-flex items-center gap-2"><ThumbsDown className="w-4 h-4"/>Reject</button></div></section>}
           {estimate?.status==="changes_requested"&&<div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300">Changes were requested. Edit the estimate values, save the draft, then submit it again.</div>}
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">{!locked||estimate?.status==="changes_requested"?<><button type="button" onClick={()=>save(false)} disabled={!!busy} className="min-h-11 px-4 rounded-lg border border-gray-300 dark:border-slate-700 font-semibold">{busy==="save"?"Saving…":"Save Draft"}</button><button type="button" onClick={()=>save(true)} disabled={!!busy} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2">{busy==="submit"?<Loader2 className="w-4 h-4 animate-spin"/>:<Send className="w-4 h-4"/>}Save & Submit</button></>:null}</div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">{!locked && !submissionUncertain ? <><button type="button" onClick={()=>save(false)} disabled={editBlocked} className="min-h-11 px-4 rounded-lg border border-gray-300 dark:border-slate-700 font-semibold">{busy==="save"?"Saving…":"Save Draft"}</button><button type="button" onClick={()=>save(true)} disabled={editBlocked} className="min-h-11 px-4 rounded-lg bg-indigo-600 text-white font-semibold inline-flex items-center justify-center gap-2">{busy==="submit"?<Loader2 className="w-4 h-4 animate-spin"/>:<Send className="w-4 h-4"/>}Save & Submit</button></>:null}</div>
         </>}
       </div>
       <style>{`.field{width:100%;min-height:44px;border:1px solid rgb(209 213 219);border-radius:.6rem;padding:.6rem .72rem;background:white;color:inherit}.dark .field{background:rgb(15 23 42);border-color:rgb(51 65 85)}.field:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}button:focus-visible{outline:2px solid rgb(79 70 229);outline-offset:2px}.field:disabled{opacity:.65;background:rgb(249 250 251)}.dark .field:disabled{background:rgb(30 41 59)}`}</style>
