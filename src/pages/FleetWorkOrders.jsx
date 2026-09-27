@@ -8,7 +8,7 @@ import FleetRepairEstimateDialog from "@/components/fleet/FleetRepairEstimateDia
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import FleetStartWorkDialog from "@/components/fleet/FleetStartWorkDialog";
 import { listAllFleetRows } from "@/components/fleet/fleetEntityLoaders";
-import { findWorkOrderFocusTarget, restoreWorkOrderFocusAfterSave } from "@/components/fleet/fleetWorkOrderFocus";
+import { findWorkOrderFocusTarget, restoreEstimateFocusAfterChange, restoreWorkOrderFocusAfterSave } from "@/components/fleet/fleetWorkOrderFocus";
 import { attemptPostMutationRefresh } from "@/components/fleet/fleetWorkOrderRefresh";
 import { easternTodayText, isWorkOrderPastProjected, workOrderAgeDays } from "@/components/fleet/fleetHelpers";
 import { ClipboardList, Loader2, Search, Image as ImageIcon, ChevronDown, ChevronUp, Plus, Pencil, CheckCircle2, RotateCcw, Play, CornerUpRight, Columns3, List, DollarSign } from "lucide-react";
@@ -270,19 +270,11 @@ export default function FleetWorkOrders() {
     if (!pending || estimateWorkOrder || loading) return undefined;
     const focusTimer = window.setTimeout(() => {
       if (pendingEstimateFocusRef.current !== pending) return;
-      if (pending.refreshFailed) {
-        (retryRefreshButtonRef.current || statusFilterRef.current)?.focus();
-      } else {
-        const visible = rows.some(row => row.id === pending.id);
-        const opener = visible ? [...document.querySelectorAll("button[data-fleet-estimate-open]")]
-          .find(button => button.dataset.fleetEstimateOpen === pending.id && button.getClientRects().length) : null;
-        const target = opener || findWorkOrderFocusTarget(rows, pending.id, viewMode, document);
-        if (target) target.focus();
-        else {
-          statusFilterRef.current?.focus();
-          setFocusNotice(`Updated the estimate for ${pending.label}. The work order no longer matches the current filters.`);
-        }
-      }
+      restoreEstimateFocusAfterChange({
+        rows, pending, viewMode, root: document,
+        statusFilter: statusFilterRef.current, onNotice: setFocusNotice,
+        refreshButton: retryRefreshButtonRef.current,
+      });
       pendingEstimateFocusRef.current = null;
     }, 0);
     return () => window.clearTimeout(focusTimer);
