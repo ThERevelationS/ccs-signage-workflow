@@ -9,6 +9,7 @@ const GROUPS = [
   { key: "different_dates", label: "Different dates", note: "Both sides contain dates that disagree. No automatic overwrite is proposed." },
   { key: "invalid_values", label: "Unrecognized values", note: "The source value could not be safely translated; resolve these before any pull." },
   { key: "text_choices", label: "Text choices and notes", note: "Date Needed and Date Ordered may contain scheduling notes such as ASAP or N/A. Date Received may contain choices such as Stock or In Stock. These are preserved separately from calendar dates." },
+  { key: "stale_text_options", label: "Stale Base44 text options", note: "Smartsheet has a real date or a blank cell, but the linked Base44 Order retains an old text option. Blank source cells never authorize erasing local data." },
   { key: "ambiguous_links", label: "Duplicate permanent links", note: "Multiple Base44 Orders refer to one Smartsheet row; never choose one by row position or name." },
   { key: "unlinked_rows", label: "Unlinked Smartsheet rows", note: "These permanent Smartsheet row IDs have no matching active Base44 Order. Review them before enabling record creation; no automatic match or deletion is performed." },
 ];
@@ -73,6 +74,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
   const blockedByTranslation = (Number(totals.invalid_date_values) || 0) > 0 ||
     (Number(totals.duplicate_base44_links) || 0) > 0;
   const unlinkedCount = Number(totals.unlinked_smartsheet_rows) || 0;
+  const staleTextCount = Number(totals.stale_text_options) || 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] max-w-5xl max-h-[90vh] flex flex-col p-4 sm:p-6">
@@ -104,12 +106,13 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
             <span>{error} Nothing was applied.</span>
           </div>}
           {report && <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               {[
                 ["Matched rows", totals.matched],
                 ["Missing Base44 dates", totals.smartsheet_date_missing_in_base44],
                 ["Different dates", totals.different_dates],
                 ["Text choices / notes", totalTextChoices],
+                ["Stale text options", staleTextCount],
                 ["Invalid date values", totals.invalid_date_values],
               ].map(([label, value]) => <div key={label} className="rounded-xl border bg-white p-3">
                 <p className="text-xs text-gray-600">{label}</p>
