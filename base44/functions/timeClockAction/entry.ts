@@ -2005,8 +2005,12 @@ Deno.serve(async (req) => {
           }
         }
         const finalAudit = await auditEntity.get(createIntent.id).catch(() => null);
-        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || ''))) {
-          return Response.json({ success: false, retry_same_request: true, error: 'The pay period exists but a confirmed create audit could not be verified yet. Retry the same create action.' }, { status: 409 });
+        const finalDetails = finalAudit?.details || {};
+        if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) ||
+            finalDetails.pay_period_id !== period.id || finalDetails.label !== period.label ||
+            finalDetails.start_date !== period.start_date || finalDetails.end_date !== period.end_date ||
+            (finalDetails.payload_hash && !constantTimeEqual(String(finalDetails.payload_hash), createPayloadHash))) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The pay period exists but its create audit does not confirm the exact period. Admin investigation is required.' }, { status: 409 });
         }
         return Response.json({ success: true, period, audit_id: createIntent.id, reused: true });
       }
