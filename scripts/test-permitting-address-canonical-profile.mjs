@@ -35,6 +35,29 @@ test('address backend uses the same normalized state for geocoder and validated 
   assert.match(source, /localityIdentityMatches\(found, aiResult\.ai_locality_name, aiResult\.ai_state \|\| geocodeState\)/);
 });
 
+test('township geocoder components cannot select same-named municipal tracker rows', async () => {
+  const { addressLocalityIdentityMatches } = await import('../base44/shared/permittingAddressLocality.js');
+  const candidate = { name: 'Deerfield Township', state: 'Ohio', source_kind: 'township' };
+  assert.equal(addressLocalityIdentityMatches({ id: 'township', name: 'Deerfield Township', state: 'OH' }, candidate), true);
+  assert.equal(addressLocalityIdentityMatches({ id: 'city', name: 'Deerfield', state: 'OH' }, candidate), false);
+  assert.equal(addressLocalityIdentityMatches({ id: 'other', name: 'Deerfield Township', state: 'KY' }, candidate), false);
+});
+
+test('municipality and postal components cannot establish township identity', async () => {
+  const { addressLocalityIdentityMatches } = await import('../base44/shared/permittingAddressLocality.js');
+  const candidate = { name: 'Deerfield', state: 'OH', source_kind: 'municipality' };
+  assert.equal(addressLocalityIdentityMatches({ id: 'city', name: 'Deerfield', state: 'OH' }, candidate), true);
+  assert.equal(addressLocalityIdentityMatches({ id: 'township', name: 'Deerfield Township', state: 'OH' }, candidate), false);
+});
+
+test('address resolver treats Google administrative level 3 as township-only evidence', () => {
+  const source = readFileSync(new URL('../base44/functions/findLocalityByAddress/entry.ts', import.meta.url), 'utf8');
+  assert.match(source, /administrative_area_level_3, source_kind: 'township'/);
+  assert.match(source, /locality, source_kind: 'municipality'/);
+  assert.match(source, /postal_town, source_kind: 'municipality'/);
+  assert.match(source, /addressLocalityIdentityMatches\(locality, candidate\)/);
+});
+
 test('canonical tracker link wins over ambiguous repository name/state matches', () => {
   const matches = findRepositoryJurisdictionMatches(profiles, {
     suggested_locality: { name: 'Example City', state: 'OH', jurisdiction_profile_id: 'profile-canonical' },
