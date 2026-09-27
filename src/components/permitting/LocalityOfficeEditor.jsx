@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
+import { LOCALITY_AUTHORITY_ROLES, revokeLocalityOfficeAuthorityVerification, setLocalityOfficeAuthorityRole, verifyLocalityOfficeAuthority } from "./localityAuthorityVerification";
 
 const stepTypeLabels = {
   checkbox: '☑ Checkbox',
@@ -22,7 +23,7 @@ const ADDON_DEFS = [
   { key: 'has_text', label: '📝 Text', color: 'bg-blue-50 border-blue-300 text-blue-700' },
 ];
 
-export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete }) {
+export default function LocalityOfficeEditor({ office, officeTypes, onChange, onDelete, verificationActor }) {
   const [expanded, setExpanded] = useState(true);
   const [newStepName, setNewStepName] = useState("");
   const [newStepType, setNewStepType] = useState("checkbox");
