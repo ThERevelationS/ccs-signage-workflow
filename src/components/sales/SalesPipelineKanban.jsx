@@ -218,7 +218,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       <div className="mt-2 flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
                         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Move stage</span>
                         <Select value={workOrder.sales_status || "lead"} onValueChange={(value) => requestStatusChange(workOrder, value)} disabled={!isRegistered}>
-                          <SelectTrigger className="h-11 flex-1 text-xs sm:h-8">
+                          <SelectTrigger aria-label={`Move ${workOrder.client_name || 'Unnamed opportunity'} to another sales stage`} className="h-11 flex-1 text-xs sm:h-8">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
