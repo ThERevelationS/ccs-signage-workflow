@@ -125,10 +125,10 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                           {attentionItems.slice(0, 2).map((item) => item.shortLabel).join(" · ")}{attentionItems.length > 2 ? ` · +${attentionItems.length - 2}` : ""}
                           {isRegistered && (
                             <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-amber-200 pt-2" onClick={(event) => event.stopPropagation()}>
-                              {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "sales_rep", currentSalesOwnerLabel)} className="rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100">Assign to me</button>}
+                              {attentionKeys.has("owner_missing") && currentSalesOwnerLabel && <button type="button" onClick={() => onUpdateWorkOrder?.(workOrder.id, "sales_rep", currentSalesOwnerLabel)} className="min-h-11 rounded-md border border-amber-300 bg-white px-2 py-1 text-[10px] font-semibold text-amber-900 hover:bg-amber-100 sm:min-h-8">Assign to me</button>}
                               {attentionKeys.has("source_missing") && leadSources.filter(Boolean).length > 0 && (
                                 <Select onValueChange={(value) => onUpdateWorkOrder?.(workOrder.id, "lead_source", value)}>
-                                  <SelectTrigger className="h-6 w-[108px] border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-900"><SelectValue placeholder="Set source" /></SelectTrigger>
+                                  <SelectTrigger aria-label={`Set lead source for ${workOrder.client_name || 'Unnamed opportunity'}`} className="h-11 w-[108px] border-amber-300 bg-white px-2 text-[10px] font-semibold text-amber-900 sm:h-8"><SelectValue placeholder="Set source" /></SelectTrigger>
                                   <SelectContent>{leadSources.filter(Boolean).map((source) => <SelectItem key={source} value={source}>{source}</SelectItem>)}</SelectContent>
                                 </Select>
                               )}
