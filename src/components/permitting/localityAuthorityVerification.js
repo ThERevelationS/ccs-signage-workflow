@@ -38,7 +38,16 @@ export function setLocalityOfficeAuthorityRole(office, role, enabled) {
   const current = Array.isArray(office?.authority_roles) ? office.authority_roles : [];
   const supportedRoles = new Set(LOCALITY_AUTHORITY_ROLES.map(([value]) => value));
   if (!supportedRoles.has(role)) {
-    throw new Error(`Unsupported authority role: ${role}. Existing legacy roles were preserved for staff review.`);
+    if (enabled || !current.includes(role)) {
+      throw new Error(`Unsupported authority role: ${role}. Existing legacy roles were preserved for staff review.`);
+    }
+    return {
+      ...office,
+      authority_roles: current.filter(item => item !== role),
+      authority_verification_status: "needs_verification",
+      authority_verified_at: undefined,
+      authority_verified_by: undefined,
+    };
   }
   const nextRoles = enabled
     ? [...new Set([...current, role])]
