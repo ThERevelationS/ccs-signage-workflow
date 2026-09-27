@@ -254,11 +254,11 @@ export default function SalesPipeline() {
               </div>
             </div>
 
-            {isRegistered && (
+            {isRegistered && !showDuplicateCleanup && (
               <Button
                 type="button"
                 onClick={() => setShowNewClientForm(true)}
-                className={`clay-button h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3 ${showDuplicateCleanup ? "order-8 col-span-12" : "order-2 col-span-5"}`}
+                className="clay-button order-2 col-span-5 h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3"
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="mr-1.5 h-4 w-4" /> New Client
@@ -278,7 +278,7 @@ export default function SalesPipeline() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                {canImportExport && (
+                {canImportExport && !showDuplicateCleanup && (
                   <>
                     <DropdownMenuItem onSelect={() => spreadsheetRef.current?.importFromExcel()}>
                       <Upload className="h-4 w-4" /> Import Sales Pipeline
@@ -643,7 +643,13 @@ export default function SalesPipeline() {
           isOpen={showNewClientForm}
           onClose={() => setShowNewClientForm(false)}
           onSave={async (data) => {
-            await spreadsheetRef.current?.handleCreateFromForm(data);
+            // Duplicate Cleanup unmounts the spreadsheet. Never silently close
+            // a completed form when the destination has become unavailable.
+            const spreadsheet = spreadsheetRef.current;
+            if (typeof spreadsheet?.handleCreateFromForm !== "function") {
+              throw new Error("Return to the Sales Pipeline before saving this client. Your form entries have been kept.");
+            }
+            await spreadsheet.handleCreateFromForm(data);
             setShowNewClientForm(false);
           }}
         />
