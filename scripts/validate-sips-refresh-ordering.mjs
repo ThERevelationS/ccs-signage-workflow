@@ -494,7 +494,7 @@ await check('mobile completed WIP Reopen shows busy state and blocks repeat taps
   const anchor = board.indexOf('className="min-h-11 px-2.5 shrink-0 text-xs bg-white border-green-200');
   assert.ok(anchor > 0, 'Mobile completed WIP Reopen button exists');
   const markup = board.slice(anchor - 260, anchor + 650);
-  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\) \|\| savingRevisitIds\.has\(wo\.id\)\}/);
   assert.match(markup, /aria-busy=\{reopeningWipIds\.has\(wo\.id\)\}/);
   assert.match(markup, /Reopening…/);
   assert.match(markup, /aria-label=/);
@@ -504,7 +504,7 @@ await check('desktop completed WIP checkbox disables and announces pending reope
   const anchor = board.indexOf('checked={true}\n                        onCheckedChange={() => toggleSipCompleted(wo)}');
   assert.ok(anchor > 0, 'Completed WIP desktop reopening checkbox exists');
   const markup = board.slice(anchor, anchor + 670);
-  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\)\}/);
+  assert.match(markup, /disabled=\{!isRegistered \|\| reopeningWipIds\.has\(wo\.id\) \|\| savingRevisitIds\.has\(wo\.id\)\}/);
   assert.match(markup, /aria-busy=\{reopeningWipIds\.has\(wo\.id\)\}/);
   assert.match(markup, /aria-label=/);
   assert.match(markup, /Loader2/);
@@ -560,5 +560,45 @@ await check('confirmed Revisit clear cannot overlap a pending WIP reopen', async
   assert.equal(h.writes, 1);
 });
 
+
+
+await check('pending confirmed clear blocks reopening without interrupting its original save', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  h.requestClearRevisit(h.ctx.workOrders[0]);
+  const releaseClearRead = h.holdGet();
+  const clearing = h.confirmClearRevisit();
+  assert.equal(h.ctx.savingRevisitIds.has(h.record.id), true);
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.ctx.reopeningWipIds.size, 0);
+  assert.match(h.ctx.quickEditError, /Revisit date.*saving/);
+  releaseClearRead();
+  await Promise.all([clearing, reopening]);
+  assert.equal(h.record.sip_completed, true);
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.writes, 1);
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  await h.toggleSipCompleted(h.ctx.workOrders[0]);
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.writes, 2);
+});
+
+await check('pending confirmed clear blocks competing date changes but allows independent fields', async () => {
+  const h = fixture(tomorrow);
+  h.requestClearRevisit(h.ctx.workOrders[0]);
+  const releaseClearRead = h.holdGet();
+  const clearing = h.confirmClearRevisit();
+  await h.updateWorkOrder(h.record.id, 'sip_revisit_date', later);
+  assert.match(h.ctx.quickEditError, /still saving/);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow);
+  await h.updateWorkOrder(h.record.id, 'notes', 'independent during clear');
+  assert.equal(h.record.notes, 'independent during clear');
+  releaseClearRead();
+  await clearing;
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.record.notes, 'independent during clear');
+  assert.equal(h.ctx.workOrders[0].notes, 'independent during clear');
+  assert.equal(h.ctx.savingRevisitIds.size, 0);
+  assert.equal(h.writes, 2);
+});
 
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
