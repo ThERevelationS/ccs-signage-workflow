@@ -27,7 +27,8 @@ export default function CorebridgeApiSettings({ sessionToken }) {
       });
       const data = response?.data || response;
       if (!data?.success || !data?.audit) throw new Error(data?.error || "The full job audit could not be verified.");
-      setAuditReport({ ...data.audit, audited_at: data.audited_at });
+      if (!data?.history) throw new Error('Historical backup metadata was not fully verified.');
+      setAuditReport({ ...data.audit, history: data.history, audited_at: data.audited_at });
     } catch (err) {
       setAuditError(err?.response?.data?.error || err?.message || "The job audit could not be completed.");
     } finally {
@@ -140,7 +141,7 @@ export default function CorebridgeApiSettings({ sessionToken }) {
             <p role="status" className="text-xs text-gray-500">Verified read-only snapshot: {new Date(auditReport.audited_at).toLocaleString()}</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[
-                ["Active WorkOrders", auditReport.active],
+                ["Non-deleted WorkOrders", auditReport.active],
                 ["Deleted WorkOrders", auditReport.deleted],
                 ["Linked Smartsheet rows", auditReport.linked_sheet_rows],
                 ["Duplicate permanent row links", auditReport.duplicate_sheet_link_groups],
@@ -176,6 +177,59 @@ export default function CorebridgeApiSettings({ sessionToken }) {
                 )) : <p className="text-gray-500">No valid external sheet links found.</p>}
               </div>
             </div>
+            <details open className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 text-sm">
+              <summary className="font-semibold cursor-pointer text-blue-900">
+                Historical backup and import evidence
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {[
+                    ["WorkOrder backups logged successful", auditReport.history.workorder_backup_logged_success],
+                    ["WorkOrder backups skipped", auditReport.history.workorder_backup_skipped],
+                    ["WorkOrder backup failures", auditReport.history.workorder_backup_failed],
+                    ["Sales pre-sync logs", auditReport.history.sales_presync_log_count],
+                    ["Historical ImportJob records", auditReport.history.import_job_count],
+                    ["Same-day ImportJobs for first cohort", auditReport.history.import_jobs_on_first_creation_day],
+                  ].map(([name, count]) => (
+                    <div key={name} className="rounded-md border border-blue-100 bg-white p-2">
+                      <div className="text-lg font-semibold">{Number(count).toLocaleString()}</div>
+                      <div className="text-xs text-gray-600">{name}</div>
+                    </div>
+                  ))}
+                </div>
+                {auditReport.history.last_logged_successful_workorder_backup ? (
+                  <div className="rounded-lg border border-blue-100 bg-white p-3">
+                    <div className="font-medium">Last logged successful WorkOrder backup</div>
+                    <div className="text-xs mt-1">
+                      {new Date(auditReport.history.last_logged_successful_workorder_backup.logged_at).toLocaleString()}
+                    </div>
+                    <div className="text-xs break-all mt-1 text-gray-600">
+                      Recorded filename: {auditReport.history.last_logged_successful_workorder_backup.filename || "not recorded"}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-amber-800">No successful WorkOrder backup log was found.</div>
+                )}
+                {auditReport.history.first_sales_presync_log && (
+                  <div className="text-xs text-gray-700">
+                    First logged Sales pre-sync check: {new Date(auditReport.history.first_sales_presync_log).toLocaleString()}.
+                    These records document checks, not verified, recoverable Sales backup files.
+                  </div>
+                )}
+                {auditReport.history.workorders_created_after_last_logged_backup_day != null && (
+                  <p className="text-xs text-gray-700">
+                    {Number(auditReport.history.workorders_created_after_last_logged_backup_day).toLocaleString()}
+                    {" "}currently retained WorkOrders were created on dates after the last logged successful
+                    WorkOrder backup day. A historic backup comparison is needed to establish any overlap.
+                  </p>
+                )}
+                <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  BackupLog metadata cannot prove the referenced Google Drive file still exists or
+                  contains the historical 1,100 WorkOrders. No restore, matching, deletion, or
+                  historical email import was performed.
+                </p>
+              </div>
+            </details>
             {auditReport.duplicate_sheet_link_groups > 0 && (
               <p role="alert" className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
                 Multiple WorkOrders share permanent Smartsheet row links. Review synchronization before further imports.
