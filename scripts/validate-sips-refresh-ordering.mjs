@@ -51,9 +51,18 @@ function fixture(date = yesterday, { completed = false } = {}) {
   };
   const reads = [];
   let holdNextGet = null;
+  let holdNextSavedRead = null;
   let writes = 0;
   const entity = {
     get: async (id) => {
+      if (holdNextSavedRead && writes > 0) {
+        const held = holdNextSavedRead;
+        holdNextSavedRead = null;
+        const snapshot = id === record.id ? structuredClone(record) : null;
+        held.captured.resolve(snapshot);
+        await held.release.promise;
+        return snapshot;
+      }
       if (holdNextGet) {
         const held = holdNextGet;
         holdNextGet = null;
@@ -128,6 +137,12 @@ function fixture(date = yesterday, { completed = false } = {}) {
       const waiting = deferred();
       holdNextGet = waiting;
       return waiting.resolve;
+    },
+    holdSavedRead: () => {
+      const captured = deferred();
+      const release = deferred();
+      holdNextSavedRead = { captured, release };
+      return { captured: captured.promise, release: release.resolve };
     },
     externalUpdate(fields) {
       Object.assign(record, fields);
@@ -255,6 +270,52 @@ await check('background refresh cannot restore Revisit after confirmed clear', a
   assert.equal(h.ctx.workOrders[0].sip_revisit_date, '');
   assert.equal(h.queue(), 'Active');
   assert.equal(h.writes, 1);
+});
+
+await check('out-of-order quick-edit save responses preserve both local fields', async () => {
+  const h = fixture(yesterday);
+  const held = h.holdSavedRead();
+  const dateSave = h.updateWorkOrder(h.record.id, 'sip_revisit_date', tomorrow);
+  const olderSnapshot = await held.captured;
+  assert.equal(olderSnapshot.notes, 'starting note');
+  await h.updateWorkOrder(h.record.id, 'notes', 'newer note');
+  assert.equal(h.ctx.workOrders[0].notes, 'newer note');
+  held.release();
+  await dateSave;
+  assert.equal(h.record.notes, 'newer note');
+  assert.equal(h.ctx.workOrders[0].notes, 'newer note');
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, tomorrow);
+  assert.equal(h.ctx.workOrders[0].updated_date, h.record.updated_date);
+});
+
+await check('late WIP reopen response does not undo concurrent saved note', async () => {
+  const h = fixture(tomorrow, { completed: true });
+  const held = h.holdSavedRead();
+  const reopening = h.toggleSipCompleted(h.ctx.workOrders[0]);
+  await held.captured;
+  await h.updateWorkOrder(h.record.id, 'notes', 'newer WIP note');
+  held.release();
+  await reopening;
+  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.ctx.workOrders[0].sip_completed, false);
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, '');
+  assert.equal(h.ctx.workOrders[0].notes, 'newer WIP note');
+  assert.equal(h.ctx.workOrders[0].updated_date, h.record.updated_date);
+});
+
+await check('late confirmed clear response does not undo concurrent saved note', async () => {
+  const h = fixture(tomorrow);
+  h.requestClearRevisit(h.ctx.workOrders[0]);
+  const held = h.holdSavedRead();
+  const clearing = h.confirmClearRevisit();
+  await held.captured;
+  await h.updateWorkOrder(h.record.id, 'notes', 'newer clear note');
+  held.release();
+  await clearing;
+  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.ctx.workOrders[0].sip_revisit_date, '');
+  assert.equal(h.ctx.workOrders[0].notes, 'newer clear note');
+  assert.equal(h.ctx.workOrders[0].updated_date, h.record.updated_date);
 });
 
 console.log(passed + '/' + passed + ' SIPS board refresh-ordering checks passed');
