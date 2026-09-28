@@ -59,25 +59,25 @@ const MultiPageContext = createContext(null);
 export const useMultiPage = () => useContext(MultiPageContext);
 
 const navigationItems = [
-  { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, color: "#E8E0F0", borderColor: "#C9B8E0" },
-  { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, color: "#DCE8F0", borderColor: "#B8D0E0" },
-  { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, color: "#D4EDE8", borderColor: "#A8D8CC" },
-  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, color: "#F0E8DC", borderColor: "#E0D0B8" },
-  { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, color: "#F0DCD8", borderColor: "#E0B8B0" },
-  { title: "Design", url: createPageUrl("Design"), icon: Pencil, color: "#D8E8F0", borderColor: "#B0D0E8" },
-  { title: "Production", url: createPageUrl("Production"), icon: Hammer, color: "#DCF0E4", borderColor: "#B0E0C8" },
-  { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, color: "#E8DCF0", borderColor: "#D0B8E0" },
-  { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, color: "#F0E4DC", borderColor: "#E0C8B0" },
-  { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, color: "#E0F0E8", borderColor: "#B8E0D0" },
-  { title: "Estimator", url: createPageUrl("Estimator"), icon: Calculator, color: "#FEE2E2", borderColor: "#F87171" },
-  { title: "Fleet", url: createPageUrl("FleetOverview"), icon: NavigationIcon, color: "#DCE8F0", borderColor: "#B8D0E0" },
+  { title: "My Workflow", url: createPageUrl("MyWorkflow"), icon: User, accent: "#A78BFA" },
+  { title: "Main Workflow", url: createPageUrl("MainWorkflow"), icon: BarChart3, accent: "#38BDF8" },
+  { title: "Sales Pipeline", url: createPageUrl("SalesPipeline"), icon: DollarSign, accent: "#2DD4BF" },
+  { title: "Estimating", url: createPageUrl("Estimating"), icon: Calculator, accent: "#FBBF24" },
+  { title: "Permitting", url: createPageUrl("Permitting"), icon: ClipboardCheck, accent: "#FB7185" },
+  { title: "Design", url: createPageUrl("Design"), icon: Pencil, accent: "#60A5FA" },
+  { title: "Production", url: createPageUrl("Production"), icon: Hammer, accent: "#4ADE80" },
+  { title: "Fabrication", url: createPageUrl("Fabrication"), icon: Wrench, accent: "#C084FC" },
+  { title: "Installation/Delivery", url: createPageUrl("InstallationDeliver"), icon: Truck, accent: "#FB923C" },
+  { title: "Order Form", url: createPageUrl("OrderForm"), icon: ClipboardList, accent: "#34D399" },
+  { title: "Estimator", url: createPageUrl("Estimator"), icon: Calculator, accent: "#F87171" },
+  { title: "Fleet", url: createPageUrl("FleetOverview"), icon: NavigationIcon, accent: "#22D3EE" },
 ];
 
 const meetingsDropdownItems = [
-  { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, color: "#F8F0D8", borderColor: "#E8D8A8" },
-  { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, color: "#F0F0D8", borderColor: "#D8D8A8" },
-  { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, color: "#D8E4F0", borderColor: "#A8C8E0" },
-  { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, color: "#EDE9FE", borderColor: "#C4B5FD" },
+  { title: "SIPs", url: createPageUrl("SIPs"), icon: ClipboardList, accent: "#FACC15" },
+  { title: "Monday Meeting", url: createPageUrl("MondayMorningMeeting"), icon: ClipboardList, accent: "#A3E635" },
+  { title: "Financials", url: createPageUrl("Financials"), icon: DollarSign, accent: "#3B82F6" },
+  { title: "Calendar", url: createPageUrl("WorkOrderCalendar"), icon: Calendar, accent: "#818CF8" },
 
 ];
 
@@ -94,11 +94,11 @@ const SHELL_SPRING = {
   mass: 0.82,
 };
 
-const hexToRgba = (hex, alpha) => {
+const hexToRgbTuple = (hex) => {
   const normalized = String(hex || "").replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return `rgba(148, 163, 184, ${alpha})`;
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return "148 163 184";
   const value = Number.parseInt(normalized, 16);
-  return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+  return `${(value >> 16) & 255} ${(value >> 8) & 255} ${value & 255}`;
 };
 
 function ShellViewControls({
