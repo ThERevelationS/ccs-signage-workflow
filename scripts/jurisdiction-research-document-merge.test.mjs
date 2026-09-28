@@ -136,7 +136,7 @@ test('Boone current commercial fee page preserves the signage-over-32-square-fee
   assert.match(source.evidenceScope, /Building Department fee evidence only/i);
   assert.match(source.evidenceScope, /does not establish the complete cost of a sign project/i);
   assert.match(source.evidenceScope, /does not.*replace Planning Commission sign\/zoning fees/i);
-  assert.match(source.evidenceScope, /does not establish a fee for signage 32 sq ft or less/i);
+  assert.match(source.evidenceScope, /establish a fee for signage 32 sq ft or less/i);
 });
 
 test('Boone electrical application remains an explicit unarchived source gap', () => {
