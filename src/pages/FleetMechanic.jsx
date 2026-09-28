@@ -60,20 +60,29 @@ export default function FleetMechanic() {
   const [busy, setBusy] = useState("");
   const [actionError, setActionError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const [estimateRecovery, setEstimateRecovery] = useState(null);
+
+  const fetchPortalPayload = async () => {
+    const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
+    if (result?.error) throw new Error(result.error);
+    return result || null;
+  };
+
+  const applyPortalPayload = result => {
+    setData(result || null);
+    setError("");
+    const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
+    setSelected(current => {
+      if (!current) return current;
+      return all.find(row => row.id === current.id) || current;
+    });
+  };
 
   const load = async (quiet = false) => {
     if (!token) { setError("This mechanic link is missing its access key. Ask CCS for a new link."); setLoading(false); return; }
     if (quiet) setRefreshing(true); else setLoading(true);
     try {
-      const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
-      if (result?.error) throw new Error(result.error);
-      setData(result || null);
-      setError("");
-      if (selected) {
-        const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
-        const fresh = all.find(row => row.id === selected.id);
-        if (fresh) setSelected(fresh);
-      }
+      applyPortalPayload(await fetchPortalPayload());
     } catch (e) {
       setError(e?.message || "The Fleet mechanic portal could not be loaded.");
     } finally {
@@ -133,8 +142,44 @@ export default function FleetMechanic() {
     finally { setBusy(""); }
   };
 
+  const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false) => {
+    const recoveryReason = reason || "Current repair-estimate state must be verified.";
+    setEstimateRecovery({workOrderId, reason: recoveryReason});
+    setBusy("estimate-refresh");
+    setRefreshing(true);
+    try {
+      const result = await fetchPortalPayload();
+      applyPortalPayload(result);
+      const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === workOrderId) || null;
+      if (freshEstimate) setEstimateForm(estimateSeed(freshEstimate));
+      setEstimateRecovery(null);
+      if (showRecoveredMessage) {
+        const serverMessage = !freshEstimate
+          ? "Current server check confirms no repair estimate exists yet. Your draft was kept."
+          : freshEstimate.visibility === "mechanic"
+            ? `Current server estimate reloaded as ${pretty(freshEstimate.status || "draft")}. The server copy is now authoritative.`
+            : freshEstimate.visibility === "conflict"
+              ? "Current server state shows conflicting repair estimates. CCS must resolve them before this portal can continue."
+              : freshEstimate.visibility === "other_mechanic"
+                ? "Current server state shows another mechanic portal owns this estimate."
+                : "Current server state shows CCS owns this estimate.";
+        setActionError(`${recoveryReason} ${serverMessage} Nothing was resubmitted automatically.`);
+      } else setActionError("");
+      return true;
+    } catch (e) {
+      const detail = e?.message ? ` (${e.message})` : "";
+      setEstimateRecovery({workOrderId, reason: recoveryReason});
+      setActionError(`${recoveryReason} Current server ownership could not be verified${detail}. Use Check Current Server State before saving or submitting again.`);
+      return false;
+    } finally {
+      setBusy("");
+      setRefreshing(false);
+    }
+  };
+
   const saveEstimate = async (submit = false) => {
     if (!selected || !data?.portal?.capabilities?.estimates) return;
+    if (estimateRecovery?.workOrderId === selected.id) { setActionError("Current server ownership must be checked before another estimate save or submit."); return; }
     const currentEstimate = estimateByWorkOrder[selected.id] || null;
     if (currentEstimate && currentEstimate.visibility !== "mechanic") { setActionError("This estimate is managed by CCS or another mechanic and cannot be viewed or overwritten here."); return; }
     setBusy(submit ? "estimate-submit" : "estimate-save"); setActionError(""); setSavedMessage("");
@@ -147,16 +192,21 @@ export default function FleetMechanic() {
       const saved = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_save",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:currentEstimate?.updated_date||"",estimate:payloadEstimate});
       if (saved?.data?.error) throw new Error(saved.data.error);
       let finalEstimate = saved?.data?.estimate;
+      let resultMessage = "Estimate draft saved.";
       if (submit) {
         const submitted = await base44.functions.invoke("fleetMechanicPortal", {action:"estimate_submit",token,work_order_id:selected.id,expected_updated_date:selected.updated_date,estimate_expected_updated_date:finalEstimate?.updated_date||""});
         if (submitted?.data?.error) throw new Error(submitted.data.error);
         finalEstimate = submitted?.data?.estimate;
-        setSavedMessage(submitted?.data?.auto_approved ? "Estimate submitted and automatically approved by CCS Fleet policy." : "Estimate submitted to CCS for approval.");
-      } else setSavedMessage("Estimate draft saved.");
+        resultMessage = submitted?.data?.auto_approved ? "Estimate submitted and automatically approved by CCS Fleet policy." : "Estimate submitted to CCS for approval.";
+      }
+      setSavedMessage(resultMessage);
       setEstimateForm(estimateSeed({...finalEstimate,visibility:"mechanic"}));
-      await load(true);
-    } catch (e) { setActionError(e?.message || "Repair estimate could not be saved."); }
-    finally { setBusy(""); }
+      await refreshEstimateState(selected.id, `${resultMessage} Current server state could not be refreshed.`, false);
+    } catch (e) {
+      const reason = e?.message || "Repair estimate request could not be confirmed.";
+      setSavedMessage("");
+      await refreshEstimateState(selected.id, `Repair estimate request could not be confirmed: ${reason}.`, true);
+    } finally { setBusy(""); }
   };
 
   const saveProgress = async () => {
@@ -208,7 +258,7 @@ export default function FleetMechanic() {
       </div>
     </main>
 
-    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)}/>} 
+    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} recoveryRequired={estimateRecovery?.workOrderId===selected.id} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)} onCheckEstimateState={()=>refreshEstimateState(selected.id,estimateRecovery?.reason||"Previous repair-estimate request was not confirmed.",true)}/>} 
   </Standalone>;
 }
 
@@ -216,7 +266,7 @@ function Standalone({children, portalName = ""}) {
   return <div className="min-h-screen bg-slate-50 text-slate-900"><header className="bg-slate-950 text-white"><div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><Wrench className="w-5 h-5"/></div><div><div className="font-bold leading-tight">CCS Fleet</div><div className="text-xs text-slate-300">{portalName || "Mechanic Portal"}</div></div></div></header>{children}<footer className="border-t border-slate-200 bg-white"><div className="max-w-5xl mx-auto px-4 py-4 text-xs text-slate-400 text-center">Standalone external mechanic portal · No access to CCS Signage Workflow navigation or administration</div></footer></div>;
 }
 
-function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved,canEstimate,estimate,estimateForm,setEstimateForm,onSaveEstimate,onSubmitEstimate}) {
+function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved,canEstimate,estimate,estimateForm,setEstimateForm,recoveryRequired,onSaveEstimate,onSubmitEstimate,onCheckEstimateState}) {
   const completed = workOrder.status === "completed";
   const approvalBlocked = !completed && workOrder.status !== "in_progress" && workOrder.approval_block?.blocked === true;
   return <div className="fixed inset-0 z-[100] bg-black/60 p-3 sm:p-6 overflow-y-auto"><div className="max-w-3xl mx-auto rounded-2xl bg-white shadow-2xl overflow-hidden">
@@ -233,7 +283,7 @@ function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddP
       {(workOrder.parts_used?.length||workOrder.fluids_used?.length) ? <Section title="Recorded Usage"><div className="grid sm:grid-cols-2 gap-3"><Needed title="Parts" rows={(workOrder.parts_used||[]).map(row=>`${row.quantity ?? ""} ${row.part_name || "Part"}`)}/><Needed title="Fluids" rows={(workOrder.fluids_used||[]).map(row=>`${row.quantity ?? ""} ${row.unit || ""} ${row.fluid_name || "Fluid"}`)}/></div></Section> : null}
       {workOrder.notes && <Section title="Existing Notes"><p className="text-sm whitespace-pre-wrap text-slate-600 max-h-48 overflow-auto">{workOrder.notes}</p></Section>}
 
-      {canEstimate && <EstimateEditor estimate={estimate} form={estimateForm} setForm={setEstimateForm} completed={completed} busy={busy} onSave={onSaveEstimate} onSubmit={onSubmitEstimate}/>} 
+      {canEstimate && <EstimateEditor estimate={estimate} form={estimateForm} setForm={setEstimateForm} completed={completed} busy={busy} recoveryRequired={recoveryRequired} onSave={onSaveEstimate} onSubmit={onSubmitEstimate} onCheckServerState={onCheckEstimateState}/>} 
 
       {!completed && <Section title="Mechanic Progress">
         {workOrder.status!=="in_progress"&&<button onClick={onStart} disabled={!!busy||approvalBlocked} className="mb-4 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy==="start"?<Loader2 className="w-4 h-4 animate-spin"/>:approvalBlocked?<Clock3 className="w-4 h-4"/>:<Activity className="w-4 h-4"/>}{approvalBlocked?"Waiting for CCS Approval":"Mark Work Started"}</button>}
@@ -250,13 +300,14 @@ function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddP
   </div></div>;
 }
 
-function EstimateEditor({estimate,form,setForm,completed,busy,onSave,onSubmit}) {
+function EstimateEditor({estimate,form,setForm,completed,busy,recoveryRequired,onSave,onSubmit,onCheckServerState}) {
   if (estimate && estimate.visibility !== "mechanic") {
     const message = estimate.visibility === "conflict" ? "CCS has detected conflicting estimate records for this work order. Estimate entry is locked until CCS resolves them." : estimate.visibility === "other_mechanic" ? "Another mechanic portal already owns the repair estimate for this work order. Its pricing is intentionally hidden." : "CCS is managing an internal repair estimate for this work order. Internal pricing is intentionally hidden from the mechanic portal.";
     return <Section title="Repair Estimate"><div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{message}</div></Section>;
   }
   const status = estimate?.status || "draft";
   const editable = !completed && (!estimate || ["draft","changes_requested"].includes(status));
+  const safeEditable = editable && !recoveryRequired;
   const total = estimateTotal(form);
   const set = (key,value) => setForm(current=>({...current,[key]:value}));
   const addLine = kind => setForm(current=>({...current,[kind]:[...(current[kind]||[]),kind==="fluids_estimate"?{description:"",quantity:"1",unit:"",estimated_cost:""}:{description:"",quantity:"1",estimated_cost:""}]}));
@@ -266,14 +317,15 @@ function EstimateEditor({estimate,form,setForm,completed,busy,onSave,onSubmit}) 
   return <Section title="Repair Estimate">
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusTone}`}>{pretty(status)}</span>{estimate?.approval_tier&&<span className="text-xs text-slate-500">Approval tier: {estimate.approval_tier}</span>}</div><p className="text-xs text-slate-500 mt-2">This is your mechanic quote for this Fleet work order only. CCS approval rules are applied by the server when it is submitted.</p></div><div className="sm:text-right"><div className="text-xs text-slate-400">Estimated total</div><div className="text-2xl font-bold text-slate-950">{total.toLocaleString(undefined,{style:"currency",currency:"USD"})}</div></div></div>
     {estimate?.decision_notes&&["changes_requested","rejected"].includes(status)&&<div className={`mt-3 rounded-xl border p-3 text-sm ${status==="rejected"?"border-red-200 bg-red-50 text-red-800":"border-amber-200 bg-amber-50 text-amber-800"}`}><b>{status==="rejected"?"CCS decision":"Changes requested"}:</b> {estimate.decision_notes}</div>}
-    <fieldset disabled={!editable||!!busy} className="mt-4 space-y-4 disabled:opacity-70">
+    {recoveryRequired&&<div role="alert" className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold">Current server ownership must be checked.</div><p className="mt-1 text-xs text-amber-800">Estimate fields and submit actions are locked until CCS Fleet confirms who owns the current server record. Nothing will be resubmitted automatically.</p><button type="button" onClick={onCheckServerState} disabled={busy==="estimate-refresh"} className="mt-3 min-h-11 w-full sm:w-auto px-4 rounded-xl border border-amber-500 bg-white font-semibold text-amber-900 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="estimate-refresh"?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Check Current Server State</button></div>}
+    <fieldset disabled={!safeEditable||!!busy} className="mt-4 space-y-4 disabled:opacity-70">
       <div className="grid sm:grid-cols-3 gap-3"><EstimateField label="Estimated labor hours"><input type="number" min="0" step="0.25" value={form.estimated_labor_hours} onChange={e=>set("estimated_labor_hours",e.target.value)} className="estimate-field"/></EstimateField><EstimateField label="Labor rate / hr"><input type="number" min="0" step="0.01" value={form.labor_rate} onChange={e=>set("labor_rate",e.target.value)} className="estimate-field"/></EstimateField><EstimateField label="Target completion"><input type="date" value={form.estimated_completion_date} onChange={e=>set("estimated_completion_date",e.target.value)} className="estimate-field"/></EstimateField></div>
-      <EstimateLines title="Parts estimate" rows={form.parts_estimate||[]} kind="parts_estimate" editable={editable} onAdd={()=>addLine("parts_estimate")} onUpdate={updateLine} onRemove={removeLine}/>
-      <EstimateLines title="Fluids estimate" rows={form.fluids_estimate||[]} kind="fluids_estimate" fluid editable={editable} onAdd={()=>addLine("fluids_estimate")} onUpdate={updateLine} onRemove={removeLine}/>
+      <EstimateLines title="Parts estimate" rows={form.parts_estimate||[]} kind="parts_estimate" editable={safeEditable} onAdd={()=>addLine("parts_estimate")} onUpdate={updateLine} onRemove={removeLine}/>
+      <EstimateLines title="Fluids estimate" rows={form.fluids_estimate||[]} kind="fluids_estimate" fluid editable={safeEditable} onAdd={()=>addLine("fluids_estimate")} onUpdate={updateLine} onRemove={removeLine}/>
       <div className="grid sm:grid-cols-2 gap-3"><EstimateField label="Miscellaneous"><input type="number" min="0" step="0.01" value={form.misc_total} onChange={e=>set("misc_total",e.target.value)} className="estimate-field"/></EstimateField><div className="rounded-xl bg-slate-50 p-3"><div className="text-xs text-slate-400">Server recalculates all totals</div><div className="text-lg font-bold text-slate-900 mt-1">{total.toLocaleString(undefined,{style:"currency",currency:"USD"})}</div></div></div>
       <EstimateField label="Estimate notes"><textarea rows={3} value={form.notes} onChange={e=>set("notes",e.target.value)} className="estimate-field" placeholder="Scope assumptions, exclusions, lead times, etc."/></EstimateField>
     </fieldset>
-    {editable&&<div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end"><button type="button" onClick={onSave} disabled={!!busy} className="min-h-11 px-4 rounded-xl border border-slate-300 bg-white font-semibold text-slate-700 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="estimate-save"?<Loader2 className="w-4 h-4 animate-spin"/>:<Save className="w-4 h-4"/>}Save Draft</button><button type="button" onClick={onSubmit} disabled={!!busy} className="min-h-11 px-4 rounded-xl bg-emerald-600 text-white font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="estimate-submit"?<Loader2 className="w-4 h-4 animate-spin"/>:<CircleDollarSign className="w-4 h-4"/>}Submit Estimate</button></div>}
+    {safeEditable&&<div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end"><button type="button" onClick={onSave} disabled={!!busy} className="min-h-11 px-4 rounded-xl border border-slate-300 bg-white font-semibold text-slate-700 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="estimate-save"?<Loader2 className="w-4 h-4 animate-spin"/>:<Save className="w-4 h-4"/>}Save Draft</button><button type="button" onClick={onSubmit} disabled={!!busy} className="min-h-11 px-4 rounded-xl bg-emerald-600 text-white font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="estimate-submit"?<Loader2 className="w-4 h-4 animate-spin"/>:<CircleDollarSign className="w-4 h-4"/>}Submit Estimate</button></div>}
     {!editable&&estimate?.visibility==="mechanic"&&<div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">{status==="submitted"?"Submitted to CCS and waiting for an approval decision.":status==="approved"?"CCS Fleet has approved this estimate.":status==="rejected"?"CCS Fleet rejected this estimate. Contact CCS before changing the quote.":"This estimate is read-only."}</div>}
     <style>{`.estimate-field{width:100%;min-height:44px;border:1px solid rgb(203 213 225);border-radius:.75rem;padding:.625rem .75rem;background:white}`}</style>
   </Section>;
