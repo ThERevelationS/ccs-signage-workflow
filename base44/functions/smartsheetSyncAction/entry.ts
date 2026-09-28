@@ -212,6 +212,7 @@ function detectConflict(
   if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync → no conflict
   const bindingColumnIds = new Set(Object.values(bindings || {}).map((id) => String(id).trim()).filter((id) => /^\d+$/.test(id)));
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
+  const seenBoundColumnIds = new Set<string>();
   for (const cell of currentSmartsheetCells) {
     const colId = String(cell.column_id || cell.columnId || '');
     if (!bindingColumnIds.has(colId)) continue;
