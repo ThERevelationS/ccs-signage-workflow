@@ -57,7 +57,8 @@
       "type": "string",
       "enum": [
         "missed_clock_out",
-        "worked_through"
+        "worked_through",
+        "missed_clock_in"
       ],
       "description": "Employee attestation supplied during self-service recovery"
     },
@@ -65,6 +66,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Employee-attested prior shift end time; not a server punch and requires manager review"
+    },
+    "claimed_clock_in": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Employee-attested missing Clock In time used to reconstruct an otherwise absent shift; always marked Needs Review"
     },
     "submitted_at": {
       "type": "string",
