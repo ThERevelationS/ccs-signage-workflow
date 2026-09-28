@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Save, Pencil, Copy, Users, X, Undo2, Redo2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
+import { createSalesFilterIfAbsent, createUniqueSalesFilterCopy, deleteSalesFilterIfUnchanged, loadSalesPersonRosterSafely, setSalesFilterSelectionSafely, updateSalesFilterIfUnchanged } from "@/components/sales/salesFilterPersistence";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
@@ -102,8 +102,6 @@ const STANDARD_COLUMN_PRESETS = [
   })) }
 ];
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
-
 export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }) {
   const { currentUser, sessionToken } = useAuth();
   const [filters, setFilters] = useState([]);
@@ -142,7 +140,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const loadUsers = async () => {
-    const usersData = await loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales custom-filter users" });
+    const usersData = await loadSalesPersonRosterSafely({ sessionToken, label: "Sales custom-filter users" });
     setUsers(usersData);
   };
 
