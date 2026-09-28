@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       } catch (aiError) {
         console.error('Onboarding invitation AI formatting failed; using safe fallback for user id:', target.id);
       }
-      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html });
+      const sent = await base44.asServiceRole.functions.invoke('sendGmail', { to: target.email, subject, body: html, _workflow_capability: 'ccs-sendGmail-internal-svc-cap-9f3a7e2b1c4d' });
       const sendResult = sent?.data || sent;
       if (sendResult?.error || sendResult?.success === false) {
         console.error('Onboarding invitation email failed for user id:', target.id);

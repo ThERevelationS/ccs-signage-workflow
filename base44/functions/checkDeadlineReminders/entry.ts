@@ -3,6 +3,8 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from '../../shared/workOrderFieldPersistence.mjs';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 
+const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 // Check for approaching and overdue deadlines and trigger notifications
 Deno.serve(async (req) => {
   try {
@@ -273,35 +275,41 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
     
   let body = config.body || '';
   
-  // Replace variables
-  const vars = {
-    '{{title}}': work_order.title || '',
-    '{{client_name}}': work_order.client_name || '',
-    '{{due_date}}': work_order.due_date || '',
-    '{{current_stage}}': work_order.current_stage || '',
-    '{{assigned_to}}': work_order.assigned_to || 'Unassigned',
-    '{{days_overdue}}': isOverdue ? daysDiff.toString() : '0',
-    '{{days_until_due}}': !isOverdue ? daysDiff.toString() : '0'
+  // Replace variables — HTML-escape all work-order-derived values to prevent
+  // injected markup from rendering inside notification emails.
+  const vars: Record<string, string> = {
+    '{{title}}': esc(work_order.title),
+    '{{client_name}}': esc(work_order.client_name),
+    '{{due_date}}': esc(work_order.due_date),
+    '{{current_stage}}': esc(work_order.current_stage),
+    '{{assigned_to}}': esc(work_order.assigned_to || 'Unassigned'),
+    '{{days_overdue}}': isOverdue ? String(daysDiff) : '0',
+    '{{days_until_due}}': !isOverdue ? String(daysDiff) : '0',
   };
-  
+
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
     body = body.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
   }
-  
+
   // Generate default body if empty
   if (!body) {
+    const safeTitle = esc(work_order.title);
+    const safeClient = esc(work_order.client_name);
+    const safeDue = esc(work_order.due_date);
+    const safeStage = esc(work_order.current_stage);
+    const safeAssigned = esc(work_order.assigned_to || 'Unassigned');
     if (isOverdue) {
       body = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #FEE2E2; padding: 20px; border-radius: 8px; border-left: 4px solid #EF4444;">
             <h2 style="color: #991B1B; margin: 0 0 10px 0;">⚠️ Work Order Overdue</h2>
-            <p style="color: #7F1D1D; margin: 0;"><strong>${work_order.title}</strong> for <strong>${work_order.client_name}</strong> is ${daysDiff} day(s) overdue.</p>
+            <p style="color: #7F1D1D; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is ${daysDiff} day(s) overdue.</p>
           </div>
           <div style="padding: 20px;">
-            <p><strong>Due Date:</strong> ${work_order.due_date}</p>
-            <p><strong>Current Stage:</strong> ${work_order.current_stage}</p>
-            <p><strong>Assigned To:</strong> ${work_order.assigned_to || 'Unassigned'}</p>
+            <p><strong>Due Date:</strong> ${safeDue}</p>
+            <p><strong>Current Stage:</strong> ${safeStage}</p>
+            <p><strong>Assigned To:</strong> ${safeAssigned}</p>
           </div>
         </div>
       `;
@@ -310,12 +318,12 @@ async function sendDeadlineEmail(base44, config, work_order, trigger_type) {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #FEF3C7; padding: 20px; border-radius: 8px; border-left: 4px solid #F59E0B;">
             <h2 style="color: #92400E; margin: 0 0 10px 0;">📅 Deadline Approaching</h2>
-            <p style="color: #78350F; margin: 0;"><strong>${work_order.title}</strong> for <strong>${work_order.client_name}</strong> is due in ${daysDiff} day(s).</p>
+            <p style="color: #78350F; margin: 0;"><strong>${safeTitle}</strong> for <strong>${safeClient}</strong> is due in ${daysDiff} day(s).</p>
           </div>
           <div style="padding: 20px;">
-            <p><strong>Due Date:</strong> ${work_order.due_date}</p>
-            <p><strong>Current Stage:</strong> ${work_order.current_stage}</p>
-            <p><strong>Assigned To:</strong> ${work_order.assigned_to || 'Unassigned'}</p>
+            <p><strong>Due Date:</strong> ${safeDue}</p>
+            <p><strong>Current Stage:</strong> ${safeStage}</p>
+            <p><strong>Assigned To:</strong> ${safeAssigned}</p>
           </div>
         </div>
       `;

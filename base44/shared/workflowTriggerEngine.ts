@@ -1,6 +1,8 @@
 import { expectedWorkOrderFields, replaceWorkOrderFieldsIfUnchanged } from './workOrderFieldPersistence.mjs';
 import { loadAllEntityRows } from './pagedEntityRows.ts';
 
+const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 const PERMIT_CONTEXT_FIELDS = [
   'locality_name',
   'office_type',
@@ -109,24 +111,26 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
 
   let subject = config.subject || 'Work Order Update';
   let body = config.body || '';
+  // HTML-escape all work-order-derived values before substituting into
+  // subject/body templates to prevent injected markup from rendering.
   const vars: Record<string, string> = {
-    '{{title}}': workOrder.title || '',
-    '{{client_name}}': workOrder.client_name || '',
-    '{{description}}': workOrder.description || '',
-    '{{current_stage}}': workOrder.current_stage || '',
-    '{{assigned_to}}': workOrder.assigned_to || '',
-    '{{due_date}}': workOrder.due_date || '',
-    '{{created_by}}': workOrder.created_by || '',
+    '{{title}}': esc(workOrder.title),
+    '{{client_name}}': esc(workOrder.client_name),
+    '{{description}}': esc(workOrder.description),
+    '{{current_stage}}': esc(workOrder.current_stage),
+    '{{assigned_to}}': esc(workOrder.assigned_to),
+    '{{due_date}}': esc(workOrder.due_date),
+    '{{created_by}}': esc(workOrder.created_by),
     '{{is_rider}}': workOrder.is_rider ? 'Yes' : 'No',
     '{{is_asap}}': workOrder.asap ? 'Yes' : 'No',
-    '{{changed_by}}': changedBy || 'System',
+    '{{changed_by}}': esc(changedBy || 'System'),
     '{{timestamp}}': new Date().toLocaleString(),
-    '{{locality_name}}': workOrder.locality_name || '',
-    '{{office_type}}': workOrder.office_type || '',
-    '{{row_name}}': workOrder.row_name || '',
-    '{{submitted_date}}': workOrder.submitted_date || '',
-    '{{next_followup_date}}': workOrder.next_followup_date || '',
-    '{{permit_received_date}}': workOrder.permit_received_date || '',
+    '{{locality_name}}': esc(workOrder.locality_name),
+    '{{office_type}}': esc(workOrder.office_type),
+    '{{row_name}}': esc(workOrder.row_name),
+    '{{submitted_date}}': esc(workOrder.submitted_date),
+    '{{next_followup_date}}': esc(workOrder.next_followup_date),
+    '{{permit_received_date}}': esc(workOrder.permit_received_date),
   };
   for (const [key, value] of Object.entries(vars)) {
     subject = subject.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);

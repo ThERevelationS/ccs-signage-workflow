@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
     let actor: any = null;
 
     if (action === 'list') {
-      if (sessionToken) actor = await authenticateSignShopSession(base44, sessionToken);
+      actor = await authenticateSignShopSession(base44, sessionToken);
       const scope = String(body?.scope || 'open') === 'completed' ? 'completed' : 'open';
       const query = scope === 'completed' ? { status: 'completed' } : { status: { $ne: 'completed' } };
       const sort = scope === 'completed' ? '-completed_date' : '-created_date';
