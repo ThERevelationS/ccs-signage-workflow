@@ -316,16 +316,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const saveAllChanges = async () => {
-    if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return;
+    if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return { complete: false, savedIds: [], busy: true };
     const changes = Object.fromEntries(
       Object.entries(pendingChangesRef.current).map(([orderId, updates]) => [orderId, { ...updates }])
     );
-    if (Object.keys(changes).length === 0) return;
+    if (Object.keys(changes).length === 0) return { complete: true, savedIds: [] };
 
     saveInFlightRef.current = true;
     setIsSaving(true);
     setSaveError("");
     let savedRows = 0;
+    const savedIds = [];
+    let complete = false;
     try {
       for (const [orderId, updates] of Object.entries(changes)) {
         const cleanedUpdates = Object.fromEntries(
@@ -345,6 +347,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           label: `Order ${baseline.row_number || orderId} save`,
         });
         savedRows += 1;
+        savedIds.push(orderId);
+        markOrderNeedsSync(orderId);
 
         originalOrdersRef.current[orderId] = { ...saved };
         const latestPending = { ...(pendingChangesRef.current[orderId] || {}) };
@@ -373,6 +377,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       const stillPending = Object.keys(pendingChangesRef.current).length > 0;
       setHasUnsavedChanges(stillPending);
       if (!stillPending) setLastSaved(new Date());
+      complete = !stillPending;
     } catch (error) {
       console.error("Error saving orders safely:", error);
       const remaining = Object.keys(pendingChangesRef.current).length;
@@ -385,9 +390,44 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       saveInFlightRef.current = false;
       setIsSaving(false);
     }
+    return { complete, savedIds };
   };
 
-  // Expose save function to parent
+  const saveAndSync = async () => {
+    if (syncInFlightRef.current || saveInFlightRef.current || dateNeededSaveInFlightRef.current) return false;
+    setSaveError('');
+    setSyncMessage('');
+
+    const saveResult = await saveAllChanges();
+    if (!saveResult?.complete) return false;
+
+    const orderIds = [...pendingSyncIdsRef.current];
+    if (orderIds.length === 0) {
+      setSyncMessage('No new Order changes need Smartsheet sync.');
+      return true;
+    }
+
+    syncInFlightRef.current = true;
+    setIsSyncing(true);
+    try {
+      const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds });
+      const summary = summarizeSavedOrderSync(result);
+      if (!summary.ok) throw new Error(summary.message);
+      clearSyncedOrderIds(orderIds);
+      setLastSynced(new Date());
+      setSyncMessage(summary.message);
+      return true;
+    } catch (error) {
+      setSaveError(`Saved in Base44, but Smartsheet sync needs attention: ${error?.message || 'Sync could not be verified.'}`);
+      return false;
+    } finally {
+      syncInFlightRef.current = false;
+      setIsSyncing(false);
+    }
+  };
+
+  // Existing internal/manual callers still save Base44 only. The page-level
+  // user button calls saveAndSync so explicit Save has deterministic sync semantics.
   const manualSave = () => {
     saveAllChanges();
   };
