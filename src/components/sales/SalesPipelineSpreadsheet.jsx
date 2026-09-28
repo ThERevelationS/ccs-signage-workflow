@@ -2490,6 +2490,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={importFromExcel} className="hidden" />
         <div className="min-h-0 flex-1">
           <SalesPipelineKanban
+            users={users}
             workOrders={filteredWorkOrders}
             onUpdateWorkOrder={updateWorkOrder}
             onRequestStatusChange={requestSalesStatusChange}
