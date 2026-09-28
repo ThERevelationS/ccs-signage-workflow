@@ -4,6 +4,7 @@ import {
   SALES_DATE_FILTER_FIELDS,
   isSalesDateFilterField,
   salesFilterCalendarDay,
+  salesDateFilterEquals,
   compareSalesDateFilterRange,
 } from "../src/components/sales/salesDateFilterRange.mjs";
 
@@ -38,6 +39,14 @@ same(salesFilterCalendarDay("09/27/26"), "2026-09-27", "Existing two-digit US cu
 same(salesFilterCalendarDay("2/29/2028"), "2028-02-29", "Leap-day cutoff accepted");
 same(salesFilterCalendarDay(new Date("2026-09-27T00:00:00Z")), "2026-09-27",
   "Valid date objects have a stable UTC day");
+check(salesDateFilterEquals("2026-09-27T23:30:05.123-04:00", "2026-09-27"),
+  "Timestamp-backed date filters match a date-only cutoff on the same stored calendar day");
+check(salesDateFilterEquals("2026-09-27T02:15:00Z", "09/27/26"),
+  "Date equality accepts the existing legacy US cutoff format");
+check(!salesDateFilterEquals("2026-09-28T00:00:00Z", "2026-09-27"),
+  "Date equality rejects a different calendar day");
+check(!salesDateFilterEquals("", "2026-09-27") && !salesDateFilterEquals("2026-09-27", "bad"),
+  "Date equality fails closed for missing or invalid values");
 for (const invalid of ["", "2026-02-29", "2026-13-01", "2026-09-31", "2026-9-2",
   "2026-09-27Tevil", "2026-09-27T25:00:00Z", "09/27/1899x", "unknown", 20260927, null]) {
   same(salesFilterCalendarDay(invalid), null, `Invalid or ambiguous calendar value rejected: ${String(invalid)}`);
@@ -68,6 +77,20 @@ for (const invalid of [null, "", "2026-02-30"]) {
 }
 check(!compareSalesDateFilterRange("2026-09-27", "2026-09-28", "contains"),
   "The date-range helper must fail closed for unsupported operators");
+
+const equalitySource = spreadsheet.split('// Check grouped "is" conditions')[1]?.split('case "contains":')[0];
+check(Boolean(equalitySource), "The live spreadsheet equality-operator branch must exist");
+check(equalitySource.includes("isSalesDateFilterField(field)") &&
+      equalitySource.includes("salesDateFilterEquals(fieldValue, val)"),
+  "Grouped Is/Equals filters must use calendar equality for date-typed fields");
+check(equalitySource.includes('case "is_not":') &&
+      equalitySource.includes("!salesDateFilterEquals(fieldValue, condValue)"),
+  "Is Not must use calendar inequality for date-typed fields");
+same((equalitySource.match(/salesDateFilterEquals\(fieldValue, value\)/g) || []).length, 2,
+  "Is One Of and Is Not One Of must both use calendar equality for date-typed fields");
+check(equalitySource.includes("fieldValue == val") && equalitySource.includes("fieldValue != condValue") &&
+      equalitySource.includes("fv == value"),
+  "Existing non-date equality and membership semantics remain unchanged");
 
 const rangeSource = spreadsheet.split("case \"greater_than\":")[1]?.split('case "not_empty":')[0];
 check(Boolean(rangeSource), "The live spreadsheet range-operator branch must exist");
