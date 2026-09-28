@@ -858,8 +858,8 @@ function LayoutContent({ children }) {
             </div>
 
             {/* Navigation Links */}
-            <div className={`flex-1 overflow-y-auto ${compactView ? "px-2 py-1" : "px-3 py-2"}`}>
-              <div className="space-y-1">
+            <div className={`flex-1 overflow-y-auto ${compactView ? "px-1.5 py-1" : "px-3 py-2"}`}>
+              <div className={compactView ? "space-y-0.5" : "space-y-1"}>
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
                   const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -868,20 +868,17 @@ function LayoutContent({ children }) {
                       key={item.title}
                       to={item.url}
                       onClick={(e) => handleNavClick(e, item)}
-                      className={`${compactView ? "px-2 py-1.5" : "px-3 py-2"} rounded-lg transition-all duration-200 flex items-center gap-2 border ${
-                        isActive ? 'clay-card shadow-lg' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
+                      className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
+                        isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                       }`}
-                      style={{ 
-                        background: isActive
-                          ? `linear-gradient(135deg, ${item.borderColor} 0%, ${item.color} 100%)`
-                          : `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
-                        borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor,
-                        borderWidth: isActive ? '2px' : '1px',
+                      style={{
+                        background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.10) : (isActive ? 0.54 : 0.25))} 0%, ${darkMode ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.30)"} 100%)`,
+                        borderColor: hexToRgba(item.borderColor, darkMode ? (isActive ? 0.50 : 0.22) : (isActive ? 0.68 : 0.40)),
                       }}
                       title="Ctrl+Click to open in split view"
                     >
-                      <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
-                      <span className={`font-medium text-sm ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                      <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
+                      <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                         {item.title}
                       </span>
                       {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
@@ -890,8 +887,8 @@ function LayoutContent({ children }) {
                       })}
 
                       {/* Meetings Section */}
-                <div className="pt-2 border-t border-gray-200 mt-2">
-                  <span className="text-xs font-medium text-gray-400 px-3">Meetings</span>
+                <div className={`${compactView ? "mt-1 pt-1" : "mt-2 pt-2"} border-t border-gray-200/50 dark:border-white/10`}>
+                  <span className={`${compactView ? "px-1.5 text-[10px]" : "px-3 text-xs"} font-medium text-gray-400`}>Meetings</span>
                   {meetingsDropdownItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -900,16 +897,17 @@ function LayoutContent({ children }) {
                         key={item.title}
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
-                        className={`${compactView ? "px-2 py-1.5" : "px-3 py-2"} rounded-lg transition-all duration-300 flex items-center gap-2 border ${
-                          isActive ? 'clay-card border-purple-300 shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card border-transparent hover:border-gray-200'
+                        className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
+                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                         }`}
-                        style={isActive ? { 
-                          background: `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.9) 100%)` 
-                        } : {}}
+                        style={{
+                          background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.08) : (isActive ? 0.50 : 0.20))} 0%, ${darkMode ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.24)"} 100%)`,
+                          borderColor: hexToRgba(item.borderColor, darkMode ? 0.24 : 0.38),
+                        }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className="w-4 h-4 flex-shrink-0" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
-                        <span className={`font-medium text-sm ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                        <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
+                        <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
