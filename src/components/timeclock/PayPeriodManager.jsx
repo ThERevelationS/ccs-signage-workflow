@@ -99,7 +99,7 @@ function periodReadiness(period, timeEntries, correctionRequests) {
   const completed = entries.filter((entry) => entry.status === "clocked_out" && entry.clock_out);
   const activeOverlap = (timeEntries || []).filter((entry) => {
     const key = dateKey(entry.clock_in);
-    return entry.status === "clocked_in" && key && key <= period.end_date;
+    return ["clocked_in", "needs_resolution"].includes(entry.status) && key && key <= period.end_date;
   });
   const unapproved = completed.filter((entry) => (entry.approval_status || "unreviewed") !== "approved");
   const ids = new Set(entries.map((entry) => entry.id));
@@ -383,7 +383,7 @@ export default function PayPeriodManager({
                 {period.status !== "finalized" && (
                   <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
                     <div className={`rounded-lg border p-2 ${readiness.activeOverlap.length ? "border-red-200 bg-red-50 text-red-800" : "border-green-200 bg-green-50 text-green-800"}`}>
-                      Active shifts: {readiness.activeOverlap.length}
+                      Active/unresolved shifts: {readiness.activeOverlap.length}
                     </div>
                     <div className={`rounded-lg border p-2 ${readiness.unapproved.length ? "border-amber-200 bg-amber-50 text-amber-800" : "border-green-200 bg-green-50 text-green-800"}`}>
                       Unapproved: {readiness.unapproved.length}
