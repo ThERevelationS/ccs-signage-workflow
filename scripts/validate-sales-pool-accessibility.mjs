@@ -48,6 +48,8 @@ check(standard.includes("aria-label={`Duplicate ${item.name}`}"),
   "Standard duplicate button needs an accessible name");
 check(selected.split('aria-label={`Remove ${item.name} from My Presets`}').length - 1 === 2,
   "Both selected-chip remove buttons need explicit accessible names");
+check(selected.split('inline-flex h-11 w-11 shrink-0 items-center justify-center').length - 1 === 2,
+  "Both selected-chip remove buttons need independent phone-sized touch targets");
 check((selected.match(/onClick=\{\(\) => toggleSelection\(item(?:, true)?\)\}/g) || []).length === 2,
   "My Presets remove actions must retain standard and custom selection paths");
 check(preview.includes("column.visible") && ui.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
