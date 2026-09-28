@@ -47,6 +47,7 @@ import { AnnouncementProvider } from "@/components/announcements/AnnouncementCon
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
+import GlobalFocusTimer from "@/components/timeclock/GlobalFocusTimer";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 
 // Context for multi-page view
@@ -458,6 +459,8 @@ function LayoutContent({ children }) {
       
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         <WorkPauseOverlay />
+        {/* Personal focus blocks stay separate from official Time Clock and Work Pause. */}
+        <GlobalFocusTimer currentUser={currentUser} />
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
