@@ -22,4 +22,9 @@ assert.match(source, /const dateOrderedOption = typeof order\.date_ordered_optio
 assert.match(source, /\{dateOrderedOption \|\| format\(dateOrdered, 'MMM d, yyyy'\)\}/);
 assert.ok(source.indexOf('dateOrderedOption || format(dateOrdered') > source.indexOf('dateOrderedOption || dateOrdered'),
   'mobile Ordered display should prefer a translated option over a paired calendar date');
-console.log('PASS Order mobile cards render verified Needed/Ordered dates, preserve translated option precedence, and safely ignore malformed calendar values');
+assert.match(source, /const dateReceived = safeOrderMobileDate\(order\.date_received\)/);
+assert.match(source, /const dateReceivedOption = typeof order\.receipt_option === 'string' \? order\.receipt_option\.trim\(\) : ''/);
+assert.match(source, /\{dateReceivedOption \|\| format\(dateReceived, 'MMM d, yyyy'\)\}/);
+assert.ok(source.indexOf('dateReceivedOption || format(dateReceived') > source.indexOf('dateReceivedOption || dateReceived'),
+  'mobile Received display should prefer a translated receipt option over a paired calendar date');
+console.log('PASS Order mobile cards render verified Needed/Ordered/Received dates, preserve translated option precedence, and safely ignore malformed calendar values');
