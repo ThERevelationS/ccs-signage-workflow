@@ -6,6 +6,7 @@ import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
 const STATUS_COLUMNS = [
   { value: "lead", label: "Lead", header: "border-blue-200 bg-blue-50", badge: "bg-blue-100 text-blue-700" },
@@ -40,7 +41,7 @@ const futureDateStamp = (days) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, onOpenDetails, isRegistered, currentSalesOwnerLabel = "", leadSources = [] }) {
+export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder, onRequestStatusChange, onCompleteFollowUp, onOpenDetails, isRegistered, currentSalesOwnerLabel = "", leadSources = [], users = [] }) {
   const [draggedId, setDraggedId] = useState(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -121,7 +122,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
 
                       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-gray-500">
                         <span className="font-medium text-gray-700">{money(workOrder.estimate_amount)}</span>
-                        <span className="truncate">{workOrder.sales_rep || "Unassigned"}</span>
+                        <span className="truncate">{buildSalesPersonSelectModel(workOrder.sales_rep, users).canonical || "Unassigned"}</span>
                       </div>
                       {attentionItems.length > 0 && (
                         <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
