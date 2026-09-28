@@ -161,9 +161,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
           : "Pause counted work time";
 
   const pairedClassName = paired
-    ? `relative z-[1] flex items-center justify-center border-0 border-l border-white/15 bg-transparent font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 disabled:opacity-45 disabled:cursor-not-allowed ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"} ${fullWidth ? "flex-1" : ""} ${paused
-      ? "text-emerald-200 hover:bg-emerald-400/12"
-      : "text-violet-200 hover:bg-violet-400/12"}`
+    ? `ccs-pause-segment relative z-[1] flex items-center justify-center border-0 font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-400 disabled:opacity-45 disabled:cursor-not-allowed ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"}`
     : `${fullWidth ? "w-full justify-center" : ""} px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${paused
       ? "border-green-300 bg-green-50 hover:bg-green-100 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60"
       : "border-purple-300 bg-purple-50 hover:bg-purple-100 dark:border-violet-500/40 dark:bg-violet-950/50 dark:hover:bg-violet-900/60"}`;
