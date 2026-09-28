@@ -47,7 +47,8 @@ const savedOrderAction = backend.slice(
 );
 assert.doesNotMatch(savedOrderAction, /push_enabled/);
 assert.doesNotMatch(savedOrderAction, /create_smartsheet_from_base44/);
-assert.match(backend, /const pushResult = await pushDataset\(base44, token, dataset, profile, config\);/);
+assert.match(backend, /const pushResult = await pushDataset\(base44, token, dataset, profile, config,[\s\S]*?dataset === 'orders' \? \{/);
+assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
 assert.match(backend, /existing\?\.smartsheet_pending_local_sync === true[\s\S]*?orderLocalPendingConflicts\.push\(existing\.id\)[\s\S]*?continue/);
 assert.match(backend, /conflicts: orderLocalPendingConflicts\.length/);
 assert.match(backend, /smartsheet_pending_local_sync: false/);
