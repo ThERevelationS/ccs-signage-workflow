@@ -98,9 +98,13 @@ assert.ok(unauthenticatedActions && !unauthenticatedActions[1].includes('audit_o
 console.log('PASS audit API is admin-session-only, read-only and full-page-verified');
 
 const orderPage = await readFile('src/pages/OrderForm.jsx', 'utf8');
+const reviewTools = await readFile('src/components/orders/OrderReviewTools.jsx', 'utf8');
+const syncAdmin = await readFile('src/components/admin/SmartsheetSyncSettings.jsx', 'utf8');
 const reviewDialog = await readFile('src/components/orders/OrderRequestorEmailReview.jsx', 'utf8');
-assert.match(orderPage, /currentUser\?\.role === \"admin\" && !!sessionToken/);
-assert.match(orderPage, /<OrderRequestorEmailReview/);
+assert.match(reviewTools, /if \(!sessionToken\) return null/);
+assert.match(reviewTools, /<OrderRequestorEmailReview/);
+assert.match(syncAdmin, /<OrderReviewTools sessionToken=\{sessionToken\}/);
+assert.doesNotMatch(orderPage, /Review emails|OrderRequestorEmailReview/);
 assert.match(reviewDialog, /action: \"audit_order_requestor_emails\"/);
 assert.match(reviewDialog, /session_token: sessionToken/);
 assert.match(reviewDialog, /data\?\.read_only !== true/);
