@@ -931,6 +931,67 @@ export default function QuickClockSection({
   const handleWorkedThroughResolution = () =>
     handlePunchResolution({ response: "worked_through" });
 
+  const handleRecoverMissedClockIn = async (claimedClockIn) => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Missed Clock In identity is no longer verified. Identify again before continuing.");
+    }
+
+    const email = selectedUser.email;
+    const requestId = requestIdFor("recover_missed_clock_in", email);
+    setLateClockInError("");
+    setPersistenceError("");
+    setIsLoading(true);
+    try {
+      const result = await invokeTimeClock({
+        action: "recover_missed_clock_in",
+        request_id: requestId,
+        claimed_clock_in: claimedClockIn,
+        ...credentialPayload(credentialRef.current, email),
+      });
+      clearRequest("recover_missed_clock_in", email);
+      if (result?.recovered_missed_clock_in !== true || result?.status !== "clocked_in" || !result?.entry?.id) {
+        throw new Error("Missed Clock In recovery returned an unexpected authoritative state. Reload before continuing.");
+      }
+
+      setLateClockInReview(null);
+      setLateClockInError("");
+      setPunchResolution(null);
+      setActiveEntry(result.entry);
+      setBreakStatus("working");
+      setActiveBreak(null);
+      setBreakSummary({ count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 });
+      setWorkPauseStatus("working");
+      setActiveWorkPause(null);
+      setWorkPauseSummary({ count: 0, total_minutes: 0 });
+      setActiveLabor(null);
+      setLaborSummary({ count: 0, total_minutes: 0 });
+      setShowClockOut(true);
+      setRecognitionStatus("Missing Clock In restored from your reported arrival time. Complete Clock Out now; this shift will require manager review.");
+      return result;
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("recover_missed_clock_in", email);
+      const message = err?.message || "Missed Clock In recovery was not confirmed by the server.";
+      setLateClockInError(message);
+      setRecognitionStatus(err?.retrySameRequest
+        ? "Missed Clock In may have been saved. Retry the same recovery to finish safely."
+        : "Missed Clock In recovery is blocked. Review the message in the window.");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLateClockInClockInNow = async () => {
+    if (!selectedUser?.email || !credentialRef.current) {
+      throw new Error("Clock In identity is no longer verified. Identify again before continuing.");
+    }
+    const user = selectedUser;
+    const credential = credentialRef.current;
+    setLateClockInReview(null);
+    setLateClockInError("");
+    await performClockIn(user, credential);
+  };
+
   const handleClockOut = async (data) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock-out identity is no longer verified. Close this dialog and identify again.");
@@ -986,6 +1047,16 @@ export default function QuickClockSection({
         error={punchResolutionError}
         onMissedClockOut={handleMissedClockOutResolution}
         onWorkedThrough={handleWorkedThroughResolution}
+      />
+
+      <LateClockInReviewDialog
+        open={Boolean(lateClockInReview && selectedUser && !activeEntry)}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        review={lateClockInReview}
+        busy={isLoading}
+        error={lateClockInError}
+        onRecoverMissedClockIn={handleRecoverMissedClockIn}
+        onClockInNow={handleLateClockInClockInNow}
       />
 
       <WorkPauseOverlay
