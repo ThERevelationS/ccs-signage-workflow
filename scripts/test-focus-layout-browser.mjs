@@ -87,12 +87,18 @@ try {
     "Compact shell preference persists locally");
   assert.match(layoutSource, /const SHELL_SPRING = \{[\s\S]*stiffness: 210,[\s\S]*damping: 30,[\s\S]*mass: 0\.82/,
     "Shell collapse uses a continuous spring rather than a short CSS jump");
-  assert.match(layoutSource, /\.ccs-glass-shell \{[\s\S]*linear-gradient\(142deg, rgba\(51,65,85,0\.82\)[\s\S]*backdrop-filter: blur\(34px\) saturate\(185%\)/,
-    "Whole navigation shell uses the approved smoked-crystal glass material");
-  assert.match(layoutSource, /\.ccs-glass-nav-item \{[\s\S]*rgb\(var\(--glass-accent-rgb\) \/ 0\.24\)/,
-    "Navigation items refract per-button accent colors through the glass surface");
+  assert.match(layoutSource, /\.ccs-glass-shell \{[\s\S]*linear-gradient\(142deg, rgba\(241,245,249,0\.78\)[\s\S]*backdrop-filter: blur\(34px\) saturate\(185%\)/,
+    "Light mode uses the approved brighter crystal glass shell");
+  assert.match(layoutSource, /\.dark \.ccs-glass-shell \{[\s\S]*linear-gradient\(145deg, rgba\(20,27,48,0\.84\)/,
+    "Dark mode preserves the approved deep navy glass shell");
+  assert.match(layoutSource, /\.ccs-glass-nav-item \{[\s\S]*rgb\(var\(--glass-accent-rgb\) \/ 0\.18\)/,
+    "Light-mode navigation items retain colored refraction without the dark base");
   assert.match(layoutSource, /\.dark \.ccs-glass-nav-item \{[\s\S]*rgb\(var\(--glass-accent-rgb\) \/ 0\.30\)/,
     "Dark mode preserves visible per-button color refraction");
+  assert.match(layoutSource, /\.ccs-focus-pause-glass \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/,
+    "Focus and Pause Work use two true equal-width segments");
+  assert.match(layoutSource, /\.ccs-focus-segment[\s\S]*\.ccs-pause-segment/,
+    "Focus and Pause Work use independent glass segment treatments");
   assert.match(layoutSource, /data-shell-navigation-handle="(?:side|top)"/,
     "Collapsed navigation exposes a dedicated bump-out handle");
   assert.match(layoutSource, />Navigation Bar</,
@@ -172,8 +178,22 @@ try {
         `Desktop work content starts below the expanded top shell (nav=${topNavBox?.height}, padding=${mainPadding})`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         "Desktop shell creates no horizontal page overflow");
+      const pair = page.locator("[data-focus-pause-pair]:visible");
       const focusButton = page.getByRole("button", { name: /Open focus timer/ });
+      const pauseButton = page.locator("[data-work-pause-trigger]:visible");
+      await pair.waitFor();
       await focusButton.waitFor();
+      await pauseButton.waitFor();
+      const [focusBox, pauseBox] = await Promise.all([focusButton.boundingBox(), pauseButton.boundingBox()]);
+      assert.ok(focusBox && pauseBox && Math.abs(focusBox.width - pauseBox.width) <= 1.5,
+        `Focus and Pause Work are true 50/50 segments (focus=${focusBox?.width}, pause=${pauseBox?.width})`);
+      const [focusBackground, pauseBackground] = await Promise.all([
+        focusButton.evaluate((node) => getComputedStyle(node).backgroundImage),
+        pauseButton.evaluate((node) => getComputedStyle(node).backgroundImage),
+      ]);
+      assert.notEqual(focusBackground, pauseBackground, "Focus and Pause Work have independently tinted glass halves");
+      assert.equal(await topNav.evaluate((node) => getComputedStyle(node).color), "rgb(15, 23, 42)",
+        "Light-mode shell uses dark text on the brighter glass material");
       await focusButton.click();
       const dialog = page.getByRole("dialog", { name: "My Focus Timer" });
       await dialog.getByLabel("The one thing I'm working on").fill("Layout route persistence");
@@ -318,6 +338,8 @@ try {
       await page.addInitScript(() => localStorage.setItem("darkMode", "true"));
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
       assert.equal(await page.locator("html").evaluate((node) => node.classList.contains("dark")), true);
+      assert.equal(await page.locator(".top-nav").evaluate((node) => getComputedStyle(node).color), "rgb(248, 250, 252)",
+        "Dark mode keeps the existing light-on-deep-navy color treatment");
       const pair = page.locator("[data-focus-pause-pair]:visible");
       await pair.waitFor();
       const backdrop = await pair.evaluate((node) => getComputedStyle(node).backdropFilter);
