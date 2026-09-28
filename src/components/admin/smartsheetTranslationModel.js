@@ -203,6 +203,22 @@ export function resolveSmartsheetPerson(smartsheetValue, authorizedUsers = [], a
   return { state: "unresolved", user: null, candidates: [] };
 }
 
+export function personValuesReferToSameUser(leftValue, rightValue, authorizedUsers = [], aliases = {}) {
+  const leftKey = normalizeOptionKey(leftValue);
+  const rightKey = normalizeOptionKey(rightValue);
+  if (!leftKey || !rightKey) return leftKey === rightKey;
+  if (leftKey === rightKey) return true;
+
+  const left = resolveSmartsheetPerson(leftValue, authorizedUsers, aliases);
+  const right = resolveSmartsheetPerson(rightValue, authorizedUsers, aliases);
+  if (!left.user || !right.user) return false;
+
+  const leftEmail = normalizeOptionKey(left.user.email);
+  const rightEmail = normalizeOptionKey(right.user.email);
+  if (leftEmail && rightEmail) return leftEmail === rightEmail;
+  return normalizeOptionKey(left.user.full_name) === normalizeOptionKey(right.user.full_name);
+}
+
 export function smartsheetPersonLabelForUser(user, smartsheetOptions = [], authorizedUsers = []) {
   const fullName = text(user?.full_name);
   if (!fullName) return "";
