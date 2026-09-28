@@ -66,9 +66,15 @@ assert.match(translatedNeededWins, /Needed: <span class="text-gray-700">In Stock
 assert.doesNotMatch(translatedNeededWins, /Oct 1, 2026/);
 console.log('PASS mobile cards display translated Date Needed choices and prefer them over stale paired dates');
 
-const unnamedCustomer = render([{ id: 'unnamed-customer', customer_name: '', status: 'pending' }], false, 0);
-assert.match(unnamedCustomer, />Unnamed customer<\/p>/,
-  'mobile cards should visibly identify orders whose customer name is blank');
-assert.match(unnamedCustomer, /aria-label="Open order details for unnamed customer"/,
-  'unnamed-customer fallback should remain aligned with the card action label');
-console.log('PASS mobile cards visibly identify blank customer names instead of rendering an empty heading');
+for (const [id, customerName] of [['empty-customer', ''], ['whitespace-customer', '   ']]) {
+  const unnamedCustomer = render([{ id, customer_name: customerName, status: 'pending' }], false, 0);
+  assert.match(unnamedCustomer, />Unnamed customer<\/p>/,
+    'mobile cards should visibly identify orders whose customer name is blank or whitespace-only');
+  assert.match(unnamedCustomer, /aria-label="Open order details for Unnamed customer"/,
+    'unnamed-customer fallback should remain aligned with the card action label');
+}
+const trimmedCustomer = render([{ id: 'trimmed-customer', customer_name: '  Acme Signs  ', status: 'pending' }], false, 0);
+assert.match(trimmedCustomer, />Acme Signs<\/p>/);
+assert.match(trimmedCustomer, /aria-label="Open order details for Acme Signs"/);
+assert.doesNotMatch(trimmedCustomer, />  Acme Signs  <\/p>/);
+console.log('PASS mobile cards normalize customer names and visibly identify blank or whitespace-only names');
