@@ -1,0 +1,29 @@
+{
+  "title": "Boone County Planning Commission — Sign Permit application version change evidence",
+  "checkedAt": "2026-09-28",
+  "priorSource": {
+    "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-2024.pdf",
+    "bytes": 269468,
+    "sha256": "cfb43fbaef40b4b4f81494e1c8e077b8062d3841e56b467805178c8e4886ac9a"
+  },
+  "currentSource": {
+    "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-current-2026-09-28.pdf",
+    "bytes": 312727,
+    "sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d"
+  },
+  "comparison": {
+    "pagesPrior": 5,
+    "pagesCurrent": 5,
+    "substantiveChangeCandidates": [
+      {
+        "field": "submitted_drawing_copy_count",
+        "priorText": "Three (3) copies of submitted drawings are required",
+        "currentText": "One (1) copy of submitted drawings is required",
+        "status": "current_form_change_candidate_requires_corroboration",
+        "useRule": "Do not promote this change into automated permit requirements or staff-facing authoritative guidance until corroborated by another current official source or staff approval."
+      }
+    ],
+    "otherObservedDifferences": "Remaining extracted-text differences observed in the comparison were spacing/OCR-layout normalization around the same first-page line; no additional substantive field or instruction change was established by this comparison."
+  },
+  "evidenceScope": "This record establishes that the preserved prior and current Sign Permit application PDFs differ and identifies the drawing-copy-count text as a current-form change candidate. It does not by itself establish the controlling submission requirement, effective date, applicability to every sign application, or whether another current checklist/process instruction supersedes or qualifies the form."
+}
