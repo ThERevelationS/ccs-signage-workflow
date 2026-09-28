@@ -937,23 +937,22 @@ function LayoutContent({ children }) {
                 </div>
               </div>
             </div>
-          </nav>
+          </motion.nav>
         )}
 
         {/* Top Navigation */}
         {!isSideNav && (
-          <nav
+          <motion.nav
             ref={topNavRef}
-            className={`top-nav fixed left-0 right-0 top-0 z-50 ${effectiveCollapsed ? (isHovered ? "show" : "collapsed") : ""}`}
+            initial={false}
+            animate={{
+              y: effectiveCollapsed && !isHovered ? -(topNavHeight - collapsedRail) : 0,
+              opacity: effectiveCollapsed && !isHovered ? 0.94 : 1,
+            }}
+            transition={shellTransition}
+            className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
             onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
             onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
-            style={{
-              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.94) 0%, rgba(20,20,40,0.88) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,248,255,0.80) 100%)',
-              backdropFilter: 'blur(18px) saturate(140%)',
-              WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-              boxShadow: '0 4px 28px rgba(15,23,42,0.10)',
-              minHeight: 'auto'
-            }}
           >
             <div className={compactView ? "px-3 py-1" : "px-4 py-2"}>
               <div className="flex items-start justify-between">
