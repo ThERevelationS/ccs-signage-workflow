@@ -58,5 +58,6 @@
     "countyPortalPage": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
     "legacyOraclePortal": "https://fa-erbz-saasfaprod1.fa.ocs.oraclecloud.com/fscmUI/publicSector.html"
   },
+  "sourceGapReview": "2026-09-27: highest-priority missing source is the Boone County Building Permit Application required by the archived Building Department sign guide; no official application URL has been verified, so no file was downloaded or indexed. Preserve this as an open collection gap until an official Boone County source is verified.",
   "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
 }
