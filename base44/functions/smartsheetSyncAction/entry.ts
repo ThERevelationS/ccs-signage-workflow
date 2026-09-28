@@ -760,7 +760,11 @@ async function pullDataset(
     updated: updatedCount,
     unchanged_skipped: unchangedSkipped,
     ...(dataset === 'sales' ? { missing_customer_rows_skipped: salesMissingCustomerRowsSkipped } : {}),
-    ...(dataset === 'orders' ? { snapshot_write_failures: snapshotWriteFailures } : {}),
+    ...(dataset === 'orders' ? {
+      snapshot_write_failures: snapshotWriteFailures,
+      conflicts: orderLocalPendingConflicts.length,
+      conflict_record_ids: orderLocalPendingConflicts.slice(0, 10),
+    } : {}),
     errors: errors.length,
     error_details: errors.slice(0, 10),
     orphans_soft_deleted: 0,
