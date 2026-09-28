@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Temporary Commercial Display (Unincorporated) application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TCDBooneCounty.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Temporary Commercial Display (Unincorporated)",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 193000,
+  "sha256": "3628f1b0702615d4fb0b39bf03bf2ee4a0cfacb307dc8c20c58a92fb673b2b16",
+  "lastModified": "Fri, 06 Sep 2024 15:18:44 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/temporary-commercial-display-unincorporated-2026-09-28.pdf",
+  "purpose": "current_temporary_commercial_display_unincorporated_application_source_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact PDF under the label Temporary Commercial Display (Unincorporated), and the linked PDF returned HTTP 200 with application/pdf content on 2026-09-28. This establishes current source identity and category availability only. The Unincorporated label is preserved exactly as the Commission presents it; this evidence does not independently establish which addresses, parcels, municipalities, businesses, projects, or display types qualify as unincorporated. It does not by itself establish every requirement, fee, eligibility rule, jurisdiction boundary, submission workflow, approval path, duration limit, or applicability to a particular sign project."
+}
