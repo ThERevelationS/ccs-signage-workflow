@@ -20,6 +20,7 @@ import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMet
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned } from '../../shared/smartsheetOrderPullSafety.mjs';
 import {
   buildCells,
+  buildOrderPullSnapshot,
   buildSnapshot,
   parseRowToFields,
 } from '../../shared/smartsheetSyncFields.ts';
@@ -451,14 +452,16 @@ async function pullDataset(
         continue;
       }
       if (dataset === 'orders') {
-        const expectedOrderSnapshot = buildSnapshot({ ...existing, ...fieldValues }, bindings, 'orders');
+        const expectedOrderSnapshot = buildOrderPullSnapshot(row, bindings);
         if (orderPulledFieldsUnchanged(existing, fieldValues) &&
             orderPullSnapshotAligned(existing, expectedOrderSnapshot)) {
           unchangedSkipped++;
           continue;
         }
       }
-      toUpdate.push({ id: existing.id, _existing: existing, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
+      toUpdate.push({ id: existing.id, _existing: existing,
+        ...(dataset === 'orders' ? { _remoteSnapshot: buildOrderPullSnapshot(row, bindings) } : {}),
+        ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
@@ -503,7 +506,7 @@ async function pullDataset(
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     const batch = toUpdate.slice(i, i + bulkBatchSize);
-    const payload = batch.map(({ id, _existing, ...fields }: any) => {
+    const payload = batch.map(({ id, _existing, _remoteSnapshot, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
       return { id, ...(dataset === 'orders' ? withoutUnverifiedTimestamp : fields) };
     });
@@ -512,9 +515,9 @@ async function pullDataset(
       updatedCount += payload.length;
       for (const rec of batch) {
         if (rec._existing) {
-          const { id, _existing, ...fields } = rec;
+          const { id, _existing, _remoteSnapshot, ...fields } = rec;
           const merged = { ..._existing, ...fields };
-          const snapshot = buildSnapshot(merged, bindings, dataset);
+          const snapshot = dataset === 'orders' ? _remoteSnapshot : buildSnapshot(merged, bindings, dataset);
           if (dataset === 'orders') {
             const changes = changedPulledOrderDates(_existing, fields);
             if (Object.keys(changes).length) {
@@ -539,7 +542,7 @@ async function pullDataset(
 
   const dateFixes: any[] = [];
   for (const rec of toUpdate) {
-    const { id, _existing, ...fields } = rec;
+    const { id, _existing, _remoteSnapshot, ...fields } = rec;
     if (dataset === 'orders') continue; // Verified read-back replaces blind Order date fixes.
     for (const df of dateFields) {
       if (fields[df] && (!_existing || _existing[df] !== fields[df])) {
