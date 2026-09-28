@@ -1021,6 +1021,17 @@ async function pushDataset(
       conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
   }
 
+  const reportOrderProgress = async (progress: any) => {
+    if (dataset !== 'orders' || typeof options?.reportOrderProgress !== 'function') return;
+    try { await options.reportOrderProgress(progress); } catch { /* progress UI must never corrupt sync work */ }
+  };
+  const orderProgressItemLabel = (record: any) => {
+    const row = Number.isFinite(Number(record?.row_number)) ? `#${Number(record.row_number)}` : '';
+    const customer = cleanText(record?.customer_name, 72) || 'Unnamed customer';
+    const description = cleanText(record?.description, 88);
+    return [row, customer, description].filter(Boolean).join(' · ');
+  };
+
   if (dataset === 'orders') {
     const unlinked = pendingRecords.filter((record: any) =>
       !/^\d+$/.test(cleanText(record?.smartsheet_row_id, 40)) || cleanText(record?.smartsheet_sheet_id, 40) !== sheetId);
@@ -1050,6 +1061,14 @@ async function pushDataset(
       records_examined: records.length,
       unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
     };
+  }
+
+  if (dataset === 'orders') {
+    await reportOrderProgress({
+      phase: 'backup', current: 0, total: pendingRecords.length,
+      item_label: 'Preparing verified Order Request backup',
+      detail: `${pendingRecords.length.toLocaleString()} changed Order${pendingRecords.length === 1 ? '' : 's'} queued`,
+    });
   }
 
   // Order-only: a successful BackupLog without any saved sheet bytes is not
@@ -1136,8 +1155,32 @@ async function pushDataset(
   const errors: string[] = [];
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
+  const orderPushStartedAt = Date.now();
+  const orderPushTimeBudgetMs = dataset === 'orders'
+    ? Math.max(0, Number(options?.orderPushTimeBudgetMs) || 0) : 0;
+  let orderProcessedCount = 0;
+  let orderTimeBudgetReached = false;
 
-  for (const record of pendingRecords) {
+  for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
+    if (dataset === 'orders' && orderPushTimeBudgetMs > 0 &&
+        Date.now() - orderPushStartedAt >= orderPushTimeBudgetMs) {
+      orderTimeBudgetReached = true;
+      break;
+    }
+    const record = pendingRecords[recordIndex];
+    orderProcessedCount = recordIndex + 1;
+    if (dataset === 'orders') {
+      const rowId = cleanText(record?.smartsheet_row_id, 40);
+      await reportOrderProgress({
+        phase: /^\d+$/.test(rowId) ? 'update' : 'create',
+        current: orderProcessedCount,
+        total: pendingRecords.length,
+        item_label: orderProgressItemLabel(record),
+        detail: /^\d+$/.test(rowId) ? `Checking and updating Smartsheet row ${rowId}` : 'Creating and permanently linking a new Smartsheet row',
+        record_id: record.id,
+        smartsheet_row_id: /^\d+$/.test(rowId) ? rowId : '',
+      });
+    }
     // Until the configured Date Received column type is independently verified,
     // do not send null over a text receipt choice (In Stock or a custom value).
     // Order pull can preserve that text; Order push must fail closed for it.
@@ -1225,8 +1268,21 @@ async function pushDataset(
     }
   }
 
+  if (dataset === 'orders') {
+    await reportOrderProgress({
+      phase: orderTimeBudgetReached ? 'paused' : 'finishing',
+      current: orderProcessedCount,
+      total: pendingRecords.length,
+      item_label: orderTimeBudgetReached ? 'Safe time limit reached' : 'Finalizing Order sync',
+      detail: orderTimeBudgetReached
+        ? `${Math.max(0, pendingRecords.length - orderProcessedCount).toLocaleString()} Order${pendingRecords.length - orderProcessedCount === 1 ? '' : 's'} remain safely queued for the next sync`
+        : `${orderProcessedCount.toLocaleString()} Order${orderProcessedCount === 1 ? '' : 's'} processed`,
+    });
+  }
+
   return {
     dataset,
+    direction: 'push',
     sheet_id: sheetId,
     records_examined: records.length,
     created: created.length,
@@ -1236,7 +1292,17 @@ async function pushDataset(
     errors: errors.length,
     error_details: errors.slice(0, 10),
     conflict_record_ids: conflicts.slice(0, 10),
-    ...(dataset === 'orders' ? { requestor_contacts_skipped_no_valid_email: requestorContactsSkippedNoEmail } : {}),
+    ...(dataset === 'orders' ? {
+      requestor_contacts_skipped_no_valid_email: requestorContactsSkippedNoEmail,
+      processed_records: orderProcessedCount,
+      remaining_records: Math.max(0, pendingRecords.length - orderProcessedCount),
+      ...(orderTimeBudgetReached ? {
+        skipped: true,
+        partial: true,
+        time_budget_reached: true,
+        reason: `Order push paused safely after ${orderProcessedCount} of ${pendingRecords.length} changed Orders to avoid a platform timeout. Remaining Orders stay queued for the next sync.`,
+      } : {}),
+    } : {}),
   };
 }
 
