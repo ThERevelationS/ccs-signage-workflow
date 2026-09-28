@@ -12,10 +12,10 @@ import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { mutateWorkOrderArrayField } from "@/components/workflow/workOrderPersistence";
 import { createGeneralTaskWithRecovery } from "@/components/workflow/generalTaskPersistence";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GeneralTask = base44.entities.GeneralTask;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const STAGE_OPTIONS = [
   { value: "", label: "General / No stage" },
@@ -29,7 +29,7 @@ const STAGE_OPTIONS = [
 ];
 
 export default function AddTaskDialog({ isOpen, onClose }) {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,8 +55,8 @@ export default function AddTaskDialog({ isOpen, onClose }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [usersData, workOrdersData] = await Promise.all([
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Add Task authorized users" }),
+      const [directory, workOrdersData] = await Promise.all([
+        loadAuthorizedUserDirectory({ sessionToken }),
         loadAllEntityRows({
           entity: WorkOrder,
           query: { completed: false, deleted: { $ne: true } },
@@ -64,7 +64,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
           label: "Add Task Work Orders",
         })
       ]);
-      setUsers(usersData);
+      setUsers(directory.users);
       setWorkOrders(workOrdersData.sort((a, b) => (a.client_name || '').localeCompare(b.client_name || '')));
     } catch (error) {
       console.error("Error loading data:", error);
