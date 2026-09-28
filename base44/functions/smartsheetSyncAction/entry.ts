@@ -845,6 +845,11 @@ async function pushDataset(
   }
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
+  if (dataset === 'orders' && requestedOrderIds.length > massLimit) {
+    return { dataset, direction: 'push', skipped: true,
+      reason: `${requestedOrderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
+      records_examined: records.length };
+  }
   if (records.length > massLimit) {
     return {
       dataset,
@@ -877,12 +882,30 @@ async function pushDataset(
   // unmatched, changed, and unsnapshotted records for ordinary reconciliation.
   const pendingRecords = dataset === 'sales'
     ? records.filter((record: any) => !salesPushRecordUnchanged(record, sheetId, buildSnapshot(record, bindings, 'sales')))
-    : records;
+    : dataset === 'orders'
+      ? records.filter((record: any) => !orderPushRecordUnchanged(record, sheetId, buildSnapshot(record, bindings, 'orders')))
+      : records;
   const unchangedSkipped = records.length - pendingRecords.length;
   if (dataset === 'sales' && pendingRecords.length === 0) {
     return { dataset, sheet_id: sheetId, records_examined: records.length,
       created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
       conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
+  }
+  if (dataset === 'orders' && pendingRecords.length === 0) {
+    return { dataset, direction: 'push', sheet_id: sheetId, records_examined: records.length,
+      created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
+      conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
+  }
+
+  if (dataset === 'orders' && options?.respectOrderCreateSetting && profile?.create_smartsheet_from_base44 !== true) {
+    const unlinked = pendingRecords.filter((record: any) =>
+      !/^\d+$/.test(cleanText(record?.smartsheet_row_id, 40)) || cleanText(record?.smartsheet_sheet_id, 40) !== sheetId);
+    if (unlinked.length) return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${unlinked.length} saved Order${unlinked.length === 1 ? '' : 's'} do not have a verified Smartsheet row link and automatic Order row creation is OFF. No Smartsheet rows were written.`,
+      records_examined: records.length,
+      unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
+    };
   }
 
   // Order-only: a successful BackupLog without any saved sheet bytes is not
@@ -1063,7 +1086,7 @@ async function pushDataset(
     records_examined: records.length,
     created: created.length,
     updated: updated.length,
-    ...(dataset === 'sales' ? { unchanged_skipped: unchangedSkipped } : {}),
+    ...((dataset === 'sales' || dataset === 'orders') ? { unchanged_skipped: unchangedSkipped } : {}),
     conflicts: conflicts.length,
     errors: errors.length,
     error_details: errors.slice(0, 10),
