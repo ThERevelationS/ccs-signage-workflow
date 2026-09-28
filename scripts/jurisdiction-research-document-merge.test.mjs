@@ -223,6 +223,23 @@ test('Boone current commercial fee page preserves the signage-over-32-square-fee
   assert.match(source.evidenceScope, /establish a fee for signage 32 sq ft or less/i);
 });
 
+test('Boone current Planning Commission site preserves current sign-resource listings without promoting linked document contents', () => {
+  assert.equal(manifest.files.length, 6);
+  const source = manifest.webSources.find(item => item.purpose === 'current_planning_commission_sign_resource_listing_evidence');
+  assert.ok(source);
+  assert.equal(source.httpStatus, 200);
+  const bytes = readFileSync(source.repositoryPath);
+  assert.equal(bytes.length, source.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sha256);
+  const html = bytes.toString('utf8');
+  assert.match(html, /SignPermit_checklist\.pdf[^>]*[^]*?Sign Permit/i);
+  assert.match(html, /SignPermit\.pdf[^>]*[^]*?Sign Permit/i);
+  assert.match(html, /TAD\.pdf[^>]*[^]*?Temporary Advertising Display/i);
+  assert.match(html, /FeeSchedule\.pdf/i);
+  assert.match(source.evidenceScope, /resource categories are currently offered/i);
+  assert.match(source.evidenceScope, /does not by itself establish that every instruction, requirement, workflow, or fee/i);
+});
+
 test('Boone electrical application remains an explicit unarchived source gap', () => {
   const electrical = manifest.onlineForms.electricalPermitApplication;
   assert.equal(electrical.listedLabel, 'Electrical Permit Application Form');
