@@ -95,7 +95,7 @@ try {
     assert.equal(await dialog.getByRole("button",{name:"Close"}).evaluate(el=>document.activeElement===el),true);
     await page.keyboard.press("Escape");
     await dialog.waitFor({state:"hidden"});
-    await page.waitForFunction(()=>document.activeElement?.textContent?.includes("Add Threshold"));
+    await page.waitForFunction(()=>[...document.querySelectorAll("button")].some(button=>button.textContent?.trim()==="Add Threshold"&&document.activeElement===button));
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
@@ -162,7 +162,7 @@ try {
     await check.click();
     await page.getByRole("status").getByText(/is now disabled/i).waitFor();
     assert.equal((await actions(page,"policy_update")).length,1);
-    await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==="Add Threshold");
+    await page.waitForFunction(()=>[...document.querySelectorAll("button")].some(button=>button.textContent?.trim()==="Add Threshold"&&document.activeElement===button));
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
@@ -208,7 +208,7 @@ try {
     assert.equal((await actions(page,"policy_update")).length,1);
     await retry.click();
     assert.equal((await actions(page,"policy_update")).length,1);
-    await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==="Add Threshold");
+    await page.waitForFunction(()=>[...document.querySelectorAll("button")].some(button=>button.textContent?.trim()==="Add Threshold"&&document.activeElement===button));
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
