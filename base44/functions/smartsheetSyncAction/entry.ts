@@ -19,7 +19,7 @@ import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsh
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
-import { orderPulledFieldsUnchanged, orderPullSnapshotAligned } from '../../shared/smartsheetOrderPullSafety.mjs';
+import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import {
   buildCells,
@@ -794,6 +794,7 @@ async function pushDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
+  options: { recordIds?: string[]; respectOrderCreateSetting?: boolean } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
