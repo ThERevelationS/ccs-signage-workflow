@@ -314,8 +314,13 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       for (const order of ordersData) {
         const orderId = String(order?.id || '').trim();
         if (!orderId) continue;
-        if (order?.smartsheet_pending_local_sync === true) pendingSyncIdsRef.current.add(orderId);
-        else pendingSyncIdsRef.current.delete(orderId);
+        if (order?.smartsheet_pending_local_sync === true) {
+          pendingSyncIdsRef.current.add(orderId);
+          if (!pendingSyncVersionRef.current.has(orderId)) pendingSyncVersionRef.current.set(orderId, 0);
+        } else {
+          pendingSyncIdsRef.current.delete(orderId);
+          pendingSyncVersionRef.current.delete(orderId);
+        }
       }
       setPendingSyncCount(pendingSyncIdsRef.current.size);
       // Store original data for comparison
