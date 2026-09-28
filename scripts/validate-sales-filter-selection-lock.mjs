@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const source = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
-const toggle = source.split("const toggleSelection = async")[1]?.split("const isSelected =")[0] ?? "";
+const toggle = source.split("const toggleSelection = async")[1]?.split("\n  const isSelected = (item")[0] ?? "";
 let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks += 1; };
 
