@@ -213,57 +213,99 @@ try {
         "Compact View survives reload");
     });
 
-  await freshCase("Top bar collapses, edge-hover previews smoothly, and click pins it open", origin,
+  await freshCase("Top bar spring-collapse is multi-frame; Navigation Bar bump previews and pins", origin,
     { width: 1366, height: 900 }, async (page) => {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
       const collapseToggle = page.locator("[data-shell-collapse-toggle]:visible");
       const topNav = page.locator(".top-nav");
       await collapseToggle.waitFor();
       await collapseToggle.click();
-      await page.waitForTimeout(220);
+
+      const collapseSamples = await page.evaluate(async () => {
+        const node = document.querySelector(".top-nav");
+        const values = [];
+        for (let index = 0; index < 16; index += 1) {
+          await new Promise(requestAnimationFrame);
+          values.push(node.getBoundingClientRect().y);
+        }
+        return values;
+      });
+      assert.ok(new Set(collapseSamples.map((value) => Math.round(value))).size >= 5,
+        "Top shell moves through multiple rendered positions instead of jumping in two frames");
+
+      await page.waitForTimeout(700);
       assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "true");
       let box = await topNav.boundingBox();
       assert.ok(box && box.y < -Math.max(20, box.height / 2), "Collapsed top bar clears working content");
 
-      await page.mouse.move(120, 2);
-      await page.waitForTimeout(220);
+      const handle = page.locator('[data-shell-navigation-handle="top"]');
+      await handle.waitFor({ state: "visible" });
+      assert.match(await handle.textContent(), /Navigation Bar/i);
+
+      await handle.hover();
+      await page.waitForTimeout(700);
       box = await topNav.boundingBox();
-      assert.ok(box && box.y >= -1, "Top-edge hover previews the full top bar");
+      assert.ok(box && box.y >= -1, "Hovering the centered bump smoothly previews the full top bar");
 
       await page.mouse.move(700, 500);
-      await page.waitForTimeout(220);
+      await page.waitForTimeout(700);
       box = await topNav.boundingBox();
       assert.ok(box && box.y < -Math.max(20, box.height / 2), "Top bar smoothly retracts after hover leaves");
 
-      await page.mouse.move(120, 2);
-      await page.waitForTimeout(220);
-      await page.locator("[data-shell-collapse-toggle]:visible").click();
+      await handle.click();
+      await page.waitForTimeout(700);
       assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "false",
-        "Pin action restores the normal shell");
+        "Navigation Bar bump can pin the shell open");
     });
 
-  await freshCase("Sidebar uses the same compact/collapse controls and hover preview", origin,
+  await freshCase("Sidebar becomes truly compact and uses the same smooth bump-out collapse", origin,
     { width: 1366, height: 900 }, async (page) => {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
+      await page.locator("[data-shell-compact-toggle]:visible").click();
+      await page.waitForTimeout(700);
       await page.getByTitle("Switch to Sidebar").click();
       const sideNav = page.locator(".side-nav");
       await sideNav.waitFor({ state: "visible" });
+      await page.waitForTimeout(700);
+      let box = await sideNav.boundingBox();
+      assert.ok(box && box.width <= 160, `Compact sidebar is materially narrow (width=${box?.width})`);
       assert.equal(await page.locator("[data-focus-pause-pair]:visible").count(), 1,
-        "Paired Focus/Pause control remains available in sidebar mode");
+        "Paired Focus/Pause control remains available in compact sidebar mode");
 
       await page.locator("[data-shell-collapse-toggle]:visible").click();
-      await page.waitForTimeout(220);
-      let box = await sideNav.boundingBox();
+      const collapseSamples = await page.evaluate(async () => {
+        const node = document.querySelector(".side-nav");
+        const values = [];
+        for (let index = 0; index < 16; index += 1) {
+          await new Promise(requestAnimationFrame);
+          values.push(node.getBoundingClientRect().x);
+        }
+        return values;
+      });
+      assert.ok(new Set(collapseSamples.map((value) => Math.round(value))).size >= 5,
+        "Sidebar moves through multiple rendered positions instead of jumping");
+
+      await page.waitForTimeout(700);
+      box = await sideNav.boundingBox();
       assert.ok(box && box.x < -Math.max(20, box.width / 2), "Collapsed sidebar clears working content");
       const mainMargin = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).marginLeft));
-      assert.equal(mainMargin, 10, "Working canvas expands to the narrow hover rail");
+      assert.equal(Math.round(mainMargin), 10, "Working canvas expands to the narrow hover rail");
 
-      await page.mouse.move(2, 220);
-      await page.waitForTimeout(220);
+      const handle = page.locator('[data-shell-navigation-handle="side"]');
+      await handle.waitFor({ state: "visible" });
+      assert.match(await handle.textContent(), /Navigation Bar/i);
+      await handle.hover();
+      await page.waitForTimeout(700);
       box = await sideNav.boundingBox();
-      assert.ok(box && box.x >= -1, "Left-edge hover previews the full sidebar");
+      assert.ok(box && box.x >= -1, "Hovering side bump smoothly previews the full sidebar");
 
-      await page.locator("[data-shell-collapse-toggle]:visible").click();
+      await page.mouse.move(700, 500);
+      await page.waitForTimeout(700);
+      box = await sideNav.boundingBox();
+      assert.ok(box && box.x < -Math.max(20, box.width / 2), "Sidebar smoothly retracts after pointer leaves");
+
+      await handle.click();
+      await page.waitForTimeout(700);
       assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "false");
     });
 
