@@ -62,7 +62,7 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
       clock_in: '2026-09-20T14:00:00.000Z', clock_out: '2026-09-20T22:00:00.000Z',
       approval_status: 'approved', total_hours: 8, updated_date: '2026-09-20T00:00:00.000Z',
     })),
-    TimeClockAudit: [], TimeClockCorrectionRequest: [],
+    TimeClockAudit: [], TimeClockCorrectionRequest: [], TimeClockPunchException: [],
   };
   let beforeUpdate = null;
   let afterRowUpdate = null;
