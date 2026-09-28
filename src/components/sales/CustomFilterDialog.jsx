@@ -15,6 +15,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
 import { SALES_TABLE_COLUMNS, getSalesColumnLayout, normalizeSalesColumnSettings, preserveLegacySalesColumnEntries, getUnavailableSalesColumns } from "@/components/sales/salesColumnCatalog.mjs";
 import { newSalesColumnDraft, salesColumnDraftReducer, salesEditorSnapshot, salesEditorHasChanges, salesColumnSettingsEqual, SALES_ESSENTIAL_COLUMN_IDS } from "@/components/sales/salesColumnEditorDraft.mjs";
+import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 
 const FILTER_FIELDS = [
   { value: "client_name", label: "Customer", type: "text" },
@@ -145,11 +146,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     setUsers(usersData);
   };
 
-  const getUsersForRole = (role) => {
-    if (!role) return users.filter((u) => u.full_name);
-    if (role === "PM") return users.filter((u) => u.sales_roles?.includes("PM") || u.sales_roles?.includes("Project Manager"));
-    return users.filter(u => u.sales_roles?.includes(role));
-  };
+  const getUsersForRole = (role) => salesPersonUsersForRole(users, role || null);
 
   const [globalOptionsCache, setGlobalOptionsCache] = useState({});
 
