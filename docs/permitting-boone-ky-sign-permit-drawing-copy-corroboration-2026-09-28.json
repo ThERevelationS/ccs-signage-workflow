@@ -1,0 +1,11 @@
+{
+  "title": "Boone County Planning Commission — Sign Permit drawing-copy corroboration decision",
+  "checkedAt": "2026-09-28",
+  "candidate": "Current Sign Permit application changed from three submitted drawing copies to one submitted drawing copy.",
+  "currentApplicationEvidence": "docs/permitting-boone-ky-sign-permit-application-change-evidence-2026-09-28.json",
+  "currentChecklistEvidence": "docs/permitting-boone-ky-sign-permit-checklist-evidence-2026-09-28.json",
+  "decision": "not_yet_corroborated",
+  "reason": "The current official Sign Permit application itself establishes the one-copy wording, but the separately verified current checklist evidence establishes checklist identity/listing only and does not independently establish or corroborate the submitted-drawing copy count. The adopted Article 34 archive references submitted drawings but the inspected indexed evidence does not establish a drawing-copy count.",
+  "useRule": "Keep submitted_drawing_copy_count as a current-form change candidate. Do not promote one copy into automated authoritative permit requirements until another current official source explicitly corroborates the count or staff approves it.",
+  "evidenceScope": "This is a conservative corroboration decision, not a claim that one copy is incorrect. It preserves the current form wording while preventing a single changed form field from silently becoming authoritative workflow guidance without independent support."
+}
