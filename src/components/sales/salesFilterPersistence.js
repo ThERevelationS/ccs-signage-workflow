@@ -15,6 +15,31 @@ async function invokeSalesFilter(payload) {
   }
 }
 
+export async function loadSalesPipelinePreferencesSafely({ sessionToken, label = "Sales Pipeline preferences" } = {}) {
+  const result = await invokeSalesFilter({
+    action: "preferences_get",
+    session_token: requireSessionToken(sessionToken, label),
+  });
+  const preferences = result?.preferences;
+  if (!preferences || typeof preferences !== "object" || Array.isArray(preferences)) {
+    throw new Error(`${label} could not be verified.`);
+  }
+  return preferences;
+}
+
+export async function saveSalesPipelinePreferencesSafely({ sessionToken, preferences, label = "Sales Pipeline preferences" } = {}) {
+  const result = await invokeSalesFilter({
+    action: "preferences_set",
+    session_token: requireSessionToken(sessionToken, label),
+    preferences,
+  });
+  const saved = result?.preferences;
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+    throw new Error(`${label} saved but could not be verified.`);
+  }
+  return saved;
+}
+
 export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales person roster" } = {}) {
   const result = await invokeSalesFilter({
     action: "roster",
