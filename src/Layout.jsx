@@ -565,6 +565,8 @@ function LayoutContent({ children }) {
           background:
             linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.20)) !important;
           border: 1px solid rgba(255,255,255,0.70) !important;
+          backdrop-filter: blur(18px) saturate(150%);
+          -webkit-backdrop-filter: blur(18px) saturate(150%);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.92),
             inset 0 -1px 0 rgba(148,163,184,0.10),
