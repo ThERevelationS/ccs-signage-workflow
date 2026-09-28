@@ -63,14 +63,14 @@ const legacyUnsafeConfig = {
   },
 };
 const readOnlySafeConfig = enforceSmartsheetBackendSafety(legacyUnsafeConfig);
-assert(readOnlySafeConfig.global_enabled === false, "Read-only backend must force global sync OFF.");
-assert(readOnlySafeConfig.observation_mode === true, "Read-only backend must force observation mode ON.");
+assert(readOnlySafeConfig.global_enabled === true, "Backend safety normalization must preserve the admin's saved global sync intent.");
+assert(readOnlySafeConfig.observation_mode === false, "Backend safety normalization must preserve the admin's saved mode intent.");
 for (const dataset of ["sales", "orders"]) {
   for (const flag of ["mirror_enabled", "pull_enabled", "push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"]) {
-    assert(readOnlySafeConfig[dataset][flag] === false, `Read-only backend must force ${dataset}.${flag} OFF.`);
+    assert(readOnlySafeConfig[dataset][flag] === true, `Backend safety normalization must preserve saved ${dataset}.${flag} intent.`);
   }
 }
-assert(readOnlySafeConfig.sales.importer_enabled === true, "Backend safety must not silently disable the separate manual importer.");
+assert(readOnlySafeConfig.sales.importer_enabled === true, "Backend safety must preserve the separate manual importer setting.");
 assert(legacyUnsafeConfig.global_enabled === true && legacyUnsafeConfig.orders.pull_enabled === true,
   "Backend safety normalization must not mutate the loaded settings object.");
 const writeCapableConfig = enforceSmartsheetBackendSafety(legacyUnsafeConfig, { writeBackendAvailable: true });
