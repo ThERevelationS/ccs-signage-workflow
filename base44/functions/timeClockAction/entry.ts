@@ -1868,6 +1868,42 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'Stored Work Pause state contains an unexpected active pause. Admin review is required.' }, { status: 409 });
         }
         const activeLabor = await activeLaborForEntry(laborEntity, entry.id, target.email);
+        const serverNow = new Date();
+        const clockInMs = new Date(entry.clock_in).getTime();
+        const acknowledgedMs = new Date(String(entry.stale_shift_acknowledged_at || '')).getTime();
+        const crossedCompanyDate = dateKeyInCompanyTime(entry.clock_in) !== dateKeyInCompanyTime(serverNow.toISOString());
+        const acknowledgementFresh = Number.isFinite(acknowledgedMs) && (serverNow.getTime() - acknowledgedMs) < MISSED_PUNCH_REPROMPT_MS;
+        const requiresPunchResolution = Number.isFinite(clockInMs) && crossedCompanyDate &&
+          (serverNow.getTime() - clockInMs) >= MISSED_PUNCH_PROMPT_MS && !acknowledgementFresh;
+        if (requiresPunchResolution) {
+          const selfServiceBlockedReason = currentBreakStatus !== 'working' || state.active_break_id
+            ? 'An active break is still attached to the old shift. A manager must review it before self-service missed clock-out recovery.'
+            : currentWorkPauseStatus !== 'working' || state.active_work_pause_id
+              ? 'Work Pause is still active on the old shift. A manager must review it before self-service missed clock-out recovery.'
+              : activeLabor?.id
+                ? 'Current Work is still active on the old shift. A manager must review it before self-service missed clock-out recovery.'
+                : '';
+          return Response.json({
+            success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+            requires_punch_resolution: true,
+            punch_resolution: {
+              type: 'missed_clock_out',
+              time_entry_id: entry.id,
+              clock_in: entry.clock_in,
+              detected_at: serverNow.toISOString(),
+              self_service_blocked: Boolean(selfServiceBlockedReason),
+              self_service_blocked_reason: selfServiceBlockedReason,
+            },
+            break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
+            work_pause_allowed: target.can_work_pause === true,
+            employment_type: target.employment_type || 'hourly',
+            work_pause_status: currentWorkPauseStatus,
+            active_work_pause: activeWorkPause || null,
+            work_pause_summary: workPauseSummary,
+            active_labor: activeLabor || null,
+            labor_summary: laborSummary,
+          });
+        }
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
