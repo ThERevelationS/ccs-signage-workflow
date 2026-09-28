@@ -1,0 +1,61 @@
+{
+  "name": "FleetRepairApprovalPolicyCreateGate",
+  "type": "object",
+  "description": "Backend-only singleton CAS coordinator for Fleet repair approval policy creation. Exactly one scope row must be provisioned before policy creation is enabled.",
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": [
+        "fleet_repair_approval_policy"
+      ],
+      "description": "Singleton coordinator scope."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "creating"
+      ],
+      "description": "Backend-only create gate state."
+    },
+    "creation_key": {
+      "type": "string"
+    },
+    "payload_fingerprint": {
+      "type": "string"
+    },
+    "claim_token": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "scope",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
