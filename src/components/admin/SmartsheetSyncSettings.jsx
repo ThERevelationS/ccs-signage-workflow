@@ -24,8 +24,7 @@ import {
   enforceSmartsheetBackendSafety,
   smartsheetWriteControlsLocked,
 } from "@/components/admin/smartsheetSyncSafetyModel";
-
-const SETTING_KEY = "smartsheetSyncConfig";
+import { stableConfigString } from "@/components/admin/smartsheetConfigState.mjs";
 
 function normalizeForMatch(value) {
   return String(value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
@@ -127,19 +126,6 @@ function normalizeBindings(bindings = {}) {
     }
   }
   return out;
-}
-
-function stableNormalize(value) {
-  if (Array.isArray(value)) return value.map(stableNormalize);
-  if (!value || typeof value !== "object") return value;
-  return Object.keys(value).sort().reduce((out, key) => {
-    out[key] = stableNormalize(value[key]);
-    return out;
-  }, {});
-}
-
-function stableConfigString(value) {
-  return JSON.stringify(stableNormalize(value));
 }
 
 function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
