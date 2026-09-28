@@ -74,3 +74,25 @@ Read-only verification after testing confirmed production settings were unchange
 - Order create directions remain off.
 
 No live settings, WorkOrders, Orders, or Smartsheet rows were modified during testing.
+
+## Follow-up: preserve immutable rollout baselines
+
+A later audit found that the settings UI merge path was forcibly replacing both datasets' `rollout_baseline` values with `null`. That would have allowed a future captured baseline to disappear from the editor and could have removed the UI target lock on a subsequent save.
+
+Fixed:
+- settings merge now preserves the stored Sales and Orders rollout baselines exactly;
+- sheet name and sheet ID become read-only when a captured baseline exists;
+- the UI explains that the target is locked while column bindings and sync switches remain editable;
+- backend `config_save` now rejects removal or mutation of a captured baseline;
+- backend also rejects changing the sheet ID or sheet name once that baseline locks the target;
+- the baseline guard executes before any `GlobalSettings` write.
+
+Verification:
+- rollout-baseline settings safety: **13/13 PASS**;
+- settings persistence: **15/15 PASS**;
+- Sales Save & Sync: **21/21 PASS**;
+- Order Save & Sync regression: **PASS**;
+- focused ESLint, backend bundle and `git diff --check`: **PASS**;
+- full production build: **PASS**.
+
+Read-only live verification on September 28, 2026 found both current rollout baselines are still `null`; this follow-up changed no production settings or targets.
