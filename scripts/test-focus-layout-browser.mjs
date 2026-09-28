@@ -79,6 +79,8 @@ try {
     "Mobile navigation retains its z-50 shell layer");
   assert.match(focusSource, /bottom-\[calc\(76px\+env\(safe-area-inset-bottom\)\)\][^"]*z-40/,
     "Focus button stays above the mobile nav without claiming overlay priority");
+  assert.match(focusSource, /<Dialog open=\{open\} onOpenChange=\{setOpen\} modal=\{false\}>/,
+    "Personal Focus dialog does not impose a modal interaction lock over official Work Pause");
   assert.match(focusSource, /DialogContent className="z-\[90\]/,
     "Focus dialog stays below official Work Pause");
   assert.match(pauseSource, /pointer-events-auto fixed inset-0 z-\[100\]/,
