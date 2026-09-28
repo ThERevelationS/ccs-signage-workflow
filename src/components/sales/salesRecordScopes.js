@@ -1,3 +1,5 @@
+import { isSmartsheetSalesImportShell } from "../../../base44/shared/smartsheetSalesImportEligibility.mjs";
+
 const LEGACY_TERMINAL_TASK_PATTERN = /^(lost\b|completed sale\b|closed\b)/i;
 
 export const isModernSalesRecord = (workOrder) => workOrder?.in_pipeline === true;
@@ -5,7 +7,8 @@ export const isModernSalesRecord = (workOrder) => workOrder?.in_pipeline === tru
 export const isOpenSalesStatus = (workOrder) => !["won", "lost"].includes(workOrder?.sales_status);
 
 export const isCurrentPipelineOpportunity = (workOrder) =>
-  isModernSalesRecord(workOrder) && isOpenSalesStatus(workOrder);
+  isModernSalesRecord(workOrder) && isOpenSalesStatus(workOrder) &&
+  !isSmartsheetSalesImportShell(workOrder);
 
 export const isTrustedSalesOutcome = (workOrder) =>
   isModernSalesRecord(workOrder) && ["won", "lost"].includes(workOrder?.sales_status);
