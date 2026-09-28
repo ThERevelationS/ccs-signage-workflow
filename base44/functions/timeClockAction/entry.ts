@@ -1941,14 +1941,28 @@ Deno.serve(async (req) => {
           labor_summary: laborSummary,
         });
       }
-      if (state.status === 'clocked_out') return Response.json({
-        success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
-        break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
-        work_pause_allowed: target.can_work_pause === true,
-        employment_type: target.employment_type || 'hourly',
-        work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
-        active_labor: null, labor_summary: { count: 0, total_minutes: 0 },
-      });
+      if (state.status === 'clocked_out') {
+        const serverNow = new Date();
+        const companyMinutes = minutesOfDayInCompanyTime(serverNow.toISOString());
+        const lateClockAction = body?.clock_action_intent === true && Number.isInteger(companyMinutes) && companyMinutes >= 15 * 60;
+        return Response.json({
+          success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
+          ...(lateClockAction ? {
+            requires_late_clock_in_review: true,
+            late_clock_in_review: {
+              type: 'late_clock_in',
+              cutoff_local_time: '15:00',
+              company_date: dateKeyInCompanyTime(serverNow.toISOString()),
+              detected_at: serverNow.toISOString(),
+            },
+          } : {}),
+          break_status: 'working', active_break: null, break_summary: { count: 0, total_minutes: 0, paid_minutes: 0, unpaid_minutes: 0 },
+          work_pause_allowed: target.can_work_pause === true,
+          employment_type: target.employment_type || 'hourly',
+          work_pause_status: 'working', active_work_pause: null, work_pause_summary: { count: 0, total_minutes: 0 },
+          active_labor: null, labor_summary: { count: 0, total_minutes: 0 },
+        });
+      }
       if (['clocking_in', 'clocking_out'].includes(state.status)) {
         return Response.json({
           success: true,
