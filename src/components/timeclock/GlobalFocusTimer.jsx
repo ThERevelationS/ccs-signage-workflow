@@ -114,7 +114,7 @@ export default function GlobalFocusTimer({ currentUser }) {
         onClick={() => setOpen(true)}
         title={buttonLabel}
         aria-label={buttonLabel}
-        className={`fixed right-3 z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
+        className={`fixed right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
           ? "border-amber-400 bg-amber-100 text-amber-950"
           : "border-purple-300 bg-purple-50 text-purple-900"}`}
         style={{ bottom: "calc(76px + env(safe-area-inset-bottom))" }}
