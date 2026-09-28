@@ -38,11 +38,13 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
         const dateReceived = safeOrderMobileDate(order.date_received);
         const dateReceivedOption = typeof order.receipt_option === 'string' ? order.receipt_option.trim() : '';
         return (
-          <div
+          <button
             key={order.id}
-            className="clay-card p-4 cursor-pointer active:opacity-80 transition-opacity"
+            type="button"
+            className="clay-card block w-full p-4 text-left cursor-pointer active:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
             style={{ minHeight: '44px', fontSize: '14px' }}
             onClick={() => onOpenDetails && onOpenDetails(order)}
+            aria-label={`Open order details for ${order.customer_name || 'unnamed customer'}`}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
@@ -74,7 +76,7 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
               )}
               {order.requestor_name && <span>By: <span className="text-gray-700">{order.requestor_name}</span></span>}
             </div>
-          </div>
+          </button>
         );
       });
 
