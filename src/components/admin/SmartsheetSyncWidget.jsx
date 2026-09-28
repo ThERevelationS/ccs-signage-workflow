@@ -90,15 +90,20 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const lastSyncDate = lastSync ? new Date(lastSync) : null;
   const minutesAgo = lastSyncDate ? Math.floor((Date.now() - lastSyncDate.getTime()) / 60000) : null;
 
-  // Keep the Order Form notification close to one third of the original
-  // height, with no redundant footer or multi-row result list. Error/review
-  // detail keeps the expanded presentation so important warnings remain clear.
-  if (compactOrderForm && (orderToast.compact ||
-    (isRunning && !isStale && !hasErrors && !hasSkipped && !hasConflicts))) {
+  // Healthy running/completed syncs use one compact horizontal toast across the
+  // app. Error, stale, skipped, conflict and review-required states retain the
+  // expanded card below so important failures are never hidden by compact UI.
+  if (orderToast.compact ||
+    (isRunning && !isStale && !hasErrors && !hasSkipped && !hasConflicts && !hasReviewNeeded)) {
     const orderResults = results.filter(r => r.dataset === 'orders');
-    const displayResults = orderResults.length ? orderResults : results;
+    const displayResults = compactOrderForm && orderResults.length ? orderResults : results;
     const created = displayResults.reduce((sum, r) => sum + (Number(r.created) || 0), 0);
     const updated = displayResults.reduce((sum, r) => sum + (Number(r.updated) || 0), 0);
+    const onlyResult = displayResults.length === 1 ? displayResults[0] : null;
+    const datasetLabel = onlyResult?.dataset
+      ? String(onlyResult.dataset).charAt(0).toUpperCase() + String(onlyResult.dataset).slice(1)
+      : 'Sync';
+    const directionLabel = onlyResult?.direction === 'pull' ? 'SS→B44' : onlyResult?.direction === 'push' ? 'B44→SS' : '';
     return (
       <div className="fixed right-3 bottom-20 z-50 w-[min(440px,calc(100vw-24px))] md:bottom-3"
         role="status" aria-live="polite" aria-label={isRunning ? "Smartsheet sync in progress" : "Smartsheet sync completed"}>
