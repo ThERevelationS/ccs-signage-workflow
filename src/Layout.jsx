@@ -691,7 +691,7 @@ function LayoutContent({ children }) {
       
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         <WorkPauseOverlay />
-        {/* Collapsed shell keeps a narrow edge target so mouse hover can preview it. */}
+        {/* Collapsed shell keeps a narrow edge target and a visible glass handle. */}
         {effectiveCollapsed && (
           <div
             data-shell-hover-rail
@@ -699,25 +699,75 @@ function LayoutContent({ children }) {
               ? "fixed bottom-0 left-0 top-0 z-40"
               : "fixed left-0 right-0 top-0 z-40"}
             style={navLayout === "side"
-              ? { width: `${collapsedRail + 4}px` }
-              : { height: `${collapsedRail + 4}px` }}
+              ? { width: `${collapsedRail + 8}px` }
+              : { height: `${collapsedRail + 8}px` }}
             onMouseEnter={() => setIsHovered(true)}
           />
         )}
 
+        <AnimatePresence>
+          {effectiveCollapsed && !isHovered && (
+            navLayout === "side" ? (
+              <motion.button
+                key="side-navigation-handle"
+                data-shell-navigation-handle="side"
+                type="button"
+                initial={reduceMotion ? false : { x: -18, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={reduceMotion ? { opacity: 0 } : { x: -18, opacity: 0 }}
+                transition={shellTransition}
+                onMouseEnter={() => setIsHovered(true)}
+                onFocus={() => setIsHovered(true)}
+                onClick={() => {
+                  setNavCollapsed(false);
+                  setIsHovered(false);
+                }}
+                className="ccs-navigation-handle fixed left-0 top-1/2 z-[60] flex h-[132px] w-[30px] -translate-y-1/2 items-center justify-center gap-2 rounded-r-2xl text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                title="Open Navigation Bar"
+                aria-label="Open Navigation Bar"
+              >
+                <ChevronsRight className="h-3.5 w-3.5 flex-shrink-0" />
+                <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>Navigation Bar</span>
+              </motion.button>
+            ) : (
+              <motion.button
+                key="top-navigation-handle"
+                data-shell-navigation-handle="top"
+                type="button"
+                initial={reduceMotion ? false : { y: -14, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={reduceMotion ? { opacity: 0 } : { y: -14, opacity: 0 }}
+                transition={shellTransition}
+                onMouseEnter={() => setIsHovered(true)}
+                onFocus={() => setIsHovered(true)}
+                onClick={() => {
+                  setNavCollapsed(false);
+                  setIsHovered(false);
+                }}
+                className="ccs-navigation-handle fixed left-1/2 top-0 z-[60] flex h-[28px] -translate-x-1/2 items-center gap-1.5 rounded-b-2xl px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                title="Open Navigation Bar"
+                aria-label="Open Navigation Bar"
+              >
+                <ChevronsDown className="h-3.5 w-3.5" />
+                <span>Navigation Bar</span>
+              </motion.button>
+            )
+          )}
+        </AnimatePresence>
+
         {/* Side Navigation */}
         {isSideNav && (
-          <nav
-            className={`side-nav fixed bottom-0 left-0 top-0 z-50 flex flex-col ${effectiveCollapsed ? (isHovered ? "show" : "collapsed") : ""}`}
+          <motion.nav
+            initial={false}
+            animate={{
+              x: effectiveCollapsed && !isHovered ? -(sideNavWidth - collapsedRail) : 0,
+              opacity: effectiveCollapsed && !isHovered ? 0.94 : 1,
+            }}
+            transition={shellTransition}
+            className="side-nav ccs-glass-shell fixed bottom-0 left-0 top-0 z-50 flex flex-col overflow-visible"
             onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
             onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
-            style={{
-              width: `${sideNavWidth}px`,
-              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.94) 0%, rgba(20,20,40,0.88) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,248,255,0.80) 100%)',
-              backdropFilter: 'blur(18px) saturate(140%)',
-              WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-              boxShadow: '4px 0 28px rgba(15,23,42,0.10)',
-            }}
+            style={{ width: sideNavWidth }}
           >
             <div className={compactView ? "p-2" : "p-3"}>
               {/* Brand + tiny shell view controls */}
