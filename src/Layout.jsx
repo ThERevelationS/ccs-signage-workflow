@@ -855,14 +855,14 @@ function LayoutContent({ children }) {
                 <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2"}`}>
                   <button
                     onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                    className={`ccs-glass-control flex flex-shrink-0 items-center justify-center text-purple-700 dark:text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl"}`}
+                    className={`ccs-glass-control ccs-glass-purple flex flex-shrink-0 items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl"}`}
                     title="Switch to Top Bar"
                   >
                     <PanelTop className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
                   </button>
                   <div className="min-w-0">
-                    <h2 className={`${compactView ? "text-xs" : "text-sm"} truncate font-bold leading-tight text-gray-800`}>Sign Shop</h2>
-                    {!compactView && <p className="truncate text-xs text-gray-500">Workflow</p>}
+                    <h2 className={`${compactView ? "text-xs" : "text-sm"} truncate font-bold leading-tight text-white`}>Sign Shop</h2>
+                    {!compactView && <p className="truncate text-xs text-slate-300">Workflow</p>}
                   </div>
                 </div>
                 <ShellViewControls
@@ -884,17 +884,17 @@ function LayoutContent({ children }) {
                   <button
                     data-login-gate-allow
                     onClick={showLoginDialog}
-                    className={`ccs-glass-control w-full flex items-center justify-center rounded-xl text-purple-800 dark:text-violet-100 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
+                    className={`ccs-glass-control ccs-glass-purple w-full flex items-center justify-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
                     title="Sign In"
                   >
-                    <LogIn className="w-4 h-4 text-purple-700" />
-                    <span className="font-bold text-sm text-purple-800">Sign In</span>
+                    <LogIn className="h-4 w-4 text-violet-300" />
+                    <span className="font-bold text-sm text-violet-100">Sign In</span>
                   </button>
                 ) : (
                   <button
                     data-login-gate-allow
                     onClick={logout}
-                    className={`ccs-glass-control w-full flex items-center justify-center rounded-xl text-slate-700 dark:text-slate-100 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
+                    className={`ccs-glass-control ccs-glass-neutral w-full flex items-center justify-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
                     title={`Logout ${getUserFirstName()}`}
                   >
                     <LogOut className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -908,7 +908,7 @@ function LayoutContent({ children }) {
                 {isUserAdmin(currentUser) && (
                   <button
                     onClick={() => setShowAnnouncementManager(true)}
-                    className={`ccs-glass-control w-full flex items-center justify-center rounded-xl text-red-700 dark:text-red-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
+                    className={`ccs-glass-control ccs-glass-red w-full flex items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 gap-1 text-xs" : "h-9 gap-2 text-sm"}`}
                     title="Announcements (Admin)"
                   >
                     <Megaphone className="w-4 h-4 text-red-600" />
@@ -918,7 +918,7 @@ function LayoutContent({ children }) {
                 <div className={`flex ${compactView ? "gap-1" : "gap-2"}`}>
                   <Link
                     to={createPageUrl("TimeClock")}
-                    className={`ccs-glass-control flex flex-1 items-center justify-center rounded-xl text-green-700 dark:text-emerald-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
+                    className={`ccs-glass-control ccs-glass-green flex flex-1 items-center justify-center rounded-xl text-emerald-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
                     <Home className="w-4 h-4 text-green-600" />
                     <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
@@ -926,7 +926,7 @@ function LayoutContent({ children }) {
 
                   <button
                     onClick={() => setShowAddTaskDialog(true)}
-                    className={`ccs-glass-control flex flex-1 items-center justify-center rounded-xl text-blue-700 dark:text-blue-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
+                    className={`ccs-glass-control ccs-glass-blue flex flex-1 items-center justify-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
                     <ClipboardList className="w-4 h-4 text-blue-600" />
                     <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
