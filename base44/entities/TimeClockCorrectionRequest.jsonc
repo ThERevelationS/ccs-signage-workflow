@@ -89,6 +89,19 @@
     "review_payload_hash": {
       "type": "string",
       "description": "SHA-256 fingerprint binding the manager decision, reason, and edited correction payload to review_request_id"
+    },
+    "request_kind": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "missed_clock_out"
+      ],
+      "default": "standard",
+      "description": "Correction workflow source; missed_clock_out is created from stale-shift recovery"
+    },
+    "punch_exception_id": {
+      "type": "string",
+      "description": "TimeClockPunchException that created this correction request, when applicable"
     }
   },
   "required": [
