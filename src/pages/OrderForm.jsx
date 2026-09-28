@@ -135,9 +135,6 @@ export default function OrderForm() {
                   ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                   : <Save className="w-4 h-4 mr-1" />}
                 {saveStatus.isSyncing ? "Syncing..." : saveStatus.isSaving ? "Saving..." : "Save & Sync"}
-                {saveStatus.pendingSyncCount > 0 && !saveStatus.isSaving && !saveStatus.isSyncing
-                  ? ` (${saveStatus.pendingSyncCount})`
-                  : ""}
               </Button>
             )}
             {isRegistered && (
