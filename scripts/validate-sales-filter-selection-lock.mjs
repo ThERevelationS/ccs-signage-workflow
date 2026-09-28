@@ -15,7 +15,7 @@ check(toggle.includes('const recordId = String(item.id || "").trim();'),
   "Custom selection must normalize the target record ID");
 check(toggle.includes("if (!recordId || selectionInFlightRef.current.has(recordId)) return false;"),
   "A second rapid toggle for the same record must be rejected synchronously");
-check(toggle.indexOf("selectionInFlightRef.current.add(recordId);") < toggle.indexOf("setSalesFilterSelectionSafely({"),
+check(toggle.indexOf("selectionInFlightRef.current.add(recordId);") < toggle.indexOf("await setSalesFilterSelectionSafely({"),
   "Per-record selection lock must be acquired before persistence");
 check(toggle.includes("recordId,") && toggle.includes("selected: !isSelected,") && toggle.includes("sessionToken,"),
   "Existing authoritative selection helper, intended state and session token must remain intact");
