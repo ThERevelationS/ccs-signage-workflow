@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
@@ -363,6 +364,7 @@ Deno.serve(async (req) => {
 
     if (action === 'estimate_save' || action === 'estimate_submit') {
       const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
+      const EstimateCreateGate = base44.asServiceRole.entities.FleetRepairEstimateCreateGate;
       const Policy = base44.asServiceRole.entities.FleetRepairApprovalPolicy;
       const rows = await Estimate.filter({work_order_id:id});
       if (rows.length > 1) return json({error:'Multiple repair estimates exist for this work order. CCS must resolve them before the mechanic estimate can continue.'},{status:409});
@@ -376,19 +378,16 @@ Deno.serve(async (req) => {
         const patch = repairEstimatePatch(body?.estimate || {});
         const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
         if (!estimate) {
-          const created = await Estimate.create({...patch,work_order_id:id,equipment_id:current.equipment_id||'',status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,estimate_source:'mechanic_portal',mechanic_name:clean(grant.name,80),mechanic_access_id:String(grant.id||''),creation_key:`repair-estimate:${id}`});
-          await new Promise(resolve=>setTimeout(resolve,75));
-          const contenders = await Estimate.filter({work_order_id:id});
-          if (contenders.length > 1) {
-            const foreign = contenders.find((row:any)=>row.id!==created.id && (row.estimate_source!=='mechanic_portal' || String(row.mechanic_access_id||'')!==String(grant.id||'')));
-            if (foreign) {
-              await Estimate.delete(created.id).catch(()=>null);
-              return json({error:'CCS or another mechanic created an estimate at the same time. Your draft was not kept; refresh before continuing.'},{status:409});
-            }
-            const winner=contenders.slice().sort((a:any,b:any)=>String(a.id).localeCompare(String(b.id)))[0];
-            for(const row of contenders)if(row.id!==winner.id)await Estimate.delete(row.id).catch(()=>null);
-            estimate=winner;
-          } else estimate=created;
+          const created = await createFleetRepairEstimateSafely({
+            estimateEntity:Estimate,
+            gateEntity:EstimateCreateGate,
+            workOrderId:id,
+            creationKey:`repair-estimate:${id}`,
+            ownerSource:'mechanic_portal',
+            ownerKey:String(grant.id||''),
+            desired:{...patch,equipment_id:current.equipment_id||'',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},
+          });
+          estimate=created.estimate;
         } else {
           const estimateExpected=String(body?.estimate_expected_updated_date||'').trim();
           if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before saving.'},{status:409});
