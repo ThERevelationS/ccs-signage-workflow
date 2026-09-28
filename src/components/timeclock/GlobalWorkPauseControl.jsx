@@ -161,7 +161,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
           : "Pause counted work time";
 
   const pairedClassName = paired
-    ? `relative z-[1] flex min-h-[36px] items-center justify-center gap-1.5 border-0 border-l border-violet-200/70 bg-transparent font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 disabled:opacity-45 disabled:cursor-not-allowed dark:border-white/10 ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"} ${fullWidth ? "flex-1" : ""} ${paused
+    ? `relative z-[1] flex items-center justify-center border-0 border-l border-violet-200/45 bg-transparent font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 disabled:opacity-45 disabled:cursor-not-allowed dark:border-white/10 ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"} ${fullWidth ? "flex-1" : ""} ${paused
       ? "text-emerald-800 hover:bg-emerald-100/70 dark:text-emerald-200 dark:hover:bg-emerald-400/10"
       : "text-violet-800 hover:bg-violet-100/70 dark:text-violet-200 dark:hover:bg-violet-400/10"}`
     : `${fullWidth ? "w-full justify-center" : ""} px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${paused
@@ -185,7 +185,7 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
       ) : (
         <Pause className="w-4 h-4 text-purple-700 dark:text-violet-300" />
       )}
-      <span className={`font-bold ${paired && compact ? "text-xs" : "text-sm"} ${paused ? "text-green-800 dark:text-emerald-200" : "text-purple-800 dark:text-violet-200"}`}>
+      <span className={`font-bold ${paired && compact ? "text-[11px]" : "text-sm"} ${paused ? "text-green-800 dark:text-emerald-200" : "text-purple-800 dark:text-violet-200"}`}>
         {paused ? "Resume Work" : "Pause Work"}
       </span>
     </button>
