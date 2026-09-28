@@ -130,6 +130,20 @@ test('Boone official Planning Commission sign checklist remains byte-identical w
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone official Planning Commission fee schedule remains byte-identical without promoting 2021 fee amounts to current fees', () => {
+  const feeSchedule = manifest.files.find(file => file.purpose === 'planning_fee_schedule_verify_currency');
+  assert.ok(feeSchedule);
+  assert.equal(feeSchedule.currencyCheck.httpStatus, 200);
+  assert.equal(feeSchedule.currencyCheck.sourceBytes, feeSchedule.bytes);
+  assert.equal(feeSchedule.currencyCheck.sourceSha256, feeSchedule.sha256);
+  assert.equal(feeSchedule.currencyCheck.matchesArchivedCopy, true);
+  assert.match(feeSchedule.currencyCheck.evidenceScope, /current bytes\/hash match the archived repository copy/i);
+  assert.match(feeSchedule.currencyCheck.evidenceScope, /archived document is a 2021 fee schedule/i);
+  assert.match(feeSchedule.currencyCheck.evidenceScope, /does not by itself establish that any individual fee amount printed inside it is current in 2026/i);
+  assert.match(manifest.sourceGapReview, /FeeSchedule\.pdf.*same 281297-byte SHA-256-identical file.*2021 fee schedule/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
   const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
