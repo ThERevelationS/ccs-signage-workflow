@@ -35,6 +35,8 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
         const dateNeededOption = typeof order.date_needed_option === 'string' ? order.date_needed_option.trim() : '';
         const dateOrdered = safeOrderMobileDate(order.date_ordered);
         const dateOrderedOption = typeof order.date_ordered_option === 'string' ? order.date_ordered_option.trim() : '';
+        const dateReceived = safeOrderMobileDate(order.date_received);
+        const dateReceivedOption = typeof order.receipt_option === 'string' ? order.receipt_option.trim() : '';
         return (
           <div
             key={order.id}
@@ -66,6 +68,9 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
               )}
               {(dateOrderedOption || dateOrdered) && (
                 <span>Ordered: <span className="text-gray-700">{dateOrderedOption || format(dateOrdered, 'MMM d, yyyy')}</span></span>
+              )}
+              {(dateReceivedOption || dateReceived) && (
+                <span>Received: <span className="text-gray-700">{dateReceivedOption || format(dateReceived, 'MMM d, yyyy')}</span></span>
               )}
               {order.requestor_name && <span>By: <span className="text-gray-700">{order.requestor_name}</span></span>}
             </div>
