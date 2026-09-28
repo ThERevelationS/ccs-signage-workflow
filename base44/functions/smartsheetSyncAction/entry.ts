@@ -2031,9 +2031,10 @@ Deno.serve(async (req) => {
         if (wantPush) steps.push({ dataset, direction: 'push', label: `${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} → Smartsheet` });
       }
 
+      const runStartedAt = new Date().toISOString();
       await saveSyncStatus(base44, {
         status: 'running',
-        started_at: new Date().toISOString(),
+        started_at: runStartedAt,
         action,
         total_steps: steps.length,
         completed_steps: 0,
@@ -2065,12 +2066,19 @@ Deno.serve(async (req) => {
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'pull')?.label || '';
             await saveSyncStatus(base44, {
               status: 'running',
-              started_at: new Date().toISOString(),
+              started_at: runStartedAt,
               action,
               total_steps: steps.length,
               completed_steps: completedSteps,
               current_step_label: stepLabel,
               results,
+              ...(dataset === 'orders' ? {
+                progress_dataset: 'orders', progress_direction: 'pull', progress_phase: 'reading',
+                progress_current: 0, progress_total: 0,
+                progress_item_label: 'Reading and validating Order Request rows',
+                progress_detail: 'Downloading the configured Smartsheet by permanent row and column IDs',
+                progress_updated_at: new Date().toISOString(),
+              } : {}),
             });
             const pullResult = await pullDataset(base44, token, dataset, profile, config);
             results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
@@ -2081,14 +2089,36 @@ Deno.serve(async (req) => {
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'push')?.label || '';
             await saveSyncStatus(base44, {
               status: 'running',
-              started_at: new Date().toISOString(),
+              started_at: runStartedAt,
               action,
               total_steps: steps.length,
               completed_steps: completedSteps,
               current_step_label: stepLabel,
               results,
             });
-            const pushResult = await pushDataset(base44, token, dataset, profile, config);
+            const pushResult = await pushDataset(base44, token, dataset, profile, config,
+              dataset === 'orders' ? {
+                // A normal combined sync must never reinterpret every preserved
+                // Base44 value as a local edit after pull. Only durable local
+                // Order edits are eligible for the background push step.
+                onlyPendingOrderRecords: action === 'run_sync',
+                orderPushTimeBudgetMs: 4 * 60 * 1000,
+                reportOrderProgress: async (progress: any) => saveSyncStatus(base44, {
+                  status: 'running', started_at: runStartedAt, action,
+                  total_steps: steps.length, completed_steps: completedSteps,
+                  current_step_label: stepLabel, results,
+                  progress_dataset: 'orders', progress_direction: 'push',
+                  progress_phase: progress?.phase || '',
+                  progress_current: Number(progress?.current) || 0,
+                  progress_total: Number(progress?.total) || 0,
+                  progress_item_label: cleanText(progress?.item_label, 220),
+                  progress_detail: cleanText(progress?.detail, 260),
+                  progress_record_id: cleanText(progress?.record_id, 100),
+                  progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
+                  progress_updated_at: new Date().toISOString(),
+                }),
+              } : {});
+
             results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
             completedSteps++;
           }
