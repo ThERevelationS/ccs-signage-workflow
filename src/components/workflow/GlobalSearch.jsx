@@ -38,7 +38,7 @@ const stageNames = {
   installation: "Installation"
 };
 
-export default function GlobalSearch({ className = "" }) {
+export default function GlobalSearch({ className = "", compact = false, shellGlass = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState([]);
@@ -127,11 +127,11 @@ export default function GlobalSearch({ className = "" }) {
       <Button
         size="sm"
         onClick={() => setShowResults(true)}
-        className={`clay-button border-2 px-4 py-2 rounded-xl ${hasActiveFilters ? 'text-purple-700 border-purple-300' : 'text-gray-800 border-gray-200'} ${className}`}
-        style={{ background: hasActiveFilters ? 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' : 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
+        className={`${shellGlass ? "ccs-glass-control" : "clay-button border-2"} ${compact ? "h-7 px-2 py-1" : "px-4 py-2"} rounded-xl ${hasActiveFilters ? 'text-purple-700 border-purple-300' : 'text-gray-800 border-gray-200'} ${className}`}
+        style={shellGlass ? undefined : { background: hasActiveFilters ? 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' : 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
       >
-        <Search className="w-4 h-4 mr-2" />
-        <span className="text-sm font-bold">Search</span>
+        <Search className={`${compact ? "mr-1 h-3.5 w-3.5" : "mr-2 h-4 w-4"}`} />
+        <span className={`${compact ? "text-xs" : "text-sm"} font-bold`}>Search</span>
         {hasActiveFilters && (
           <span className="ml-2 bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
             {(filterStages.length > 0 ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0)}
