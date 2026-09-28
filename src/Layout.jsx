@@ -1018,7 +1018,7 @@ function LayoutContent({ children }) {
           style={{
             paddingTop: isMobile
               ? (isRootRoute ? '0' : '48px')
-              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : (compactView ? '72px' : '90px'))),
+              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : (compactView ? '80px' : '104px'))),
             marginLeft: isSideNav
               ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`)
               : '0',
