@@ -441,6 +441,8 @@ async function pullDataset(
       if (normalized !== undefined) fieldValues[key] = normalized;
     }
 
+    const salesParentRowId = dataset === 'sales' && /^\d+$/.test(cleanText(row?.parent_id, 40))
+      ? cleanText(row.parent_id, 40) : '';
     const existing = recordsByRowId[rowId];
     if (dataset === 'orders') {
       Object.assign(fieldValues, orderStatusFromPulledDates(
@@ -451,6 +453,7 @@ async function pullDataset(
       // A no-op pull must not bump updated_date or rewrite working Sales data.
       // If the snapshot is missing/stale, retain the existing reconciliation path.
       if (dataset === 'sales' && salesPulledFieldsUnchanged(existing, fieldValues) &&
+          cleanText(existing?.smartsheet_parent_row_id, 40) === salesParentRowId &&
           salesPullSnapshotAligned(existing, buildSnapshot(existing, bindings, 'sales'))) {
         unchangedSkipped++;
         continue;
@@ -465,10 +468,12 @@ async function pullDataset(
       }
       toUpdate.push({ id: existing.id, _existing: existing,
         ...(dataset === 'orders' ? { _remoteSnapshot: buildOrderPullSnapshot(row, bindings) } : {}),
+        ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
         ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
+        newRecord.smartsheet_parent_row_id = salesParentRowId;
         if (!newRecord.title) newRecord.title = newRecord.client_name || `Smartsheet row ${rowId}`;
         if (!newRecord.client_name) newRecord.client_name = 'Unknown';
         newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
