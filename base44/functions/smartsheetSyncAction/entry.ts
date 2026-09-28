@@ -216,6 +216,7 @@ function detectConflict(
   for (const cell of currentSmartsheetCells) {
     const colId = String(cell.column_id || cell.columnId || '');
     if (!bindingColumnIds.has(colId)) continue;
+    seenBoundColumnIds.add(colId);
     if (sharedContactId && colId === sharedContactId) {
       // The CONTACT_LIST raw value is its email; display_value is its name.
       // A missing contact snapshot means this field was intentionally not written.
@@ -231,6 +232,12 @@ function detectConflict(
     const last = snapshot[colId];
     const lastStr = last == null ? '' : String(last);
     if (current.trim() !== lastStr.trim()) return true;
+  }
+  if (dataset === 'orders') {
+    for (const colId of bindingColumnIds) {
+      if (seenBoundColumnIds.has(colId) || !Object.prototype.hasOwnProperty.call(snapshot, colId)) continue;
+      if (String(snapshot[colId] ?? '').trim() !== '') return true;
+    }
   }
   return false;
 }
