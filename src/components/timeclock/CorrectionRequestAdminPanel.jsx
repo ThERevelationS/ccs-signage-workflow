@@ -172,7 +172,12 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
             {requests.map((request) => (
               <div key={request.id} className="rounded-lg border bg-white p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="font-medium text-sm">{request.user_name || request.user_email}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="font-medium text-sm">{request.user_name || request.user_email}</div>
+                    {request.request_kind === "missed_clock_out" && (
+                      <Badge className="bg-amber-100 text-amber-800">Missed Clock Out</Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)}</div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
                 </div>
@@ -185,12 +190,14 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open && !busy && !retryingSelected) { setSelected(null); setRetryReview(null); } }}>
         <DialogContent className="clay-card border-none max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Review Time Correction</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{selected?.request_kind === "missed_clock_out" ? "Review Missed Clock Out" : "Review Time Correction"}</DialogTitle></DialogHeader>
           {selected && (
             <div className="space-y-4">
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 flex gap-2 text-sm text-amber-900">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>Approval changes the preserved TimeEntry through the audited backend. Rejection leaves the original shift unchanged.</span>
+                <span>{selected.request_kind === "missed_clock_out"
+                  ? "The employee's reported Clock Out has not been written to the TimeEntry yet. Approval or modification completes the preserved shift through the audited backend; rejection leaves it unresolved."
+                  : "Approval changes the preserved TimeEntry through the audited backend. Rejection leaves the original shift unchanged."}</span>
               </div>
               <div>
                 <div className="font-semibold">{selected.user_name || selected.user_email}</div>
