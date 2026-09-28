@@ -23,14 +23,14 @@ const ui = readFileSync('src/components/orders/OrderSpreadsheet.jsx', 'utf8');
 const page = readFileSync('src/pages/OrderForm.jsx', 'utf8');
 const client = readFileSync('src/components/orders/orderSaveSync.js', 'utf8');
 
-assert.match(backend, /action !== 'push_saved_orders'/);
+assert.match(backend, /!\['push_saved_orders', 'push_saved_sales'\]\.includes\(action\)/);
 assert.match(backend, /if \(action === 'push_saved_orders'\)/);
 assert.match(backend, /recordIds: orderIds/);
 assert.match(backend, /respectOrderCreateSetting: true/);
-assert.match(backend, /query: \{ id: \{ \$in: requestedOrderIds \} \}/);
-assert.match(backend, /saved Order records could not be re-read by permanent ID/);
+assert.match(backend, /query: \{ id: \{ \$in: requestedRecordIds \} \}/);
+assert.match(backend, /could not be re-read by permanent ID/);
 assert.match(backend, /automatic Order row creation is OFF\. No Smartsheet rows were written/);
-assert.match(backend, /requestedOrderIds\.length > massLimit/);
+assert.match(backend, /requestedRecordIds\.length > massLimit/);
 assert.match(backend, /orderPushRecordUnchanged\(record, sheetId, buildSnapshot\(record, bindings, 'orders'\)\)/);
 assert.doesNotMatch(
   backend.slice(backend.indexOf("if (action === 'push_saved_orders')"), backend.indexOf("if (action === 'audit_order_backup_readiness')")),
