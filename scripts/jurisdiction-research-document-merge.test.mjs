@@ -234,6 +234,19 @@ test('Boone electrical application remains an explicit unarchived source gap', (
   assert.equal(manifest.files.some(file => /ElecApp|electrical/i.test(file.filename)), false);
 });
 
+test('Boone 2025 encroachment source identity is current without broadening sign-permit scope', () => {
+  const source = manifest.files.find(file => file.filename === 'encroachment-permit-application-2025.pdf');
+  assert.ok(source);
+  assert.equal(source.sourceVerification.httpStatus, 200);
+  assert.equal(source.sourceVerification.matchesArchivedCopy, true);
+  const bytes = readFileSync(source.repositoryPath);
+  assert.equal(bytes.length, source.sourceVerification.liveBytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sourceVerification.liveSha256);
+  assert.match(source.sourceVerification.evidenceScope, /does not establish that every sign requires an encroachment permit/i);
+  assert.match(source.sourceVerification.evidenceScope, /zoning, sign, or building approvals/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('both server refresh paths use safe merge and individual refresh skips pinned re-download', () => {
   const individual = readFileSync('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   const batch = readFileSync('base44/functions/batchUpdateJurisdictions/entry.ts', 'utf8');
