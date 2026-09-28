@@ -93,8 +93,11 @@ assert.match(auditRoute, /createSmartsheetOrderPageGuard/);
 assert.match(auditRoute, /guard\.assertComplete\(\)/);
 assert.match(auditRoute, /auditOrderRequestorContacts/);
 assert.doesNotMatch(auditRoute, /smartsheetWrite|\.bulkUpdate\(|\.create\(|\.update\(/);
-const unauthenticatedActions = engine.match(/else if \((action !== 'run_sync'.*)\) \{/);
-assert.ok(unauthenticatedActions && !unauthenticatedActions[1].includes('audit_order_requestor_emails'));
+// The current shared boundary allows only a capability-authenticated scheduled
+// run_sync without an admin session. Read-only Order audits are not on it.
+assert.match(engine, /const scheduledRun = !hasSessionToken && action === 'run_sync' &&[\s\S]*?hasWorkflowInvocationCapability/);
+assert.match(engine, /if \(hasSessionToken\) \{[\s\S]*?authenticateSignShopSession[\s\S]*?else if \(!scheduledRun\) \{/);
+assert.ok(start > engine.indexOf("if (hasSessionToken)"));
 console.log('PASS audit API is admin-session-only, read-only and full-page-verified');
 
 const orderPage = await readFile('src/pages/OrderForm.jsx', 'utf8');
