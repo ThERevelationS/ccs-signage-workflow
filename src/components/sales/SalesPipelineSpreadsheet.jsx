@@ -809,6 +809,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         }
         setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, updated_date: saved.updated_date } : row));
         setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, updated_date: saved.updated_date } : selected);
+        markWorkOrderNeedsSync(orderId);
         setQuickEditError("");
       } catch (error) {
         if (!error.message?.includes('not found')) {
@@ -1307,6 +1308,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         label: "Estimate/invoice number and Base44 link",
       });
       setWorkOrders((current) => current.map((row) => row.id === saved.id ? { ...row, ...saved } : row));
+      markWorkOrderNeedsSync(saved.id);
       closeCorbridgeDialog();
     } catch (error) {
       console.error("Could not save Corebridge fields:", error);
@@ -1480,6 +1482,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       label: "Sales Pipeline form Work Order",
     });
     setWorkOrders(prev => [newOrder, ...prev.filter(wo => wo.id !== newOrder.id)]);
+    markWorkOrderNeedsSync(newOrder.id);
   };
 
   React.useImperativeHandle(ref, () => ({
@@ -1487,6 +1490,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     exportToExcel,
     importFromExcel: () => fileInputRef.current?.click(),
     openImportHistory: () => setShowImportHistory(true),
+    saveAndSync,
     handleCreateFromForm
   }));
 
@@ -2393,7 +2397,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           isOpen={true}
           workOrder={selectedWorkOrder}
           onClose={() => setShowFullWorkOrderDetails(false)}
-          onUpdate={refreshSelectedWorkOrder}
+          onUpdate={async () => {
+            markWorkOrderNeedsSync(selectedWorkOrder.id);
+            await refreshSelectedWorkOrder();
+          }}
           onMove={async (wo, newStage) => {
             try {
               await transitionWorkOrderFromLoadedSnapshot({ workOrder: wo, newStage, label: "Sales Pipeline details stage transition" });
