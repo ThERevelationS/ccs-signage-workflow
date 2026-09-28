@@ -120,11 +120,13 @@ async function performOrderSmartsheetCreate({
       smartsheet_sheet_id: targetSheet,
       smartsheet_sync_snapshot: snapshot,
       smartsheet_last_synced_at: syncedAt,
+      smartsheet_pending_local_sync: false,
       smartsheet_create_attempt: { ...marker, status: 'linked', row_id: rowId, linked_at: syncedAt },
     });
     const verified = await entity.get(id);
     if (String(verified?.smartsheet_row_id ?? '') !== rowId ||
         String(verified?.smartsheet_sheet_id ?? '') !== targetSheet ||
+        verified?.smartsheet_pending_local_sync === true ||
         orderSmartsheetCreateNeedsReview(verified)) {
       throw new Error('Base44 did not verify its permanent Order row link.');
     }
