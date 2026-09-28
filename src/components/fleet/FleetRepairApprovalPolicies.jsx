@@ -128,10 +128,8 @@ export default function FleetRepairApprovalPolicies() {
     return () => {
       document.removeEventListener("keydown", handleKey);
       editorReturnFocusRef.current = null;
-      requestAnimationFrame(() => {
-        if (returnTarget?.isConnected) returnTarget.focus();
-        else addButtonRef.current?.focus();
-      });
+      if (returnTarget?.isConnected) returnTarget.focus();
+      else addButtonRef.current?.focus();
     };
   }, [!!editor]);
 
