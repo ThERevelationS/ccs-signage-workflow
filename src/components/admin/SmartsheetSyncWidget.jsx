@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { RefreshCw, Check, AlertTriangle, GitBranch, X } from "lucide-react";
 import { interpretSmartsheetSyncStatus } from "./smartsheetSyncStatusModel.js";
 import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
+import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 
 const STATUS_KEY = 'smartsheetSyncStatus';
 const CONFIG_KEY = 'smartsheetSyncConfig';
@@ -66,17 +67,14 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   if (!config?.global_enabled) return null;
 
   const interpretedStatus = interpretSmartsheetSyncStatus(status);
-  const orderHeartbeatStamp = Date.parse(status?.progress_updated_at || status?.updated_at || status?.started_at || '');
-  const orderHeartbeatAgeMs = Number.isFinite(orderHeartbeatStamp) ? Math.max(0, Date.now() - orderHeartbeatStamp) : null;
+  const orderProgress = orderSyncLiveProgress(status, { enabled: compactOrderForm });
   // The shared widget historically waits 30m before declaring a run stale.
   // Order Form now emits frequent heartbeats, so five quiet minutes is enough
   // to say the run is stalled without changing other CCS sync consumers.
-  const compactOrderStalled = compactOrderForm && status?.status === 'running' &&
-    (orderHeartbeatAgeMs === null || orderHeartbeatAgeMs > 5 * 60 * 1000);
-  const isRunning = interpretedStatus.isRunning && !compactOrderStalled;
-  const isStale = interpretedStatus.isStale || compactOrderStalled;
-  const ageMinutes = compactOrderStalled && orderHeartbeatAgeMs !== null
-    ? Math.floor(orderHeartbeatAgeMs / 60000) : interpretedStatus.ageMinutes;
+  const isRunning = interpretedStatus.isRunning && !orderProgress.stalled;
+  const isStale = interpretedStatus.isStale || orderProgress.stalled;
+  const ageMinutes = orderProgress.stalled && orderProgress.heartbeatAgeMs !== null
+    ? Math.floor(orderProgress.heartbeatAgeMs / 60000) : interpretedStatus.ageMinutes;
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
   const hasSkipped = results.some(r => r.skipped);
@@ -89,15 +87,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const totalSteps = status?.total_steps || 0;
   const completedSteps = status?.completed_steps || 0;
   const currentStepLabel = status?.current_step_label || '';
-  const showOrderGranularProgress = compactOrderForm && status?.progress_dataset === 'orders';
-  const progressCurrent = showOrderGranularProgress ? Math.max(0, Number(status?.progress_current) || 0) : 0;
-  const progressTotal = showOrderGranularProgress ? Math.max(0, Number(status?.progress_total) || 0) : 0;
-  const progressItemLabel = showOrderGranularProgress ? String(status?.progress_item_label || '').trim() : '';
-  const progressDetail = showOrderGranularProgress ? String(status?.progress_detail || '').trim() : '';
-  const stepFraction = isRunning && progressTotal > 0
-    ? Math.min(0.999, progressCurrent / progressTotal) : 0;
-  const progressPercent = totalSteps > 0
-    ? Math.round(((completedSteps + stepFraction) / totalSteps) * 1000) / 10 : 0;
+  const progressCurrent = orderProgress.current;
+  const progressTotal = orderProgress.total;
+  const progressItemLabel = orderProgress.itemLabel;
+  const progressDetail = orderProgress.detail;
+  const progressPercent = orderProgress.show ? orderProgress.percent
+    : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
   // A successful completion dismissal belongs to that specific run, so the next
   // completion can still appear even if polling missed its brief running phase.
