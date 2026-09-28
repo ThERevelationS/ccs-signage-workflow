@@ -38,6 +38,9 @@ check(backend.includes("!['push_saved_orders', 'push_saved_sales'].includes(acti
   "Non-admin users may only reach the two narrow Save & Sync actions, not full sync/admin actions");
 check(backend.includes("if (action === 'push_saved_sales')") && backend.includes("Sales Pipeline Smartsheet mirror is OFF."),
   "Sales Save & Sync must honor the existing Sales mirror kill switch");
+const salesAction = backend.slice(backend.indexOf("if (action === 'push_saved_sales')"), backend.indexOf("if (action === 'audit_order_backup_readiness')"));
+check(!salesAction.includes("push_enabled"),
+  "Manual Sales Save & Sync must not mutate or depend on the scheduled push-enabled flag");
 check(backend.includes("Observation mode is ON; saved Sales changes were not pushed."),
   "Sales Save & Sync must honor observation mode");
 check(backend.includes("const saveSyncLimit = Math.min(configuredLimit, 100);"),
