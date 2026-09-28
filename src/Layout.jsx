@@ -951,14 +951,11 @@ function LayoutContent({ children }) {
                       className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
                         isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                       }`}
-                      style={{
-                        background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.10) : (isActive ? 0.54 : 0.25))} 0%, ${darkMode ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.30)"} 100%)`,
-                        borderColor: hexToRgba(item.borderColor, darkMode ? (isActive ? 0.50 : 0.22) : (isActive ? 0.68 : 0.40)),
-                      }}
+                      style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                       title="Ctrl+Click to open in split view"
                     >
-                      <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
-                      <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                      <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
+                      <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
                         {item.title}
                       </span>
                       {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
@@ -968,7 +965,7 @@ function LayoutContent({ children }) {
 
                       {/* Meetings Section */}
                 <div className={`${compactView ? "mt-1 pt-1" : "mt-2 pt-2"} border-t border-gray-200/50 dark:border-white/10`}>
-                  <span className={`${compactView ? "px-1.5 text-[10px]" : "px-3 text-xs"} font-medium text-gray-400`}>Meetings</span>
+                  <span className={`${compactView ? "px-1.5 text-[10px]" : "px-3 text-xs"} font-medium text-slate-300`}>Meetings</span>
                   {meetingsDropdownItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -980,14 +977,11 @@ function LayoutContent({ children }) {
                         className={`ccs-glass-nav-item flex items-center border ${compactView ? "gap-1.5 rounded-lg px-1.5 py-1" : "gap-2 rounded-xl px-3 py-2"} ${
                           isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                         }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.08) : (isActive ? 0.50 : 0.20))} 0%, ${darkMode ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.24)"} 100%)`,
-                          borderColor: hexToRgba(item.borderColor, darkMode ? 0.24 : 0.38),
-                        }}
+                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
-                        <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium ${isActive ? 'text-purple-900' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                        <item.icon className={`${compactView ? "h-3 w-3" : "h-4 w-4"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
+                        <span className={`${compactView ? "text-[11px]" : "text-sm"} min-w-0 truncate font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
