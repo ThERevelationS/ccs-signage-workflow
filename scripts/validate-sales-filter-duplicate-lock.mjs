@@ -28,7 +28,7 @@ check(duplicateSource.includes("await createUniqueSalesFilterCopy({") &&
   "Existing conflict-safe copy helper and session token path must remain intact");
 check(duplicateSource.includes("await loadData();") && duplicateSource.includes("return true;"),
   "Successful copy must still reload the pool and report success");
-check(duplicateSource.includes("setPersistenceError(error?.message || "The saved filter could not be copied safely.")") &&
+check(duplicateSource.includes('setPersistenceError(error?.message || "The saved filter could not be copied safely.")') &&
       duplicateSource.includes("return false;"),
   "Copy failures must remain visible and report failure");
 check(duplicateSource.includes("finally {") &&
