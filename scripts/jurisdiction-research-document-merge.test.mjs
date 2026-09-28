@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import {
   findExistingJurisdictionDocument,
   jurisdictionDocumentSourceKey,
@@ -102,6 +103,22 @@ test('Boone building application review preserves evidence-bounded GovWell and O
   assert.match(manifest.sourceGapReview, /directs NEW building-permit applications to GovWell/i);
   assert.match(manifest.sourceGapReview, /current evidence does not establish that Oracle is obsolete/i);
   assert.equal(manifest.files.length, 6);
+});
+
+test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
+  assert.equal(manifest.files.length, 6);
+  assert.equal(manifest.webSources.length, 1);
+  const source = manifest.webSources[0];
+  assert.equal(source.sourceUrl, manifest.onlineForms.countyPortalPage);
+  assert.equal(source.httpStatus, 200);
+  assert.equal(source.contentType, 'text/html');
+  const bytes = readFileSync(source.repositoryPath);
+  assert.equal(bytes.length, source.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sha256);
+  const html = bytes.toString('utf8');
+  assert.match(html, /app\.govwell\.com/i);
+  assert.match(html, /fa-erbz-saasfaprod1\.fa\.ocs\.oraclecloud\.com/i);
+  assert.match(source.evidenceScope, /does not establish which permit types, if any, still use Oracle/i);
 });
 
 test('Boone electrical application remains an explicit unarchived source gap', () => {
