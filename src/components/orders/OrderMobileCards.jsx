@@ -48,7 +48,7 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-800 text-base truncate">{order.customer_name}</p>
+                <p className="font-semibold text-gray-800 text-base truncate">{order.customer_name || 'Unnamed customer'}</p>
                 {order.request_type && (
                   <p className="text-sm text-purple-600 font-medium">{order.request_type}</p>
                 )}
