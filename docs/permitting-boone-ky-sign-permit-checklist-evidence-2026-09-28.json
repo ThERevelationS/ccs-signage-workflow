@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Sign Permit checklist current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/SignPermit_checklist.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Sign Permit",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 46354,
+  "sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+  "lastModified": "Fri, 06 Sep 2024 15:17:51 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-checklist.pdf",
+  "purpose": "current_sign_permit_checklist_source_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact PDF in its Checklists section under the label Sign Permit, and the linked PDF returned HTTP 200 with application/pdf content on 2026-09-28. The live file is byte-for-byte identical to the archived repository copy. This establishes current checklist source identity and current listing only. It does not by itself establish that every checklist instruction, requirement, fee, jurisdiction rule, submission workflow, approval path, or applicability statement remains current or applies to a particular sign project."
+}
