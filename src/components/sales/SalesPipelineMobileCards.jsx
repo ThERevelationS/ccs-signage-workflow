@@ -6,6 +6,7 @@ import { getStageAgingState } from "@/components/sales/salesStageAging";
 import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -49,6 +50,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const attentionItems = getActionableSalesAttentionItems(wo, today);
         const attentionKeys = new Set(attentionItems.map((item) => item.key));
         const likelyPlaceholder = isLikelySalesPlaceholder(wo);
+        const salesOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical;
         return (
           <div
             key={wo.id}
@@ -113,7 +115,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
             )}
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-              {wo.sales_rep && <span>Rep: <span className="text-gray-700">{wo.sales_rep}</span></span>}
+              {salesOwnerLabel && <span>Rep: <span className="text-gray-700">{salesOwnerLabel}</span></span>}
               {wo.estimate_amount != null && (
                 <span>Est: <span className="text-gray-700">${wo.estimate_amount.toLocaleString()}</span></span>
               )}
