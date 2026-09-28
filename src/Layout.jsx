@@ -875,7 +875,7 @@ function LayoutContent({ children }) {
         )}
 
         <AnimatePresence>
-          {effectiveCollapsed && (
+          {effectiveCollapsed && !isHovered && (
             navLayout === "side" ? (
               <motion.button
                 key="side-navigation-handle"
@@ -1134,7 +1134,10 @@ function LayoutContent({ children }) {
                 </button>
 
                 {/* Desktop Navigation Links */}
-                <div className={`hidden lg:flex items-center flex-wrap flex-1 ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}>
+                <div
+                  data-top-navigation-links
+                  className={`hidden lg:flex self-center items-center flex-wrap flex-1 ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}
+                >
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     const isInSplit = additionalPages.find(p => item.url.includes(p.name));
