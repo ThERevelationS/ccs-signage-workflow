@@ -65,3 +65,10 @@ const translatedNeededWins = render([{ id: 'translated-needed-wins', customer_na
 assert.match(translatedNeededWins, /Needed: <span class="text-gray-700">In Stock<\/span>/);
 assert.doesNotMatch(translatedNeededWins, /Oct 1, 2026/);
 console.log('PASS mobile cards display translated Date Needed choices and prefer them over stale paired dates');
+
+const unnamedCustomer = render([{ id: 'unnamed-customer', customer_name: '', status: 'pending' }], false, 0);
+assert.match(unnamedCustomer, />Unnamed customer<\/p>/,
+  'mobile cards should visibly identify orders whose customer name is blank');
+assert.match(unnamedCustomer, /aria-label="Open order details for unnamed customer"/,
+  'unnamed-customer fallback should remain aligned with the card action label');
+console.log('PASS mobile cards visibly identify blank customer names instead of rendering an empty heading');
