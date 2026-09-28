@@ -12,14 +12,14 @@ export default function FocusPausePair({
   return (
     <div
       data-focus-pause-pair
-      className={`ccs-glass-control focus-pause-pair group relative flex items-stretch overflow-hidden ${compact ? "rounded-xl" : "rounded-2xl"} ${fullWidth ? "w-full" : ""} ${compact ? "focus-pause-pair--compact" : ""} ${className}`}
+      className={`ccs-glass-control ccs-focus-pause-glass focus-pause-pair group relative flex items-stretch overflow-hidden ${compact ? "rounded-xl" : "rounded-2xl"} ${fullWidth ? "w-full" : ""} ${compact ? "focus-pause-pair--compact" : ""} ${className}`}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-70 dark:opacity-35"
+        className="pointer-events-none absolute inset-0 opacity-60"
         style={{
           background:
-            "radial-gradient(circle at 18% 20%, rgba(196,181,253,0.38), transparent 34%), radial-gradient(circle at 86% 80%, rgba(94,234,212,0.22), transparent 32%)",
+            "linear-gradient(112deg, rgba(255,255,255,0.14), transparent 28%, transparent 70%, rgba(255,255,255,0.05))",
         }}
       />
       <GlobalFocusTimer
