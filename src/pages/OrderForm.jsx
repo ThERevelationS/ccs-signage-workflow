@@ -104,7 +104,7 @@ export default function OrderForm() {
             </MobileSelect>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isRegistered && (
               <Button 
                 onClick={() => spreadsheetRef.current?.addNewRow()}
@@ -117,41 +117,7 @@ export default function OrderForm() {
               </Button>
             )}
             
-            {currentUser?.role === "admin" && !!sessionToken && (
-              <Button
-                type="button"
-                onClick={() => setEmailReviewOpen(true)}
-                size="sm"
-                className="h-8 px-3"
-                variant="ghost"
-              >
-                <ShieldCheck className="w-4 h-4 mr-1" />
-                Review emails
-              </Button>
-            )}
-
-            {currentUser?.role === "admin" && !!sessionToken && (
-              <Button
-                type="button"
-                onClick={() => setCreateAttemptReviewOpen(true)}
-                size="sm"
-                className="h-8 px-3"
-                variant="ghost"
-              >
-                <ShieldCheck className="w-4 h-4 mr-1" />
-                Review sync attempts
-              </Button>
-            )}
-
-            {currentUser?.role === "admin" && !!sessionToken && (
-              <Button type="button" onClick={() => setDateReviewOpen(true)} size="sm"
-                className="h-8 px-3" variant="ghost">
-                <ShieldCheck className="w-4 h-4 mr-1" />
-                Review dates
-              </Button>
-            )}
-
-            {canImportExport && (
+            {canOrderExport && (
               <Button 
                 onClick={() => spreadsheetRef.current?.exportToExcel()}
                 size="sm" 
@@ -170,28 +136,10 @@ export default function OrderForm() {
           searchTerm={searchTerm} 
           filterStatus={filterStatus}
           showButtonsInline={false}
+          canOrderExport={canOrderExport}
         />
       </div>
     </div>
-    {currentUser?.role === "admin" && !!sessionToken && (
-      <>
-        <OrderRequestorEmailReview
-          open={emailReviewOpen}
-          onOpenChange={setEmailReviewOpen}
-          sessionToken={sessionToken}
-        />
-        <OrderCreateAttemptReview
-          open={createAttemptReviewOpen}
-          onOpenChange={setCreateAttemptReviewOpen}
-          sessionToken={sessionToken}
-        />
-        <OrderDateParityReview
-          open={dateReviewOpen}
-          onOpenChange={setDateReviewOpen}
-          sessionToken={sessionToken}
-        />
-      </>
-    )}
     </PullToRefresh>
   );
 }
