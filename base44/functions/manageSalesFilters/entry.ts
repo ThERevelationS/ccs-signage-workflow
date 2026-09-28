@@ -7,6 +7,13 @@ const MAX_CONDITIONS = 100;
 const MAX_COLUMNS = 250;
 const MAX_JSON_CHARS = 200_000;
 const MAX_ATTEMPTS = 4;
+const SALES_INFORMATION_FILTERS = new Set(['all', 'lead', 'quoted', 'follow_up', 'won', 'lost', 'on_hold']);
+const SALES_ATTENTION_FILTERS = new Set([
+  'all', 'overdue', 'today', 'upcoming', 'needs_attention', 'due', 'no_next_action',
+  'quote_no_followup', 'quote_aged', 'near_close', 'close_overdue', 'stale', 'stage_aged',
+  'age_90_plus', 'owner_unassigned', 'source_missing', 'quote_timing_missing',
+  'stage_untracked', 'activity_untracked', 'mine', 'placeholder',
+]);
 
 function cleanText(value: unknown, max: number) {
   return String(value || '').trim().slice(0, max);
@@ -77,6 +84,39 @@ async function loadSalesRoster(AuthorizedEmail: any) {
   return rows
     .map(salesRosterView)
     .filter((row: any) => row.is_active !== false && row.full_name);
+}
+
+function cleanSalesPipelinePreferences(value: any) {
+  const input = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const information = cleanText(input.information_filter, 240) || 'all';
+  const attention = cleanText(input.attention_filter, 80) || 'all';
+  const column = cleanText(input.column_preset_id, 200) || 'default';
+  const informationValid = SALES_INFORMATION_FILTERS.has(information) || /^custom_[A-Za-z0-9_-]{1,200}$/.test(information);
+  const columnValid = column === 'default' || /^[A-Za-z0-9_-]{1,200}$/.test(column);
+  return {
+    information_filter: informationValid ? information : 'all',
+    attention_filter: SALES_ATTENTION_FILTERS.has(attention) ? attention : 'all',
+    column_preset_id: columnValid ? column : 'default',
+  };
+}
+
+async function saveSalesPipelinePreferences(AuthorizedEmail: any, actor: any, value: any) {
+  const next = cleanSalesPipelinePreferences(value);
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    const current = await AuthorizedEmail.get(actor?.id).catch(() => null);
+    if (!current?.id) throw Object.assign(new Error('User preferences could not identify the signed-in user.'), { status: 404 });
+    const result = await AuthorizedEmail.updateMany(
+      { id: current.id, updated_date: current.updated_date },
+      { $set: { sales_pipeline_preferences: next } },
+    );
+    if (!result || typeof result.updated !== 'number') throw new Error('Sales Pipeline preferences result could not be verified.');
+    if (result.updated === 1) {
+      const saved = await AuthorizedEmail.get(current.id).catch(() => null);
+      if (!saved?.id) throw new Error('Sales Pipeline preferences saved but could not be verified.');
+      return cleanSalesPipelinePreferences(saved.sales_pipeline_preferences);
+    }
+  }
+  throw Object.assign(new Error('Sales Pipeline preferences changed repeatedly. Reload before retrying.'), { status: 409 });
 }
 
 async function nameTypeMatches(SalesFilter: any, name: string, type: string) {
@@ -236,6 +276,13 @@ Deno.serve(async (req) => {
     if (action === 'roster') {
       const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
       return Response.json({ users: await loadSalesRoster(AuthorizedEmail) });
+    }
+    if (action === 'preferences_get') {
+      return Response.json({ preferences: cleanSalesPipelinePreferences(actor?.sales_pipeline_preferences) });
+    }
+    if (action === 'preferences_set') {
+      const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
+      return Response.json({ preferences: await saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences) });
     }
     if (action === 'create') return Response.json(await createIfAbsent(SalesFilter, actor, body?.data));
     if (action === 'copy') return Response.json(await copyUnique(SalesFilter, actor, body?.source));
