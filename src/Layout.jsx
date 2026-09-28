@@ -1013,14 +1013,14 @@ function LayoutContent({ children }) {
                   <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
                     <button
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                      className={`ccs-glass-control flex items-center justify-center text-purple-700 dark:text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
+                      className={`ccs-glass-control ccs-glass-purple flex items-center justify-center text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
                       title="Switch to Sidebar"
                     >
                       <PanelLeft className={compactView ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
                     </button>
                     <div className="hidden sm:block">
-                      <h2 className={`${compactView ? "text-xs" : "text-lg"} font-bold leading-tight text-gray-800 dark:text-slate-100`}>Sign Shop</h2>
-                      {!compactView && <p className="text-xs text-gray-500 dark:text-slate-400">Workflow Manager</p>}
+                      <h2 className={`${compactView ? "text-xs" : "text-lg"} font-bold leading-tight text-white`}>Sign Shop</h2>
+                      {!compactView && <p className="text-xs text-slate-300">Workflow Manager</p>}
                     </div>
                   </div>
                   <ShellViewControls
@@ -1057,14 +1057,11 @@ function LayoutContent({ children }) {
                         className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"} ${
                           isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                         }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.09) : (isActive ? 0.48 : 0.22))} 0%, ${darkMode ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.25)"} 100%)`,
-                          borderColor: hexToRgba(item.borderColor, darkMode ? (isActive ? 0.50 : 0.20) : (isActive ? 0.64 : 0.38)),
-                        }}
+                        style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
-                        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                        <item.icon className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
+                        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
@@ -1078,13 +1075,10 @@ function LayoutContent({ children }) {
                       onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
                       onBlur={() => setTimeout(() => setMeetingsDropdownOpen(false), 150)}
                       className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"}`}
-                      style={{
-                        background: `linear-gradient(135deg, ${darkMode ? "rgba(253,230,138,0.12)" : "rgba(253,230,138,0.28)"} 0%, ${darkMode ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.24)"} 100%)`,
-                        borderColor: darkMode ? "rgba(253,230,138,0.20)" : "rgba(232,216,168,0.48)",
-                      }}
+                      style={{ "--glass-accent-rgb": hexToRgbTuple("#FACC15") }}
                     >
-                      <Calendar className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
-                      <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${meetingsDropdownItems.some(item => location.pathname === item.url) ? 'text-purple-900' : 'text-gray-700'}`}>
+                      <Calendar className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: "#FACC15" }} />
+                      <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium text-slate-100`}>
                         Meetings
                       </span>
                       <ChevronDown className={`w-3 h-3 transition-transform ${meetingsDropdownOpen ? 'rotate-180' : ''}`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
