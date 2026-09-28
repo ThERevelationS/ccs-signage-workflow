@@ -722,7 +722,8 @@ function LayoutContent({ children }) {
                   setNavCollapsed(false);
                   setIsHovered(false);
                 }}
-                className="ccs-navigation-handle fixed left-0 top-1/2 z-[60] flex h-[132px] w-[30px] -translate-y-1/2 items-center justify-center gap-2 rounded-r-2xl text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                className="ccs-navigation-handle fixed left-0 top-1/2 z-[60] flex h-[132px] w-[30px] items-center justify-center gap-2 rounded-r-2xl text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                style={{ marginTop: -66 }}
                 title="Open Navigation Bar"
                 aria-label="Open Navigation Bar"
               >
@@ -744,7 +745,8 @@ function LayoutContent({ children }) {
                   setNavCollapsed(false);
                   setIsHovered(false);
                 }}
-                className="ccs-navigation-handle fixed left-1/2 top-0 z-[60] flex h-[28px] -translate-x-1/2 items-center gap-1.5 rounded-b-2xl px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                className="ccs-navigation-handle fixed left-1/2 top-0 z-[60] flex h-[28px] w-[148px] items-center justify-center gap-1.5 rounded-b-2xl text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:text-slate-100"
+                style={{ marginLeft: -74 }}
                 title="Open Navigation Bar"
                 aria-label="Open Navigation Bar"
               >
