@@ -48,16 +48,16 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     prevRunningRef.current = isRunning;
   }, [status?.status]);
 
-  // Healthy completed syncs use a short-lived toast everywhere. The timeout is
-  // anchored to the actual completion timestamp, so an old successful run never
-  // reappears merely because a page was opened later. Failures/reviews stay visible.
+  // Order Form only: a successful run disappears nine seconds after its actual
+  // completion timestamp, not nine seconds after opening a page six hours later.
+  // Failures and reviews never auto-dismiss. Re-key for each new completed run.
   const orderToast = orderSyncToastState(status);
   useEffect(() => {
-    if (!orderToast.compact || !orderToast.visible) return;
+    if (!compactOrderForm || !orderToast.compact || !orderToast.visible) return;
     const delay = Math.max(0, orderToast.expiresAt - Date.now());
     const timeout = setTimeout(() => setDismissedSuccessRun(orderToast.key), delay);
     return () => clearTimeout(timeout);
-  }, [orderToast.compact, orderToast.visible, orderToast.expiresAt, orderToast.key]);
+  }, [compactOrderForm, orderToast.compact, orderToast.visible, orderToast.expiresAt, orderToast.key]);
 
   if (loading) return null;
   if (!config?.global_enabled) return null;
@@ -77,12 +77,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const currentStepLabel = status?.current_step_label || '';
   const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
-  // A successful completion dismissal belongs to that specific run, so the next
-  // completion can still appear even if polling missed its brief running phase.
-  if (!isRunning && (orderToast.compact
-    ? Boolean(orderToast.key && dismissedSuccessRun === orderToast.key)
+  // The Order Form's close state belongs to a particular run, so a new
+  // completion is visible even if polling missed its short running phase.
+  if (!isRunning && (compactOrderForm
+    ? Boolean(orderToast.key && dismissedOrderRun === orderToast.key)
     : dismissed)) return null;
-  if (orderToast.compact && !orderToast.visible) return null;
+  if (compactOrderForm && orderToast.compact && !orderToast.visible) return null;
   if (!isRunning && !isStale && !status?.completed_at) return null;
   if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded && !(compactOrderForm && hasSkipped)) return null;
 
@@ -90,49 +90,46 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const lastSyncDate = lastSync ? new Date(lastSync) : null;
   const minutesAgo = lastSyncDate ? Math.floor((Date.now() - lastSyncDate.getTime()) / 60000) : null;
 
-  // Healthy running/completed syncs use one compact horizontal toast across the
-  // app. Error, stale, skipped, conflict and review-required states retain the
-  // expanded card below so important failures are never hidden by compact UI.
-  if (orderToast.compact ||
-    (isRunning && !isStale && !hasErrors && !hasSkipped && !hasConflicts && !hasReviewNeeded)) {
+  // Keep the Order Form notification close to one third of the original
+  // height, with no redundant footer or multi-row result list. Error/review
+  // detail keeps the expanded presentation so important warnings remain clear.
+  if (compactOrderForm && (orderToast.compact ||
+    (isRunning && !isStale && !hasErrors && !hasSkipped && !hasConflicts))) {
     const orderResults = results.filter(r => r.dataset === 'orders');
-    const displayResults = compactOrderForm && orderResults.length ? orderResults : results;
+    const displayResults = orderResults.length ? orderResults : results;
     const created = displayResults.reduce((sum, r) => sum + (Number(r.created) || 0), 0);
     const updated = displayResults.reduce((sum, r) => sum + (Number(r.updated) || 0), 0);
-    const onlyResult = displayResults.length === 1 ? displayResults[0] : null;
-    const datasetLabel = onlyResult?.dataset
-      ? String(onlyResult.dataset).charAt(0).toUpperCase() + String(onlyResult.dataset).slice(1)
-      : 'Sync';
-    const directionLabel = onlyResult?.direction === 'pull' ? 'SS→B44' : onlyResult?.direction === 'push' ? 'B44→SS' : '';
     return (
-      <div className="fixed right-3 bottom-20 z-50 w-[min(620px,calc(100vw-24px))] md:bottom-3"
+      <div className="fixed right-3 bottom-20 z-50 w-[min(440px,calc(100vw-24px))] md:bottom-3"
         role="status" aria-live="polite" aria-label={isRunning ? "Smartsheet sync in progress" : "Smartsheet sync completed"}>
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-          <div className="flex min-h-9 items-center gap-2.5">
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50">
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg">
+          <div className="flex min-h-10 items-center gap-2.5">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50">
               {isRunning
                 ? <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
                 : <Check className="h-4 w-4 text-emerald-600" />}
             </span>
-            <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
-              <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
-              <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-slate-800">
+                {isRunning ? "Syncing…" : "Synced"}
+                {!isRunning && <span className="ml-2 font-normal text-slate-400">just now</span>}
+              </div>
+              <p className="mt-0.5 truncate text-[11px] text-slate-500">
                 {isRunning
                   ? `${currentStepLabel || "Working…"} · ${progressPercent}%`
-                  : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
-              </span>
-              {!isRunning && <span className="shrink-0 text-[10px] text-slate-400">just now</span>}
+                  : `${orderResults.length ? "Orders" : "Sync"} · +${created.toLocaleString()} created · ${updated.toLocaleString()} updated`}
+              </p>
             </div>
             {!isRunning && (
               <button type="button" aria-label="Dismiss sync notification"
                 onClick={() => setDismissedSuccessRun(orderToast.key)}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
           {isRunning && (
-            <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
               <div className="h-full rounded-full bg-blue-500 transition-all duration-500"
                 style={{ width: `${Math.max(5, progressPercent)}%` }} />
             </div>
@@ -181,7 +178,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
           </div>
           {!isRunning && (
             <button
-              onClick={() => compactOrderForm ? setDismissedOrderRun(orderToast.key) : setDismissed(true)}
+              onClick={() => compactOrderForm ? setDismissedSuccessRun(orderToast.key) : setDismissed(true)}
               className="flex-shrink-0 p-1 rounded hover:bg-gray-100"
               title="Dismiss"
             >

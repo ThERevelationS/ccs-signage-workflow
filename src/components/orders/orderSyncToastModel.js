@@ -1,4 +1,4 @@
-// Order Form-only presentation policy; never hides a failed, skipped, stale,
+// Shared healthy-sync toast policy; never hides a failed, skipped, stale,
 // conflicted or review-required sync result automatically.
 export const ORDER_SYNC_SUCCESS_VISIBLE_MS = 9000;
 
