@@ -52,6 +52,20 @@
       "repositoryPath": "public/permitting/sources/boone-ky/encroachment-permit-application-2025.pdf"
     }
   ],
+  "webSources": [
+    {
+      "title": "Boone County Building Permits — current official page snapshot",
+      "sourceUrl": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
+      "checkedAt": "2026-09-28",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "bytes": 127897,
+      "sha256": "27ec2c9bf89658bc077efd07662ef3b93c66dc2fedb9f88d39e6d030e521df99",
+      "repositoryPath": "public/permitting/sources/boone-ky/building-permits-page-2026-09-28.html",
+      "purpose": "current_building_permit_process_and_portal_evidence",
+      "evidenceScope": "Snapshot supports the current county sequence to obtain zoning approval, create a GovWell account, apply online, and wait for permit issuance before starting work. The same current page separately links Oracle; this snapshot does not establish which permit types, if any, still use Oracle."
+    }
+  ],
   "onlineForms": {
     "signZoningApplication": "PDF from Planning Commission; no authenticated Planning Commission online submission portal verified",
     "buildingPermitPortal": "https://app.govwell.com/",
