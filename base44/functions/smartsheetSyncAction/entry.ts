@@ -1112,7 +1112,9 @@ Deno.serve(async (req) => {
     let adminActor: any = null;
     if (hasSessionToken) {
       const actor = await authenticateSignShopSession(base44, body?.session_token);
-      if (actor?.role !== 'admin') {
+      // Save & Sync is intentionally available to any currently authorized
+      // Order Form user, but it can only push the exact saved Order IDs.
+      if (actor?.role !== 'admin' && action !== 'push_saved_orders') {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
       adminActor = actor;
@@ -1127,9 +1129,54 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders'],
         write_actions_available: true,
       });
+    }
+
+    if (action === 'push_saved_orders') {
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
+      }
+      const { config } = await loadSyncConfig(base44);
+      if (!config) return Response.json({ success: false, error: 'Smartsheet sync configuration is missing.' }, { status: 400 });
+      if (!config.global_enabled) return Response.json({ success: false, error: 'Global sync kill switch is OFF.' }, { status: 400 });
+      if (config.observation_mode) return Response.json({ success: false, error: 'Observation mode is ON; saved Orders were not pushed.' }, { status: 400 });
+      const profile = config?.orders || {};
+      if (!profile?.mirror_enabled) return Response.json({ success: false, error: 'Order Form Smartsheet mirror is OFF.' }, { status: 400 });
+
+      const rawIds = Array.isArray(body?.order_ids) ? body.order_ids : [];
+      const cleanedIds = rawIds.map((id: unknown) => cleanText(id, 80));
+      if (cleanedIds.length === 0 || cleanedIds.some((id: string) => !/^[A-Za-z0-9_-]{6,80}$/.test(id))) {
+        return Response.json({ success: false, error: 'Save & Sync requires valid permanent Order IDs.' }, { status: 400 });
+      }
+      const orderIds = [...new Set(cleanedIds)];
+      const massLimit = Math.max(1, Number(config?.mass_change_limit_count) || 25);
+      if (orderIds.length > massLimit) {
+        return Response.json({ success: false,
+          error: `${orderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit.` }, { status: 400 });
+      }
+
+      await saveSyncStatus(base44, {
+        status: 'running', started_at: new Date().toISOString(), action,
+        total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
+        requested_order_ids: orderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
+      });
+
+      const pushResult = await pushDataset(base44, token, 'orders', profile, config, {
+        recordIds: orderIds,
+        respectOrderCreateSetting: true,
+      });
+      const result = { ...pushResult, dataset: 'orders', direction: 'push' };
+      const needsReview = orderRunRequiresReview([result]);
+      await saveSyncStatus(base44, {
+        status: needsReview ? 'needs_review' : 'completed', needs_review: needsReview,
+        completed_at: new Date().toISOString(), action, total_steps: 1, completed_steps: 1,
+        current_step_label: '', requested_order_ids: orderIds,
+        requested_by: cleanText(adminActor?.email, 320), results: [result],
+      });
+      return Response.json({ success: true, configured: true, write_actions_available: true,
+        sync_complete: !needsReview, needs_review: needsReview, results: [result] });
     }
 
     if (action === 'audit_order_backup_readiness') {
