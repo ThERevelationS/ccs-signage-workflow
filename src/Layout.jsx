@@ -1434,14 +1434,14 @@ function LayoutContent({ children }) {
             {/* Mobile full-page menu overlay */}
             {mobileMenuOpen && (
               <div
-                className="fixed inset-0 z-40"
-                style={{ background: darkMode ? 'rgba(20,20,40,0.97)' : 'rgba(255,255,255,0.97)', paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
+                className="ccs-glass-shell fixed inset-0 z-40"
+                style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}
               >
                 <div className="h-full overflow-y-auto p-4 pt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold" style={{ color: darkMode ? '#e2e8f0' : '#1f2937' }}>All Pages</h2>
-                    <button onClick={() => setMobileMenuOpen(false)} className="p-2">
-                      <X className="w-5 h-5" style={{ color: darkMode ? '#e2e8f0' : '#6B7280' }} />
+                    <h2 className="text-lg font-bold text-white">All Pages</h2>
+                    <button onClick={() => setMobileMenuOpen(false)} className="ccs-glass-control ccs-glass-neutral rounded-lg p-2 text-slate-100">
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                   {currentUser && (
@@ -1477,17 +1477,11 @@ function LayoutContent({ children }) {
                           key={item.title}
                           to={item.url}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="px-4 py-3 rounded-xl flex items-center gap-3 min-h-[48px] border"
-                          style={{
-                            background: isActive
-                              ? `linear-gradient(135deg, ${item.borderColor} 0%, ${item.color} 100%)`
-                              : `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
-                            borderColor: isActive ? item.borderColor : item.borderColor,
-                            borderWidth: isActive ? '2px' : '1px',
-                          }}
+                          className={`ccs-glass-nav-item flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 ${isActive ? "font-bold" : ""}`}
+                          style={{ "--glass-accent-rgb": hexToRgbTuple(item.accent) }}
                         >
-                          <item.icon className="w-5 h-5 flex-shrink-0" style={{ color: isActive ? '#3730A3' : '#6B7280' }} />
-                          <span className={`font-medium text-base ${isActive ? 'text-indigo-900 font-bold' : 'text-gray-700'}`}>
+                          <item.icon className="h-5 w-5 flex-shrink-0" style={{ color: item.accent, filter: isActive ? `drop-shadow(0 0 6px ${item.accent})` : undefined }} />
+                          <span className={`text-base font-medium text-slate-100 ${isActive ? "font-bold text-white" : ""}`}>
                             {item.title}
                           </span>
                         </Link>
