@@ -20,7 +20,7 @@ function readTimer(key) {
 
 // Personal planning only. This must not mutate TimeEntry, break, Work Pause,
 // Current Work, allocations or pay-period state, even when "Break" is selected.
-export default function GlobalFocusTimer({ currentUser, paired = false, compact = false, fullWidth = false } = {}) {
+export default function GlobalFocusTimer({ currentUser, paired = false, compact = false } = {}) {
   const identity = currentUser?.id || currentUser?.email;
   const key = timerStorageKey(identity);
   const [timer, setTimer] = useState(() => readTimer(key));
