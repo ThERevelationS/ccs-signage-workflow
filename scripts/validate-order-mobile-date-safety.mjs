@@ -17,4 +17,9 @@ for (const invalid of [null, undefined, '', 'In Stock', 'ASAP', '2026-02-30', '2
 }
 
 assert.match(source, /const dateNeeded = safeOrderMobileDate\(order\.date_needed\)/);
-console.log('PASS Order mobile cards render only verified YYYY-MM-DD Date Needed values and safely ignore translated text or malformed dates');
+assert.match(source, /const dateOrdered = safeOrderMobileDate\(order\.date_ordered\)/);
+assert.match(source, /const dateOrderedOption = typeof order\.date_ordered_option === 'string' \? order\.date_ordered_option\.trim\(\) : ''/);
+assert.match(source, /\{dateOrderedOption \|\| format\(dateOrdered, 'MMM d, yyyy'\)\}/);
+assert.ok(source.indexOf('dateOrderedOption || format(dateOrdered') > source.indexOf('dateOrderedOption || dateOrdered'),
+  'mobile Ordered display should prefer a translated option over a paired calendar date');
+console.log('PASS Order mobile cards render verified Needed/Ordered dates, preserve translated option precedence, and safely ignore malformed calendar values');
