@@ -219,7 +219,15 @@ try {
       await first.getByText("Synthetic admin A").waitFor();
       // Second administrator may retry after A releases; backend now rejects overlap.
       await secondDialog.getByRole("button", { name: "Create", exact: true }).click();
-      await second.getByText(/overlaps Synthetic admin A/).waitFor();
+      await second.getByText(/overlaps Synthetic admin A/).waitFor({ timeout: 4500 }).catch(async (error) => {
+        console.error("CONCURRENT_RETRY_DIAGNOSTIC", JSON.stringify({
+          gate: fixture.h.rows.TimeClockPayPeriodCreateGate,
+          periods: fixture.h.rows.TimeClockPayPeriod,
+          invokes: fixture.invokes.map((item) => ({ action: item.action, request_id: item.request_id, label: item.label })),
+          screen: (await second.locator("body").innerText()).slice(0, 1800),
+        }));
+        throw error;
+      });
       assertClean();
       assert.equal(fixture.h.rows.TimeClockPayPeriod[0].label, "Synthetic admin A");
     });
