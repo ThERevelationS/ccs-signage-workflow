@@ -50,7 +50,7 @@ export default function AddTaskDialog({ isOpen, onClose }) {
       loadData();
       resetForm();
     }
-  }, [isOpen]);
+  }, [isOpen, sessionToken]);
 
   const loadData = async () => {
     setIsLoading(true);
