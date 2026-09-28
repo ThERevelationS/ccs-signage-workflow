@@ -875,14 +875,14 @@ function LayoutContent({ children }) {
         )}
 
         <AnimatePresence>
-          {effectiveCollapsed && !isHovered && (
+          {effectiveCollapsed && (
             navLayout === "side" ? (
               <motion.button
                 key="side-navigation-handle"
                 data-shell-navigation-handle="side"
                 type="button"
                 initial={reduceMotion ? false : { x: -18, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
+                animate={{ x: isHovered ? sideNavWidth - 1 : 0, opacity: 1 }}
                 exit={reduceMotion ? { opacity: 0 } : { x: -18, opacity: 0 }}
                 transition={shellTransition}
                 onMouseEnter={() => setIsHovered(true)}
@@ -905,7 +905,7 @@ function LayoutContent({ children }) {
                 data-shell-navigation-handle="top"
                 type="button"
                 initial={reduceMotion ? false : { y: -14, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
+                animate={{ y: isHovered ? topNavHeight - 1 : 0, opacity: 1 }}
                 exit={reduceMotion ? { opacity: 0 } : { y: -14, opacity: 0 }}
                 transition={shellTransition}
                 onMouseEnter={() => setIsHovered(true)}
