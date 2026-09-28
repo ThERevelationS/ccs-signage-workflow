@@ -32,7 +32,8 @@
         "pto_balance_assign",
         "pto_policy_delete",
         "pto_policy_update",
-        "pto_policy_create"
+        "pto_policy_create",
+        "punch_exception"
       ]
     },
     "outcome": {
