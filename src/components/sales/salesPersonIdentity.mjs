@@ -30,9 +30,15 @@ export function canonicalSalesPersonRoster(users = []) {
 
   const canonical = [];
   for (const group of byFirst.values()) {
-    const fullNames = group.filter((user) => clean(user.full_name).includes(" "));
-    if (fullNames.length === 1) {
-      canonical.push(mergeUsers(fullNames[0], group.filter((user) => user !== fullNames[0])));
+    const fullByName = new Map();
+    for (const user of group.filter((candidate) => clean(candidate.full_name).includes(" "))) {
+      const nameKey = key(user.full_name);
+      if (!fullByName.has(nameKey)) fullByName.set(nameKey, []);
+      fullByName.get(nameKey).push(user);
+    }
+    if (fullByName.size === 1) {
+      const fullRecords = [...fullByName.values()][0];
+      canonical.push(mergeUsers(fullRecords[0], group.filter((user) => user !== fullRecords[0])));
       continue;
     }
 
