@@ -29,6 +29,27 @@ export async function getSmartsheetSyncStatus({ sessionToken } = {}) {
   return invokeSmartsheet("status", sessionToken);
 }
 
+export async function getSmartsheetSyncConfig({ sessionToken } = {}) {
+  const result = await invokeSmartsheet("config_get", sessionToken);
+  return result?.record || null;
+}
+
+export async function saveSmartsheetSyncConfig({ sessionToken, loadedRecord, settingValue } = {}) {
+  const record = loadedRecord && typeof loadedRecord === "object" ? loadedRecord : null;
+  if (!record?.id || !record?.updated_date || !record?.setting_value) {
+    throw new Error("Smartsheet sync settings are missing their loaded save baseline. Reload before saving.");
+  }
+  const result = await invokeSmartsheet("config_save", sessionToken, {
+    expected_updated_date: record.updated_date,
+    expected_setting_value: record.setting_value,
+    setting_value: settingValue,
+  });
+  if (!result?.record?.id || !result?.record?.updated_date || !result?.record?.setting_value) {
+    throw new Error("Smartsheet sync settings saved but the result could not be verified.");
+  }
+  return result.record;
+}
+
 export async function testSmartsheetConnection({ sessionToken } = {}) {
   return invokeSmartsheet("test_connection", sessionToken);
 }
