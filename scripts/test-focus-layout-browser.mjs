@@ -179,6 +179,11 @@ try {
         `Desktop work content starts below the expanded top shell (nav=${topNavBox?.height}, padding=${mainPadding})`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         "Desktop shell creates no horizontal page overflow");
+      const topLinks = page.locator("[data-top-navigation-links]:visible");
+      const topLinksBox = await topLinks.boundingBox();
+      assert.ok(topNavBox && topLinksBox &&
+        Math.abs((topLinksBox.y + topLinksBox.height / 2) - (topNavBox.y + topNavBox.height / 2)) <= 8,
+        `Roomy top navigation links are vertically centered in the bar (navCenter=${topNavBox ? topNavBox.y + topNavBox.height / 2 : "?"}, linksCenter=${topLinksBox ? topLinksBox.y + topLinksBox.height / 2 : "?"})`);
       const pair = page.locator("[data-focus-pause-pair]:visible");
       const focusButton = page.getByRole("button", { name: /Open focus timer/ });
       const pauseButton = page.locator("[data-work-pause-trigger]:visible");
@@ -271,6 +276,9 @@ try {
       await page.waitForTimeout(700);
       box = await topNav.boundingBox();
       assert.ok(box && box.y >= -1, "Hovering the centered bump smoothly previews the full top bar");
+      const openTopHandleBox = await handle.boundingBox();
+      assert.ok(box && openTopHandleBox && openTopHandleBox.y >= box.y + box.height - 2,
+        "Expanded top navigation moves the Navigation Bar bump below the controls instead of covering them");
 
       await page.mouse.move(700, 500);
       await page.waitForTimeout(700);
@@ -323,6 +331,9 @@ try {
       await page.waitForTimeout(700);
       box = await sideNav.boundingBox();
       assert.ok(box && box.x >= -1, "Hovering side bump smoothly previews the full sidebar");
+      const openSideHandleBox = await handle.boundingBox();
+      assert.ok(box && openSideHandleBox && openSideHandleBox.x >= box.x + box.width - 2,
+        "Expanded compact sidebar moves the Navigation Bar bump outside the buttons instead of covering them");
 
       await page.mouse.move(700, 500);
       await page.waitForTimeout(700);
