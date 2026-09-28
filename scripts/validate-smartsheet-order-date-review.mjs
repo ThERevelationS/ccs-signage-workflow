@@ -76,10 +76,14 @@ assert.equal(staleReport.samples.stale_text_options.find(s => s.field === 'date_
 console.log('PASS stale text options are reported for matching dates and blank source cells without automatic clearing');
 
 const ui = readFileSync('src/components/orders/OrderDateParityReview.jsx', 'utf8');
-const page = readFileSync('src/pages/OrderForm.jsx', 'utf8');
+const reviewTools = readFileSync('src/components/orders/OrderReviewTools.jsx', 'utf8');
+const syncAdmin = readFileSync('src/components/admin/SmartsheetSyncSettings.jsx', 'utf8');
+const orderPage = readFileSync('src/pages/OrderForm.jsx', 'utf8');
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
-assert.match(page, /currentUser\?\.role === "admin" && !!sessionToken && \(\s*<Button type="button" onClick=\{\(\) => setDateReviewOpen\(true\)\}/);
-assert.match(page, /<OrderDateParityReview[\s\S]*?sessionToken=\{sessionToken\}/);
+assert.match(reviewTools, /if \(!sessionToken\) return null/);
+assert.match(reviewTools, /<OrderDateParityReview[\s\S]*?sessionToken=\{sessionToken\}/);
+assert.match(syncAdmin, /<OrderReviewTools sessionToken=\{sessionToken\}/);
+assert.doesNotMatch(orderPage, /Review dates|Review emails|Review sync attempts|OrderDateParityReview/);
 assert.match(ui, /action: "audit_order_dates", session_token: sessionToken/);
 assert.match(ui, /data\.read_only !== true \|\| data\.sheet_download_verified !== true/);
 assert.match(ui, /active\.current !== requestId/);
