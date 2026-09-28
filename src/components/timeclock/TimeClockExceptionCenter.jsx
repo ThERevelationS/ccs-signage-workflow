@@ -46,6 +46,7 @@ export default function TimeClockExceptionCenter({
 }) {
   const nowMs = Date.now();
   const activeEntries = timeEntries.filter(entry => entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data);
+  const unresolvedPunchEntries = timeEntries.filter(entry => entry.status === "needs_resolution" && !entry.archived_admin && !entry.archived_test_data);
   const activeEntryById = new Map(activeEntries.map(entry => [entry.id, entry]));
   const breakById = new Map(activeBreaks.map(row => [row.id, row]));
   const pauseById = new Map(activeWorkPauses.map(row => [row.id, row]));
@@ -75,6 +76,18 @@ export default function TimeClockExceptionCenter({
   for (const row of activeBreaks) addGrouped(breaksByEntryId, row.time_entry_id, row);
   for (const row of activeWorkPauses) addGrouped(pausesByEntryId, row.time_entry_id, row);
   for (const row of activeLaborSegments) addGrouped(laborByEntryId, row.time_entry_id, row);
+
+  for (const entry of unresolvedPunchEntries) {
+    exceptions.push({
+      key: `punch-resolution:${entry.id}`,
+      severity: "critical",
+      icon: FileWarning,
+      title: "Missed punch awaiting manager review",
+      employee: entry.user_name || entry.user_email,
+      detail: "The employee reported a missed Clock Out. The old shift is preserved with no fabricated Clock Out and is excluded from active work while its correction awaits manager review. Pay-period finalization remains blocked until it is resolved.",
+      entry,
+    });
+  }
 
   for (const [email, rows] of statesByEmail.entries()) {
     if (rows.length > 1) {
