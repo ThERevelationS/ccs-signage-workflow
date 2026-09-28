@@ -87,6 +87,20 @@ const isUserAdmin = (user) => {
   return user?.role === "admin";
 };
 
+const SHELL_SPRING = {
+  type: "spring",
+  stiffness: 210,
+  damping: 30,
+  mass: 0.82,
+};
+
+const hexToRgba = (hex, alpha) => {
+  const normalized = String(hex || "").replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return `rgba(148, 163, 184, ${alpha})`;
+  const value = Number.parseInt(normalized, 16);
+  return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+};
+
 function ShellViewControls({
   compactView,
   onToggleCompact,
@@ -101,7 +115,7 @@ function ShellViewControls({
   return (
     <div
       data-shell-view-controls
-      className="mt-1 flex items-center gap-1 rounded-xl border border-white/60 bg-white/45 p-0.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/35"
+      className={`ccs-glass-strip mt-1 flex items-center gap-0.5 rounded-xl ${compactView ? "h-[17px] p-px" : "h-[20px] p-px"}`}
     >
       <motion.button
         type="button"
@@ -109,7 +123,7 @@ function ShellViewControls({
         onClick={onToggleCompact}
         aria-pressed={compactView}
         title={compactView ? "Return navigation to comfortable spacing" : "Use compact navigation spacing"}
-        className={`flex h-5 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1.5 text-[9px] font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${compactView
           ? "bg-violet-100/90 text-violet-800 dark:bg-violet-400/20 dark:text-violet-100"
           : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
@@ -125,7 +139,7 @@ function ShellViewControls({
         onClick={onToggleCollapsed}
         aria-pressed={collapsed}
         title={collapsed ? "Pin navigation open" : "Collapse navigation; hover the screen edge to peek"}
-        className={`flex h-5 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1.5 text-[9px] font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${collapsed
+        className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${collapsed
           ? "bg-cyan-100/90 text-cyan-900 dark:bg-cyan-400/15 dark:text-cyan-100"
           : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
