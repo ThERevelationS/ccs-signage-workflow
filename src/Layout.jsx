@@ -31,6 +31,11 @@ import {
   Megaphone,
   LogIn,
   GitBranch,
+  Minimize2,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 import { DarkModeSwitch } from "react-toggle-dark-mode";
 import { AuthProvider, useAuth } from "@/components/auth/EmailGate";
@@ -46,8 +51,7 @@ import AnnouncementManager from "@/components/announcements/AnnouncementManager"
 import { AnnouncementProvider } from "@/components/announcements/AnnouncementContext";
 import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
-import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
-import GlobalFocusTimer from "@/components/timeclock/GlobalFocusTimer";
+import FocusPausePair from "@/components/timeclock/FocusPausePair";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
 
 // Context for multi-page view
@@ -82,6 +86,58 @@ const meetingsDropdownItems = [
 const isUserAdmin = (user) => {
   return user?.role === "admin";
 };
+
+function ShellViewControls({
+  compactView,
+  onToggleCompact,
+  collapsed,
+  onToggleCollapsed,
+  navLayout,
+} = {}) {
+  const CollapseIcon = navLayout === "side"
+    ? (collapsed ? ChevronsRight : ChevronsLeft)
+    : (collapsed ? ChevronsDown : ChevronsUp);
+
+  return (
+    <div
+      data-shell-view-controls
+      className="mt-1 flex items-center gap-1 rounded-xl border border-white/60 bg-white/45 p-0.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/35"
+    >
+      <motion.button
+        type="button"
+        data-shell-compact-toggle
+        onClick={onToggleCompact}
+        aria-pressed={compactView}
+        title={compactView ? "Return navigation to comfortable spacing" : "Use compact navigation spacing"}
+        className={`flex h-5 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1.5 text-[9px] font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView
+          ? "bg-violet-100/90 text-violet-800 dark:bg-violet-400/20 dark:text-violet-100"
+          : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
+        whileHover={{ y: -1, scale: 1.025 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.12 }}
+      >
+        <Minimize2 className="h-3 w-3" />
+        <span>{compactView ? "Roomy" : "Compact"}</span>
+      </motion.button>
+      <motion.button
+        type="button"
+        data-shell-collapse-toggle
+        onClick={onToggleCollapsed}
+        aria-pressed={collapsed}
+        title={collapsed ? "Pin navigation open" : "Collapse navigation; hover the screen edge to peek"}
+        className={`flex h-5 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-1.5 text-[9px] font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${collapsed
+          ? "bg-cyan-100/90 text-cyan-900 dark:bg-cyan-400/15 dark:text-cyan-100"
+          : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
+        whileHover={{ y: -1, scale: 1.025 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ duration: 0.12 }}
+      >
+        <CollapseIcon className="h-3 w-3" />
+        <span>{collapsed ? "Pin" : "Collapse"}</span>
+      </motion.button>
+    </div>
+  );
+}
 
 const getFullscreenStyles = (isFullscreen) => `
   html, body, #root {
@@ -126,7 +182,9 @@ const ROOT_ROUTES = [
 function LayoutContent({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(() => localStorage.getItem("ccsShellCollapsed") === "true");
+  const [compactView, setCompactView] = useState(() => localStorage.getItem("ccsShellCompact") === "true");
   const [isHovered, setIsHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [meetingsDropdownOpen, setMeetingsDropdownOpen] = useState(false);
@@ -189,7 +247,16 @@ function LayoutContent({ children }) {
 
   useEffect(() => {
     localStorage.setItem("navLayout", navLayout);
+    setIsHovered(false);
   }, [navLayout]);
+
+  useEffect(() => {
+    localStorage.setItem("ccsShellCollapsed", navCollapsed ? "true" : "false");
+  }, [navCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem("ccsShellCompact", compactView ? "true" : "false");
+  }, [compactView]);
 
   // Handle Ctrl+Click for multi-page view — disabled on mobile
   const handleNavClick = (e, item) => {
@@ -202,9 +269,10 @@ function LayoutContent({ children }) {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const isFullscreen = !!document.fullscreenElement;
-      setIsCollapsed(isFullscreen);
-      if (isFullscreen) {
+      const nextFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(nextFullscreen);
+      setIsHovered(false);
+      if (nextFullscreen) {
         localStorage.setItem("fullscreenMode", "true");
       } else {
         localStorage.removeItem("fullscreenMode");
@@ -224,12 +292,15 @@ function LayoutContent({ children }) {
   };
 
   const isRootRoute = ROOT_ROUTES.includes(location.pathname) || location.pathname === "/";
-  const isSideNav = navLayout === "side" && !isCollapsed && !isMobile;
+  const isSideNav = navLayout === "side" && !isMobile;
+  const effectiveCollapsed = (navCollapsed || isFullscreen) && !isMobile;
+  const sideNavWidth = compactView ? 196 : 224;
+  const collapsedRail = 10;
 
   return (
     <>
       <style>{`
-                ${getFullscreenStyles(isCollapsed)}
+                ${getFullscreenStyles(isFullscreen)}
         :root {
           --clay-lavender: #E0D4F7;
           --clay-mint: #C8F4E9;
@@ -409,12 +480,13 @@ function LayoutContent({ children }) {
         }
 
         .top-nav {
-          transition: transform 0.3s ease-in-out;
+          transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
           padding-top: env(safe-area-inset-top);
+          will-change: transform;
         }
 
         .top-nav.collapsed {
-          transform: translateY(-100%);
+          transform: translateY(calc(-100% + 10px));
         }
 
         .top-nav.show {
@@ -422,11 +494,23 @@ function LayoutContent({ children }) {
         }
 
         .side-nav {
-          transition: transform 0.3s ease-in-out;
+          transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), width 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
+          will-change: transform, width;
         }
 
         .side-nav.collapsed {
-          transform: translateX(-100%);
+          transform: translateX(calc(-100% + 10px));
+        }
+
+        .side-nav.show {
+          transform: translateX(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .top-nav,
+          .side-nav {
+            transition-duration: 1ms !important;
+          }
         }
 
         .mobile-bottom-nav {
