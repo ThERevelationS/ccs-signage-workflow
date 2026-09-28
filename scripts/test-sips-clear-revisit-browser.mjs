@@ -366,6 +366,29 @@ try {
       state.updateDelayMs = 450;
     });
 
+
+  await caseRun("320px phone: Revisit calendar, Clear dialog and keyboard stay inside the viewport",
+    origin, [{ width: 320, height: 568 }], async ([page]) => {
+      const trigger = page.locator("#sips-revisit-later")
+        .getByRole("button", { name: "Change Revisit Date" });
+      await trigger.click();
+      const calendar = page.locator(".rdp:visible").last();
+      await calendar.waitFor();
+      const rect = await calendar.boundingBox();
+      const viewport = page.viewportSize();
+      assert.ok(rect && rect.x >= -1 && rect.x + rect.width <= viewport.width + 1,
+        "The actual Revisit calendar must fit within a 320px viewport");
+      await page.getByRole("button", { name: "Clear date & return to active" }).click();
+      const dialog = page.getByRole("alertdialog", { name: "Return this item to active SIPs?" });
+      await dialog.waitFor();
+      await checkDialogOnScreen(page);
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      await boardHeadingFocused(page);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      assert.equal(fixture.writes.length, 0);
+    });
+
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
 } finally {
