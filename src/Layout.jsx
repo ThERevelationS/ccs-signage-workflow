@@ -460,7 +460,7 @@ function LayoutContent({ children }) {
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         <WorkPauseOverlay />
         {/* Personal focus blocks stay separate from official Time Clock and Work Pause. */}
-        <GlobalFocusTimer currentUser={currentUser} />
+        <GlobalFocusTimer key={currentUser?.id || currentUser?.email || "signed-out"} currentUser={currentUser} />
         {/* Hover detection area when collapsed */}
         {isCollapsed && (
           <div 
