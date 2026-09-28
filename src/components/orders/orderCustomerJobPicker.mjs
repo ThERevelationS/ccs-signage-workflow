@@ -6,7 +6,9 @@ const normalizedCustomerIdentity = (value) => normalized(value).replace(/[^a-z0-
 const TERMINAL_TASK = /^(?:lost\b|completed(?:\s+(?:sale|job|project)\b|$)|closed(?:\s+(?:sale|job|account|project)\b|\s*[-:]|$))/i;
 
 export function isActiveOrderCustomerJob(job) {
-  if (!job?.id || job.deleted === true || job.completed === true || job.is_rider === true || job.closed === true) return false;
+  const smartsheetParentRowId = String(job?.smartsheet_parent_row_id ?? "").trim();
+  if (!job?.id || job.deleted === true || job.completed === true || job.is_rider === true || job.closed === true ||
+      /^\d+$/.test(smartsheetParentRowId)) return false;
   // Historical imports may have sales_status='lead' and in_pipeline=true
   // even when their current task explicitly says Completed Sale, Lost, or Closed.
   // Treat that terminal evidence consistently for modern and legacy records.
@@ -30,8 +32,9 @@ export function orderCustomerJobSubtitle(job) {
       ? `Current task: ${String(job.current_task_description).trim()}` : "No project title");
 }
 
-// Older Workflow Smartsheet pulls did not persist row hierarchy, so an
-// automatic child/rider row could be imported as a second top-level WorkOrder.
+// Current Workflow Smartsheet pulls persist smartsheet_parent_row_id, which
+// is authoritative for the Order Form picker. Older pulls did not preserve
+// hierarchy, so an automatic child/rider row could still look top-level.
 // Suppress only the narrowly provable legacy shadow shape in the Order picker:
 // same sheet, same nonzero estimate, same active task, a root customer whose
 // title is only the generated Smartsheet-row placeholder, and a child customer
