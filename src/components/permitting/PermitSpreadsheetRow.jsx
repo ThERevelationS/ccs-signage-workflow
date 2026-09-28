@@ -428,10 +428,10 @@ export default function PermitSpreadsheetRow({
                 )}
               </div>
             )}
-            {isRegistered && !lineItem.locality_office_id && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
+            {isRegistered && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
               <button ref={linkOfficeTriggerRef} type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
                 onClick={() => { setSelectedOfficeId(""); setLinkError(""); setLinkOfficeOpen(true); }}>
-                Link legacy line to office
+                {lineItem.locality_office_id ? "Repair missing office link" : "Link legacy line to office"}
               </button>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
@@ -560,8 +560,12 @@ export default function PermitSpreadsheetRow({
       }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
-            <AlertDialogTitle>Link this existing permit line to an office?</AlertDialogTitle>
+            <AlertDialogTitle>{lineItem.locality_office_id ? "Repair this missing office reference?" : "Link this existing permit line to an office?"}</AlertDialogTitle>
             <AlertDialogDescription>
+              {lineItem.locality_office_id && (
+                <>The saved office ID ({lineItem.locality_office_id}) no longer matches any current
+                office. Review the office history before selecting a replacement. </>
+              )}
               Confirm which configured office represents this line. Only this line's stable office
               reference changes. This does not verify permitting authority or change workflow
               steps, other lines, notes, or historical permits.

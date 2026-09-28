@@ -547,8 +547,8 @@ export default function Permitting() {
   const linkLegacyPermitLineOffice = useCallback(async (lineItemId, officeId) => {
     const line = lineItems.find(item => item.id === lineItemId);
     const selectedId = String(officeId || "").trim();
-    if (!isRegistered || !line?.id || !selectedId || !line.locality_id || String(line.locality_office_id || "").trim()) {
-      setPermitLineEditError("This legacy line cannot be linked. Reload and review the permit line.");
+    if (!isRegistered || !line?.id || !selectedId || !line.locality_id) {
+      setPermitLineEditError("This office link cannot be repaired. Reload and review the permit line.");
       return false;
     }
     try {
@@ -564,7 +564,7 @@ export default function Permitting() {
       return false;
     }
     const saved = await persistPermitLineItemFields(
-      line.id, { locality_office_id: selectedId }, "Staff-selected legacy office link",
+      line.id, { locality_office_id: selectedId }, "Staff-selected permit office link or repair",
       {
         locality_id: line.locality_id, locality_office_id: line.locality_office_id,
         row_name: line.row_name, office_type: line.office_type,

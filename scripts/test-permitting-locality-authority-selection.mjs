@@ -203,6 +203,41 @@ test('legacy office linking offers unique IDs only within the selected locality'
   assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'loc', offices: [{ name: 'No ID' }] }]), []);
 });
 
+test('deleted stable office references allow staff repair, but renamed or duplicate IDs remain protected', async () => {
+  const { legacyOfficeLinkOptions, summarizePermitLineOfficeAuthority } = await import('../base44/shared/permittingAddressLocality.js');
+  const line = { id: 'line-1', locality_id: 'township', locality_office_id: 'removed-office', row_name: 'Old Sign Office', office_type: 'Zoning' };
+  const replacement = { id: 'replacement', name: 'New Sign Office', office_type: 'Zoning', authority_verification_status: 'needs_verification', authority_roles: ['sign_permit'] };
+  const locality = { id: 'township', offices: [replacement] };
+  assert.equal(summarizePermitLineOfficeAuthority(line, [locality]).status, 'unresolved');
+  assert.deepEqual(legacyOfficeLinkOptions(line, [locality]).map(o => o.id), ['replacement']);
+  // A rename or reinstated ID keeps the existing link. No repair choice is shown.
+  const renamed = { ...replacement, id: 'removed-office', name: 'Renamed Department' };
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'township', offices: [renamed, replacement] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'township', offices: [renamed, { ...renamed }] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'township', offices: [replacement, { ...replacement }] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'township', offices: [{ ...replacement, id: '' }] }]), []);
+  // Never cross a missing or ambiguous locality boundary.
+  assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'other', offices: [replacement] }]), []);
+  assert.deepEqual(legacyOfficeLinkOptions(line, [locality, locality]), []);
+  // Staff-selected replacement does not automatically inherit approval of the retired office.
+  const repaired = summarizePermitLineOfficeAuthority({ ...line, locality_office_id: 'replacement' }, [locality]);
+  assert.equal(repaired.status, 'needs_verification');
+  assert.deepEqual(repaired.verified_roles, []);
+});
+
+test('repair UI is restricted to available explicit choices and preserves the old ID in concurrency guards', () => {
+  const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
+  const page = readFileSync(new URL('../src/pages/Permitting.jsx', import.meta.url), 'utf8');
+  assert.match(row, /lineItem\.locality_office_id \? "Repair missing office link"/);
+  assert.match(row, /legacyOfficeOptions\.length > 0/);
+  assert.match(row, /The saved office ID/);
+  assert.match(row, /Review the office history before selecting a replacement/);
+  assert.match(page, /legacyOfficeLinkOptions\(line, \[liveLocality\]\)/);
+  assert.match(page, /locality_office_id: line\.locality_office_id/);
+  assert.match(page, /row_name: line\.row_name/);
+  assert.match(page, /guardFields,/);
+});
+
 test('legacy office link dialog restores keyboard focus and keeps failures actionable', () => {
   const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
   assert.match(row, /ref={linkOfficeTriggerRef}/);

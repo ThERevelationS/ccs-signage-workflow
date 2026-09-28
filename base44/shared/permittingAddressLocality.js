@@ -75,18 +75,24 @@ export function summarizePermitGroupAuthorityCoverage(lines, localities) {
   return [...byLocality.values()];
 }
 
-/** Offer only stable, unique, locality-scoped office choices for manual legacy linking.
- * Never infer a choice from an old line name or claim the office is verified.
+/** Offer unique locality-scoped office IDs for explicit legacy linking or repair.
+ * A saved ID that still exists, even duplicated, cannot be silently replaced.
+ * Only a missing saved ID permits a staff-confirmed repair, never name fallback.
  */
 export function legacyOfficeLinkOptions(line, localities) {
-  if (!line?.id || String(line.locality_office_id || '').trim()) return [];
+  if (!line?.id) return [];
   const id = String(line.locality_id || '').trim();
   const matches = id && Array.isArray(localities)
     ? localities.filter(locality => String(locality?.id || '').trim() === id) : [];
   if (matches.length !== 1 || !Array.isArray(matches[0].offices)) return [];
+  const offices = matches[0].offices;
+  const savedOfficeId = String(line.locality_office_id || '').trim();
+  // Existing IDs are authoritative even if the office was renamed or the ID
+  // is duplicated; duplicates must first be fixed in locality settings.
+  if (savedOfficeId && offices.some(office => String(office?.id || '').trim() === savedOfficeId)) return [];
   const seen = new Set();
   const choices = [];
-  for (const office of matches[0].offices) {
+  for (const office of offices) {
     const officeId = String(office?.id || '').trim();
     if (!officeId || seen.has(officeId)) return [];
     seen.add(officeId);
