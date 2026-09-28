@@ -84,6 +84,7 @@ export default function UserManagement() {
     role: "user",
     sales_roles: ["Task Assigned"],
     can_import_export: false,
+    can_order_export: false,
     can_view_resources: false,
     employment_type: "hourly",
     can_work_pause: false
@@ -209,6 +210,7 @@ export default function UserManagement() {
       role: user.role || "user",
       sales_roles: user.sales_roles || ["Task Assigned"],
       can_import_export: user.can_import_export || false,
+      can_order_export: user.role === "admin" && user.can_order_export === true,
       can_view_resources: user.role === 'admin' || user.can_view_resources || false,
       employment_type: user.employment_type || "hourly",
       can_work_pause: user.can_work_pause === true
@@ -815,6 +817,7 @@ export default function UserManagement() {
                       onValueChange={(val) => setFormData({ 
                         ...formData, 
                         role: val,
+                        can_order_export: val === 'admin' ? formData.can_order_export : false,
                         // Auto-enable resources for admins
                         can_view_resources: val === 'admin' ? true : formData.can_view_resources
                       })}
@@ -910,6 +913,19 @@ export default function UserManagement() {
                         />
                         <label className="text-sm">Can Import/Export Data</label>
                       </div>
+                      {formData.role === "admin" && (
+                        <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3">
+                          <Checkbox
+                            id="admin-order-form-export"
+                            checked={formData.can_order_export === true}
+                            onCheckedChange={(checked) => setFormData({ ...formData, can_order_export: checked === true })}
+                          />
+                          <div>
+                            <label htmlFor="admin-order-form-export" className="text-sm font-medium">Order Form: Show Export button</label>
+                            <p className="mt-1 text-xs text-gray-600">Admin only. OFF until assigned here. The general Import/Export permission does not grant this button.</p>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <Checkbox
                           checked={formData.role === 'admin' || formData.can_view_resources || false}
