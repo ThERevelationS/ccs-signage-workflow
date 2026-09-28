@@ -60,7 +60,7 @@ export default function FleetRepairApprovalPolicies() {
   const addButtonRef = useRef(null);
   const editorDialogRef = useRef(null);
   const editorNameRef = useRef(null);
-  const editorPreviousFocusRef = useRef(null);
+  const editorReturnFocusRef = useRef(null);
   const busyRef = useRef(busy);
   const uncertainRef = useRef(uncertain);
   const recoveryRef = useRef(null);
@@ -105,7 +105,7 @@ export default function FleetRepairApprovalPolicies() {
 
   useEffect(() => {
     if (!editor) return undefined;
-    editorPreviousFocusRef.current = document.activeElement;
+    const returnTarget = editorReturnFocusRef.current?.isConnected ? editorReturnFocusRef.current : addButtonRef.current;
     requestAnimationFrame(() => editorNameRef.current?.focus());
     const handleKey = event => {
       if (event.key === "Escape") {
@@ -131,8 +131,9 @@ export default function FleetRepairApprovalPolicies() {
     document.addEventListener("keydown", handleKey);
     return () => {
       document.removeEventListener("keydown", handleKey);
+      editorReturnFocusRef.current = null;
       requestAnimationFrame(() => {
-        if (editorPreviousFocusRef.current?.isConnected) editorPreviousFocusRef.current.focus();
+        if (returnTarget?.isConnected) returnTarget.focus();
         else addButtonRef.current?.focus();
       });
     };
@@ -179,11 +180,13 @@ export default function FleetRepairApprovalPolicies() {
   const openCreate = () => {
     if (mutationBlocked) return;
     setError(""); setNotice(""); setRefreshWarning("");
+    editorReturnFocusRef.current = document.activeElement;
     setEditor({ ...emptyPolicy(), _creation_key: `fleet-policy-${crypto.randomUUID()}` });
   };
   const openEdit = policy => {
     if (mutationBlocked) return;
     setError(""); setNotice(""); setRefreshWarning("");
+    editorReturnFocusRef.current = document.activeElement;
     setEditor({ ...policy, minimum_amount: String(policy.minimum_amount ?? 0), maximum_amount: Number(policy.maximum_amount || 0) ? String(policy.maximum_amount) : "", sort_order: String(policy.sort_order ?? 0) });
   };
   const replacePolicy = row => setPolicies(current => {
