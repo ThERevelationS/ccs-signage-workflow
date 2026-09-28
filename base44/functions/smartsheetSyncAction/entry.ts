@@ -794,7 +794,7 @@ async function pushDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
-  options: { recordIds?: string[]; respectOrderCreateSetting?: boolean } = {},
+  options: { recordIds?: string[]; respectOrderCreateSetting?: boolean; respectSalesCreateSetting?: boolean } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -807,29 +807,36 @@ async function pushDataset(
     return { dataset, skipped: true, reason: 'No column bindings configured for this dataset.' };
   }
 
-  // Load Base44 records for this dataset. Save & Sync supplies exact Order IDs
-  // so a button press never expands into a full-sheet Order push.
-  const requestedOrderIds = dataset === 'orders' && Array.isArray(options?.recordIds)
+  // Save & Sync supplies exact permanent record IDs so a button press never
+  // expands into a full-dataset push.
+  const requestedRecordIds = Array.isArray(options?.recordIds)
     ? [...new Set(options.recordIds.map((id) => cleanText(id, 80)).filter(Boolean))]
     : [];
   let records: any[] = [];
   if (dataset === 'sales') {
-    records = await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
+    records = requestedRecordIds.length
+      ? await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: { id: { $in: requestedRecordIds } },
+          sort: 'id',
+          label: 'Sales Pipeline targeted Save & Sync WorkOrders',
+        })
+      : await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
   } else {
     records = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.Order,
-      ...(requestedOrderIds.length ? { query: { id: { $in: requestedOrderIds } } } : {}),
+      ...(requestedRecordIds.length ? { query: { id: { $in: requestedRecordIds } } } : {}),
       sort: 'id',
-      label: requestedOrderIds.length ? 'Order Form targeted Save & Sync Orders' : 'Order Form Smartsheet push Orders',
+      label: requestedRecordIds.length ? 'Order Form targeted Save & Sync Orders' : 'Order Form Smartsheet push Orders',
     });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
-  if (dataset === 'orders' && requestedOrderIds.length) {
+  if (requestedRecordIds.length) {
     const foundIds = new Set(records.map((record: any) => String(record?.id || '')));
-    const missingIds = requestedOrderIds.filter((id) => !foundIds.has(id));
+    const missingIds = requestedRecordIds.filter((id) => !foundIds.has(id));
     if (missingIds.length) return {
       dataset, direction: 'push', skipped: true,
-      reason: `${missingIds.length} saved Order records could not be re-read by permanent ID. No Smartsheet rows were written.`,
+      reason: `${missingIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrder' : 'Order'} record${missingIds.length === 1 ? '' : 's'} could not be re-read by permanent ID. No Smartsheet rows were written.`,
       missing_record_ids: missingIds.slice(0, 10), records_examined: records.length,
     };
   }
@@ -845,9 +852,9 @@ async function pushDataset(
   }
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
-  if (dataset === 'orders' && requestedOrderIds.length > massLimit) {
+  if (requestedRecordIds.length > massLimit) {
     return { dataset, direction: 'push', skipped: true,
-      reason: `${requestedOrderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
+      reason: `${requestedRecordIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrders' : 'Orders'} exceed the ${massLimit}-record Save & Sync safety limit. Sync a smaller batch.`,
       records_examined: records.length };
   }
   if (records.length > massLimit) {
@@ -903,6 +910,16 @@ async function pushDataset(
     if (unlinked.length) return {
       dataset, direction: 'push', sheet_id: sheetId, skipped: true,
       reason: `${unlinked.length} saved Order${unlinked.length === 1 ? '' : 's'} do not have a verified Smartsheet row link and automatic Order row creation is OFF. No Smartsheet rows were written.`,
+      records_examined: records.length,
+      unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
+    };
+  }
+  if (dataset === 'sales' && options?.respectSalesCreateSetting && profile?.create_smartsheet_from_base44 !== true) {
+    const unlinked = pendingRecords.filter((record: any) =>
+      !/^\d+$/.test(cleanText(record?.smartsheet_row_id, 40)) || cleanText(record?.smartsheet_sheet_id, 40) !== sheetId);
+    if (unlinked.length) return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${unlinked.length} saved Sales WorkOrder${unlinked.length === 1 ? '' : 's'} do not have a verified Smartsheet row link and automatic Sales row creation is OFF. No Smartsheet rows were written.`,
       records_examined: records.length,
       unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
     };
