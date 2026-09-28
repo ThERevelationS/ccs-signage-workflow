@@ -50,7 +50,8 @@
       "type": "string",
       "enum": [
         "clocked_in",
-        "clocked_out"
+        "clocked_out",
+        "needs_resolution"
       ],
       "default": "clocked_in",
       "description": "Current status"
@@ -225,6 +226,28 @@
     "pay_period_locked_by": {
       "type": "string",
       "description": "Administrator that finalized the pay period containing this TimeEntry"
+    },
+    "punch_exception_id": {
+      "type": "string",
+      "description": "Open or most recent TimeClockPunchException associated with this shift"
+    },
+    "punch_resolution_pending_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an old active shift was detached for missed-punch manager review"
+    },
+    "punch_resolution_request_id": {
+      "type": "string",
+      "description": "Employee request id that moved this shift into Needs Punch Resolution"
+    },
+    "stale_shift_acknowledged_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend time when the employee affirmed they were still continuously working"
+    },
+    "stale_shift_acknowledged_request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the latest worked-through acknowledgement"
     }
   },
   "required": [
