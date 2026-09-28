@@ -124,8 +124,8 @@ function ShellViewControls({
         aria-pressed={compactView}
         title={compactView ? "Return navigation to comfortable spacing" : "Use compact navigation spacing"}
         className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${compactView
-          ? "bg-violet-100/90 text-violet-800 dark:bg-violet-400/20 dark:text-violet-100"
-          : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
+          ? "bg-violet-400/20 text-violet-100 shadow-inner"
+          : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
         whileTap={{ scale: 0.96 }}
         transition={{ duration: 0.12 }}
@@ -140,8 +140,8 @@ function ShellViewControls({
         aria-pressed={collapsed}
         title={collapsed ? "Pin navigation open" : "Collapse navigation; hover the screen edge to peek"}
         className={`flex h-full min-w-0 flex-1 items-center justify-center rounded-lg font-bold tracking-tight outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 ${compactView ? "gap-0.5 px-1 text-[8px]" : "gap-1 px-1.5 text-[9px]"} ${collapsed
-          ? "bg-cyan-100/90 text-cyan-900 dark:bg-cyan-400/15 dark:text-cyan-100"
-          : "text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-white/10"}`}
+          ? "bg-cyan-400/15 text-cyan-100 shadow-inner"
+          : "text-slate-200 hover:bg-white/10"}`}
         whileHover={{ y: -1, scale: 1.025 }}
         whileTap={{ scale: 0.96 }}
         transition={{ duration: 0.12 }}
