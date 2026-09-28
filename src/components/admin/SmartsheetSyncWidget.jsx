@@ -105,11 +105,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
       : 'Sync';
     const directionLabel = onlyResult?.direction === 'pull' ? 'SS→B44' : onlyResult?.direction === 'push' ? 'B44→SS' : '';
     return (
-      <div className="fixed right-3 bottom-20 z-50 w-[min(440px,calc(100vw-24px))] md:bottom-3"
+      <div className="fixed right-3 bottom-20 z-50 w-[min(620px,calc(100vw-24px))] md:bottom-3"
         role="status" aria-live="polite" aria-label={isRunning ? "Smartsheet sync in progress" : "Smartsheet sync completed"}>
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg">
-          <div className="flex min-h-10 items-center gap-2.5">
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50">
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg">
+          <div className="flex min-h-9 items-center gap-2.5">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50">
               {isRunning
                 ? <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
                 : <Check className="h-4 w-4 text-emerald-600" />}
@@ -127,7 +127,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             </div>
             {!isRunning && (
               <button type="button" aria-label="Dismiss sync notification"
-                onClick={() => setDismissedOrderRun(orderToast.key)}
+                onClick={() => setDismissedSuccessRun(orderToast.key)}
                 className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                 <X className="h-4 w-4" />
               </button>
