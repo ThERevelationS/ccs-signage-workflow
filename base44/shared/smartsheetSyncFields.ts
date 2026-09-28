@@ -234,6 +234,38 @@ export function parseRowToFields(
   return out;
 }
 
+// Order pull snapshots must represent the actual remote row, not a merged
+// Base44 record. This lets a blank Smartsheet cell remain non-destructive while
+// still recording that the remote cell is truly blank for later reconciliation.
+export function buildOrderPullSnapshot(
+  row: { cells?: { column_id?: string; columnId?: string; value?: any; display_value?: any; displayValue?: any }[] },
+  bindings: Record<string, string>,
+) {
+  const boundIds = new Set(
+    Object.values(bindings || {}).map((id) => String(id ?? '').trim()).filter((id) => /^\d+$/.test(id)),
+  );
+  const snapshot: Record<string, string | number | null> = {};
+  const sharedContactId = sharedOrderRequestorColumnId(bindings);
+  for (const cell of row?.cells || []) {
+    const columnId = String(cell?.column_id ?? cell?.columnId ?? '').trim();
+    if (!boundIds.has(columnId)) continue;
+    if (sharedContactId && columnId === sharedContactId) {
+      const contact = readSharedOrderRequestor(cell);
+      snapshot[columnId] = contact.email || contact.name || '';
+      continue;
+    }
+    const display = cell?.display_value != null ? cell.display_value : cell?.displayValue;
+    const value = display != null ? display : cell?.value;
+    snapshot[columnId] = value == null ? '' : (typeof value === 'number' ? value : String(value).trim());
+  }
+  // Smartsheet can omit empty cells from a row payload. Bound-but-absent means
+  // blank remotely and must be represented as such rather than inherited locally.
+  for (const columnId of boundIds) {
+    if (!Object.prototype.hasOwnProperty.call(snapshot, columnId)) snapshot[columnId] = '';
+  }
+  return snapshot;
+}
+
 // Snapshot of the values we just wrote, stored on the record for three-way
 // conflict detection on the next sync.
 export function buildSnapshot(record: any, bindings: Record<string, string>, dataset: "sales" | "orders") {
