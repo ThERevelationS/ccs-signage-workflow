@@ -311,9 +311,9 @@ try {
       const before = await page.evaluate(() =>
         localStorage.getItem("ccs_focus_timer:v1:synthetic-layout-user-a"));
 
-      await page.evaluate(() => window.dispatchEvent(new CustomEvent("synthetic-work-pause", {
-        detail: { paused: true },
-      })));
+      const pairedWorkPause = page.locator("[data-work-pause-trigger]:visible");
+      await pairedWorkPause.waitFor();
+      await pairedWorkPause.click();
       const pauseOverlay = page.getByTestId("synthetic-work-pause-overlay");
       await pauseOverlay.waitFor();
       const pauseZ = Number(await pauseOverlay.evaluate((node) => getComputedStyle(node).zIndex));
