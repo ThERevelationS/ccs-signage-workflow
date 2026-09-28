@@ -203,6 +203,19 @@ test('legacy office linking offers unique IDs only within the selected locality'
   assert.deepEqual(legacyOfficeLinkOptions(line, [{ id: 'loc', offices: [{ name: 'No ID' }] }]), []);
 });
 
+test('legacy office link dialog restores keyboard focus and keeps failures actionable', () => {
+  const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
+  assert.match(row, /ref={linkOfficeTriggerRef}/);
+  assert.match(row, /ref={linkOfficeSelectRef}/);
+  assert.match(row, /linkOfficeSelectRef\.current\?\.focus\(\)/);
+  assert.match(row, /linkOfficeTriggerRef\.current\?\.focus\(\)/);
+  assert.match(row, /aria-describedby={"office-link-help-" \+ lineItem\.id}/);
+  assert.match(row, /role="alert" aria-live="assertive"/);
+  assert.match(row, /if \(linkSaving\) return/);
+  assert.match(row, /disabled={!selectedOfficeId \|\| linkSaving \|\| !isRegistered}/);
+  assert.match(row, /Office link was not saved/);
+});
+
 test('legacy link requires explicit staff confirmation and guarded single-line persistence', () => {
   const page = readFileSync(new URL('../src/pages/Permitting.jsx', import.meta.url), 'utf8');
   const group = readFileSync(new URL('../src/components/permitting/PermitClientGroup.jsx', import.meta.url), 'utf8');
