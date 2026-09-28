@@ -10,11 +10,16 @@ import {
   Search,
   Plus,
   Download,
-  Save
+  Save,
+  Loader2,
+  CheckCircle2,
+  Clock3,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
 import { canUseOrderExport } from "../../base44/shared/orderExportAccess.mjs";
+import { orderSaveSyncStatus } from "@/components/orders/orderSaveSyncStatus.mjs";
 
 export default function OrderForm() {
   const { currentUser, isRegistered } = useAuth();
@@ -25,8 +30,19 @@ export default function OrderForm() {
   const [filterLoaded, setFilterLoaded] = useState(false);
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, pendingSyncCount: 0 });
+  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, pendingSyncCount: 0, saveError: "" });
   const spreadsheetRef = useRef(null);
+  const saveSyncIndicator = orderSaveSyncStatus(saveStatus);
+  const SaveSyncIcon = saveSyncIndicator.kind === "working" ? Loader2
+    : saveSyncIndicator.kind === "success" || saveSyncIndicator.kind === "ready" ? CheckCircle2
+      : saveSyncIndicator.kind === "error" ? AlertTriangle : Clock3;
+  const saveSyncIndicatorClass = saveSyncIndicator.kind === "error"
+    ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+    : saveSyncIndicator.kind === "pending" || saveSyncIndicator.kind === "unsaved" || saveSyncIndicator.kind === "local"
+      ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
+      : saveSyncIndicator.kind === "working"
+        ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300"
+        : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300";
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -115,12 +131,25 @@ export default function OrderForm() {
                 className="h-8 px-3"
                 disabled={saveStatus.isSaving || saveStatus.isSyncing}
               >
-                <Save className="w-4 h-4 mr-1" />
+                {saveStatus.isSaving || saveStatus.isSyncing
+                  ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  : <Save className="w-4 h-4 mr-1" />}
                 {saveStatus.isSyncing ? "Syncing..." : saveStatus.isSaving ? "Saving..." : "Save & Sync"}
                 {saveStatus.pendingSyncCount > 0 && !saveStatus.isSaving && !saveStatus.isSyncing
                   ? ` (${saveStatus.pendingSyncCount})`
                   : ""}
               </Button>
+            )}
+            {isRegistered && (
+              <span
+                className={`inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium ${saveSyncIndicatorClass}`}
+                title={saveSyncIndicator.title}
+                aria-live="polite"
+                aria-label={`Order save and sync status: ${saveSyncIndicator.text}`}
+              >
+                <SaveSyncIcon className={`h-3.5 w-3.5 shrink-0 ${saveSyncIndicator.kind === "working" ? "animate-spin" : ""}`} />
+                <span className="truncate">{saveSyncIndicator.text}</span>
+              </span>
             )}
             {isRegistered && (
               <Button 
