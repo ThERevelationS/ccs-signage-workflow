@@ -890,7 +890,15 @@ async function pushDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
-  options: { recordIds?: string[]; allowExplicitOrderCreate?: boolean; requireOrderPendingMarker?: boolean; respectSalesCreateSetting?: boolean } = {},
+  options: {
+    recordIds?: string[];
+    allowExplicitOrderCreate?: boolean;
+    requireOrderPendingMarker?: boolean;
+    onlyPendingOrderRecords?: boolean;
+    orderPushTimeBudgetMs?: number;
+    reportOrderProgress?: (progress: any) => Promise<void> | void;
+    respectSalesCreateSetting?: boolean;
+  } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -927,6 +935,9 @@ async function pushDataset(
     });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
+  if (dataset === 'orders' && options?.onlyPendingOrderRecords && requestedRecordIds.length === 0) {
+    records = records.filter((record: any) => record?.smartsheet_pending_local_sync === true);
+  }
   if (requestedRecordIds.length) {
     const foundIds = new Set(records.map((record: any) => String(record?.id || '')));
     const missingIds = requestedRecordIds.filter((id) => !foundIds.has(id));
