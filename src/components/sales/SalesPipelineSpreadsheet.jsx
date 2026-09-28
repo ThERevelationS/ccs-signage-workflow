@@ -40,6 +40,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
 import { personValuesReferToSameUser } from "@/components/admin/smartsheetTranslationModel.js";
+import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -109,12 +110,7 @@ const SALES_USER_FILTER_ROLES = Object.freeze({
 
 const salesFilterUsersForField = (field, users = []) => {
   if (!Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field)) return [];
-  const role = SALES_USER_FILTER_ROLES[field];
-  if (!role) return users;
-  if (role === "PM") {
-    return users.filter((user) => user?.sales_roles?.includes("PM") || user?.sales_roles?.includes("Project Manager"));
-  }
-  return users.filter((user) => user?.sales_roles?.includes(role));
+  return salesPersonUsersForRole(users, SALES_USER_FILTER_ROLES[field]);
 };
 
 const isSalesUserFilterField = (field) => Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field);
