@@ -1015,11 +1015,16 @@ function LayoutContent({ children }) {
         <main 
           ref={mainRef}
           className={`flex-1 main-scroll-container ${isMobile ? 'main-content-mobile' : ''}`}
-          style={{ 
-            paddingTop: isMobile ? (isRootRoute ? '0' : '48px') : (isSideNav ? '0' : (isCollapsed ? '16px' : '80px')),
-            marginLeft: isSideNav ? '224px' : '0',
+          style={{
+            paddingTop: isMobile
+              ? (isRootRoute ? '0' : '48px')
+              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : (compactView ? '72px' : '90px'))),
+            marginLeft: isSideNav
+              ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`)
+              : '0',
             height: '100vh',
-            overflow: 'auto'
+            overflow: 'auto',
+            transition: 'padding-top 180ms cubic-bezier(0.22, 1, 0.36, 1), margin-left 180ms cubic-bezier(0.22, 1, 0.36, 1)'
           }}
         >
           <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
@@ -1068,8 +1073,11 @@ function LayoutContent({ children }) {
         <AnnouncementBanner />
 
         {/* Floating Buttons - hidden in fullscreen and on mobile */}
-        {!isCollapsed && !isMobile && (
-          <div className="fixed bottom-3 left-3 z-50 flex gap-1 opacity-20 hover:opacity-100 transition-opacity duration-200" style={{ marginLeft: isSideNav ? '224px' : '0' }}>
+        {!isFullscreen && !isMobile && (
+          <div
+            className="fixed bottom-3 left-3 z-50 flex gap-1 opacity-20 hover:opacity-100 transition-opacity duration-200"
+            style={{ marginLeft: isSideNav ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`) : '0' }}
+          >
             {/* Full Screen Toggle */}
             <button
               onClick={toggleFullScreen}
@@ -1215,7 +1223,7 @@ function LayoutContent({ children }) {
                   </div>
                   {currentUser && (
                     <div className="mb-3">
-                      <GlobalWorkPauseControl fullWidth />
+                      <FocusPausePair currentUser={currentUser} fullWidth compact />
                     </div>
                   )}
                   {isUserAdmin(currentUser) && (
