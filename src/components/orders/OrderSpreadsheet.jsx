@@ -700,6 +700,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   React.useImperativeHandle(ref, () => ({
     addNewRow,
     exportToExcel,
+    refreshOrders: () => loadData(false),
     importFromExcel: () => fileInputRef.current?.click(),
     canImportExport: () => {
       // Check if user has import/export permission
