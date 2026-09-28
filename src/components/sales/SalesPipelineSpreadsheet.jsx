@@ -172,7 +172,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   return true;
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [] }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [], canImportExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -2555,12 +2555,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="flex gap-2">
             {isRegistered && (
+              <Button onClick={addNewRow} className="clay-button border-none text-gray-800"
+                style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Client
+              </Button>
+            )}
+            {canImportExport && (
               <>
-                <Button onClick={addNewRow} className="clay-button border-none text-gray-800"
-                  style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Client
-                </Button>
                 <Button 
                   onClick={() => fileInputRef.current?.click()} 
                   size="sm"
@@ -2570,18 +2572,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
                   <Upload className="w-4 h-4 mr-1" />
                   Import
                 </Button>
+                <Button 
+                  onClick={exportToExcel}
+                  disabled={exportProgress.show}
+                  size="sm" 
+                  className="clay-button border-none text-gray-700 h-8"
+                  style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
+                >
+                  {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
+                  Export
+                </Button>
               </>
             )}
-            <Button 
-              onClick={exportToExcel}
-              disabled={exportProgress.show}
-              size="sm" 
-              className="clay-button border-none text-gray-700 h-8"
-              style={{ background: 'linear-gradient(135deg, #D4E9F7 0%, #E0D4F7 100%)' }}
-            >
-              {exportProgress.show ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-              Export
-            </Button>
 
           </div>
           <span className="text-xs text-gray-500">{filteredWorkOrders.length} opportunities</span>
