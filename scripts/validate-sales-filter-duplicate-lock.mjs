@@ -45,7 +45,7 @@ check(poolSource.includes("duplicateItem({") &&
   "Standard preset duplication must retain its type and column translation");
 check(poolSource.includes("duplicateItem(item);"),
   "Custom preset duplication must continue copying the loaded record");
-check(source.includes('className="flex flex-wrap gap-1"') &&
+check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
       source.includes('aria-label="Horizontal Sales Pipeline column preview"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 check(source.includes("const saveInFlightRef = useRef(false);"),
