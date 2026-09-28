@@ -314,7 +314,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       ? setInterval(() => loadWorkOrders(false, recordScope), 60000)
       : null;
     return () => interval && clearInterval(interval);
-  }, [recordScope]);
+  }, [recordScope, sessionToken]);
 
   useEffect(() => {
     if (!["insights", "daily"].includes(viewMode)) return;
