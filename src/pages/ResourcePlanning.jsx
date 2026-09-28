@@ -30,9 +30,9 @@ import {
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleUserCapacity, saveUserCapacityIfUnchanged } from "@/components/resourcePlanning/userCapacityPersistence";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourcePlanning() {
@@ -53,24 +53,24 @@ export default function ResourcePlanning() {
   
   useEffect(() => {
     checkAccess();
-  }, [currentUser]);
+  }, [currentUser, sessionToken]);
   
   const checkAccess = async () => {
-    if (!currentUser?.email) {
+    if (!currentUser?.email || !sessionToken) {
+      setUsers([]);
+      setHasAccess(false);
       setAccessChecked(true);
       return;
     }
     
     try {
-      const users = await AuthorizedEmail.filter({ email: currentUser.email });
-      const user = users[0];
-      // Admin always has access, or if can_view_resources is true
-      if (user?.role === 'admin' || user?.can_view_resources) {
-        setHasAccess(true);
-        loadData();
-      }
+      const directory = await loadAuthorizedUserDirectory({ sessionToken });
+      setUsers(directory.users);
+      setHasAccess(directory.viewer.can_view_resources === true);
     } catch (error) {
       console.error("Error checking access:", error);
+      setUsers([]);
+      setHasAccess(false);
     }
     setAccessChecked(true);
   };
@@ -84,8 +84,7 @@ export default function ResourcePlanning() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [usersData, capacitiesData, ordersData] = await Promise.all([
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Resource Planning authorized users" }),
+      const [capacitiesData, ordersData] = await Promise.all([
         loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Planning user capacities" }),
         loadAllEntityRows({
           entity: WorkOrder,
@@ -94,7 +93,6 @@ export default function ResourcePlanning() {
           label: "Resource Planning Work Orders",
         })
       ]);
-      setUsers(usersData);
       setUserCapacities(capacitiesData);
       setWorkOrders(ordersData);
     } catch (error) {
