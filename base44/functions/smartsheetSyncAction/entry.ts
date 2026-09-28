@@ -1385,15 +1385,32 @@ Deno.serve(async (req) => {
           error: `${orderIds.length} saved Orders exceed the ${massLimit}-record Save & Sync safety limit.` }, { status: 400 });
       }
 
+      const startedAt = new Date().toISOString();
+      const requestedBy = cleanText(adminActor?.email, 320);
       await saveSyncStatus(base44, {
-        status: 'running', started_at: new Date().toISOString(), action,
+        status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
-        requested_order_ids: orderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
+        requested_order_ids: orderIds, requested_by: requestedBy, results: [],
       });
 
       const pushResult = await pushDataset(base44, token, 'orders', profile, config, {
         recordIds: orderIds,
         requireOrderPendingMarker: true,
+        orderPushTimeBudgetMs: 4 * 60 * 1000,
+        reportOrderProgress: async (progress: any) => saveSyncStatus(base44, {
+          status: 'running', started_at: startedAt, action,
+          total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
+          requested_order_ids: orderIds, requested_by: requestedBy, results: [],
+          progress_dataset: 'orders', progress_direction: 'push',
+          progress_phase: progress?.phase || '',
+          progress_current: Number(progress?.current) || 0,
+          progress_total: Number(progress?.total) || 0,
+          progress_item_label: cleanText(progress?.item_label, 220),
+          progress_detail: cleanText(progress?.detail, 260),
+          progress_record_id: cleanText(progress?.record_id, 100),
+          progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
+          progress_updated_at: new Date().toISOString(),
+        }),
         // Explicit Save & Sync may create a row for a brand-new Order without
         // enabling automatic/background Order creation for any other path.
         allowExplicitOrderCreate: true,
@@ -1404,7 +1421,7 @@ Deno.serve(async (req) => {
         status: needsReview ? 'needs_review' : 'completed', needs_review: needsReview,
         completed_at: new Date().toISOString(), action, total_steps: 1, completed_steps: 1,
         current_step_label: '', requested_order_ids: orderIds,
-        requested_by: cleanText(adminActor?.email, 320), results: [result],
+        requested_by: requestedBy, results: [result],
       });
       return Response.json({ success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result] });
