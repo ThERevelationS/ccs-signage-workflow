@@ -35,9 +35,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
 
   useEffect(() => {
     loadStatus();
-    const interval = setInterval(loadStatus, 5000);
+    // Running Order syncs publish row-level heartbeat data. Poll quickly enough
+    // for that activity to feel live without increasing idle background traffic.
+    const interval = setInterval(loadStatus, status?.status === 'running' ? 1000 : 5000);
     return () => clearInterval(interval);
-  }, [loadStatus]);
+  }, [loadStatus, status?.status]);
 
   // Reset dismissed when a new sync starts on other pages.
   useEffect(() => {
@@ -62,7 +64,18 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   if (loading) return null;
   if (!config?.global_enabled) return null;
 
-  const { isRunning, isStale, ageMinutes } = interpretSmartsheetSyncStatus(status);
+  const interpretedStatus = interpretSmartsheetSyncStatus(status);
+  const orderHeartbeatStamp = Date.parse(status?.progress_updated_at || status?.updated_at || status?.started_at || '');
+  const orderHeartbeatAgeMs = Number.isFinite(orderHeartbeatStamp) ? Math.max(0, Date.now() - orderHeartbeatStamp) : null;
+  // The shared widget historically waits 30m before declaring a run stale.
+  // Order Form now emits frequent heartbeats, so five quiet minutes is enough
+  // to say the run is stalled without changing other CCS sync consumers.
+  const compactOrderStalled = compactOrderForm && status?.status === 'running' &&
+    (orderHeartbeatAgeMs === null || orderHeartbeatAgeMs > 5 * 60 * 1000);
+  const isRunning = interpretedStatus.isRunning && !compactOrderStalled;
+  const isStale = interpretedStatus.isStale || compactOrderStalled;
+  const ageMinutes = compactOrderStalled && orderHeartbeatAgeMs !== null
+    ? Math.floor(orderHeartbeatAgeMs / 60000) : interpretedStatus.ageMinutes;
   const results = status?.results || [];
   const hasErrors = results.some(r => r.errors > 0);
   const hasSkipped = results.some(r => r.skipped);
@@ -75,7 +88,14 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const totalSteps = status?.total_steps || 0;
   const completedSteps = status?.completed_steps || 0;
   const currentStepLabel = status?.current_step_label || '';
-  const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const progressCurrent = Math.max(0, Number(status?.progress_current) || 0);
+  const progressTotal = Math.max(0, Number(status?.progress_total) || 0);
+  const progressItemLabel = String(status?.progress_item_label || '').trim();
+  const progressDetail = String(status?.progress_detail || '').trim();
+  const stepFraction = isRunning && progressTotal > 0
+    ? Math.min(0.999, progressCurrent / progressTotal) : 0;
+  const progressPercent = totalSteps > 0
+    ? Math.round(((completedSteps + stepFraction) / totalSteps) * 1000) / 10 : 0;
 
   // A successful completion dismissal belongs to that specific run, so the next
   // completion can still appear even if polling missed its brief running phase.
@@ -118,7 +138,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
               <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
                 {isRunning
-                  ? `${currentStepLabel || "Working…"} · ${progressPercent}%`
+                  ? `${currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
                   : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
               </span>
               {!isRunning && <span className="shrink-0 text-[10px] text-slate-400">just now</span>}
@@ -205,6 +225,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
                 {completedSteps}/{totalSteps} steps
               </span>
             </div>
+            {(progressItemLabel || progressDetail) && (
+              <div className="rounded-md border border-blue-100 bg-blue-50/70 px-2 py-1.5 text-[10px] leading-snug text-slate-700 dark:border-blue-900/60 dark:bg-blue-950/25 dark:text-slate-200" aria-live="polite">
+                {progressItemLabel && <div className="truncate font-medium">{progressItemLabel}</div>}
+                {progressDetail && <div className="truncate text-slate-500 dark:text-slate-400">{progressDetail}</div>}
+              </div>
+            )}
             <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 ease-out"
@@ -214,7 +240,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             <div className="flex items-center justify-between text-[10px] text-gray-500">
               <span>{progressPercent}%</span>
               <span>
-                {totalExamined > 0 && `${totalExamined.toLocaleString()} records examined`}
+                {progressTotal > 0
+                  ? `${progressCurrent.toLocaleString()} / ${progressTotal.toLocaleString()} line items`
+                  : totalExamined > 0 && `${totalExamined.toLocaleString()} records examined`}
               </span>
             </div>
           </div>
