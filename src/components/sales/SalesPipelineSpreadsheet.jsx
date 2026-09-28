@@ -38,6 +38,7 @@ import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitio
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
+import { isSalesDateFilterField, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -1476,9 +1477,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         case "contains":
           return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
         case "greater_than":
-          return parseFloat(fieldValue) > parseFloat(condValue);
+          return isSalesDateFilterField(condition.field)
+            ? compareSalesDateFilterRange(fieldValue, condValue, condition.operator)
+            : parseFloat(fieldValue) > parseFloat(condValue);
         case "less_than":
-          return parseFloat(fieldValue) < parseFloat(condValue);
+          return isSalesDateFilterField(condition.field)
+            ? compareSalesDateFilterRange(fieldValue, condValue, condition.operator)
+            : parseFloat(fieldValue) < parseFloat(condValue);
         case "not_empty":
           return fieldValue != null && fieldValue !== "";
         case "empty":
