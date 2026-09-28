@@ -73,18 +73,30 @@ try {
     readFile(path.join(appRoot, "src/components/timeclock/GlobalFocusTimer.jsx"), "utf8"),
     readFile(path.join(appRoot, "src/components/timeclock/WorkPauseOverlay.jsx"), "utf8"),
   ]);
-  assert.match(layoutSource, /<GlobalFocusTimer[\s\S]*currentUser=\{currentUser\}/,
-    "Layout mounts the real personal focus timer with authenticated user identity");
+  assert.match(layoutSource, /<FocusPausePair[\s\S]*currentUser=\{currentUser\}/,
+    "Layout mounts the paired Focus + official Work Pause control with authenticated identity");
+  assert.doesNotMatch(layoutSource, /<GlobalFocusTimer/,
+    "Layout no longer mounts a separate floating Focus Timer trigger");
+  assert.match(layoutSource, /data-shell-compact-toggle/,
+    "Layout exposes the tiny Compact View control");
+  assert.match(layoutSource, /data-shell-collapse-toggle/,
+    "Layout exposes the Collapse Bar control");
+  assert.match(layoutSource, /ccsShellCollapsed/,
+    "Collapsed shell preference persists locally");
+  assert.match(layoutSource, /ccsShellCompact/,
+    "Compact shell preference persists locally");
+  assert.match(layoutSource, /180ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/,
+    "Shell uses the approved fast smooth transition curve");
   assert.match(layoutSource, /mobile-bottom-nav[^"]*z-50/,
     "Mobile navigation retains its z-50 shell layer");
-  assert.match(focusSource, /bottom-\[calc\(76px\+env\(safe-area-inset-bottom\)\)\][^"]*z-40/,
-    "Focus button stays above the mobile nav without claiming overlay priority");
+  assert.match(focusSource, /data-focus-timer-trigger/,
+    "Focus Timer exposes a reusable paired trigger");
   assert.match(focusSource, /<Dialog open=\{open\} onOpenChange=\{setOpen\} modal=\{false\}>/,
     "Personal Focus dialog does not impose a modal interaction lock over official Work Pause");
   assert.match(focusSource, /DialogContent className="z-\[90\]/,
     "Focus dialog stays below official Work Pause");
   assert.match(pauseSource, /pointer-events-auto fixed inset-0 z-\[100\]/,
-    "Official Work Pause remains interactive and highest-priority over modal Focus UI");
+    "Official Work Pause remains interactive and highest-priority over Focus UI");
   passed += 1;
   console.log("PASS Source stacking and Layout integration contracts");
 
