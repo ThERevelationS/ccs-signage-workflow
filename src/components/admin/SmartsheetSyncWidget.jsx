@@ -37,9 +37,10 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     loadStatus();
     // Running Order syncs publish row-level heartbeat data. Poll quickly enough
     // for that activity to feel live without increasing idle background traffic.
-    const interval = setInterval(loadStatus, status?.status === 'running' ? 1000 : 5000);
+    const interval = setInterval(loadStatus,
+      compactOrderForm && status?.status === 'running' ? 1000 : 5000);
     return () => clearInterval(interval);
-  }, [loadStatus, status?.status]);
+  }, [loadStatus, compactOrderForm, status?.status]);
 
   // Reset dismissed when a new sync starts on other pages.
   useEffect(() => {
@@ -88,10 +89,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const totalSteps = status?.total_steps || 0;
   const completedSteps = status?.completed_steps || 0;
   const currentStepLabel = status?.current_step_label || '';
-  const progressCurrent = Math.max(0, Number(status?.progress_current) || 0);
-  const progressTotal = Math.max(0, Number(status?.progress_total) || 0);
-  const progressItemLabel = String(status?.progress_item_label || '').trim();
-  const progressDetail = String(status?.progress_detail || '').trim();
+  const showOrderGranularProgress = compactOrderForm && status?.progress_dataset === 'orders';
+  const progressCurrent = showOrderGranularProgress ? Math.max(0, Number(status?.progress_current) || 0) : 0;
+  const progressTotal = showOrderGranularProgress ? Math.max(0, Number(status?.progress_total) || 0) : 0;
+  const progressItemLabel = showOrderGranularProgress ? String(status?.progress_item_label || '').trim() : '';
+  const progressDetail = showOrderGranularProgress ? String(status?.progress_detail || '').trim() : '';
   const stepFraction = isRunning && progressTotal > 0
     ? Math.min(0.999, progressCurrent / progressTotal) : 0;
   const progressPercent = totalSteps > 0
