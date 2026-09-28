@@ -4363,6 +4363,15 @@ Deno.serve(async (req) => {
             reason: correctionRequest.reviewer_reason || 'Recovered abandoned manager review',
             details: { correction_request_id: correctionRequest.id, decision: recoveredStatus, applied_audit_id: staleAudit.id },
           });
+          if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
+            await punchExceptionEntity.updateMany(
+              { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
+              { $set: {
+                status: 'resolved', resolution_audit_id: staleAudit.id,
+                resolution_note: 'Recovered an interrupted manager approval for the employee-reported missed clock-out.',
+              } },
+            );
+          }
           return Response.json({ success: false, recovered: true, error: 'A previous interrupted manager approval was recovered. Reload the correction queue before taking another action.' }, { status: 409 });
         }
 
