@@ -18,6 +18,7 @@ import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/sm
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned } from '../../shared/smartsheetOrderPullSafety.mjs';
+import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import {
   buildCells,
   buildOrderPullSnapshot,
@@ -233,12 +234,7 @@ function detectConflict(
     const lastStr = last == null ? '' : String(last);
     if (current.trim() !== lastStr.trim()) return true;
   }
-  if (dataset === 'orders') {
-    for (const colId of bindingColumnIds) {
-      if (seenBoundColumnIds.has(colId) || !Object.prototype.hasOwnProperty.call(snapshot, colId)) continue;
-      if (String(snapshot[colId] ?? '').trim() !== '') return true;
-    }
-  }
+  if (dataset === 'orders' && orderMissingBoundCellConflicts(snapshot, bindingColumnIds, seenBoundColumnIds)) return true;
   return false;
 }
 
