@@ -91,10 +91,16 @@ test('older unarchived research can receive a newly downloaded PDF and extracted
   assert.equal(merged.last_fetched, incoming.last_fetched);
 });
 
-test('Boone building application review records the current county-linked online workflow', () => {
+test('Boone building application review preserves evidence-bounded GovWell and Oracle routing', () => {
   assert.equal(manifest.onlineForms.buildingPermitPortal, 'https://app.govwell.com/');
-  assert.match(manifest.onlineForms.buildingPermitSubmission, /Boone County Building Permits page/i);
-  assert.match(manifest.sourceGapReview, /resolved as an online workflow/i);
+  assert.match(manifest.onlineForms.buildingPermitSubmission, /NEW building-permit applications/i);
+  assert.match(manifest.onlineForms.buildingPermitPortalEvidence.newApplications, /GovWell.*current official county-directed path.*new building-permit applications/i);
+  assert.match(manifest.onlineForms.buildingPermitPortalEvidence.oracleCurrentPageLink, /current Boone County Building Permits page still links.*Oracle/i);
+  assert.match(manifest.onlineForms.buildingPermitPortalEvidence.oracleArchivedEvidence, /archived official Online Permit Information PDF.*Oracle.*building-permit workflow/i);
+  assert.match(manifest.onlineForms.buildingPermitPortalEvidence.oracleScopeCaveat, /does not establish.*Oracle is obsolete.*does not define every permit type/i);
+  assert.match(manifest.onlineForms.buildingPermitPortalEvidence.newApplicationRoutingRule, /Do not direct new building-permit applications to Oracle without newer permit-specific official evidence/i);
+  assert.match(manifest.sourceGapReview, /directs NEW building-permit applications to GovWell/i);
+  assert.match(manifest.sourceGapReview, /current evidence does not establish that Oracle is obsolete/i);
   assert.equal(manifest.files.length, 6);
 });
 
