@@ -1,0 +1,74 @@
+{
+  "name": "FleetRepairEstimateCreateGate",
+  "type": "object",
+  "description": "Backend-only singleton CAS coordinator for first-time Fleet repair estimate creation across CCS admin and mechanic portal flows. Exactly one scope row must be provisioned before estimate creation is enabled.",
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": [
+        "fleet_repair_estimate"
+      ],
+      "description": "Singleton coordinator scope."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "creating"
+      ],
+      "description": "Backend-only create gate state."
+    },
+    "work_order_id": {
+      "type": "string"
+    },
+    "creation_key": {
+      "type": "string"
+    },
+    "owner_source": {
+      "type": "string",
+      "enum": [
+        "ccs_admin",
+        "mechanic_portal"
+      ]
+    },
+    "owner_key": {
+      "type": "string"
+    },
+    "payload_fingerprint": {
+      "type": "string"
+    },
+    "claim_token": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "scope",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__fleet_server_only__"
+      }
+    }
+  }
+}
