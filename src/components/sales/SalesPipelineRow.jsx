@@ -84,8 +84,6 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   };
   const salesOwnerSelect = personSelect(wo.sales_rep, users);
   const designerSelect = personSelect(wo.designer, users.filter((user) => user.sales_roles?.includes('Designer')));
-  const projectManagerSelect = personSelect(wo.project_manager, users.filter((user) => user.sales_roles?.includes('Project Manager') || user.sales_roles?.includes('PM')));
-  const estimatorSelect = personSelect(wo.estimator, users.filter((user) => user.sales_roles?.includes('Estimator')));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStamp = format(today, "yyyy-MM-dd");
