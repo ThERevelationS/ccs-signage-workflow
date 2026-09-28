@@ -67,7 +67,7 @@ export default function OrderForm() {
   };
 
   return (
-    <PullToRefresh onRefresh={async () => { /* triggers OrderSpreadsheet to reload via key */ setSearchTerm(s => s); }}>
+    <PullToRefresh onRefresh={() => spreadsheetRef.current?.refreshOrders?.()}>
     <div className="min-h-full p-4 pb-20 sm:p-6 flex flex-col">
       <div className="w-full min-w-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6">
