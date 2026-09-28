@@ -12,6 +12,17 @@ const saveSource = source.split("const saveItem = async")[1]?.split("const dupli
 check(Boolean(filters), "Information Filter editor section must exist");
 check(saveSource.includes("setIsSaving(true)") && saveSource.includes("setIsSaving(false)"),
   "Existing async save lifecycle must retain its saving state");
+check(source.includes("const saveInFlightRef = useRef(false);"),
+  "Save persistence must have a synchronous single-flight guard independent of React render timing");
+check(saveSource.includes("if (saveInFlightRef.current) return false;") &&
+      saveSource.indexOf("if (saveInFlightRef.current) return false;") < saveSource.indexOf("setIsSaving(true)"),
+  "A second rapid save must be rejected before the async save begins");
+check(saveSource.includes("saveInFlightRef.current = true;") &&
+      saveSource.indexOf("saveInFlightRef.current = true;") < saveSource.indexOf("try {"),
+  "The single-flight lock must be acquired synchronously before any awaited persistence path");
+check(saveSource.includes("finally {") && saveSource.includes("saveInFlightRef.current = false;") &&
+      saveSource.indexOf("saveInFlightRef.current = false;") > saveSource.indexOf("finally {"),
+  "Success and failure paths must both release the single-flight lock in finally");
 check(filters.includes('placeholder="e.g., High Priority Leads"\n                    disabled={isSaving}'),
   "Filter name must be locked during persistence");
 check(filters.includes('value={condition.field}\n                          disabled={isSaving}'),
