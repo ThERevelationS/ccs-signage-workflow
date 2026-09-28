@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned } from '../base44/shared/smartsheetOrderPullSafety.mjs';
 
 const row = { customer_name: 'Acme', quantity: '2', status: 'ordered', date_needed: '2026-10-01',
@@ -20,4 +21,9 @@ assert.equal(orderPullSnapshotAligned(row, { '11': 'Acme', '12': '2' }), false);
 assert.equal(orderPulledFieldsUnchanged({ receipt_option: 'In Stock', date_received: '' },
   { receipt_option: '', date_received: '2026-09-28' }), false);
 
-console.log('PASS exact Order pulls can skip writes only with a verified nonempty snapshot and sync timestamp');
+const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
+assert.match(backend, /const expectedOrderSnapshot = buildSnapshot\(\{ \.\.\.existing, \.\.\.fieldValues \}, bindings, 'orders'\)/);
+assert.match(backend, /orderPulledFieldsUnchanged\(existing, fieldValues\) &&[\s\S]*?orderPullSnapshotAligned\(existing, expectedOrderSnapshot\)[\s\S]*?unchangedSkipped\+\+[\s\S]*?continue/);
+assert.ok(backend.indexOf("orderPulledFieldsUnchanged(existing, fieldValues)") < backend.indexOf("toUpdate.push({ id: existing.id"));
+assert.match(backend, /unchanged_skipped: unchangedSkipped/);
+console.log('PASS exact Order pulls skip business-field writes only with a verified nonempty snapshot and sync timestamp');
