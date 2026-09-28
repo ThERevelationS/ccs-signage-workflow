@@ -143,28 +143,63 @@ export default function SalesPipeline() {
   const loadActiveFilters = async () => {
     const requestId = ++activeFiltersLoadRef.current;
     const userEmail = currentUser?.email?.toLowerCase() || "";
-    if (!userEmail) {
+    if (!userEmail || !sessionToken) {
       setActiveFilters([]);
       setActiveColumnPreset(null);
-      setFilterStatus((current) => current.startsWith("custom_") ? "all" : current);
+      setFilterStatus("all");
+      setAttentionFilter("all");
       return;
     }
     const SalesFilter = base44.entities.SalesFilter;
-    const allFilters = await loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" });
+    const [allFilters, preferences] = await Promise.all([
+      loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" }),
+      loadSalesPipelinePreferencesSafely({ sessionToken, label: "Sales Pipeline filter preferences" })
+        .catch((error) => {
+          console.error("Could not restore Sales Pipeline filter preferences:", error);
+          return { information_filter: "all", attention_filter: "all", column_preset_id: "default" };
+        }),
+    ]);
     if (requestId !== activeFiltersLoadRef.current) return;
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
     setActiveFilters(selected);
 
-    // selected_by controls which custom presets are available in the selector;
-    // it is not an active-preset field. Preserve the layout the user actually
-    // chose in this session only while that preset remains selected/available.
-    // Never auto-apply an arbitrary first saved preset after load/reload.
-    setActiveColumnPreset((current) => reconcileActiveSalesColumnPreset(current, selected));
-    setFilterStatus((current) => {
-      if (!current.startsWith("custom_")) return current;
-      const selectedId = current.slice("custom_".length);
-      return selected.some(f => f.type === "filter" && f.id === selectedId) ? current : "all";
-    });
+    const savedInformation = String(preferences?.information_filter || "all");
+    const restoredInformation = savedInformation.startsWith("custom_")
+      ? (selected.some((filter) => filter.type === "filter" && filter.id === savedInformation.slice("custom_".length)) ? savedInformation : "all")
+      : (["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
+    const savedAttention = String(preferences?.attention_filter || "all");
+    const restoredAttention = salesAttentionOption(savedAttention) ? savedAttention : "all";
+    const savedColumnId = String(preferences?.column_preset_id || "default");
+    const restoredColumn = savedColumnId === "default"
+      ? null
+      : selected.find((filter) => filter.type === "column_preset" && filter.id === savedColumnId) || null;
+
+    setFilterStatus(restoredInformation);
+    setAttentionFilter(restoredAttention);
+    setActiveColumnPreset(restoredColumn);
+  };
+
+  const persistFilterPreferences = ({
+    informationFilter = filterStatus,
+    attention = attentionFilter,
+    columnPresetId = activeColumnPreset?.id || "default",
+  } = {}) => {
+    if (!sessionToken || !currentUser?.email) return;
+    const preferences = {
+      information_filter: informationFilter,
+      attention_filter: attention,
+      column_preset_id: columnPresetId,
+    };
+    preferenceSaveChainRef.current = preferenceSaveChainRef.current
+      .catch(() => undefined)
+      .then(() => saveSalesPipelinePreferencesSafely({
+        sessionToken,
+        preferences,
+        label: "Sales Pipeline filter preferences",
+      }))
+      .catch((error) => {
+        console.error("Could not save Sales Pipeline filter preferences:", error);
+      });
   };
 
   const isStandardFilterEnabled = (value) => {
@@ -176,6 +211,7 @@ export default function SalesPipeline() {
   const applyAttentionFilter = (value) => {
     setAttentionFilter(value);
     setFilterStatus("all");
+    persistFilterPreferences({ informationFilter: "all", attention: value });
   };
 
   const chooseView = (nextView) => {
