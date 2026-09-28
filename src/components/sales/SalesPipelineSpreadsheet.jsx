@@ -40,7 +40,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
 import { personValuesReferToSameUser } from "@/components/admin/smartsheetTranslationModel.js";
-import { salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
+import { buildSalesPersonSelectModel, salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -1815,7 +1815,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     operational.forEach((wo) => {
       const value = Number(wo.estimate_amount ?? 0) || 0;
       const followUp = wo.follow_up_date || "";
-      const ownerLabel = String(wo.sales_rep || "").trim() || "Unassigned";
+      const ownerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical || "Unassigned";
       const ownerKey = normalizeOwnerIdentity(ownerLabel) || "__unassigned__";
       const ownerRow = ownerWorkload.get(ownerKey) || { owner: ownerLabel, count: 0, value: 0, dueCount: 0, age90Count: 0 };
       ownerRow.count += 1;
@@ -1835,7 +1835,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       }
 
       if (isQuoteAwaitingResponse(wo)) {
-        const quoteOwnerLabel = String(wo.sales_rep || "").trim() || "Unassigned";
+        const quoteOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical || "Unassigned";
         const quoteOwnerKey = normalizeOwnerIdentity(quoteOwnerLabel) || "__unassigned__";
         const quoteRow = quoteOwnerMix.get(quoteOwnerKey) || { owner: quoteOwnerLabel, count: 0, value: 0, trackedCount: 0, missingCount: 0, agedCount: 0, veryAgedCount: 0, noFollowUpCount: 0 };
         quoteRow.count += 1;
@@ -1915,7 +1915,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const buildOutcomePerformance = (field, fallbackLabel) => {
       const grouped = new Map();
       reportingOutcomes.forEach((wo) => {
-        const label = String(wo[field] || "").trim() || fallbackLabel;
+        const rawLabel = String(wo[field] || "").trim();
+        const label = field === "sales_rep"
+          ? (buildSalesPersonSelectModel(rawLabel, users).canonical || fallbackLabel)
+          : (rawLabel || fallbackLabel);
         const key = label.toLowerCase();
         const row = grouped.get(key) || { label, total: 0, won: 0, lost: 0, closedValue: 0, wonValue: 0, winRate: null };
         const value = Number(wo.estimate_amount ?? 0) || 0;
@@ -1937,7 +1940,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     summary.ownerOutcomePerformance = buildOutcomePerformance("sales_rep", "Unassigned");
     summary.sourceOutcomePerformance = buildOutcomePerformance("lead_source", "Unspecified");
     return summary;
-  }, [scopedWorkOrders, workOrders, recordScope, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp]);
+  }, [scopedWorkOrders, workOrders, recordScope, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp, users]);
 
   useEffect(() => {
     onSummaryChange?.(pipelineSummary);
