@@ -5311,6 +5311,289 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, archived: true, time_entry_id: entry.id, audit_id: intent.id });
     }
 
+    if (action === 'recover_missed_clock_in') {
+      const serverNow = new Date();
+      const companyMinutes = minutesOfDayInCompanyTime(serverNow.toISOString());
+      if (!Number.isInteger(companyMinutes) || companyMinutes < 15 * 60) {
+        return Response.json({ success: false, error: 'Missed Clock In recovery is only available at or after 3:00 PM company time.' }, { status: 409 });
+      }
+
+      const claimedClockIn = new Date(String(body?.claimed_clock_in || ''));
+      if (!Number.isFinite(claimedClockIn.getTime())) {
+        return Response.json({ success: false, error: 'Enter the date and time you actually arrived.' }, { status: 400 });
+      }
+      if (claimedClockIn.getTime() > serverNow.getTime()) {
+        return Response.json({ success: false, error: 'The reported Clock In cannot be in the future.' }, { status: 400 });
+      }
+
+      const companyDate = dateKeyInCompanyTime(serverNow.toISOString());
+      const claimedCompanyDate = dateKeyInCompanyTime(claimedClockIn.toISOString());
+      if (!companyDate || !claimedCompanyDate || claimedCompanyDate !== companyDate) {
+        return Response.json({ success: false, error: 'Late-day self-service recovery can only reconstruct a missing Clock In from today. Older missing punches require manager review.' }, { status: 400 });
+      }
+
+      const claimedClockInIso = claimedClockIn.toISOString();
+      const recoveryPayloadHash = await payloadHash({
+        action: 'recover_missed_clock_in',
+        user_email: target.email,
+        claimed_clock_in: claimedClockInIso,
+        company_date: companyDate,
+      });
+
+      let entry = await uniqueRow(
+        entryEntity,
+        { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+        'Missed Clock In recovery request',
+      );
+
+      const exactRecoveredEntry = Boolean(
+        entry?.id &&
+        entry.status === 'clocked_in' &&
+        asEmail(entry.user_email) === target.email &&
+        entry.clock_source === 'employee_attested_missed_clock_in' &&
+        String(entry.clock_in_request_id || '') === requestId &&
+        String(entry.clock_in || '') === claimedClockInIso
+      );
+
+      if (entry?.id && !exactRecoveredEntry) {
+        return Response.json({ success: false, error: 'This recovery request id is already tied to a different Clock In record.' }, { status: 409 });
+      }
+
+      const existingActives = await entryEntity.filter({
+        user_email: target.email,
+        status: 'clocked_in',
+        archived_test_data: { $ne: true },
+        archived_admin: { $ne: true },
+      });
+      if (!Array.isArray(existingActives)) throw new Error('Active TimeEntry lookup did not return a record list.');
+      const unrelatedActive = existingActives.find((row: any) => !entry?.id || row.id !== entry.id);
+      if (unrelatedActive?.id) {
+        return Response.json({ success: false, error: 'An active shift already exists for this employee. Reload Time Clock before using missed Clock In recovery.' }, { status: 409 });
+      }
+
+      if (!exactRecoveredEntry && state.status !== 'clocked_out' &&
+          !(state.status === 'clocking_in' && String(state.last_request_id || '') === requestId)) {
+        return Response.json({ success: false, error: 'Employee Time Clock state changed before missed Clock In recovery could start.' }, { status: 409 });
+      }
+      if (exactRecoveredEntry && state.status === 'clocked_in' && state.active_entry_id !== entry.id) {
+        return Response.json({ success: false, error: 'Recovered Clock In exists but authoritative employee state points to another shift. Admin investigation is required.' }, { status: 409 });
+      }
+
+      const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' });
+      if (!Array.isArray(finalizedPeriods)) throw new Error('Finalized pay-period lookup did not return a record list.');
+      const invalidFinalizedPeriod = finalizedPeriods.find((period: any) => {
+        const start = validDateKey(period.start_date);
+        const end = validDateKey(period.end_date);
+        return !start || !end || start > end;
+      });
+      if (invalidFinalizedPeriod) {
+        return Response.json({ success: false, error: 'A finalized pay period has invalid date boundaries. Admin review is required before a missing Clock In can be reconstructed.' }, { status: 409 });
+      }
+      const closedPeriod = finalizedPeriods.find((period: any) =>
+        claimedCompanyDate >= period.start_date && claimedCompanyDate <= period.end_date
+      );
+      if (closedPeriod) {
+        return Response.json({
+          success: false,
+          error: 'The reported arrival belongs to a finalized pay period. An administrator must reopen that period before reconstructing the missing Clock In.',
+          finalized_pay_period_id: closedPeriod.id,
+        }, { status: 409 });
+      }
+
+      const gateEntryId = 'late_clock_in:' + target.email;
+      const gate = await claimCorrectionCreateLock(stateEntity, state.id, requestId, gateEntryId, recoveryPayloadHash);
+      if (!gate?.acquired) {
+        return Response.json({
+          success: false,
+          ...(gate?.retry_same_request === true ? { retry_same_request: true } : {}),
+          error: gate?.error || 'Missed Clock In recovery could not acquire its authoritative employee lock.',
+        }, { status: 409 });
+      }
+      state = gate.state?.id ? gate.state : await freshState(stateEntity, state.id);
+
+      try {
+        const reportedAt = entry?.missed_clock_in_reported_at || new Date().toISOString();
+        let claimedState = state;
+        if (!exactRecoveredEntry) {
+          claimedState = state.status === 'clocking_in' && String(state.last_request_id || '') === requestId
+            ? state
+            : await setState(stateEntity, state, 'clocked_out', null, {
+                status: 'clocking_in',
+                active_entry_id: null,
+                last_request_id: requestId,
+                last_request_payload_hash: recoveryPayloadHash,
+                pending_started_at: reportedAt,
+                break_status: 'working', active_break_id: null,
+                last_break_request_id: null, break_pending_started_at: null,
+                work_pause_status: 'working', active_work_pause_id: null,
+                last_work_pause_request_id: null, work_pause_pending_started_at: null,
+                labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+                labor_pending_activity_type: '', labor_pending_work_order_id: '',
+              });
+          if (!claimedState) {
+            return Response.json({ success: false, error: 'Missed Clock In recovery lost a concurrency race. Reload status before retrying.' }, { status: 409 });
+          }
+
+          entry = await uniqueRow(
+            entryEntity,
+            { user_email: target.email, clock_in_request_id: requestId, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+            'Missed Clock In recovery request',
+          );
+          if (!entry) {
+            entry = await entryEntity.create({
+              user_email: target.email,
+              user_name: target.full_name || target.email,
+              clock_in: claimedClockInIso,
+              clock_in_request_id: requestId,
+              clock_source: 'employee_attested_missed_clock_in',
+              missed_clock_in_reported_at: reportedAt,
+              status: 'clocked_in',
+              approval_status: 'needs_review',
+            });
+          }
+        }
+
+        if (!entry?.id || entry.status !== 'clocked_in' ||
+            asEmail(entry.user_email) !== target.email ||
+            entry.clock_source !== 'employee_attested_missed_clock_in' ||
+            String(entry.clock_in_request_id || '') !== requestId ||
+            String(entry.clock_in || '') !== claimedClockInIso) {
+          return Response.json({ success: false, error: 'The reconstructed Clock In could not be tied to this exact employee response.' }, { status: 409 });
+        }
+
+        const caseKey = 'late_clock_in:' + entry.id;
+        let punchCase = await uniqueRow(punchExceptionEntity, { case_key: caseKey }, 'Missed Clock In case');
+        if (!punchCase?.id) {
+          punchCase = await punchExceptionEntity.create({
+            case_key: caseKey,
+            user_email: target.email,
+            user_name: target.full_name || target.email,
+            time_entry_id: entry.id,
+            exception_type: 'late_clock_in',
+            status: 'pending_manager_review',
+            detected_at: reportedAt,
+            detected_clock_in: claimedClockInIso,
+            original_snapshot: {
+              missing_clock_in: true,
+              detected_at: reportedAt,
+              company_date: companyDate,
+            },
+            employee_response: 'missed_clock_in',
+            claimed_clock_in: claimedClockInIso,
+            submitted_at: reportedAt,
+            request_id: requestId,
+            resolution_note: 'Employee reconstructed a missing Clock In after the 3:00 PM late-day check; completed shift requires manager review.',
+          });
+        }
+        if (!punchCase?.id ||
+            asEmail(punchCase.user_email) !== target.email ||
+            String(punchCase.time_entry_id || '') !== entry.id ||
+            String(punchCase.exception_type || '') !== 'late_clock_in' ||
+            String(punchCase.claimed_clock_in || '') !== claimedClockInIso ||
+            String(punchCase.request_id || '') !== requestId) {
+          return Response.json({ success: false, error: 'The Missed Clock In exception record does not match this reconstructed shift.' }, { status: 409 });
+        }
+
+        if (String(entry.punch_exception_id || '') !== punchCase.id) {
+          const linked = await entryEntity.updateMany(
+            { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_in' },
+            { $set: {
+              punch_exception_id: punchCase.id,
+              approval_status: 'needs_review',
+              missed_clock_in_reported_at: reportedAt,
+            } },
+          );
+          if (!linked || linked.updated !== 1) {
+            const fresh = await entryEntity.get(entry.id).catch(() => null);
+            if (!fresh?.id || String(fresh.punch_exception_id || '') !== punchCase.id) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The reconstructed shift was saved but its exception link still needs recovery. Retry the same request.' }, { status: 409 });
+            }
+            entry = fresh;
+          } else {
+            entry = await entryEntity.get(entry.id);
+          }
+        }
+
+        await ensureClockInAudit({ auditEntity, entry, target, actor, requestId });
+        const punchAudit = await ensureActionAudit(auditEntity, {
+          action: 'punch_exception', outcome: 'confirmed', user_email: target.email,
+          user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
+          authentication_method: authenticationMethodFor(actor, target),
+          server_timestamp: reportedAt, request_id: requestId, time_entry_id: entry.id,
+          reason: 'Employee reported a missing Clock In during the late-day pre-clockout review',
+          details: {
+            payload_hash: recoveryPayloadHash,
+            punch_exception_id: punchCase.id,
+            response: 'missed_clock_in',
+            claimed_clock_in: claimedClockInIso,
+            company_date: companyDate,
+          },
+        }, 'Missed Clock In punch-exception audit');
+
+        if (String(punchCase.resolution_audit_id || '') !== punchAudit.audit.id) {
+          await punchExceptionEntity.updateMany(
+            { id: punchCase.id, time_entry_id: entry.id, request_id: requestId },
+            { $set: { resolution_audit_id: punchAudit.audit.id } },
+          );
+          punchCase = await punchExceptionEntity.get(punchCase.id);
+        }
+
+        const currentState = await freshState(stateEntity, state.id);
+        if (currentState.status === 'clocking_in' && String(currentState.last_request_id || '') === requestId) {
+          const finalizedState = await setState(stateEntity, currentState, 'clocking_in', requestId, {
+            status: 'clocked_in',
+            active_entry_id: entry.id,
+            last_action_at: reportedAt,
+            pending_started_at: null,
+            last_request_payload_hash: recoveryPayloadHash,
+            break_status: 'working', active_break_id: null,
+            last_break_request_id: null, break_pending_started_at: null,
+            work_pause_status: 'working', active_work_pause_id: null,
+            last_work_pause_request_id: null, work_pause_pending_started_at: null,
+            labor_status: 'idle', last_labor_request_id: null, labor_pending_started_at: null,
+            labor_pending_activity_type: '', labor_pending_work_order_id: '',
+          });
+          if (!finalizedState) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The reconstructed Clock In and audits were saved, but authoritative state still needs finalization. Retry the same request.' }, { status: 409 });
+          }
+          state = finalizedState;
+        } else if (!(currentState.status === 'clocked_in' && currentState.active_entry_id === entry.id)) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The reconstructed Clock In is saved, but authoritative employee state changed unexpectedly. Retry the same request or request admin review.' }, { status: 409 });
+        }
+
+        return Response.json({
+          success: true,
+          status: 'clocked_in',
+          recovered_missed_clock_in: true,
+          entry,
+          punch_exception: punchCase,
+          user: publicEmployee(target),
+        });
+      } finally {
+        let releaseFailed = false;
+        try {
+          const released = await releaseCorrectionCreateLock(
+            stateEntity, state.id, requestId, gateEntryId,
+            recoveryPayloadHash, String(gate.claim_token || ''),
+          );
+          if (!released) {
+            const current = await freshState(stateEntity, state.id).catch(() => null);
+            const gateStatus = String(current?.correction_create_status || '');
+            const safe = current?.id && (
+              !gateStatus || gateStatus === 'idle' ||
+              (gateStatus === 'creating' && String(current.correction_create_request_id || '') !== requestId)
+            );
+            if (!safe) releaseFailed = true;
+          }
+        } catch {
+          releaseFailed = true;
+        }
+        if (releaseFailed) {
+          throw new Error('Missed Clock In employee mutation gate could not be released safely. Retry this same recovery request.');
+        }
+      }
+    }
+
     if (action === 'resolve_punch_exception') {
       const responseType = String(body?.response || '').trim();
       if (!['missed_clock_out', 'worked_through'].includes(responseType)) {
