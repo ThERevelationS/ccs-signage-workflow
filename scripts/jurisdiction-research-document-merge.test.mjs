@@ -104,6 +104,17 @@ test('Boone building application review preserves evidence-bounded GovWell and O
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone electrical application remains an explicit unarchived source gap', () => {
+  const electrical = manifest.onlineForms.electricalPermitApplication;
+  assert.equal(electrical.listedLabel, 'Electrical Permit Application Form');
+  assert.equal(electrical.httpStatus, 404);
+  assert.equal(electrical.archiveStatus, 'not_archived_source_unavailable');
+  assert.match(electrical.notes, /No repository copy was created and no file hash\/byte count is claimed/i);
+  assert.match(manifest.sourceGapReview, /explicit unresolved source gap and was not archived/i);
+  assert.equal(manifest.files.length, 6);
+  assert.equal(manifest.files.some(file => /ElecApp|electrical/i.test(file.filename)), false);
+});
+
 test('both server refresh paths use safe merge and individual refresh skips pinned re-download', () => {
   const individual = readFileSync('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   const batch = readFileSync('base44/functions/batchUpdateJurisdictions/entry.ts', 'utf8');
