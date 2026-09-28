@@ -31,6 +31,8 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
   const renderCards = (items) => items.map((order) => {
         const displayStatus = effectiveOrderStatus(order);
         const statusColor = STATUS_COLORS[displayStatus] || "bg-gray-100 text-gray-700";
+        const customerName = typeof order.customer_name === 'string' ? order.customer_name.trim() : '';
+        const displayCustomerName = customerName || 'Unnamed customer';
         const dateNeeded = safeOrderMobileDate(order.date_needed);
         const dateNeededOption = typeof order.date_needed_option === 'string' ? order.date_needed_option.trim() : '';
         const dateOrdered = safeOrderMobileDate(order.date_ordered);
@@ -44,11 +46,11 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
             className="clay-card block w-full p-4 text-left cursor-pointer active:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
             style={{ minHeight: '44px', fontSize: '14px' }}
             onClick={() => onOpenDetails && onOpenDetails(order)}
-            aria-label={`Open order details for ${order.customer_name || 'unnamed customer'}`}
+            aria-label={`Open order details for ${displayCustomerName}`}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-800 text-base truncate">{order.customer_name || 'Unnamed customer'}</p>
+                <p className="font-semibold text-gray-800 text-base truncate">{displayCustomerName}</p>
                 {order.request_type && (
                   <p className="text-sm text-purple-600 font-medium">{order.request_type}</p>
                 )}
