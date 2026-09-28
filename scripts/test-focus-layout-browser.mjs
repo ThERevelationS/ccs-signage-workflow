@@ -81,8 +81,8 @@ try {
     "Focus button stays above the mobile nav without claiming overlay priority");
   assert.match(focusSource, /DialogContent className="z-\[90\]/,
     "Focus dialog stays below official Work Pause");
-  assert.match(pauseSource, /fixed inset-0 z-\[100\]/,
-    "Official Work Pause remains the highest-priority Time Clock guard");
+  assert.match(pauseSource, /pointer-events-auto fixed inset-0 z-\[100\]/,
+    "Official Work Pause remains interactive and highest-priority over modal Focus UI");
   passed += 1;
   console.log("PASS Source stacking and Layout integration contracts");
 
