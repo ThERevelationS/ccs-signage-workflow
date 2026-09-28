@@ -1,8 +1,9 @@
 import { resolveSmartsheetPerson } from "./smartsheetTranslationModel.js";
+import { salesPersonUsersForRole } from "../sales/salesPersonIdentity.mjs";
 
 export const CUSTOM_ASSIGNEE_SETTING_KEY = "smartsheetCustomAssignees";
 export function eligibleTaskAssignees(users = []) {
-  return users.filter((user) => user?.is_active !== false && String(user?.full_name || "").trim() && user.sales_roles?.includes("Task Assigned"));
+  return salesPersonUsersForRole(users, "Task Assigned");
 }
 
 // Approval is scoped to an exact label and stable sheet/column IDs, never an identity alias.
