@@ -217,6 +217,20 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       return false;
     }
 
+    if (activeTab === "filters") {
+      const fieldIds = new Set(FILTER_FIELDS.map((field) => field.value));
+      const operatorIds = new Set(OPERATORS.map((operator) => operator.value));
+      const invalidConditionIndex = filterConditions.findIndex((condition) => {
+        if (!fieldIds.has(condition?.field) || !operatorIds.has(condition?.operator)) return true;
+        if (condition.operator === "empty" || condition.operator === "not_empty") return false;
+        return String(condition?.value ?? "").trim() === "";
+      });
+      if (invalidConditionIndex >= 0) {
+        setPersistenceError(`Complete condition ${invalidConditionIndex + 1} before saving. Choose a field, operator, and value.`);
+        return false;
+      }
+    }
+
     const data = {
       name: itemName,
       type: activeTab === "filters" ? "filter" : "column_preset",
