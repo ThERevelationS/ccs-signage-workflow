@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   personValuesReferToSameUser,
 } from "../src/components/admin/smartsheetTranslationModel.js";
-import { smartsheetSalesAssigneeLabel } from "../base44/shared/smartsheetSalesAssigneeTranslation.mjs";
+import { canonicalBase44SalesAssignee, smartsheetSalesAssigneeLabel } from "../base44/shared/smartsheetSalesAssigneeTranslation.mjs";
 import {
   buildCells,
   buildSnapshot,
@@ -17,6 +17,7 @@ import {
 const spreadsheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.jsx", "utf8");
 const filterDialog = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
 const assigneeSelect = readFileSync("src/components/sales/TaskAssigneeSelect.jsx", "utf8");
+const syncAction = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "utf8");
 let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks += 1; };
 const same = (actual, expected, label) => { assert.equal(actual, expected, label); checks += 1; };
@@ -57,6 +58,21 @@ same(smartsheetSalesAssigneeLabel("Carl"), "Carl",
 same(smartsheetSalesAssigneeLabel("Terri Tarter <admin@cincicustomsigns.com>"), "Terri",
   "Legacy display-name/email labels translate to first name");
 same(smartsheetSalesAssigneeLabel(""), "", "Blank assignee stays blank");
+for (const [short, full] of [
+  ["Brett", "Brett Heinlein"],
+  ["Carl", "Carl Heinlein"],
+  ["Kyle", "Kyle Heinlein"],
+  ["Twyla", "Twyla Heinlein"],
+]) {
+  same(canonicalBase44SalesAssignee(short, users).name, full,
+    `Smartsheet pull must canonicalize ${short} to ${full}`);
+  same(canonicalBase44SalesAssignee(full, users).name, full,
+    `Already-canonical ${full} must remain canonical on pull`);
+}
+same(canonicalBase44SalesAssignee("Alex", users).state, "ambiguous",
+  "Ambiguous Smartsheet first names must fail closed");
+same(canonicalBase44SalesAssignee("Unknown Person", users).state, "unresolved",
+  "Unknown Smartsheet assignees must fail closed instead of creating a raw Base44 assignment");
 
 const bindings = { current_task_assigned_to: "3326787726927748" };
 const cells = buildCells({ current_task_assigned_to: "Brett Heinlein" }, bindings, "sales");
@@ -97,9 +113,15 @@ check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
 check(filterDialog.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
       filterDialog.includes('className="flex flex-wrap gap-1"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
-check(assigneeSelect.includes('resolvedValue.state === "matched" ? resolvedValue.name : value') &&
+check(assigneeSelect.includes("const selectedName = resolvedValue.name || value;") &&
       assigneeSelect.includes('value={selectedName ? `name:${options.indexOf(selectedName)}` : "none"}') &&
       assigneeSelect.includes('<SelectValue>{selectedName || "Unassigned"}</SelectValue>'),
-  "Task assignee UI must display unique first-name aliases as their authorized canonical full name without rewriting the record");
+  "Task assignee UI must display unique first-name aliases as their authorized canonical full name");
+check(syncAction.includes("canonicalBase44SalesAssignee(val, salesAssigneeUsers)") &&
+      syncAction.includes("fieldValues[key] = resolution.name;"),
+  "Sales Smartsheet pull must write canonical authorized full names into Base44");
+check(syncAction.includes("assignee_translation_review_required") &&
+      syncAction.includes("No Sales records were changed."),
+  "Unresolved or ambiguous Smartsheet assignees must block the Sales pull before writes");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);
