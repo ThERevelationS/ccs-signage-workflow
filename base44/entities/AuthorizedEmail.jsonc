@@ -86,6 +86,11 @@
       "default": false,
       "description": "Whether this user can import/export data"
     },
+    "can_order_export": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit admin-assigned permission to display the Order Form Export button. Requires admin role."
+    },
     "can_view_resources": {
       "type": "boolean",
       "default": false,
