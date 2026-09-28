@@ -61,6 +61,7 @@ function adminUserView(row: any) {
     role: row?.role || 'user',
     sales_roles: Array.isArray(row?.sales_roles) ? row.sales_roles : [],
     can_import_export: row?.can_import_export === true,
+    can_order_export: row?.role === 'admin' && row?.can_order_export === true,
     can_view_resources: row?.can_view_resources === true,
     employment_type: row?.employment_type || 'hourly',
     can_work_pause: row?.can_work_pause === true,
@@ -102,6 +103,7 @@ function cleanManagedFields(value: any) {
   }
   if (Object.prototype.hasOwnProperty.call(input, 'sales_roles')) out.sales_roles = cleanSalesRoles(input.sales_roles);
   if (Object.prototype.hasOwnProperty.call(input, 'can_import_export')) out.can_import_export = input.can_import_export === true;
+  if (Object.prototype.hasOwnProperty.call(input, 'can_order_export')) out.can_order_export = input.can_order_export === true;
   if (Object.prototype.hasOwnProperty.call(input, 'can_view_resources')) out.can_view_resources = input.can_view_resources === true;
   if (Object.prototype.hasOwnProperty.call(input, 'employment_type')) {
     const employmentType = String(input.employment_type || '');
@@ -112,6 +114,7 @@ function cleanManagedFields(value: any) {
 
   if (!Object.keys(out).length) throw Object.assign(new Error('No supported user fields were supplied.'), { status: 400 });
   if (out.role === 'admin') out.can_view_resources = true;
+  if (out.role === 'user') out.can_order_export = false;
   return out;
 }
 
@@ -408,6 +411,7 @@ async function createUser(AuthorizedEmail: any, input: any) {
     role,
     sales_roles: Array.isArray(input?.sales_roles) ? cleanSalesRoles(input.sales_roles) : ['Task Assigned'],
     can_import_export: input?.can_import_export === true,
+    can_order_export: role === 'admin' && input?.can_order_export === true,
     can_view_resources: role === 'admin' ? true : input?.can_view_resources === true,
     employment_type: EMPLOYMENT_TYPES.has(String(input?.employment_type || 'hourly')) ? String(input.employment_type || 'hourly') : 'hourly',
     can_work_pause: input?.can_work_pause === true,
@@ -489,6 +493,12 @@ Deno.serve(async (req) => {
 
     if (action === 'update') {
       const desired = cleanManagedFields(body?.next_fields);
+      // The Order Form export grant is separate from broad import/export.
+      // Role demotion revokes it, and no non-admin may retain or request it.
+      if (desired.can_order_export === true && (desired.role || current.role) !== 'admin') {
+        return Response.json({ error: 'Order Form export requires an admin account.' }, { status: 403 });
+      }
+      if (desired.role === 'user') desired.can_order_export = false;
       const expectedInput = body?.expected_fields && typeof body.expected_fields === 'object' && !Array.isArray(body.expected_fields)
         ? body.expected_fields
         : {};
