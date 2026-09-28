@@ -17,6 +17,7 @@ import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsh
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
+import { orderPulledFieldsUnchanged, orderPullSnapshotAligned } from '../../shared/smartsheetOrderPullSafety.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -448,6 +449,14 @@ async function pullDataset(
           salesPullSnapshotAligned(existing, buildSnapshot(existing, bindings, 'sales'))) {
         unchangedSkipped++;
         continue;
+      }
+      if (dataset === 'orders') {
+        const expectedOrderSnapshot = buildSnapshot({ ...existing, ...fieldValues }, bindings, 'orders');
+        if (orderPulledFieldsUnchanged(existing, fieldValues) &&
+            orderPullSnapshotAligned(existing, expectedOrderSnapshot)) {
+          unchangedSkipped++;
+          continue;
+        }
       }
       toUpdate.push({ id: existing.id, _existing: existing, ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
     } else if (profile?.create_base44_from_smartsheet) {
