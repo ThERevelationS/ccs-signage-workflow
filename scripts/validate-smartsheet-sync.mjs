@@ -751,6 +751,6 @@ const salesReadiness = buildSmartsheetCreationReadiness({
   dataset: "sales",
   sheetId: "8702703019812740",
 });
-assert(salesReadiness.summary.blocked_required_fields === 1, "WorkOrder Job Description is a real schema-required creation field.");
+assert(salesReadiness.summary.blocked_required_fields === 0, "Sales readiness must not require Base44-only Job Description/title from Smartsheet; the controlled proposal layer generates the required internal WorkOrder title before creation.");
 
 console.log("Smartsheet rollout regression validation: PASS");
