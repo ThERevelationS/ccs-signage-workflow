@@ -65,6 +65,11 @@ function syntheticBackend() {
           } else if (request.op === "updateMany") {
             const query = request.query || {};
             const patch = request.patch || {};
+            if (fixture.failNextWriteMessage) {
+              const message = fixture.failNextWriteMessage;
+              fixture.failNextWriteMessage = null;
+              throw new Error(message);
+            }
             if (fixture.updateDelayMs) {
               await new Promise((resolve) => setTimeout(resolve, fixture.updateDelayMs));
             }
