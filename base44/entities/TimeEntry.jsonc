@@ -33,7 +33,8 @@
       "enum": [
         "server",
         "legacy_client",
-        "admin_correction"
+        "admin_correction",
+        "employee_attested_missed_clock_in"
       ],
       "description": "Authority/source used for punch timestamps"
     },
@@ -230,6 +231,11 @@
     "punch_exception_id": {
       "type": "string",
       "description": "Open or most recent TimeClockPunchException associated with this shift"
+    },
+    "missed_clock_in_reported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when an employee reported a missing Clock In and supplied the reconstructed start"
     },
     "punch_resolution_pending_at": {
       "type": "string",
