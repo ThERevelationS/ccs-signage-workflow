@@ -930,6 +930,213 @@ test('interrupted Clock In preserves its original trusted punch after closed-per
   assert.equal(recovered.body.entry.clock_in, originalPunch);
 });
 
+function setupStaleMissedPunch({ serverNow = '2026-09-29T12:00:00.000Z', clockIn = '2026-09-28T10:00:00.000Z' } = {}) {
+  const h = setup({ entryCount: 1, serverNow });
+  h.rows.TimeClockPayPeriod = [];
+  const entry = h.rows.TimeEntry[0];
+  Object.assign(entry, {
+    status: 'clocked_in', clock_in: clockIn, approval_status: 'unreviewed',
+    lunch_minutes: 0, job_allocations: [], clock_source: 'server',
+  });
+  delete entry.clock_out;
+  delete entry.total_hours;
+  delete entry.pay_period_id;
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(state, {
+    status: 'clocked_in', active_entry_id: entry.id,
+    break_status: 'working', active_break_id: null,
+    work_pause_status: 'working', active_work_pause_id: null,
+    labor_status: 'idle',
+  });
+  return h;
+}
+
+test('long cross-date shift prompts without mutating the active punch', async () => {
+  const h = setupStaleMissedPunch();
+  const before = structuredClone(h.rows.TimeEntry[0]);
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.status, 200, JSON.stringify(status.body));
+  assert.equal(status.body.requires_punch_resolution, true);
+  assert.equal(status.body.punch_resolution.type, 'missed_clock_out');
+  assert.equal(status.body.punch_resolution.self_service_blocked, false);
+  assert.equal(h.rows.TimeEntry[0].status, before.status);
+  assert.equal(h.rows.TimeEntry[0].clock_in, before.clock_in);
+  assert.equal(h.rows.TimeEntry[0].clock_out, undefined);
+  assert.equal(h.rows.TimeClockPunchException.length, 0);
+});
+
+test('ordinary overnight shift under 18 hours is preserved without a missed-punch prompt', async () => {
+  const h = setupStaleMissedPunch({
+    serverNow: '2026-09-29T03:00:00.000Z',
+    clockIn: '2026-09-28T10:00:00.000Z',
+  });
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.status, 200, JSON.stringify(status.body));
+  assert.notEqual(status.body.requires_punch_resolution, true);
+  assert.equal(h.rows.TimeEntry[0].status, 'clocked_in');
+});
+
+test('Worked Through preserves the original continuous shift with an exact audit', async () => {
+  const h = setupStaleMissedPunch();
+  const originalClockIn = h.rows.TimeEntry[0].clock_in;
+  const payload = {
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'worked-through-acceptance-001', response: 'worked_through',
+  };
+  const first = await h.invoke(payload);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.worked_through, true);
+  assert.equal(h.rows.TimeEntry[0].status, 'clocked_in');
+  assert.equal(h.rows.TimeEntry[0].clock_in, originalClockIn);
+  assert.equal(h.rows.TimeEntry[0].clock_out, undefined);
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).status, 'clocked_in');
+  assert.equal(h.rows.TimeClockCorrectionRequest.length, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'worked_through');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'punch_exception').length, 1);
+  const acknowledgedAt = h.rows.TimeEntry[0].stale_shift_acknowledged_at;
+  const retry = await h.invoke(payload);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.reused, true);
+  assert.equal(h.rows.TimeEntry[0].stale_shift_acknowledged_at, acknowledgedAt);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+});
+
+test('active Current Work blocks self-service missed Clock Out but still reports the stale shift', async () => {
+  const h = setupStaleMissedPunch();
+  h.rows.TimeClockLaborSegment = [{
+    id: 'active-labor-001', user_email: employee.email, time_entry_id: h.rows.TimeEntry[0].id,
+    status: 'active', started_at: '2026-09-29T08:00:00.000Z',
+  }];
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.body.requires_punch_resolution, true);
+  assert.equal(status.body.punch_resolution.self_service_blocked, true);
+  assert.match(status.body.punch_resolution.self_service_blocked_reason, /Current Work/);
+  const blocked = await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'blocked-current-work-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /Current Work/);
+  assert.equal(h.rows.TimeEntry[0].status, 'clocked_in');
+  assert.equal(h.rows.TimeClockCorrectionRequest.length, 0);
+});
+
+test('missed Clock Out detaches old shift without fabricating time and permits a fresh Clock In', async () => {
+  const h = setupStaleMissedPunch();
+  const payload = {
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'missed-clock-out-acceptance-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  };
+  const resolved = await h.invoke(payload);
+  assert.equal(resolved.status, 200, JSON.stringify(resolved.body));
+  assert.equal(resolved.body.punch_resolution_pending, true);
+  const oldEntry = h.rows.TimeEntry[0];
+  assert.equal(oldEntry.status, 'needs_resolution');
+  assert.equal(oldEntry.clock_out, undefined);
+  assert.equal(oldEntry.approval_status, 'needs_review');
+  const employeeState = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.equal(employeeState.status, 'clocked_out');
+  assert.equal(employeeState.active_entry_id, null);
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'pending_manager_review');
+  assert.equal(h.rows.TimeClockCorrectionRequest.length, 1);
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].request_kind, 'missed_clock_out');
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].requested_changes.clock_out, '2026-09-28T22:00:00.000Z');
+
+  const retried = await h.invoke(payload);
+  assert.equal(retried.status, 200, JSON.stringify(retried.body));
+  assert.equal(retried.body.reused, true);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockCorrectionRequest.length, 1);
+
+  const freshClockIn = await h.clockIn('fresh-after-missed-001');
+  assert.equal(freshClockIn.status, 200, JSON.stringify(freshClockIn.body));
+  assert.equal(freshClockIn.body.status, 'clocked_in');
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'needs_resolution').length, 1);
+  assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 1);
+});
+
+test('missed Clock Out rejects impossible times before creating recovery records', async () => {
+  for (const claimedClockOut of [
+    '2026-09-28T09:00:00.000Z',
+    '2026-09-30T09:00:00.000Z',
+    'not-a-date',
+  ]) {
+    const h = setupStaleMissedPunch();
+    const result = await h.invoke({
+      action: 'resolve_punch_exception', target_email: employee.email,
+      request_id: 'invalid-missed-punch-001', response: 'missed_clock_out', claimed_clock_out: claimedClockOut,
+    });
+    assert.ok([400, 409].includes(result.status), JSON.stringify(result.body));
+    assert.equal(h.rows.TimeEntry[0].status, 'clocked_in');
+    assert.equal(h.rows.TimeClockPunchException.length, 0);
+    assert.equal(h.rows.TimeClockCorrectionRequest.length, 0);
+  }
+});
+
+test('manager approval completes the unresolved shift while rejection leaves it unresolved', async () => {
+  const approveHarness = setupStaleMissedPunch();
+  await approveHarness.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'approve-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const approveRequest = approveHarness.rows.TimeClockCorrectionRequest[0];
+  const approved = await approveHarness.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'approve-review-001', correction_request_id: approveRequest.id,
+    expected_request_updated_date: approveRequest.updated_date,
+    decision: 'approve', reason: 'Verified employee reported time',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  assert.equal(approveHarness.rows.TimeEntry[0].status, 'clocked_out');
+  assert.equal(approveHarness.rows.TimeEntry[0].clock_out, '2026-09-28T22:00:00.000Z');
+  assert.equal(approveHarness.rows.TimeEntry[0].approval_status, 'needs_review');
+  assert.equal(approveHarness.rows.TimeClockPunchException[0].status, 'resolved');
+
+  const rejectHarness = setupStaleMissedPunch();
+  await rejectHarness.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'reject-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const rejectRequest = rejectHarness.rows.TimeClockCorrectionRequest[0];
+  const rejected = await rejectHarness.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'reject-review-001', correction_request_id: rejectRequest.id,
+    expected_request_updated_date: rejectRequest.updated_date,
+    decision: 'reject', reason: 'Needs clarification',
+  });
+  assert.equal(rejected.status, 200, JSON.stringify(rejected.body));
+  assert.equal(rejectHarness.rows.TimeEntry[0].status, 'needs_resolution');
+  assert.equal(rejectHarness.rows.TimeEntry[0].clock_out, undefined);
+  assert.equal(rejectHarness.rows.TimeClockPunchException[0].status, 'rejected');
+});
+
+test('needs_resolution remains a pay-period finalization blocker', async () => {
+  const h = setupStaleMissedPunch();
+  await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'period-block-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  h.rows.TimeClockPayPeriod = [{
+    id: 'unresolved-period', label: 'Unresolved Punch Period',
+    start_date: '2026-09-28', end_date: '2026-09-28', status: 'review',
+    updated_date: '2026-09-29T00:00:00.000Z',
+  }];
+  const blocked = await h.invoke({
+    action: 'pay_period_status', target_email: employee.email,
+    request_id: 'period-block-review-001', pay_period_id: 'unresolved-period',
+    decision: 'finalize', note: '',
+  });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /active shift|readiness/i);
+  assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
+});
+
 // Export the same real backend VM for isolated browser acceptance. Test registration
 // has no side effects against live Base44; execute the CLI suite only when direct.
 export { setup as setupSyntheticTimeClock };
