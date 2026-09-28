@@ -1,5 +1,5 @@
-import GlobalFocusTimer from "./GlobalFocusTimer";
-import GlobalWorkPauseControl from "./GlobalWorkPauseControl";
+import GlobalFocusTimer from "@/components/timeclock/GlobalFocusTimer";
+import GlobalWorkPauseControl from "@/components/timeclock/GlobalWorkPauseControl";
 
 export default function FocusPausePair({
   currentUser,
