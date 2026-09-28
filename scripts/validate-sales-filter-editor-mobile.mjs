@@ -19,10 +19,12 @@ const filters = section('{activeSubTab === "create" && activeTab === "filters"',
 const columns = section('{activeSubTab === "create" && activeTab === "columns"', '</DialogContent>');
 const row = section('<div key={index} className="mt-2 grid', '                        </Button>\n                      </div>');
 
-check(shell.includes('className="clay-card min-w-0 border-none p-3 sm:p-6 [&>button]:hidden"'),
-  "Shared dialog must use compact phone padding without enlarging desktop padding");
-check(shell.includes('maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column"'),
-  "Dialog bounds must remain capped without making the whole page scroll horizontally");
+check(shell.includes('className="clay-card min-w-0 border-none p-3 sm:p-5 dark:border dark:border-slate-700 dark:bg-slate-950 [&>button]:hidden"'),
+  "Shared dialog must use compact phone padding and a restrained desktop/dark-mode shell");
+check(shell.includes('maxWidth: activeTab === "columns" ? "96vw" : "90vw"') &&
+      shell.includes('width: activeTab === "columns" ? "1400px" : "1100px"') &&
+      shell.includes('maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column"'),
+  "Column editor may widen toward full-screen while dialog bounds remain capped");
 check(shell.includes('<DialogHeader className="shrink-0">') &&
       shell.includes('flex flex-wrap items-start justify-between gap-2') &&
       shell.includes('text-base font-bold leading-tight sm:text-2xl'),
@@ -42,7 +44,7 @@ check(pool.includes('className="min-h-0 flex-1 space-y-4 overflow-y-auto overscr
 check(filters.includes('className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2"') &&
       filters.includes('className="clay-card min-w-0 space-y-4 p-3 sm:p-4"'),
   "Information Filter editor must scroll to its save buttons at phone heights");
-check(columns.includes('className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain"'),
+check(columns.includes('className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5"'),
   "Shared dialog must retain scrollable column editing");
 check(row.includes('grid-cols-[minmax(0,1fr)_auto]') && row.includes('sm:flex sm:items-start') &&
       row.includes('sm:border-0 sm:bg-transparent sm:p-0'),
@@ -90,9 +92,9 @@ check(row.includes('updateCondition(index, "field", value)') &&
   "Responsive markup must preserve existing condition-field, operator and remove actions");
 check(editor.includes('dispatchColumnDraft({ type: "undo" })') &&
       editor.includes('dispatchColumnDraft({ type: "redo" })') &&
-      editor.includes('className="flex flex-wrap gap-1"') &&
+      editor.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
       editor.includes('aria-label="Horizontal Sales Pipeline column preview"'),
-  "Compact always-visible column checkboxes, Undo/Redo and horizontal preview must remain intact");
+  "Compact always-visible column grid, Undo/Redo and horizontal preview must remain intact");
 check(editor.includes('setSalesFilterSelectionSafely') &&
       editor.includes('updateSalesFilterIfUnchanged') &&
       editor.includes('preserveLegacySalesColumnEntries'),
