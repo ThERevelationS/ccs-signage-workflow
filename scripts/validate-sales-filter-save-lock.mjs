@@ -51,7 +51,7 @@ check(source.includes('placeholder="e.g., My Custom View"\n                    d
   "Column preset name save lock must remain intact");
 check(source.includes('checked={column.visible}\n                          disabled={isSaving}'),
   "Column preset visibility controls must remain locked during persistence");
-check(source.includes('className="flex flex-wrap gap-1"') &&
+check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
       source.includes('aria-label="Horizontal Sales Pipeline column preview"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 
