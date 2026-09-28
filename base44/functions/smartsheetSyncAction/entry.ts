@@ -797,6 +797,29 @@ function sameStableValue(left: any, right: any) {
   return JSON.stringify(stableNormalize(left)) === JSON.stringify(stableNormalize(right));
 }
 
+function assertRolloutBaselinesPreserved(currentConfig: any, nextConfig: any) {
+  for (const dataset of ['sales', 'orders']) {
+    const currentProfile = currentConfig?.[dataset] || {};
+    const nextProfile = nextConfig?.[dataset] || {};
+    const baseline = currentProfile?.rollout_baseline;
+    if (!baseline?.captured_at) continue;
+    if (!sameStableValue(baseline, nextProfile?.rollout_baseline)) {
+      throw Object.assign(new Error(`${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} rollout baseline is immutable and was not changed.`), { status: 409 });
+    }
+    const currentId = cleanText(currentProfile?.smartsheet_sheet_id, 80);
+    const nextId = cleanText(nextProfile?.smartsheet_sheet_id, 80);
+    const baselineId = cleanText(baseline?.sheet_id, 80);
+    if (nextId !== currentId || (baselineId && nextId !== baselineId)) {
+      throw Object.assign(new Error(`${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} Smartsheet target is locked by its rollout baseline.`), { status: 409 });
+    }
+    const currentName = cleanText(currentProfile?.smartsheet_sheet_name, 500);
+    const nextName = cleanText(nextProfile?.smartsheet_sheet_name, 500);
+    if (nextName !== currentName) {
+      throw Object.assign(new Error(`${dataset === 'sales' ? 'Sales Pipeline' : 'Order Form'} Smartsheet target name is locked by its rollout baseline.`), { status: 409 });
+    }
+  }
+}
+
 function safeConfigRecord(record: any) {
   if (!record?.id) return null;
   return {
@@ -825,6 +848,7 @@ async function saveSyncConfigIfUnchanged(base44: any, body: any) {
   if (cleanText(record.updated_date, 120) !== expectedUpdatedAt || !sameStableValue(record.setting_value, expectedValue)) {
     throw Object.assign(new Error('Smartsheet sync settings changed in another session. Reload before saving.'), { status: 409 });
   }
+  assertRolloutBaselinesPreserved(record.setting_value, nextValue);
   const serialized = JSON.stringify(nextValue);
   if (serialized.length > 500_000) {
     throw Object.assign(new Error('Smartsheet sync settings are unexpectedly large and were not saved.'), { status: 400 });
