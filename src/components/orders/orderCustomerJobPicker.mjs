@@ -2,6 +2,7 @@
 // exclude terminal job states, not every closed sales opportunity.
 const TERMINAL = new Set(["lost", "completed", "closed"]);
 const normalized = (value) => String(value ?? "").trim().toLowerCase();
+const normalizedCustomerIdentity = (value) => normalized(value).replace(/[^a-z0-9]+/g, " ").trim();
 const TERMINAL_TASK = /^(?:lost\b|completed(?:\s+(?:sale|job|project)\b|$)|closed(?:\s+(?:sale|job|account|project)\b|\s*[-:]|$))/i;
 
 export function isActiveOrderCustomerJob(job) {
@@ -29,6 +30,43 @@ export function orderCustomerJobSubtitle(job) {
       ? `Current task: ${String(job.current_task_description).trim()}` : "No project title");
 }
 
+// Older Workflow Smartsheet pulls did not persist row hierarchy, so an
+// automatic child/rider row could be imported as a second top-level WorkOrder.
+// Suppress only the narrowly provable legacy shadow shape in the Order picker:
+// same sheet, same nonzero estimate, same active task, a root customer whose
+// title is only the generated Smartsheet-row placeholder, and a child customer
+// named "Root - rider description". This avoids guessing from name alone.
+export function orderAutomaticRiderShadowIds(jobs) {
+  const active = (Array.isArray(jobs) ? jobs : []).filter(isActiveOrderCustomerJob);
+  const shadows = new Set();
+  for (const candidate of active) {
+    const clientName = String(candidate?.client_name ?? "").trim();
+    const splitAt = clientName.indexOf(" - ");
+    if (splitAt < 1) continue;
+    const rootIdentity = normalizedCustomerIdentity(clientName.slice(0, splitAt));
+    const sheetId = String(candidate?.smartsheet_sheet_id ?? "").trim();
+    const rowId = String(candidate?.smartsheet_row_id ?? "").trim();
+    const task = normalized(candidate?.current_task_description);
+    const amount = Number(candidate?.estimate_amount);
+    if (!rootIdentity || !/^\d+$/.test(sheetId) || !/^\d+$/.test(rowId) || !task ||
+        !Number.isFinite(amount) || amount === 0) continue;
+
+    const hasRoot = active.some(root => {
+      if (root?.id === candidate.id) return false;
+      if (normalizedCustomerIdentity(root?.client_name) !== rootIdentity) return false;
+      if (cleanOrderJobTitle(root?.title)) return false;
+      if (String(root?.smartsheet_sheet_id ?? "").trim() !== sheetId) return false;
+      const rootRowId = String(root?.smartsheet_row_id ?? "").trim();
+      if (!/^\d+$/.test(rootRowId) || rootRowId === rowId) return false;
+      if (normalized(root?.current_task_description) !== task) return false;
+      const rootAmount = Number(root?.estimate_amount);
+      return Number.isFinite(rootAmount) && rootAmount === amount;
+    });
+    if (hasRoot) shadows.add(candidate.id);
+  }
+  return shadows;
+}
+
 // Recheck the permanent WorkOrder ID at selection time: an item may have
 // closed since the latest picker refresh. Read-only; never changes the job.
 export async function verifyActiveOrderCustomerJob(entity, id) {
@@ -39,8 +77,11 @@ export async function verifyActiveOrderCustomerJob(entity, id) {
 
 export function filterOrderCustomerJobs(jobs, searchTerm, limit = 10) {
   const terms = normalized(searchTerm).split(/\s+/).filter(Boolean);
-  return (Array.isArray(jobs) ? jobs : [])
+  const source = Array.isArray(jobs) ? jobs : [];
+  const automaticRiderShadows = orderAutomaticRiderShadowIds(source);
+  return source
     .filter(isActiveOrderCustomerJob)
+    .filter(job => !automaticRiderShadows.has(job.id))
     .filter(job => {
       if (!terms.length) return true;
       const searchable = [job.client_name, cleanOrderJobTitle(job.title), cleanOrderJobTitle(job.description)]
