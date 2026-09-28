@@ -79,13 +79,19 @@ export default function ProductChecklistDialog({
 
   // Keep hierarchy indexes stable while unrelated dialog state changes. Long
   // checklists should only rebuild these O(n) structures when their source data changes.
-  const { checklistItemById, checklistChildrenByParentId, childrenCompleteByItemId } = useMemo(() => {
+  const { checklistItemById, checklistChildrenByParentId, checklistChildrenByParentType, childrenCompleteByItemId } = useMemo(() => {
     const itemById = new Map(checklist.map(item => [item.id, item]));
     const childrenByParentId = new Map();
+    const childrenByParentType = new Map();
     checklist.forEach(item => {
       if (!item.parent_id) return;
       if (!childrenByParentId.has(item.parent_id)) childrenByParentId.set(item.parent_id, []);
       childrenByParentId.get(item.parent_id).push(item);
+      if (!childrenByParentType.has(item.parent_id)) {
+        childrenByParentType.set(item.parent_id, { task: [], detail: [], subtask: [] });
+      }
+      const typedChildren = childrenByParentType.get(item.parent_id);
+      if (typedChildren[item.type]) typedChildren[item.type].push(item);
     });
 
     // Cache descendant-completion state once per checklist change. Rendering attention
@@ -115,6 +121,7 @@ export default function ProductChecklistDialog({
     return {
       checklistItemById: itemById,
       checklistChildrenByParentId: childrenByParentId,
+      checklistChildrenByParentType: childrenByParentType,
       childrenCompleteByItemId: completionByItemId,
     };
   }, [checklist]);
@@ -1542,11 +1549,10 @@ export default function ProductChecklistDialog({
                         // Treat items without type as checklist items
                         const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
                         // Find associated tasks/details from the SAME group
-                        const itemChildren = checklistChildrenByParentId.get(item.id) || [];
-                        const itemTasks = itemChildren.filter(i => i.type === 'task');
-                        const itemDetails = itemChildren.filter(i => i.type === 'detail').map(detail => ({
+                        const itemTasks = checklistChildrenByParentType.get(item.id)?.task || [];
+                        const itemDetails = (checklistChildrenByParentType.get(item.id)?.detail || []).map(detail => ({
                           ...detail,
-                          tasks: (checklistChildrenByParentId.get(detail.id) || []).filter(i => i.type === 'task')
+                          tasks: checklistChildrenByParentType.get(detail.id)?.task || []
                         }));
                         
                         const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
@@ -1737,7 +1743,7 @@ export default function ProductChecklistDialog({
                                   )}
                                 </div>
                                 {/* Subtasks */}
-                                {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
+                                {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
                                   <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-4 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/subtask ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                     <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                       <Checkbox 
@@ -2006,7 +2012,7 @@ export default function ProductChecklistDialog({
                                             )}
                                           </div>
                                           {/* Subtasks under detail task */}
-                                          {(checklistChildrenByParentId.get(task.id) || []).filter(st => st.type === 'subtask').map(subtask => (
+                                          {(checklistChildrenByParentType.get(task.id)?.subtask || []).map(subtask => (
                                             <div data-sips-checklist-item-id={String(subtask.id)} key={subtask.id} className={`ml-3 mt-0.5 flex items-center gap-1 bg-yellow-50 p-0.5 rounded text-xs group/dsub ${focusedSearchId === subtask.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                               <label htmlFor={`sips-complete-${subtask.id}`} className="inline-flex h-11 w-11 md:h-7 md:w-7 shrink-0 items-center justify-center rounded cursor-pointer focus-within:ring-2 focus-within:ring-yellow-400 focus-within:ring-offset-1">
                                                 <Checkbox 
@@ -2081,11 +2087,10 @@ export default function ProductChecklistDialog({
                       <div className="space-y-2">
                         {stItems.map(rawItem => {
                           const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
-                          const stItemChildren = checklistChildrenByParentId.get(stItem.id) || [];
-                          const stItemTasks = stItemChildren.filter(i => i.type === 'task');
-                          const stItemDetails = stItemChildren.filter(i => i.type === 'detail').map(detail => ({
+                          const stItemTasks = checklistChildrenByParentType.get(stItem.id)?.task || [];
+                          const stItemDetails = (checklistChildrenByParentType.get(stItem.id)?.detail || []).map(detail => ({
                             ...detail,
-                            tasks: (checklistChildrenByParentId.get(detail.id) || []).filter(i => i.type === 'task')
+                            tasks: checklistChildrenByParentType.get(detail.id)?.task || []
                           }));
                           if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                           
