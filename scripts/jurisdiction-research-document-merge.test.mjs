@@ -117,6 +117,19 @@ test('Boone official Planning Commission sign application remains byte-identical
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone official Planning Commission sign checklist remains byte-identical without overclaiming printed requirement currency', () => {
+  const checklist = manifest.files.find(file => file.purpose === 'sign_permit_checklist');
+  assert.ok(checklist);
+  assert.equal(checklist.currencyCheck.httpStatus, 200);
+  assert.equal(checklist.currencyCheck.sourceBytes, checklist.bytes);
+  assert.equal(checklist.currencyCheck.sourceSha256, checklist.sha256);
+  assert.equal(checklist.currencyCheck.matchesArchivedCopy, true);
+  assert.match(checklist.currencyCheck.evidenceScope, /current bytes\/hash match the archived repository copy/i);
+  assert.match(checklist.currencyCheck.evidenceScope, /does not by itself prove that every checklist requirement, instruction, fee, or workflow printed inside the document is current/i);
+  assert.match(manifest.sourceGapReview, /SignPermit_checklist\.pdf.*same 46354-byte SHA-256-identical file/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
   const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
