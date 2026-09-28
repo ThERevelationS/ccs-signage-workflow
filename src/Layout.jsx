@@ -832,7 +832,7 @@ function LayoutContent({ children }) {
                     title="Announcements (Admin)"
                   >
                     <Megaphone className="w-4 h-4 text-red-600" />
-                    <span className="font-bold text-sm text-red-700">Announce</span>
+                    <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Announce</span>
                   </button>
                 )}
                 <div className={`flex ${compactView ? "gap-1" : "gap-2"}`}>
@@ -841,7 +841,7 @@ function LayoutContent({ children }) {
                     className={`ccs-glass-control flex flex-1 items-center justify-center rounded-xl text-green-700 dark:text-emerald-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
                     <Home className="w-4 h-4 text-green-600" />
-                    <span className="font-bold text-sm text-green-700">Time Clock</span>
+                    <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                   </Link>
 
                   <button
@@ -849,7 +849,7 @@ function LayoutContent({ children }) {
                     className={`ccs-glass-control flex flex-1 items-center justify-center rounded-xl text-blue-700 dark:text-blue-200 ${compactView ? "h-7 gap-1 px-1.5 text-[11px]" : "gap-2 px-3 py-2 text-sm"}`}
                   >
                     <ClipboardList className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-sm text-blue-700">+ Task</span>
+                    <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
                   </button>
                 </div>
 
@@ -1019,7 +1019,7 @@ function LayoutContent({ children }) {
                     </button>
                     
                     {meetingsDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 py-1 rounded-lg border border-gray-200 shadow-lg z-50 min-w-[160px]" style={{ background: 'white' }}>
+                      <div className="ccs-glass-panel absolute left-0 top-full z-50 mt-1 min-w-[160px] overflow-hidden rounded-xl p-1 text-slate-700 dark:text-slate-100">
                         {meetingsDropdownItems.map((item) => {
                           const isActive = location.pathname === item.url;
                           const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -1035,10 +1035,9 @@ function LayoutContent({ children }) {
                                 }
                                 setMeetingsDropdownOpen(false);
                               }}
-                              className={`px-3 py-2 flex items-center gap-2 transition-colors ${
-                                isActive ? 'bg-purple-50' : isInSplit ? 'bg-purple-50' : 'hover:bg-gray-50'
+                              className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
+                                isActive || isInSplit ? 'bg-violet-100/45 dark:bg-violet-400/10' : 'hover:bg-white/40 dark:hover:bg-white/5'
                               }`}
-                              style={isActive ? { background: `linear-gradient(135deg, ${item.color}40 0%, rgba(255,255,255,0.9) 100%)` } : {}}
                               title="Ctrl+Click to open in split view"
                             >
                               <item.icon className="w-4 h-4" style={{ color: isActive ? '#6B46C1' : isInSplit ? '#7C3AED' : '#9CA3AF' }} />
@@ -1152,7 +1151,7 @@ function LayoutContent({ children }) {
                 </div>
               )}
             </div>
-          </nav>
+          </motion.nav>
         )}
 
         {/* Mobile back button in header area */}
@@ -1172,19 +1171,22 @@ function LayoutContent({ children }) {
         )}
 
         {/* Main content */}
-        <main 
+        <motion.main
           ref={mainRef}
+          initial={false}
+          animate={{
+            paddingTop: isMobile
+              ? (isRootRoute ? 0 : 48)
+              : (isSideNav ? 0 : (effectiveCollapsed ? collapsedRail + 4 : topNavHeight)),
+            marginLeft: isSideNav
+              ? (effectiveCollapsed ? collapsedRail : sideNavWidth)
+              : 0,
+          }}
+          transition={isMobile ? { duration: 0.01 } : shellTransition}
           className={`flex-1 main-scroll-container ${isMobile ? 'main-content-mobile' : ''}`}
           style={{
-            paddingTop: isMobile
-              ? (isRootRoute ? '0' : '48px')
-              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : `${topNavHeight}px`)),
-            marginLeft: isSideNav
-              ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`)
-              : '0',
             height: '100vh',
             overflow: 'auto',
-            transition: 'padding-top 180ms cubic-bezier(0.22, 1, 0.36, 1), margin-left 180ms cubic-bezier(0.22, 1, 0.36, 1)'
           }}
         >
           <MultiPageContext.Provider value={{ addPage, removePage, clearPages, isInMultiView, additionalPages }}>
@@ -1209,7 +1211,7 @@ function LayoutContent({ children }) {
               ) : <LoginGate>{children}</LoginGate>}
             </MultiPageContainer>
           </MultiPageContext.Provider>
-        </main>
+        </motion.main>
 
         {/* Smartsheet Sync Status Widget — persistent on every page */}
         <SmartsheetSyncWidget compactOrderForm={location.pathname.replace(/\/+$/, '').toLowerCase() === '/orderform'} />
