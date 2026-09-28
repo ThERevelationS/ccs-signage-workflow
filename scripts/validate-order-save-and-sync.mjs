@@ -30,20 +30,28 @@ const createSafety = readFileSync('base44/shared/smartsheetOrderCreateSafety.mjs
 assert.match(backend, /!\['push_saved_orders', 'push_saved_sales'\]\.includes\(action\)/);
 assert.match(backend, /if \(action === 'push_saved_orders'\)/);
 assert.match(backend, /recordIds: orderIds/);
-assert.match(backend, /respectOrderCreateSetting: true/);
+assert.match(backend, /requireOrderPendingMarker: true/);
+assert.match(backend, /allowExplicitOrderCreate: true/);
+assert.doesNotMatch(backend, /respectOrderCreateSetting/);
 assert.match(backend, /query: \{ id: \{ \$in: requestedRecordIds \} \}/);
 assert.match(backend, /could not be re-read by permanent ID/);
+assert.match(backend, /const createAllowed = profile\?\.create_smartsheet_from_base44 === true \|\| options\?\.allowExplicitOrderCreate === true/);
 assert.match(backend, /automatic Order row creation is OFF\. No Smartsheet rows were written/);
+assert.match(backend, /new Order\$\{noMappedCells\.length === 1 \? '' : 's'\} have no mapped Smartsheet values/);
+assert.match(backend, /not durably marked as waiting for Save & Sync/);
 assert.match(backend, /requestedRecordIds\.length > massLimit/);
 assert.match(backend, /orderPushRecordUnchanged\(record, sheetId, buildSnapshot\(record, bindings, 'orders'\)\)/);
-assert.doesNotMatch(
-  backend.slice(backend.indexOf("if (action === 'push_saved_orders')"), backend.indexOf("if (action === 'audit_order_backup_readiness')")),
-  /push_enabled/
+const savedOrderAction = backend.slice(
+  backend.indexOf("if (action === 'push_saved_orders')"),
+  backend.indexOf("if (action === 'push_saved_sales')"),
 );
+assert.doesNotMatch(savedOrderAction, /push_enabled/);
+assert.doesNotMatch(savedOrderAction, /create_smartsheet_from_base44/);
+assert.match(backend, /const pushResult = await pushDataset\(base44, token, dataset, profile, config\);/);
 assert.match(backend, /existing\?\.smartsheet_pending_local_sync === true[\s\S]*?orderLocalPendingConflicts\.push\(existing\.id\)[\s\S]*?continue/);
 assert.match(backend, /conflicts: orderLocalPendingConflicts\.length/);
 assert.match(backend, /smartsheet_pending_local_sync: false/);
-console.log('PASS Save & Sync backend is exact-ID targeted, bounded, and background pull preserves locally pending Orders');
+console.log('PASS explicit Save & Sync can create only durable pending new Orders while background creation still follows the OFF/ON profile setting');
 
 assert.match(client, /action: "push_saved_orders"/);
 assert.match(client, /order_ids: ids/);
