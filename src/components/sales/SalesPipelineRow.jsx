@@ -13,7 +13,7 @@ import { getActionableSalesAttentionItems } from "@/components/sales/salesAttent
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
-import { resolveSmartsheetPerson } from "@/components/admin/smartsheetTranslationModel";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -74,16 +74,10 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   handleDuplicateClient, deleteWorkOrder, leadSources, users, taskDescriptions, projectTypes,
 }) {
   const getTaskDescText = (item) => (typeof item === 'string' ? item : item?.text || '');
-  const personSelect = (value, eligibleUsers) => {
-    const roster = eligibleUsers.filter((user) => user?.is_active !== false && String(user?.full_name || '').trim());
-    const resolution = resolveSmartsheetPerson(value, roster);
-    const canonical = resolution.user?.full_name || String(value || '').trim();
-    const options = [...new Map(roster.map((user) => [user.full_name, user])).values()];
-    const legacy = canonical && !options.some((user) => user.full_name === canonical) ? canonical : '';
-    return { canonical, options, legacy };
-  };
-  const salesOwnerSelect = personSelect(wo.sales_rep, users);
-  const designerSelect = personSelect(wo.designer, users.filter((user) => user.sales_roles?.includes('Designer')));
+  const salesOwnerSelect = buildSalesPersonSelectModel(wo.sales_rep, users);
+  const designerSelect = buildSalesPersonSelectModel(wo.designer, users, 'Designer');
+  const projectManagerSelect = buildSalesPersonSelectModel(wo.project_manager, users, 'PM');
+  const estimatorSelect = buildSalesPersonSelectModel(wo.estimator, users, 'Estimator');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStamp = format(today, "yyyy-MM-dd");
@@ -200,22 +194,22 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "project_manager": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "project_manager", "Project Manager", wo.project_manager)}>
-            <Select value={wo.project_manager || ""} onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)} disabled={!isRegistered}>
-              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.project_manager || "-"}</SelectValue></SelectTrigger>
+            <Select value={projectManagerSelect.canonical} onValueChange={(val) => updateWorkOrder(wo.id, "project_manager", val)} disabled={!isRegistered}>
+              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{projectManagerSelect.canonical || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
-                {wo.project_manager && !users.some(u => u.full_name === wo.project_manager && (u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM"))) && <SelectItem key={wo.project_manager} value={wo.project_manager}>{wo.project_manager}</SelectItem>}
-                {users.filter(u => u.sales_roles?.includes("Project Manager") || u.sales_roles?.includes("PM")).map(u => <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>)}
+                {projectManagerSelect.legacy && <SelectItem value={projectManagerSelect.legacy}>{projectManagerSelect.legacy}</SelectItem>}
+                {projectManagerSelect.options.map((u) => <SelectItem key={u.email || u.full_name} value={u.full_name}>{u.full_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </td>
               );
               case "estimator": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "estimator", "Estimator", wo.estimator)}>
-            <Select value={wo.estimator || ""} onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)} disabled={!isRegistered}>
-              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.estimator || "-"}</SelectValue></SelectTrigger>
+            <Select value={estimatorSelect.canonical} onValueChange={(val) => updateWorkOrder(wo.id, "estimator", val)} disabled={!isRegistered}>
+              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{estimatorSelect.canonical || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
-                {wo.estimator && !users.some(u => u.full_name === wo.estimator && u.sales_roles?.includes("Estimator")) && <SelectItem key={wo.estimator} value={wo.estimator}>{wo.estimator}</SelectItem>}
-                {users.filter(u => u.sales_roles?.includes("Estimator")).map(u => <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>)}
+                {estimatorSelect.legacy && <SelectItem value={estimatorSelect.legacy}>{estimatorSelect.legacy}</SelectItem>}
+                {estimatorSelect.options.map((u) => <SelectItem key={u.email || u.full_name} value={u.full_name}>{u.full_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </td>
