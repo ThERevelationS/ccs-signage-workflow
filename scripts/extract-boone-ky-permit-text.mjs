@@ -38,5 +38,8 @@ for (const file of manifest.files) {
   console.log('EXTRACTED', file.filename, pdf.numPages + ' pages', extractedText.length + ' characters', entries.at(-1).extractionStatus);
 }
 if (entries.length !== 6 || new Set(entries.map(e => e.documentId)).size !== 6) throw Error('Incomplete or duplicate Boone PDF mapping');
+if (!manifest.sourceGapReview?.includes('Building Permit Application') || !manifest.sourceGapReview?.includes('no official application URL has been verified')) {
+  throw Error('Boone Building Permit Application collection gap must remain explicit until an official source is verified');
+}
 await writeFile('docs/permitting-boone-ky-extracted-text-2026-09-26.json', JSON.stringify({ jurisdictionId:'6ab7c6107f2251a8e8e48b90', state:'KY', generatedAt: new Date().toISOString(), entries }, null, 2) + '\n');
 console.log('VERIFIED', entries.length, 'PDFs; file hashes, page counts and nonempty extraction status recorded');
