@@ -708,15 +708,16 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                               <div className="col-span-2 row-start-3 min-w-0 rounded-md border bg-white p-2 sm:flex-1">
                                 <div className="flex flex-wrap gap-1 mb-1">
                                   {multiValues.map((val, vi) => (
-                                    <span key={vi} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                                      {val}
+                                    <span key={vi} className="inline-flex max-w-full min-w-0 items-center gap-1 rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                                      <span className="min-w-0 break-words">{val}</span>
                                       <button
                                         type="button"
                                         onClick={() => {
                                           const newVals = multiValues.filter((_, i) => i !== vi);
                                           updateCondition(index, "value", newVals.join(","));
                                         }}
-                                        className="hover:text-blue-600 font-bold"
+                                        aria-label={`Remove ${val} from condition ${index + 1}`}
+                                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded font-bold hover:text-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 sm:h-5 sm:w-5"
                                       >×</button>
                                     </span>
                                   ))}
