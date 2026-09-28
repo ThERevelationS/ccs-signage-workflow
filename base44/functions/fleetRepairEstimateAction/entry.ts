@@ -67,8 +67,18 @@ Deno.serve(async req => {
     }
     if (action === 'policy_delete') {
       const id = norm(body?.id);
+      const expected = norm(body?.expected_updated_date);
       if (!id) return Response.json({error:'Approval policy id is required.'},{status:400});
-      await Policy.delete(id);
+      if (!expected) return Response.json({error:'Approval-policy version is missing. Reload before deleting.'},{status:409});
+      const result = await Policy.deleteMany({id,updated_date:expected});
+      if (!result || typeof result.deleted !== 'number' || result.deleted > 1) {
+        throw new Error('Fleet repair approval policy delete result could not be verified.');
+      }
+      if (result.deleted === 0) {
+        const current = await Policy.get(id).catch(()=>null);
+        if (!current) return Response.json({success:true,deleted:true,reused:true});
+        return Response.json({error:'Fleet repair approval policy changed after the delete confirmation opened. Reload it before deleting; newer data was preserved.'},{status:409});
+      }
       return Response.json({success:true,deleted:true});
     }
 
