@@ -470,7 +470,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             type="button"
                             aria-label={`Remove ${item.name} from My Presets`}
                             onClick={() => toggleSelection(item, true)}
-                            className="rounded px-1 hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 sm:h-5 sm:w-5"
                           >
                             ×
                           </button>
@@ -486,7 +486,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             type="button"
                             aria-label={`Remove ${item.name} from My Presets`}
                             onClick={() => toggleSelection(item)}
-                            className="rounded px-1 hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 sm:h-5 sm:w-5"
                           >
                             ×
                           </button>
