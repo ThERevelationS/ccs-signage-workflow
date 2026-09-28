@@ -394,6 +394,30 @@ try {
       assert.equal(fixture.writes.length, 0);
     });
 
+
+  await caseRun("320px short phone: long Clear failure remains scrollable, keyboard-safe and write-free",
+    origin, [{ width: 320, height: 480 }], async ([page]) => {
+      const dialog = await openClear(page, true);
+      await dialog.getByRole("button", { name: "Clear & return to active" }).click();
+      const error = dialog.getByRole("alert");
+      await error.waitFor();
+      assert.match(await error.innerText(), /Synthetic long error detail/);
+      await checkDialogOnScreen(page);
+      const close = dialog.getByRole("button", { name: "Close & review board" });
+      await close.waitFor();
+      await page.waitForFunction(() => document.activeElement?.textContent?.includes("Close & review board"));
+      assert.equal(await close.evaluate(node => document.activeElement === node), true);
+      assert.equal(await dialog.getByRole("button", { name: "Clear & return to active" }).isDisabled(), true);
+      assert.equal(fixture.writes.length, 0);
+      assert.equal(fixture.row.sip_revisit_date, initialDate);
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      await boardHeadingFocused(page);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }, (state) => {
+      state.failNextWriteMessage = "Synthetic long error detail: " + "Revisit changed in another session. ".repeat(45);
+    });
+
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
 } finally {
