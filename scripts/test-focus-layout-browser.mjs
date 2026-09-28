@@ -152,7 +152,14 @@ try {
   await freshCase("Desktop top navigation and route persistence use the real CCS Layout", origin,
     { width: 1366, height: 900 }, async (page) => {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
-      await page.locator(".top-nav").waitFor({ state: "visible" });
+      const topNav = page.locator(".top-nav");
+      await topNav.waitFor({ state: "visible" });
+      const topNavBox = await topNav.boundingBox();
+      const mainPadding = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).paddingTop));
+      assert.ok(topNavBox && mainPadding >= topNavBox.height - 1,
+        "Desktop work content starts below the expanded top shell");
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
+        "Desktop shell creates no horizontal page overflow");
       const focusButton = page.getByRole("button", { name: /Open focus timer/ });
       await focusButton.waitFor();
       await focusButton.click();
@@ -183,6 +190,10 @@ try {
       await page.waitForTimeout(180);
       const afterPadding = Number.parseFloat(await workflowLink.evaluate((node) => getComputedStyle(node).paddingTop));
       assert.ok(afterPadding < beforePadding, "Compact View reduces navigation padding");
+      const compactNavBox = await page.locator(".top-nav").boundingBox();
+      const compactMainPadding = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).paddingTop));
+      assert.ok(compactNavBox && compactMainPadding >= compactNavBox.height - 1,
+        "Compact shell still reserves enough space for page content");
       assert.equal(await compactToggle.getAttribute("aria-pressed"), "true");
       assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCompact")), "true");
 
