@@ -934,25 +934,21 @@ function LayoutContent({ children }) {
             onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
             onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
           >
-            <div className={compactView ? "px-3 py-1" : "px-4 py-2"}>
-              <div className="flex items-start justify-between">
+            <div className={compactView ? "px-2 py-1" : "px-4 py-2"}>
+              <div className={`flex justify-between ${compactView ? "items-center" : "items-start"}`}>
                 {/* Brand + tiny shell view controls */}
                 <div className="flex-shrink-0">
-                  <div className={`clay-card flex items-center gap-2 ${compactView ? "px-2 py-1" : "px-3 py-2 sm:gap-3 sm:px-4"}`}>
+                  <div className={`ccs-glass-panel flex items-center ${compactView ? "gap-1.5 rounded-xl px-1.5 py-1" : "gap-2 rounded-2xl px-3 py-2 sm:gap-3 sm:px-4"}`}>
                     <button
                       onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                      className={`${compactView ? "h-8 w-8" : "h-8 w-8 sm:h-10 sm:w-10"} flex items-center justify-center rounded-xl transition-opacity hover:opacity-80 sm:rounded-2xl`}
-                      style={{
-                        background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
-                        boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
-                      }}
+                      className={`ccs-glass-control flex items-center justify-center text-purple-700 dark:text-violet-200 ${compactView ? "h-6 w-6 rounded-lg" : "h-8 w-8 rounded-xl sm:h-10 sm:w-10 sm:rounded-2xl"}`}
                       title="Switch to Sidebar"
                     >
-                      <PanelLeft className={`${compactView ? "h-4 w-4" : "h-4 w-4 sm:h-5 sm:w-5"} text-purple-700`} />
+                      <PanelLeft className={compactView ? "h-3.5 w-3.5" : "h-4 w-4 sm:h-5 sm:w-5"} />
                     </button>
                     <div className="hidden sm:block">
-                      <h2 className={`${compactView ? "text-sm" : "text-lg"} font-bold leading-tight text-gray-800`}>Sign Shop</h2>
-                      <p className="text-xs text-gray-500">Workflow Manager</p>
+                      <h2 className={`${compactView ? "text-xs" : "text-lg"} font-bold leading-tight text-gray-800 dark:text-slate-100`}>Sign Shop</h2>
+                      {!compactView && <p className="text-xs text-gray-500 dark:text-slate-400">Workflow Manager</p>}
                     </div>
                   </div>
                   <ShellViewControls
@@ -977,7 +973,7 @@ function LayoutContent({ children }) {
                 </button>
 
                 {/* Desktop Navigation Links */}
-                <div className={`hidden lg:flex items-center flex-wrap flex-1 max-w-[calc(100%-400px)] ${compactView ? "ml-2 gap-0.5" : "ml-4 gap-1"}`}>
+                <div className={`hidden lg:flex items-center flex-wrap flex-1 ${compactView ? "ml-2 max-w-[calc(100%-470px)] gap-0.5" : "ml-4 max-w-[calc(100%-400px)] gap-1"}`}>
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -986,21 +982,17 @@ function LayoutContent({ children }) {
                         key={item.title}
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
-                        className={`${compactView ? "px-1.5 py-1" : "px-2 py-1.5"} rounded-lg transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border ${
-                          isActive ? 'clay-card shadow-lg scale-105' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
+                        className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"} ${
+                          isActive ? "font-bold" : isInSplit ? "ring-1 ring-violet-300/50" : ""
                         }`}
-                        style={{ 
-                          background: isActive
-                            ? `linear-gradient(135deg, ${item.borderColor} 0%, ${item.color} 100%)`
-                            : `linear-gradient(135deg, ${item.color} 0%, rgba(255,255,255,0.95) 100%)`,
-                          borderColor: isActive ? item.borderColor : isInSplit ? '#C4B5FD' : item.borderColor,
-                          borderWidth: isActive ? '2px' : '1px',
-                          transform: isActive ? 'scale(1.07)' : undefined,
+                        style={{
+                          background: `linear-gradient(135deg, ${hexToRgba(item.color, darkMode ? (isActive ? 0.22 : 0.09) : (isActive ? 0.48 : 0.22))} 0%, ${darkMode ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.25)"} 100%)`,
+                          borderColor: hexToRgba(item.borderColor, darkMode ? (isActive ? 0.50 : 0.20) : (isActive ? 0.64 : 0.38)),
                         }}
                         title="Ctrl+Click to open in split view"
                       >
-                        <item.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
-                        <span className={`font-medium text-xs ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
+                        <item.icon className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: isActive ? '#3730A3' : isInSplit ? '#7C3AED' : '#6B7280' }} />
+                        <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${isActive ? 'text-indigo-900 font-bold' : isInSplit ? 'text-purple-700' : 'text-gray-700'}`}>
                           {item.title}
                         </span>
                         {isInSplit && <Columns className="w-3 h-3 text-purple-500" />}
@@ -1013,17 +1005,14 @@ function LayoutContent({ children }) {
                     <button
                       onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
                       onBlur={() => setTimeout(() => setMeetingsDropdownOpen(false), 150)}
-                      className={`${compactView ? "px-1.5 py-1" : "px-2 py-1.5"} rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
-                        meetingsDropdownItems.some(item => location.pathname === item.url) 
-                          ? 'clay-card border-purple-300 shadow-md' 
-                          : 'hover:clay-card border-gray-200 hover:border-gray-300'
-                      }`}
-                      style={meetingsDropdownItems.some(item => location.pathname === item.url) ? { 
-                        background: `linear-gradient(135deg, #FDE68A 0%, rgba(255,255,255,0.9) 100%)` 
-                      } : {}}
+                      className={`ccs-glass-nav-item flex items-center whitespace-nowrap border ${compactView ? "gap-1 rounded-lg px-1 py-0.5" : "gap-1.5 rounded-lg px-2 py-1.5"}`}
+                      style={{
+                        background: `linear-gradient(135deg, ${darkMode ? "rgba(253,230,138,0.12)" : "rgba(253,230,138,0.28)"} 0%, ${darkMode ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.24)"} 100%)`,
+                        borderColor: darkMode ? "rgba(253,230,138,0.20)" : "rgba(232,216,168,0.48)",
+                      }}
                     >
-                      <Calendar className="w-3.5 h-3.5 flex-shrink-0" style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
-                      <span className={`font-medium text-xs ${meetingsDropdownItems.some(item => location.pathname === item.url) ? 'text-purple-900' : 'text-gray-700'}`}>
+                      <Calendar className={`${compactView ? "h-3 w-3" : "h-3.5 w-3.5"} flex-shrink-0`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
+                      <span className={`${compactView ? "text-[10px]" : "text-xs"} font-medium ${meetingsDropdownItems.some(item => location.pathname === item.url) ? 'text-purple-900' : 'text-gray-700'}`}>
                         Meetings
                       </span>
                       <ChevronDown className={`w-3 h-3 transition-transform ${meetingsDropdownOpen ? 'rotate-180' : ''}`} style={{ color: meetingsDropdownItems.some(item => location.pathname === item.url) ? '#6B46C1' : '#9CA3AF' }} />
