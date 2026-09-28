@@ -49,6 +49,7 @@ import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/lo
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
+import { pushSavedSalesToSmartsheet, summarizeSavedSalesSync } from "@/components/sales/salesSaveSync";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -203,6 +204,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
+  const pendingSyncIdsRef = useRef(new Set());
+  const syncInFlightRef = useRef(false);
   const [quickEditError, setQuickEditError] = useState("");
   const [destructiveActionError, setDestructiveActionError] = useState("");
   const [exportProgress, setExportProgress] = useState({ show: false, progress: 0 });
