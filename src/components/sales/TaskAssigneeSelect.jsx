@@ -9,7 +9,7 @@ export default function TaskAssigneeSelect({ value = "", users = [], disabled = 
   const eligible = eligibleTaskAssignees(users);
   const names = [...new Set(eligible.map((user) => user.full_name))];
   const resolvedValue = value ? resolveSmartsheetTaskAssignee(value, users) : { state: "blank", name: "" };
-  const selectedName = resolvedValue.state === "matched" ? resolvedValue.name : value;
+  const selectedName = resolvedValue.name || value;
   const options = selectedName && !names.includes(selectedName) ? [selectedName, ...names] : names;
   const choose = (next) => {
     if (disabled) return;
