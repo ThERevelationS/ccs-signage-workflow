@@ -6,7 +6,7 @@ let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks += 1; };
 
 const duplicateSource = source.split("const duplicateItem = async")[1]?.split("const editItem =")[0] ?? "";
-const poolSource = source.split("{/* Standard Items - Compact */}")[1]?.split("{activeSubTab === "create"")[0] ?? "";
+const poolSource = source.split("{/* Standard Items - Compact */}")[1]?.split('{activeSubTab === "create"')[0] ?? "";
 
 check(Boolean(duplicateSource), "Duplicate handler must exist");
 check(source.includes("const copyInFlightRef = useRef(false);"),
