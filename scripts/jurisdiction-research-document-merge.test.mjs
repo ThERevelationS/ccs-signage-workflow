@@ -105,6 +105,18 @@ test('Boone building application review preserves evidence-bounded GovWell and O
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone official Planning Commission sign application remains byte-identical without overclaiming printed workflow currency', () => {
+  const signApplication = manifest.files.find(file => file.purpose === 'sign_permit_application');
+  assert.ok(signApplication);
+  assert.equal(signApplication.currencyCheck.httpStatus, 200);
+  assert.equal(signApplication.currencyCheck.sourceBytes, signApplication.bytes);
+  assert.equal(signApplication.currencyCheck.sourceSha256, signApplication.sha256);
+  assert.equal(signApplication.currencyCheck.matchesArchivedCopy, true);
+  assert.match(signApplication.currencyCheck.evidenceScope, /current bytes\/hash match the archived repository copy/i);
+  assert.match(signApplication.currencyCheck.evidenceScope, /does not by itself prove that every instruction, fee, or workflow printed inside the form is current/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
   const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
