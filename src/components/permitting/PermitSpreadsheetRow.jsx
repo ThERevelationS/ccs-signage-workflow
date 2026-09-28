@@ -577,7 +577,7 @@ export default function PermitSpreadsheetRow({
             )}
           </select>
           <p id={"office-link-help-" + lineItem.id} className="text-xs text-gray-600">Office IDs are shown so similarly named offices can be distinguished safely.</p>
-          {linkError && <p role="alert" aria-live="assertive" className="text-sm text-red-700">{linkError}</p>
+          {linkError && <p role="alert" aria-live="assertive" className="text-sm text-red-700">{linkError}</p>}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={linkSaving}>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={!selectedOfficeId || linkSaving || !isRegistered}
