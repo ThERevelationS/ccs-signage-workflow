@@ -107,16 +107,16 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     return (
       <div className="fixed right-3 bottom-20 z-50 w-[min(620px,calc(100vw-24px))] md:bottom-3"
         role="status" aria-live="polite" aria-label={isRunning ? "Smartsheet sync in progress" : "Smartsheet sync completed"}>
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg">
+        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
           <div className="flex min-h-9 items-center gap-2.5">
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/50">
               {isRunning
                 ? <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
                 : <Check className="h-4 w-4 text-emerald-600" />}
             </span>
             <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
-              <span className="shrink-0 font-semibold text-slate-800">{isRunning ? "Syncing" : "Sync Complete"}</span>
-              <span className="min-w-0 truncate text-[11px] text-slate-500">
+              <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
+              <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
                 {isRunning
                   ? `${currentStepLabel || "Working…"} · ${progressPercent}%`
                   : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
@@ -126,13 +126,13 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
             {!isRunning && (
               <button type="button" aria-label="Dismiss sync notification"
                 onClick={() => setDismissedSuccessRun(orderToast.key)}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-200">
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
           {isRunning && (
-            <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
               <div className="h-full rounded-full bg-blue-500 transition-all duration-500"
                 style={{ width: `${Math.max(5, progressPercent)}%` }} />
             </div>
