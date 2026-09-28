@@ -107,7 +107,7 @@ export default function GlobalFocusTimer({ currentUser, paired = false, compact 
   const buttonLabel = done ? "Focus timer finished. Open timer" :
     `Open focus timer${running ? `, ${displayTimer(timer.remainingSeconds)} remaining` : ""}`;
   const triggerClassName = paired
-    ? `relative z-[1] flex items-center justify-center border-0 bg-transparent font-bold text-violet-200 outline-none transition-[background-color,color,transform] duration-150 hover:bg-violet-400/12 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"} ${fullWidth ? "flex-1" : ""}`
+    ? `ccs-focus-segment relative z-[1] flex items-center justify-center border-0 font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400 ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"}`
     : `fixed right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
         ? "border-amber-400 bg-amber-100 text-amber-950 dark:border-amber-500/60 dark:bg-amber-950/70 dark:text-amber-100"
         : "border-purple-300 bg-purple-50 text-purple-900 dark:border-violet-500/50 dark:bg-violet-950/70 dark:text-violet-100"}`;
