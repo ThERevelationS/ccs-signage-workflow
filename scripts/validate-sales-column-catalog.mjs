@@ -35,8 +35,8 @@ assert.match(row, /visibleColumnIds\.map\(\(columnId\) =>/);
 assert.match(read("src/components/sales/SalesPipelineTableBody.jsx"), /visibleColumnIds=\{visibleColumnIds\}/);
 
 // The real table and the horizontal preview must consume identical header
-// wording and minimum widths from one catalog, without changing the tiny
-// checkbox layout or inventing production data in the preview.
+// wording and minimum widths from one catalog, while preserving the dense
+// all-visible column controls and never inventing production data in the preview.
 assert.equal((headers.match(/getSalesColumnLayout\(columnId\)\.headerLabel/g) || []).length,
   catalogIds.length, "Every live header must display its shared catalog label.");
 assert.equal((headers.match(/getSalesColumnLayout\(columnId\)\.minWidth/g) || []).length,
@@ -45,8 +45,8 @@ assert.match(editor, /getSalesColumnLayout\(column\.id\)\.headerLabel/);
 assert.equal((editor.match(/getSalesColumnLayout\(column\.id\)\.minWidth/g) || []).length, 2,
   "Preview headers and sample cells must share the table's minimum widths.");
 assert.match(editor, /visiblePreviewColumns = columnSettings\.filter/);
-assert.match(editor, /<div className="flex flex-wrap gap-1">/,
-  "Existing compact, always-visible checkbox strip must remain.");
+assert.match(editor, /className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"/,
+  "Compact, always-visible all-column grid must remain.");
 assert.match(editor, /overflow-x-auto.*aria-label="Horizontal Sales Pipeline column preview"/);
 assert.match(editor, /aria-label=\{`Move \$\{column\.label\} left`\}/);
 assert.match(editor, /aria-label=\{`Move \$\{column\.label\} right`\}/);
