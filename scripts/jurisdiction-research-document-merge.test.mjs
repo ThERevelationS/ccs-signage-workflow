@@ -172,6 +172,23 @@ test('Boone Building Department SIGN FEES source identity cannot override newer 
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone official Online Permit Information PDF identity is current while Oracle routing remains evidence-bounded', () => {
+  const file = manifest.files.find(item => item.filename === 'online-building-permit-instructions.pdf');
+  assert.ok(file);
+  assert.equal(file.currencyCheck.checkedAt, '2026-09-28');
+  assert.equal(file.currencyCheck.httpStatus, 200);
+  assert.equal(file.currencyCheck.sourceBytes, file.bytes);
+  assert.equal(file.currencyCheck.sourceSha256, file.sha256);
+  assert.equal(file.currencyCheck.matchesArchivedCopy, true);
+  assert.match(file.currencyCheck.evidenceScope, /official source still serves the Oracle-era instructions/i);
+  assert.match(file.currencyCheck.evidenceScope, /does not establish Oracle as the route for new building-permit applications/i);
+  assert.match(file.currencyCheck.evidenceScope, /current Building Permits page directs NEW applications to GovWell/i);
+  assert.match(file.currencyCheck.evidenceScope, /does not establish that Oracle is obsolete/i);
+  assert.match(file.currencyCheck.evidenceScope, /does not.*define every permit type that may still use it/i);
+  assert.match(manifest.sourceGapReview, /same 38830-byte SHA-256-identical Oracle-era instruction file/i);
+  assert.match(manifest.sourceGapReview, /do not declare Oracle obsolete or assign it to specific permit types/i);
+});
+
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
   const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
