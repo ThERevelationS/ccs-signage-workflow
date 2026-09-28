@@ -199,8 +199,10 @@ try {
       let entered;
       const hasClaim = new Promise((resolve) => { entered = resolve; });
       let release;
-      fixture.h.setAfterRowUpdate(async (name, _query, update, row) => {
-        if (name === "TimeClockPayPeriodCreateGate" && update.$set?.status === "creating") {
+      let firstClaimHeld = false;
+      fixture.h.setAfterRowUpdate(async (name, _query, update) => {
+        if (name === "TimeClockPayPeriodCreateGate" && update.$set?.status === "creating" && !firstClaimHeld) {
+          firstClaimHeld = true;
           entered();
           await new Promise((resolve) => { release = resolve; });
         }
@@ -219,15 +221,7 @@ try {
       await first.getByText("Synthetic admin A").waitFor();
       // Second administrator may retry after A releases; backend now rejects overlap.
       await secondDialog.getByRole("button", { name: "Create", exact: true }).click();
-      await second.getByText(/overlaps Synthetic admin A/).waitFor({ timeout: 4500 }).catch(async (error) => {
-        console.error("CONCURRENT_RETRY_DIAGNOSTIC", JSON.stringify({
-          gate: fixture.h.rows.TimeClockPayPeriodCreateGate,
-          periods: fixture.h.rows.TimeClockPayPeriod,
-          invokes: fixture.invokes.map((item) => ({ action: item.action, request_id: item.request_id, label: item.label })),
-          screen: (await second.locator("body").innerText()).slice(0, 1800),
-        }));
-        throw error;
-      });
+      await second.getByText(/overlaps Synthetic admin A/).waitFor();
       assertClean();
       assert.equal(fixture.h.rows.TimeClockPayPeriod[0].label, "Synthetic admin A");
     });
