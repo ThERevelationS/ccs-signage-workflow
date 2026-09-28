@@ -131,10 +131,18 @@ export default function PermitSpreadsheetRow({
   const [jurisdictionMatches, setJurisdictionMatches] = useState(null);
   const headerScrollRef = useRef(null);
   const dataScrollRef = useRef(null);
+  const linkOfficeTriggerRef = useRef(null);
+  const linkOfficeSelectRef = useRef(null);
   const syncingScrollRef = useRef(false);
 
   const isCompleted = isPermitLineEffectivelyComplete(lineItem);
   const steps = lineItem.steps || [];
+
+  useEffect(() => {
+    if (linkOfficeOpen && !linkSaving) {
+      requestAnimationFrame(() => linkOfficeSelectRef.current?.focus());
+    }
+  }, [linkOfficeOpen, linkSaving]);
 
   useEffect(() => {
     setJurisdictionMatches(null);
@@ -421,7 +429,7 @@ export default function PermitSpreadsheetRow({
               </div>
             )}
             {isRegistered && !lineItem.locality_office_id && onLinkLegacyOffice && legacyOfficeOptions.length > 0 && (
-              <button type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
+              <button ref={linkOfficeTriggerRef} type="button" className="mt-1 rounded border border-purple-300 bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-900"
                 onClick={() => { setSelectedOfficeId(""); setLinkError(""); setLinkOfficeOpen(true); }}>
                 Link legacy line to office
               </button>
@@ -545,7 +553,10 @@ export default function PermitSpreadsheetRow({
       <AlertDialog open={linkOfficeOpen} onOpenChange={open => {
         if (linkSaving) return;
         setLinkOfficeOpen(open);
-        if (!open) { setSelectedOfficeId(""); setLinkError(""); }
+        if (!open) {
+          setSelectedOfficeId(""); setLinkError("");
+          requestAnimationFrame(() => linkOfficeTriggerRef.current?.focus());
+        }
       }}>
         <AlertDialogContent className="clay-card border-none">
           <AlertDialogHeader>
@@ -557,15 +568,16 @@ export default function PermitSpreadsheetRow({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <label className="text-sm font-semibold" htmlFor={"office-link-" + lineItem.id}>Configured office</label>
-          <select id={"office-link-" + lineItem.id} value={selectedOfficeId}
+          <select ref={linkOfficeSelectRef} id={"office-link-" + lineItem.id} value={selectedOfficeId}
             onChange={event => setSelectedOfficeId(event.target.value)}
-            disabled={linkSaving} className="min-h-10 w-full rounded border px-2 text-sm">
+            disabled={linkSaving} aria-describedby={"office-link-help-" + lineItem.id} className="min-h-10 w-full rounded border px-2 text-sm">
             <option value="">Choose the exact office</option>
             {legacyOfficeOptions.map(office =>
               <option key={office.id} value={office.id}>{office.label}</option>
             )}
           </select>
-          {linkError && <p role="alert" className="text-sm text-red-700">{linkError}</p>}
+          <p id={"office-link-help-" + lineItem.id} className="text-xs text-gray-600">Office IDs are shown so similarly named offices can be distinguished safely.</p>
+          {linkError && <p role="alert" aria-live="assertive" className="text-sm text-red-700">{linkError}</p>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={linkSaving}>Cancel</AlertDialogCancel>
             <AlertDialogAction disabled={!selectedOfficeId || linkSaving || !isRegistered}
@@ -576,9 +588,13 @@ export default function PermitSpreadsheetRow({
                 try {
                   const saved = await onLinkLegacyOffice(lineItem.id, selectedOfficeId);
                   if (saved) setLinkOfficeOpen(false);
-                  else setLinkError("Office link was not saved. Review the latest permit line and locality.");
+                  else {
+                    setLinkError("Office link was not saved. Review the latest permit line and locality.");
+                    requestAnimationFrame(() => linkOfficeSelectRef.current?.focus());
+                  }
                 } catch (error) {
                   setLinkError(error?.message || "Office link could not be saved.");
+                  requestAnimationFrame(() => linkOfficeSelectRef.current?.focus());
                 } finally {
                   setLinkSaving(false);
                 }
