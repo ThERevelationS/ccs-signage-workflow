@@ -866,7 +866,7 @@ async function pushDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
-  options: { recordIds?: string[]; respectOrderCreateSetting?: boolean; respectSalesCreateSetting?: boolean } = {},
+  options: { recordIds?: string[]; allowExplicitOrderCreate?: boolean; requireOrderPendingMarker?: boolean; respectSalesCreateSetting?: boolean } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -910,6 +910,16 @@ async function pushDataset(
       dataset, direction: 'push', skipped: true,
       reason: `${missingIds.length} saved ${dataset === 'sales' ? 'Sales WorkOrder' : 'Order'} record${missingIds.length === 1 ? '' : 's'} could not be re-read by permanent ID. No Smartsheet rows were written.`,
       missing_record_ids: missingIds.slice(0, 10), records_examined: records.length,
+    };
+  }
+
+  if (dataset === 'orders' && options?.requireOrderPendingMarker) {
+    const notPending = records.filter((record: any) => record?.smartsheet_pending_local_sync !== true);
+    if (notPending.length) return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: `${notPending.length} requested Order${notPending.length === 1 ? '' : 's'} are not durably marked as waiting for Save & Sync. No Smartsheet rows were written.`,
+      records_examined: records.length,
+      not_pending_record_ids: notPending.slice(0, 10).map((record: any) => record.id),
     };
   }
 
@@ -976,15 +986,25 @@ async function pushDataset(
       conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
   }
 
-  if (dataset === 'orders' && options?.respectOrderCreateSetting && profile?.create_smartsheet_from_base44 !== true) {
+  if (dataset === 'orders') {
     const unlinked = pendingRecords.filter((record: any) =>
       !/^\d+$/.test(cleanText(record?.smartsheet_row_id, 40)) || cleanText(record?.smartsheet_sheet_id, 40) !== sheetId);
-    if (unlinked.length) return {
+    const createAllowed = profile?.create_smartsheet_from_base44 === true || options?.allowExplicitOrderCreate === true;
+    if (unlinked.length && !createAllowed) return {
       dataset, direction: 'push', sheet_id: sheetId, skipped: true,
-      reason: `${unlinked.length} saved Order${unlinked.length === 1 ? '' : 's'} do not have a verified Smartsheet row link and automatic Order row creation is OFF. No Smartsheet rows were written.`,
+      reason: `${unlinked.length} Order${unlinked.length === 1 ? '' : 's'} do not have a verified Smartsheet row link and automatic Order row creation is OFF. No Smartsheet rows were written.`,
       records_examined: records.length,
       unlinked_record_ids: unlinked.slice(0, 10).map((record: any) => record.id),
     };
+    if (unlinked.length && options?.allowExplicitOrderCreate === true) {
+      const noMappedCells = unlinked.filter((record: any) => buildCells(record, bindings, 'orders').length === 0);
+      if (noMappedCells.length) return {
+        dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+        reason: `${noMappedCells.length} new Order${noMappedCells.length === 1 ? '' : 's'} have no mapped Smartsheet values. No Smartsheet rows were written.`,
+        records_examined: records.length,
+        invalid_create_record_ids: noMappedCells.slice(0, 10).map((record: any) => record.id),
+      };
+    }
   }
   if (dataset === 'sales' && options?.respectSalesCreateSetting && profile?.create_smartsheet_from_base44 !== true) {
     const unlinked = pendingRecords.filter((record: any) =>
@@ -1272,7 +1292,10 @@ Deno.serve(async (req) => {
 
       const pushResult = await pushDataset(base44, token, 'orders', profile, config, {
         recordIds: orderIds,
-        respectOrderCreateSetting: true,
+        requireOrderPendingMarker: true,
+        // Explicit Save & Sync may create a row for a brand-new Order without
+        // enabling automatic/background Order creation for any other path.
+        allowExplicitOrderCreate: true,
       });
       const result = { ...pushResult, dataset: 'orders', direction: 'push' };
       const needsReview = orderRunRequiresReview([result]);
