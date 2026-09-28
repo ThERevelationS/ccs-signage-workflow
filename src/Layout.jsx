@@ -744,35 +744,49 @@ function LayoutContent({ children }) {
 
         {/* Top Navigation */}
         {!isSideNav && (
-          <nav 
-            className={`top-nav fixed top-0 left-0 right-0 z-50 ${isCollapsed ? (isHovered ? 'show' : 'collapsed') : ''}`}
-            onMouseLeave={() => isCollapsed && setIsHovered(false)}
-            style={{ 
-              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(20,20,40,0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          <nav
+            className={`top-nav fixed left-0 right-0 top-0 z-50 ${effectiveCollapsed ? (isHovered ? "show" : "collapsed") : ""}`}
+            onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
+            onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
+            style={{
+              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.94) 0%, rgba(20,20,40,0.88) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,248,255,0.80) 100%)',
+              backdropFilter: 'blur(18px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+              boxShadow: '0 4px 28px rgba(15,23,42,0.10)',
               minHeight: 'auto'
             }}
           >
-            <div className="px-4 py-2">
-              <div className="flex items-center justify-between">
-                {/* Logo with nav toggle */}
-                <div className="clay-card px-3 py-2 flex items-center gap-2 sm:gap-3 sm:px-4">
-                  <button
-                    onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center hover:opacity-80 transition-opacity"
-                    style={{ 
-                      background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
-                      boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
-                    }}
-                    title="Switch to Sidebar"
-                  >
-                    <PanelLeft className="w-4 h-4 sm:w-5 sm:h-5 text-purple-700" />
-                  </button>
-                  <div className="hidden sm:block">
-                    <h2 className="font-bold text-gray-800 text-lg leading-tight">Sign Shop</h2>
-                    <p className="text-xs text-gray-500">Workflow Manager</p>
+            <div className={compactView ? "px-3 py-1" : "px-4 py-2"}>
+              <div className="flex items-start justify-between">
+                {/* Brand + tiny shell view controls */}
+                <div className="flex-shrink-0">
+                  <div className={`clay-card flex items-center gap-2 ${compactView ? "px-2 py-1" : "px-3 py-2 sm:gap-3 sm:px-4"}`}>
+                    <button
+                      onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
+                      className={`${compactView ? "h-8 w-8" : "h-8 w-8 sm:h-10 sm:w-10"} flex items-center justify-center rounded-xl transition-opacity hover:opacity-80 sm:rounded-2xl`}
+                      style={{
+                        background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
+                        boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
+                      }}
+                      title="Switch to Sidebar"
+                    >
+                      <PanelLeft className={`${compactView ? "h-4 w-4" : "h-4 w-4 sm:h-5 sm:w-5"} text-purple-700`} />
+                    </button>
+                    <div className="hidden sm:block">
+                      <h2 className={`${compactView ? "text-sm" : "text-lg"} font-bold leading-tight text-gray-800`}>Sign Shop</h2>
+                      <p className="text-xs text-gray-500">Workflow Manager</p>
+                    </div>
                   </div>
+                  <ShellViewControls
+                    compactView={compactView}
+                    onToggleCompact={() => setCompactView((value) => !value)}
+                    collapsed={navCollapsed}
+                    onToggleCollapsed={() => {
+                      setNavCollapsed((value) => !value);
+                      setIsHovered(false);
+                    }}
+                    navLayout="top"
+                  />
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -785,7 +799,7 @@ function LayoutContent({ children }) {
                 </button>
 
                 {/* Desktop Navigation Links */}
-                <div className="hidden lg:flex items-center gap-1 flex-wrap flex-1 ml-4 max-w-[calc(100%-400px)]">
+                <div className={`hidden lg:flex items-center flex-wrap flex-1 max-w-[calc(100%-400px)] ${compactView ? "ml-2 gap-0.5" : "ml-4 gap-1"}`}>
                   {navigationItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     const isInSplit = additionalPages.find(p => item.url.includes(p.name));
@@ -794,7 +808,7 @@ function LayoutContent({ children }) {
                         key={item.title}
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
-                        className={`px-2 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border ${
+                        className={`${compactView ? "px-1.5 py-1" : "px-2 py-1.5"} rounded-lg transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap border ${
                           isActive ? 'clay-card shadow-lg scale-105' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
                         }`}
                         style={{ 
@@ -821,7 +835,7 @@ function LayoutContent({ children }) {
                     <button
                       onClick={() => setMeetingsDropdownOpen(!meetingsDropdownOpen)}
                       onBlur={() => setTimeout(() => setMeetingsDropdownOpen(false), 150)}
-                      className={`px-2 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
+                      className={`${compactView ? "px-1.5 py-1" : "px-2 py-1.5"} rounded-lg transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap border ${
                         meetingsDropdownItems.some(item => location.pathname === item.url) 
                           ? 'clay-card border-purple-300 shadow-md' 
                           : 'hover:clay-card border-gray-200 hover:border-gray-300'
@@ -900,7 +914,7 @@ function LayoutContent({ children }) {
                       </button>
                     )}
 
-                    {currentUser && <GlobalWorkPauseControl />}
+                    {currentUser && <FocusPausePair currentUser={currentUser} compact={compactView} />}
 
                     {/* Announcement button - admin only, square, two rows tall */}
                     {isUserAdmin(currentUser) && (
