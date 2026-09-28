@@ -590,9 +590,14 @@ export default function PermitSpreadsheetRow({
                 if (!selectedOfficeId || linkSaving) return;
                 setLinkSaving(true); setLinkError("");
                 try {
-                  const saved = await onLinkLegacyOffice(lineItem.id, selectedOfficeId);
-                  if (saved) setLinkOfficeOpen(false);
-                  else {
+                  const selectedSnapshot = legacyOfficeOptions.find(office => office.id === selectedOfficeId)?.snapshot;
+                  const saved = await onLinkLegacyOffice(lineItem.id, selectedOfficeId, selectedSnapshot);
+                  if (saved === true) setLinkOfficeOpen(false);
+                  else if (saved === "saved_needs_review") {
+                    setSelectedOfficeId("");
+                    setLinkError("Office link saved, but current authority needs review. Reload the locality before relying on it.");
+                    requestAnimationFrame(() => linkOfficeSelectRef.current?.focus());
+                  } else {
                     setLinkError("Office link was not saved. Review the latest permit line and locality.");
                     requestAnimationFrame(() => linkOfficeSelectRef.current?.focus());
                   }

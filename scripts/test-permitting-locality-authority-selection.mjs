@@ -264,6 +264,33 @@ test('legacy link requires explicit staff confirmation and guarded single-line p
   assert.match(group, /legacyOfficeOptions=\{legacyOfficeLinkOptions\(li, localities\)\}/);
   assert.match(row, /Link legacy line to office/);
   assert.match(row, /Confirm this office link/);
-  assert.match(row, /onLinkLegacyOffice\(lineItem\.id, selectedOfficeId\)/);
+  assert.match(row, /onLinkLegacyOffice\(lineItem\.id, selectedOfficeId, selectedSnapshot\)/);
   assert.match(row, /This does not verify permitting authority/);
+});
+
+test('office repair freshness rejects concurrent deletion, rename, role revocation and duplicate IDs', async () => {
+  const { legacyOfficeLinkOptions, assessOfficeRepairFreshness } = await import('../base44/shared/permittingAddressLocality.js');
+  const line = { id: 'line', locality_id: 'loc', locality_office_id: 'retired' };
+  const office = { id: 'candidate', name: 'Sign Office', authority_roles: ['sign_permit'], authority_verification_status: 'staff_verified' };
+  const locality = { id: 'loc', offices: [office] };
+  const snapshot = legacyOfficeLinkOptions(line, [locality])[0].snapshot;
+  assert.equal(assessOfficeRepairFreshness(line, locality, 'candidate', snapshot), true);
+  assert.equal(assessOfficeRepairFreshness(line, { ...locality, offices: [] }, 'candidate', snapshot), false);
+  assert.equal(assessOfficeRepairFreshness(line, { ...locality, offices: [{ ...office, name: 'Renamed' }] }, 'candidate', snapshot), false);
+  assert.equal(assessOfficeRepairFreshness(line, { ...locality, offices: [{ ...office, authority_verification_status: 'needs_verification' }] }, 'candidate', snapshot), false);
+  assert.equal(assessOfficeRepairFreshness(line, { ...locality, offices: [office, { ...office }] }, 'candidate', snapshot), false);
+  assert.equal(assessOfficeRepairFreshness(line, { id: 'wrong', offices: [office] }, 'candidate', snapshot), false);
+  assert.equal(assessOfficeRepairFreshness(line, locality, 'candidate', ''), false);
+});
+
+test('repair handler checks office snapshot on both sides of CAS; post-save read uncertainty does not imply verified authority', () => {
+  const page = readFileSync(new URL('../src/pages/Permitting.jsx', import.meta.url), 'utf8');
+  const row = readFileSync(new URL('../src/components/permitting/PermitSpreadsheetRow.jsx', import.meta.url), 'utf8');
+  assert.match(page, /assessOfficeRepairFreshness\(line, liveLocality, selectedId, selectedSnapshot\)/);
+  assert.match(page, /assessOfficeRepairFreshness\(line, latestLocality, selectedId, selectedSnapshot\)/);
+  assert.match(page, /setLocalities\(previous => previous\.filter\(locality => locality\.id !== line\.locality_id\)\)/);
+  assert.match(page, /return "saved_needs_review"/);
+  assert.match(row, /saved === "saved_needs_review"/);
+  assert.match(row, /legacyOfficeOptions\.find\(office => office\.id === selectedOfficeId\)\?\.snapshot/);
+  assert.match(row, /Office link saved, but current authority needs review/);
 });

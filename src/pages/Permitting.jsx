@@ -18,7 +18,7 @@ import { mutateWorkOrderArrayField, replaceWorkOrderFieldsIfUnchanged, transitio
 import { ActivityActions } from "@/components/workflow/ActivityLogger";
 import { deleteEntityIfUnchanged, expectedEntityFields, replaceEntityFieldsIfUnchanged } from "@/components/estimator/builder/builderEntityPersistence";
 import { getPermitGroupReadiness, isPermitGroupAssignedToUser, isPermitLineEffectivelyComplete, PERMIT_QUEUE_META, PERMIT_QUEUE_ORDER, summarizePermitQueue } from "@/components/permitting/permitQueue";
-import { legacyOfficeLinkOptions } from "../../base44/shared/permittingAddressLocality.js";
+import { legacyOfficeLinkOptions, assessOfficeRepairFreshness } from "../../base44/shared/permittingAddressLocality.js";
 
 const WorkOrder = base44.entities.WorkOrder;
 const PermitLineItem = base44.entities.PermitLineItem;
@@ -544,7 +544,7 @@ export default function Permitting() {
   }, [localities, workOrders]);
 
   // Staff-approved, one-line legacy repair. No bulk update or inferred verification.
-  const linkLegacyPermitLineOffice = useCallback(async (lineItemId, officeId) => {
+  const linkLegacyPermitLineOffice = useCallback(async (lineItemId, officeId, selectedSnapshot) => {
     const line = lineItems.find(item => item.id === lineItemId);
     const selectedId = String(officeId || "").trim();
     if (!isRegistered || !line?.id || !selectedId || !line.locality_id) {
@@ -556,8 +556,12 @@ export default function Permitting() {
       if (!liveLocality?.id || String(liveLocality.id) !== String(line.locality_id)) {
         throw new Error("The selected locality is unavailable.");
       }
-      if (legacyOfficeLinkOptions(line, [liveLocality]).filter(office => office.id === selectedId).length !== 1) {
-        throw new Error("The chosen office ID is unavailable or ambiguous. Review current locality settings.");
+      setLocalities(previous => previous.map(locality =>
+        locality.id === liveLocality.id ? liveLocality : locality
+      ));
+      if (legacyOfficeLinkOptions(line, [liveLocality]).filter(office => office.id === selectedId).length !== 1 ||
+          !assessOfficeRepairFreshness(line, liveLocality, selectedId, selectedSnapshot)) {
+        throw new Error("The selected office changed or was removed since the dialog opened. Review updated office choices before confirming.");
       }
     } catch (error) {
       setPermitLineEditError(error?.message || "Could not recheck the office. Nothing was linked.");
@@ -570,7 +574,26 @@ export default function Permitting() {
         row_name: line.row_name, office_type: line.office_type,
       }
     );
-    return !!saved?.id && String(saved.locality_office_id || "") === selectedId;
+    if (!saved?.id || String(saved.locality_office_id || "") !== selectedId) return false;
+    // No cross-entity transaction: recheck the office after the guarded line
+    // save; do not display stale authority if another editor changed it.
+    try {
+      const latestLocality = await PermitLocality.get(line.locality_id);
+      if (!latestLocality?.id || String(latestLocality.id) !== String(line.locality_id)) {
+        throw new Error("Locality could not be verified after saving.");
+      }
+      setLocalities(previous => previous.map(locality =>
+        locality.id === latestLocality.id ? latestLocality : locality
+      ));
+      if (assessOfficeRepairFreshness(line, latestLocality, selectedId, selectedSnapshot)) return true;
+      setPermitLineEditError("Office link saved, but the selected office changed or was removed during saving. Review current authority before relying on it.");
+    } catch (error) {
+      // A failed post-save read must not leave a previously verified office
+      // cached on the displayed permit line.
+      setLocalities(previous => previous.filter(locality => locality.id !== line.locality_id));
+      setPermitLineEditError("Office link saved, but its current office could not be rechecked. Reload locality settings before relying on authority.");
+    }
+    return "saved_needs_review";
   }, [isRegistered, lineItems, persistPermitLineItemFields]);
 
   // Update locality on an existing line — replaces steps using the office this line represents

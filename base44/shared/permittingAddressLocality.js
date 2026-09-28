@@ -75,6 +75,25 @@ export function summarizePermitGroupAuthorityCoverage(lines, localities) {
   return [...byLocality.values()];
 }
 
+// Stable comparison detects selected office edits while a repair dialog is open.
+// Sorting nested object keys avoids false conflicts from API property ordering.
+function canonicalOffice(value) {
+  if (Array.isArray(value)) return value.map(canonicalOffice);
+  if (value && typeof value === 'object') return Object.fromEntries(
+    Object.entries(value).sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, field]) => [key, canonicalOffice(field)])
+  );
+  return value;
+}
+
+export function assessOfficeRepairFreshness(line, locality, officeId, snapshot) {
+  if (!snapshot || !locality?.id) return false;
+  const matches = legacyOfficeLinkOptions(line, [locality]).filter(
+    option => option.id === String(officeId || '').trim()
+  );
+  return matches.length === 1 && matches[0].snapshot === snapshot;
+}
+
 /** Offer unique locality-scoped office IDs for explicit legacy linking or repair.
  * A saved ID that still exists, even duplicated, cannot be silently replaced.
  * Only a missing saved ID permits a staff-confirmed repair, never name fallback.
@@ -99,7 +118,8 @@ export function legacyOfficeLinkOptions(line, localities) {
     const types = Array.isArray(office?.office_types) && office.office_types.length
       ? office.office_types : office?.office_type ? [office.office_type] : [];
     const name = String(office?.name || types[0] || 'Office').trim();
-    choices.push({ id: officeId, label: name + ' — ID: ' + officeId, name });
+    choices.push({ id: officeId, label: name + ' — ID: ' + officeId, name,
+      snapshot: JSON.stringify(canonicalOffice(office)) });
   }
   return choices;
 }
