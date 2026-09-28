@@ -157,7 +157,7 @@ try {
       const topNavBox = await topNav.boundingBox();
       const mainPadding = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).paddingTop));
       assert.ok(topNavBox && mainPadding >= topNavBox.height - 1,
-        "Desktop work content starts below the expanded top shell");
+        `Desktop work content starts below the expanded top shell (nav=${topNavBox?.height}, padding=${mainPadding})`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         "Desktop shell creates no horizontal page overflow");
       const focusButton = page.getByRole("button", { name: /Open focus timer/ });
