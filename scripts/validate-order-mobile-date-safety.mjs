@@ -29,8 +29,12 @@ assert.ok(source.indexOf('dateReceivedOption || format(dateReceived') > source.i
   'mobile Received display should prefer a translated receipt option over a paired calendar date');
 assert.match(source, /<button\s+key=\{order\.id\}\s+type="button"/,
   'each mobile Order card should be a native keyboard-operable button');
-assert.match(source, /aria-label=\{\`Open order details for \$\{order\.customer_name \|\| 'unnamed customer'\}\`\}/,
-  'each mobile Order card should announce the customer and its details action');
+assert.ok(source.includes("const customerName = typeof order.customer_name === 'string' ? order.customer_name.trim() : '';"),
+  'mobile Order cards should normalize customer names before display');
+assert.ok(source.includes("const displayCustomerName = customerName || 'Unnamed customer';"),
+  'blank and whitespace-only customer names should share the visible fallback');
+assert.ok(source.includes('aria-label={`Open order details for ${displayCustomerName}`}'),
+  'each mobile Order card should announce the same normalized customer name it displays');
 assert.match(source, /focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2/,
   'keyboard focus should remain visibly apparent on mobile Order cards');
 assert.doesNotMatch(source, /<div\s+key=\{order\.id\}[\s\S]{0,300}onClick=/,
