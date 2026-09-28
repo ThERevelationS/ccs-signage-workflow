@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { filterOrderCustomerJobs, isActiveOrderCustomerJob, cleanOrderJobTitle, orderCustomerJobSubtitle, verifyActiveOrderCustomerJob } from '../src/components/orders/orderCustomerJobPicker.mjs';
+import { filterOrderCustomerJobs, isActiveOrderCustomerJob, cleanOrderJobTitle, orderCustomerJobSubtitle, verifyActiveOrderCustomerJob, orderAutomaticRiderShadowIds } from '../src/components/orders/orderCustomerJobPicker.mjs';
 
 const job = (id, overrides = {}) => ({
   id, client_name: 'Advantage Storage', title: 'Self Storage sign',
@@ -59,6 +59,39 @@ assert.equal(orderCustomerJobSubtitle({ title: 'Smartsheet row 4456987745249156'
 assert.equal(orderCustomerJobSubtitle({ title: 'Smartsheet row 4456987745249156', description: 'Acrylic panel' }), 'Acrylic panel');
 assert.deepEqual(filterOrderCustomerJobs([job('placeholder', {title: 'Smartsheet row 4456987745249156', description: ''})], '4456987745249156'), []);
 console.log('PASS Sunrise live-shaped examples leave one WIP job; fabricated Smartsheet IDs cannot display as project titles');
+
+// Live-shaped New Cincy example: the Workflow sheet's automatic child/rider row
+// was historically imported as another top-level WorkOrder because hierarchy
+// metadata was not persisted. The Order picker must show only the root job.
+const newCincyRoot = job('new-cincy-root', {
+  client_name: 'New Cincy Inc.', title: 'Smartsheet row 8533271213768580',
+  current_task_description: 'WIP - Production/Fabrication', estimate_amount: 5160.08,
+  smartsheet_sheet_id: '8702703019812740', smartsheet_row_id: '8533271213768580',
+});
+const newCincyShadow = job('new-cincy-shadow', {
+  client_name: 'New Cincy Inc - P&P Reface, Wall Sign, Reskin Awning', title: '2026-09-29',
+  current_task_description: 'WIP - Production/Fabrication', estimate_amount: 5160.08,
+  smartsheet_sheet_id: '8702703019812740', smartsheet_row_id: '4979196880813956',
+});
+assert.deepEqual([...orderAutomaticRiderShadowIds([newCincyRoot, newCincyShadow])], ['new-cincy-shadow']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, newCincyShadow], 'New Cincy').map(x => x.id), ['new-cincy-root']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, newCincyShadow], 'P&P'), []);
+console.log('PASS New Cincy automatic rider shadow is suppressed while the one active root job remains');
+
+// Never collapse legitimate same-customer jobs from name alone.
+const legitDifferentAmount = { ...newCincyShadow, id: 'legit-amount', estimate_amount: 6000 };
+const legitDifferentTask = { ...newCincyShadow, id: 'legit-task', current_task_description: 'Permit Review' };
+const rootWithRealTitle = { ...newCincyRoot, id: 'root-real-title', title: 'Main monument sign' };
+const childForRealTitle = { ...newCincyShadow, id: 'child-real-title' };
+const otherSheet = { ...newCincyShadow, id: 'other-sheet', smartsheet_sheet_id: '999999' };
+const unsynced = { ...newCincyShadow, id: 'unsynced', smartsheet_row_id: null, smartsheet_sheet_id: null };
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, legitDifferentAmount], 'New Cincy').map(x => x.id), ['new-cincy-root', 'legit-amount']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, legitDifferentTask], 'New Cincy').map(x => x.id), ['new-cincy-root', 'legit-task']);
+assert.deepEqual(filterOrderCustomerJobs([rootWithRealTitle, childForRealTitle], 'New Cincy').map(x => x.id), ['root-real-title', 'child-real-title']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, otherSheet], 'New Cincy').map(x => x.id), ['new-cincy-root', 'other-sheet']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, unsynced], 'New Cincy').map(x => x.id), ['new-cincy-root', 'unsynced']);
+assert.deepEqual(filterOrderCustomerJobs([{ ...newCincyRoot, current_task_description: 'Completed Sale' }, newCincyShadow], 'New Cincy').map(x => x.id), ['new-cincy-shadow']);
+console.log('PASS automatic-rider compatibility rule does not hide legitimate distinct, unsynced, other-sheet, or orphaned active jobs');
 
 const expectedId = 'permanent-job-id';
 const activeEntity = { get: async (id) => job(id, { current_task_description: 'WIP - Production' }) };
