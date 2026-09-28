@@ -87,8 +87,12 @@ try {
     "Compact shell preference persists locally");
   assert.match(layoutSource, /const SHELL_SPRING = \{[\s\S]*stiffness: 210,[\s\S]*damping: 30,[\s\S]*mass: 0\.82/,
     "Shell collapse uses a continuous spring rather than a short CSS jump");
-  assert.match(layoutSource, /\.ccs-glass-shell \{[\s\S]*backdrop-filter: blur\(30px\) saturate\(185%\)/,
-    "Whole navigation shell uses the layered glass material");
+  assert.match(layoutSource, /\.ccs-glass-shell \{[\s\S]*linear-gradient\(142deg, rgba\(51,65,85,0\.82\)[\s\S]*backdrop-filter: blur\(34px\) saturate\(185%\)/,
+    "Whole navigation shell uses the approved smoked-crystal glass material");
+  assert.match(layoutSource, /\.ccs-glass-nav-item \{[\s\S]*rgb\(var\(--glass-accent-rgb\) \/ 0\.24\)/,
+    "Navigation items refract per-button accent colors through the glass surface");
+  assert.match(layoutSource, /\.dark \.ccs-glass-nav-item \{[\s\S]*rgb\(var\(--glass-accent-rgb\) \/ 0\.30\)/,
+    "Dark mode preserves visible per-button color refraction");
   assert.match(layoutSource, /data-shell-navigation-handle="(?:side|top)"/,
     "Collapsed navigation exposes a dedicated bump-out handle");
   assert.match(layoutSource, />Navigation Bar</,
@@ -318,6 +322,14 @@ try {
       await pair.waitFor();
       const backdrop = await pair.evaluate((node) => getComputedStyle(node).backdropFilter);
       assert.notEqual(backdrop, "none", "Glass pair keeps its backdrop treatment in dark mode");
+
+      const salesBorder = await page.getByRole("link", { name: "Sales Pipeline" }).first()
+        .evaluate((node) => getComputedStyle(node).borderColor);
+      const estimatingBorder = await page.getByRole("link", { name: "Estimating" }).first()
+        .evaluate((node) => getComputedStyle(node).borderColor);
+      assert.notEqual(salesBorder, estimatingBorder,
+        "Dark-mode navigation buttons retain distinct category-colored glass edges");
+
       await page.locator("[data-focus-timer-trigger]:visible").click();
       const dialog = page.getByRole("dialog", { name: "My Focus Timer" });
       await dialog.waitFor();
