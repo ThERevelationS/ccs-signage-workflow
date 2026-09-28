@@ -1495,7 +1495,9 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
       const recovered = await setState(stateEntity, auditClaim, 'clocking_in', requestId, {
         status: 'clocked_in',
         active_entry_id: entry.id,
-        last_action_at: entry.clock_in,
+        last_action_at: entry.clock_source === 'employee_attested_missed_clock_in'
+          ? (entry.missed_clock_in_reported_at || entry.clock_in)
+          : entry.clock_in,
         pending_started_at: null,
         break_status: 'working', active_break_id: null, last_break_request_id: null, break_pending_started_at: null,
         work_pause_status: 'working', active_work_pause_id: null, last_work_pause_request_id: null, work_pause_pending_started_at: null,
@@ -6004,14 +6006,14 @@ Deno.serve(async (req) => {
         job_allocations: allocations,
         notes: submittedClockOut.notes,
         status: 'clocked_out',
-        clock_source: 'server',
+        clock_source: entry.clock_source === 'employee_attested_missed_clock_in' ? entry.clock_source : 'server',
         break_tracking_used: breakSummary.count > 0,
         tracked_break_minutes: breakSummary.total_minutes,
         tracked_paid_break_minutes: breakSummary.paid_minutes,
         tracked_unpaid_break_minutes: breakSummary.unpaid_minutes,
         work_pause_tracking_used: workPauseSummary.count > 0,
         tracked_work_pause_minutes: workPauseSummary.total_minutes,
-        approval_status: 'unreviewed',
+        approval_status: entry.clock_source === 'employee_attested_missed_clock_in' ? 'needs_review' : 'unreviewed',
       };
       const updateResult = await entryEntity.updateMany(
         { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_in' },
