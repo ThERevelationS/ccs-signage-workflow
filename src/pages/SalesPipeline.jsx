@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuGroup, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock, Wrench, ChevronDown, SlidersHorizontal, Check, X } from "lucide-react";
+import { DollarSign, Filter, Search, Plus, Upload, Download, History, Settings, Inbox, BriefcaseBusiness, Archive, Database, Trophy, BarChart3, AlertTriangle, CalendarClock, Wrench, ChevronDown, SlidersHorizontal, Check, X, Save, Loader2 } from "lucide-react";
 import SalesPipelineSpreadsheet from "@/components/sales/SalesPipelineSpreadsheet";
 import WorkOrderForm from "@/components/workflow/WorkOrderForm";
 import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
@@ -97,6 +97,7 @@ export default function SalesPipeline() {
   const spreadsheetRef = useRef(null);
   const activeFiltersLoadRef = useRef(0);
   const preferenceSaveChainRef = useRef(Promise.resolve());
+  const [saveSyncState, setSaveSyncState] = useState({ busy: false, ok: null, message: "" });
 
   useEffect(() => {
     document.title = "Sales Pipeline - Workflow Manager";
@@ -113,6 +114,26 @@ export default function SalesPipeline() {
     setAttentionFilter("all");
     loadActiveFilters();
   }, [currentUser?.email, sessionToken]);
+
+  const runSaveAndSync = async () => {
+    if (saveSyncState.busy) return;
+    const action = spreadsheetRef.current?.saveAndSync;
+    if (typeof action !== "function") {
+      setSaveSyncState({ busy: false, ok: false, message: "Sales table is not ready to save and sync yet." });
+      return;
+    }
+    setSaveSyncState({ busy: true, ok: null, message: "" });
+    try {
+      const result = await action();
+      setSaveSyncState({
+        busy: false,
+        ok: result?.ok === true,
+        message: result?.message || (result?.ok ? "Sales changes are synchronized." : "Sales sync could not be verified."),
+      });
+    } catch (error) {
+      setSaveSyncState({ busy: false, ok: false, message: error?.message || "Sales Save & Sync could not be completed." });
+    }
+  };
 
   const loadActiveFilters = async () => {
     const requestId = ++activeFiltersLoadRef.current;
