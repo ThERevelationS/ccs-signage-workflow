@@ -4147,6 +4147,7 @@ Deno.serve(async (req) => {
 
       let correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
       if (!correctionRequest?.id || asEmail(correctionRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request was not found.' }, { status: 404 });
+      const missedClockOutRecovery = String(correctionRequest.request_kind || 'standard') === 'missed_clock_out';
 
       const sameReviewPayload = () => {
         const storedHash = String(correctionRequest.review_payload_hash || '');
@@ -4403,13 +4404,29 @@ Deno.serve(async (req) => {
         const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
         if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The rejection was saved but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
         if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The rejection was saved but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
+        if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
+          await punchExceptionEntity.updateMany(
+            { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
+            { $set: {
+              status: 'rejected', resolution_audit_id: reviewAuditResult.audit.id,
+              resolution_note: reviewerReason || 'Manager rejected the employee-reported missed clock-out; the shift remains unresolved.',
+            } },
+          );
+        }
         return Response.json({ success: true, request: savedRequest, review_audit_id: reviewAuditResult.audit.id });
       }
 
       let entry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
-      if (!entry?.id || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin || entry.status !== 'clocked_out' || !entry.clock_out) {
+      const expectedUnderlyingStatus = missedClockOutRecovery ? 'needs_resolution' : 'clocked_out';
+      const underlyingEligible = Boolean(
+        entry?.id && asEmail(entry.user_email) === target.email && !entry.archived_test_data && !entry.archived_admin &&
+        entry.status === expectedUnderlyingStatus && (missedClockOutRecovery || Boolean(entry.clock_out))
+      );
+      if (!underlyingEligible) {
         await releaseReview();
-        return Response.json({ success: false, error: 'The underlying completed TimeEntry is no longer eligible for this correction.' }, { status: 409 });
+        return Response.json({ success: false, error: missedClockOutRecovery
+          ? 'The unresolved missed-clock-out TimeEntry is no longer eligible for this correction.'
+          : 'The underlying completed TimeEntry is no longer eligible for this correction.' }, { status: 409 });
       }
       if (entryIsPayPeriodLocked(entry)) {
         await releaseReview();
@@ -4519,7 +4536,7 @@ Deno.serve(async (req) => {
         }
         correctionAuditId = correctionAudit.id;
         const updated = await entryEntity.updateMany(
-          { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: 'clocked_out', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+          { id: entry.id, updated_date: entry.updated_date, user_email: target.email, status: expectedUnderlyingStatus, archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
           { $set: nextFields, $unset: { approved_at: '', approved_by: '', approval_note: '', approval_request_id: '' } },
         );
         if (!updated || updated.updated !== 1) {
@@ -4556,6 +4573,17 @@ Deno.serve(async (req) => {
       const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
       if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The correction was applied but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
       if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied and review saved, but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
+      if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
+        await punchExceptionEntity.updateMany(
+          { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
+          { $set: {
+            status: 'resolved', resolution_audit_id: correctionAuditId,
+            resolution_note: decision === 'approve_modified'
+              ? 'Manager approved the missed clock-out with modified punch details.'
+              : 'Manager approved the employee-reported missed clock-out.',
+          } },
+        );
+      }
       return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
     }
 
