@@ -346,7 +346,7 @@ async function pullDataset(
     });
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
-  const salesAssigneeUsers = dataset === 'sales'
+  const salesAssigneeUsers = dataset === 'sales' && /^\d+$/.test(String(bindings?.current_task_assigned_to ?? '').trim())
     ? await loadAllEntityRows({
         entity: base44.asServiceRole.entities.AuthorizedEmail,
         sort: 'full_name',
