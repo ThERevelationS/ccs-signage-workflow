@@ -206,6 +206,21 @@ function dateKeyInCompanyTime(value: any) {
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
+function minutesOfDayInCompanyTime(value: any) {
+  const date = new Date(String(value || ''));
+  if (!Number.isFinite(date.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: COMPANY_TIME_ZONE,
+    hourCycle: 'h23',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(date);
+  const hour = Number(parts.find(part => part.type === 'hour')?.value);
+  const minute = Number(parts.find(part => part.type === 'minute')?.value);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+  return hour * 60 + minute;
+}
+
 function entryFallsInPeriod(entry: any, startDate: string, endDate: string) {
   const key = dateKeyInCompanyTime(entry?.clock_in);
   return Boolean(key && key >= startDate && key <= endDate);
@@ -306,11 +321,21 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
   if (!entry?.id || entry.status !== 'clocked_in' || String(entry.clock_in_request_id || '') !== requestId) {
     throw new Error('A matching active TimeEntry is required before its Clock In audit can be confirmed.');
   }
+  const employeeAttested = entry.clock_source === 'employee_attested_missed_clock_in';
   return ensureActionAudit(auditEntity, {
     action: 'clock_in', outcome: 'confirmed', user_email: target.email,
     user_name: target.full_name || target.email, actor_email: asEmail(actor.email), actor_role: actor.role,
     authentication_method: authenticationMethodFor(actor, target),
-    server_timestamp: entry.clock_in, request_id: requestId, time_entry_id: entry.id,
+    server_timestamp: employeeAttested ? (entry.missed_clock_in_reported_at || new Date().toISOString()) : entry.clock_in,
+    request_id: requestId, time_entry_id: entry.id,
+    ...(employeeAttested ? {
+      reason: 'Employee-attested missed Clock In reconstruction',
+      details: {
+        clock_source: entry.clock_source,
+        employee_attested_clock_in: entry.clock_in,
+        reported_at: entry.missed_clock_in_reported_at || null,
+      },
+    } : {}),
   }, 'Clock In audit');
 }
 
