@@ -192,6 +192,8 @@ function entryAuditSnapshot(entry: any) {
 }
 
 const COMPANY_TIME_ZONE = 'America/New_York';
+const MISSED_PUNCH_PROMPT_MS = 18 * 60 * 60 * 1000;
+const MISSED_PUNCH_REPROMPT_MS = 8 * 60 * 60 * 1000;
 
 function dateKeyInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
@@ -210,7 +212,7 @@ function entryFallsInPeriod(entry: any, startDate: string, endDate: string) {
 }
 
 function activeEntryMayOverlapPeriod(entry: any, endDate: string) {
-  if (entry?.status !== 'clocked_in' || entry.archived_test_data || entry.archived_admin) return false;
+  if (!['clocked_in', 'needs_resolution'].includes(String(entry?.status || '')) || entry.archived_test_data || entry.archived_admin) return false;
   const clockInDay = dateKeyInCompanyTime(entry.clock_in);
   // A missing or malformed active punch cannot safely be ruled out of any period.
   // Require audited manager investigation rather than silently finalizing past it.
@@ -1755,6 +1757,7 @@ Deno.serve(async (req) => {
     const auditEntity = base44.asServiceRole.entities.TimeClockAudit;
     const badgeEntity = base44.asServiceRole.entities.TimeClockBadge;
     const correctionRequestEntity = base44.asServiceRole.entities.TimeClockCorrectionRequest;
+    const punchExceptionEntity = base44.asServiceRole.entities.TimeClockPunchException;
     const breakEntity = base44.asServiceRole.entities.TimeClockBreak;
     const workPauseEntity = base44.asServiceRole.entities.TimeClockWorkPause;
     const payPeriodEntity = base44.asServiceRole.entities.TimeClockPayPeriod;
