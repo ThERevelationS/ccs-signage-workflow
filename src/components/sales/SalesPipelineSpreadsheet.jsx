@@ -39,6 +39,7 @@ import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpComplet
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
+import { personValuesReferToSameUser } from "@/components/admin/smartsheetTranslationModel.js";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -98,6 +99,25 @@ const LEGACY_CLOSED_QUERY = {
   deleted: { $ne: true },
 };
 const ALL_RECORDS_ACTIVE_QUERY = { is_rider: false, completed: false, deleted: { $ne: true } };
+const SALES_USER_FILTER_ROLES = Object.freeze({
+  sales_rep: null,
+  current_task_assigned_to: "Task Assigned",
+  designer: "Designer",
+  project_manager: "PM",
+  estimator: "Estimator",
+});
+
+const salesFilterUsersForField = (field, users = []) => {
+  if (!Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field)) return [];
+  const role = SALES_USER_FILTER_ROLES[field];
+  if (!role) return users;
+  if (role === "PM") {
+    return users.filter((user) => user?.sales_roles?.includes("PM") || user?.sales_roles?.includes("Project Manager"));
+  }
+  return users.filter((user) => user?.sales_roles?.includes(role));
+};
+
+const isSalesUserFilterField = (field) => Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field);
 
 const getSalesActivityTime = (workOrder) => {
   const parsed = Date.parse(workOrder?.sales_last_activity_at || "");
@@ -1453,7 +1473,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       // compare calendar days so timestamp-backed fields can match date-only cutoffs.
       const fieldPasses = isSalesDateFilterField(field)
         ? values.some((val) => salesDateFilterEquals(fieldValue, val))
-        : values.some((val) => fieldValue == val);
+        : isSalesUserFilterField(field)
+          ? values.some((val) => personValuesReferToSameUser(fieldValue, val, salesFilterUsersForField(field, users)))
+          : values.some((val) => fieldValue == val);
       if (!fieldPasses) return false;
     }
     
@@ -1466,14 +1488,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         case "is_not":
           return isSalesDateFilterField(condition.field)
             ? !salesDateFilterEquals(fieldValue, condValue)
-            : fieldValue != condValue;
+            : isSalesUserFilterField(condition.field)
+              ? !personValuesReferToSameUser(fieldValue, condValue, salesFilterUsersForField(condition.field, users))
+              : fieldValue != condValue;
         case "is_one_of": {
           const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
           if (vals.length === 0) return true;
           const fv = fieldValue != null ? String(fieldValue) : "";
           return isSalesDateFilterField(condition.field)
             ? vals.some((value) => salesDateFilterEquals(fieldValue, value))
-            : vals.some((value) => fv == value);
+            : isSalesUserFilterField(condition.field)
+              ? vals.some((value) => personValuesReferToSameUser(fieldValue, value, salesFilterUsersForField(condition.field, users)))
+              : vals.some((value) => fv == value);
         }
         case "is_not_one_of": {
           const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
@@ -1481,7 +1507,9 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           const fv = fieldValue != null ? String(fieldValue) : "";
           return isSalesDateFilterField(condition.field)
             ? !vals.some((value) => salesDateFilterEquals(fieldValue, value))
-            : !vals.some((value) => fv == value);
+            : isSalesUserFilterField(condition.field)
+              ? !vals.some((value) => personValuesReferToSameUser(fieldValue, value, salesFilterUsersForField(condition.field, users)))
+              : !vals.some((value) => fv == value);
         }
         case "contains":
           return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
