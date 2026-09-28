@@ -1,0 +1,134 @@
+{
+  "name": "TimeClockPunchException",
+  "type": "object",
+  "properties": {
+    "case_key": {
+      "type": "string",
+      "description": "Stable backend case key for one punch exception on one TimeEntry"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Employee who owns the affected TimeEntry"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Employee display name snapshot"
+    },
+    "time_entry_id": {
+      "type": "string",
+      "description": "TimeEntry requiring missed-punch resolution"
+    },
+    "exception_type": {
+      "type": "string",
+      "enum": [
+        "missed_clock_out",
+        "late_clock_in"
+      ],
+      "description": "Detected punch exception type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "worked_through",
+        "pending_manager_review",
+        "resolved",
+        "rejected",
+        "cancelled"
+      ],
+      "default": "open",
+      "description": "Punch exception lifecycle state"
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when the exception was first recorded"
+    },
+    "detected_clock_in": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Original clock-in observed when the exception was detected"
+    },
+    "original_snapshot": {
+      "type": "object",
+      "description": "Immutable TimeEntry snapshot captured when the exception was created"
+    },
+    "employee_response": {
+      "type": "string",
+      "enum": [
+        "missed_clock_out",
+        "worked_through"
+      ],
+      "description": "Employee attestation supplied during self-service recovery"
+    },
+    "claimed_clock_out": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Employee-attested prior shift end time; not a server punch and requires manager review"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Trusted backend timestamp when the employee submitted the response"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Idempotency request id for the latest employee exception response"
+    },
+    "correction_request_id": {
+      "type": "string",
+      "description": "TimeClockCorrectionRequest created for a missed clock-out response"
+    },
+    "resolution_audit_id": {
+      "type": "string",
+      "description": "TimeClockAudit record confirming the exception response"
+    },
+    "acknowledged_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "For worked-through responses, backend time until another stale-shift prompt may appear"
+    },
+    "resolution_note": {
+      "type": "string",
+      "description": "Backend or manager resolution context"
+    }
+  },
+  "required": [
+    "case_key",
+    "user_email",
+    "time_entry_id",
+    "exception_type",
+    "status",
+    "detected_at",
+    "original_snapshot"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "timeclock_backend_only"
+      }
+    }
+  }
+}

@@ -304,6 +304,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
+      for (const order of ordersData) {
+        if (order?.smartsheet_pending_local_sync === true && order?.id) {
+          pendingSyncIdsRef.current.add(String(order.id));
+        }
+      }
+      setPendingSyncCount(pendingSyncIdsRef.current.size);
       // Store original data for comparison
       ordersData.forEach(order => {
         originalOrdersRef.current[order.id] = { ...order };
@@ -343,7 +349,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         const saved = await replaceOrderFieldsIfUnchanged({
           entity: Order,
           order: baseline,
-          nextFields: cleanedUpdates,
+          nextFields: { ...cleanedUpdates, smartsheet_pending_local_sync: true },
           label: `Order ${baseline.row_number || orderId} save`,
         });
         savedRows += 1;
@@ -414,6 +420,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       const summary = summarizeSavedOrderSync(result);
       if (!summary.ok) throw new Error(summary.message);
       clearSyncedOrderIds(orderIds);
+      const syncedIdSet = new Set(orderIds.map(String));
+      for (const orderId of orderIds) {
+        const baseline = originalOrdersRef.current[orderId];
+        if (baseline) originalOrdersRef.current[orderId] = { ...baseline, smartsheet_pending_local_sync: false };
+      }
+      setOrders((current) => current.map((order) => syncedIdSet.has(String(order.id))
+        ? { ...order, smartsheet_pending_local_sync: false }
+        : order));
       setLastSynced(new Date());
       setSyncMessage(summary.message);
       return true;
@@ -451,7 +465,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
         vendor: "",
         status: "pending",
         row_number: maxRowNumber + 1,
-        work_order_id: workOrderFilter || ""
+        work_order_id: workOrderFilter || "",
+        smartsheet_pending_local_sync: true
       };
       const { record: newOrder } = await createOrderWithRecovery({
         entity: Order,
@@ -536,7 +551,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const saved = await replaceOrderFieldsIfUnchanged({
       entity: Order,
       order: baseline,
-      nextFields,
+      nextFields: { ...nextFields, smartsheet_pending_local_sync: true },
       label,
     });
     originalOrdersRef.current[orderId] = { ...saved };
