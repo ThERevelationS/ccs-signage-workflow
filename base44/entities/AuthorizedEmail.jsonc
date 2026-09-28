@@ -81,6 +81,21 @@
       },
       "default": []
     },
+    "sales_pipeline_preferences": {
+      "type": "object",
+      "description": "User-specific Sales Pipeline filter and column-view selections restored across sessions",
+      "properties": {
+        "information_filter": {
+          "type": "string"
+        },
+        "attention_filter": {
+          "type": "string"
+        },
+        "column_preset_id": {
+          "type": "string"
+        }
+      }
+    },
     "can_import_export": {
       "type": "boolean",
       "default": false,
