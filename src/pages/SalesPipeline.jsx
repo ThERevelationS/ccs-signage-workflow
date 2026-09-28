@@ -12,6 +12,7 @@ import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
+import { reconcileActiveSalesColumnPreset } from "@/components/sales/salesColumnPresetSelection.mjs";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const EMPTY_PIPELINE_SUMMARY = {
@@ -150,10 +151,11 @@ export default function SalesPipeline() {
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
     setActiveFilters(selected);
 
-    // Load active column preset and discard custom selections that were
-    // unselected/deleted while the management dialog was open.
-    const columnPreset = selected.find(f => f.type === "column_preset");
-    setActiveColumnPreset(columnPreset || null);
+    // selected_by controls which custom presets are available in the selector;
+    // it is not an active-preset field. Preserve the layout the user actually
+    // chose in this session only while that preset remains selected/available.
+    // Never auto-apply an arbitrary first saved preset after load/reload.
+    setActiveColumnPreset((current) => reconcileActiveSalesColumnPreset(current, selected));
     setFilterStatus((current) => {
       if (!current.startsWith("custom_")) return current;
       const selectedId = current.slice("custom_".length);
