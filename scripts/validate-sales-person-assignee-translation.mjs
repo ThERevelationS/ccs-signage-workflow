@@ -16,6 +16,7 @@ import {
 
 const spreadsheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.jsx", "utf8");
 const filterDialog = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
+const assigneeSelect = readFileSync("src/components/sales/TaskAssigneeSelect.jsx", "utf8");
 let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks += 1; };
 const same = (actual, expected, label) => { assert.equal(actual, expected, label); checks += 1; };
@@ -96,5 +97,9 @@ check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
 check(filterDialog.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
       filterDialog.includes('className="flex flex-wrap gap-1"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
+check(assigneeSelect.includes('resolvedValue.state === "matched" ? resolvedValue.name : value') &&
+      assigneeSelect.includes('value={selectedName ? `name:${options.indexOf(selectedName)}` : "none"}') &&
+      assigneeSelect.includes('<SelectValue>{selectedName || "Unassigned"}</SelectValue>'),
+  "Task assignee UI must display unique first-name aliases as their authorized canonical full name without rewriting the record");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);
