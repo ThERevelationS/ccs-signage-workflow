@@ -440,8 +440,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) requestClose(); }} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
-          className="clay-card min-w-0 border-none p-3 sm:p-6 [&>button]:hidden"
-          style={{ maxWidth: "90vw", width: "1100px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+          className="clay-card min-w-0 border-none p-3 sm:p-5 dark:border dark:border-slate-700 dark:bg-slate-950 [&>button]:hidden"
+          style={{ maxWidth: activeTab === "columns" ? "96vw" : "90vw", width: activeTab === "columns" ? "1400px" : "1100px", maxHeight: "92vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
         >
           <DialogHeader className="shrink-0">
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -886,26 +886,40 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "columns" && (
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
-              <div className="clay-card p-4 space-y-3">
-                <h3 className="font-bold text-lg">
-                  {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
-                </h3>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5">
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/95 sm:p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-200 pb-3 dark:border-slate-700">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">
+                      {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
+                    </h3>
+                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                      Toggle any column, then arrange the visible layout directly in the live preview below.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 font-semibold text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200">
+                      {visiblePreviewColumns.length} visible
+                    </span>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {SALES_TABLE_COLUMNS.length - visiblePreviewColumns.length} hidden
+                    </span>
+                  </div>
+                </div>
 
-                <div>
-                  <Label>Preset Name</Label>
+                <div className="grid gap-2 sm:grid-cols-[minmax(240px,420px)_1fr] sm:items-end">
+                  <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Preset Name</Label>
                   <Input
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder="e.g., My Custom View"
                     disabled={isSaving}
-                    className="mt-1"
+                    className="mt-1 h-10 border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950"
                   />
-                </div>
-
-                <div>
-                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                    <Label className="block text-sm">Column Settings - Toggle visibility</Label>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-start gap-1 sm:justify-end">
+                    <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Layout tools</span>
                     <div className="flex flex-wrap items-center gap-1">
                       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Column layout shortcuts">
                         <Button type="button" variant="outline" size="sm" className="h-11 px-2 text-xs sm:h-8"
@@ -937,6 +951,16 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-slate-700 dark:bg-slate-950/40">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Columns</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Everything stays visible here—no search or hidden picker.</div>
+                    </div>
+                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Click a column to show or hide it</span>
+                  </div>
                   {editingItem && getUnavailableSalesColumns(editingItem.column_settings).length > 0 && (
                     <p role="status" className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                       This older preset includes unavailable columns: {getUnavailableSalesColumns(editingItem.column_settings).map((item) => item.label || item.id).join(", ")}.
@@ -944,23 +968,25 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     </p>
                   )}
                   
-                  <div className="flex flex-wrap gap-1">
+                  <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
                     {columnSettings.map((column) => (
                       <label 
                         key={column.id} 
-                        className={`min-h-11 px-1.5 py-0.5 rounded border flex items-center gap-1 cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-0 ${
-                          column.visible ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-gray-50 border-gray-200 text-gray-400'
+                        title={column.label}
+                        className={`flex min-h-11 min-w-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-blue-600 sm:min-h-8 ${
+                          column.visible
+                            ? 'border-blue-300 bg-blue-50 text-blue-900 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.08)] dark:border-blue-700 dark:bg-blue-950/45 dark:text-blue-100'
+                            : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500 dark:hover:border-slate-600 dark:hover:text-slate-300'
                         }`}
-                        style={{ fontSize: '11px' }}
                       >
                         <input
                           type="checkbox"
                           checked={column.visible}
                           disabled={isSaving}
                           onChange={() => toggleColumnVisibility(column.id)}
-                          className="w-3 h-3 flex-shrink-0"
+                          className="h-3.5 w-3.5 flex-shrink-0 accent-blue-600"
                         />
-                        <span className={column.visible ? "font-medium" : ""}>
+                        <span className={`min-w-0 truncate ${column.visible ? "font-semibold" : "font-medium"}`}>
                           {column.label}
                         </span>
                       </label>
@@ -968,20 +994,23 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </div>
                 </div>
 
-                <div className="clay-card min-w-0 p-2 bg-blue-50/50">
-                  <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
-                    <Label className="font-bold text-sm">Preview</Label>
-                    <span className="text-[11px] font-medium text-blue-900">
-                      {visiblePreviewColumns.length} of {SALES_TABLE_COLUMNS.length} data columns visible
-                    </span>
+                <div className="min-w-0 rounded-xl border border-slate-300 bg-slate-100/80 p-2.5 shadow-inner dark:border-slate-700 dark:bg-slate-950/70">
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-1">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-bold text-slate-900 dark:text-slate-100">Live Layout Preview</Label>
+                      <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-slate-200 dark:text-slate-900">
+                        {visiblePreviewColumns.length}/{SALES_TABLE_COLUMNS.length}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Drag-free reorder with arrows</span>
                   </div>
-                  <p id="sales-column-preview-instructions" className="text-xs text-gray-600 mb-1">
+                  <p id="sales-column-preview-instructions" className="mb-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                     Same headers, minimum widths and saved order as the Sales Pipeline table. Use the header arrows to reorder. Scroll horizontally → Keyboard: Tab into the preview and use the arrow keys to scroll.
                   </p>
                   {visiblePreviewColumns.length === 0 && (
                     <p role="status" className="mb-1 text-xs text-amber-800">No data columns selected. Check a column above to add it.</p>
                   )}
-                  <div className="max-w-full overflow-x-auto rounded-lg border bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2" role="region" aria-label="Horizontal Sales Pipeline column preview" aria-describedby="sales-column-preview-instructions" tabIndex={0}>
+                  <div className="max-w-full overflow-x-auto rounded-lg border border-slate-300 bg-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900" role="region" aria-label="Horizontal Sales Pipeline column preview" aria-describedby="sales-column-preview-instructions" tabIndex={0}>
                     <table className="w-full border-collapse" style={{ tableLayout: "auto", minWidth: "max-content", fontSize: "12px" }}>
                       <thead className="bg-gray-100 text-[11px] leading-tight [&_th]:whitespace-nowrap">
                         <tr className="h-7 border-b">
@@ -1052,11 +1081,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                       </tbody>
                     </table>
                   </div>
-                  <p className="mt-1 text-[11px] text-gray-500">Example row only. The editor never changes a WorkOrder.</p>
+                  <p className="mt-1.5 text-[10px] text-slate-500 dark:text-slate-400">Example row only. Changes affect this saved column preset, never a WorkOrder.</p>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={() => saveItem()} className="clay-button border-none" disabled={isSaving}>
+                <div className="sticky bottom-0 -mx-3 -mb-3 flex flex-wrap gap-2 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 sm:-mx-4 sm:-mb-4 sm:px-4">
+                  <Button onClick={() => saveItem()} className="clay-button min-h-11 border-none sm:min-h-9" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {editingItem ? "Update Preset" : "Save Preset"}
                   </Button>
