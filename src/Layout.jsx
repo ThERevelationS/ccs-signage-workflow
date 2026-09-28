@@ -336,6 +336,25 @@ function LayoutContent({ children }) {
     return () => observer.disconnect();
   }, [isMobile, isSideNav]);
 
+  useEffect(() => {
+    if (!effectiveCollapsed) return undefined;
+
+    const trackCollapsedShellPointer = (event) => {
+      const target = event.target;
+      const insideShell = target instanceof Element && Boolean(
+        target.closest(".top-nav, .side-nav, [data-shell-navigation-handle]")
+      );
+      const onEdge = navLayout === "side"
+        ? event.clientX <= collapsedRail + 8
+        : event.clientY <= collapsedRail + 8;
+      const nextHovered = insideShell || onEdge;
+      setIsHovered((previous) => previous === nextHovered ? previous : nextHovered);
+    };
+
+    window.addEventListener("pointermove", trackCollapsedShellPointer, { passive: true });
+    return () => window.removeEventListener("pointermove", trackCollapsedShellPointer);
+  }, [effectiveCollapsed, navLayout]);
+
   return (
     <>
       <style>{`
@@ -769,8 +788,6 @@ function LayoutContent({ children }) {
             }}
             transition={shellTransition}
             className="side-nav ccs-glass-shell fixed bottom-0 left-0 top-0 z-50 flex flex-col overflow-visible"
-            onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
-            onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
             style={{ width: sideNavWidth }}
           >
             <div className={compactView ? "p-1.5" : "p-3"}>
@@ -935,8 +952,6 @@ function LayoutContent({ children }) {
             }}
             transition={shellTransition}
             className="top-nav ccs-glass-shell fixed left-0 right-0 top-0 z-50 overflow-visible"
-            onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
-            onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
           >
             <div className={compactView ? "px-2 py-1" : "px-4 py-2"}>
               <div className={`flex justify-between ${compactView ? "items-center" : "items-start"}`}>
