@@ -649,6 +649,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     value={itemName}
                     onChange={(e) => setItemName(e.target.value)}
                     placeholder="e.g., High Priority Leads"
+                    disabled={isSaving}
                     className="mt-1"
                   />
                 </div>
@@ -677,6 +678,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                       <div key={index} className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-md border border-slate-200 bg-white p-2 sm:flex sm:items-start sm:border-0 sm:bg-transparent sm:p-0">
                         <Select
                           value={condition.field}
+                          disabled={isSaving}
                           onValueChange={(value) => {
                             updateCondition(index, "field", value);
                             updateCondition(index, "value", ""); // Reset value when field changes
@@ -696,6 +698,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
 
                         <Select
                           value={condition.operator}
+                          disabled={isSaving}
                           onValueChange={(value) => {
                             updateCondition(index, "operator", value);
                             // Reset value when switching between single/multi operators
@@ -726,6 +729,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                       <span className="min-w-0 break-words">{val}</span>
                                       <button
                                         type="button"
+                                        disabled={isSaving}
                                         onClick={() => {
                                           const newVals = multiValues.filter((_, i) => i !== vi);
                                           updateCondition(index, "value", newVals.join(","));
@@ -738,6 +742,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 </div>
                                 <Select
                                   value=""
+                                  disabled={isSaving}
                                   onValueChange={(val) => {
                                     if (!multiValues.includes(val)) {
                                       updateCondition(index, "value", [...multiValues, val].join(","));
@@ -762,12 +767,14 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 value={condition.value}
                                 onChange={(e) => updateCondition(index, "value", e.target.value)}
                                 placeholder="Comma-separated values"
+                                disabled={isSaving}
                                 aria-label={`Values for condition ${index + 1}`}
                                 className="col-span-2 row-start-3 h-11 w-full min-w-0 sm:h-9 sm:flex-1"
                               />
                             ) : hasDropdownOptions ? (
                               <Select
                                 value={condition.value}
+                                disabled={isSaving}
                                 onValueChange={(value) => updateCondition(index, "value", value)}
                               >
                                 <SelectTrigger aria-label={`Value for condition ${index + 1}`} className="col-span-2 row-start-3 h-11 w-full min-w-0 text-xs sm:h-9 sm:flex-1">
@@ -796,6 +803,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 value={condition.value}
                                 onChange={(e) => updateCondition(index, "value", e.target.value)}
                                 placeholder={selectedField?.type === "date" ? "YYYY-MM-DD" : "Value"}
+                                disabled={isSaving}
                                 title={selectedField?.type === "date" ? "Use YYYY-MM-DD. Date ranges also accept M/D/YYYY or M/D/YY." : undefined}
                                 aria-label={`${selectedField?.label || "Value"} for condition ${index + 1}`}
                                 className="col-span-2 row-start-3 h-11 w-full min-w-0 sm:h-9 sm:flex-1"
@@ -810,7 +818,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           size="icon"
                           type="button"
                           onClick={() => removeCondition(index)}
-                          disabled={filterConditions.length === 1}
+                          disabled={filterConditions.length === 1 || isSaving}
                           aria-label={`Remove condition ${index + 1}`}
                           className="col-start-2 row-start-1 h-11 w-11 shrink-0 sm:h-9 sm:w-9"
                         >
@@ -824,6 +832,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     variant="outline"
                     size="sm"
                     onClick={addCondition}
+                    disabled={isSaving}
                     className="mt-2 min-h-11 sm:min-h-0"
                   >
                     <Plus className="w-4 h-4 mr-2" />
