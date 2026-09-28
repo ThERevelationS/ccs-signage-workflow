@@ -103,6 +103,11 @@
       "type": "object",
       "description": "Last successfully synchronized mapped values used for three-way Smartsheet/Base44 conflict detection."
     },
+    "smartsheet_pending_local_sync": {
+      "type": "boolean",
+      "default": false,
+      "description": "Order Form-only durable marker that local Base44 edits are waiting for verified Save & Sync to Smartsheet. Cleared only after a confirmed Order push."
+    },
     "smartsheet_create_attempt": {
       "type": "object",
       "description": "Order Form-only write-ahead marker for an uncertain Smartsheet row creation. Preserve until permanent row-link reconciliation; never retry an unresolved attempt."
