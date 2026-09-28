@@ -116,6 +116,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [unsavedConfirm, setUnsavedConfirm] = useState(false);
   const pendingLeaveRef = useRef(null);
   const saveInFlightRef = useRef(false);
+  const copyInFlightRef = useRef(false);
+  const [isCopying, setIsCopying] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
@@ -269,6 +271,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const duplicateItem = async (item) => {
+    if (copyInFlightRef.current) return false;
+    copyInFlightRef.current = true;
+    setIsCopying(true);
     setPersistenceError("");
     try {
       await createUniqueSalesFilterCopy({
@@ -277,10 +282,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
         label: `Saved filter copy ${item.name}`,
       });
       await loadData();
+      return true;
     } catch (error) {
       console.error("Saved filter copy blocked:", error);
       setPersistenceError(error?.message || "The saved filter could not be copied safely.");
       await loadData();
+      return false;
+    } finally {
+      copyInFlightRef.current = false;
+      setIsCopying(false);
     }
   };
 
@@ -547,6 +557,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         type="button"
                         aria-label={`Duplicate ${item.name}`}
                         title={`Duplicate ${item.name}`}
+                        disabled={isCopying}
                         className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
                         onClick={() => {
                           duplicateItem({ 
@@ -596,6 +607,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           type="button"
                           aria-label={`Duplicate ${item.name}`}
                           title={`Duplicate ${item.name}`}
+                          disabled={isCopying}
                           className="h-11 w-11 shrink-0 p-0 sm:h-6 sm:w-6"
                           onClick={() => {
                             duplicateItem(item);
