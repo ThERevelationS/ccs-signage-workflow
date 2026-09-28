@@ -14,7 +14,7 @@ export default function MockWorkPauseOverlay() {
   return (
     <div
       data-testid="synthetic-work-pause-overlay"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4"
+      className="pointer-events-auto fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4"
     >
       <div className="rounded-2xl bg-white p-6 shadow-xl">
         <div className="text-xl font-black">WORK PAUSED</div>
