@@ -398,15 +398,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) requestClose(); }} onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
         <DialogContent 
-          className="clay-card border-none [&>button]:hidden" 
+          className="clay-card min-w-0 border-none p-3 sm:p-6 [&>button]:hidden" 
           style={{ maxWidth: "90vw", width: "1100px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
         >
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold">
+          <DialogHeader className="shrink-0">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <DialogTitle className="min-w-0 flex-1 text-base font-bold leading-tight sm:text-2xl">
                 {activeTab === "filters" ? "Manage Custom Information Filters" : "Manage Custom Column Filters"}
               </DialogTitle>
-              <Button type="button" onClick={() => hasUnsavedEdits ? saveItem({ closeAfterSave: true }) : requestClose()} className="clay-button border-none" disabled={isSaving}>
+              <Button type="button" onClick={() => hasUnsavedEdits ? saveItem({ closeAfterSave: true }) : requestClose()} className="clay-button min-h-11 shrink-0 border-none px-2 text-xs sm:px-4 sm:text-sm" disabled={isSaving}>
                 {hasUnsavedEdits ? <Save className="w-4 h-4 mr-2" /> : <X className="w-4 h-4 mr-2" />}
                 {isSaving ? "Saving…" : hasUnsavedEdits ? "Save & Close" : "Close"}
               </Button>
@@ -424,10 +424,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {/* Sub-tabs */}
-          <div className="flex gap-2 mb-4">
+          <div className="mb-3 flex shrink-0 flex-wrap gap-2 sm:mb-4">
             <Button
               size="sm"
               variant={activeSubTab === "pool" ? "default" : "outline"}
+              className="min-h-11 min-w-0 whitespace-normal text-xs sm:min-h-0 sm:text-sm"
               onClick={() => requestNavigation(resetForm)}
             >
               {activeTab === "filters" ? "Information Filter Pool" : "Preset Pool"}
@@ -435,6 +436,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
             <Button
               size="sm"
               variant={activeSubTab === "create" ? "default" : "outline"}
+              className="min-h-11 min-w-0 whitespace-normal text-xs sm:min-h-0 sm:text-sm"
               onClick={() => requestNavigation(() => {
                 resetForm();
                 setActiveSubTab("create");
@@ -445,7 +447,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           </div>
 
           {activeSubTab === "pool" && (
-            <div className="space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2">
               {/* My Presets - Shows selected items */}
               {(() => {
                 const standardItems = activeTab === "filters" ? STANDARD_FILTERS : STANDARD_COLUMN_PRESETS;
@@ -621,8 +623,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "filters" && (
-            <div className="space-y-4">
-              <div className="clay-card p-4 space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2">
+              <div className="clay-card min-w-0 space-y-4 p-3 sm:p-4">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Information Filter" : "Create New Information Filter"}
                 </h3>
@@ -658,7 +660,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     };
                     
                     return (
-                      <div key={index} className="flex gap-2 mt-2 items-start">
+                      <div key={index} className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-md border border-slate-200 bg-white p-2 sm:flex sm:items-start sm:border-0 sm:bg-transparent sm:p-0">
                         <Select
                           value={condition.field}
                           onValueChange={(value) => {
@@ -666,7 +668,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             updateCondition(index, "value", ""); // Reset value when field changes
                           }}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger aria-label={`Filter field for condition ${index + 1}`} className="col-start-1 row-start-1 h-11 w-full min-w-0 text-xs sm:h-9 sm:flex-1">
                             <SelectValue placeholder="Select field" />
                           </SelectTrigger>
                           <SelectContent>
@@ -688,7 +690,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                             if (wasMulti !== nowMulti) updateCondition(index, "value", "");
                           }}
                         >
-                          <SelectTrigger className="w-40">
+                          <SelectTrigger aria-label={`Operator for condition ${index + 1}`} className="col-span-2 row-start-2 h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40 sm:flex-none">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -703,7 +705,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         {condition.operator !== "empty" && condition.operator !== "not_empty" && (
                           <>
                             {isMultiOperator && hasDropdownOptions ? (
-                              <div className="flex-1 border rounded-md p-2 bg-white min-h-[36px]">
+                              <div className="col-span-2 row-start-3 min-w-0 rounded-md border bg-white p-2 sm:flex-1">
                                 <div className="flex flex-wrap gap-1 mb-1">
                                   {multiValues.map((val, vi) => (
                                     <span key={vi} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
@@ -727,7 +729,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                     }
                                   }}
                                 >
-                                  <SelectTrigger className="h-7 text-xs">
+                                  <SelectTrigger aria-label={`Add value to condition ${index + 1}`} className="h-11 w-full min-w-0 text-xs sm:h-7">
                                     <SelectValue placeholder="Add value..." />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -745,14 +747,15 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 value={condition.value}
                                 onChange={(e) => updateCondition(index, "value", e.target.value)}
                                 placeholder="Comma-separated values"
-                                className="flex-1"
+                                aria-label={`Values for condition ${index + 1}`}
+                                className="col-span-2 row-start-3 h-11 w-full min-w-0 sm:h-9 sm:flex-1"
                               />
                             ) : hasDropdownOptions ? (
                               <Select
                                 value={condition.value}
                                 onValueChange={(value) => updateCondition(index, "value", value)}
                               >
-                                <SelectTrigger className="flex-1">
+                                <SelectTrigger aria-label={`Value for condition ${index + 1}`} className="col-span-2 row-start-3 h-11 w-full min-w-0 text-xs sm:h-9 sm:flex-1">
                                   <SelectValue placeholder={isUserField ? "Select user" : "Select value"} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -779,7 +782,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                                 onChange={(e) => updateCondition(index, "value", e.target.value)}
                                 placeholder={selectedField?.type === "date" ? "YYYY-MM-DD" : "Value"}
                                 title={selectedField?.type === "date" ? "Use YYYY-MM-DD. Date ranges also accept M/D/YYYY or M/D/YY." : undefined}
-                                className="flex-1"
+                                aria-label={`${selectedField?.label || "Value"} for condition ${index + 1}`}
+                                className="col-span-2 row-start-3 h-11 w-full min-w-0 sm:h-9 sm:flex-1"
                                 type={selectedField?.type === "number" ? "number" : "text"}
                               />
                             )}
@@ -789,9 +793,11 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                         <Button
                           variant="ghost"
                           size="icon"
+                          type="button"
                           onClick={() => removeCondition(index)}
                           disabled={filterConditions.length === 1}
-                          className="flex-shrink-0"
+                          aria-label={`Remove condition ${index + 1}`}
+                          className="col-start-2 row-start-1 h-11 w-11 shrink-0 sm:h-9 sm:w-9"
                         >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
@@ -810,9 +816,9 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                   </Button>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={() => saveItem()} className="clay-button border-none" disabled={isSaving}>
-                    <Save className="w-4 h-4 mr-2" />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => saveItem()} className="clay-button min-h-11 min-w-0 whitespace-normal border-none text-xs sm:min-h-0 sm:text-sm" disabled={isSaving}>
+                    <Save className="mr-2 h-4 w-4 shrink-0" />
                     {editingItem ? "Update Information Filter" : "Save Information Filter"}
                   </Button>
                   <Button variant="outline" onClick={() => requestNavigation(resetForm)} disabled={isSaving}>
@@ -824,7 +830,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
           )}
 
           {activeSubTab === "create" && activeTab === "columns" && (
-            <div className="space-y-3 overflow-y-auto flex-1">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
               <div className="clay-card p-4 space-y-3">
                 <h3 className="font-bold text-lg">
                   {editingItem ? "Edit Column Preset" : "Create New Column Preset"}
