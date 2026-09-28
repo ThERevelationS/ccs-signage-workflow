@@ -50,6 +50,12 @@ export function salesFilterCalendarDay(value) {
     : null;
 }
 
+export function salesDateFilterEquals(actual, expected) {
+  const actualDay = salesFilterCalendarDay(actual);
+  const expectedDay = salesFilterCalendarDay(expected);
+  return Boolean(actualDay && expectedDay && actualDay === expectedDay);
+}
+
 export function compareSalesDateFilterRange(actual, expected, operator) {
   const actualDay = salesFilterCalendarDay(actual);
   const expectedDay = salesFilterCalendarDay(expected);
