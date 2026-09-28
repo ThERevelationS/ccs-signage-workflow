@@ -1,5 +1,6 @@
 import { buildSharedOrderContactCell, readSharedOrderRequestor, sharedOrderRequestorColumnId } from './smartsheetOrderContact.mjs';
 import { orderDateOptionField, translateOrderDateCell } from './smartsheetOrderDateTranslation.mjs';
+import { smartsheetSalesAssigneeLabel } from './smartsheetSalesAssigneeTranslation.mjs';
 
 // Shared Smartsheet sync field vocabulary used by both the backend sync engine
 // and the frontend column-bindings editor. Keeps the two sides in sync so a
@@ -120,6 +121,9 @@ export function extractFieldValue(record: any, field: MappableField): string | n
   }
   const raw = record?.[field.key];
   if (raw === null || raw === undefined || raw === "") return null;
+  if (field.key === "current_task_assigned_to") {
+    return smartsheetSalesAssigneeLabel(raw) || null;
+  }
   if (field.type === "number") {
     const num = Number(raw);
     return Number.isFinite(num) ? num : null;
