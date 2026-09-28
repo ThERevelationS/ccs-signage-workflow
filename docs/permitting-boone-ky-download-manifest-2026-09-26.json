@@ -9,7 +9,15 @@
       "purpose": "sign_permit_application",
       "bytes": 269468,
       "sha256": "cfb43fbaef40b4b4f81494e1c8e077b8062d3841e56b467805178c8e4886ac9a",
-      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-2024.pdf"
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-2024.pdf",
+      "currencyCheck": {
+        "checkedAt": "2026-09-28",
+        "httpStatus": 200,
+        "sourceBytes": 269468,
+        "sourceSha256": "cfb43fbaef40b4b4f81494e1c8e077b8062d3841e56b467805178c8e4886ac9a",
+        "matchesArchivedCopy": true,
+        "evidenceScope": "The exact official Planning Commission SignPermit.pdf URL remains available and its current bytes/hash match the archived repository copy. This verifies source-file identity as checked; it does not by itself prove that every instruction, fee, or workflow printed inside the form is current."
+      }
     },
     {
       "filename": "sign-permit-checklist.pdf",
@@ -102,6 +110,6 @@
       "notes": "The current official Boone County Building Permits page lists this form under Resources, but its linked .doc returned HTTP 404 during direct source verification. No repository copy was created and no file hash/byte count is claimed."
     }
   },
-  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs NEW building-permit applications to GovWell and still links the Oracle public-sector permit portal. The archived official Online Permit Information PDF documents Oracle as a building-permit workflow, but current evidence does not establish that Oracle is obsolete or define every permit type that may still use it. Do not direct new building-permit applications to Oracle without newer permit-specific official evidence. The page also lists an Electrical Permit Application Form under Resources; the exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. The current official Commercial Building Permit Fees page separately lists a Building Department specialized-system review fee of $150/sign for signage over 32 sq ft; do not treat that as the complete sign-permit cost or as a Planning Commission zoning/sign fee. Preserve the older archived Building Department sign guide as historical instructions.",
+  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs NEW building-permit applications to GovWell and still links the Oracle public-sector permit portal. The archived official Online Permit Information PDF documents Oracle as a building-permit workflow, but current evidence does not establish that Oracle is obsolete or define every permit type that may still use it. Do not direct new building-permit applications to Oracle without newer permit-specific official evidence. The page also lists an Electrical Permit Application Form under Resources; the exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. The current official Commercial Building Permit Fees page separately lists a Building Department specialized-system review fee of $150/sign for signage over 32 sq ft; do not treat that as the complete sign-permit cost or as a Planning Commission zoning/sign fee. The exact official Planning Commission SignPermit.pdf URL was rechecked on 2026-09-28 and still returns the same 269468-byte SHA-256-identical file as the archived sign-permit application; treat that as current source-file identity evidence, not blanket proof that every printed workflow or fee is current. Preserve the older archived Building Department sign guide as historical instructions.",
   "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
 }
