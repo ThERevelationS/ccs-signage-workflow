@@ -9,7 +9,7 @@ import react from "@vitejs/plugin-react";
 
 const appRoot = process.cwd();
 const playwrightPath = process.env.FOCUS_PLAYWRIGHT_PATH ||
-  "/tmp/fleet-browser-check/node_modules/playwright/index.mjs";
+  "/tmp/sips-browser-check/node_modules/playwright/index.mjs";
 const { chromium } = await import(playwrightPath);
 const scratch = await mkdtemp(path.join(tmpdir(), "ccs-focus-browser-"));
 let server;
