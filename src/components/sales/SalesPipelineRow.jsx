@@ -191,11 +191,11 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               );
               case "designer": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "designer", "Designer", wo.designer)}>
-            <Select value={wo.designer || ""} onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)} disabled={!isRegistered}>
-              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{wo.designer || "-"}</SelectValue></SelectTrigger>
+            <Select value={designerSelect.canonical} onValueChange={(val) => updateWorkOrder(wo.id, "designer", val)} disabled={!isRegistered}>
+              <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 px-1"><SelectValue placeholder="-">{designerSelect.canonical || "-"}</SelectValue></SelectTrigger>
               <SelectContent>
-                {wo.designer && !users.some(u => u.full_name === wo.designer && u.sales_roles?.includes("Designer")) && <SelectItem key={wo.designer} value={wo.designer}>{wo.designer}</SelectItem>}
-                {users.filter(u => u.sales_roles?.includes("Designer")).map(u => <SelectItem key={u.email} value={u.full_name}>{u.full_name}</SelectItem>)}
+                {designerSelect.legacy && <SelectItem value={designerSelect.legacy}>{designerSelect.legacy}</SelectItem>}
+                {designerSelect.options.map((u) => <SelectItem key={u.email || u.full_name} value={u.full_name}>{u.full_name}</SelectItem>)}
               </SelectContent>
             </Select>
           </td>
