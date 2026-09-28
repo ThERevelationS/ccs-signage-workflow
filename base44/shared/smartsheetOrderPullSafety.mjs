@@ -13,6 +13,13 @@ export function orderPulledFieldsUnchanged(existing, pulledFields = {}) {
   );
 }
 
+export function orderPushRecordUnchanged(record, sheetId, expectedSnapshot) {
+  const rowId = String(record?.smartsheet_row_id ?? '').trim();
+  const linkedSheetId = String(record?.smartsheet_sheet_id ?? '').trim();
+  return /^\d+$/.test(rowId) && linkedSheetId === String(sheetId ?? '').trim() &&
+    /^\d+$/.test(linkedSheetId) && orderPullSnapshotAligned(record, expectedSnapshot);
+}
+
 export function orderPullSnapshotAligned(existing, expectedSnapshot) {
   const prior = existing?.smartsheet_sync_snapshot;
   if (!existing?.smartsheet_last_synced_at || !prior || typeof prior !== 'object' || Array.isArray(prior) ||
