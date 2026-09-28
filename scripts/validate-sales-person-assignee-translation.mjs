@@ -111,7 +111,7 @@ check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
       spreadsheet.includes("fv == value"),
   "Non-user filter equality semantics must remain unchanged");
 check(filterDialog.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
-      filterDialog.includes('className="flex flex-wrap gap-1"'),
+      filterDialog.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"'),
   "Compact always-visible column checkboxes and horizontal preview must remain intact");
 check(assigneeSelect.includes("const selectedName = resolvedValue.name || value;") &&
       assigneeSelect.includes('value={selectedName ? `name:${options.indexOf(selectedName)}` : "none"}') &&
