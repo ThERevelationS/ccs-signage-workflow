@@ -777,7 +777,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                               <Input
                                 value={condition.value}
                                 onChange={(e) => updateCondition(index, "value", e.target.value)}
-                                placeholder="Value"
+                                placeholder={selectedField?.type === "date" ? "YYYY-MM-DD" : "Value"}
+                                title={selectedField?.type === "date" ? "Use YYYY-MM-DD. Date ranges also accept M/D/YYYY or M/D/YY." : undefined}
                                 className="flex-1"
                                 type={selectedField?.type === "number" ? "number" : "text"}
                               />
