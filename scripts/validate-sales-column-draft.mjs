@@ -148,8 +148,9 @@ check(ui.includes('onOpenChange={(open) => { if (!open) requestClose(); }}') &&
   "Escape, Close, tab switching and Cancel must use the unsaved edit guard.");
 check(ui.includes("Keep editing") && ui.includes("Discard changes"),
   "Unsaved changes must use an explicit in-app confirmation.");
-check(ui.includes('overflow-x-auto rounded-lg border bg-white') &&
-      ui.includes('className="flex flex-wrap gap-1"'),
-  "Existing horizontal preview and compact always-visible checkbox strip must remain.");
+check(ui.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
+      ui.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') &&
+      ui.includes('columnSettings.map((column) => ('),
+  "Horizontal preview and compact always-visible all-column grid must remain.");
 
 console.log(`Sales column Undo/Redo, Save & Close and unsaved navigation: ${checks}/${checks} PASS.`);
