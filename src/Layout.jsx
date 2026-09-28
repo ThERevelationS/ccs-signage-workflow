@@ -206,6 +206,8 @@ function LayoutContent({ children }) {
   // Scroll position preservation per tab on mobile
   const scrollPositions = useRef({});
   const mainRef = useRef(null);
+  const topNavRef = useRef(null);
+  const [topNavHeight, setTopNavHeight] = useState(120);
   const prevPathnameRef = useRef(location.pathname);
 
   useEffect(() => {
@@ -296,6 +298,27 @@ function LayoutContent({ children }) {
   const effectiveCollapsed = (navCollapsed || isFullscreen) && !isMobile;
   const sideNavWidth = compactView ? 196 : 224;
   const collapsedRail = 10;
+
+  useEffect(() => {
+    if (isMobile || isSideNav) return undefined;
+    const node = topNavRef.current;
+    if (!node) return undefined;
+
+    const updateTopNavHeight = () => {
+      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      if (nextHeight > 0) setTopNavHeight(nextHeight);
+    };
+
+    updateTopNavHeight();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateTopNavHeight);
+      return () => window.removeEventListener("resize", updateTopNavHeight);
+    }
+
+    const observer = new ResizeObserver(updateTopNavHeight);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isMobile, isSideNav]);
 
   return (
     <>
@@ -745,6 +768,7 @@ function LayoutContent({ children }) {
         {/* Top Navigation */}
         {!isSideNav && (
           <nav
+            ref={topNavRef}
             className={`top-nav fixed left-0 right-0 top-0 z-50 ${effectiveCollapsed ? (isHovered ? "show" : "collapsed") : ""}`}
             onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
             onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
@@ -1018,7 +1042,7 @@ function LayoutContent({ children }) {
           style={{
             paddingTop: isMobile
               ? (isRootRoute ? '0' : '48px')
-              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : (compactView ? '80px' : '104px'))),
+              : (isSideNav ? '0' : (effectiveCollapsed ? `${collapsedRail + 4}px` : `${topNavHeight}px`)),
             marginLeft: isSideNav
               ? (effectiveCollapsed ? `${collapsedRail}px` : `${sideNavWidth}px`)
               : '0',
