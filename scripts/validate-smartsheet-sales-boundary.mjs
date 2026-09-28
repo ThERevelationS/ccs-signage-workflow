@@ -67,8 +67,13 @@ assert(
   "Completed Sale rows must not be created as modern pipeline records."
 );
 assert(
-  shouldCreateSmartsheetSalesRecordInPipeline({ current_task_description: "Prospect Initiation" }) === true,
-  "Active Smartsheet rows should still create as modern pipeline opportunities."
+  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Prospect Initiation" }) === true,
+  "Active Smartsheet rows with a real customer should still create as modern pipeline opportunities."
+);
+assert(
+  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "", current_task_description: "Prospect Initiation" }) === false &&
+  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Unknown", current_task_description: "Prospect Initiation" }) === false,
+  "Blank/Unknown Smartsheet customers must never create modern pipeline opportunities."
 );
 
 // Synthetic live-record scenarios: unchanged pulls must never need a write.
