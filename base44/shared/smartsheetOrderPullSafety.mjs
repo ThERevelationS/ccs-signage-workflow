@@ -15,11 +15,12 @@ export function orderPulledFieldsUnchanged(existing, pulledFields = {}) {
 
 export function orderPullSnapshotAligned(existing, expectedSnapshot) {
   const prior = existing?.smartsheet_sync_snapshot;
-  if (!prior || typeof prior !== 'object' || Array.isArray(prior) ||
+  if (!existing?.smartsheet_last_synced_at || !prior || typeof prior !== 'object' || Array.isArray(prior) ||
       !expectedSnapshot || typeof expectedSnapshot !== 'object' || Array.isArray(expectedSnapshot)) return false;
 
   const priorKeys = Object.keys(prior).sort();
   const expectedKeys = Object.keys(expectedSnapshot).sort();
+  if (expectedKeys.length === 0) return false;
   if (priorKeys.length !== expectedKeys.length ||
       priorKeys.some((key, index) => key !== expectedKeys[index])) return false;
 
