@@ -40,14 +40,21 @@ export function summarizeSavedOrderSync(result) {
         `${Number(item?.conflicts || 0)} conflict(s) and ${Number(item?.errors || 0)} error(s) need review.`,
     };
   }
-  const changed = Number(item?.updated || 0) + Number(item?.created || 0);
+  const created = Number(item?.created || 0);
+  const updated = Number(item?.updated || 0);
+  const changed = updated + created;
   const unchanged = Number(item?.unchanged_skipped || 0);
-  return {
-    ok: true,
-    message: changed > 0
-      ? `${changed} Order${changed === 1 ? "" : "s"} synced to Smartsheet.`
-      : unchanged > 0
-        ? `${unchanged} Order${unchanged === 1 ? "" : "s"} already matched Smartsheet.`
-        : "Saved changes are synchronized.",
-  };
+  let message = "Saved changes are synchronized.";
+  if (created > 0 && updated > 0) {
+    message = `${created} new Order${created === 1 ? "" : "s"} added and ${updated} existing Order${updated === 1 ? "" : "s"} updated in Smartsheet.`;
+  } else if (created > 0) {
+    message = `${created} new Order${created === 1 ? "" : "s"} added to Smartsheet.`;
+  } else if (updated > 0) {
+    message = `${updated} Order${updated === 1 ? "" : "s"} updated in Smartsheet.`;
+  } else if (unchanged > 0) {
+    message = `${unchanged} Order${unchanged === 1 ? "" : "s"} already matched Smartsheet.`;
+  } else if (changed > 0) {
+    message = `${changed} Order${changed === 1 ? "" : "s"} synced to Smartsheet.`;
+  }
+  return { ok: true, message };
 }
