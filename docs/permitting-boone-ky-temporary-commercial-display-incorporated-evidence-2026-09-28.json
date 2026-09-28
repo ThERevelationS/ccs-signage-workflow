@@ -1,0 +1,14 @@
+{
+  "title": "Boone County Planning Commission — Temporary Commercial Display (Incorporated) application current source snapshot",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TCDFlorenceUnionWalton.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Temporary Commercial Display (Incorporated)",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 197780,
+  "sha256": "698cdb1fa464bce9ae51fdfc7897bc2b7729b28460751477c1905ff93ca44442",
+  "repositoryPath": "public/permitting/sources/boone-ky/tcd-incorporated-2026-09-28.pdf",
+  "purpose": "current_temporary_commercial_display_incorporated_application_source_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact PDF under the label Temporary Commercial Display (Incorporated), and the linked PDF returned HTTP 200 on 2026-09-28. This establishes current source identity and category availability only. The Incorporated label is preserved exactly as the Commission presents it; this evidence does not independently establish which municipalities, addresses, or projects qualify. It does not by itself establish every requirement, fee, eligibility rule, jurisdiction boundary, submission workflow, approval path, or applicability to a particular sign project."
+}
