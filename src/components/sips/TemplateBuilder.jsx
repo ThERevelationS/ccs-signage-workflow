@@ -486,18 +486,18 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
 
   const deleteSubTemplate = (subTemplate) => {
     setConfirmDialog({
-      title: "Delete sub-template?",
-      message: `Delete “${subTemplate.name}” and its checklist configuration? This cannot be undone.`,
-      confirmLabel: "Delete Sub-Template",
+      title: "Delete reusable checklist option?",
+      message: `Delete “${subTemplate.name}” from Template Builder? Work Orders that already use this option keep their saved checklist rows and answers. This only removes the reusable option and its template configuration, so it cannot be added to new jobs. This cannot be undone.`,
+      confirmLabel: "Delete Reusable Option",
       onConfirm: () => performDeleteSubTemplate(subTemplate),
     });
   };
 
   const requestDeleteProductType = (type, index) => {
     setConfirmDialog({
-      title: "Delete product type?",
-      message: `Delete “${type}” from the SIPS product types list?`,
-      confirmLabel: "Delete Product Type",
+      title: "Remove product checklist from builder?",
+      message: `Remove “${type}” from the SIPS Product Checklists list? Work Orders that already use this checklist keep their saved checklist rows and answers. This stops the checklist from appearing for new selections; its stored template configuration is retained internally.`,
+      confirmLabel: "Remove from Builder",
       onConfirm: async () => {
         await saveProductTypes(productTypes.filter((_, i) => i !== index));
         if (selectedProductType === type) {
@@ -2036,8 +2036,8 @@ export default function TemplateBuilder({ isOpen, onClose, onApplyTemplate, exis
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); requestDeleteProductType(type, index); }}
                                       className="h-11 w-11 shrink-0 rounded hover:bg-red-50 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 lg:h-7 lg:w-7"
-                                      title={`Delete ${type}`}
-                                      aria-label={`Delete product checklist ${type}`}
+                                      title={`Remove ${type} from Product Checklists`}
+                                      aria-label={`Remove product checklist ${type} from Template Builder`}
                                     >
                                       <Trash2 className="w-4 h-4 text-red-500 mx-auto" aria-hidden="true" />
                                     </button>
