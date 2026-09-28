@@ -205,6 +205,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
   const pendingSyncIdsRef = useRef(new Set());
+  const pendingSyncVersionRef = useRef(new Map());
   const syncInFlightRef = useRef(false);
   const [quickEditError, setQuickEditError] = useState("");
   const [destructiveActionError, setDestructiveActionError] = useState("");
@@ -601,16 +602,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   const markWorkOrderNeedsSync = useCallback((workOrderId) => {
     const id = String(workOrderId || "").trim();
-    if (id) pendingSyncIdsRef.current.add(id);
+    if (!id) return;
+    pendingSyncIdsRef.current.add(id);
+    pendingSyncVersionRef.current.set(id, (pendingSyncVersionRef.current.get(id) || 0) + 1);
   }, []);
 
-  const clearSyncedWorkOrderIds = useCallback((workOrderIds) => {
-    for (const id of workOrderIds || []) pendingSyncIdsRef.current.delete(String(id));
+  const clearSyncedWorkOrderIds = useCallback((targets) => {
+    for (const target of targets || []) {
+      const id = String(target?.id || "").trim();
+      if (!id || pendingSyncVersionRef.current.get(id) !== target?.version) continue;
+      pendingSyncIdsRef.current.delete(id);
+      pendingSyncVersionRef.current.delete(id);
+    }
   }, []);
 
   const waitForPendingSalesSaves = async () => {
     for (let attempt = 0; attempt < 70; attempt += 1) {
-      if (Object.keys(pendingChangesRef.current).length === 0 && Object.keys(debounceTimers.current).length === 0) return;
+      const pendingCount = Object.keys(pendingChangesRef.current).length;
+      const timerCount = Object.keys(debounceTimers.current).length;
+      if (pendingCount === 0 && timerCount === 0) return;
+      if (pendingCount > 0 && timerCount === 0) {
+        throw new Error("A Sales quick edit is still unsaved. Resolve the save warning or reload latest before syncing.");
+      }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     throw new Error("Sales changes are still waiting to save. Resolve the save warning or reload latest before syncing.");
@@ -624,7 +637,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return { ok: false, message: error?.message || "Sales changes could not be saved before sync." };
     }
 
-    const workOrderIds = [...pendingSyncIdsRef.current];
+    const syncTargets = [...pendingSyncIdsRef.current].map((id) => ({
+      id,
+      version: pendingSyncVersionRef.current.get(id) || 0,
+    }));
+    const workOrderIds = syncTargets.map((target) => target.id);
     if (workOrderIds.length === 0) {
       return { ok: true, message: "No new Sales changes need Smartsheet sync." };
     }
@@ -634,7 +651,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const result = await pushSavedSalesToSmartsheet({ sessionToken, workOrderIds });
       const summary = summarizeSavedSalesSync(result);
       if (!summary.ok) return summary;
-      clearSyncedWorkOrderIds(workOrderIds);
+      clearSyncedWorkOrderIds(syncTargets);
       return summary;
     } catch (error) {
       return { ok: false, message: error?.message || "Saved in Base44, but Smartsheet sync could not be verified." };
