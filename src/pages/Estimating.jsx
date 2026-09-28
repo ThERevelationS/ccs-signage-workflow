@@ -241,8 +241,7 @@ export default function Estimating() {
 
   return (
     <div 
-      className="h-full p-6" 
-      style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}
+      className="h-full p-6 page-gradient-bg"
       onDoubleClick={handleDoubleClick}
     >
       {isFullscreen && (

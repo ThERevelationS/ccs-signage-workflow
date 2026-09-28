@@ -147,6 +147,16 @@ button:focus-visible {
 
 
 
+/* Page-level gradient background with dark mode support.
+   Used by workflow stage pages and standalone screens so the background
+   adapts to dark mode instead of staying a hardcoded light gradient. */
+.page-gradient-bg {
+  background: linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%);
+}
+.dark .page-gradient-bg {
+  background: #1a1a2e !important;
+}
+
 /* Estimator tab: flat SignEstimate Pro styling — plain white panels with thin
    gray borders, no claymorphic shadows or pastel gradients. */
 .clay-scope,

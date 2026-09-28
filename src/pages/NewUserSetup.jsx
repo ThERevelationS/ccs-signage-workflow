@@ -253,7 +253,7 @@ export default function NewUserSetup() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center page-gradient-bg">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Validating your registration link...</p>
@@ -264,7 +264,7 @@ export default function NewUserSetup() {
 
   if (resetMode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center p-4 page-gradient-bg">
         <div className="clay-card p-8 max-w-md w-full">
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' }}>
@@ -311,7 +311,7 @@ export default function NewUserSetup() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center p-4 page-gradient-bg">
         <div className="clay-card p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Registration Error</h2>
@@ -324,7 +324,7 @@ export default function NewUserSetup() {
   // Step 5: Complete
   if (step === 5) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center p-4 page-gradient-bg">
         <div className="clay-card p-8 max-w-md w-full text-center">
           <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}>
             <CheckCircle2 className="w-10 h-10 text-green-600" />
@@ -351,7 +351,7 @@ export default function NewUserSetup() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 page-gradient-bg">
       <div className={`clay-card p-8 w-full ${step === 4 ? 'max-w-3xl' : 'max-w-md'}`}>
         {/* Header */}
         <div className="text-center mb-6">
