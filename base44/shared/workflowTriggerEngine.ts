@@ -139,7 +139,7 @@ async function sendEmailAction(base44: any, config: any, workOrder: any, changed
 
   if (config.use_ai) {
     const aiResult = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate a professional email notification about a work order update.\n\nWork Order Details:\n- Title: ${workOrder.title}\n- Client: ${workOrder.client_name}\n- Stage: ${workOrder.current_stage}\n- Due Date: ${workOrder.due_date || 'Not set'}\n- Assigned To: ${workOrder.assigned_to || 'Unassigned'}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${workOrder.description || 'None'}\n\nContext from user: ${body || 'Standard notification'}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
+      prompt: `Generate a professional email notification about a work order update.\n\nWork Order Details:\n- Title: ${esc(workOrder.title)}\n- Client: ${esc(workOrder.client_name)}\n- Stage: ${esc(workOrder.current_stage)}\n- Due Date: ${esc(workOrder.due_date || 'Not set')}\n- Assigned To: ${esc(workOrder.assigned_to || 'Unassigned')}\n- ASAP: ${workOrder.asap ? 'Yes' : 'No'}\n- Description: ${esc(workOrder.description || 'None')}\n\nContext from user: ${esc(body || 'Standard notification')}\n\nGenerate a concise, professional email body (HTML format). Keep it brief but informative.`,
       response_json_schema: {
         type: 'object',
         properties: { subject: { type: 'string' }, body: { type: 'string' } },

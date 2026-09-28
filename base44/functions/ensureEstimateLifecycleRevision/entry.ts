@@ -140,12 +140,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    const before = revision?.estimate_snapshot_before && typeof revision.estimate_snapshot_before === 'object'
-      ? JSON.parse(JSON.stringify(revision.estimate_snapshot_before))
+    // Derive the "before" snapshot server-side from the most recent completed
+    // revision's estimate_snapshot_after, so a caller cannot rewrite history by
+    // supplying a fabricated or stale before-snapshot. When no prior completed
+    // revision exists, fall back to an empty object (the Estimate's current
+    // server state is still captured authoritatively as the "after" snapshot).
+    const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
+    const priorCompleted = (allRows || [])
+      .filter((row) => row?.revision_status === 'completed')
+      .slice()
+      .sort((a, b) => num(b?.revision_number) - num(a?.revision_number))[0];
+    const before = priorCompleted?.estimate_snapshot_after && typeof priorCompleted.estimate_snapshot_after === 'object'
+      ? JSON.parse(JSON.stringify(priorCompleted.estimate_snapshot_after))
       : {};
     const after = estimateAuditSnapshot(estimate);
     const quoteVersion = Math.max(0, Math.floor(estimateAuditNumber(after.quote_version)));
-    const allRows = await loadRevisionRows(RevisionService, { estimate_id: estimateId });
     const revisionNumber = Math.max(0, ...(allRows || []).map((row) => num(row?.revision_number))) + 1;
     const timestamp = new Date().toISOString();
 
@@ -160,11 +169,11 @@ Deno.serve(async (req) => {
       revision_type: revisionType,
       revision_status: 'completed',
       reason,
-      previous_status: String(before.status || revision?.previous_status || 'draft'),
+      previous_status: String(before.status || 'draft'),
       new_status: String(after.status || 'draft'),
-      previous_quote_total: estimateAuditNumber(before.quote_total, estimateAuditNumber(revision?.previous_quote_total)),
+      previous_quote_total: estimateAuditNumber(before.quote_total),
       new_quote_total: estimateAuditNumber(after.quote_total),
-      previous_total_cost: estimateAuditNumber(before.total_cost, estimateAuditNumber(revision?.previous_total_cost)),
+      previous_total_cost: estimateAuditNumber(before.total_cost),
       new_total_cost: estimateAuditNumber(after.total_cost),
       change_summary: summarizeEstimateAuditChanges(before, after),
       estimate_snapshot_before: before,
