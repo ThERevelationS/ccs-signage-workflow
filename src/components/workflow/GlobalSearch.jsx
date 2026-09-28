@@ -127,7 +127,7 @@ export default function GlobalSearch({ className = "", compact = false, shellGla
       <Button
         size="sm"
         onClick={() => setShowResults(true)}
-        className={`${shellGlass ? "ccs-glass-control" : "clay-button border-2"} ${compact ? "h-7 px-2 py-1" : "px-4 py-2"} rounded-xl ${hasActiveFilters ? 'text-purple-700 border-purple-300' : 'text-gray-800 border-gray-200'} ${className}`}
+        className={`${shellGlass ? `ccs-glass-control ${hasActiveFilters ? "ccs-glass-purple text-violet-100" : "ccs-glass-neutral text-slate-100"}` : "clay-button border-2"} ${compact ? "h-7 px-2 py-1" : "px-4 py-2"} rounded-xl ${shellGlass ? "" : (hasActiveFilters ? "text-purple-700 border-purple-300" : "text-gray-800 border-gray-200")} ${className}`}
         style={shellGlass ? undefined : { background: hasActiveFilters ? 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)' : 'linear-gradient(135deg, #F5F3FF 0%, rgba(255,255,255,0.9) 100%)' }}
       >
         <Search className={`${compact ? "mr-1 h-3.5 w-3.5" : "mr-2 h-4 w-4"}`} />
