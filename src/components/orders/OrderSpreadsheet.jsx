@@ -115,7 +115,7 @@ const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const DEFAULT_REQUEST_TYPES = ["Substrate", "Vinyl", "Supplies", "Other"];
 const DEFAULT_VENDORS = ["Grimco", "Glantz", "JDS", "Kost", "Stock", "Other"];
 
-const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true }, ref) => {
+const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = false, searchTerm = "", filterStatus = "all", onSaveStatusChange = null, showButtonsInline = true, canOrderExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -620,6 +620,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const exportToExcel = async () => {
+    if (currentUser?.role !== "admin" || !canOrderExport || currentUser?.can_order_export !== true) {
+      setSaveError("Order Form export is available only to admins explicitly assigned this permission.");
+      return;
+    }
     setExportProgress({ show: true, progress: 0 });
     
     const exportData = filteredOrders.map(order => ({
