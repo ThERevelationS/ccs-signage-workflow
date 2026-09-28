@@ -9,7 +9,8 @@ import {
   ClipboardList,
   Search,
   Plus,
-  Download
+  Download,
+  Save
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
@@ -24,6 +25,7 @@ export default function OrderForm() {
   const [filterLoaded, setFilterLoaded] = useState(false);
   const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState({ hasUnsavedChanges: false, isSaving: false, isSyncing: false, pendingSyncCount: 0 });
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -107,6 +109,20 @@ export default function OrderForm() {
 
           <div className="flex flex-wrap items-center gap-2">
             {isRegistered && (
+              <Button
+                onClick={() => spreadsheetRef.current?.saveAndSync?.()}
+                size="sm"
+                className="h-8 px-3"
+                disabled={saveStatus.isSaving || saveStatus.isSyncing}
+              >
+                <Save className="w-4 h-4 mr-1" />
+                {saveStatus.isSyncing ? "Syncing..." : saveStatus.isSaving ? "Saving..." : "Save & Sync"}
+                {saveStatus.pendingSyncCount > 0 && !saveStatus.isSaving && !saveStatus.isSyncing
+                  ? ` (${saveStatus.pendingSyncCount})`
+                  : ""}
+              </Button>
+            )}
+            {isRegistered && (
               <Button 
                 onClick={() => spreadsheetRef.current?.addNewRow()}
                 size="sm" 
@@ -138,6 +154,7 @@ export default function OrderForm() {
           filterStatus={filterStatus}
           showButtonsInline={false}
           canOrderExport={canOrderExport}
+          onSaveStatusChange={setSaveStatus}
         />
       </div>
     </div>
