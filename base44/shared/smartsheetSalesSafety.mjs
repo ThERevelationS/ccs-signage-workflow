@@ -1,3 +1,5 @@
+import { smartsheetSalesAssigneeLabel } from './smartsheetSalesAssigneeTranslation.mjs';
+
 // Sales Pipeline Smartsheet boundary safety.
 //
 // The live Sales Pipeline intentionally keeps most sales/workflow fields
@@ -9,6 +11,7 @@ export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
   "est_inv_at",
   "estimate_amount",
   "current_task_description",
+  "current_task_assigned_to",
   "notes_serialized",
 ]);
 
@@ -42,6 +45,9 @@ export function salesPulledFieldsUnchanged(existing = {}, incoming = {}) {
     if (key === "estimate_amount") {
       return current != null && current !== "" && Number.isFinite(Number(current)) &&
         Number.isFinite(Number(value)) && Number(current) === Number(value);
+    }
+    if (key === "current_task_assigned_to") {
+      return smartsheetSalesAssigneeLabel(current) === smartsheetSalesAssigneeLabel(value);
     }
     return String(current ?? "").trim() === String(value ?? "").trim();
   });
