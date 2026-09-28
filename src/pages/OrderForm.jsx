@@ -9,29 +9,20 @@ import {
   ClipboardList,
   Search,
   Plus,
-  Download,
-  ShieldCheck
+  Download
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
-import OrderRequestorEmailReview from "@/components/orders/OrderRequestorEmailReview";
-import OrderCreateAttemptReview from "@/components/orders/OrderCreateAttemptReview";
-import OrderDateParityReview from "@/components/orders/OrderDateParityReview";
-
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 export default function OrderForm() {
-  const { currentUser, sessionToken, isRegistered, promptForEmail } = useAuth();
+  const { currentUser, isRegistered } = useAuth();
   
   // Show outstanding Orders and a visibly separate received history by default.
   const [filterStatus, setFilterStatus] = useState("all_with_received");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
-  const [canImportExport, setCanImportExport] = useState(false);
+  const canOrderExport = currentUser?.role === "admin" && currentUser?.can_order_export === true;
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [emailReviewOpen, setEmailReviewOpen] = useState(false);
-  const [createAttemptReviewOpen, setCreateAttemptReviewOpen] = useState(false);
-  const [dateReviewOpen, setDateReviewOpen] = useState(false);
   const spreadsheetRef = useRef(null);
 
   useEffect(() => {
@@ -63,26 +54,6 @@ export default function OrderForm() {
     loadSavedFilter();
   }, [currentUser?.email]);
 
-  useEffect(() => {
-    const checkImportExportPermission = async () => {
-      if (currentUser?.role === "admin") {
-        setCanImportExport(true);
-        return;
-      }
-      if (currentUser?.email) {
-        try {
-          const users = await AuthorizedEmail.filter({ email: currentUser.email.toLowerCase() });
-          if (users.length > 0 && users[0].can_import_export) {
-            setCanImportExport(true);
-          }
-        } catch (e) {
-          // ignore
-        }
-      }
-    };
-    checkImportExportPermission();
-  }, [currentUser]);
-
   const handleFilterChange = async (value) => {
     setFilterStatus(value);
     if (currentUser?.email) {
@@ -96,8 +67,8 @@ export default function OrderForm() {
 
   return (
     <PullToRefresh onRefresh={async () => { /* triggers OrderSpreadsheet to reload via key */ setSearchTerm(s => s); }}>
-    <div className="h-full overflow-hidden p-4 sm:p-6 flex flex-col">
-      <div className="w-full flex-1 flex flex-col overflow-hidden">
+    <div className="min-h-full p-4 pb-20 sm:p-6 flex flex-col">
+      <div className="w-full min-w-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6">
           <div className="clay-card p-3">
             <ClipboardList className="w-6 h-6 text-purple-600" />
