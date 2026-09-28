@@ -34,7 +34,7 @@ function signalPauseChanged(data = null) {
   window.dispatchEvent(new CustomEvent("ccs-timeclock-work-pause-changed", { detail: data }));
 }
 
-export default function GlobalWorkPauseControl({ className = "", fullWidth = false } = {}) {
+export default function GlobalWorkPauseControl({ className = "", fullWidth = false, paired = false, compact = false } = {}) {
   const { currentUser, sessionToken } = useAuth();
   const email = String(currentUser?.email || "").trim().toLowerCase();
   const [status, setStatus] = useState(null);
@@ -160,23 +160,32 @@ export default function GlobalWorkPauseControl({ className = "", fullWidth = fal
           ? "A Time Clock action is still being finalized"
           : "Pause counted work time";
 
+  const pairedClassName = paired
+    ? `relative z-[1] flex min-h-[36px] items-center justify-center gap-1.5 border-0 border-l border-violet-200/70 bg-transparent font-bold outline-none transition-[background-color,color,transform] duration-150 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 disabled:opacity-45 disabled:cursor-not-allowed dark:border-white/10 ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"} ${fullWidth ? "flex-1" : ""} ${paused
+      ? "text-emerald-800 hover:bg-emerald-100/70 dark:text-emerald-200 dark:hover:bg-emerald-400/10"
+      : "text-violet-800 hover:bg-violet-100/70 dark:text-violet-200 dark:hover:bg-violet-400/10"}`
+    : `${fullWidth ? "w-full justify-center" : ""} px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${paused
+      ? "border-green-300 bg-green-50 hover:bg-green-100 dark:border-emerald-500/40 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60"
+      : "border-purple-300 bg-purple-50 hover:bg-purple-100 dark:border-violet-500/40 dark:bg-violet-950/50 dark:hover:bg-violet-900/60"}`;
+
   return (
     <button
+      data-work-pause-trigger
       type="button"
       onClick={runToggle}
       disabled={busy || unavailable}
       aria-pressed={paused}
       title={title}
-      className={`${fullWidth ? "w-full justify-center" : ""} px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${paused ? "border-green-300 bg-green-50 hover:bg-green-100" : "border-purple-300 bg-purple-50 hover:bg-purple-100"} ${className}`}
+      className={`${pairedClassName} ${className}`}
     >
       {busy ? (
-        <Loader2 className={`w-4 h-4 animate-spin ${paused ? "text-green-700" : "text-purple-700"}`} />
+        <Loader2 className={`w-4 h-4 animate-spin ${paused ? "text-green-700 dark:text-emerald-300" : "text-purple-700 dark:text-violet-300"}`} />
       ) : paused ? (
-        <Play className="w-4 h-4 text-green-700" />
+        <Play className="w-4 h-4 text-green-700 dark:text-emerald-300" />
       ) : (
-        <Pause className="w-4 h-4 text-purple-700" />
+        <Pause className="w-4 h-4 text-purple-700 dark:text-violet-300" />
       )}
-      <span className={`font-bold text-sm ${paused ? "text-green-800" : "text-purple-800"}`}>
+      <span className={`font-bold ${paired && compact ? "text-xs" : "text-sm"} ${paused ? "text-green-800 dark:text-emerald-200" : "text-purple-800 dark:text-violet-200"}`}>
         {paused ? "Resume Work" : "Pause Work"}
       </span>
     </button>
