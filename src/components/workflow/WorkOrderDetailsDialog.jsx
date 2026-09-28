@@ -72,6 +72,7 @@ import TaskDependencyManager from "./TaskDependencyManager";
 import MilestoneManager from "./MilestoneManager";
 import MultiUserSelect from "@/components/shared/MultiUserSelect";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import {
   createWorkOrderArrayItemLocator,
@@ -84,7 +85,6 @@ import {
 } from "@/components/workflow/workOrderPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 
 const stageColors = {
   estimating: "#FFF9C4",
@@ -119,7 +119,7 @@ export default function WorkOrderDetailsDialog({
   onUpdate,
   onDelete
 }) {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [allWorkOrders, setAllWorkOrders] = useState([]);
   const [relatedDataReadError, setRelatedDataReadError] = useState("");
   const [relatedDataVerified, setRelatedDataVerified] = useState(false);
@@ -166,18 +166,31 @@ export default function WorkOrderDetailsDialog({
   useEffect(() => {
     if (isOpen && workOrder) {
       loadRelatedData();
-      loadUsers();
     }
   }, [isOpen, workOrder]);
 
-  const loadUsers = async () => {
-    const users = await loadAllEntityRows({
-      entity: AuthorizedEmail,
-      sort: null,
-      label: "Work Order Details authorized users",
-    });
-    setAllUsers(users);
-  };
+  useEffect(() => {
+    if (!isOpen || !sessionToken) {
+      setAllUsers([]);
+      return;
+    }
+
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((directory) => {
+        if (!cancelled) setAllUsers(directory.users);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setAllUsers([]);
+          console.error("Error loading Work Order assignment users:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, sessionToken]);
 
   const loadRelatedData = async () => {
     setRelatedDataReadError("");
