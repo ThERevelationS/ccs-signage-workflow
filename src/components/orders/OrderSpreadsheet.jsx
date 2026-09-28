@@ -205,6 +205,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const { trackChange } = useCellHistoryTracker("Order", currentUser);
   const pendingChangesRef = useRef({}); // Track changes per order ID
   const pendingSyncIdsRef = useRef(new Set()); // Saved locally but not yet confirmed in Smartsheet
+  const pendingSyncVersionRef = useRef(new Map()); // Prevent an older sync from clearing a newer local save
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const saveInFlightRef = useRef(false);
   const syncInFlightRef = useRef(false);
@@ -249,12 +250,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const id = String(orderId || '').trim();
     if (!id) return;
     pendingSyncIdsRef.current.add(id);
+    pendingSyncVersionRef.current.set(id, (pendingSyncVersionRef.current.get(id) || 0) + 1);
     setPendingSyncCount(pendingSyncIdsRef.current.size);
     setSyncMessage('');
   }, []);
 
-  const clearSyncedOrderIds = useCallback((orderIds) => {
-    for (const id of orderIds || []) pendingSyncIdsRef.current.delete(String(id));
+  const clearSyncedOrderIds = useCallback((syncTargets) => {
+    for (const target of syncTargets || []) {
+      const id = String(target?.id || '').trim();
+      if (!id || pendingSyncVersionRef.current.get(id) !== target?.version) continue;
+      pendingSyncIdsRef.current.delete(id);
+      pendingSyncVersionRef.current.delete(id);
+    }
     setPendingSyncCount(pendingSyncIdsRef.current.size);
   }, []);
 
@@ -408,7 +415,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     const saveResult = await saveAllChanges();
     if (!saveResult?.complete) return false;
 
-    const orderIds = [...pendingSyncIdsRef.current];
+    const syncTargets = [...pendingSyncIdsRef.current].map((id) => ({
+      id,
+      version: pendingSyncVersionRef.current.get(id) || 0,
+    }));
+    const orderIds = syncTargets.map(({ id }) => id);
     if (orderIds.length === 0) {
       setSyncMessage('No new Order changes need Smartsheet sync.');
       return true;
@@ -420,13 +431,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds });
       const summary = summarizeSavedOrderSync(result);
       if (!summary.ok) throw new Error(summary.message);
-      clearSyncedOrderIds(orderIds);
-      const syncedIdSet = new Set(orderIds.map(String));
-      for (const orderId of orderIds) {
+      clearSyncedOrderIds(syncTargets);
+      const safelySyncedIds = new Set(syncTargets
+        .filter(({ id, version }) => pendingSyncVersionRef.current.get(id) === undefined || pendingSyncVersionRef.current.get(id) === version)
+        .filter(({ id }) => !pendingSyncIdsRef.current.has(id))
+        .map(({ id }) => String(id)));
+      for (const orderId of safelySyncedIds) {
         const baseline = originalOrdersRef.current[orderId];
         if (baseline) originalOrdersRef.current[orderId] = { ...baseline, smartsheet_pending_local_sync: false };
       }
-      setOrders((current) => current.map((order) => syncedIdSet.has(String(order.id))
+      setOrders((current) => current.map((order) => safelySyncedIds.has(String(order.id))
         ? { ...order, smartsheet_pending_local_sync: false }
         : order));
       setLastSynced(new Date());
