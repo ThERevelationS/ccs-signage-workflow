@@ -1,0 +1,19 @@
+{
+  "title": "Boone County Planning Commission — Sign Permit application current source version verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SignPermit.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Sign Permit",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 312727,
+  "sha256": "0924ac5425a5a215f76f112d78bf91dde7226b0ecfbe6f6d51cc24834b99d73d",
+  "lastModified": "Fri, 06 Sep 2024 15:18:54 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-current-2026-09-28.pdf",
+  "priorArchivedRepositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-2024.pdf",
+  "priorArchivedBytes": 269468,
+  "priorArchivedSha256": "cfb43fbaef40b4b4f81494e1c8e077b8062d3841e56b467805178c8e4886ac9a",
+  "sameAsPriorArchive": false,
+  "purpose": "current_sign_permit_application_source_version_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact Sign Permit PDF, and the live file returned HTTP 200 with application/pdf content on 2026-09-28. The current file is a different byte/hash version from the preserved 2024 repository copy, so both versions are retained rather than replacing history. This establishes current source identity, current listing, and a source-version change only. It does not by itself establish that every instruction, requirement, fee, eligibility rule, jurisdiction boundary, submission workflow, approval path, or applicability statement inside either version is current or controlling."
+}
