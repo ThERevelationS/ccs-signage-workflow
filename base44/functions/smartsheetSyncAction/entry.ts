@@ -5,6 +5,7 @@ import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocation
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
+import { canonicalBase44SalesAssignee } from '../../shared/smartsheetSalesAssigneeTranslation.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
 import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
@@ -345,6 +346,13 @@ async function pullDataset(
     });
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+  const salesAssigneeUsers = dataset === 'sales'
+    ? await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.AuthorizedEmail,
+        sort: 'full_name',
+        label: 'Sales Smartsheet assignee translation users',
+      })
+    : [];
 
   let orderUnlinkedRowCount = 0;
   let orderUnlinkedRowIds: string[] = [];
@@ -407,6 +415,7 @@ async function pullDataset(
   // Collect records to create and update
   const toCreate: any[] = [];
   const toUpdate: any[] = [];
+  const salesAssigneeTranslationIssues: any[] = [];
   let unchangedSkipped = 0;
 
   for (const row of allRows) {
@@ -436,6 +445,20 @@ async function pullDataset(
           fieldValues[key] = '';
           continue;
         }
+      }
+      if (dataset === 'sales' && key === 'current_task_assigned_to') {
+        const resolution = canonicalBase44SalesAssignee(val, salesAssigneeUsers);
+        if (resolution.name) {
+          fieldValues[key] = resolution.name;
+        } else if (String(val ?? '').trim()) {
+          salesAssigneeTranslationIssues.push({
+            row_id: rowId,
+            value: cleanText(val, 120),
+            state: resolution.state,
+            candidates: resolution.candidates.slice(0, 5).map((candidate: any) => cleanText(candidate?.full_name, 120)).filter(Boolean),
+          });
+        }
+        continue;
       }
       const normalized = normalizePullValue(key, val);
       if (normalized !== undefined) fieldValues[key] = normalized;
@@ -487,6 +510,18 @@ async function pullDataset(
       newRecord.smartsheet_last_synced_at = new Date().toISOString();
       toCreate.push(newRecord);
     }
+  }
+
+  if (dataset === 'sales' && salesAssigneeTranslationIssues.length) {
+    return {
+      dataset,
+      direction: 'pull',
+      sheet_id: sheetId,
+      skipped: true,
+      reason: 'Smartsheet Task Assigned To contains names that cannot be translated to one authorized Base44 full name. No Sales records were changed.',
+      assignee_translation_review_required: salesAssigneeTranslationIssues.length,
+      assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
+    };
   }
 
   let createdCount = 0;
