@@ -305,9 +305,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setWorkOrders(workOrdersData);
       setUsers(usersData);
       for (const order of ordersData) {
-        if (order?.smartsheet_pending_local_sync === true && order?.id) {
-          pendingSyncIdsRef.current.add(String(order.id));
-        }
+        const orderId = String(order?.id || '').trim();
+        if (!orderId) continue;
+        if (order?.smartsheet_pending_local_sync === true) pendingSyncIdsRef.current.add(orderId);
+        else pendingSyncIdsRef.current.delete(orderId);
       }
       setPendingSyncCount(pendingSyncIdsRef.current.size);
       // Store original data for comparison
