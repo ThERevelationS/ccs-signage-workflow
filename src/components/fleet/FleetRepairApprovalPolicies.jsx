@@ -168,72 +168,186 @@ export default function FleetRepairApprovalPolicies() {
     return policies.filter(policy => policy.id !== editor.id && policy.enabled !== false && rangesOverlap(current, policy));
   }, [editor, policies]);
 
+  const openCreate = () => {
+    if (mutationBlocked) return;
+    setError(""); setNotice(""); setRefreshWarning("");
+    setEditor({ ...emptyPolicy(), _creation_key: `fleet-policy-${crypto.randomUUID()}` });
+  };
+  const openEdit = policy => {
+    if (mutationBlocked) return;
+    setError(""); setNotice(""); setRefreshWarning("");
+    setEditor({ ...policy, minimum_amount: String(policy.minimum_amount ?? 0), maximum_amount: Number(policy.maximum_amount || 0) ? String(policy.maximum_amount) : "", sort_order: String(policy.sort_order ?? 0) });
+  };
+  const replacePolicy = row => setPolicies(current => {
+    const exists = current.some(policy => policy.id === row.id);
+    return exists ? current.map(policy => policy.id === row.id ? row : policy) : [...current, row];
+  });
+  const checkUncertain = async () => {
+    if (!uncertain || busy) return;
+    const pending = uncertain;
+    setBusy("recover"); setError(""); setRefreshWarning("");
+    try {
+      const rows = await fetchPolicies();
+      setPolicies(rows);
+      setLoadFailed(false);
+      if (pending.kind === "save" && pending.mode === "create") {
+        const row = rows.find(policy => policy.creation_key === pending.creation_key);
+        if (!row) {
+          setUncertain(null);
+          setNotice("Server confirms the new threshold was not created. Review the editor before saving again.");
+          requestAnimationFrame(() => editorNameRef.current?.focus());
+        } else if (policyMatches(row, pending.desired)) {
+          setUncertain(null); setEditor(null);
+          setNotice("Server confirms the new threshold was saved. The create operation was not repeated.");
+        } else {
+          setError("A threshold exists with this creation identity but its current values differ. Close and review the current policies; do not repeat the save.");
+        }
+        return;
+      }
+      if (pending.kind === "save" && pending.mode === "update") {
+        const row = rows.find(policy => policy.id === pending.id);
+        if (!row) {
+          setError("The edited threshold no longer exists. Close the editor and review current policies; do not repeat the save.");
+        } else if (policyMatches(row, pending.desired) && row.updated_date !== pending.expected_updated_date) {
+          setUncertain(null); setEditor(null);
+          setNotice("Server confirms the threshold update is present. The update was not repeated.");
+        } else if (row.updated_date === pending.expected_updated_date) {
+          setUncertain(null);
+          setNotice("Server confirms the threshold was not updated. Review the editor before saving again.");
+          requestAnimationFrame(() => editorNameRef.current?.focus());
+        } else {
+          setUncertain(null); setEditor(null);
+          setNotice("The threshold changed while the save response was uncertain. Current server values were loaded; review them before making another edit.");
+        }
+        return;
+      }
+      if (pending.kind === "toggle") {
+        const row = rows.find(policy => policy.id === pending.id);
+        setUncertain(null);
+        if (!row) {
+          setNotice("The threshold no longer exists. Current server policies were loaded; no toggle was repeated.");
+        } else if ((row.enabled !== false) === pending.enabled && row.updated_date !== pending.expected_updated_date) {
+          setNotice(`Server confirms ${row.name} is now ${pending.enabled ? "enabled" : "disabled"}. The toggle was not repeated.`);
+        } else if (row.updated_date === pending.expected_updated_date) {
+          setNotice(`Server confirms ${row.name} was not changed. Review it before trying the toggle again.`);
+        } else {
+          setNotice(`${row.name} changed while the toggle response was uncertain. Current server values were loaded; review them before another change.`);
+        }
+        requestAnimationFrame(() => addButtonRef.current?.focus());
+        return;
+      }
+      if (pending.kind === "delete") {
+        const row = rows.find(policy => policy.id === pending.id);
+        setUncertain(null);
+        if (!row) {
+          setNotice("Server confirms the threshold is deleted. The deletion was not repeated.");
+        } else if (row.updated_date === pending.expected_updated_date) {
+          setNotice(`Server confirms ${row.name} was not deleted. Review it before trying again.`);
+        } else {
+          setNotice(`${row.name} changed after the delete confirmation. It was not deleted; current server values were loaded for review.`);
+        }
+        requestAnimationFrame(() => addButtonRef.current?.focus());
+      }
+    } catch (err) {
+      setError(`${err?.message || "Unable to verify the policy operation."} The operation remains unconfirmed; do not repeat it.`);
+    } finally {
+      setBusy("");
+    }
+  };
+
   const save = async () => {
-    if (!editor) return;
-    const existing = editor.id ? policies.find(row => row.id === editor.id) : null;
+    if (!editor || mutationBlocked) return;
+    const existing = !!editor.id;
     const min = Number(editor.minimum_amount || 0);
     const max = editor.maximum_amount === "" ? 0 : Number(editor.maximum_amount || 0);
     if (!editor.name.trim()) { setError("Policy name is required."); return; }
     if (!Number.isFinite(min) || min < 0 || !Number.isFinite(max) || max < 0) { setError("Approval amounts must be valid non-negative numbers."); return; }
     if (max > 0 && max < min) { setError("Maximum amount must be greater than or equal to the minimum, or blank for no maximum."); return; }
-    setBusy("save");
-    setError("");
+    const desired = policyDesired({
+      ...editor,
+      minimum_amount: min,
+      maximum_amount: max,
+      approval_tier: editor.approval_tier.trim() || editor.name.trim(),
+    });
+    const expectedUpdatedDate = existing ? String(editor.updated_date || "") : "";
+    const creationKey = existing ? "" : String(editor._creation_key || "");
+    setBusy("save"); setError(""); setNotice(""); setRefreshWarning("");
     try {
       const payload = {
         action: existing ? "policy_update" : "policy_create",
-        ...(existing ? { id: existing.id, expected_updated_date: existing.updated_date } : { creation_key: `${new Date().toISOString().slice(0,10)}-${crypto.randomUUID()}` }),
-        policy: {
-          name: editor.name.trim(),
-          approval_tier: editor.approval_tier.trim() || editor.name.trim(),
-          minimum_amount: min,
-          maximum_amount: max,
-          approval_required: editor.approval_required !== false,
-          enabled: editor.enabled !== false,
-          notes: editor.notes.trim(),
-          sort_order: Number(editor.sort_order || 0),
-        },
+        ...(existing ? { id: editor.id, expected_updated_date: expectedUpdatedDate } : { creation_key: creationKey }),
+        policy: desired,
       };
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", payload);
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw responseError(data.error);
+      if (!data?.policy?.id) throw new Error("The policy save response could not be verified.");
+      replacePolicy(data.policy);
       setEditor(null);
-      await load();
+      setNotice(existing ? "Approval threshold updated." : "Approval threshold created.");
+      await refreshAfterMutation(existing ? "Threshold update" : "Threshold creation");
     } catch (err) {
-      setError(err?.message || "Unable to save repair approval policy.");
+      if (definiteMutationFailure(err)) {
+        setError(err?.message || "Unable to save repair approval policy.");
+      } else {
+        setUncertain({ kind:"save", mode:existing ? "update" : "create", id:editor.id || "", expected_updated_date:expectedUpdatedDate, creation_key:creationKey, desired });
+        setError("The policy save response could not be confirmed. Check current server status before attempting another save.");
+      }
     } finally {
       setBusy("");
     }
   };
 
   const toggle = async policy => {
-    setBusy(policy.id);
-    setError("");
+    if (mutationBlocked) return;
+    const enabled = policy.enabled === false;
+    setBusy(policy.id); setError(""); setNotice(""); setRefreshWarning("");
     try {
       const { data } = await base44.functions.invoke("fleetRepairEstimateAction", {
         action: "policy_update",
         id: policy.id,
         expected_updated_date: policy.updated_date,
-        policy: { ...policy, enabled: policy.enabled === false },
+        policy: { ...policy, enabled },
       });
-      if (data?.error) throw new Error(data.error);
-      await load();
+      if (data?.error) throw responseError(data.error);
+      if (!data?.policy?.id) throw new Error("The threshold update response could not be verified.");
+      replacePolicy(data.policy);
+      setNotice(`${policy.name} ${enabled ? "enabled" : "disabled"}.`);
+      await refreshAfterMutation("Threshold update");
     } catch (err) {
-      setError(err?.message || "Unable to update repair approval policy.");
+      if (definiteMutationFailure(err)) setError(err?.message || "Unable to update repair approval policy.");
+      else {
+        setUncertain({ kind:"toggle", id:policy.id, expected_updated_date:policy.updated_date, enabled });
+        setError("The enable/disable response could not be confirmed. Check current server status before trying another policy change.");
+      }
     } finally {
       setBusy("");
     }
   };
 
   const remove = async () => {
-    if (!deletePolicy) return;
-    setBusy("delete");
-    setError("");
+    if (!deletePolicy || mutationBlocked) return;
+    const pending = deletePolicy;
+    setBusy("delete"); setError(""); setNotice(""); setRefreshWarning("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_delete", id: deletePolicy.id });
-      if (data?.error) throw new Error(data.error);
+      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_delete", id: pending.id, expected_updated_date: pending.updated_date });
+      if (data?.error) throw responseError(data.error);
+      if (data?.deleted !== true) throw new Error("The threshold delete response could not be verified.");
+      setPolicies(current => current.filter(policy => policy.id !== pending.id));
       setDeletePolicy(null);
-      await load();
+      setNotice(`${pending.name} deleted.`);
+      await refreshAfterMutation("Threshold deletion");
+      requestAnimationFrame(() => addButtonRef.current?.focus());
     } catch (err) {
-      setError(err?.message || "Unable to delete repair approval policy.");
+      if (definiteMutationFailure(err)) {
+        setDeletePolicy(null);
+        setError(err?.message || "Unable to delete repair approval policy.");
+        try { setPolicies(await fetchPolicies()); setLoadFailed(false); } catch { setRefreshWarning("The delete was blocked, and current policies could not be refreshed. Use Retry refresh before trying again."); }
+        requestAnimationFrame(() => addButtonRef.current?.focus());
+      } else {
+        setDeletePolicy(null);
+        setUncertain({ kind:"delete", id:pending.id, expected_updated_date:pending.updated_date });
+        setError("The delete response could not be confirmed. Check current server status before attempting another deletion.");
+      }
     } finally {
       setBusy("");
     }
