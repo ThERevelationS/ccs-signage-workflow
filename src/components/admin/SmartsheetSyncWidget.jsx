@@ -48,16 +48,16 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
     prevRunningRef.current = isRunning;
   }, [status?.status]);
 
-  // Order Form only: a successful run disappears nine seconds after its actual
-  // completion timestamp, not nine seconds after opening a page six hours later.
-  // Failures and reviews never auto-dismiss. Re-key for each new completed run.
+  // Healthy completed syncs use a short-lived toast everywhere. The timeout is
+  // anchored to the actual completion timestamp, so an old successful run never
+  // reappears merely because a page was opened later. Failures/reviews stay visible.
   const orderToast = orderSyncToastState(status);
   useEffect(() => {
-    if (!compactOrderForm || !orderToast.compact || !orderToast.visible) return;
+    if (!orderToast.compact || !orderToast.visible) return;
     const delay = Math.max(0, orderToast.expiresAt - Date.now());
     const timeout = setTimeout(() => setDismissedSuccessRun(orderToast.key), delay);
     return () => clearTimeout(timeout);
-  }, [compactOrderForm, orderToast.compact, orderToast.visible, orderToast.expiresAt, orderToast.key]);
+  }, [orderToast.compact, orderToast.visible, orderToast.expiresAt, orderToast.key]);
 
   if (loading) return null;
   if (!config?.global_enabled) return null;
@@ -77,12 +77,12 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const currentStepLabel = status?.current_step_label || '';
   const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
-  // The Order Form's close state belongs to a particular run, so a new
-  // completion is visible even if polling missed its short running phase.
-  if (!isRunning && (compactOrderForm
+  // A successful completion dismissal belongs to that specific run, so the next
+  // completion can still appear even if polling missed its brief running phase.
+  if (!isRunning && (orderToast.compact
     ? Boolean(orderToast.key && dismissedSuccessRun === orderToast.key)
     : dismissed)) return null;
-  if (compactOrderForm && orderToast.compact && !orderToast.visible) return null;
+  if (orderToast.compact && !orderToast.visible) return null;
   if (!isRunning && !isStale && !status?.completed_at) return null;
   if (!isRunning && !isStale && totalCreated === 0 && totalUpdated === 0 && !hasErrors && !hasReviewNeeded && !(compactOrderForm && hasSkipped)) return null;
 
