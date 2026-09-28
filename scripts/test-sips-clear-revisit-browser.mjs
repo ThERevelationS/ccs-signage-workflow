@@ -418,6 +418,24 @@ try {
       state.failNextWriteMessage = "Synthetic long error detail: " + "Revisit changed in another session. ".repeat(45);
     });
 
+
+  await caseRun("320px phone: pending Clear blocks Escape and duplicate submission until saved",
+    origin, [{ width: 320, height: 568 }], async ([page]) => {
+      const dialog = await openClear(page, true);
+      await dialog.getByRole("button", { name: "Clear & return to active" }).click();
+      await dialog.getByRole("button", { name: "Clear & return to active" }).waitFor({ state: "visible" });
+      assert.equal(await dialog.getByRole("button", { name: "Clear & return to active" }).isDisabled(), true);
+      assert.equal(await dialog.getByRole("button", { name: "Keep revisit date" }).isDisabled(), true);
+      await page.keyboard.press("Escape");
+      assert.equal(await dialog.isVisible(), true, "Pending Clear cannot dismiss its confirmation");
+      await checkDialogOnScreen(page);
+      await waitFor(1, "");
+      await dialog.waitFor({ state: "hidden" });
+      await boardHeadingFocused(page);
+      assert.deepEqual(fixture.writes, [{ sip_revisit_date: "" }], "Clear must write only once");
+      await page.getByText("Showing 1 of 1 active item").waitFor();
+    }, (state) => { state.updateDelayMs = 700; });
+
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
 } finally {
