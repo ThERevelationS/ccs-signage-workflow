@@ -172,6 +172,95 @@ try {
       assert.equal(state.focusMinutes, 10);
     });
 
+  await freshCase("Compact View persists and actually tightens desktop navigation density", origin,
+    { width: 1366, height: 900 }, async (page) => {
+      await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
+      const compactToggle = page.locator("[data-shell-compact-toggle]:visible");
+      const workflowLink = page.getByRole("link", { name: "My Workflow" }).first();
+      await compactToggle.waitFor();
+      const beforePadding = Number.parseFloat(await workflowLink.evaluate((node) => getComputedStyle(node).paddingTop));
+      await compactToggle.click();
+      await page.waitForTimeout(180);
+      const afterPadding = Number.parseFloat(await workflowLink.evaluate((node) => getComputedStyle(node).paddingTop));
+      assert.ok(afterPadding < beforePadding, "Compact View reduces navigation padding");
+      assert.equal(await compactToggle.getAttribute("aria-pressed"), "true");
+      assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCompact")), "true");
+
+      await page.reload({ waitUntil: "networkidle" });
+      assert.equal(await page.locator("[data-shell-compact-toggle]:visible").getAttribute("aria-pressed"), "true",
+        "Compact View survives reload");
+    });
+
+  await freshCase("Top bar collapses, edge-hover previews smoothly, and click pins it open", origin,
+    { width: 1366, height: 900 }, async (page) => {
+      await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
+      const collapseToggle = page.locator("[data-shell-collapse-toggle]:visible");
+      const topNav = page.locator(".top-nav");
+      await collapseToggle.waitFor();
+      await collapseToggle.click();
+      await page.waitForTimeout(220);
+      assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "true");
+      let box = await topNav.boundingBox();
+      assert.ok(box && box.y < -Math.max(20, box.height / 2), "Collapsed top bar clears working content");
+
+      await page.mouse.move(120, 2);
+      await page.waitForTimeout(220);
+      box = await topNav.boundingBox();
+      assert.ok(box && box.y >= -1, "Top-edge hover previews the full top bar");
+
+      await page.mouse.move(700, 500);
+      await page.waitForTimeout(220);
+      box = await topNav.boundingBox();
+      assert.ok(box && box.y < -Math.max(20, box.height / 2), "Top bar smoothly retracts after hover leaves");
+
+      await page.mouse.move(120, 2);
+      await page.waitForTimeout(220);
+      await page.locator("[data-shell-collapse-toggle]:visible").click();
+      assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "false",
+        "Pin action restores the normal shell");
+    });
+
+  await freshCase("Sidebar uses the same compact/collapse controls and hover preview", origin,
+    { width: 1366, height: 900 }, async (page) => {
+      await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
+      await page.getByTitle("Switch to Sidebar").click();
+      const sideNav = page.locator(".side-nav");
+      await sideNav.waitFor({ state: "visible" });
+      assert.equal(await page.locator("[data-focus-pause-pair]:visible").count(), 1,
+        "Paired Focus/Pause control remains available in sidebar mode");
+
+      await page.locator("[data-shell-collapse-toggle]:visible").click();
+      await page.waitForTimeout(220);
+      let box = await sideNav.boundingBox();
+      assert.ok(box && box.x < -Math.max(20, box.width / 2), "Collapsed sidebar clears working content");
+      const mainMargin = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).marginLeft));
+      assert.equal(mainMargin, 10, "Working canvas expands to the narrow hover rail");
+
+      await page.mouse.move(2, 220);
+      await page.waitForTimeout(220);
+      box = await sideNav.boundingBox();
+      assert.ok(box && box.x >= -1, "Left-edge hover previews the full sidebar");
+
+      await page.locator("[data-shell-collapse-toggle]:visible").click();
+      assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCollapsed")), "false");
+    });
+
+  await freshCase("Glass shell and Focus dialog remain dark-mode compatible", origin,
+    { width: 1366, height: 900 }, async (page) => {
+      await page.addInitScript(() => localStorage.setItem("darkMode", "true"));
+      await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
+      assert.equal(await page.locator("html").evaluate((node) => node.classList.contains("dark")), true);
+      const pair = page.locator("[data-focus-pause-pair]:visible");
+      await pair.waitFor();
+      const backdrop = await pair.evaluate((node) => getComputedStyle(node).backdropFilter);
+      assert.notEqual(backdrop, "none", "Glass pair keeps its backdrop treatment in dark mode");
+      await page.locator("[data-focus-timer-trigger]:visible").click();
+      const dialog = page.getByRole("dialog", { name: "My Focus Timer" });
+      await dialog.waitFor();
+      const background = await dialog.evaluate((node) => getComputedStyle(node).backgroundColor);
+      assert.notEqual(background, "rgb(255, 255, 255)", "Focus dialog switches away from pure white in dark mode");
+    });
+
   await freshCase("Signed-out state hides Focus Timer and account remounts remain isolated", origin,
     { width: 1366, height: 900 }, async (page) => {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
