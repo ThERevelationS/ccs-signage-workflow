@@ -8,15 +8,17 @@ export default function TaskAssigneeSelect({ value = "", users = [], disabled = 
   const [customBaseline, setCustomBaseline] = useState("");
   const eligible = eligibleTaskAssignees(users);
   const names = [...new Set(eligible.map((user) => user.full_name))];
-  const options = value && !names.includes(value) ? [value, ...names] : names;
+  const resolvedValue = value ? resolveSmartsheetTaskAssignee(value, users) : { state: "blank", name: "" };
+  const selectedName = resolvedValue.state === "matched" ? resolvedValue.name : value;
+  const options = selectedName && !names.includes(selectedName) ? [selectedName, ...names] : names;
   const choose = (next) => {
     if (disabled) return;
     if (next === "custom") { setCustomBaseline(value); setCustomOpen(true); }
     else onChange(next === "none" ? "" : options[Number(next.slice(5))]);
   };
   return <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-    <Select value={value ? `name:${options.indexOf(value)}` : "none"} onValueChange={choose} disabled={disabled}>
-      <SelectTrigger className={className} aria-label={`Task assigned to for ${context}`}><SelectValue>{value || "Unassigned"}</SelectValue></SelectTrigger>
+    <Select value={selectedName ? `name:${options.indexOf(selectedName)}` : "none"} onValueChange={choose} disabled={disabled}>
+      <SelectTrigger className={className} aria-label={`Task assigned to for ${context}`}><SelectValue>{selectedName || "Unassigned"}</SelectValue></SelectTrigger>
       <SelectContent>
         <SelectItem value="none" className="min-h-11">Unassigned</SelectItem>
         {options.map((name, index) => <SelectItem key={name} value={`name:${index}`} className="min-h-11">{name}{!names.includes(name) ? " (custom / legacy)" : ""}</SelectItem>)}
