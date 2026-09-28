@@ -96,6 +96,7 @@ import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
+import { canUseOrderExport } from "../../../base44/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
 import { useMultiImport } from "@/components/shared/MultiImportContext";
@@ -620,7 +621,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   };
 
   const exportToExcel = async () => {
-    if (currentUser?.role !== "admin" || !canOrderExport || currentUser?.can_order_export !== true) {
+    if (!canOrderExport || !canUseOrderExport(currentUser)) {
       setSaveError("Order Form export is available only to admins explicitly assigned this permission.");
       return;
     }
