@@ -80,7 +80,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   // The Order Form's close state belongs to a particular run, so a new
   // completion is visible even if polling missed its short running phase.
   if (!isRunning && (compactOrderForm
-    ? Boolean(orderToast.key && dismissedOrderRun === orderToast.key)
+    ? Boolean(orderToast.key && dismissedSuccessRun === orderToast.key)
     : dismissed)) return null;
   if (compactOrderForm && orderToast.compact && !orderToast.visible) return null;
   if (!isRunning && !isStale && !status?.completed_at) return null;
