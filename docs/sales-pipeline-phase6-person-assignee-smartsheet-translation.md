@@ -39,7 +39,9 @@ The existing Smartsheet translation/review model already understands a unique fi
   - already-short names remain unchanged
   - legacy display names such as `Terri Tarter <email>` translate to `Terri`
 - The same first-name value is used in the stored sync snapshot, so conflict detection compares against what was actually sent to Smartsheet.
-- Sales pull no-op comparison treats Base44 `Brett Heinlein` and Smartsheet `Brett` as the same translated assignment, avoiding unnecessary rewrites of a canonical Base44 full name.
+- Smartsheet pull now performs the reverse translation before any Sales write: a unique authorized first name becomes the canonical Base44 full name (`Brett` → `Brett Heinlein`, `Twyla` → `Twyla Heinlein`, etc.). Already-canonical full names remain unchanged.
+- Ambiguous or unresolved nonblank Smartsheet assignees fail closed and block the Sales pull before any Sales records are changed; the response includes review samples rather than guessing.
+- The Assigned selector now displays the resolver's canonical full name for legacy first-name WorkOrders, so `Brett` and `Brett Heinlein` no longer appear as two separate visible assignees while historical records remain untouched.
 - Added only `current_task_assigned_to` to the backend Sales sync allowlist. `sales_rep` and the other protected Base44-only bindings remain blocked.
 - No production data was migrated or rewritten.
 
@@ -53,7 +55,7 @@ The existing Smartsheet translation/review model already understands a unique fi
 
 ## Verified
 
-- New person alias + Smartsheet translation regression: **28/28 PASS**.
+- Person alias + canonical Smartsheet translation regression: **41/41 PASS**.
 - Smartsheet Sales boundary validation: **PASS**.
 - Existing Smartsheet translation regression: **PASS**.
 - Smartsheet vocabulary review regression: **PASS**.
