@@ -483,13 +483,18 @@ export default function TimeClock() {
                               )}
                             </div>
                             <p className="text-sm text-gray-500">
-                              {format(parseISO(entry.clock_in), "h:mm a")} 
+                              {format(parseISO(entry.clock_in), "h:mm a")}
                               {entry.clock_out && ` - ${format(parseISO(entry.clock_out), "h:mm a")}`}
+                              {entry.status === "needs_resolution" && correctionRequest?.requested_changes?.clock_out && (
+                                <> · reported out {format(parseISO(correctionRequest.requested_changes.clock_out), "h:mm a")} pending manager review</>
+                              )}
                             </p>
                           </div>
                           <div className="text-right">
                             {entry.status === "clocked_in" ? (
                               <Badge className="bg-green-100 text-green-700">Active</Badge>
+                            ) : entry.status === "needs_resolution" ? (
+                              <Badge className="bg-amber-100 text-amber-800">Missed punch · review pending</Badge>
                             ) : (
                               <div>
                                 <p className="text-lg font-bold text-purple-600">{entryHours.toFixed(2)} hrs</p>
@@ -600,7 +605,7 @@ export default function TimeClock() {
                           )}
                         </div>
 
-                        {entry.status === "clocked_out" && (
+                        {["clocked_out", "needs_resolution"].includes(entry.status) && (
                           <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                             <div>
                               <p className="text-xs font-medium text-gray-500">Correction</p>
@@ -618,7 +623,9 @@ export default function TimeClock() {
                                 <p className="text-xs text-gray-400">No correction requested</p>
                               )}
                             </div>
-                            {entry.pay_period_id ? (
+                            {entry.status === "needs_resolution" ? (
+                              <span className="text-xs font-medium text-amber-700">Manager review required before this prior shift is complete</span>
+                            ) : entry.pay_period_id ? (
                               <span className="text-xs text-slate-600 flex items-center gap-1"><LockKeyhole className="w-3 h-3" />Finalized period — contact a manager to reopen before requesting a correction</span>
                             ) : !correctionRequest || ["approved", "approved_modified", "rejected", "cancelled"].includes(correctionRequest.status) ? (
                               <Button variant="outline" size="sm" onClick={() => setCorrectionEntry(entry)}>
