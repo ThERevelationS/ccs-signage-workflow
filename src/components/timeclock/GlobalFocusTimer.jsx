@@ -20,7 +20,7 @@ function readTimer(key) {
 
 // Personal planning only. This must not mutate TimeEntry, break, Work Pause,
 // Current Work, allocations or pay-period state, even when "Break" is selected.
-export default function GlobalFocusTimer({ currentUser }) {
+export default function GlobalFocusTimer({ currentUser, paired = false, compact = false, fullWidth = false } = {}) {
   const identity = currentUser?.id || currentUser?.email;
   const key = timerStorageKey(identity);
   const [timer, setTimer] = useState(() => readTimer(key));
@@ -106,26 +106,30 @@ export default function GlobalFocusTimer({ currentUser }) {
   const done = timer.status === "finished";
   const buttonLabel = done ? "Focus timer finished. Open timer" :
     `Open focus timer${running ? `, ${displayTimer(timer.remainingSeconds)} remaining` : ""}`;
+  const triggerClassName = paired
+    ? `relative z-[1] flex min-h-[36px] items-center justify-center gap-1.5 border-0 bg-transparent font-bold text-violet-800 outline-none transition-[background-color,color,transform] duration-150 hover:bg-violet-100/70 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:text-violet-200 dark:hover:bg-violet-400/10 ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"} ${fullWidth ? "flex-1" : ""}`
+    : `fixed right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
+        ? "border-amber-400 bg-amber-100 text-amber-950 dark:border-amber-500/60 dark:bg-amber-950/70 dark:text-amber-100"
+        : "border-purple-300 bg-purple-50 text-purple-900 dark:border-violet-500/50 dark:bg-violet-950/70 dark:text-violet-100"}`;
 
   return (
     <>
       <button
+        data-focus-timer-trigger
         type="button"
         onClick={() => setOpen(true)}
         title={buttonLabel}
         aria-label={buttonLabel}
-        className={`fixed right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
-          ? "border-amber-400 bg-amber-100 text-amber-950"
-          : "border-purple-300 bg-purple-50 text-purple-900"}`}
+        className={triggerClassName}
       >
-        {done ? <CheckCircle2 className="h-5 w-5" /> : <Timer className="h-5 w-5" />}
+        {done ? <CheckCircle2 className={paired ? "h-4 w-4" : "h-5 w-5"} /> : <Timer className={paired ? "h-4 w-4" : "h-5 w-5"} />}
         <span>{done ? "Time's up" : running || timer.status === "paused"
-          ? displayTimer(timer.remainingSeconds) : "Focus Timer"}</span>
+          ? displayTimer(timer.remainingSeconds) : paired ? "Focus" : "Focus Timer"}</span>
         {running && <span className="sr-only">Running</span>}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen} modal={false}>
-        <DialogContent className="z-[90] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-lg overflow-y-auto rounded-3xl border-purple-200 bg-white p-4 text-slate-900 sm:p-6">
+        <DialogContent className="z-[90] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-lg overflow-y-auto rounded-3xl border-purple-200 bg-white/95 p-4 text-slate-900 shadow-2xl backdrop-blur-xl dark:border-violet-400/20 dark:bg-slate-950/95 dark:text-slate-100 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Brain className="h-6 w-6 text-purple-700" /> My Focus Timer
@@ -135,15 +139,15 @@ export default function GlobalFocusTimer({ currentUser }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex gap-2 rounded-2xl bg-purple-50 p-1" role="group" aria-label="Focus timer mode">
+          <div className="flex gap-2 rounded-2xl bg-purple-50 p-1 dark:bg-violet-950/50" role="group" aria-label="Focus timer mode">
             <button type="button" disabled={running} onClick={() => action("mode", "focus")}
               aria-pressed={isFocus}
-              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed ${isFocus ? "bg-white text-purple-800 shadow-sm" : "text-slate-600"}`}>
+              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed ${isFocus ? "bg-white text-purple-800 shadow-sm dark:bg-slate-800 dark:text-violet-200" : "text-slate-600 dark:text-slate-300"}`}>
               <Brain className="h-4 w-4" /> Focus
             </button>
             <button type="button" disabled={running} onClick={() => action("mode", "break")}
               aria-pressed={!isFocus}
-              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed ${!isFocus ? "bg-white text-purple-800 shadow-sm" : "text-slate-600"}`}>
+              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-600 disabled:cursor-not-allowed ${!isFocus ? "bg-white text-purple-800 shadow-sm dark:bg-slate-800 dark:text-violet-200" : "text-slate-600 dark:text-slate-300"}`}>
               <Coffee className="h-4 w-4" /> Short Break
             </button>
           </div>
@@ -171,12 +175,12 @@ export default function GlobalFocusTimer({ currentUser }) {
             </div>
           </div>
 
-          <div aria-live="polite" className="min-h-[20px] text-center text-sm font-medium text-purple-800">
+          <div aria-live="polite" className="min-h-[20px] text-center text-sm font-medium text-purple-800 dark:text-violet-200">
             {done ? isFocus ? "Focus block complete. Take a break or start another." :
               "Break complete. Ready for another focus block?" : timer.task || "Choose one task to work on."}
           </div>
 
-          <label className="block text-sm font-semibold text-slate-700" htmlFor="ccs-focus-task">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="ccs-focus-task">
             The one thing I'm working on
           </label>
           <Input id="ccs-focus-task" maxLength={120} value={timer.task}
@@ -185,19 +189,19 @@ export default function GlobalFocusTimer({ currentUser }) {
             className="min-h-[44px] text-base" />
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="space-y-1 text-sm font-semibold text-slate-700" htmlFor="ccs-focus-duration">
+            <label className="space-y-1 text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="ccs-focus-duration">
               Focus minutes
               <select id="ccs-focus-duration" value={timer.focusMinutes} disabled={running}
                 onChange={(event) => action("focusMinutes", event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base disabled:opacity-60">
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 disabled:opacity-60">
                 {FOCUS_CHOICES.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
               </select>
             </label>
-            <label className="space-y-1 text-sm font-semibold text-slate-700" htmlFor="ccs-break-duration">
+            <label className="space-y-1 text-sm font-semibold text-slate-700 dark:text-slate-200" htmlFor="ccs-break-duration">
               Break minutes
               <select id="ccs-break-duration" value={timer.breakMinutes} disabled={running}
                 onChange={(event) => action("breakMinutes", event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base disabled:opacity-60">
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-base dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 disabled:opacity-60">
                 {BREAK_CHOICES.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
               </select>
             </label>
@@ -224,11 +228,11 @@ export default function GlobalFocusTimer({ currentUser }) {
             </Button>
           )}
 
-          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-950/40 dark:text-amber-100">
             Focus breaks do <strong>not</strong> start tracked lunch, unpaid breaks or Work Pause.
             Use the Time Clock separately whenever you actually stop working.
           </p>
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
             {timer.finishedFocusBlocks} completed focus block{timer.finishedFocusBlocks === 1 ? "" : "s"} on this device.
             Timer survives refresh and keeps counting while you visit other pages.
           </p>
