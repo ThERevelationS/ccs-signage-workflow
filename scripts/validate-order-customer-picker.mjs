@@ -22,6 +22,7 @@ const rows = [
   job('closed-flag', { closed: true }),
   job('deleted', { deleted: true }),
   job('rider', { is_rider: true }),
+  job('smartsheet-child', { smartsheet_parent_row_id: '1234567890' }),
   job('legacy-lost', { in_pipeline: false, current_task_description: 'Lost to competitor' }),
   job('legacy-completed', { current_task_description: 'Completed sale - done' }),
   job('legacy-closed', { current_task_description: 'Closed account' }),
@@ -36,6 +37,8 @@ assert.deepEqual(filterOrderCustomerJobs(rows, 'unrelated'), []);
 assert.deepEqual(filterOrderCustomerJobs(null, 'advantage'), []);
 assert.equal(filterOrderCustomerJobs(rows, 'advantage', 2).length, 2);
 assert.equal(isActiveOrderCustomerJob(job('won-active', { sales_status: 'won', close_date: '2026-09-25' })), true);
+assert.equal(isActiveOrderCustomerJob(job('hierarchy-child', { smartsheet_parent_row_id: '8533271213768580' })), false);
+assert.equal(isActiveOrderCustomerJob(job('malformed-parent-metadata', { smartsheet_parent_row_id: 'not-a-row-id' })), true);
 console.log('PASS only nonterminal active main jobs appear; historical closed and lost states excluded without hiding active won jobs');
 
 // Read-only production-shaped fixtures: all three Sunrise rows are marked
@@ -75,6 +78,7 @@ const newCincyShadow = job('new-cincy-shadow', {
 });
 assert.deepEqual([...orderAutomaticRiderShadowIds([newCincyRoot, newCincyShadow])], ['new-cincy-shadow']);
 assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, newCincyShadow], 'New Cincy').map(x => x.id), ['new-cincy-root']);
+assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, { ...newCincyShadow, smartsheet_parent_row_id: '8533271213768580' }], 'New Cincy').map(x => x.id), ['new-cincy-root']);
 assert.deepEqual(filterOrderCustomerJobs([newCincyRoot, newCincyShadow], 'P&P'), []);
 console.log('PASS New Cincy automatic rider shadow is suppressed while the one active root job remains');
 
