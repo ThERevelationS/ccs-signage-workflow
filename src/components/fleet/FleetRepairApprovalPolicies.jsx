@@ -64,6 +64,7 @@ export default function FleetRepairApprovalPolicies() {
   const busyRef = useRef(busy);
   const uncertainRef = useRef(uncertain);
   const recoveryRef = useRef(null);
+  const refreshRetryRef = useRef(null);
   busyRef.current = busy;
   uncertainRef.current = uncertain;
 
@@ -81,9 +82,11 @@ export default function FleetRepairApprovalPolicies() {
       setPolicies(rows);
       setLoadFailed(false);
       setRefreshWarning("");
+      return true;
     } catch (err) {
       setLoadFailed(true);
       setError(err?.message || "Unable to load Fleet repair approval policies.");
+      return false;
     } finally {
       setLoading(false);
     }
@@ -140,6 +143,11 @@ export default function FleetRepairApprovalPolicies() {
   }, [uncertain, busy]);
 
   const mutationBlocked = !!busy || !!uncertain || loading || loadFailed;
+  const editorLocked = !!busy || !!uncertain;
+  const retryRefresh = async () => {
+    const ok = await load();
+    requestAnimationFrame(() => (ok ? addButtonRef.current : refreshRetryRef.current)?.focus());
+  };
   const sorted = useMemo(() => policies.slice().sort((a, b) => Number(a.minimum_amount || 0) - Number(b.minimum_amount || 0)), [policies]);
   const coverage = useMemo(() => {
     const enabled = policies.filter(policy => policy.enabled !== false).slice().sort((a,b) => policyMin(a) - policyMin(b));
