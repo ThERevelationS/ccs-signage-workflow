@@ -27,4 +27,12 @@ assert.match(source, /const dateReceivedOption = typeof order\.receipt_option ==
 assert.match(source, /\{dateReceivedOption \|\| format\(dateReceived, 'MMM d, yyyy'\)\}/);
 assert.ok(source.indexOf('dateReceivedOption || format(dateReceived') > source.indexOf('dateReceivedOption || dateReceived'),
   'mobile Received display should prefer a translated receipt option over a paired calendar date');
-console.log('PASS Order mobile cards render verified Needed/Ordered/Received dates, preserve translated option precedence, and safely ignore malformed calendar values');
+assert.match(source, /<button\s+key=\{order\.id\}\s+type="button"/,
+  'each mobile Order card should be a native keyboard-operable button');
+assert.match(source, /aria-label=\{\`Open order details for \$\{order\.customer_name \|\| 'unnamed customer'\}\`\}/,
+  'each mobile Order card should announce the customer and its details action');
+assert.match(source, /focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2/,
+  'keyboard focus should remain visibly apparent on mobile Order cards');
+assert.doesNotMatch(source, /<div\s+key=\{order\.id\}[\s\S]{0,300}onClick=/,
+  'mobile Order cards should not regress to click-only div controls');
+console.log('PASS Order mobile cards render verified dates and options safely and expose each details card as a visible-focus native keyboard control');
