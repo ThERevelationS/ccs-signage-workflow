@@ -21,6 +21,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   const [loading, setLoading] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [submissionUncertain, setSubmissionUncertain] = useState(false);
+  const [decisionUncertain, setDecisionUncertain] = useState(null);
   const [loadedWorkOrderId, setLoadedWorkOrderId] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -130,7 +131,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
       setEstimate(null); setForm(EMPTY); setDecisionNotes("");
       focusResultOnSettle.current = false;
       retrySucceededFocusRef.current = false;
-      setSubmissionUncertain(false); setLoadFailed(false);
+      setSubmissionUncertain(false); setDecisionUncertain(null); setLoadFailed(false);
       load();
     }
     return () => { loadEpochRef.current += 1; };
@@ -139,8 +140,8 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     if (open && loadFailed && !loading) retryLoadRef.current?.focus();
   }, [open, loadFailed, loading]);
   useEffect(() => {
-    if (open && submissionUncertain && error && !loading) recheckRef.current?.focus();
-  }, [open, submissionUncertain, error, loading]);
+    if (open && (submissionUncertain || decisionUncertain) && error && !loading) recheckRef.current?.focus();
+  }, [open, submissionUncertain, decisionUncertain, error, loading]);
   useEffect(() => {
     if (!open || loading || loadFailed || !retrySucceededFocusRef.current || loadedWorkOrderId !== workOrder?.id) return;
     closeRef.current?.focus();
@@ -156,7 +157,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
   if (!open) return null;
   const locked = ["submitted","approved","rejected"].includes(estimate?.status);
   const verified = loadedWorkOrderId === workOrder?.id;
-  const decisionBlocked = loading || loadFailed || !verified || submissionUncertain || !!busy;
+  const decisionBlocked = loading || loadFailed || !verified || submissionUncertain || !!decisionUncertain || !!busy;
   const editBlocked = locked || decisionBlocked;
   const set = (key,value) => { setMessage(""); setForm(prev=>({...prev,[key]:value})); };
   const setLine = (kind,index,key,value) => setForm(prev=>({...prev,[kind]:prev[kind].map((line,i)=>i===index?{...line,[key]:value}:line)}));
@@ -203,18 +204,50 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
     } catch (err) { setError(err?.message || "Unable to save the Fleet repair estimate."); }
     finally { setBusy(""); }
   };
+  const recheckDecision = async () => {
+    if (!decisionUncertain || !workOrder?.id || loading || busy) return;
+    const epoch = ++loadEpochRef.current;
+    setLoading(true); setError(""); setRefreshWarning("");
+    try {
+      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action:"get", work_order_id:workOrder.id });
+      if (epoch !== loadEpochRef.current) return;
+      if (data?.error) throw new Error(data.error);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, "estimate")) throw new Error("The server did not return an estimate status.");
+      const row = data.estimate || null;
+      if (!row || row.id !== estimate?.id) throw new Error("The current estimate cannot be reconciled with the unconfirmed decision.");
+      const committed = row.status === decisionUncertain.decision;
+      const definitelyNotCommitted = row.status === "submitted" && row.updated_date === decisionUncertain.expected_updated_date;
+      if (!committed && !definitelyNotCommitted) throw new Error("The estimate changed while the approval response was uncertain. Close and reopen to review the current server record.");
+      setEstimate(row);
+      setDecisionNotes(row?.decision_notes || "");
+      setLoadedWorkOrderId(workOrder.id);
+      setDecisionUncertain(null);
+      setMessage(committed
+        ? `Server confirms the estimate is ${pretty(row.status)}. The decision was not repeated.`
+        : "Server confirms the approval decision was not recorded. Review it before trying again.");
+      focusResultOnSettle.current = true;
+      if (committed && !(await reportChanged(row, `Estimate ${pretty(row.status)}`))) focusResultOnSettle.current = true;
+    } catch (err) {
+      if (epoch !== loadEpochRef.current) return;
+      setError(`${err?.message || "Unable to check approval status."} The decision remains unconfirmed; do not repeat it.`);
+    } finally { if (epoch === loadEpochRef.current) setLoading(false); }
+  };
   const decide = async decision => {
     if (decisionBlocked) return;
+    const expectedUpdatedDate = estimate?.updated_date || "";
     setBusy(decision); setError(""); setMessage(""); setRefreshWarning("");
     try {
-      const {data}=await base44.functions.invoke("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:estimate?.updated_date||"",decision,decision_notes:decisionNotes});
+      const {data}=await base44.functions.invoke("fleetRepairEstimateAction",{action:"decide",work_order_id:workOrder.id,expected_updated_date:expectedUpdatedDate,decision,decision_notes:decisionNotes});
       if(data?.error)throw new Error(data.error);
       if (!data?.estimate) throw new Error("The approval response did not include an estimate. Refresh before retrying.");
       setEstimate(data.estimate);
       setMessage(`Estimate ${pretty(decision)}.`);
       focusResultOnSettle.current = true;
       if (!(await reportChanged(data.estimate, `Estimate ${pretty(decision)}`))) focusResultOnSettle.current = true;
-    } catch(err){setError(err?.message||"Unable to record the approval decision.");}
+    } catch(err){
+      setDecisionUncertain({ decision, expected_updated_date: expectedUpdatedDate });
+      setError(`${err?.message || "Unable to confirm the approval decision."} Check current server status before attempting another decision.`);
+    }
     finally{setBusy("");}
   };
 
@@ -227,6 +260,7 @@ export default function FleetRepairEstimateDialog({ open, workOrder, equipmentNa
         {refreshWarning&&<div ref={warningRef} tabIndex={-1} role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200 focus-visible:outline-2 focus-visible:outline-indigo-500">{refreshWarning}</div>}
         {loading || (!verified && !loadFailed) ? <div role="status" aria-label="Loading repair estimate" className="py-16 flex justify-center"><Loader2 aria-hidden="true" className="w-7 h-7 animate-spin text-gray-400"/></div> : loadFailed ? <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm text-amber-900 dark:text-amber-200">Estimate data is unavailable. Editing and approval are disabled until the current server record loads.</p><button ref={retryLoadRef} type="button" onClick={() => { retrySucceededFocusRef.current = true; load(); }} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Retry loading estimate</button></div> : <>
           {submissionUncertain && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-200">Submission status is unconfirmed. Changes and approval are paused until the server is checked.</p><button ref={recheckRef} type="button" onClick={() => load(true)} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Check current server status</button></div>}
+          {decisionUncertain && <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30"><p className="mb-3 text-sm font-semibold text-amber-900 dark:text-amber-200">The {pretty(decisionUncertain.decision)} decision is unconfirmed. Approval actions are paused until the current server record is checked.</p><button ref={recheckRef} type="button" onClick={recheckDecision} className="min-h-11 px-4 rounded-lg border border-amber-500 font-semibold focus-visible:outline-2 focus-visible:outline-indigo-500">Check approval decision status</button></div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Stat label="Estimate status" value={pretty(estimate?.status||"draft")} /><Stat label="Approval tier" value={estimate?.approval_tier||"No matching tier"}/><Stat label="Approval required" value={estimate?.approval_required?"Yes":"No"} attention={estimate?.approval_required&&estimate?.status!=="approved"}/><Stat label="Estimated total" value={money(estimate?.estimated_total ?? preview.total)} /></div>
           {estimate?.approval_required&&estimate.status!=="approved"&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-300 flex items-start gap-2"><AlertTriangle className="w-5 h-5 shrink-0"/><div><b>Approval gate active.</b> This work order cannot be started or completed until this estimate is approved.</div></div>}
           <section className="rounded-xl border border-gray-200 dark:border-slate-700 p-4 space-y-4"><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><Field label="Labor hours"><input type="number" min="0" step="0.1" value={form.estimated_labor_hours} disabled={editBlocked} onChange={e=>set("estimated_labor_hours",e.target.value)} className="field"/></Field><Field label="Labor rate"><input type="number" min="0" step="0.01" value={form.labor_rate} disabled={editBlocked} onChange={e=>set("labor_rate",e.target.value)} className="field"/></Field><Field label="Miscellaneous"><input type="number" min="0" step="0.01" value={form.misc_total} disabled={editBlocked} onChange={e=>set("misc_total",e.target.value)} className="field"/></Field><Field label="Estimated completion"><input type="date" value={form.estimated_completion_date} disabled={editBlocked} onChange={e=>set("estimated_completion_date",e.target.value)} className="field"/></Field></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-2"><MoneyMini label="Labor" value={preview.labor}/><MoneyMini label="Parts" value={preview.partsTotal}/><MoneyMini label="Fluids" value={preview.fluidsTotal}/><MoneyMini label="Total" value={preview.total} strong/></div></section>
