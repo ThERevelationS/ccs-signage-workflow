@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/EmailGate";
 import OrderSpreadsheet from "@/components/orders/OrderSpreadsheet";
+import { canUseOrderExport } from "../../base44/shared/orderExportAccess.mjs";
 
 export default function OrderForm() {
   const { currentUser, isRegistered } = useAuth();
@@ -21,7 +22,7 @@ export default function OrderForm() {
   const [filterStatus, setFilterStatus] = useState("all_with_received");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLoaded, setFilterLoaded] = useState(false);
-  const canOrderExport = currentUser?.role === "admin" && currentUser?.can_order_export === true;
+  const canOrderExport = canUseOrderExport(currentUser);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const spreadsheetRef = useRef(null);
 
