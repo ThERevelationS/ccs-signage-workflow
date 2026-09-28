@@ -13,6 +13,7 @@ import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 import { reconcileActiveSalesColumnPreset } from "@/components/sales/salesColumnPresetSelection.mjs";
+import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const EMPTY_PIPELINE_SUMMARY = {
@@ -79,7 +80,7 @@ const EMPTY_PIPELINE_SUMMARY = {
 };
 
 export default function SalesPipeline() {
-  const { isRegistered, currentUser } = useAuth();
+  const { isRegistered, currentUser, sessionToken } = useAuth();
   const [filterStatus, setFilterStatus] = useState("all");
   const [recordScope, setRecordScope] = useState("current");
   const [viewMode, setViewMode] = useState("table");
@@ -97,20 +98,23 @@ export default function SalesPipeline() {
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const spreadsheetRef = useRef(null);
   const activeFiltersLoadRef = useRef(0);
+  const preferenceSaveChainRef = useRef(Promise.resolve());
 
   useEffect(() => {
     document.title = "Sales Pipeline - Workflow Manager";
   }, []);
 
   useEffect(() => {
-    // Saved-filter selections are user-specific. Fail closed while identity
-    // changes so a previous user's filters/preset cannot remain visible.
+    // Saved-filter selections and active filter preferences are user-specific.
+    // Fail closed while identity/session changes so a previous user's state
+    // cannot remain visible in a newly authenticated session.
     activeFiltersLoadRef.current += 1;
     setActiveFilters([]);
     setActiveColumnPreset(null);
-    setFilterStatus((current) => current.startsWith("custom_") ? "all" : current);
+    setFilterStatus("all");
+    setAttentionFilter("all");
     loadActiveFilters();
-  }, [currentUser?.email]);
+  }, [currentUser?.email, sessionToken]);
 
   useEffect(() => {
     let cancelled = false;
