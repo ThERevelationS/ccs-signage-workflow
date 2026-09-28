@@ -96,6 +96,7 @@ import OrderMobileCards from "@/components/orders/OrderMobileCards";
 import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJobSubtitle } from "@/components/orders/orderCustomerJobPicker.mjs";
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
+import { pushSavedOrdersToSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
 import { canUseOrderExport } from "../../../base44/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -132,8 +133,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   const [editingCell, setEditingCell] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [syncMessage, setSyncMessage] = useState("");
   const [lastSaved, setLastSaved] = useState(null);
+  const [lastSynced, setLastSynced] = useState(null);
   const [focusedRowId, setFocusedRowId] = useState(null);
   const [focusedRowIndex, setFocusedRowIndex] = useState(null);
   const [headerContextMenu, setHeaderContextMenu] = useState(null);
@@ -199,8 +204,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const { trackChange } = useCellHistoryTracker("Order", currentUser);
   const pendingChangesRef = useRef({}); // Track changes per order ID
+  const pendingSyncIdsRef = useRef(new Set()); // Saved locally but not yet confirmed in Smartsheet
   const originalOrdersRef = useRef({}); // Track original order data for comparison
   const saveInFlightRef = useRef(false);
+  const syncInFlightRef = useRef(false);
   const dateNeededSaveInFlightRef = useRef(false);
   const addInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
