@@ -245,7 +245,21 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     return () => clearInterval(interval);
   }, [workOrderFilter]);
 
-  // Auto-save every 5 seconds if there are unsaved changes
+  const markOrderNeedsSync = useCallback((orderId) => {
+    const id = String(orderId || '').trim();
+    if (!id) return;
+    pendingSyncIdsRef.current.add(id);
+    setPendingSyncCount(pendingSyncIdsRef.current.size);
+    setSyncMessage('');
+  }, []);
+
+  const clearSyncedOrderIds = useCallback((orderIds) => {
+    for (const id of orderIds || []) pendingSyncIdsRef.current.delete(String(id));
+    setPendingSyncCount(pendingSyncIdsRef.current.size);
+  }, []);
+
+  // Auto-save every 5 seconds if there are unsaved changes. Auto-save writes
+  // Base44 only; the explicit Save & Sync button pushes those saved row IDs.
   useEffect(() => {
     const interval = setInterval(() => {
       if (hasUnsavedChanges && Object.keys(pendingChangesRef.current).length > 0) {
@@ -258,9 +272,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
   // Notify parent of save status
   useEffect(() => {
     if (onSaveStatusChange) {
-      onSaveStatusChange({ hasUnsavedChanges, isSaving, lastSaved });
+      onSaveStatusChange({
+        hasUnsavedChanges, isSaving, lastSaved,
+        isSyncing, pendingSyncCount, lastSynced, syncMessage,
+      });
     }
-  }, [hasUnsavedChanges, isSaving, lastSaved]);
+  }, [hasUnsavedChanges, isSaving, lastSaved, isSyncing, pendingSyncCount, lastSynced, syncMessage, onSaveStatusChange]);
 
   const loadData = async (showLoading = true) => {
     if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
