@@ -12,7 +12,6 @@ import CustomFilterDialog from "@/components/sales/CustomFilterDialog";
 import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
-import { reconcileActiveSalesColumnPreset } from "@/components/sales/salesColumnPresetSelection.mjs";
 import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
 
 const AuthorizedEmail = base44.entities.AuthorizedEmail;
@@ -443,6 +442,7 @@ export default function SalesPipeline() {
                   setShowCustomFilterDialog(true);
                 } else {
                   setFilterStatus(value);
+                  persistFilterPreferences({ informationFilter: value });
                 }
               }}>
                 <SelectTrigger aria-label="Information Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40">
@@ -482,9 +482,11 @@ export default function SalesPipeline() {
                   setShowColumnFilterDialog(true);
                 } else if (value === "default") {
                   setActiveColumnPreset(null);
+                  persistFilterPreferences({ columnPresetId: "default" });
                 } else if (value) {
                   const preset = activeFilters.find(f => f.id === value);
                   setActiveColumnPreset(preset || null);
+                  if (preset?.type === "column_preset") persistFilterPreferences({ columnPresetId: preset.id });
                 }
               }}
             >
@@ -593,17 +595,17 @@ export default function SalesPipeline() {
         {!showDuplicateCleanup && recordScope === "outcomes" && (
           <div className="mb-3 space-y-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("all"); }} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("all"); persistFilterPreferences({ informationFilter: "all", attention: "all" }); }} className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-300 hover:shadow">
                 <div className="text-[10px] font-medium uppercase tracking-wide text-slate-500">Tracked Outcomes</div>
                 <div className="mt-0.5 text-xl font-bold leading-tight text-slate-900">{pipelineSummary.trackedOutcomeCount}</div>
                 <div className="mt-1 text-xs text-slate-500">{outcomePeriod === "all" ? "All authoritative modern outcomes" : `${pipelineSummary.totalTrackedOutcomeCount} tracked across all dates`}</div>
               </button>
-              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("won"); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "won" ? "border-emerald-400 bg-emerald-50" : "border-emerald-200 bg-white hover:border-emerald-300"}`}>
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("won"); persistFilterPreferences({ informationFilter: "won", attention: "all" }); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "won" ? "border-emerald-400 bg-emerald-50" : "border-emerald-200 bg-white hover:border-emerald-300"}`}>
                 <div className="text-[10px] font-medium uppercase tracking-wide text-emerald-700">Won</div>
                 <div className="mt-0.5 text-xl font-bold leading-tight text-emerald-900">{pipelineSummary.wonCount}</div>
                 <div className="mt-1 text-xs text-emerald-700/80">{formatPipelineValue(pipelineSummary.wonValue)} won value</div>
               </button>
-              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("lost"); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "lost" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
+              <button type="button" onClick={() => { setAttentionFilter("all"); setFilterStatus("lost"); persistFilterPreferences({ informationFilter: "lost", attention: "all" }); }} className={`rounded-xl border p-3 text-left shadow-sm transition ${filterStatus === "lost" ? "border-red-400 bg-red-50" : "border-red-200 bg-white hover:border-red-300"}`}>
                 <div className="text-[10px] font-medium uppercase tracking-wide text-red-700">Lost</div>
                 <div className="mt-0.5 text-xl font-bold leading-tight text-red-900">{pipelineSummary.lostCount}</div>
                 <div className="mt-1 text-xs text-red-700/80">{formatPipelineValue(pipelineSummary.lostValue)} lost value</div>
