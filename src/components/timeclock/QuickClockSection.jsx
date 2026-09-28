@@ -16,6 +16,7 @@ import {
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
+import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import * as faceapi from "face-api.js";
 import { Html5Qrcode } from "html5-qrcode";
@@ -111,6 +112,8 @@ export default function QuickClockSection({
   const [authoritativeTransition, setAuthoritativeTransition] = useState(null);
   const [punchResolution, setPunchResolution] = useState(null);
   const [punchResolutionError, setPunchResolutionError] = useState("");
+  const [lateClockInReview, setLateClockInReview] = useState(null);
+  const [lateClockInError, setLateClockInError] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -279,6 +282,8 @@ export default function QuickClockSection({
     setLaborSummary(status?.labor_summary || { count: 0, total_minutes: 0 });
 
     if (status?.requires_punch_resolution === true && status?.entry?.id && status?.punch_resolution) {
+      setLateClockInReview(null);
+      setLateClockInError("");
       setAuthoritativeTransition(null);
       setPunchResolution({ ...status.punch_resolution, entry: status.entry });
       setPunchResolutionError("");
@@ -288,6 +293,17 @@ export default function QuickClockSection({
       return "punch_resolution";
     }
     setPunchResolution(null);
+
+    if (status?.requires_late_clock_in_review === true && status?.status === "clocked_out" && status?.late_clock_in_review) {
+      setAuthoritativeTransition(null);
+      setLateClockInReview(status.late_clock_in_review);
+      setLateClockInError("");
+      setActiveEntry(null);
+      setShowClockOut(false);
+      setIsRecognizing(false);
+      return "late_clock_in_review";
+    }
+    setLateClockInReview(null);
 
     if (status?.transition) {
       const transition = status.transition;
@@ -409,6 +425,8 @@ export default function QuickClockSection({
     setAuthoritativeTransition(null);
     setPunchResolution(null);
     setPunchResolutionError("");
+    setLateClockInReview(null);
+    setLateClockInError("");
     setUsernameInput("");
     setManualPassword("");
     setUsernameError("");
@@ -470,6 +488,7 @@ export default function QuickClockSection({
     try {
       const status = await invokeTimeClock({
         action: "status",
+        clock_action_intent: true,
         ...credentialPayload(credential, user?.email),
       });
       const verifiedUser = status.user || user;
@@ -482,6 +501,10 @@ export default function QuickClockSection({
       }
       if (resolvedStatus === "punch_resolution") {
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
+        return;
+      }
+      if (resolvedStatus === "late_clock_in_review") {
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Confirm whether you missed Clock In before continuing.`);
         return;
       }
       if (resolvedStatus === "transition") return;
