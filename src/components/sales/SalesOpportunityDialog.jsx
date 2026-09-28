@@ -16,6 +16,7 @@ import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems, getSalesAttentionItems } from "@/components/sales/salesAttention";
 import { getSalesRecordClassification } from "@/components/sales/salesRecordScopes";
 import { getSalesPlaceholderReason, isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 
 const CellHistory = base44.entities.CellHistory;
@@ -163,6 +164,7 @@ export default function SalesOpportunityDialog({
   const recordClassification = getSalesRecordClassification(workOrder);
   const likelyPlaceholder = isLikelySalesPlaceholder(workOrder);
   const placeholderReason = getSalesPlaceholderReason(workOrder);
+  const salesOwnerSelect = buildSalesPersonSelectModel(workOrder?.sales_rep, users);
   const clientNotes = useMemo(() => (workOrder?.work_notes || [])
     .filter((note) => ["client", "admin", "other"].includes(note?.type))
     .slice()
@@ -328,12 +330,12 @@ export default function SalesOpportunityDialog({
             </div>
             <div className={`rounded-xl border bg-white p-3 ${attentionKeys.has("owner_missing") ? "border-amber-300 bg-amber-50/30" : ""}`}>
               <Label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sales Owner</Label>
-              <Select value={workOrder.sales_rep || "__unassigned__"} onValueChange={(value) => update({ sales_rep: value === "__unassigned__" ? "" : value })} disabled={!isRegistered}>
-                <SelectTrigger className="mt-2 h-9"><SelectValue /></SelectTrigger>
+              <Select value={salesOwnerSelect.canonical || "__unassigned__"} onValueChange={(value) => update({ sales_rep: value === "__unassigned__" ? "" : value })} disabled={!isRegistered}>
+                <SelectTrigger className="mt-2 h-9"><SelectValue>{salesOwnerSelect.canonical || "Unassigned"}</SelectValue></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                  {workOrder.sales_rep && !users.some((user) => user.full_name === workOrder.sales_rep) && <SelectItem value={workOrder.sales_rep}>{workOrder.sales_rep}</SelectItem>}
-                  {users.filter((user) => user.full_name).map((user) => <SelectItem key={user.email} value={user.full_name}>{user.full_name}</SelectItem>)}
+                  {salesOwnerSelect.legacy && <SelectItem value={salesOwnerSelect.legacy}>{salesOwnerSelect.legacy}</SelectItem>}
+                  {salesOwnerSelect.options.map((user) => <SelectItem key={user.email || user.full_name} value={user.full_name}>{user.full_name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
