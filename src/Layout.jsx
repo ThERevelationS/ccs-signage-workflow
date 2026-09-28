@@ -1054,30 +1054,29 @@ function LayoutContent({ children }) {
                   </div>
                 </div>
 
-                {/* Time Clock + Add Task on top row, Search spans full width below */}
-                <div className="hidden lg:flex lg:flex-col lg:gap-1">
-                  <div className="flex gap-2 items-stretch">
+                {/* Utility controls stay within the same glass material as the navigation shell. */}
+                <div className={`hidden lg:flex ${compactView ? "flex-row items-center gap-1" : "flex-col gap-1"}`}>
+                  <div className={`flex items-stretch ${compactView ? "gap-1" : "gap-2"}`}>
                     {/* Login / Logout button */}
                     {!currentUser ? (
                       <button
                         data-login-gate-allow
                         onClick={showLoginDialog}
-                        className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-purple-300"
-                        style={{ background: 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)' }}
+                        className={`ccs-glass-control flex items-center rounded-xl text-purple-800 dark:text-violet-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title="Sign In"
                       >
-                        <LogIn className="w-4 h-4 text-purple-700" />
-                        <span className="font-bold text-sm text-purple-800">Sign In</span>
+                        <LogIn className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Sign In</span>
                       </button>
                     ) : (
                       <button
                         data-login-gate-allow
                         onClick={logout}
-                        className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-gray-300 bg-gray-50"
+                        className={`ccs-glass-control flex items-center rounded-xl text-slate-700 dark:text-slate-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title={`Logout ${getUserFirstName()}`}
                       >
-                        <LogOut className="w-4 h-4 text-gray-700" />
-                        <span className="font-bold text-sm text-gray-800">Logout</span>
+                        <LogOut className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                        <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Logout</span>
                       </button>
                     )}
 
@@ -1087,36 +1086,30 @@ function LayoutContent({ children }) {
                     {isUserAdmin(currentUser) && (
                       <button
                         onClick={() => setShowAnnouncementManager(true)}
-                        className="clay-button flex-shrink-0 flex flex-col items-center justify-center rounded-xl border-2 border-red-300 hover:opacity-90 transition-all duration-200"
-                        style={{
-                          background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
-                          boxShadow: '4px 4px 12px rgba(239,68,68,0.15), -4px -4px 12px rgba(255,255,255,0.9), inset 1px 1px 4px rgba(255,255,255,0.6)',
-                          width: '52px',
-                          alignSelf: 'stretch',
-                        }}
+                        className={`ccs-glass-control flex flex-shrink-0 items-center justify-center rounded-xl text-red-700 dark:text-red-200 ${compactView ? "h-7 w-8" : "w-11 self-stretch"}`}
                         title="Announcements (Admin)"
                       >
-                        <Megaphone className="w-5 h-5 text-red-600" />
+                        <Megaphone className={compactView ? "h-3.5 w-3.5" : "h-5 w-5"} />
                       </button>
                     )}
                     <Link
                       to={createPageUrl("TimeClock")}
-                      className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-green-300 bg-green-50"
+                      className={`ccs-glass-control flex items-center rounded-xl text-green-700 dark:text-emerald-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
-                      <Home className="w-4 h-4 text-green-600" />
-                      <span className="font-bold text-sm text-green-700">Time Clock</span>
+                      <Home className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
                     </Link>
                     
                     <button
                       onClick={() => setShowAddTaskDialog(true)}
-                      className="px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center gap-2 border-2 hover:clay-card border-blue-300 bg-blue-50"
+                      className={`ccs-glass-control flex items-center rounded-xl text-blue-700 dark:text-blue-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
-                      <ClipboardList className="w-4 h-4 text-blue-600" />
-                      <span className="font-bold text-sm text-blue-700">+ Task</span>
+                      <ClipboardList className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                      <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
                     </button>
                   </div>
 
-                  <GlobalSearch className="w-full justify-center" compact={compactView} shellGlass />
+                  <GlobalSearch className={compactView ? "w-[116px] justify-center" : "w-full justify-center"} compact={compactView} shellGlass />
                 </div>
               </div>
 
