@@ -349,6 +349,23 @@ try {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     }, (state) => { state.row.sip_completed = true; });
 
+  await caseRun("Mobile: reopening does not steal focus from another control used during the save",
+    origin, [mobile], async ([page]) => {
+      await page.getByRole("heading", { name: "Completed WIP Items (1)" }).waitFor();
+      await page.getByRole("button", { name: "Reopen Synthetic Revisit QA in the active SIPs queue" }).click();
+      await page.getByRole("button", { name: "Reopening Synthetic Revisit QA in the active SIPs queue" }).waitFor();
+      const search = page.getByPlaceholder(/Search customer/);
+      await search.focus();
+      await waitFor(1, "");
+      await page.getByText("Showing 1 of 1 active item").waitFor();
+      assert.equal(await search.evaluate(node => document.activeElement === node), true,
+        "A deliberate focus change during save must be preserved");
+      assert.equal(fixture.row.sip_completed, false);
+    }, (state) => {
+      state.row.sip_completed = true;
+      state.updateDelayMs = 450;
+    });
+
   console.log("PASS " + passed + " isolated Chromium SIPS browser scenarios");
   console.log("Synthetic conditional Work Order fixture only; authenticated nonproduction QA still required.");
 } finally {
