@@ -376,6 +376,10 @@
       "type": "string",
       "description": "Stable Smartsheet row identity for the linked mirror record. Used instead of visible row position, customer name, or sorting."
     },
+    "smartsheet_parent_row_id": {
+      "type": "string",
+      "description": "Stable parent-row identity from the Workflow Smartsheet hierarchy. Order Form uses this to suppress automatic child/rider rows without relying on row position or customer-name guessing."
+    },
     "smartsheet_last_synced_at": {
       "type": "string",
       "format": "date-time",
