@@ -765,8 +765,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   React.useImperativeHandle(ref, () => ({
     addNewRow,
-    exportToExcel,
     saveAndSync,
+    exportToExcel,
     refreshOrders: () => loadData(false),
     importFromExcel: () => fileInputRef.current?.click(),
     canImportExport: () => {
@@ -982,6 +982,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           <Button type="button" variant="outline" size="sm" onClick={() => loadData(true)} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
             Reload Orders
           </Button>
+        </div>
+      )}
+      {syncMessage && !saveError && (
+        <div className="mb-3 rounded-md border border-green-200 bg-green-50 p-2 text-xs text-green-800">
+          {syncMessage}
         </div>
       )}
 
