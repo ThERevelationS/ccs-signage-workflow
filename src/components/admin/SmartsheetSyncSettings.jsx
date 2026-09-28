@@ -19,6 +19,7 @@ import SmartsheetSalesSnapshotReview from "@/components/admin/SmartsheetSalesSna
 import OrderReviewTools from "@/components/orders/OrderReviewTools";
 import {
   prepareSmartsheetProfileTargetChange,
+  smartsheetProfileTargetLocked,
 } from "@/components/admin/smartsheetMappingFreshnessModel";
 import {
   enforceSmartsheetBackendSafety,
@@ -132,8 +133,8 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
   const merged = {
     ...DEFAULT_CONFIG,
     ...(saved || {}),
-    sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}), rollout_baseline: null },
-    orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}), rollout_baseline: null },
+    sales: { ...DEFAULT_CONFIG.sales, ...(saved?.sales || {}) },
+    orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}) },
   };
   if (merged.sales) merged.sales.column_bindings = normalizeBindings(merged.sales.column_bindings);
   if (merged.orders) merged.orders.column_bindings = normalizeBindings(merged.orders.column_bindings);
@@ -141,6 +142,7 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
 }
 
 function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionToken, columns, columnsLoading, columnsMessage, onLoadColumns }) {
+  const targetLocked = smartsheetProfileTargetLocked(value);
   const patch = (next) => onChange({ ...value, ...next });
   const fields = dataset ? getMappableFields(dataset) : [];
   const bindings = value.column_bindings || {};
@@ -171,6 +173,7 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
           <Input
             value={value.smartsheet_sheet_name || ""}
             onChange={(e) => patch({ smartsheet_sheet_name: e.target.value })}
+            disabled={targetLocked}
             className="mt-1"
           />
         </div>
@@ -180,6 +183,7 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
             <Input
               value={value.smartsheet_sheet_id || ""}
               onChange={(e) => patch({ smartsheet_sheet_id: e.target.value.trim() })}
+              disabled={targetLocked}
               placeholder="Numeric sheet ID"
               className="flex-1"
             />
@@ -196,6 +200,11 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
           </div>
           {columnsMessage && (
             <div className={`text-[11px] mt-1 ${columnsMessage.includes("Loaded") ? "text-green-700" : "text-red-600"}`}>{columnsMessage}</div>
+          )}
+          {targetLocked && (
+            <div className="mt-1 text-[11px] font-medium text-amber-700">
+              Target locked by the captured rollout baseline. Column bindings and sync switches remain editable.
+            </div>
           )}
         </div>
       </div>
