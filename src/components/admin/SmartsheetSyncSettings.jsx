@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, Check, Loader2, Play, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import {
-  loadSingleGlobalSetting,
-  saveGlobalSettingValueIfUnchanged,
-} from "@/components/shared/globalSettingsPersistence";
-import {
   getSmartsheetSyncStatus,
+  getSmartsheetSyncConfig,
+  saveSmartsheetSyncConfig,
   listSmartsheetSheets,
   testSmartsheetConnection,
   runSmartsheetSync,
@@ -130,6 +127,19 @@ function normalizeBindings(bindings = {}) {
     }
   }
   return out;
+}
+
+function stableNormalize(value) {
+  if (Array.isArray(value)) return value.map(stableNormalize);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((out, key) => {
+    out[key] = stableNormalize(value[key]);
+    return out;
+  }, {});
+}
+
+function stableConfigString(value) {
+  return JSON.stringify(stableNormalize(value));
 }
 
 function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
@@ -292,20 +302,22 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
   const dirty = useMemo(() => {
     const saved = record?.setting_value;
     if (!saved) return true;
-    const savedStr = JSON.stringify(mergeConfig(saved));
-    const currentStr = JSON.stringify(mergeConfig(config));
+    const savedStr = stableConfigString(mergeConfig(saved));
+    const currentStr = stableConfigString(mergeConfig(config));
     return savedStr !== currentStr;
   }, [record, config]);
 
   const load = async () => {
     setLoading(true);
     setError("");
+    if (!sessionToken) {
+      setRecord(null);
+      setConfig(DEFAULT_CONFIG);
+      setLoading(false);
+      return;
+    }
     try {
-      const loaded = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
-        settingKey: SETTING_KEY,
-        label: "Smartsheet sync configuration",
-      });
+      const loaded = await getSmartsheetSyncConfig({ sessionToken });
       setRecord(loaded);
       setConfig(mergeConfig(loaded?.setting_value));
     } catch (err) {
@@ -502,12 +514,10 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       const normalized = mergeConfig(config, {
         writeBackendAvailable: apiStatus?.write_actions_available === true,
       });
-      const savedRecord = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
+      const savedRecord = await saveSmartsheetSyncConfig({
+        sessionToken,
         loadedRecord: record,
-        settingKey: SETTING_KEY,
-        nextValue: normalized,
-        label: "Smartsheet sync configuration",
+        settingValue: normalized,
       });
       setRecord(savedRecord);
       setConfig(mergeConfig(savedRecord?.setting_value));
