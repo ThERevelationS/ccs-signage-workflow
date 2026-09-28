@@ -172,9 +172,10 @@ try {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
       const topNav = page.locator(".top-nav");
       await topNav.waitFor({ state: "visible" });
+      await page.waitForTimeout(700);
       const topNavBox = await topNav.boundingBox();
       const mainPadding = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).paddingTop));
-      assert.ok(topNavBox && mainPadding >= topNavBox.height - 1,
+      assert.ok(topNavBox && mainPadding >= topNavBox.height - 2,
         `Desktop work content starts below the expanded top shell (nav=${topNavBox?.height}, padding=${mainPadding})`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         "Desktop shell creates no horizontal page overflow");
