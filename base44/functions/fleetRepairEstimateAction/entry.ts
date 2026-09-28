@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { deleteFleetRecordIfCurrent, updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
+import { createFleetRepairApprovalPolicySafely } from '../../shared/fleetRepairApprovalPolicyCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 
 const norm = (value: unknown) => String(value ?? '').trim();
@@ -9,7 +10,6 @@ const nonNegative = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 };
 const nowIso = () => new Date().toISOString();
-const canonical = (rows:any[]=[]) => rows.slice().sort((a,b)=>String(a.id||'').localeCompare(String(b.id||'')))[0] || null;
 
 async function requireAdmin(base44:any) {
   const user = await base44.auth.me().catch(()=>null);
@@ -30,6 +30,7 @@ Deno.serve(async req => {
     const action = norm(body?.action);
     const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
     const Policy = base44.asServiceRole.entities.FleetRepairApprovalPolicy;
+    const PolicyCreateGate = base44.asServiceRole.entities.FleetRepairApprovalPolicyCreateGate;
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
 
     if (action === 'policy_list') {
@@ -45,10 +46,13 @@ Deno.serve(async req => {
       if (maximum != null && maximum !== 0 && (!Number.isFinite(maximum) || maximum < minimum)) return Response.json({error:'Maximum amount must be blank/0 for open-ended, or greater than/equal to the minimum amount.'},{status:400});
       const desired = {name:norm(row.name),enabled:row.enabled!==false,minimum_amount:minimum,...(maximum==null?{}:{maximum_amount:maximum}),approval_tier:norm(row.approval_tier||row.name),approval_required:row.approval_required!==false,approver_role:'admin',notes:norm(row.notes),sort_order:Number.isFinite(Number(row.sort_order))?Number(row.sort_order):0,creation_key:creationKey};
       if (!desired.name) return Response.json({error:'Policy name is required.'},{status:400});
-      const existing = canonical(await Policy.filter({creation_key:creationKey}));
-      if (existing) return Response.json({success:true,reused:true,policy:existing});
-      const created = await Policy.create(desired);
-      return Response.json({success:true,policy:created});
+      const result = await createFleetRepairApprovalPolicySafely({
+        policyEntity:Policy,
+        gateEntity:PolicyCreateGate,
+        creationKey,
+        desired,
+      });
+      return Response.json({success:true,reused:result.reused,policy:result.policy});
     }
     if (action === 'policy_update') {
       const id = norm(body?.id);
