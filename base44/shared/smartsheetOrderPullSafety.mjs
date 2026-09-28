@@ -14,6 +14,7 @@ export function orderPulledFieldsUnchanged(existing, pulledFields = {}) {
 }
 
 export function orderPushRecordUnchanged(record, sheetId, expectedSnapshot) {
+  if (record?.smartsheet_pending_local_sync === true) return false;
   const rowId = String(record?.smartsheet_row_id ?? '').trim();
   const linkedSheetId = String(record?.smartsheet_sheet_id ?? '').trim();
   return /^\d+$/.test(rowId) && linkedSheetId === String(sheetId ?? '').trim() &&
