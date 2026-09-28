@@ -48,9 +48,9 @@ import { useImportProgress } from "@/components/shared/ImportProgressContext";
 import { loadAllEntityRows, withRateLimitRetry } from "@/components/estimator/loadAllEntityRows";
 import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDeleteWorkOrderFromLoadedSnapshot, transitionWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const GlobalSettings = base44.entities.GlobalSettings;
 
 const SALES_STATUSES = [
@@ -463,7 +463,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const scopeAtStart = scope;
     if (showLoading) setIsLoading(true);
     try {
-      const usersPromise = loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Sales Pipeline authorized users" });
+      const usersPromise = loadSalesPersonRosterSafely({ sessionToken, label: "Sales Pipeline authorized users" });
       let rows = [];
       let pagedCount = 0;
       let hasMore = false;
