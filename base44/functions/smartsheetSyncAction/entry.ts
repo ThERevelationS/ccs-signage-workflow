@@ -1130,8 +1130,8 @@ Deno.serve(async (req) => {
     if (hasSessionToken) {
       const actor = await authenticateSignShopSession(base44, body?.session_token);
       // Save & Sync is intentionally available to any currently authorized
-      // Order Form user, but it can only push the exact saved Order IDs.
-      if (actor?.role !== 'admin' && action !== 'push_saved_orders') {
+      // user, but it can only push exact saved record IDs for its dataset.
+      if (actor?.role !== 'admin' && !['push_saved_orders', 'push_saved_sales'].includes(action)) {
         return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
       }
       adminActor = actor;
@@ -1146,7 +1146,7 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders'],
+        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales'],
         write_actions_available: true,
       });
     }
@@ -1194,6 +1194,54 @@ Deno.serve(async (req) => {
       });
       return Response.json({ success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result] });
+    }
+
+    if (action === 'push_saved_sales') {
+      if (!configured) {
+        return Response.json({ success: false, error: 'Smartsheet API token is not configured.' }, { status: 503 });
+      }
+      const { config } = await loadSyncConfig(base44);
+      if (!config) return Response.json({ success: false, error: 'Smartsheet sync configuration is missing.' }, { status: 400 });
+      if (!config.global_enabled) return Response.json({ success: false, error: 'Global sync kill switch is OFF.' }, { status: 400 });
+      if (config.observation_mode) return Response.json({ success: false, error: 'Observation mode is ON; saved Sales changes were not pushed.' }, { status: 400 });
+      const profile = config?.sales || {};
+      if (!profile?.mirror_enabled) return Response.json({ success: false, error: 'Sales Pipeline Smartsheet mirror is OFF.' }, { status: 400 });
+
+      const rawIds = Array.isArray(body?.work_order_ids) ? body.work_order_ids : [];
+      const cleanedIds = rawIds.map((id: unknown) => cleanText(id, 80));
+      if (cleanedIds.length === 0 || cleanedIds.some((id: string) => !/^[A-Za-z0-9_-]{6,80}$/.test(id))) {
+        return Response.json({ success: false, error: 'Save & Sync requires valid permanent WorkOrder IDs.' }, { status: 400 });
+      }
+      const workOrderIds = [...new Set(cleanedIds)];
+      const configuredLimit = Math.max(1, Number(config?.mass_change_limit_count) || 25);
+      const saveSyncLimit = Math.min(configuredLimit, 100);
+      if (workOrderIds.length > saveSyncLimit) {
+        return Response.json({ success: false,
+          error: `${workOrderIds.length} saved Sales WorkOrders exceed the ${saveSyncLimit}-record Save & Sync safety limit.` }, { status: 400 });
+      }
+
+      await saveSyncStatus(base44, {
+        status: 'running', started_at: new Date().toISOString(), action,
+        total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline → Smartsheet',
+        requested_work_order_ids: workOrderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
+      });
+
+      const pushResult = await pushDataset(base44, token, 'sales', profile, config, {
+        recordIds: workOrderIds,
+        respectSalesCreateSetting: true,
+      });
+      const result = { ...pushResult, dataset: 'sales', direction: 'push' };
+      const needsReview = salesRunRequiresReview([result]);
+      await saveSyncStatus(base44, {
+        status: needsReview ? 'needs_review' : 'completed', needs_review: needsReview,
+        completed_at: new Date().toISOString(), total_steps: 1, completed_steps: 1,
+        current_step_label: '', requested_work_order_ids: workOrderIds,
+        requested_by: cleanText(adminActor?.email, 320), results: [result],
+      });
+      return Response.json({
+        success: true, configured: true, write_actions_available: true,
+        sync_complete: !needsReview, needs_review: needsReview, results: [result],
+      });
     }
 
     if (action === 'audit_order_backup_readiness') {
