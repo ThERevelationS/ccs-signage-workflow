@@ -4,6 +4,7 @@ import { CalendarClock, CheckCircle2, ChevronRight, Clock3, UserRound } from "lu
 import { getQuoteAgingState, isQuoteAwaitingResponse } from "@/components/sales/salesQuoteAging";
 import { isCurrentPipelineOpportunity } from "@/components/sales/salesRecordScopes";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
 const money = (value) => new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -19,6 +20,7 @@ const dateLabel = (stamp) => {
 };
 
 const ownerKey = (value) => String(value || "").trim().toLowerCase();
+const canonicalOwnerKey = (value, users) => ownerKey(buildSalesPersonSelectModel(value, users).canonical);
 
 export default function SalesDailyQueue({
   workOrders = [],
@@ -27,6 +29,7 @@ export default function SalesDailyQueue({
   onCompleteFollowUp,
   isRegistered,
   currentSalesOwnerLabel = "",
+  users = [],
 }) {
   const [ownerScope, setOwnerScope] = useState("all");
   const [quoteDateErrors, setQuoteDateErrors] = useState({});
@@ -34,13 +37,13 @@ export default function SalesDailyQueue({
   today.setHours(0, 0, 0, 0);
   const todayStamp = format(today, "yyyy-MM-dd");
   const nearCloseStamp = format(addDays(today, 14), "yyyy-MM-dd");
-  const currentOwnerKey = ownerKey(currentSalesOwnerLabel);
+  const currentOwnerKey = canonicalOwnerKey(currentSalesOwnerLabel, users);
 
   const queues = useMemo(() => {
     const eligible = workOrders
       .filter(isCurrentPipelineOpportunity)
       .filter((workOrder) => {
-        if (ownerScope === "mine") return currentOwnerKey && ownerKey(workOrder.sales_rep) === currentOwnerKey;
+        if (ownerScope === "mine") return currentOwnerKey && canonicalOwnerKey(workOrder.sales_rep, users) === currentOwnerKey;
         if (ownerScope === "unassigned") return !ownerKey(workOrder.sales_rep);
         return true;
       });
@@ -73,7 +76,7 @@ export default function SalesDailyQueue({
     };
     Object.values(sections).forEach((rows) => rows.sort(byUrgency));
     return sections;
-  }, [workOrders, ownerScope, currentOwnerKey, todayStamp, nearCloseStamp]);
+  }, [workOrders, ownerScope, currentOwnerKey, todayStamp, nearCloseStamp, users]);
 
   const sectionDefinitions = [
     { key: "overdue", title: "Overdue Follow-ups", description: "Past-due customer follow-ups that need action first.", tone: "border-red-200 bg-red-50/50", badge: "bg-red-100 text-red-800" },
