@@ -107,7 +107,7 @@ export default function GlobalFocusTimer({ currentUser, paired = false, compact 
   const buttonLabel = done ? "Focus timer finished. Open timer" :
     `Open focus timer${running ? `, ${displayTimer(timer.remainingSeconds)} remaining` : ""}`;
   const triggerClassName = paired
-    ? `relative z-[1] flex min-h-[36px] items-center justify-center gap-1.5 border-0 bg-transparent font-bold text-violet-800 outline-none transition-[background-color,color,transform] duration-150 hover:bg-violet-100/70 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:text-violet-200 dark:hover:bg-violet-400/10 ${compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"} ${fullWidth ? "flex-1" : ""}`
+    ? `relative z-[1] flex items-center justify-center border-0 bg-transparent font-bold text-violet-800 outline-none transition-[background-color,color,transform] duration-150 hover:bg-violet-100/35 focus-visible:z-[2] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:text-violet-200 dark:hover:bg-violet-400/10 ${compact ? "min-h-[26px] gap-1 px-1.5 py-0.5 text-[11px]" : "min-h-[32px] gap-1.5 px-2.5 py-1 text-sm"} ${fullWidth ? "flex-1" : ""}`
     : `fixed right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-40 flex min-h-[48px] items-center gap-2 rounded-2xl border-2 px-4 py-2 text-sm font-bold shadow-lg transition-transform hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 lg:bottom-5 ${done
         ? "border-amber-400 bg-amber-100 text-amber-950 dark:border-amber-500/60 dark:bg-amber-950/70 dark:text-amber-100"
         : "border-purple-300 bg-purple-50 text-purple-900 dark:border-violet-500/50 dark:bg-violet-950/70 dark:text-violet-100"}`;
@@ -122,7 +122,7 @@ export default function GlobalFocusTimer({ currentUser, paired = false, compact 
         aria-label={buttonLabel}
         className={triggerClassName}
       >
-        {done ? <CheckCircle2 className={paired ? "h-4 w-4" : "h-5 w-5"} /> : <Timer className={paired ? "h-4 w-4" : "h-5 w-5"} />}
+        {done ? <CheckCircle2 className={paired ? (compact ? "h-3.5 w-3.5" : "h-4 w-4") : "h-5 w-5"} /> : <Timer className={paired ? (compact ? "h-3.5 w-3.5" : "h-4 w-4") : "h-5 w-5"} />}
         <span>{done ? "Time's up" : running || timer.status === "paused"
           ? displayTimer(timer.remainingSeconds) : paired ? "Focus" : "Focus Timer"}</span>
         {running && <span className="sr-only">Running</span>}
