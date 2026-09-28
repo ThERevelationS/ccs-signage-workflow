@@ -158,6 +158,20 @@ test('Boone official Planning Commission fee schedule remains byte-identical wit
   assert.equal(manifest.files.length, 6);
 });
 
+test('Boone Building Department SIGN FEES source identity cannot override newer current fee evidence', () => {
+  const guide = manifest.files.find(file => file.purpose === 'building_sign_permit_instructions_verify_currency');
+  assert.ok(guide);
+  assert.equal(guide.currencyCheck.httpStatus, 200);
+  assert.equal(guide.currencyCheck.sourceBytes, guide.bytes);
+  assert.equal(guide.currencyCheck.sourceSha256, guide.sha256);
+  assert.equal(guide.currencyCheck.matchesArchivedCopy, true);
+  assert.match(guide.currencyCheck.evidenceScope, /source-file identity only/i);
+  assert.match(guide.currencyCheck.evidenceScope, /Do not use it to override or broaden the current official Commercial Building Permit Fees page/i);
+  assert.match(guide.currencyCheck.evidenceScope, /do not infer that every fee, threshold, instruction, or workflow.*is current/i);
+  assert.match(manifest.sourceGapReview, /SIGN FEES\.pdf.*same 28092-byte SHA-256-identical file.*source-file identity evidence only/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
   const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
