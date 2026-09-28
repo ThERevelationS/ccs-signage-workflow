@@ -47,7 +47,7 @@ function fixture(initial = {}) {
 }
 
 {
-  const state = fixture();
+  const state = fixture({ smartsheet_pending_local_sync: true });
   let posts = 0;
   const result = await createOrderSmartsheetRowWithGuard(state.args(async (fresh) => {
     posts++;
@@ -61,6 +61,7 @@ function fixture(initial = {}) {
   assert.equal(posts, 1);
   assert.equal(state.getStored().smartsheet_row_id, '987654321');
   assert.deepEqual(state.getStored().smartsheet_sync_snapshot, { '111': 'Example' });
+  assert.equal(state.getStored().smartsheet_pending_local_sync, false);
   assert.equal(state.getStored().smartsheet_create_attempt.status, 'linked');
   assert.equal(orderSmartsheetCreateNeedsReview(state.getStored()), false);
   assert.deepEqual(state.calls.slice(0, 4), ['GET', 'RESERVE', 'GET', 'LINK']);
@@ -69,7 +70,7 @@ function fixture(initial = {}) {
     /already has a Smartsheet identity/,
   );
   assert.equal(posts, 1);
-  console.log('PASS write-ahead reservation, verified permanent link, snapshot and repeat-create blocking');
+  console.log('PASS explicit new-Order create clears durable pending marker only after verified permanent link and snapshot');
 }
 
 {
