@@ -25,7 +25,15 @@
       "purpose": "sign_permit_checklist",
       "bytes": 46354,
       "sha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
-      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-checklist.pdf"
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-checklist.pdf",
+      "currencyCheck": {
+        "checkedAt": "2026-09-28",
+        "httpStatus": 200,
+        "sourceBytes": 46354,
+        "sourceSha256": "58275e6fca4ad7ad67491544e50c8bfe0d9465d6c12de3cee5f69014cbfe8880",
+        "matchesArchivedCopy": true,
+        "evidenceScope": "The exact official Planning Commission SignPermit_checklist.pdf URL remains available and its current bytes/hash match the archived repository copy. This verifies source-file identity as checked; it does not by itself prove that every checklist requirement, instruction, fee, or workflow printed inside the document is current."
+      }
     },
     {
       "filename": "planning-fee-schedule-2021.pdf",
@@ -110,6 +118,6 @@
       "notes": "The current official Boone County Building Permits page lists this form under Resources, but its linked .doc returned HTTP 404 during direct source verification. No repository copy was created and no file hash/byte count is claimed."
     }
   },
-  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs NEW building-permit applications to GovWell and still links the Oracle public-sector permit portal. The archived official Online Permit Information PDF documents Oracle as a building-permit workflow, but current evidence does not establish that Oracle is obsolete or define every permit type that may still use it. Do not direct new building-permit applications to Oracle without newer permit-specific official evidence. The page also lists an Electrical Permit Application Form under Resources; the exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. The current official Commercial Building Permit Fees page separately lists a Building Department specialized-system review fee of $150/sign for signage over 32 sq ft; do not treat that as the complete sign-permit cost or as a Planning Commission zoning/sign fee. The exact official Planning Commission SignPermit.pdf URL was rechecked on 2026-09-28 and still returns the same 269468-byte SHA-256-identical file as the archived sign-permit application; treat that as current source-file identity evidence, not blanket proof that every printed workflow or fee is current. Preserve the older archived Building Department sign guide as historical instructions.",
+  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs NEW building-permit applications to GovWell and still links the Oracle public-sector permit portal. The archived official Online Permit Information PDF documents Oracle as a building-permit workflow, but current evidence does not establish that Oracle is obsolete or define every permit type that may still use it. Do not direct new building-permit applications to Oracle without newer permit-specific official evidence. The page also lists an Electrical Permit Application Form under Resources; the exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. The current official Commercial Building Permit Fees page separately lists a Building Department specialized-system review fee of $150/sign for signage over 32 sq ft; do not treat that as the complete sign-permit cost or as a Planning Commission zoning/sign fee. The exact official Planning Commission SignPermit.pdf URL was rechecked on 2026-09-28 and still returns the same 269468-byte SHA-256-identical file as the archived sign-permit application; treat that as current source-file identity evidence, not blanket proof that every printed workflow or fee is current. The exact official Planning Commission SignPermit_checklist.pdf URL was also rechecked and remains the same 46354-byte SHA-256-identical file as the archived checklist; likewise treat that as source-file identity evidence, not blanket proof that every printed checklist requirement, instruction, fee, or workflow is current. Preserve the older archived Building Department sign guide as historical instructions.",
   "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
 }
