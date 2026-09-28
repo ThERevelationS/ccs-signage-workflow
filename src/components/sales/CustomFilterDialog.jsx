@@ -115,6 +115,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const [editorBaseline, setEditorBaseline] = useState(() => salesEditorSnapshot({ columns: ALL_COLUMNS, conditions: [{ field: "", operator: "equals", value: "" }] }));
   const [unsavedConfirm, setUnsavedConfirm] = useState(false);
   const pendingLeaveRef = useRef(null);
+  const saveInFlightRef = useRef(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
   const [activeSubTab, setActiveSubTab] = useState("pool");
@@ -241,7 +242,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       selected_by: editingItem?.selected_by || []
     };
 
-    if (isSaving) return false;
+    if (saveInFlightRef.current) return false;
+    saveInFlightRef.current = true;
     setIsSaving(true);
     setPersistenceError("");
     try {
@@ -261,6 +263,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       await loadData().catch(() => {});
       return false;
     } finally {
+      saveInFlightRef.current = false;
       setIsSaving(false);
     }
   };
