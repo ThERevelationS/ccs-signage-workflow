@@ -35,7 +35,7 @@ const render = (orders, split, openCount) =>
   renderToStaticMarkup(React.createElement(OrderMobileCards, {
     orders, separateHistory: split, openCount,
   }));
-const countCards = (html) => (html.match(/clay-card p-4/g) || []).length;
+const countCards = (html) => (html.match(/class="[^"]*clay-card[^"]*"/g) || []).length;
 const mixed = render([...open, ...received], true, 2);
 assert.match(mixed, /aria-label="Open orders"/);
 assert.match(mixed, /aria-label="Received order history"/);
