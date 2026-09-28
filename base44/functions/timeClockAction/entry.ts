@@ -5408,6 +5408,15 @@ Deno.serve(async (req) => {
         }
 
         if (responseType === 'worked_through') {
+          if (punchCase.status === 'worked_through' && String(punchCase.request_id || '') === requestId) {
+            if (!priorAudit?.id || !constantTimeEqual(String(priorAudit.details?.payload_hash || ''), punchPayloadHash)) {
+              return Response.json({ success: false, retry_same_request: true, error: 'The Worked Through response is saved but its exact audit could not be verified. Retry the same request.' }, { status: 409 });
+            }
+            return Response.json({
+              success: true, status: 'clocked_in', worked_through: true, reused: true,
+              entry, punch_exception: punchCase, user: publicEmployee(target),
+            });
+          }
           if (entry.status !== 'clocked_in') {
             return Response.json({ success: false, error: 'This prior shift has already been detached for manager review and cannot be changed to Worked Through.' }, { status: 409 });
           }
@@ -5521,6 +5530,20 @@ Deno.serve(async (req) => {
             String(correctionRequest.request_kind || '') !== 'missed_clock_out' ||
             String(correctionRequest.punch_exception_id || '') !== punchCase.id) {
           return Response.json({ success: false, error: 'The missed clock-out correction request could not be tied to this exact shift.' }, { status: 409 });
+        }
+        const savedRequestedChanges = correctionRequest.requested_changes || {};
+        if (
+          String(savedRequestedChanges.clock_in || '') !== String(requestedChanges.clock_in || '') ||
+          String(savedRequestedChanges.clock_out || '') !== String(requestedChanges.clock_out || '') ||
+          Number(savedRequestedChanges.lunch_minutes || 0) !== Number(requestedChanges.lunch_minutes || 0) ||
+          String(savedRequestedChanges.notes || '') !== String(requestedChanges.notes || '')
+        ) {
+          return Response.json({ success: false, error: 'This missed-punch request id is already bound to different reported punch details.' }, { status: 409 });
+        }
+        if (punchCase.status === 'pending_manager_review' &&
+            String(punchCase.request_id || '') === requestId &&
+            String(punchCase.claimed_clock_out || '') !== claimedClockOutIso) {
+          return Response.json({ success: false, error: 'This missed-punch request id is already bound to a different reported Clock Out time.' }, { status: 409 });
         }
 
         const correctionPayloadHash = await payloadHash({
