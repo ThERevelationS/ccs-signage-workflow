@@ -807,18 +807,32 @@ async function pushDataset(
     return { dataset, skipped: true, reason: 'No column bindings configured for this dataset.' };
   }
 
-  // Load Base44 records for this dataset.
+  // Load Base44 records for this dataset. Save & Sync supplies exact Order IDs
+  // so a button press never expands into a full-sheet Order push.
+  const requestedOrderIds = dataset === 'orders' && Array.isArray(options?.recordIds)
+    ? [...new Set(options.recordIds.map((id) => cleanText(id, 80)).filter(Boolean))]
+    : [];
   let records: any[] = [];
   if (dataset === 'sales') {
     records = await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
   } else {
     records = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.Order,
+      ...(requestedOrderIds.length ? { query: { id: { $in: requestedOrderIds } } } : {}),
       sort: 'id',
-      label: 'Order Form Smartsheet push Orders',
+      label: requestedOrderIds.length ? 'Order Form targeted Save & Sync Orders' : 'Order Form Smartsheet push Orders',
     });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
+  if (dataset === 'orders' && requestedOrderIds.length) {
+    const foundIds = new Set(records.map((record: any) => String(record?.id || '')));
+    const missingIds = requestedOrderIds.filter((id) => !foundIds.has(id));
+    if (missingIds.length) return {
+      dataset, direction: 'push', skipped: true,
+      reason: `${missingIds.length} saved Order records could not be re-read by permanent ID. No Smartsheet rows were written.`,
+      missing_record_ids: missingIds.slice(0, 10), records_examined: records.length,
+    };
+  }
 
   if (dataset === 'orders') {
     const unresolved = records.filter(orderSmartsheetCreateNeedsReview);
