@@ -81,4 +81,14 @@ const normalMarkup = render([{
 assert.match(normalMarkup, /Possible missed clock-out/);
 assert.match(normalMarkup, /Active shift is not linked to employee state/);
 console.log('PASS existing missed-clock-out and orphaned-live-shift alerts still display');
-console.log('PASS 3/3 Time Clock management exception renderer scenarios');
+
+const unresolvedMarkup = render([{
+  id: 'missed-punch-review', user_email: email, user_name: 'Synthetic Employee',
+  status: 'needs_resolution', clock_in: '2026-09-27T14:00:00.000Z',
+  punch_resolution_pending_at: '2026-09-28T12:00:00.000Z',
+}]);
+assert.match(unresolvedMarkup, /Missed punch awaiting manager review/);
+assert.match(unresolvedMarkup, /no fabricated Clock Out/);
+assert.doesNotMatch(unresolvedMarkup, /Active shift is not linked to employee state/);
+console.log('PASS unresolved missed punch is visible to management without being treated as an active shift');
+console.log('PASS 4/4 Time Clock management exception renderer scenarios');
