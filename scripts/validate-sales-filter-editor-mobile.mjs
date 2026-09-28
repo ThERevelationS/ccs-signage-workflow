@@ -74,8 +74,8 @@ check((row.match(/col-span-2 row-start-3 h-11 w-full min-w-0 sm:h-9 sm:flex-1/g)
   "Both raw-value entry paths need full-width 44px phone controls");
 check(row.includes('aria-label={`Remove condition ${index + 1}`}') &&
       row.includes('col-start-2 row-start-1 h-11 w-11 shrink-0 sm:h-9 sm:w-9') &&
-      row.includes('disabled={filterConditions.length === 1}'),
-  "Independent remove button must remain phone-sized and protect the final condition");
+      row.includes('disabled={filterConditions.length === 1 || isSaving}'),
+  "Independent remove button must remain phone-sized, protect the final condition and lock during save");
 check(filters.includes('onClick={addCondition}') &&
       filters.includes('className="mt-2 min-h-11 sm:min-h-0"'),
   "Add Condition must stay visible, reachable and phone-sized");
