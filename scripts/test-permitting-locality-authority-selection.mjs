@@ -290,6 +290,8 @@ test('repair handler checks office snapshot on both sides of CAS; post-save read
   assert.match(page, /assessOfficeRepairFreshness\(line, latestLocality, selectedId, selectedSnapshot\)/);
   assert.match(page, /setLocalities\(previous => previous\.filter\(locality => locality\.id !== line\.locality_id\)\)/);
   assert.match(page, /return "saved_needs_review"/);
+  assert.match(page, /if \(assessOfficeRepairFreshness\(line, latestLocality, selectedId, selectedSnapshot\)\) \{/);
+  assert.match(page, /setLocalities\(previous => previous\.filter\(locality => locality\.id !== line\.locality_id\)\)/);
   assert.match(row, /saved === "saved_needs_review"/);
   assert.match(row, /legacyOfficeOptions\.find\(office => office\.id === selectedOfficeId\)\?\.snapshot/);
   assert.match(row, /Office link saved, but current authority needs review/);

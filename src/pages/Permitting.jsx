@@ -582,12 +582,17 @@ export default function Permitting() {
       if (!latestLocality?.id || String(latestLocality.id) !== String(line.locality_id)) {
         throw new Error("Locality could not be verified after saving.");
       }
-      setLocalities(previous => previous.map(locality =>
-        locality.id === latestLocality.id ? latestLocality : locality
-      ));
-      if (assessOfficeRepairFreshness(line, latestLocality, selectedId, selectedSnapshot)) return true;
+      if (assessOfficeRepairFreshness(line, latestLocality, selectedId, selectedSnapshot)) {
+        setLocalities(previous => previous.map(locality =>
+          locality.id === latestLocality.id ? latestLocality : locality
+        ));
+        return true;
+      }
+      // The saved ID may have changed owner or gained new permissions mid-save.
+      // Treat all locality-office authority as unresolved until a fresh reload.
+      setLocalities(previous => previous.filter(locality => locality.id !== line.locality_id));
       setPermitLineEditError("Office link saved, but the selected office changed or was removed during saving. Review current authority before relying on it.");
-    } catch (error) {
+    } catch {
       // A failed post-save read must not leave a previously verified office
       // cached on the displayed permit line.
       setLocalities(previous => previous.filter(locality => locality.id !== line.locality_id));
