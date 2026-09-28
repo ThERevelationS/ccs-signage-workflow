@@ -24,6 +24,7 @@ const configuredBindings = {
   est_inv_at: "4624329576763268",
   estimate_amount: "5655853885876100",
   current_task_description: "4783818077955972",
+  current_task_assigned_to: "3326787726927748",
   title: "4872970838167428",
   sales_status: "999",
   sales_rep: "280218450585476",
@@ -81,6 +82,12 @@ const syncedRecord = {
 };
 const snapshot = { "11": "Example Client", "12": 250, "13": "Web", "14": "" };
 const sameRemote = { client_name: "Example Client", estimate_amount: "250", lead_source: "Web" };
+assert(salesPulledFieldsUnchanged({ ...syncedRecord, current_task_assigned_to: "Brett Heinlein" },
+  { current_task_assigned_to: "Brett" }),
+  "Smartsheet first-name assignee labels must compare equal to the same Base44 full name.");
+assert(!salesPulledFieldsUnchanged({ ...syncedRecord, current_task_assigned_to: "Brett Heinlein" },
+  { current_task_assigned_to: "Carl" }),
+  "Different Smartsheet first-name assignees must remain a real change.");
 assert(salesPulledFieldsUnchanged(syncedRecord, sameRemote), "Unchanged Sales values, including numeric strings, must not cause a write.");
 assert(salesPullSnapshotAligned(syncedRecord, snapshot), "An existing matching snapshot must allow a true no-op.");
 assert(!salesPulledFieldsUnchanged(syncedRecord, { ...sameRemote, estimate_amount: "275" }), "A changed estimate must remain eligible for reconciliation.");
