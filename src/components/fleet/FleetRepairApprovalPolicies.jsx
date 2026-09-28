@@ -40,11 +40,7 @@ const definiteMutationFailure = err => {
   const status = Number(err?.response?.status || 0);
   return status >= 400 && status < 500;
 };
-const responseError = message => {
-  const err = new Error(message);
-  err.fleetDefinite = true;
-  return err;
-};
+const responseError = message => Object.assign(new Error(message), { fleetDefinite: true });
 
 export default function FleetRepairApprovalPolicies() {
   const [policies, setPolicies] = useState([]);
