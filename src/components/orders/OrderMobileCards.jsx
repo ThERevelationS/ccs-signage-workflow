@@ -10,12 +10,17 @@ const STATUS_COLORS = {
   cancelled: "bg-red-100 text-red-700",
 };
 
-const safeDate = (d) => {
-  if (!d) return null;
-  try {
-    const [y, m, day] = d.split('-').map(Number);
-    return new Date(y, m - 1, day);
-  } catch { return null; }
+export const safeOrderMobileDate = (value) => {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return date;
 };
 
 export default function OrderMobileCards({ orders, onOpenDetails, separateHistory = false, openCount = 0 }) {
@@ -26,7 +31,7 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
   const renderCards = (items) => items.map((order) => {
         const displayStatus = effectiveOrderStatus(order);
         const statusColor = STATUS_COLORS[displayStatus] || "bg-gray-100 text-gray-700";
-        const dateNeeded = safeDate(order.date_needed);
+        const dateNeeded = safeOrderMobileDate(order.date_needed);
         return (
           <div
             key={order.id}
