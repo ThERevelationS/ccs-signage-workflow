@@ -91,6 +91,13 @@ test('older unarchived research can receive a newly downloaded PDF and extracted
   assert.equal(merged.last_fetched, incoming.last_fetched);
 });
 
+test('Boone building application review records the current county-linked online workflow', () => {
+  assert.equal(manifest.onlineForms.buildingPermitPortal, 'https://app.govwell.com/');
+  assert.match(manifest.onlineForms.buildingPermitSubmission, /Boone County Building Permits page/i);
+  assert.match(manifest.sourceGapReview, /resolved as an online workflow/i);
+  assert.equal(manifest.files.length, 6);
+});
+
 test('both server refresh paths use safe merge and individual refresh skips pinned re-download', () => {
   const individual = readFileSync('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   const batch = readFileSync('base44/functions/batchUpdateJurisdictions/entry.ts', 'utf8');
