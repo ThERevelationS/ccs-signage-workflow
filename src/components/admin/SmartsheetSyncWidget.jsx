@@ -114,16 +114,14 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
                 ? <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
                 : <Check className="h-4 w-4 text-emerald-600" />}
             </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-800">
-                {isRunning ? "Syncing…" : "Synced"}
-                {!isRunning && <span className="ml-2 font-normal text-slate-400">just now</span>}
-              </div>
-              <p className="mt-0.5 truncate text-[11px] text-slate-500">
+            <div className="flex min-w-0 flex-1 items-center gap-2 text-xs">
+              <span className="shrink-0 font-semibold text-slate-800">{isRunning ? "Syncing" : "Sync Complete"}</span>
+              <span className="min-w-0 truncate text-[11px] text-slate-500">
                 {isRunning
                   ? `${currentStepLabel || "Working…"} · ${progressPercent}%`
-                  : `${orderResults.length ? "Orders" : "Sync"} · +${created.toLocaleString()} created · ${updated.toLocaleString()} updated`}
-              </p>
+                  : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
+              </span>
+              {!isRunning && <span className="shrink-0 text-[10px] text-slate-400">just now</span>}
             </div>
             {!isRunning && (
               <button type="button" aria-label="Dismiss sync notification"
