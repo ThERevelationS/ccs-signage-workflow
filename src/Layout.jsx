@@ -543,44 +543,64 @@ function LayoutContent({ children }) {
       
       <div className={`h-full flex ${isSideNav ? 'flex-row' : 'flex-col'}`} style={{ background: darkMode ? '#1a1a2e' : 'linear-gradient(135deg, #F5F3FF 0%, #FFF9F5 100%)' }}>
         <WorkPauseOverlay />
-        {/* Personal focus blocks stay separate from official Time Clock and Work Pause. */}
-        <GlobalFocusTimer key={currentUser?.id || currentUser?.email || "signed-out"} currentUser={currentUser} />
-        {/* Hover detection area when collapsed */}
-        {isCollapsed && (
-          <div 
-            className="fixed top-0 left-0 right-0 h-4 z-40"
+        {/* Collapsed shell keeps a narrow edge target so mouse hover can preview it. */}
+        {effectiveCollapsed && (
+          <div
+            data-shell-hover-rail
+            className={navLayout === "side"
+              ? "fixed bottom-0 left-0 top-0 z-40"
+              : "fixed left-0 right-0 top-0 z-40"}
+            style={navLayout === "side"
+              ? { width: `${collapsedRail + 4}px` }
+              : { height: `${collapsedRail + 4}px` }}
             onMouseEnter={() => setIsHovered(true)}
           />
         )}
 
         {/* Side Navigation */}
         {isSideNav && (
-          <nav 
-            className="side-nav fixed top-0 left-0 bottom-0 z-50 w-56 flex flex-col"
-            style={{ 
-              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.98) 0%, rgba(20,20,40,0.95) 100%)' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '4px 0 20px rgba(0,0,0,0.08)',
+          <nav
+            className={`side-nav fixed bottom-0 left-0 top-0 z-50 flex flex-col ${effectiveCollapsed ? (isHovered ? "show" : "collapsed") : ""}`}
+            onMouseEnter={() => effectiveCollapsed && setIsHovered(true)}
+            onMouseLeave={() => effectiveCollapsed && setIsHovered(false)}
+            style={{
+              width: `${sideNavWidth}px`,
+              background: darkMode ? 'linear-gradient(180deg, rgba(20,20,40,0.94) 0%, rgba(20,20,40,0.88) 100%)' : 'linear-gradient(180deg, rgba(255,255,255,0.86) 0%, rgba(250,248,255,0.80) 100%)',
+              backdropFilter: 'blur(18px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+              boxShadow: '4px 0 28px rgba(15,23,42,0.10)',
             }}
           >
-            <div className="p-3">
-              {/* Logo with nav toggle */}
-              <div className="clay-card px-3 py-2 flex items-center gap-2 mb-4">
-                <button
-                  onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center hover:opacity-80 transition-opacity"
-                  style={{ 
-                    background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
-                    boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
-                  }}
-                  title="Switch to Top Bar"
-                >
-                  <PanelTop className="w-4 h-4 text-purple-700" />
-                </button>
-                <div>
-                  <h2 className="font-bold text-gray-800 text-sm leading-tight">Sign Shop</h2>
-                  <p className="text-xs text-gray-500">Workflow</p>
+            <div className={compactView ? "p-2" : "p-3"}>
+              {/* Brand + tiny shell view controls */}
+              <div className={compactView ? "mb-2" : "mb-4"}>
+                <div className={`clay-card flex items-center gap-2 ${compactView ? "px-2 py-1.5" : "px-3 py-2"}`}>
+                  <button
+                    onClick={() => setNavLayout(navLayout === "top" ? "side" : "top")}
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-opacity hover:opacity-80"
+                    style={{
+                      background: 'linear-gradient(135deg, #E0D4F7 0%, #D4E9F7 100%)',
+                      boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.7), inset -2px -2px 6px rgba(0,0,0,0.1)'
+                    }}
+                    title="Switch to Top Bar"
+                  >
+                    <PanelTop className="h-4 w-4 text-purple-700" />
+                  </button>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm font-bold leading-tight text-gray-800">Sign Shop</h2>
+                    <p className="truncate text-xs text-gray-500">Workflow</p>
+                  </div>
                 </div>
+                <ShellViewControls
+                  compactView={compactView}
+                  onToggleCompact={() => setCompactView((value) => !value)}
+                  collapsed={navCollapsed}
+                  onToggleCollapsed={() => {
+                    setNavCollapsed((value) => !value);
+                    setIsHovered(false);
+                  }}
+                  navLayout="side"
+                />
               </div>
 
               {/* Time Clock + Add Task side by side, Search full width below */}
@@ -617,7 +637,7 @@ function LayoutContent({ children }) {
                   </button>
                 )}
 
-                {currentUser && <GlobalWorkPauseControl fullWidth />}
+                {currentUser && <FocusPausePair currentUser={currentUser} fullWidth compact={compactView} />}
 
                 {/* Announcement button - admin only, above Time Clock */}
                 {isUserAdmin(currentUser) && (
@@ -658,7 +678,7 @@ function LayoutContent({ children }) {
             </div>
 
             {/* Navigation Links */}
-            <div className="flex-1 overflow-y-auto px-3 py-2">
+            <div className={`flex-1 overflow-y-auto ${compactView ? "px-2 py-1" : "px-3 py-2"}`}>
               <div className="space-y-1">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.url;
@@ -668,7 +688,7 @@ function LayoutContent({ children }) {
                       key={item.title}
                       to={item.url}
                       onClick={(e) => handleNavClick(e, item)}
-                      className={`px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 border ${
+                      className={`${compactView ? "px-2 py-1.5" : "px-3 py-2"} rounded-lg transition-all duration-200 flex items-center gap-2 border ${
                         isActive ? 'clay-card shadow-lg' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card'
                       }`}
                       style={{ 
@@ -700,7 +720,7 @@ function LayoutContent({ children }) {
                         key={item.title}
                         to={item.url}
                         onClick={(e) => handleNavClick(e, item)}
-                        className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 border ${
+                        className={`${compactView ? "px-2 py-1.5" : "px-3 py-2"} rounded-lg transition-all duration-300 flex items-center gap-2 border ${
                           isActive ? 'clay-card border-purple-300 shadow-md' : isInSplit ? 'border-purple-200 bg-purple-50' : 'hover:clay-card border-transparent hover:border-gray-200'
                         }`}
                         style={isActive ? { 
