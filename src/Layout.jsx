@@ -1127,7 +1127,7 @@ function LayoutContent({ children }) {
                       <button
                         data-login-gate-allow
                         onClick={showLoginDialog}
-                        className={`ccs-glass-control flex items-center rounded-xl text-purple-800 dark:text-violet-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        className={`ccs-glass-control ccs-glass-purple flex items-center rounded-xl text-violet-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title="Sign In"
                       >
                         <LogIn className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -1137,7 +1137,7 @@ function LayoutContent({ children }) {
                       <button
                         data-login-gate-allow
                         onClick={logout}
-                        className={`ccs-glass-control flex items-center rounded-xl text-slate-700 dark:text-slate-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                        className={`ccs-glass-control ccs-glass-neutral flex items-center rounded-xl text-slate-100 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                         title={`Logout ${getUserFirstName()}`}
                       >
                         <LogOut className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -1151,7 +1151,7 @@ function LayoutContent({ children }) {
                     {isUserAdmin(currentUser) && (
                       <button
                         onClick={() => setShowAnnouncementManager(true)}
-                        className={`ccs-glass-control flex flex-shrink-0 items-center justify-center rounded-xl text-red-700 dark:text-red-200 ${compactView ? "h-7 w-8" : "w-11 self-stretch"}`}
+                        className={`ccs-glass-control ccs-glass-red flex flex-shrink-0 items-center justify-center rounded-xl text-red-200 ${compactView ? "h-7 w-8" : "w-11 self-stretch"}`}
                         title="Announcements (Admin)"
                       >
                         <Megaphone className={compactView ? "h-3.5 w-3.5" : "h-5 w-5"} />
@@ -1159,7 +1159,7 @@ function LayoutContent({ children }) {
                     )}
                     <Link
                       to={createPageUrl("TimeClock")}
-                      className={`ccs-glass-control flex items-center rounded-xl text-green-700 dark:text-emerald-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                      className={`ccs-glass-control ccs-glass-green flex items-center rounded-xl text-emerald-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
                       <Home className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
                       <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>Time Clock</span>
@@ -1167,7 +1167,7 @@ function LayoutContent({ children }) {
                     
                     <button
                       onClick={() => setShowAddTaskDialog(true)}
-                      className={`ccs-glass-control flex items-center rounded-xl text-blue-700 dark:text-blue-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
+                      className={`ccs-glass-control ccs-glass-blue flex items-center rounded-xl text-blue-200 ${compactView ? "h-7 gap-1 px-2 text-[11px]" : "gap-2 px-3 py-1.5 text-sm"}`}
                     >
                       <ClipboardList className={compactView ? "h-3.5 w-3.5" : "h-4 w-4"} />
                       <span className={`${compactView ? "text-[11px]" : "text-sm"} font-bold`}>+ Task</span>
