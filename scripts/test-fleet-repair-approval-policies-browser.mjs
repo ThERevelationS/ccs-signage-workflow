@@ -162,6 +162,7 @@ try {
     await check.click();
     await page.getByRole("status").getByText(/is now disabled/i).waitFor();
     assert.equal((await actions(page,"policy_update")).length,1);
+    await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==="Add Threshold");
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
@@ -207,6 +208,7 @@ try {
     assert.equal((await actions(page,"policy_update")).length,1);
     await retry.click();
     assert.equal((await actions(page,"policy_update")).length,1);
+    await page.waitForFunction(()=>document.activeElement?.textContent?.trim()==="Add Threshold");
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
