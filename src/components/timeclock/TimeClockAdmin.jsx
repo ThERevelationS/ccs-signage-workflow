@@ -956,6 +956,8 @@ export default function TimeClockAdmin() {
                     <td className="px-4 py-3">
                       {entry.clock_out ? (
                         format(parseISO(entry.clock_out), "h:mm a")
+                      ) : entry.status === "needs_resolution" ? (
+                        <Badge className="bg-amber-100 text-amber-800">Missed punch review</Badge>
                       ) : (
                         <Badge className="bg-green-100 text-green-700">Active</Badge>
                       )}
@@ -972,7 +974,12 @@ export default function TimeClockAdmin() {
                       {entry.total_hours?.toFixed(2) || "-"} hrs
                     </td>
                     <td className="px-4 py-3">
-                      {entry.status === "clocked_out" ? (
+                      {entry.status === "needs_resolution" ? (
+                        <div className="flex flex-col items-start gap-1.5">
+                          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Needs Punch Review</Badge>
+                          <span className="text-[11px] text-amber-700">Review the linked Missed Clock Out correction before approving this shift.</span>
+                        </div>
+                      ) : entry.status === "clocked_out" ? (
                         <div className="flex flex-col items-start gap-1.5">
                           <Badge
                             variant="outline"
