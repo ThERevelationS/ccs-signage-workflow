@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
+import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import * as faceapi from "face-api.js";
 import { Html5Qrcode } from "html5-qrcode";
@@ -108,6 +109,8 @@ export default function QuickClockSection({
   const [recognitionMethod, setRecognitionMethod] = useState(null); // face | qr | manual
   const [recognitionStatus, setRecognitionStatus] = useState("");
   const [authoritativeTransition, setAuthoritativeTransition] = useState(null);
+  const [punchResolution, setPunchResolution] = useState(null);
+  const [punchResolutionError, setPunchResolutionError] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [manualPassword, setManualPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -275,6 +278,17 @@ export default function QuickClockSection({
     setActiveLabor(status?.active_labor || null);
     setLaborSummary(status?.labor_summary || { count: 0, total_minutes: 0 });
 
+    if (status?.requires_punch_resolution === true && status?.entry?.id && status?.punch_resolution) {
+      setAuthoritativeTransition(null);
+      setPunchResolution({ ...status.punch_resolution, entry: status.entry });
+      setPunchResolutionError("");
+      setActiveEntry(status.entry);
+      setShowClockOut(false);
+      setIsRecognizing(false);
+      return "punch_resolution";
+    }
+    setPunchResolution(null);
+
     if (status?.transition) {
       const transition = status.transition;
       setAuthoritativeTransition({
@@ -330,6 +344,9 @@ export default function QuickClockSection({
       if (restored === "clocked_in") {
         setPersistenceError("");
         setRecognitionStatus(`Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
+      } else if (restored === "punch_resolution") {
+        setPersistenceError("");
+        setRecognitionStatus("Previous shift needs punch confirmation before a new Clock In.");
       } else if (restored === "transition") {
         setPersistenceError("");
       } else if (restored === "clocked_out") {
@@ -390,6 +407,8 @@ export default function QuickClockSection({
     setRecognitionMethod(null);
     setRecognitionStatus("");
     setAuthoritativeTransition(null);
+    setPunchResolution(null);
+    setPunchResolutionError("");
     setUsernameInput("");
     setManualPassword("");
     setUsernameError("");
@@ -459,6 +478,10 @@ export default function QuickClockSection({
       const resolvedStatus = applyAuthoritativeStatus(status, verifiedUser, credential);
       if (resolvedStatus === "clocked_in") {
         setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}! Active shift restored.`);
+        return;
+      }
+      if (resolvedStatus === "punch_resolution") {
+        setRecognitionStatus(`Welcome, ${verifiedUser.full_name || verifiedUser.email}. Resolve the previous shift before starting a new one.`);
         return;
       }
       if (resolvedStatus === "transition") return;
