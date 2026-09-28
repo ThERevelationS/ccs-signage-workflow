@@ -516,36 +516,145 @@ function LayoutContent({ children }) {
           transform: scale(0.98);
         }
 
+        /* Premium glass navigation shell inspired by layered adaptive navigation materials. */
+        .ccs-glass-shell {
+          isolation: isolate;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.58) 0%, rgba(255,255,255,0.34) 46%, rgba(246,248,255,0.24) 100%);
+          border: 1px solid rgba(255,255,255,0.72);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.94),
+            inset 0 -1px 0 rgba(148,163,184,0.10),
+            0 18px 48px rgba(30,41,59,0.13),
+            0 3px 12px rgba(76,29,149,0.06);
+          backdrop-filter: blur(30px) saturate(185%) contrast(108%);
+          -webkit-backdrop-filter: blur(30px) saturate(185%) contrast(108%);
+        }
+
+        .ccs-glass-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: -1;
+          background:
+            radial-gradient(circle at 12% -25%, rgba(255,255,255,0.95), transparent 33%),
+            radial-gradient(circle at 84% 118%, rgba(167,139,250,0.12), transparent 34%),
+            linear-gradient(105deg, rgba(255,255,255,0.17), transparent 28%, rgba(255,255,255,0.10) 62%, transparent 84%);
+        }
+
+        .ccs-glass-panel {
+          background: linear-gradient(145deg, rgba(255,255,255,0.46), rgba(255,255,255,0.18));
+          border: 1px solid rgba(255,255,255,0.62);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.90),
+            0 8px 22px rgba(15,23,42,0.08);
+        }
+
+        .ccs-glass-strip {
+          background: linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.14));
+          border: 1px solid rgba(255,255,255,0.58);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            0 5px 16px rgba(15,23,42,0.06);
+        }
+
+        .ccs-glass-control {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.20)) !important;
+          border: 1px solid rgba(255,255,255,0.70) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.92),
+            inset 0 -1px 0 rgba(148,163,184,0.10),
+            0 6px 16px rgba(15,23,42,0.08) !important;
+          transition:
+            transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+            background-color 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease !important;
+        }
+
+        .ccs-glass-control:hover {
+          transform: translateY(-1px);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.66), rgba(255,255,255,0.28)) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.98),
+            0 9px 22px rgba(15,23,42,0.11) !important;
+        }
+
+        .ccs-glass-control:active {
+          transform: translateY(0) scale(0.985);
+        }
+
+        .ccs-glass-nav-item {
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.58),
+            0 3px 10px rgba(15,23,42,0.045);
+          transition:
+            transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 180ms ease,
+            background-color 180ms ease;
+        }
+
+        .ccs-glass-nav-item:hover {
+          transform: translateY(-1px);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.78),
+            0 7px 16px rgba(15,23,42,0.08);
+        }
+
+        .ccs-navigation-handle {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.76), rgba(255,255,255,0.34));
+          border: 1px solid rgba(255,255,255,0.82);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.98),
+            0 10px 28px rgba(15,23,42,0.15);
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+        }
+
+        .dark .ccs-glass-shell {
+          background:
+            linear-gradient(180deg, rgba(25,31,52,0.66) 0%, rgba(18,23,42,0.50) 48%, rgba(12,17,34,0.38) 100%);
+          border-color: rgba(255,255,255,0.13);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.12),
+            inset 0 -1px 0 rgba(255,255,255,0.025),
+            0 18px 54px rgba(0,0,0,0.40),
+            0 5px 20px rgba(124,58,237,0.10);
+        }
+
+        .dark .ccs-glass-panel,
+        .dark .ccs-glass-strip,
+        .dark .ccs-glass-control,
+        .dark .ccs-navigation-handle {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035)) !important;
+          border-color: rgba(255,255,255,0.12) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.12),
+            0 8px 22px rgba(0,0,0,0.26) !important;
+        }
+
+        .dark .ccs-glass-control:hover {
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.06)) !important;
+        }
+
         .top-nav {
-          transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
           padding-top: env(safe-area-inset-top);
-          will-change: transform;
-        }
-
-        .top-nav.collapsed {
-          transform: translateY(calc(-100% + 10px));
-        }
-
-        .top-nav.show {
-          transform: translateY(0);
+          will-change: transform, opacity;
         }
 
         .side-nav {
-          transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), width 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms ease;
-          will-change: transform, width;
-        }
-
-        .side-nav.collapsed {
-          transform: translateX(calc(-100% + 10px));
-        }
-
-        .side-nav.show {
-          transform: translateX(0);
+          will-change: transform, opacity, width;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .top-nav,
-          .side-nav {
+          .ccs-glass-control,
+          .ccs-glass-nav-item {
             transition-duration: 1ms !important;
           }
         }
