@@ -1,0 +1,14 @@
+{
+  "title": "Boone County Planning Commission — Temporary Commercial Display (Seasonal) application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TCDSeasonal.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Temporary Commercial Display (Seasonal)",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 170116,
+  "sha256": "ae3be76260c5be717b63bb4fa510fa381d58246815b3f79cd9a941a4b4b0b255",
+  "lastModified": "Fri, 06 Sep 2024 15:18:42 GMT",
+  "purpose": "current_temporary_commercial_display_seasonal_application_source_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact PDF under the label Temporary Commercial Display (Seasonal), and the linked PDF returned HTTP 200 with application/pdf content on 2026-09-28. This establishes current source identity and category availability only. The Seasonal label is preserved exactly as the Commission presents it; this evidence does not independently establish what dates, businesses, municipalities, addresses, projects, or display types qualify as seasonal. It does not by itself establish every requirement, fee, eligibility rule, jurisdiction boundary, submission workflow, approval path, duration limit, or applicability to a particular sign project."
+}
