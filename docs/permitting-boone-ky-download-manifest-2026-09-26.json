@@ -56,8 +56,9 @@
     "signZoningApplication": "PDF from Planning Commission; no authenticated Planning Commission online submission portal verified",
     "buildingPermitPortal": "https://app.govwell.com/",
     "countyPortalPage": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
-    "legacyOraclePortal": "https://fa-erbz-saasfaprod1.fa.ocs.oraclecloud.com/fscmUI/publicSector.html"
+    "legacyOraclePortal": "https://fa-erbz-saasfaprod1.fa.ocs.oraclecloud.com/fscmUI/publicSector.html",
+    "buildingPermitSubmission": "Current official Boone County Building Permits page directs applicants to create an account in GovWell and apply online; no separate current general Building Permit Application PDF is listed."
   },
-  "sourceGapReview": "2026-09-27: highest-priority missing source is the Boone County Building Permit Application required by the archived Building Department sign guide; no official application URL has been verified, so no file was downloaded or indexed. Preserve this as an open collection gap until an official Boone County source is verified.",
+  "sourceGapReview": "2026-09-27: resolved as an online workflow, not a missing PDF. The current official Boone County Building Permits page directs applicants to GovWell and says to apply online. Its Resources list does not publish a general Building Permit Application PDF. Preserve the older archived Building Department sign guide as historical instructions. The legacy Oracle portal remains linked lower on the county page and requires separate current-use review.",
   "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
 }
