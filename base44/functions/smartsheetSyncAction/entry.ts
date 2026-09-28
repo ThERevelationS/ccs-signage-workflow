@@ -779,8 +779,68 @@ async function pullDataset(
 
 async function loadSyncConfig(base44: any) {
   const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: SETTING_KEY });
-  const record = Array.isArray(results) ? results[0] : results;
-  return { record, config: record?.setting_value || null };
+  const rows = Array.isArray(results) ? results : (results ? [results] : []);
+  const record = rows[0] || null;
+  return { record, config: record?.setting_value || null, duplicateCount: rows.length };
+}
+
+function stableNormalize(value: any): any {
+  if (Array.isArray(value)) return value.map(stableNormalize);
+  if (!value || typeof value !== 'object') return value;
+  return Object.keys(value).sort().reduce((out: any, key) => {
+    out[key] = stableNormalize(value[key]);
+    return out;
+  }, {});
+}
+
+function sameStableValue(left: any, right: any) {
+  return JSON.stringify(stableNormalize(left)) === JSON.stringify(stableNormalize(right));
+}
+
+function safeConfigRecord(record: any) {
+  if (!record?.id) return null;
+  return {
+    id: cleanText(record.id, 200),
+    setting_key: cleanText(record.setting_key, 200),
+    setting_value: record.setting_value && typeof record.setting_value === 'object' ? record.setting_value : {},
+    updated_date: cleanText(record.updated_date, 120),
+  };
+}
+
+async function saveSyncConfigIfUnchanged(base44: any, body: any) {
+  const { record, duplicateCount } = await loadSyncConfig(base44);
+  if (duplicateCount > 1) {
+    throw Object.assign(new Error(`Smartsheet sync configuration has ${duplicateCount} records. No settings were changed; resolve the duplicate records first.`), { status: 409 });
+  }
+  if (!record?.id) {
+    throw Object.assign(new Error('Smartsheet sync configuration is missing. Reload before saving.'), { status: 404 });
+  }
+  const expectedUpdatedAt = cleanText(body?.expected_updated_date, 120);
+  const expectedValue = body?.expected_setting_value;
+  const nextValue = body?.setting_value;
+  if (!expectedUpdatedAt || !expectedValue || typeof expectedValue !== 'object' || Array.isArray(expectedValue) ||
+      !nextValue || typeof nextValue !== 'object' || Array.isArray(nextValue)) {
+    throw Object.assign(new Error('Smartsheet sync settings save is missing its loaded concurrency baseline.'), { status: 400 });
+  }
+  if (cleanText(record.updated_date, 120) !== expectedUpdatedAt || !sameStableValue(record.setting_value, expectedValue)) {
+    throw Object.assign(new Error('Smartsheet sync settings changed in another session. Reload before saving.'), { status: 409 });
+  }
+  const serialized = JSON.stringify(nextValue);
+  if (serialized.length > 500_000) {
+    throw Object.assign(new Error('Smartsheet sync settings are unexpectedly large and were not saved.'), { status: 400 });
+  }
+  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+    { id: record.id, updated_date: record.updated_date, setting_key: SETTING_KEY },
+    { $set: { setting_value: nextValue } },
+  );
+  if (!result || result.updated !== 1) {
+    throw Object.assign(new Error('Smartsheet sync settings changed while saving. Reload before retrying.'), { status: 409 });
+  }
+  const saved = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);
+  if (!saved?.id || !sameStableValue(saved.setting_value, nextValue)) {
+    throw new Error('Smartsheet sync settings were updated but could not be verified. Reload before retrying.');
+  }
+  return safeConfigRecord(saved);
 }
 
 // Store the last sync run status so the persistent UI widget can show it
@@ -1159,9 +1219,26 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales'],
+        supported_actions: ['status', 'config_get', 'config_save', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales'],
         write_actions_available: true,
       });
+    }
+
+    if (action === 'config_get') {
+      const { record, duplicateCount } = await loadSyncConfig(base44);
+      if (duplicateCount > 1) {
+        return Response.json({ success: false, error: `Smartsheet sync configuration has ${duplicateCount} records. Resolve the duplicate settings before editing.` }, { status: 409 });
+      }
+      return Response.json({ success: true, record: safeConfigRecord(record) });
+    }
+
+    if (action === 'config_save') {
+      try {
+        const savedRecord = await saveSyncConfigIfUnchanged(base44, body);
+        return Response.json({ success: true, record: savedRecord });
+      } catch (error: any) {
+        return Response.json({ success: false, error: cleanText(error?.message || 'Smartsheet sync settings could not be saved.', 1000) }, { status: Number(error?.status) || 500 });
+      }
     }
 
     if (action === 'push_saved_orders') {
