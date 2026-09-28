@@ -33,6 +33,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/components/auth/EmailGate";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { loadSingleGlobalSetting } from "@/components/shared/globalSettingsPersistence";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const TEAM_MEMBERS = [
   "Carl",
@@ -46,8 +47,6 @@ const TEAM_MEMBERS = [
   "Chris"
 ];
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
-
 export default function WorkOrderForm({ 
   isOpen, 
   onClose, 
@@ -60,7 +59,7 @@ export default function WorkOrderForm({
   existingWorkOrders = [], // For duplicate detection
   key // Force re-render when duplicating
 }) {
-  const { currentUser } = useAuth();
+  const { currentUser, sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [authorizedUsers, setAuthorizedUsers] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -229,7 +228,6 @@ export default function WorkOrderForm({
 
   useEffect(() => {
     loadUsers();
-    loadAuthorizedUsers();
     loadProductTypes();
     
     // Handle custom name for initialData (duplicating)
@@ -312,18 +310,28 @@ export default function WorkOrderForm({
     }
   };
 
-  const loadAuthorizedUsers = async () => {
-    try {
-      const authUsers = await loadAllEntityRows({
-        entity: AuthorizedEmail,
-        sort: null,
-        label: "Work Order form authorized users",
-      });
-      setAuthorizedUsers(authUsers);
-    } catch (e) {
-      console.error("Error loading authorized users:", e);
+  useEffect(() => {
+    if (!isOpen || !sessionToken) {
+      setAuthorizedUsers([]);
+      return;
     }
-  };
+
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((directory) => {
+        if (!cancelled) setAuthorizedUsers(directory.users);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setAuthorizedUsers([]);
+          console.error("Error loading authorized users:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, sessionToken]);
 
   // Get salespersons from authorized users with sales roles
   const salespersons = authorizedUsers.filter(u => 
