@@ -60,6 +60,25 @@ async function allRows(SalesFilter: any) {
   return loadAllEntityRows({ entity: SalesFilter, sort: 'created_date', label: 'Sales Filters' });
 }
 
+function salesRosterView(row: any) {
+  return {
+    id: cleanText(row?.id, 200),
+    email: cleanEmail(row?.email),
+    full_name: cleanText(row?.full_name, 500),
+    sales_roles: Array.isArray(row?.sales_roles)
+      ? row.sales_roles.map((role: unknown) => cleanText(role, 120)).filter(Boolean)
+      : [],
+    is_active: row?.is_active !== false,
+  };
+}
+
+async function loadSalesRoster(AuthorizedEmail: any) {
+  const rows = await loadAllEntityRows({ entity: AuthorizedEmail, sort: 'full_name', label: 'Sales person roster' });
+  return rows
+    .map(salesRosterView)
+    .filter((row: any) => row.is_active !== false && row.full_name);
+}
+
 async function nameTypeMatches(SalesFilter: any, name: string, type: string) {
   const rows = await allRows(SalesFilter);
   const wanted = norm(name);
@@ -214,6 +233,10 @@ Deno.serve(async (req) => {
     const action = String(body?.action || '').trim();
     const SalesFilter = base44.asServiceRole.entities.SalesFilter;
 
+    if (action === 'roster') {
+      const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
+      return Response.json({ users: await loadSalesRoster(AuthorizedEmail) });
+    }
     if (action === 'create') return Response.json(await createIfAbsent(SalesFilter, actor, body?.data));
     if (action === 'copy') return Response.json(await copyUnique(SalesFilter, actor, body?.source));
     if (action === 'update') return Response.json({ record: await updateCollaborative(SalesFilter, body, actor) });
