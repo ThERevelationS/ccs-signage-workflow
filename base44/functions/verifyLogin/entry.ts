@@ -120,6 +120,7 @@ Deno.serve(async (req) => {
         role: user.role,
         sales_roles: user.sales_roles,
         can_import_export: user.can_import_export,
+        can_order_export: user.role === 'admin' && user.can_order_export === true,
         can_view_resources: user.can_view_resources,
       },
     });
