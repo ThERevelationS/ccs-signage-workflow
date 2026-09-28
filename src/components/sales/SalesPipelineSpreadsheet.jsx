@@ -2444,6 +2444,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             onCompleteFollowUp={requestFollowUpCompletion}
             isRegistered={isRegistered}
             currentSalesOwnerLabel={currentSalesOwnerLabel}
+            users={users}
           />
         </div>
         {renderOpportunityDialogs()}
