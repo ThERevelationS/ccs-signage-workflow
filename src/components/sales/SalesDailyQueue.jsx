@@ -153,6 +153,7 @@ export default function SalesDailyQueue({
                   const expectedCloseOverdue = Boolean(expectedCloseStamp && expectedCloseStamp < todayStamp);
                   const expectedCloseNear = Boolean(expectedCloseStamp && expectedCloseStamp >= todayStamp && expectedCloseStamp <= nearCloseStamp);
                   const placeholder = isLikelySalesPlaceholder(workOrder);
+                  const salesOwnerLabel = buildSalesPersonSelectModel(workOrder.sales_rep, users).canonical;
                   return (
                     <article key={workOrder.id} className="rounded-lg border border-white/80 bg-white p-3 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
@@ -168,7 +169,7 @@ export default function SalesDailyQueue({
 
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600">
                         <span className="font-semibold text-gray-800">{money(value)}</span>
-                        <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3" />{workOrder.sales_rep || "Unassigned"}</span>
+                        <span className="inline-flex items-center gap-1"><UserRound className="h-3 w-3" />{salesOwnerLabel || "Unassigned"}</span>
                         {workOrder.follow_up_date && <span>Follow-up {dateLabel(workOrder.follow_up_date)}</span>}
                         {workOrder.expected_close_date && (
                           <span className={expectedCloseOverdue ? "font-semibold text-rose-700" : expectedCloseNear ? "font-semibold text-cyan-700" : ""}>
