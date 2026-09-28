@@ -1,0 +1,14 @@
+{
+  "title": "Boone County Planning Commission — Temporary Advertising Display application current source snapshot",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TAD.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Temporary Advertising Display",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 138429,
+  "sha256": "89b66bf9154501386c6aa73f463d9845881041b2ef0fb49ea9d60ab51c083ef2",
+  "repositoryPath": "public/permitting/sources/boone-ky/temporary-advertising-display-application-2026-09-28.pdf",
+  "purpose": "current_temporary_advertising_display_application_source_identity",
+  "evidenceScope": "The current Boone County Planning Commission Applications and Forms page directly links this exact PDF under the label Temporary Advertising Display, and the linked PDF returned HTTP 200 on 2026-09-28. This establishes current source identity and category availability only. It does not by itself establish every requirement, fee, eligibility rule, jurisdiction boundary, submission workflow, approval path, or applicability to a particular sign project."
+}
