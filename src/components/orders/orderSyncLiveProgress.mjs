@@ -11,9 +11,10 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
   const completedSteps = Math.max(0, Number(status?.completed_steps) || 0);
   const running = status?.status === 'running';
   const stepFraction = running && total > 0 ? Math.min(0.999, current / total) : 0;
-  const percent = totalSteps > 0
+  const rawPercent = totalSteps > 0
     ? Math.round(((completedSteps + stepFraction) / totalSteps) * 1000) / 10
     : 0;
+  const percent = running ? Math.min(99.9, rawPercent) : rawPercent;
 
   const stamp = Date.parse(status?.progress_updated_at || status?.updated_at || status?.started_at || '');
   const heartbeatAgeMs = Number.isFinite(stamp) ? Math.max(0, now - stamp) : null;
