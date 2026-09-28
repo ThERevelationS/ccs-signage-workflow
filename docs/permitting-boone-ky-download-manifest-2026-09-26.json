@@ -89,7 +89,8 @@
       "purpose": "right_of_way_sign_related",
       "bytes": 1335572,
       "sha256": "109599a9a5fd571f823543de0eba156fb7241caf7eb707e41652f7820c1e2bdc",
-      "repositoryPath": "public/permitting/sources/boone-ky/encroachment-permit-application-2025.pdf"
+      "repositoryPath": "public/permitting/sources/boone-ky/encroachment-permit-application-2025.pdf",
+      "sourceVerification": {"checkedAt":"2026-09-28","httpStatus":200,"liveBytes":1335572,"liveSha256":"109599a9a5fd571f823543de0eba156fb7241caf7eb707e41652f7820c1e2bdc","matchesArchivedCopy":true,"evidenceScope":"Current official source bytes match the archived 2025 Boone County encroachment/right-of-way application. This source identity does not establish that every sign requires an encroachment permit or replace separate zoning, sign, or building approvals."}
     }
   ],
   "webSources": [
