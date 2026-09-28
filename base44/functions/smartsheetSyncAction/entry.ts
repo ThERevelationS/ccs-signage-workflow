@@ -16,6 +16,7 @@ import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '.
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
+import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import {
   buildCells,
   buildSnapshot,
@@ -586,11 +587,13 @@ async function pullDataset(
   // Failed batches may have applied fields or some metadata: report them for
   // review rather than falsely declaring every Order fully synchronized.
   let snapshotWriteFailures = 0;
+  const verifiedMetadataExpected: any[] = [];
   const snapshotBatchSize = 100;
   for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
     const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
+      if (dataset === 'orders') verifiedMetadataExpected.push(...batch);
     } catch (error: any) {
       if (dataset === 'orders') {
         snapshotWriteFailures += batch.length;
@@ -598,6 +601,40 @@ async function pullDataset(
         errors.push(`Order sync metadata was not confirmed for ${batch.length} records (IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). Review before treating this pull as complete: ${error?.message || 'unknown error'}`);
       }
       // Preserve the existing Sales metadata behavior (separate project).
+    }
+  }
+
+  // Order-only read-after-write for reconciliation metadata. Base44 bulkUpdate
+  // has previously acknowledged writes while silently omitting individual
+  // fields, so the snapshot/timestamp must be re-read before success is final.
+  if (dataset === 'orders' && verifiedMetadataExpected.length) {
+    try {
+      const metadataRows = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        query: { smartsheet_sheet_id: sheetId },
+        sort: 'id',
+        label: 'Order Form sync metadata verification',
+      });
+      const metadataFailures = findUnverifiedOrderSyncMetadata(
+        verifiedMetadataExpected,
+        metadataRows.filter((record: any) => !record?.deleted),
+      );
+      if (metadataFailures.length) {
+        snapshotWriteFailures += metadataFailures.length;
+        updatedCount = Math.max(0, updatedCount - metadataFailures.length);
+        errors.push(
+          `Order sync metadata read-back failed for ${metadataFailures.length} records ` +
+          `(IDs: ${metadataFailures.slice(0, 5).map((item: any) => item.id || 'unknown').join(', ')}). ` +
+          `Snapshot/timestamp was not verified; review before treating this pull as complete.`
+        );
+      }
+    } catch (error: any) {
+      snapshotWriteFailures += verifiedMetadataExpected.length;
+      updatedCount = Math.max(0, updatedCount - verifiedMetadataExpected.length);
+      errors.push(
+        `Order sync metadata could not be re-read for ${verifiedMetadataExpected.length} records. ` +
+        `Review before treating this pull as complete: ${error?.message || 'unknown error'}`
+      );
     }
   }
 
