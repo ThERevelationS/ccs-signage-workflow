@@ -18,6 +18,6 @@ check(saveSource.includes('String(condition?.value ?? "").trim() === ""'), "Valu
 check(saveSource.includes("Complete condition ${invalidConditionIndex + 1} before saving"), "Validation error must identify the condition the user needs to repair");
 check(saveSource.indexOf("invalidConditionIndex") < saveSource.indexOf("const data = {"), "Invalid conditions must be rejected before persistence payload construction");
 check(saveSource.includes("updateSalesFilterIfUnchanged") && saveSource.includes("createSalesFilterIfAbsent"), "Existing conflict-safe update and create paths must remain intact");
-check(source.includes('className="flex flex-wrap gap-1"') && source.includes('aria-label="Horizontal Sales Pipeline column preview"'), "Compact always-visible column checkboxes and horizontal preview must remain intact");
+check(source.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"') && source.includes('aria-label="Horizontal Sales Pipeline column preview"'), "Compact always-visible column checkboxes and horizontal preview must remain intact");
 
 console.log(`Sales saved-filter condition validation: ${checks}/${checks} PASS.`);
