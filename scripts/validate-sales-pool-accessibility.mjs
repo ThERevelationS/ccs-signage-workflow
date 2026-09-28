@@ -53,7 +53,7 @@ check(selected.split('inline-flex h-11 w-11 shrink-0 items-center justify-center
 check((selected.match(/onClick=\{\(\) => toggleSelection\(item(?:, true)?\)\}/g) || []).length === 2,
   "My Presets remove actions must retain standard and custom selection paths");
 check(preview.includes("column.visible") && ui.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
-      ui.includes('className="flex flex-wrap gap-1"'),
+      ui.includes('className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6"'),
   "Always-visible compact column checkboxes and horizontal preview remain intact");
 check(ui.includes("setSalesFilterSelectionSafely") && ui.includes("createUniqueSalesFilterCopy") &&
       ui.includes("deleteSalesFilterIfUnchanged"),
