@@ -537,24 +537,24 @@ function LayoutContent({ children }) {
           transform: scale(0.98);
         }
 
-        /* Smoked crystal navigation: layered translucency, edge highlights and color refraction. */
+        /* Crystal navigation. Light mode is bright smoked glass; dark mode intentionally stays deep navy. */
         .ccs-glass-shell {
           --glass-accent-rgb: 148 163 184;
           isolation: isolate;
-          color: #f8fafc;
+          color: #0f172a;
           background:
-            radial-gradient(circle at 14% -12%, rgba(255,255,255,0.24), transparent 28%),
-            radial-gradient(circle at 86% 118%, rgba(125,211,252,0.12), transparent 34%),
-            linear-gradient(142deg, rgba(51,65,85,0.82) 0%, rgba(71,85,105,0.66) 42%, rgba(30,41,59,0.76) 100%);
-          border: 1px solid rgba(255,255,255,0.34);
+            radial-gradient(circle at 14% -12%, rgba(255,255,255,0.90), transparent 30%),
+            radial-gradient(circle at 86% 118%, rgba(125,211,252,0.20), transparent 36%),
+            linear-gradient(142deg, rgba(241,245,249,0.78) 0%, rgba(226,232,240,0.62) 44%, rgba(203,213,225,0.58) 100%);
+          border: 1px solid rgba(255,255,255,0.78);
           box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.56),
-            inset 1px 0 0 rgba(255,255,255,0.14),
-            inset 0 -1px 0 rgba(15,23,42,0.38),
-            0 20px 52px rgba(15,23,42,0.28),
-            0 5px 18px rgba(15,23,42,0.18);
-          backdrop-filter: blur(34px) saturate(185%) contrast(112%);
-          -webkit-backdrop-filter: blur(34px) saturate(185%) contrast(112%);
+            inset 0 1px 0 rgba(255,255,255,0.98),
+            inset 1px 0 0 rgba(255,255,255,0.50),
+            inset 0 -1px 0 rgba(100,116,139,0.20),
+            0 20px 52px rgba(51,65,85,0.16),
+            0 5px 18px rgba(71,85,105,0.10);
+          backdrop-filter: blur(34px) saturate(185%) contrast(108%);
+          -webkit-backdrop-filter: blur(34px) saturate(185%) contrast(108%);
         }
 
         .ccs-glass-shell::before,
@@ -582,18 +582,22 @@ function LayoutContent({ children }) {
 
         .ccs-glass-panel,
         .ccs-glass-strip {
-          color: #f8fafc;
+          color: #1e293b;
           background:
-            radial-gradient(circle at 18% 0%, rgba(255,255,255,0.17), transparent 30%),
-            linear-gradient(145deg, rgba(100,116,139,0.38), rgba(30,41,59,0.32));
-          border: 1px solid rgba(255,255,255,0.25);
+            radial-gradient(circle at 18% 0%, rgba(255,255,255,0.92), transparent 32%),
+            linear-gradient(145deg, rgba(255,255,255,0.56), rgba(203,213,225,0.34));
+          border: 1px solid rgba(255,255,255,0.78);
           box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.42),
-            inset 0 -1px 0 rgba(15,23,42,0.30),
-            0 7px 18px rgba(15,23,42,0.18);
-          backdrop-filter: blur(22px) saturate(160%);
-          -webkit-backdrop-filter: blur(22px) saturate(160%);
+            inset 0 1px 0 rgba(255,255,255,0.98),
+            inset 0 -1px 0 rgba(100,116,139,0.16),
+            0 7px 18px rgba(51,65,85,0.10);
+          backdrop-filter: blur(22px) saturate(165%);
+          -webkit-backdrop-filter: blur(22px) saturate(165%);
         }
+
+        .ccs-glass-panel h2 { color: #0f172a !important; }
+        .ccs-glass-panel p { color: #64748b !important; }
+        .ccs-glass-strip button { color: #334155 !important; }
 
         .ccs-glass-control,
         .ccs-glass-nav-item {
@@ -601,18 +605,18 @@ function LayoutContent({ children }) {
           position: relative;
           isolation: isolate;
           overflow: hidden;
-          color: #f8fafc;
+          color: #334155;
           background:
-            radial-gradient(circle at 16% -12%, rgba(255,255,255,0.18), transparent 34%),
-            linear-gradient(145deg, rgb(var(--glass-accent-rgb) / 0.24) 0%, rgba(30,41,59,0.42) 58%, rgba(15,23,42,0.50) 100%) !important;
-          border: 1px solid rgb(var(--glass-accent-rgb) / 0.48) !important;
+            radial-gradient(circle at 16% -12%, rgba(255,255,255,0.92), transparent 34%),
+            linear-gradient(145deg, rgb(var(--glass-accent-rgb) / 0.18) 0%, rgba(255,255,255,0.52) 52%, rgba(203,213,225,0.36) 100%) !important;
+          border: 1px solid rgb(var(--glass-accent-rgb) / 0.44) !important;
           backdrop-filter: blur(20px) saturate(170%);
           -webkit-backdrop-filter: blur(20px) saturate(170%);
           box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.42),
-            inset 1px 0 0 rgba(255,255,255,0.10),
-            inset 0 -1px 0 rgba(15,23,42,0.32),
-            0 7px 18px rgba(15,23,42,0.20) !important;
+            inset 0 1px 0 rgba(255,255,255,0.98),
+            inset 1px 0 0 rgba(255,255,255,0.46),
+            inset 0 -1px 0 rgba(100,116,139,0.16),
+            0 7px 18px rgba(51,65,85,0.11) !important;
           transition:
             transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
             border-color 180ms ease,
@@ -655,21 +659,51 @@ function LayoutContent({ children }) {
           transform: translateY(0) scale(0.985);
         }
 
-        .ccs-glass-purple { --glass-accent-rgb: 167 139 250; }
-        .ccs-glass-red { --glass-accent-rgb: 248 113 113; }
-        .ccs-glass-green { --glass-accent-rgb: 74 222 128; }
-        .ccs-glass-blue { --glass-accent-rgb: 96 165 250; }
-        .ccs-glass-cyan { --glass-accent-rgb: 34 211 238; }
-        .ccs-glass-neutral { --glass-accent-rgb: 148 163 184; }
+        .ccs-glass-purple { --glass-accent-rgb: 167 139 250; color: #6d28d9 !important; }
+        .ccs-glass-red { --glass-accent-rgb: 248 113 113; color: #b91c1c !important; }
+        .ccs-glass-green { --glass-accent-rgb: 74 222 128; color: #047857 !important; }
+        .ccs-glass-blue { --glass-accent-rgb: 96 165 250; color: #1d4ed8 !important; }
+        .ccs-glass-cyan { --glass-accent-rgb: 34 211 238; color: #0e7490 !important; }
+        .ccs-glass-neutral { --glass-accent-rgb: 148 163 184; color: #334155 !important; }
+
+        .ccs-glass-nav-item > span { color: #334155 !important; }
 
         .ccs-focus-pause-glass {
           --glass-accent-rgb: 167 139 250;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           background:
-            radial-gradient(circle at 12% -10%, rgba(255,255,255,0.20), transparent 32%),
-            linear-gradient(90deg, rgba(139,92,246,0.30) 0%, rgba(91,33,182,0.20) 49.7%, rgba(20,184,166,0.22) 50.3%, rgba(13,148,136,0.28) 100%),
-            linear-gradient(145deg, rgba(30,41,59,0.50), rgba(15,23,42,0.56)) !important;
-          border-color: rgba(196,181,253,0.46) !important;
+            radial-gradient(circle at 12% -10%, rgba(255,255,255,0.94), transparent 34%),
+            linear-gradient(145deg, rgba(255,255,255,0.54), rgba(203,213,225,0.34)) !important;
+          border-color: rgba(148,163,184,0.42) !important;
         }
+
+        .ccs-focus-segment,
+        .ccs-pause-segment {
+          width: 100%;
+          min-width: 0;
+          position: relative;
+          z-index: 2;
+        }
+
+        .ccs-focus-segment {
+          color: #6d28d9 !important;
+          background:
+            linear-gradient(145deg, rgba(167,139,250,0.28), rgba(255,255,255,0.20)) !important;
+          border-right: 1px solid rgba(148,163,184,0.34) !important;
+        }
+
+        .ccs-pause-segment {
+          color: #0f766e !important;
+          background:
+            linear-gradient(145deg, rgba(45,212,191,0.24), rgba(255,255,255,0.18)) !important;
+          border-left: 0 !important;
+        }
+
+        .ccs-focus-segment svg { color: #7c3aed !important; }
+        .ccs-pause-segment svg { color: #0f766e !important; }
+        .ccs-pause-segment[aria-pressed="true"] { color: #047857 !important; }
+        .ccs-pause-segment[aria-pressed="true"] svg { color: #059669 !important; }
 
         .ccs-navigation-handle {
           color: #f8fafc;
@@ -686,6 +720,7 @@ function LayoutContent({ children }) {
         }
 
         .dark .ccs-glass-shell {
+          color: #f8fafc;
           background:
             radial-gradient(circle at 14% -12%, rgba(255,255,255,0.12), transparent 28%),
             radial-gradient(circle at 84% 116%, rgba(124,58,237,0.10), transparent 34%),
@@ -700,6 +735,7 @@ function LayoutContent({ children }) {
 
         .dark .ccs-glass-panel,
         .dark .ccs-glass-strip {
+          color: #f8fafc;
           background:
             radial-gradient(circle at 18% 0%, rgba(255,255,255,0.10), transparent 30%),
             linear-gradient(145deg, rgba(71,85,105,0.28), rgba(15,23,42,0.38)) !important;
@@ -711,19 +747,47 @@ function LayoutContent({ children }) {
 
         .dark .ccs-glass-control,
         .dark .ccs-glass-nav-item {
+          color: #f8fafc;
           background:
             radial-gradient(circle at 16% -12%, rgba(255,255,255,0.12), transparent 34%),
             linear-gradient(145deg, rgb(var(--glass-accent-rgb) / 0.30) 0%, rgba(15,23,42,0.46) 58%, rgba(2,6,23,0.56) 100%) !important;
           border-color: rgb(var(--glass-accent-rgb) / 0.58) !important;
         }
 
+        .dark .ccs-glass-panel h2 { color: #f8fafc !important; }
+        .dark .ccs-glass-panel p { color: #94a3b8 !important; }
+        .dark .ccs-glass-strip button { color: #e2e8f0 !important; }
+        .dark .ccs-glass-nav-item > span { color: #e2e8f0 !important; }
+
+        .dark .ccs-glass-purple { color: #ddd6fe !important; }
+        .dark .ccs-glass-red { color: #fecaca !important; }
+        .dark .ccs-glass-green { color: #bbf7d0 !important; }
+        .dark .ccs-glass-blue { color: #bfdbfe !important; }
+        .dark .ccs-glass-cyan { color: #a5f3fc !important; }
+        .dark .ccs-glass-neutral { color: #e2e8f0 !important; }
+
         .dark .ccs-focus-pause-glass {
           background:
             radial-gradient(circle at 12% -10%, rgba(255,255,255,0.12), transparent 32%),
-            linear-gradient(90deg, rgba(139,92,246,0.34) 0%, rgba(76,29,149,0.22) 49.7%, rgba(20,184,166,0.24) 50.3%, rgba(15,118,110,0.32) 100%),
             linear-gradient(145deg, rgba(15,23,42,0.62), rgba(2,6,23,0.68)) !important;
           border-color: rgba(196,181,253,0.42) !important;
         }
+
+        .dark .ccs-focus-segment {
+          color: #ddd6fe !important;
+          background: linear-gradient(145deg, rgba(139,92,246,0.34), rgba(76,29,149,0.22)) !important;
+          border-right-color: rgba(255,255,255,0.15) !important;
+        }
+
+        .dark .ccs-pause-segment {
+          color: #99f6e4 !important;
+          background: linear-gradient(145deg, rgba(20,184,166,0.24), rgba(15,118,110,0.32)) !important;
+        }
+
+        .dark .ccs-focus-segment svg { color: #c4b5fd !important; }
+        .dark .ccs-pause-segment svg { color: #5eead4 !important; }
+        .dark .ccs-pause-segment[aria-pressed="true"],
+        .dark .ccs-pause-segment[aria-pressed="true"] svg { color: #6ee7b7 !important; }
 
         .top-nav {
           padding-top: env(safe-area-inset-top);
