@@ -274,10 +274,10 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     if (onSaveStatusChange) {
       onSaveStatusChange({
         hasUnsavedChanges, isSaving, lastSaved,
-        isSyncing, pendingSyncCount, lastSynced, syncMessage,
+        isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError,
       });
     }
-  }, [hasUnsavedChanges, isSaving, lastSaved, isSyncing, pendingSyncCount, lastSynced, syncMessage, onSaveStatusChange]);
+  }, [hasUnsavedChanges, isSaving, lastSaved, isSyncing, pendingSyncCount, lastSynced, syncMessage, saveError, onSaveStatusChange]);
 
   const loadData = async (showLoading = true) => {
     if (!showLoading && (saveInFlightRef.current || dateNeededSaveInFlightRef.current || Object.keys(pendingChangesRef.current).length > 0)) return;
