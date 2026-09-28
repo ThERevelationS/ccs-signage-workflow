@@ -1115,6 +1115,130 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(rejectHarness.rows.TimeClockPunchException[0].status, 'rejected');
 });
 
+test('late-day clock action intent prompts for a possible missed Clock In without inventing a shift', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+
+  const passiveStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(passiveStatus.status, 200, JSON.stringify(passiveStatus.body));
+  assert.notEqual(passiveStatus.body.requires_late_clock_in_review, true);
+  assert.equal(h.rows.TimeEntry.length, 0);
+
+  const actionStatus = await h.invoke({
+    action: 'status', target_email: employee.email, clock_action_intent: true,
+  });
+  assert.equal(actionStatus.status, 200, JSON.stringify(actionStatus.body));
+  assert.equal(actionStatus.body.status, 'clocked_out');
+  assert.equal(actionStatus.body.requires_late_clock_in_review, true);
+  assert.equal(actionStatus.body.late_clock_in_review.type, 'late_clock_in');
+  assert.equal(actionStatus.body.late_clock_in_review.company_date, '2026-09-28');
+  assert.equal(h.rows.TimeEntry.length, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 0);
+});
+
+test('late-day missed Clock In recovery reconstructs one auditable Needs Review shift and exact retry is idempotent', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+  const payload = {
+    action: 'recover_missed_clock_in',
+    target_email: employee.email,
+    request_id: 'late-clock-in-recovery-001',
+    claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  };
+
+  const first = await h.invoke(payload);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.recovered_missed_clock_in, true);
+  assert.equal(first.body.status, 'clocked_in');
+  assert.equal(h.rows.TimeEntry.length, 1);
+  const entry = h.rows.TimeEntry[0];
+  assert.equal(entry.clock_in, '2026-09-28T12:00:00.000Z');
+  assert.equal(entry.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(entry.status, 'clocked_in');
+  assert.equal(entry.approval_status, 'needs_review');
+  assert.ok(entry.missed_clock_in_reported_at);
+  assert.ok(entry.punch_exception_id);
+
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.equal(state.status, 'clocked_in');
+  assert.equal(state.active_entry_id, entry.id);
+
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  const punchCase = h.rows.TimeClockPunchException[0];
+  assert.equal(punchCase.exception_type, 'late_clock_in');
+  assert.equal(punchCase.status, 'pending_manager_review');
+  assert.equal(punchCase.employee_response, 'missed_clock_in');
+  assert.equal(punchCase.claimed_clock_in, entry.clock_in);
+
+  const clockInAudits = h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'clock_in' && row.request_id === payload.request_id
+  );
+  const punchAudits = h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'punch_exception' && row.request_id === payload.request_id
+  );
+  assert.equal(clockInAudits.length, 1);
+  assert.equal(clockInAudits[0].server_timestamp, entry.missed_clock_in_reported_at);
+  assert.equal(punchAudits.length, 1);
+
+  const retry = await h.invoke(payload);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.recovered_missed_clock_in, true);
+  assert.equal(h.rows.TimeEntry.length, 1);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'clock_in' && row.request_id === payload.request_id).length, 1);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'punch_exception' && row.request_id === payload.request_id).length, 1);
+});
+
+test('late-day missed Clock In recovery rejects early-day use, old dates, future times, and existing active work', async () => {
+  const beforeCutoff = setup({ entryCount: 0, serverNow: '2026-09-28T18:59:00.000Z' });
+  beforeCutoff.rows.TimeClockPayPeriod = [];
+  const noPrompt = await beforeCutoff.invoke({
+    action: 'status', target_email: employee.email, clock_action_intent: true,
+  });
+  assert.equal(noPrompt.status, 200, JSON.stringify(noPrompt.body));
+  assert.notEqual(noPrompt.body.requires_late_clock_in_review, true);
+  const blockedEarly = await beforeCutoff.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'late-clock-in-too-early-001',
+    claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(blockedEarly.status, 409, JSON.stringify(blockedEarly.body));
+  assert.equal(beforeCutoff.rows.TimeEntry.length, 0);
+
+  for (const claimedClockIn of ['2026-09-27T12:00:00.000Z', '2026-09-29T12:00:00.000Z', 'not-a-date']) {
+    const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+    h.rows.TimeClockPayPeriod = [];
+    const blocked = await h.invoke({
+      action: 'recover_missed_clock_in', target_email: employee.email,
+      request_id: 'late-clock-in-invalid-001',
+      claimed_clock_in: claimedClockIn,
+    });
+    assert.ok([400, 409].includes(blocked.status), JSON.stringify(blocked.body));
+    assert.equal(h.rows.TimeEntry.length, 0);
+    assert.equal(h.rows.TimeClockPunchException.length, 0);
+  }
+
+  const active = setup({ entryCount: 1, serverNow: '2026-09-28T20:00:00.000Z' });
+  active.rows.TimeClockPayPeriod = [];
+  const activeEntry = active.rows.TimeEntry[0];
+  Object.assign(activeEntry, {
+    user_email: employee.email,
+    status: 'clocked_in',
+    clock_in: '2026-09-28T12:00:00.000Z',
+    clock_source: 'server',
+  });
+  const activeState = active.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  Object.assign(activeState, { status: 'clocked_in', active_entry_id: activeEntry.id });
+  const blockedActive = await active.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'late-clock-in-active-001',
+    claimed_clock_in: '2026-09-28T11:00:00.000Z',
+  });
+  assert.equal(blockedActive.status, 409, JSON.stringify(blockedActive.body));
+  assert.match(blockedActive.body.error, /active shift|state changed/i);
+  assert.equal(active.rows.TimeEntry.length, 1);
+});
+
 test('needs_resolution remains a pay-period finalization blocker', async () => {
   const h = setupStaleMissedPunch();
   await h.invoke({
