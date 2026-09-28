@@ -107,8 +107,8 @@ test('Boone building application review preserves evidence-bounded GovWell and O
 
 test('Boone current Building Permits page is archived separately from the six PDFs with bounded portal evidence', () => {
   assert.equal(manifest.files.length, 6);
-  assert.equal(manifest.webSources.length, 1);
-  const source = manifest.webSources[0];
+  const source = manifest.webSources.find(item => item.purpose === 'current_building_permit_process_and_portal_evidence');
+  assert.ok(source);
   assert.equal(source.sourceUrl, manifest.onlineForms.countyPortalPage);
   assert.equal(source.httpStatus, 200);
   assert.equal(source.contentType, 'text/html');
@@ -119,6 +119,24 @@ test('Boone current Building Permits page is archived separately from the six PD
   assert.match(html, /app\.govwell\.com/i);
   assert.match(html, /fa-erbz-saasfaprod1\.fa\.ocs\.oraclecloud\.com/i);
   assert.match(source.evidenceScope, /does not establish which permit types, if any, still use Oracle/i);
+});
+
+test('Boone current commercial fee page preserves the signage-over-32-square-feet Building Department fee with scope caveats', () => {
+  assert.equal(manifest.files.length, 6);
+  const source = manifest.webSources.find(item => item.purpose === 'current_building_department_signage_review_fee_evidence');
+  assert.ok(source);
+  assert.equal(source.httpStatus, 200);
+  assert.equal(source.contentType, 'text/html');
+  const bytes = readFileSync(source.repositoryPath);
+  assert.equal(bytes.length, source.bytes);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sha256);
+  const html = bytes.toString('utf8');
+  assert.match(html, /Signage \(over 32 sq ft\)/i);
+  assert.match(html, /\$150\/sign/i);
+  assert.match(source.evidenceScope, /Building Department fee evidence only/i);
+  assert.match(source.evidenceScope, /does not establish the complete cost of a sign project/i);
+  assert.match(source.evidenceScope, /does not.*replace Planning Commission sign\/zoning fees/i);
+  assert.match(source.evidenceScope, /does not establish a fee for signage 32 sq ft or less/i);
 });
 
 test('Boone electrical application remains an explicit unarchived source gap', () => {
