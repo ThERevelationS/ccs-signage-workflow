@@ -9,6 +9,27 @@ function cleanText(value: unknown, maxLength = 200) {
   return String(value || '').trim().slice(0, maxLength);
 }
 
+function sameRequestIdentity(record: any, actorId: string, actorEmail: string) {
+  return (
+    cleanText(record?.authorized_email_id, 200) === actorId &&
+    normalizeEmail(record?.user_email) === actorEmail
+  );
+}
+
+function canonicalRequest(rows: any[]) {
+  return [...rows].sort((a, b) => {
+    const aTime = String(a?.created_date || a?.requested_at || '');
+    const bTime = String(b?.created_date || b?.requested_at || '');
+    const byTime = aTime.localeCompare(bTime);
+    if (byTime !== 0) return byTime;
+    return String(a?.id || '').localeCompare(String(b?.id || ''));
+  })[0] || null;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function publicRequest(record: any) {
   if (!record?.id) return null;
   return {
@@ -35,16 +56,76 @@ async function loadOwnRequest(Request: any, actor: any) {
   }
 
   const existing = rows[0] || null;
-  if (existing) {
-    if (
-      cleanText(existing.authorized_email_id, 200) !== actorId ||
-      normalizeEmail(existing.user_email) !== actorEmail
-    ) {
-      throw Object.assign(new Error('Deletion request identity does not match the signed-in account.'), { status: 409 });
-    }
+  if (existing && !sameRequestIdentity(existing, actorId, actorEmail)) {
+    throw Object.assign(new Error('Deletion request identity does not match the signed-in account.'), { status: 409 });
   }
 
   return { actorId, actorEmail, creationKey, existing };
+}
+
+async function createOwnPendingRequest(Request: any, actor: any, actorId: string, actorEmail: string, creationKey: string) {
+  const payload = {
+    creation_key: creationKey,
+    authorized_email_id: actorId,
+    user_email: actorEmail,
+    user_name: cleanText(actor?.full_name || actor?.name || actorEmail, 200),
+    status: 'pending',
+    requested_at: new Date().toISOString(),
+  };
+
+  let created: any = null;
+  let createError: any = null;
+  try {
+    created = await Request.create(payload);
+  } catch (error) {
+    createError = error;
+  }
+
+  // Re-read after create so simultaneous submissions converge on one canonical row.
+  // This also recovers a successful create whose response was lost.
+  await delay(75);
+  let contenders = await Request.filter({ creation_key: creationKey });
+  if (!Array.isArray(contenders)) {
+    if (createError) throw createError;
+    throw Object.assign(new Error('Deletion request create verification did not return a record list.'), { status: 503 });
+  }
+  if (contenders.length === 0) {
+    if (createError) throw createError;
+    throw new Error('Account deletion request create outcome could not be verified.');
+  }
+  if (contenders.some((row: any) => !sameRequestIdentity(row, actorId, actorEmail) || String(row?.status || '').toLowerCase() !== 'pending')) {
+    throw Object.assign(new Error('Deletion request create identity is ambiguous. An administrator must review it before retrying.'), { status: 409 });
+  }
+
+  const winner = canonicalRequest(contenders);
+  if (!winner?.id) throw new Error('Account deletion request create outcome could not be verified.');
+
+  if (contenders.length > 1) {
+    for (const duplicate of contenders) {
+      if (duplicate?.id && duplicate.id !== winner.id) {
+        await Request.delete(duplicate.id).catch(() => null);
+      }
+    }
+    await delay(25);
+  }
+
+  contenders = await Request.filter({ creation_key: creationKey });
+  if (!Array.isArray(contenders)) {
+    throw Object.assign(new Error('Deletion request cleanup verification did not return a record list.'), { status: 503 });
+  }
+  if (contenders.length !== 1) {
+    throw Object.assign(new Error('Multiple deletion requests were created concurrently. An administrator must review them before retrying.'), { status: 409 });
+  }
+
+  const saved = contenders[0];
+  if (!sameRequestIdentity(saved, actorId, actorEmail) || String(saved?.status || '').toLowerCase() !== 'pending') {
+    throw Object.assign(new Error('Deletion request identity changed while the request was being created.'), { status: 409 });
+  }
+
+  return {
+    request: saved,
+    reused: !created?.id || created.id !== saved.id,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -79,19 +160,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      const created = await Request.create({
-        creation_key: creationKey,
-        authorized_email_id: actorId,
-        user_email: actorEmail,
-        user_name: cleanText(actor?.full_name || actor?.name || actorEmail, 200),
-        status: 'pending',
-        requested_at: new Date().toISOString(),
-      });
+      const created = await createOwnPendingRequest(Request, actor, actorId, actorEmail, creationKey);
 
       return Response.json({
         success: true,
-        request: publicRequest(created),
-        reused: false,
+        request: publicRequest(created.request),
+        reused: created.reused,
       });
     }
 
