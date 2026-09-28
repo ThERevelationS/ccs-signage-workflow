@@ -58,3 +58,10 @@ const receivedFilter = render(received, false, 0);
 assert.equal(countCards(receivedFilter), 100);
 assert.match(receivedFilter, /Show next 100 \(20 remaining\)/);
 console.log('PASS unsplit received-only mobile view initially renders at most 100 cards');
+
+const translatedNeeded = render([{ id: 'translated-needed', customer_name: 'Translated Needed', status: 'pending', date_needed_option: 'ASAP' }], false, 0);
+assert.match(translatedNeeded, /Needed: <span class="text-gray-700">ASAP<\/span>/);
+const translatedNeededWins = render([{ id: 'translated-needed-wins', customer_name: 'Translated Needed Wins', status: 'pending', date_needed: '2026-10-01', date_needed_option: 'In Stock' }], false, 0);
+assert.match(translatedNeededWins, /Needed: <span class="text-gray-700">In Stock<\/span>/);
+assert.doesNotMatch(translatedNeededWins, /Oct 1, 2026/);
+console.log('PASS mobile cards display translated Date Needed choices and prefer them over stale paired dates');
