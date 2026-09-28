@@ -32,6 +32,7 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
         const displayStatus = effectiveOrderStatus(order);
         const statusColor = STATUS_COLORS[displayStatus] || "bg-gray-100 text-gray-700";
         const dateNeeded = safeOrderMobileDate(order.date_needed);
+        const dateNeededOption = typeof order.date_needed_option === 'string' ? order.date_needed_option.trim() : '';
         return (
           <div
             key={order.id}
@@ -58,8 +59,8 @@ export default function OrderMobileCards({ orders, onOpenDetails, separateHistor
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
               {order.quantity && <span>Qty: <span className="text-gray-700">{order.quantity}</span></span>}
               {order.vendor && <span>Vendor: <span className="text-gray-700">{order.vendor}</span></span>}
-              {dateNeeded && (
-                <span>Needed: <span className="text-gray-700">{format(dateNeeded, 'MMM d, yyyy')}</span></span>
+              {(dateNeededOption || dateNeeded) && (
+                <span>Needed: <span className="text-gray-700">{dateNeededOption || format(dateNeeded, 'MMM d, yyyy')}</span></span>
               )}
               {order.requestor_name && <span>By: <span className="text-gray-700">{order.requestor_name}</span></span>}
             </div>
