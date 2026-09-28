@@ -118,6 +118,8 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const saveInFlightRef = useRef(false);
   const copyInFlightRef = useRef(false);
   const deleteInFlightRef = useRef(false);
+  const selectionInFlightRef = useRef(new Set());
+  const [selectingIds, setSelectingIds] = useState(() => new Set());
   const [isCopying, setIsCopying] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
@@ -373,21 +375,34 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
       // Force re-render
       setFilters([...filters]);
     } else {
+      const recordId = String(item.id || "").trim();
+      if (!recordId || selectionInFlightRef.current.has(recordId)) return false;
+      selectionInFlightRef.current.add(recordId);
+      setSelectingIds((current) => new Set(current).add(recordId));
       const selectedBy = item.selected_by || [];
       const isSelected = selectedBy.includes(userEmail);
       
       try {
         await setSalesFilterSelectionSafely({
-          recordId: item.id,
+          recordId,
           selected: !isSelected,
           sessionToken,
           label: `Saved filter ${item.name || item.id} selection`,
         });
         await loadData();
+        return true;
       } catch (error) {
         console.error("Saved filter selection update blocked:", error);
         setPersistenceError(error?.message || "This saved filter changed while your selection was being saved.");
         await loadData();
+        return false;
+      } finally {
+        selectionInFlightRef.current.delete(recordId);
+        setSelectingIds((current) => {
+          const next = new Set(current);
+          next.delete(recordId);
+          return next;
+        });
       }
     }
   };
@@ -519,6 +534,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           <button 
                             type="button"
                             aria-label={`Remove ${item.name} from My Presets`}
+                            disabled={selectingIds.has(item.id)}
                             onClick={() => toggleSelection(item)}
                             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded hover:text-purple-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 sm:h-5 sm:w-5"
                           >
@@ -601,6 +617,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                           <input
                             type="checkbox"
                             checked={isSelected(item)}
+                            disabled={selectingIds.has(item.id)}
                             onChange={() => toggleSelection(item)}
                             className="h-3 w-3 shrink-0"
                           />
