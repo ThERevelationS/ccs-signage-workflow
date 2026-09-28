@@ -61,7 +61,7 @@ import {
   mutateWorkOrderArrayField,
   replaceWorkOrderFieldsIfUnchanged,
 } from "@/components/workflow/workOrderPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -93,7 +93,7 @@ export default function WorkOrderCard({
   const isTopPriority = priorityNumber === 1;
   const isAsap = workOrder.asap || false;
   
-  const { isRegistered, promptForEmail } = useAuth();
+  const { isRegistered, promptForEmail, sessionToken } = useAuth();
   
   const requireAuth = (callback) => {
     return (e) => {
@@ -180,21 +180,30 @@ export default function WorkOrderCard({
 
   React.useEffect(() => {
     loadUser();
-    loadAllUsers();
   }, []);
 
-  const loadAllUsers = async () => {
-    try {
-      const users = await loadAllEntityRows({
-        entity: base44.entities.AuthorizedEmail,
-        sort: null,
-        label: "Work Order card authorized users",
-      });
-      setAllUsers(users);
-    } catch (error) {
-      console.error("Error loading users:", error);
+  React.useEffect(() => {
+    if (!sessionToken) {
+      setAllUsers([]);
+      return;
     }
-  };
+
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((directory) => {
+        if (!cancelled) setAllUsers(directory.users);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setAllUsers([]);
+          console.error("Error loading Work Order assignment users:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionToken]);
 
   // Riders and parent are passed in via workOrder._riders / workOrder._parent by the parent page
   // to avoid N+1 API calls per card. Only fetch if not already provided.
