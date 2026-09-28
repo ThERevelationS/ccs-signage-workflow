@@ -208,14 +208,16 @@ export default function FleetRepairApprovalPolicies() {
           setUncertain(null); setEditor(null);
           setNotice("Server confirms the new threshold was saved. The create operation was not repeated.");
         } else {
-          setError("A threshold exists with this creation identity but its current values differ. Close and review the current policies; do not repeat the save.");
+          setUncertain(null); setEditor(null);
+          setNotice("A threshold already exists with this creation identity but different current values. The server list was loaded; review it before creating or editing another threshold.");
         }
         return;
       }
       if (pending.kind === "save" && pending.mode === "update") {
         const row = rows.find(policy => policy.id === pending.id);
         if (!row) {
-          setError("The edited threshold no longer exists. Close the editor and review current policies; do not repeat the save.");
+          setUncertain(null); setEditor(null);
+          setNotice("The edited threshold no longer exists. Current server policies were loaded; no update was repeated.");
         } else if (policyMatches(row, pending.desired) && row.updated_date !== pending.expected_updated_date) {
           setUncertain(null); setEditor(null);
           setNotice("Server confirms the threshold update is present. The update was not repeated.");
