@@ -6,6 +6,7 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { canonicalBase44SalesAssignee } from '../../shared/smartsheetSalesAssigneeTranslation.mjs';
+import { hasMeaningfulSmartsheetSalesCustomer } from '../../shared/smartsheetSalesImportEligibility.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
 import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
 import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
@@ -416,6 +417,7 @@ async function pullDataset(
   const toCreate: any[] = [];
   const toUpdate: any[] = [];
   const salesAssigneeTranslationIssues: any[] = [];
+  let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
 
   for (const row of allRows) {
@@ -496,9 +498,12 @@ async function pullDataset(
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
+        if (!hasMeaningfulSmartsheetSalesCustomer(newRecord)) {
+          salesMissingCustomerRowsSkipped++;
+          continue;
+        }
         newRecord.smartsheet_parent_row_id = salesParentRowId;
-        if (!newRecord.title) newRecord.title = newRecord.client_name || `Smartsheet row ${rowId}`;
-        if (!newRecord.client_name) newRecord.client_name = 'Unknown';
+        if (!newRecord.title) newRecord.title = newRecord.client_name;
         newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
       } else {
         if (!newRecord.customer_name) newRecord.customer_name = 'Unknown';
@@ -746,6 +751,7 @@ async function pullDataset(
     created: createdCount,
     updated: updatedCount,
     unchanged_skipped: unchangedSkipped,
+    ...(dataset === 'sales' ? { missing_customer_rows_skipped: salesMissingCustomerRowsSkipped } : {}),
     ...(dataset === 'orders' ? { snapshot_write_failures: snapshotWriteFailures } : {}),
     errors: errors.length,
     error_details: errors.slice(0, 10),
