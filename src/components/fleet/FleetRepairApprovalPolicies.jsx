@@ -67,21 +67,79 @@ export default function FleetRepairApprovalPolicies() {
   busyRef.current = busy;
   uncertainRef.current = uncertain;
 
+  const fetchPolicies = async () => {
+    const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_list" });
+    if (data?.error) throw responseError(data.error);
+    if (!Array.isArray(data?.policies)) throw new Error("The policy list response could not be verified.");
+    return data.policies;
+  };
   const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await base44.functions.invoke("fleetRepairEstimateAction", { action: "policy_list" });
-      if (data?.error) throw new Error(data.error);
-      setPolicies(data?.policies || []);
+      const rows = await fetchPolicies();
+      setPolicies(rows);
+      setLoadFailed(false);
+      setRefreshWarning("");
     } catch (err) {
+      setLoadFailed(true);
       setError(err?.message || "Unable to load Fleet repair approval policies.");
     } finally {
       setLoading(false);
     }
   };
+  const refreshAfterMutation = async verb => {
+    try {
+      setPolicies(await fetchPolicies());
+      setRefreshWarning("");
+      return true;
+    } catch {
+      setRefreshWarning(`${verb} succeeded, but the policy list could not refresh. Use Retry refresh; do not repeat the operation.`);
+      return false;
+    }
+  };
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!editor) return undefined;
+    editorPreviousFocusRef.current = document.activeElement;
+    requestAnimationFrame(() => editorNameRef.current?.focus());
+    const handleKey = event => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!busyRef.current && !uncertainRef.current) setEditor(null);
+        return;
+      }
+      if (event.key !== "Tab" || !editorDialogRef.current) return;
+      const controls = [...editorDialogRef.current.querySelectorAll("button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)")]
+        .filter(element => element.getClientRects().length > 0);
+      if (!controls.length) { event.preventDefault(); editorDialogRef.current.focus(); return; }
+      const first = controls[0], last = controls[controls.length - 1], active = document.activeElement;
+      if (!editorDialogRef.current.contains(active) || active === editorDialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      requestAnimationFrame(() => {
+        if (editorPreviousFocusRef.current?.isConnected) editorPreviousFocusRef.current.focus();
+        else addButtonRef.current?.focus();
+      });
+    };
+  }, [!!editor]);
+
+  useEffect(() => {
+    if (uncertain && !busy) requestAnimationFrame(() => recoveryRef.current?.focus());
+  }, [uncertain, busy]);
+
+  const mutationBlocked = !!busy || !!uncertain || loading || loadFailed;
   const sorted = useMemo(() => policies.slice().sort((a, b) => Number(a.minimum_amount || 0) - Number(b.minimum_amount || 0)), [policies]);
   const coverage = useMemo(() => {
     const enabled = policies.filter(policy => policy.enabled !== false).slice().sort((a,b) => policyMin(a) - policyMin(b));
