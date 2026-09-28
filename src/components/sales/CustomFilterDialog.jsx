@@ -810,7 +810,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     variant="outline"
                     size="sm"
                     onClick={addCondition}
-                    className="mt-2"
+                    className="mt-2 min-h-11 sm:min-h-0"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Condition
@@ -822,7 +822,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
                     <Save className="mr-2 h-4 w-4 shrink-0" />
                     {editingItem ? "Update Information Filter" : "Save Information Filter"}
                   </Button>
-                  <Button variant="outline" onClick={() => requestNavigation(resetForm)} disabled={isSaving}>
+                  <Button variant="outline" onClick={() => requestNavigation(resetForm)} disabled={isSaving} className="min-h-11 sm:min-h-0">
                     Cancel
                   </Button>
                 </div>
