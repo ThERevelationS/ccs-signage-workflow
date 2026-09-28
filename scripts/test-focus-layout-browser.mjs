@@ -193,18 +193,18 @@ try {
         "Private layout task A");
     });
 
-  await freshCase("Mobile Focus button clears bottom navigation and creates no horizontal overflow", origin,
+  await freshCase("Mobile keeps Focus paired inside More menu with no floating obstruction or overflow", origin,
     { width: 360, height: 740 }, async (page) => {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
       const nav = page.locator(".mobile-bottom-nav");
-      const focusButton = page.getByRole("button", { name: /Open focus timer/ });
       await nav.waitFor({ state: "visible" });
+      assert.equal(await page.locator("[data-focus-timer-trigger]:visible").count(), 0,
+        "Focus trigger is not floating over mobile work content");
+      await page.getByRole("button", { name: "More" }).click();
+      const focusButton = page.locator("[data-focus-timer-trigger]:visible");
       await focusButton.waitFor();
-      const navBox = await nav.boundingBox();
-      const buttonBox = await focusButton.boundingBox();
-      assert.ok(navBox && buttonBox, "Mobile navigation and Focus button are measurable");
-      assert.ok(buttonBox.y + buttonBox.height <= navBox.y,
-        "Focus button sits fully above mobile bottom navigation");
+      const pair = page.locator("[data-focus-pause-pair]:visible");
+      await pair.waitFor();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await focusButton.click();
       const dialog = page.getByRole("dialog", { name: "My Focus Timer" });
