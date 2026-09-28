@@ -65,6 +65,9 @@ function syntheticBackend() {
           } else if (request.op === "updateMany") {
             const query = request.query || {};
             const patch = request.patch || {};
+            if (fixture.updateDelayMs) {
+              await new Promise((resolve) => setTimeout(resolve, fixture.updateDelayMs));
+            }
             assert.deepEqual(Object.keys(patch), ["$set"], "Synthetic fixture accepts only conditional field replacements");
             const matches = query.id === fixture.row.id &&
               query.updated_date === fixture.row.updated_date && fixture.row.deleted !== true;
