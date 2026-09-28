@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import FleetConfirmDialog from "@/components/fleet/FleetConfirmDialog";
 import { AlertTriangle, DollarSign, Loader2, Pencil, Plus, ShieldCheck, Trash2, X } from "lucide-react";
@@ -21,14 +21,51 @@ const policyMax = policy => {
 };
 const rangesOverlap = (a, b) => policyMin(a) <= policyMax(b) && policyMin(b) <= policyMax(a);
 const policyRangeText = policy => policyMax(policy) === Infinity ? `${money(policyMin(policy))} and above` : `${money(policyMin(policy))} to ${money(policyMax(policy))}`;
+const policyDesired = policy => ({
+  name: String(policy?.name || "").trim(),
+  approval_tier: String(policy?.approval_tier || policy?.name || "").trim(),
+  minimum_amount: Number(policy?.minimum_amount || 0),
+  maximum_amount: Number(policy?.maximum_amount || 0),
+  approval_required: policy?.approval_required !== false,
+  enabled: policy?.enabled !== false,
+  notes: String(policy?.notes || "").trim(),
+  sort_order: Number(policy?.sort_order || 0),
+});
+const policyMatches = (row, desired) => {
+  const actual = policyDesired(row);
+  return Object.keys(desired).every(key => actual[key] === desired[key]);
+};
+const definiteMutationFailure = err => {
+  if (err?.fleetDefinite) return true;
+  const status = Number(err?.response?.status || 0);
+  return status >= 400 && status < 500;
+};
+const responseError = message => {
+  const err = new Error(message);
+  err.fleetDefinite = true;
+  return err;
+};
 
 export default function FleetRepairApprovalPolicies() {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [refreshWarning, setRefreshWarning] = useState("");
+  const [uncertain, setUncertain] = useState(null);
   const [editor, setEditor] = useState(null);
   const [deletePolicy, setDeletePolicy] = useState(null);
+  const addButtonRef = useRef(null);
+  const editorDialogRef = useRef(null);
+  const editorNameRef = useRef(null);
+  const editorPreviousFocusRef = useRef(null);
+  const busyRef = useRef(busy);
+  const uncertainRef = useRef(uncertain);
+  const recoveryRef = useRef(null);
+  busyRef.current = busy;
+  uncertainRef.current = uncertain;
 
   const load = async () => {
     setLoading(true);
