@@ -979,8 +979,12 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       {saveError && (
         <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-800 flex items-center justify-between gap-2">
           <span>{saveError}</span>
-          <Button type="button" variant="outline" size="sm" onClick={() => loadData(true)} className="h-7 shrink-0 border-red-300 bg-white text-red-800">
-            Reload Orders
+          <Button
+            type="button" variant="outline" size="sm"
+            onClick={() => saveError.startsWith('Saved in Base44, but Smartsheet sync needs attention:') ? saveAndSync() : loadData(true)}
+            className="h-7 shrink-0 border-red-300 bg-white text-red-800"
+          >
+            {saveError.startsWith('Saved in Base44, but Smartsheet sync needs attention:') ? 'Retry Sync' : 'Reload Orders'}
           </Button>
         </div>
       )}
