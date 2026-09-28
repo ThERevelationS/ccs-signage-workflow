@@ -849,6 +849,65 @@ export default function QuickClockSection({
     }
   };
 
+  const handlePunchResolution = async ({ response, claimedClockOut = "" }) => {
+    if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
+      throw new Error("Punch-resolution identity is no longer verified. Identify again before continuing.");
+    }
+
+    const email = selectedUser.email;
+    const requestId = requestIdFor("resolve_punch_exception", email);
+    const credential = credentialRef.current;
+    const user = selectedUser;
+    setPunchResolutionError("");
+    setPersistenceError("");
+    setIsLoading(true);
+
+    try {
+      const result = await invokeTimeClock({
+        action: "resolve_punch_exception",
+        request_id: requestId,
+        response,
+        ...(claimedClockOut ? { claimed_clock_out: claimedClockOut } : {}),
+        ...credentialPayload(credential, email),
+      });
+      clearRequest("resolve_punch_exception", email);
+
+      if (result?.worked_through === true && result?.status === "clocked_in") {
+        setPunchResolution(null);
+        setActiveEntry(result.entry || activeEntry);
+        setRecognitionStatus("Continuous shift confirmed. Your original Clock In remains active and no punch time was changed.");
+        setTimeout(() => resetState(), 2500);
+        return result;
+      }
+
+      if (result?.punch_resolution_pending === true && result?.status === "clocked_out") {
+        setPunchResolution(null);
+        setActiveEntry(null);
+        setRecognitionStatus("Previous shift sent to manager review. Clocking you in now...");
+        await performClockIn(result.user || user, credential);
+        return result;
+      }
+
+      throw new Error("Punch resolution returned an unexpected authoritative state. Reload before continuing.");
+    } catch (err) {
+      if (!shouldRetainRequest(err)) clearRequest("resolve_punch_exception", email);
+      const message = err?.message || "Punch resolution was not confirmed by the server.";
+      setPunchResolutionError(message);
+      setRecognitionStatus(err?.retrySameRequest
+        ? "Punch resolution may have been saved. Retry the same response to recover safely."
+        : "Punch resolution is blocked. Review the message in the window.");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMissedClockOutResolution = (claimedClockOut) =>
+    handlePunchResolution({ response: "missed_clock_out", claimedClockOut });
+
+  const handleWorkedThroughResolution = () =>
+    handlePunchResolution({ response: "worked_through" });
+
   const handleClockOut = async (data) => {
     if (!activeEntry?.id || !selectedUser?.email || !credentialRef.current) {
       throw new Error("Clock-out identity is no longer verified. Close this dialog and identify again.");
@@ -895,6 +954,17 @@ export default function QuickClockSection({
 
   return (
     <>
+      <MissedPunchResolutionDialog
+        open={Boolean(punchResolution && activeEntry && selectedUser)}
+        entry={activeEntry}
+        userName={selectedUser?.full_name || selectedUser?.email}
+        resolution={punchResolution}
+        busy={isLoading}
+        error={punchResolutionError}
+        onMissedClockOut={handleMissedClockOutResolution}
+        onWorkedThrough={handleWorkedThroughResolution}
+      />
+
       <WorkPauseOverlay
         userOverride={selectedUser}
         credentialOverride={credentialRef.current}
@@ -960,7 +1030,7 @@ export default function QuickClockSection({
           </div>
         )}
 
-        {!authoritativeTransition && !isRecognizing && !showClockOut && (
+        {!authoritativeTransition && !punchResolution && !isRecognizing && !showClockOut && (
           <div className="flex flex-col items-center gap-6">
             <p className="text-gray-600 text-center">
               Tap the button, then identify with face recognition, a secure QR badge, or username/password.
