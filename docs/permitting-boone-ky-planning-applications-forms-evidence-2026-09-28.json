@@ -1,0 +1,12 @@
+{
+  "title": "Boone County Planning Commission — current Applications and Forms page snapshot",
+  "sourceUrl": "https://bcpcky.org/applications_forms/index.php",
+  "checkedAt": "2026-09-28",
+  "httpStatus": 200,
+  "contentType": "text/html",
+  "bytes": 57219,
+  "sha256": "70aedcbdaffa34b5019b6dc7a3b73b50b9134383573267e62fb6e41e0878b598",
+  "repositoryPath": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "purpose": "current_planning_commission_application_category_evidence",
+  "evidenceScope": "The current Applications and Forms page directly categorizes Sign Permit as both a checklist and an application, and directly lists Temporary Advertising Display plus three distinct Temporary Commercial Display applications: Incorporated, Seasonal, and Unincorporated. This is current resource/category evidence only; the page does not establish an authenticated online submission workflow, and it does not by itself confirm every requirement, eligibility rule, jurisdiction boundary, instruction, or fee inside the linked PDFs."
+}
