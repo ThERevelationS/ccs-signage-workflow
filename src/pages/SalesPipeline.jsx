@@ -112,6 +112,7 @@ export default function SalesPipeline() {
     setActiveColumnPreset(null);
     setFilterStatus("all");
     setAttentionFilter("all");
+    setSaveSyncState({ busy: false, ok: null, message: "" });
     loadActiveFilters();
   }, [currentUser?.email, sessionToken]);
 
@@ -324,8 +325,23 @@ export default function SalesPipeline() {
             {isRegistered && !showDuplicateCleanup && (
               <Button
                 type="button"
+                onClick={runSaveAndSync}
+                disabled={saveSyncState.busy}
+                className="order-2 col-span-3 h-11 min-w-0 shrink-0 whitespace-nowrap px-2 text-xs sm:order-5 sm:h-9 sm:w-auto sm:px-3"
+                variant="outline"
+                title="Save pending Sales edits in Base44, then sync those exact WorkOrders to Smartsheet now"
+              >
+                {saveSyncState.busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+                <span className="sm:hidden">{saveSyncState.busy ? "Syncing" : "Save"}</span>
+                <span className="hidden sm:inline">{saveSyncState.busy ? "Saving & Syncing..." : "Save & Sync"}</span>
+              </Button>
+            )}
+
+            {isRegistered && !showDuplicateCleanup && (
+              <Button
+                type="button"
                 onClick={() => setShowNewClientForm(true)}
-                className="clay-button order-2 col-span-5 h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-5 sm:h-9 sm:w-auto sm:px-3"
+                className="clay-button order-2 col-span-5 h-11 min-w-0 shrink-0 whitespace-nowrap border-none px-2 text-xs text-gray-800 sm:order-6 sm:h-9 sm:w-auto sm:px-3"
                 style={{ background: 'linear-gradient(135deg, #C8F4E9 0%, #D4E9F7 100%)' }}
               >
                 <Plus className="mr-1.5 h-4 w-4" /> New Client
@@ -513,6 +529,14 @@ export default function SalesPipeline() {
             </div>
             
           </div>
+          {saveSyncState.message && !showDuplicateCleanup && (
+            <div
+              role={saveSyncState.ok === false ? "alert" : "status"}
+              className={`mt-2 rounded-md border px-2.5 py-1.5 text-xs ${saveSyncState.ok === false ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
+            >
+              {saveSyncState.message}
+            </div>
+          )}
         </section>
 
         {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
