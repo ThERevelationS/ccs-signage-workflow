@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { deleteFleetRecordIfCurrent, updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { createFleetRepairApprovalPolicySafely } from '../../shared/fleetRepairApprovalPolicyCreate.ts';
+import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
 
 const norm = (value: unknown) => String(value ?? '').trim();
@@ -29,6 +30,7 @@ Deno.serve(async req => {
     const body = await req.json().catch(()=>({}));
     const action = norm(body?.action);
     const Estimate = base44.asServiceRole.entities.FleetRepairEstimate;
+    const EstimateCreateGate = base44.asServiceRole.entities.FleetRepairEstimateCreateGate;
     const Policy = base44.asServiceRole.entities.FleetRepairApprovalPolicy;
     const PolicyCreateGate = base44.asServiceRole.entities.FleetRepairApprovalPolicyCreateGate;
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
@@ -96,7 +98,15 @@ Deno.serve(async req => {
       const patch = repairEstimatePatch(body?.estimate || body);
       const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
       if (!estimate) {
-        estimate = await Estimate.create({...patch,work_order_id:wo.id,equipment_id:wo.equipment_id||'',status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,estimate_source:'ccs_admin',creation_key:`repair-estimate:${wo.id}`});
+        const created = await createFleetRepairEstimateSafely({
+          estimateEntity:Estimate,
+          gateEntity:EstimateCreateGate,
+          workOrderId:wo.id,
+          creationKey:`repair-estimate:${wo.id}`,
+          ownerSource:'ccs_admin',
+          desired:{...patch,equipment_id:wo.equipment_id||'',approval_required:policy.approval_required,approval_tier:policy.approval_tier},
+        });
+        estimate = created.estimate;
       } else {
         const expected = norm(body?.expected_updated_date);
         if (!expected) return Response.json({error:'Repair-estimate version is missing. Reload before saving.'},{status:409});
