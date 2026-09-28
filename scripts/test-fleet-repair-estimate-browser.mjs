@@ -289,6 +289,77 @@ try {
       ["get","get"]);
   });
 
+  await run("Desktop: lost approval acknowledgment reconciles without repeating the decision",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    await dialog.getByRole("button",{name:"Approve",exact:true}).waitFor();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.decisionThenLoseAck=true;});
+    await dialog.getByRole("button",{name:"Approve",exact:true}).click();
+    const check=dialog.getByRole("button",{name:"Check approval decision status"});
+    await check.waitFor();
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.estimates["wo-open"].status),"approved");
+    assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).isDisabled(),true);
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
+    await check.click();
+    await dialog.getByRole("status").getByText(/Server confirms the estimate is approved/).waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).count(),0);
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
+    assert.deepEqual(await page.evaluate(()=>window.__fleetEstimateFixture.actions.map(a=>a.payload.action)),
+      ["get","save","submit","decide","get"]);
+  });
+
+  await run("Desktop: uncommitted decision is unlocked only after server verification",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    await dialog.getByRole("button",{name:"Reject",exact:true}).waitFor();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextDecision=true;});
+    await dialog.getByRole("button",{name:"Reject",exact:true}).click();
+    const check=dialog.getByRole("button",{name:"Check approval decision status"});
+    await check.waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Reject",exact:true}).isDisabled(),true);
+    await check.click();
+    await dialog.getByRole("status").getByText(/approval decision was not recorded/).waitFor();
+    assert.equal(await dialog.getByRole("button",{name:"Reject",exact:true}).isEnabled(),true);
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
+    await dialog.getByRole("button",{name:"Reject",exact:true}).click();
+    await dialog.getByRole("status").getByText(/Estimate rejected/).waitFor();
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),2);
+  });
+
+  await run("Desktop: failed decision-status GET keeps approval actions blocked",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextDecision=true;});
+    await dialog.getByRole("button",{name:"Request Changes",exact:true}).click();
+    const check=dialog.getByRole("button",{name:"Check approval decision status"});
+    await check.waitFor();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextGet=true;});
+    await check.click();
+    await dialog.getByRole("alert").getByText(/decision remains unconfirmed; do not repeat it/i).waitFor();
+    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).isDisabled(),true);
+    assert.equal(await dialog.getByRole("button",{name:"Request Changes",exact:true}).isDisabled(),true);
+    assert.equal(await dialog.getByRole("button",{name:"Reject",exact:true}).isDisabled(),true);
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
+  });
+
+  await run("Desktop: concurrent estimate change keeps an uncertain decision fail-closed",1440,async page=>{
+    const dialog=await openEstimate(page);
+    await dialog.getByRole("button",{name:"Save & Submit"}).click();
+    await page.evaluate(()=>{window.__fleetEstimateFixture.failNextDecision=true;});
+    await dialog.getByRole("button",{name:"Approve",exact:true}).click();
+    const check=dialog.getByRole("button",{name:"Check approval decision status"});
+    await check.waitFor();
+    await page.evaluate(()=>{
+      window.__fleetEstimateFixture.estimates["wo-open"].updated_date="synthetic-concurrent-decision-version";
+    });
+    await check.click();
+    await dialog.getByRole("alert").getByText(/changed while the approval response was uncertain/i).waitFor();
+    assert.equal(await check.evaluate(el=>document.activeElement===el),true);
+    assert.equal(await dialog.getByRole("button",{name:"Approve",exact:true}).isDisabled(),true);
+    assert.equal(await page.evaluate(()=>window.__fleetEstimateFixture.actions.filter(a=>a.payload.action==="decide").length),1);
+  });
+
   console.log("REPAIR_ESTIMATE_BROWSER_PASS="+passed);
 } finally {
   if(browser) await browser.close();
