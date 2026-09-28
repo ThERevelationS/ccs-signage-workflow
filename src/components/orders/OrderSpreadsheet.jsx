@@ -471,6 +471,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
       setOrders((current) => current.some((order) => order.id === newOrder.id) ? current : [...current, newOrder]);
       originalOrdersRef.current[newOrder.id] = { ...newOrder };
+      markOrderNeedsSync(newOrder.id);
 
       try {
         await NotificationTriggers.orderCreated(newOrder, currentUser?.full_name || currentUser?.email);
@@ -539,6 +540,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       label,
     });
     originalOrdersRef.current[orderId] = { ...saved };
+    markOrderNeedsSync(orderId);
 
     const latestPending = remainingOrderPendingAfterImmediateSave(
       pendingChangesRef.current[orderId] || {}, pendingAtStart, nextFields, supersedePendingFields
