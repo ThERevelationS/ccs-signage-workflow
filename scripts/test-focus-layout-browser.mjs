@@ -85,8 +85,16 @@ try {
     "Collapsed shell preference persists locally");
   assert.match(layoutSource, /ccsShellCompact/,
     "Compact shell preference persists locally");
-  assert.match(layoutSource, /180ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/,
-    "Shell uses the approved fast smooth transition curve");
+  assert.match(layoutSource, /const SHELL_SPRING = \{[\s\S]*stiffness: 210,[\s\S]*damping: 30,[\s\S]*mass: 0\.82/,
+    "Shell collapse uses a continuous spring rather than a short CSS jump");
+  assert.match(layoutSource, /\.ccs-glass-shell \{[\s\S]*backdrop-filter: blur\(30px\) saturate\(185%\)/,
+    "Whole navigation shell uses the layered glass material");
+  assert.match(layoutSource, /data-shell-navigation-handle="(?:side|top)"/,
+    "Collapsed navigation exposes a dedicated bump-out handle");
+  assert.match(layoutSource, />Navigation Bar</,
+    "Collapsed handle is visibly labeled Navigation Bar");
+  assert.match(layoutSource, /<motion\.main/,
+    "Working canvas animates with the same spring as the navigation shell");
   assert.match(layoutSource, /mobile-bottom-nav[^"]*z-50/,
     "Mobile navigation retains its z-50 shell layer");
   assert.match(focusSource, /data-focus-timer-trigger/,
@@ -184,16 +192,19 @@ try {
       await page.goto(origin + "/?user=synthetic-layout-user-a", { waitUntil: "networkidle" });
       const compactToggle = page.locator("[data-shell-compact-toggle]:visible");
       const workflowLink = page.getByRole("link", { name: "My Workflow" }).first();
+      const beforeNavBox = await page.locator(".top-nav").boundingBox();
       await compactToggle.waitFor();
       const beforePadding = Number.parseFloat(await workflowLink.evaluate((node) => getComputedStyle(node).paddingTop));
       await compactToggle.click();
-      await page.waitForTimeout(180);
+      await page.waitForTimeout(700);
       const afterPadding = Number.parseFloat(await workflowLink.evaluate((node) => getComputedStyle(node).paddingTop));
       assert.ok(afterPadding < beforePadding, "Compact View reduces navigation padding");
       const compactNavBox = await page.locator(".top-nav").boundingBox();
       const compactMainPadding = Number.parseFloat(await page.locator("main").evaluate((node) => getComputedStyle(node).paddingTop));
       assert.ok(compactNavBox && compactMainPadding >= compactNavBox.height - 1,
         "Compact shell still reserves enough space for page content");
+      assert.ok(beforeNavBox && compactNavBox.height <= beforeNavBox.height * 0.82,
+        `Compact mode materially reduces top shell height (before=${beforeNavBox?.height}, after=${compactNavBox?.height})`);
       assert.equal(await compactToggle.getAttribute("aria-pressed"), "true");
       assert.equal(await page.evaluate(() => localStorage.getItem("ccsShellCompact")), "true");
 
