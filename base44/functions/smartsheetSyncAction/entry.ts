@@ -417,6 +417,7 @@ async function pullDataset(
   const toCreate: any[] = [];
   const toUpdate: any[] = [];
   const salesAssigneeTranslationIssues: any[] = [];
+  const orderLocalPendingConflicts: string[] = [];
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
 
@@ -469,6 +470,13 @@ async function pullDataset(
     const salesParentRowId = dataset === 'sales' && /^\d+$/.test(cleanText(row?.parent_id, 40))
       ? cleanText(row.parent_id, 40) : '';
     const existing = recordsByRowId[rowId];
+    if (dataset === 'orders' && existing?.smartsheet_pending_local_sync === true) {
+      // A local Order edit that has been durably saved but not yet pushed is
+      // authoritative until Save & Sync resolves it. Never let background pull
+      // overwrite it; flag the permanent Order ID for review instead.
+      orderLocalPendingConflicts.push(existing.id);
+      continue;
+    }
     if (dataset === 'orders') {
       Object.assign(fieldValues, orderStatusFromPulledDates(
         fieldValues, existing, /^\d+$/.test(String(bindings?.status ?? '').trim()),
@@ -1091,6 +1099,7 @@ async function pushDataset(
       await base44.asServiceRole.entities[dataset === 'sales' ? 'WorkOrder' : 'Order'].update(record.id, {
         smartsheet_sync_snapshot: snapshot,
         smartsheet_last_synced_at: new Date().toISOString(),
+        ...(dataset === 'orders' ? { smartsheet_pending_local_sync: false } : {}),
       });
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
