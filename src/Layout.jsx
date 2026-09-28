@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -196,6 +196,7 @@ const ROOT_ROUTES = [
 function LayoutContent({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(() => localStorage.getItem("ccsShellCollapsed") === "true");
   const [compactView, setCompactView] = useState(() => localStorage.getItem("ccsShellCompact") === "true");
@@ -310,8 +311,9 @@ function LayoutContent({ children }) {
   const isRootRoute = ROOT_ROUTES.includes(location.pathname) || location.pathname === "/";
   const isSideNav = navLayout === "side" && !isMobile;
   const effectiveCollapsed = (navCollapsed || isFullscreen) && !isMobile;
-  const sideNavWidth = compactView ? 196 : 224;
+  const sideNavWidth = compactView ? 158 : 224;
   const collapsedRail = 10;
+  const shellTransition = reduceMotion ? { duration: 0.01 } : SHELL_SPRING;
 
   useEffect(() => {
     if (isMobile || isSideNav) return undefined;
