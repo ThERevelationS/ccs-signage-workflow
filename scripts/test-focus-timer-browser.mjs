@@ -158,6 +158,21 @@ try {
         "Private synthetic task A");
     });
 
+  await freshCase("Two tabs share focus state without overwriting one another", origin,
+    { width: 1366, height: 900 }, async (first, context, errors) => {
+      const second = await context.newPage();
+      monitor(second, origin, errors);
+      await second.goto(origin + "/?user=synthetic-person-a", { waitUntil: "networkidle" });
+      await first.getByRole("button", { name: /Open focus timer/ }).click();
+      await first.getByRole("button", { name: "Start focusing" }).click();
+      await second.getByRole("button", { name: /Open focus timer, .*remaining/ }).waitFor();
+      await second.getByRole("button", { name: /Open focus timer/ }).click();
+      await second.getByRole("button", { name: "Pause", exact: true }).click();
+      await first.getByRole("button", { name: "Resume" }).waitFor();
+      const state = await first.evaluate((key) => JSON.parse(localStorage.getItem(key)), stateKey);
+      assert.equal(state.status, "paused");
+    });
+
   console.log("PASS " + passed + "/" + passed + " isolated Focus Timer Chromium scenarios");
 } finally {
   if (browser) await browser.close();
