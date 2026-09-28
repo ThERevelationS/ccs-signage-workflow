@@ -38,7 +38,7 @@ import SalesStatusTransitionDialog from "@/components/sales/SalesStatusTransitio
 import SalesFollowUpCompleteDialog from "@/components/sales/SalesFollowUpCompleteDialog";
 import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
-import { isSalesDateFilterField, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
+import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -1449,8 +1449,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     // Check grouped "is" conditions - ANY value matching = pass (OR logic within same field)
     for (const [field, values] of Object.entries(conditionsByField)) {
       const fieldValue = wo[field];
-      // If ANY of the values match, this field passes
-      const fieldPasses = values.some(val => fieldValue == val);
+      // If ANY of the values match, this field passes. Date-typed filters
+      // compare calendar days so timestamp-backed fields can match date-only cutoffs.
+      const fieldPasses = isSalesDateFilterField(field)
+        ? values.some((val) => salesDateFilterEquals(fieldValue, val))
+        : values.some((val) => fieldValue == val);
       if (!fieldPasses) return false;
     }
     
@@ -1461,18 +1464,24 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       switch (condition.operator) {
         case "is_not":
-          return fieldValue != condValue;
+          return isSalesDateFilterField(condition.field)
+            ? !salesDateFilterEquals(fieldValue, condValue)
+            : fieldValue != condValue;
         case "is_one_of": {
           const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
           if (vals.length === 0) return true;
           const fv = fieldValue != null ? String(fieldValue) : "";
-          return vals.some(v => fv == v);
+          return isSalesDateFilterField(condition.field)
+            ? vals.some((value) => salesDateFilterEquals(fieldValue, value))
+            : vals.some((value) => fv == value);
         }
         case "is_not_one_of": {
           const vals = (condValue || "").split(",").filter(Boolean).map(v => v.trim());
           if (vals.length === 0) return true;
           const fv = fieldValue != null ? String(fieldValue) : "";
-          return !vals.some(v => fv == v);
+          return isSalesDateFilterField(condition.field)
+            ? !vals.some((value) => salesDateFilterEquals(fieldValue, value))
+            : !vals.some((value) => fv == value);
         }
         case "contains":
           return fieldValue?.toString().toLowerCase().includes(condValue.toLowerCase());
