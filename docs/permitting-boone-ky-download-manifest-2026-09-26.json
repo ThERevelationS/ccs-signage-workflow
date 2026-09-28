@@ -57,7 +57,14 @@
     "buildingPermitPortal": "https://app.govwell.com/",
     "countyPortalPage": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
     "legacyOraclePortal": "https://fa-erbz-saasfaprod1.fa.ocs.oraclecloud.com/fscmUI/publicSector.html",
-    "buildingPermitSubmission": "Current official Boone County Building Permits page directs applicants to create an account in GovWell and apply online; no separate current general Building Permit Application PDF is listed.",
+    "buildingPermitSubmission": "Current official Boone County Building Permits page directs applicants creating NEW building-permit applications to create an account in GovWell and apply online; no separate current general Building Permit Application PDF is listed.",
+    "buildingPermitPortalEvidence": {
+      "newApplications": "GovWell is the current official county-directed path for new building-permit applications.",
+      "oracleCurrentPageLink": "The current Boone County Building Permits page still links the Oracle public-sector permit portal.",
+      "oracleArchivedEvidence": "The archived official Online Permit Information PDF documents Oracle as a building-permit workflow.",
+      "oracleScopeCaveat": "Current evidence does not establish that Oracle is obsolete and does not define every permit type that may still use it.",
+      "newApplicationRoutingRule": "Do not direct new building-permit applications to Oracle without newer permit-specific official evidence."
+    },
     "electricalPermitApplication": {
       "listingPage": "https://www.boonecountyky.org/services/building_department/building_permits/index.php",
       "listedLabel": "Electrical Permit Application Form",
@@ -69,6 +76,6 @@
       "notes": "The current official Boone County Building Permits page lists this form under Resources, but its linked .doc returned HTTP 404 during direct source verification. No repository copy was created and no file hash/byte count is claimed."
     }
   },
-  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs general building applications to GovWell and still lists an Electrical Permit Application Form under Resources. The exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. Preserve the older archived Building Department sign guide as historical instructions. The legacy Oracle portal remains linked lower on the county page and requires separate current-use review.",
+  "sourceGapReview": "2026-09-28: the current official Boone County Building Permits page directs NEW building-permit applications to GovWell and still links the Oracle public-sector permit portal. The archived official Online Permit Information PDF documents Oracle as a building-permit workflow, but current evidence does not establish that Oracle is obsolete or define every permit type that may still use it. Do not direct new building-permit applications to Oracle without newer permit-specific official evidence. The page also lists an Electrical Permit Application Form under Resources; the exact linked ElecApp 2024 (4).doc resource returned HTTP 404 during direct verification, so it remains an explicit unresolved source gap and was not archived. Preserve the older archived Building Department sign guide as historical instructions.",
   "status": "downloaded repository copies; live Base44 file storage and staff legal review pending"
 }
