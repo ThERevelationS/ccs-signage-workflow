@@ -117,6 +117,7 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   const pendingLeaveRef = useRef(null);
   const saveInFlightRef = useRef(false);
   const copyInFlightRef = useRef(false);
+  const deleteInFlightRef = useRef(false);
   const [isCopying, setIsCopying] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState(mode);
@@ -312,19 +313,23 @@ export default function CustomFilterDialog({ isOpen, onClose, mode = "filters" }
   };
 
   const confirmDelete = async () => {
-    if (!deleteConfirm?.id || isSaving) return;
+    if (!deleteConfirm?.id || deleteInFlightRef.current) return false;
+    deleteInFlightRef.current = true;
     setIsSaving(true);
     setPersistenceError("");
     try {
       await deleteSalesFilterIfUnchanged({ record: deleteConfirm, sessionToken, label: `Saved filter ${deleteConfirm.name || deleteConfirm.id} deletion` });
       await loadData();
       setDeleteConfirm(null);
+      return true;
     } catch (error) {
       console.error("Saved filter deletion blocked:", error);
       setPersistenceError(error?.message || "This saved filter changed in another session and was not deleted.");
       setDeleteConfirm(null);
       await loadData();
+      return false;
     } finally {
+      deleteInFlightRef.current = false;
       setIsSaving(false);
     }
   };
