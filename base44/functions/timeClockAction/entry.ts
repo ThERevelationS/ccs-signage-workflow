@@ -4936,6 +4936,32 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'TimeEntry was not found or is archived.' }, { status: 404 });
       }
       if (entry.status !== 'clocked_out' || !entry.clock_out) return Response.json({ success: false, error: 'Only completed shifts can be approved.' }, { status: 400 });
+
+      const syncLateClockInPunchCase = async (record: any, approvalAuditId: string) => {
+        if (!record?.punch_exception_id) return true;
+        const punchCase = await punchExceptionEntity.get(record.punch_exception_id).catch(() => null);
+        if (!punchCase?.id || String(punchCase.exception_type || '') !== 'late_clock_in') return true;
+        if (String(punchCase.time_entry_id || '') !== record.id || asEmail(punchCase.user_email) !== target.email) return false;
+        const expectedCaseStatus = decision === 'approve' ? 'resolved' : 'pending_manager_review';
+        if (String(punchCase.status || '') === expectedCaseStatus &&
+            (decision !== 'approve' || String(punchCase.resolution_audit_id || '') === String(approvalAuditId || ''))) return true;
+        const updated = await punchExceptionEntity.updateMany(
+          { id: punchCase.id, time_entry_id: record.id, user_email: target.email },
+          { $set: {
+            status: expectedCaseStatus,
+            ...(decision === 'approve' ? {
+              resolution_audit_id: approvalAuditId,
+              resolution_note: 'Manager approved the completed shift reconstructed from the employee-reported missed Clock In.',
+            } : {
+              resolution_note: 'Manager returned the reconstructed missed Clock In shift to Needs Review.',
+            }),
+          } },
+        );
+        if (!updated || typeof updated.updated !== 'number') return false;
+        const verified = await punchExceptionEntity.get(punchCase.id).catch(() => null);
+        return Boolean(verified?.id && String(verified.status || '') === expectedCaseStatus &&
+          (decision !== 'approve' || String(verified.resolution_audit_id || '') === String(approvalAuditId || '')));
+      };
       const approvalPayloadHash = await payloadHash({
         entry_id: entry.id,
         expected_updated_date: expectedUpdatedDate,
@@ -4994,6 +5020,9 @@ Deno.serve(async (req) => {
         if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) ||
           !approvalAuditMatches(finalAudit) || !savedByThisApproval(entry)) {
           return Response.json({ success: false, retry_same_request: true, error: 'The saved approval and exact manager audit could not be verified. Retry the same approval action.' }, { status: 409 });
+        }
+        if (!await syncLateClockInPunchCase(entry, intent.id)) {
+          return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved, but its Missed Clock In report still needs finalization. Retry this same approval.' }, { status: 409 });
         }
         if (decision === 'approve') {
           const completedGateReleased = await releaseCompletedCorrectionCreateLock(
@@ -5101,6 +5130,9 @@ Deno.serve(async (req) => {
       const finalAudit = await auditEntity.get(intent.id).catch(() => null);
       if (!finalAudit || !['confirmed', 'recovered'].includes(String(finalAudit.outcome || '')) || !approvalAuditMatches(finalAudit)) {
         return Response.json({ success: false, retry_same_request: true, error: 'The approval was saved but its exact manager audit could not be confirmed. Retry the same approval action.' }, { status: 409 });
+      }
+      if (!await syncLateClockInPunchCase(savedEntry, finalAudit.id)) {
+        return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved, but its Missed Clock In report still needs finalization. Retry this same approval.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
       } finally {
