@@ -15,6 +15,15 @@ async function invokeSalesFilter(payload) {
   }
 }
 
+export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales person roster" } = {}) {
+  const result = await invokeSalesFilter({
+    action: "roster",
+    session_token: requireSessionToken(sessionToken, label),
+  });
+  if (!Array.isArray(result?.users)) throw new Error(`${label} could not be verified.`);
+  return result.users;
+}
+
 export async function createSalesFilterIfAbsent({ data, sessionToken, label = "Sales filter" } = {}) {
   const result = await invokeSalesFilter({
     action: "create",
