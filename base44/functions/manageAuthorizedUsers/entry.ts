@@ -504,10 +504,15 @@ Deno.serve(async (req) => {
         : {};
       const expected: Record<string, unknown> = {};
       for (const field of Object.keys(desired)) {
-        expected[field] = expectedInput[field];
-        if (!sameValue(current?.[field], expected[field]) && !sameValue(current?.[field], desired[field])) {
+        // Existing users predate the Order Export field. Its absent stored
+        // value means false, but the conditional write must retain the actual
+        // absent baseline rather than falsely treating it as a conflict.
+        const legacyUnsetOrderExport = field === 'can_order_export' && current?.[field] == null;
+        const currentValue = legacyUnsetOrderExport ? false : current?.[field];
+        if (!sameValue(currentValue, expectedInput[field]) && !sameValue(currentValue, desired[field])) {
           return Response.json({ error: `Authorized user changed in another session (${field}). Reload before saving.` }, { status: 409 });
         }
+        expected[field] = legacyUnsetOrderExport ? current?.[field] : expectedInput[field];
       }
 
       if (Object.prototype.hasOwnProperty.call(desired, 'username')) {
