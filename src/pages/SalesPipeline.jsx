@@ -14,7 +14,6 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
 
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const EMPTY_PIPELINE_SUMMARY = {
   openCount: 0,
   openValue: 0,
@@ -92,7 +91,7 @@ export default function SalesPipeline() {
   const [showColumnFilterDialog, setShowColumnFilterDialog] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
-  const [canImportExport, setCanImportExport] = useState(false);
+  const canImportExport = currentUser?.role === "admin" || currentUser?.can_import_export === true;
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const spreadsheetRef = useRef(null);
@@ -114,30 +113,6 @@ export default function SalesPipeline() {
     setAttentionFilter("all");
     loadActiveFilters();
   }, [currentUser?.email, sessionToken]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const checkImportExportPermission = async () => {
-      // Permission must fail closed while identity changes or authorization is rechecked.
-      setCanImportExport(false);
-      if (currentUser?.role === "admin") {
-        if (!cancelled) setCanImportExport(true);
-        return;
-      }
-      if (!currentUser?.email) return;
-      try {
-        const users = await AuthorizedEmail.filter({ email: currentUser.email.toLowerCase() });
-        if (!cancelled) setCanImportExport(Boolean(users[0]?.can_import_export));
-      } catch (error) {
-        console.error("Could not verify Sales Pipeline import/export permission:", error);
-        if (!cancelled) setCanImportExport(false);
-      }
-    };
-    checkImportExportPermission();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser]);
 
   const loadActiveFilters = async () => {
     const requestId = ++activeFiltersLoadRef.current;
@@ -708,6 +683,7 @@ export default function SalesPipeline() {
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
             customFilters={activeFilters.filter(f => f.type === "filter")}
+            canImportExport={canImportExport}
           />
         )}
       </div>
