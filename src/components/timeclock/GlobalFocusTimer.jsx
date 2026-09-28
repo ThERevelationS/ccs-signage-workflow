@@ -124,7 +124,7 @@ export default function GlobalFocusTimer({ currentUser }) {
         {running && <span className="sr-only">Running</span>}
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={setOpen} modal={false}>
         <DialogContent className="z-[90] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-lg overflow-y-auto rounded-3xl border-purple-200 bg-white p-4 text-slate-900 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
