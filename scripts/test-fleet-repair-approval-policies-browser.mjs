@@ -95,6 +95,7 @@ try {
     assert.equal(await dialog.getByRole("button",{name:"Close"}).evaluate(el=>document.activeElement===el),true);
     await page.keyboard.press("Escape");
     await dialog.waitFor({state:"hidden"});
+    await page.waitForFunction(()=>document.activeElement?.textContent?.includes("Add Threshold"));
     assert.equal(await page.getByRole("button",{name:"Add Threshold"}).evaluate(el=>document.activeElement===el),true);
   });
 
