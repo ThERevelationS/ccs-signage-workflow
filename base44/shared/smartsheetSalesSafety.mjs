@@ -1,4 +1,5 @@
 import { smartsheetSalesAssigneeLabel } from './smartsheetSalesAssigneeTranslation.mjs';
+import { hasMeaningfulSmartsheetSalesCustomer } from './smartsheetSalesImportEligibility.mjs';
 
 // Sales Pipeline Smartsheet boundary safety.
 //
@@ -32,7 +33,8 @@ export function isLegacyTerminalSalesTask(value) {
 }
 
 export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
-  return !isLegacyTerminalSalesTask(fields?.current_task_description);
+  return hasMeaningfulSmartsheetSalesCustomer(fields) &&
+    !isLegacyTerminalSalesTask(fields?.current_task_description);
 }
 
 // Only skip a linked Sales pull when every populated inbound field already
