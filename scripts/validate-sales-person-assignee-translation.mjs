@@ -15,6 +15,7 @@ import {
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 
 const spreadsheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.jsx", "utf8");
+const filterDialog = readFileSync("src/components/sales/CustomFilterDialog.jsx", "utf8");
 let checks = 0;
 const check = (value, label) => { assert.ok(value, label); checks += 1; };
 const same = (actual, expected, label) => { assert.equal(actual, expected, label); checks += 1; };
@@ -92,7 +93,8 @@ check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
       spreadsheet.includes("fieldValue != condValue") &&
       spreadsheet.includes("fv == value"),
   "Non-user filter equality semantics must remain unchanged");
-check(spreadsheet.includes('aria-label="Horizontal Sales Pipeline column preview"'),
-  "Horizontal column preview must remain intact");
+check(filterDialog.includes('aria-label="Horizontal Sales Pipeline column preview"') &&
+      filterDialog.includes('className="flex flex-wrap gap-1"'),
+  "Compact always-visible column checkboxes and horizontal preview must remain intact");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);
