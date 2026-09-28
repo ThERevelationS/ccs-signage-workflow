@@ -599,6 +599,50 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     setShowForm(true);
   };
 
+  const markWorkOrderNeedsSync = useCallback((workOrderId) => {
+    const id = String(workOrderId || "").trim();
+    if (id) pendingSyncIdsRef.current.add(id);
+  }, []);
+
+  const clearSyncedWorkOrderIds = useCallback((workOrderIds) => {
+    for (const id of workOrderIds || []) pendingSyncIdsRef.current.delete(String(id));
+  }, []);
+
+  const waitForPendingSalesSaves = async () => {
+    for (let attempt = 0; attempt < 70; attempt += 1) {
+      if (Object.keys(pendingChangesRef.current).length === 0 && Object.keys(debounceTimers.current).length === 0) return;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error("Sales changes are still waiting to save. Resolve the save warning or reload latest before syncing.");
+  };
+
+  const saveAndSync = async () => {
+    if (syncInFlightRef.current) return { ok: false, message: "Sales sync is already running." };
+    try {
+      await waitForPendingSalesSaves();
+    } catch (error) {
+      return { ok: false, message: error?.message || "Sales changes could not be saved before sync." };
+    }
+
+    const workOrderIds = [...pendingSyncIdsRef.current];
+    if (workOrderIds.length === 0) {
+      return { ok: true, message: "No new Sales changes need Smartsheet sync." };
+    }
+
+    syncInFlightRef.current = true;
+    try {
+      const result = await pushSavedSalesToSmartsheet({ sessionToken, workOrderIds });
+      const summary = summarizeSavedSalesSync(result);
+      if (!summary.ok) return summary;
+      clearSyncedWorkOrderIds(workOrderIds);
+      return summary;
+    } catch (error) {
+      return { ok: false, message: error?.message || "Saved in Base44, but Smartsheet sync could not be verified." };
+    } finally {
+      syncInFlightRef.current = false;
+    }
+  };
+
   const updateWorkOrderFields = (orderId, nextChanges, skipHistory = false) => {
     const currentWo = workOrders.find(wo => wo.id === orderId);
     if (!currentWo || !nextChanges || Object.keys(nextChanges).length === 0) return;
