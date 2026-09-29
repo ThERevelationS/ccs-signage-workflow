@@ -27,10 +27,9 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
 
 export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
   const expected = Math.max(0, Number(expectedOrderCount) || 0);
-  const readCount = (value) => {
-    const count = Number(value);
-    return Number.isSafeInteger(count) && count >= 0 ? count : null;
-  };
+  const readCount = (value) => (
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null
+  );
   const results = Array.isArray(result?.results) ? result.results : [];
   const orderResults = results.filter((row) => row?.dataset === "orders");
   if (orderResults.length !== 1 || results.length !== 1) {
