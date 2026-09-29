@@ -40,6 +40,25 @@ export async function saveSalesPipelinePreferencesSafely({ sessionToken, prefere
   return saved;
 }
 
+export async function loadSalesDefaultSortSafely({ sessionToken, label = "Sales Pipeline default sort" } = {}) {
+  const result = await invokeSalesFilter({
+    action: "default_sort_get",
+    session_token: requireSessionToken(sessionToken, label),
+  });
+  return { record: result?.record || null, value: result?.value || { column: "created_date", direction: "desc" } };
+}
+
+export async function saveSalesDefaultSortSafely({ sessionToken, record, value, label = "Sales Pipeline default sort" } = {}) {
+  const result = await invokeSalesFilter({
+    action: "default_sort_set",
+    session_token: requireSessionToken(sessionToken, label),
+    expected_updated_date: record?.updated_date || "",
+    value,
+  });
+  if (!result?.record?.id || !result?.value) throw new Error(`${label} save could not be verified.`);
+  return result;
+}
+
 export async function loadSalesPersonRosterSafely({ sessionToken, label = "Sales person roster" } = {}) {
   const result = await invokeSalesFilter({
     action: "roster",
