@@ -84,7 +84,7 @@ await assert.rejects(verifyPulledOrderDates(silentlyDropped, 'stable-order', pre
 console.log('PASS concurrent date/option edits, unexpected blanking and unmapped fields fail closed');
 
 const engine = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');
-assert.match(engine, /dataset === 'orders' \? withoutUnverifiedTimestamp : fields/);
+assert.match(engine, /return \{ id, \.\.\.withoutUnverifiedTimestamp \};/);
 assert.match(engine, /changedPulledOrderDates\(_existing, fields\)/);
 assert.match(engine, /rawFields\[dateField\]/);
 assert.match(engine, /fieldValues\[key\] = '';/);
@@ -92,4 +92,4 @@ assert.match(engine, /orderDateOptionField\(candidate\) === key/);
 assert.match(engine, /await verifyPulledOrderDates\(base44\.asServiceRole\.entities\.Order/);
 assert.match(engine, /Snapshot not advanced/);
 assert.match(engine, /smartsheet_last_synced_at: new Date\(\)\.toISOString\(\)/);
-console.log('PASS Order-only sync timestamp and snapshot follow date read-back verification');
+console.log('PASS Order date sync timestamp and snapshot still follow date read-back verification');
