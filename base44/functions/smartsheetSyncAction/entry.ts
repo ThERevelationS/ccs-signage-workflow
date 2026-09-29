@@ -1259,11 +1259,20 @@ async function pushDataset(
       }
       // Store fresh snapshot + timestamp on the record
       const snapshot = buildSnapshot(record, bindings, dataset);
-      await base44.asServiceRole.entities[dataset === 'sales' ? 'WorkOrder' : 'Order'].update(record.id, {
-        smartsheet_sync_snapshot: snapshot,
-        smartsheet_last_synced_at: new Date().toISOString(),
-        ...(dataset === 'orders' ? { smartsheet_pending_local_sync: false } : {}),
-      });
+      if (dataset === 'orders') {
+        const finalized = await base44.asServiceRole.entities.Order.updateMany(
+          { id: record.id, updated_date: record.updated_date, smartsheet_pending_local_sync: true },
+          { $set: { smartsheet_sync_snapshot: snapshot, smartsheet_last_synced_at: new Date().toISOString(), smartsheet_pending_local_sync: false } },
+        );
+        if (!finalized || finalized.updated !== 1) {
+          throw new Error('Order changed while Smartsheet sync was running. The newer revision remains queued for Save & Sync.');
+        }
+      } else {
+        await base44.asServiceRole.entities.WorkOrder.update(record.id, {
+          smartsheet_sync_snapshot: snapshot,
+          smartsheet_last_synced_at: new Date().toISOString(),
+        });
+      }
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
     }
