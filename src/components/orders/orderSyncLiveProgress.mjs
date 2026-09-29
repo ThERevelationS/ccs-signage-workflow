@@ -18,7 +18,10 @@ export function orderSyncLiveProgress(status, { enabled = true, now = Date.now()
 
   const stamp = Date.parse(status?.progress_updated_at || status?.updated_at || status?.started_at || '');
   const heartbeatAgeMs = Number.isFinite(stamp) ? Math.max(0, now - stamp) : null;
-  const stalled = Boolean(enabled && running &&
+  // The short heartbeat timeout belongs only to active Order row progress.
+  // Other sync stages (for example Sales in a combined run) do not emit this
+  // heartbeat and must keep the shared widget's normal stale-run policy.
+  const stalled = Boolean(show && running &&
     (heartbeatAgeMs === null || heartbeatAgeMs > ORDER_SYNC_HEARTBEAT_STALE_MS));
 
   return { show, current, total, itemLabel, detail, percent, stalled, heartbeatAgeMs };
