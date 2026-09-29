@@ -79,6 +79,41 @@ export function salesPushRecordUnchanged(record = {}, sheetId = "", expectedSnap
     /^\d+$/.test(linkedSheetId) && salesPullSnapshotAligned(record, expectedSnapshot);
 }
 
+function sameKnownSalesSnapshotValue(columnId, current, previous, assigneeColumnId = "") {
+  if (columnId === String(assigneeColumnId || "").trim()) {
+    return smartsheetSalesAssigneeLabel(current).toLowerCase() ===
+      smartsheetSalesAssigneeLabel(previous).toLowerCase();
+  }
+  const currentBlank = current == null || String(current).trim() === "";
+  const previousBlank = previous == null || String(previous).trim() === "";
+  if (currentBlank || previousBlank) return currentBlank && previousBlank;
+  if (typeof current === "number" || typeof previous === "number") {
+    const a = Number(current);
+    const b = Number(previous);
+    if (Number.isFinite(a) && Number.isFinite(b)) return a === b;
+  }
+  return String(current).trim() === String(previous).trim();
+}
+
+// Detect local Base44 edits without treating a newly-added Smartsheet binding
+// as a local change. Only columns that already existed in the last verified
+// snapshot are comparable. This lets pull safely fill a new binding baseline
+// while preserving real local edits for the subsequent push/conflict check.
+export function salesRecordHasLocalChangesSinceSnapshot(
+  record = {},
+  expectedSnapshot = {},
+  assigneeColumnId = "",
+) {
+  const prior = record?.smartsheet_sync_snapshot;
+  if (!record?.smartsheet_last_synced_at || !prior || typeof prior !== "object" || Array.isArray(prior)) {
+    return false;
+  }
+  return Object.entries(expectedSnapshot || {}).some(([columnId, current]) =>
+    Object.prototype.hasOwnProperty.call(prior, columnId) &&
+    !sameKnownSalesSnapshotValue(columnId, current, prior[columnId], assigneeColumnId)
+  );
+}
+
 // A previously linked Sales record with no verified snapshot for every current
 // bound column must not be blindly rewritten. A new mapping (such as Est / Inv #)
 // can be absent from an old snapshot even when the Smartsheet cell has data.
