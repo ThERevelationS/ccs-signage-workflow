@@ -84,8 +84,9 @@ assert.ok(client.includes('typeof value === "number" && Number.isSafeInteger(val
 assert.doesNotMatch(client, /const count = Number\(value\)/);
 assert.ok(client.includes('[recordsExamined, created, updated, unchanged, errors, conflicts].some((count) => count === null)'));
 assert.ok(client.includes('Smartsheet returned invalid Order sync counts. The requested Orders will stay queued.'));
-assert.ok(client.includes('const accounted = created + updated + unchanged'));
-assert.ok(client.includes('accounted !== expected'));
+assert.ok(client.includes('const accounted = created + updated + unchanged + errors + conflicts'));
+assert.ok(client.includes('if (expected > 0 && accounted !== expected)'));
+assert.doesNotMatch(client, /accounted !== expected && errors === 0 && conflicts === 0/);
 assert.ok(client.includes('Unaccounted Orders will stay queued.'));
 assert.ok(client.includes('result?.configured !== true'));
 assert.ok(client.includes('result?.write_actions_available !== true'));
