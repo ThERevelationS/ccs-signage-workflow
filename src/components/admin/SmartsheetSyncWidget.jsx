@@ -5,16 +5,19 @@ import { RefreshCw, Check, AlertTriangle, GitBranch, X } from "lucide-react";
 import { interpretSmartsheetSyncStatus } from "./smartsheetSyncStatusModel.js";
 import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
+import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
 
 const STATUS_KEY = 'smartsheetSyncStatus';
 const CONFIG_KEY = 'smartsheetSyncConfig';
 
-export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
+export default function SmartsheetSyncWidget({ compactOrderForm = false, sessionToken = "", currentUser = null }) {
   const [status, setStatus] = useState(null);
   const [config, setConfig] = useState(null);
   const [dismissed, setDismissed] = useState(false);
   const [dismissedSuccessRun, setDismissedSuccessRun] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recoveringStaleRun, setRecoveringStaleRun] = useState(false);
+  const [recoveryError, setRecoveryError] = useState("");
   const prevRunningRef = useRef(false);
 
   const loadStatus = useCallback(async () => {
@@ -93,6 +96,21 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
   const progressDetail = orderProgress.detail;
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const canRecoverStaleOrderRun = compactOrderForm && isStale && status?.status === 'running' &&
+    orderProgress.heartbeatAgeMs !== null && currentUser?.role === 'admin' && Boolean(sessionToken);
+  const recoverStaleRun = async () => {
+    if (!canRecoverStaleOrderRun || recoveringStaleRun) return;
+    setRecoveryError('');
+    setRecoveringStaleRun(true);
+    try {
+      await recoverStalledOrderSync({ sessionToken, expectedStartedAt: status?.started_at });
+      await loadStatus();
+    } catch (error) {
+      setRecoveryError(error?.message || 'The stalled Order sync could not be closed safely.');
+    } finally {
+      setRecoveringStaleRun(false);
+    }
+  };
 
   // A successful completion dismissal belongs to that specific run, so the next
   // completion can still appear even if polling missed its brief running phase.
@@ -212,7 +230,20 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false }) {
           <div className="px-3 py-2.5 space-y-2 text-[11px] text-amber-800" role="status">
             <p>The last sync still says running, but its progress timestamp is stale. Its actual outcome is unverified; do not assume the run completed.</p>
             <p className="text-gray-600">Last reported: {currentStepLabel || "Unknown stage"} · {completedSteps}/{totalSteps} stages</p>
-            <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Review sync settings →</Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/AdminSettings?tab=smartsheet" className="text-blue-600 hover:underline font-medium">Review sync settings →</Link>
+              {canRecoverStaleOrderRun && (
+                <button
+                  type="button"
+                  onClick={recoverStaleRun}
+                  disabled={recoveringStaleRun}
+                  className="rounded-md border border-amber-300 bg-white px-2 py-1 font-medium text-amber-800 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                >
+                  {recoveringStaleRun ? "Closing stalled run…" : "Close stalled run"}
+                </button>
+              )}
+            </div>
+            {recoveryError && <p className="text-red-700 dark:text-red-300" role="alert">{recoveryError}</p>}
           </div>
         ) : isRunning ? (
           <div className="px-3 py-2.5 space-y-2">
