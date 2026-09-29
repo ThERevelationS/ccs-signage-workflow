@@ -41,6 +41,11 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
     };
   }
   const results = Array.isArray(result?.results) ? result.results : [];
+  if (expected === 0) {
+    return results.length === 0 && result?.sync_complete === true && result?.needs_review !== true
+      ? { ok: true, message: "Saved changes are already synchronized." }
+      : { ok: false, message: "Smartsheet returned an unexpected Order sync result when no Orders were requested." };
+  }
   const orderResults = results.filter((row) => row?.dataset === "orders");
   if (orderResults.length !== 1 || results.length !== 1) {
     return expected === 0 && results.length === 0 && result?.sync_complete === true
