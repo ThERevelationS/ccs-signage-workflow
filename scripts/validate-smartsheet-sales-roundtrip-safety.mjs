@@ -7,6 +7,9 @@ import {
 import {
   salesRecordHasLocalChangesSinceSnapshot,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
+import {
+  findUnverifiedSyncMetadata,
+} from "../base44/shared/smartsheetOrderMetadataVerification.mjs";
 
 const assigneeColumn = "3326787726927748";
 const estInvColumn = "4624329576763268";
@@ -87,13 +90,31 @@ assert.equal(
 const remote = buildSalesPullSnapshot({
   cells: [
     { column_id: "3087579177346948", value: "Example Client", display_value: "Example Client" },
-    { column_id: estInvColumn, value: 12345, display_value: "12345" },
-    { column_id: assigneeColumn, value: "Brett", display_value: "Brett" },
+    { column_id: estInvColumn, value: 12345, display_value: "12,345" },
+    { column_id: "5655853885876100", value: 450, display_value: "$450.00" },
+    { column_id: assigneeColumn, value: "Brett Heinlein", display_value: "Brett Heinlein" },
   ],
 }, bindings);
-assert.equal(remote[estInvColumn], "12345", "Remote Est / Inv baseline must use the actual Smartsheet cell.");
-assert.equal(remote[assigneeColumn], "Brett", "Remote assignee baseline must preserve the actual Smartsheet label.");
+assert.equal(remote[estInvColumn], "12345", "Remote Est / Inv baseline must prefer the canonical raw identifier over formatted display text.");
+assert.equal(remote["5655853885876100"], 450, "Remote numeric snapshots must use canonical numeric values instead of currency display text.");
+assert.equal(remote[assigneeColumn], "Brett", "Remote assignee baseline must normalize to the same first-name representation used by push snapshots.");
 assert.equal(remote["4072653460557700"], "", "A bound-but-omitted Smartsheet cell must baseline as blank.");
+
+const metadataExpected = [{
+  id: "wo-1",
+  smartsheet_sync_snapshot: remote,
+  smartsheet_last_synced_at: "2026-09-29T20:00:00Z",
+}];
+assert.equal(findUnverifiedSyncMetadata(metadataExpected, [{
+  id: "wo-1",
+  smartsheet_sync_snapshot: { ...remote },
+  smartsheet_last_synced_at: "2026-09-29T20:00:00Z",
+}]).length, 0, "Sales metadata read-back must accept an exact persisted snapshot/timestamp.");
+assert.equal(findUnverifiedSyncMetadata(metadataExpected, [{
+  id: "wo-1",
+  smartsheet_sync_snapshot: { ...remote, [estInvColumn]: "99999" },
+  smartsheet_last_synced_at: "2026-09-29T20:00:00Z",
+}])[0]?.reason, "snapshot_mismatch", "Sales metadata read-back must fail closed when a snapshot was silently dropped or changed.");
 
 const backend = readFileSync("base44/functions/smartsheetSyncAction/entry.ts", "utf8");
 assert.match(
@@ -118,8 +139,38 @@ assert.match(
 );
 assert.match(
   backend,
-  /newRecord\.smartsheet_sync_snapshot = buildSnapshot\(newRecord, bindings, 'sales'\)/,
-  "Sales rows created from Smartsheet must start with a sync snapshot baseline.",
+  /label: 'Sales Smartsheet pull linked WorkOrders'/,
+  "Sales pull must page through every linked WorkOrder instead of stopping at a fixed 5,000-record window.",
+);
+assert.doesNotMatch(
+  backend,
+  /WorkOrder\.filter\(\{ smartsheet_sheet_id: sheetId \}, '-updated_date', 5000\)/,
+  "Sales pull must not silently cap linked WorkOrders at 5,000.",
+);
+assert.match(
+  backend,
+  /salesSnapshotOnlyUpdates\.push\([\s\S]*?smartsheet_sync_snapshot: remoteSnapshot/,
+  "Unchanged Sales business fields with stale snapshots must use metadata-only reconciliation.",
+);
+assert.match(
+  backend,
+  /return \{ id, \.\.\.withoutUnverifiedTimestamp \};/,
+  "Sales business-field bulk updates must not advance the sync timestamp before metadata verification.",
+);
+assert.match(
+  backend,
+  /verifiedMetadataExpected\.push\(\.\.\.batch\)[\s\S]*?Sales Smartsheet sync metadata verification[\s\S]*?findUnverifiedSyncMetadata/,
+  "Sales snapshot/timestamp writes must be re-read and verified before the pull is healthy.",
+);
+assert.match(
+  backend,
+  /snapshot_write_failures: snapshotWriteFailures/,
+  "Sales pull results must expose snapshot write failures to the coordinator/UI.",
+);
+assert.match(
+  backend,
+  /newRecord\.smartsheet_sync_snapshot = salesRemoteSnapshot \|\| buildSalesPullSnapshot\(row, bindings\)/,
+  "Sales rows created from Smartsheet must start from the canonical remote snapshot baseline.",
 );
 
 console.log("Smartsheet Sales round-trip safety validation passed.");
