@@ -60,19 +60,20 @@ assert.deepEqual(findUnverifiedOrderSyncMetadata([{ smartsheet_sync_snapshot: {}
 console.log('PASS missing permanent Order IDs/records fail closed');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
-assert.match(backend, /findUnverifiedOrderSyncMetadata/);
+assert.match(backend, /findUnverifiedSyncMetadata/);
 assert.match(backend, /const verifiedMetadataExpected: any\[\] = \[\]/);
-assert.match(backend, /if \(dataset === 'orders'\) verifiedMetadataExpected\.push\(\.\.\.batch\)/);
-assert.match(backend, /label: 'Order Form sync metadata verification'/);
+assert.match(backend, /verifiedMetadataExpected\.push\(\.\.\.batch\)/);
+assert.match(backend, /label: dataset === 'sales'[\s\S]*?'Order Form sync metadata verification'/);
 assert.match(backend, /query: \{ smartsheet_sheet_id: sheetId \}/);
 assert.match(backend, /metadataRows\.filter\(\(record: any\) => !record\?\.deleted\)/);
 assert.match(backend, /snapshotWriteFailures \+= metadataFailures\.length/);
-assert.match(backend, /updatedCount = Math\.max\(0, updatedCount - metadataFailures\.length\)/);
-assert.match(backend, /Order sync metadata read-back failed/);
-assert.match(backend, /Order sync metadata could not be re-read/);
+assert.match(backend, /if \(dataset === 'orders'\) updatedCount = Math\.max\(0, updatedCount - metadataFailures\.length\)/);
+assert.match(backend, /const datasetLabel = dataset === 'sales' \? 'Sales' : 'Order'/);
+assert.match(backend, /sync metadata read-back failed/);
+assert.match(backend, /sync metadata could not be re-read/);
 assert.doesNotMatch(
-  backend.slice(backend.indexOf('// Order-only read-after-write for reconciliation metadata'),
+  backend.slice(backend.indexOf('// Re-read every metadata write by permanent Base44 ID'),
     backend.indexOf('// Preserve Base44 records whose linked Smartsheet row is missing.')),
   /\.bulkUpdate\(|\.update\(|\.create\(/,
 );
-console.log('PASS Order metadata verification is read-only after the metadata write and fails the run closed');
+console.log('PASS Order metadata verification stays read-only after the metadata write and fails the run closed');
