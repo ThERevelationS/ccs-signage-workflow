@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Activity, AlertTriangle, Camera, CheckCircle2, CircleDollarSign, Clock3, Loader2, Plus, RefreshCw, Save, Trash2, Truck, Wrench, X } from "lucide-react";
 
@@ -61,6 +61,8 @@ export default function FleetMechanic() {
   const [actionError, setActionError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const [estimateRecovery, setEstimateRecovery] = useState(null);
+  const portalRequestRef = useRef(0);
+  const selectedWorkOrderRef = useRef(null);
 
   const fetchPortalPayload = async () => {
     const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
@@ -80,14 +82,19 @@ export default function FleetMechanic() {
 
   const load = async (quiet = false) => {
     if (!token) { setError("This mechanic link is missing its access key. Ask CCS for a new link."); setLoading(false); return; }
+    const requestId = ++portalRequestRef.current;
     if (quiet) setRefreshing(true); else setLoading(true);
     try {
-      applyPortalPayload(await fetchPortalPayload());
+      const result = await fetchPortalPayload();
+      if (requestId !== portalRequestRef.current) return;
+      applyPortalPayload(result);
     } catch (e) {
-      setError(e?.message || "The Fleet mechanic portal could not be loaded.");
+      if (requestId === portalRequestRef.current) setError(e?.message || "The Fleet mechanic portal could not be loaded.");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestId === portalRequestRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
@@ -99,6 +106,7 @@ export default function FleetMechanic() {
   const rows = tab === "active" ? (data?.active_work_orders || []) : (data?.recent_completed || []);
 
   const openJob = workOrder => {
+    selectedWorkOrderRef.current = workOrder.id;
     setSelected(workOrder);
     setForm({ actual_hours: workOrder.actual_hours ?? "", corrective_action: workOrder.corrective_action || "", mechanic_note: "" });
     setEstimateForm(estimateSeed(estimateByWorkOrder[workOrder.id]));
@@ -109,6 +117,7 @@ export default function FleetMechanic() {
   };
 
   const closeJob = () => {
+    selectedWorkOrderRef.current = null;
     photos.forEach(row => URL.revokeObjectURL(row.preview));
     setPhotos([]);
     setSelected(null);
@@ -144,36 +153,44 @@ export default function FleetMechanic() {
 
   const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false) => {
     const recoveryReason = reason || "Current repair-estimate state must be verified.";
+    const requestId = ++portalRequestRef.current;
     setEstimateRecovery({workOrderId, reason: recoveryReason});
     setBusy("estimate-refresh");
     setRefreshing(true);
     try {
       const result = await fetchPortalPayload();
+      if (requestId !== portalRequestRef.current) return false;
       applyPortalPayload(result);
       const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === workOrderId) || null;
-      if (freshEstimate) setEstimateForm(estimateSeed(freshEstimate));
+      const isSameOpenJob = selectedWorkOrderRef.current === workOrderId;
+      if (freshEstimate && isSameOpenJob) setEstimateForm(estimateSeed(freshEstimate));
       setEstimateRecovery(null);
-      if (showRecoveredMessage) {
-        const serverMessage = !freshEstimate
-          ? "Current server check confirms no repair estimate exists yet. Your draft was kept."
-          : freshEstimate.visibility === "mechanic"
-            ? `Current server estimate reloaded as ${pretty(freshEstimate.status || "draft")}. The server copy is now authoritative.`
-            : freshEstimate.visibility === "conflict"
-              ? "Current server state shows conflicting repair estimates. CCS must resolve them before this portal can continue."
-              : freshEstimate.visibility === "other_mechanic"
-                ? "Current server state shows another mechanic portal owns this estimate."
-                : "Current server state shows CCS owns this estimate.";
-        setActionError(`${recoveryReason} ${serverMessage} Nothing was resubmitted automatically.`);
-      } else setActionError("");
+      if (isSameOpenJob) {
+        if (showRecoveredMessage) {
+          const serverMessage = !freshEstimate
+            ? "Current server check confirms no repair estimate exists yet. Your draft was kept."
+            : freshEstimate.visibility === "mechanic"
+              ? `Current server estimate reloaded as ${pretty(freshEstimate.status || "draft")}. The server copy is now authoritative.`
+              : freshEstimate.visibility === "conflict"
+                ? "Current server state shows conflicting repair estimates. CCS must resolve them before this portal can continue."
+                : freshEstimate.visibility === "other_mechanic"
+                  ? "Current server state shows another mechanic portal owns this estimate."
+                  : "Current server state shows CCS owns this estimate.";
+          setActionError(`${recoveryReason} ${serverMessage} Nothing was resubmitted automatically.`);
+        } else setActionError("");
+      }
       return true;
     } catch (e) {
+      if (requestId !== portalRequestRef.current) return false;
       const detail = e?.message ? ` (${e.message})` : "";
       setEstimateRecovery({workOrderId, reason: recoveryReason});
-      setActionError(`${recoveryReason} Current server ownership could not be verified${detail}. Use Check Current Server State before saving or submitting again.`);
+      if (selectedWorkOrderRef.current === workOrderId) setActionError(`${recoveryReason} Current server ownership could not be verified${detail}. Use Check Current Server State before saving or submitting again.`);
       return false;
     } finally {
-      setBusy("");
-      setRefreshing(false);
+      if (requestId === portalRequestRef.current) {
+        setBusy("");
+        setRefreshing(false);
+      }
     }
   };
 
