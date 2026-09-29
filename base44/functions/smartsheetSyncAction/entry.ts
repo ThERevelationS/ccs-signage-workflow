@@ -1398,18 +1398,22 @@ async function pushDataset(
         created.push(record.id); // helper already stored and verified link + snapshot atomically
         continue;
       } else {
-        // Preserve the existing Sales creation flow; Order guards are isolated.
+        // Sales create must produce one usable permanent row ID before Base44
+        // can claim the record was created or advance its sync metadata. An
+        // acknowledged POST with an unreadable/missing ID is an uncertain
+        // remote create and must fail closed to avoid a silently unlinked row.
         const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
           toTop: true,
           cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
-        const newRowId = String(result?.body?.result?.id || result?.body?.id || '');
-        if (newRowId && /^\d+$/.test(newRowId)) {
-          await base44.asServiceRole.entities.WorkOrder.update(record.id, {
-            smartsheet_row_id: newRowId,
-            smartsheet_sheet_id: sheetId,
-          });
+        const newRowId = String(result?.body?.result?.id || result?.body?.id || '').trim();
+        if (!/^\d+$/.test(newRowId)) {
+          throw new Error('Sales Smartsheet create returned no usable permanent row ID. The remote create is uncertain; Base44 link and sync metadata were not advanced. Review Smartsheet before retrying.');
         }
+        await base44.asServiceRole.entities.WorkOrder.update(record.id, {
+          smartsheet_row_id: newRowId,
+          smartsheet_sheet_id: sheetId,
+        });
         created.push(record.id);
       }
       // Store fresh snapshot + timestamp on the record
