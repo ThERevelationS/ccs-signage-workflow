@@ -264,7 +264,7 @@ export function buildSalesPullSnapshot(
       : (display != null ? display : cell?.value);
 
     if (raw == null || raw === '') {
-      snapshot[columnId] = '';
+      snapshot[columnId] = field.type === 'notes' ? '' : null;
     } else if (field.key === 'current_task_assigned_to') {
       snapshot[columnId] = smartsheetSalesAssigneeLabel(raw);
     } else if (field.type === 'number') {
@@ -277,7 +277,9 @@ export function buildSalesPullSnapshot(
     }
   }
   for (const columnId of boundIds) {
-    if (!Object.prototype.hasOwnProperty.call(snapshot, columnId)) snapshot[columnId] = '';
+    if (Object.prototype.hasOwnProperty.call(snapshot, columnId)) continue;
+    const field = fieldsByColumn.get(columnId);
+    snapshot[columnId] = field?.type === 'notes' ? '' : null;
   }
   return snapshot;
 }
