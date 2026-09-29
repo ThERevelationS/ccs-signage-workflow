@@ -87,6 +87,9 @@ assert.ok(client.includes('Smartsheet returned invalid Order sync counts. The re
 assert.ok(client.includes('const accounted = created + updated + unchanged'));
 assert.ok(client.includes('accounted !== expected'));
 assert.ok(client.includes('Unaccounted Orders will stay queued.'));
+assert.ok(client.includes('result?.configured !== true'));
+assert.ok(client.includes('result?.write_actions_available !== true'));
+assert.ok(client.includes('explicit writable, configured Order sync confirmation'));
 assert.match(ui, /summarizeSavedOrderSync\(result, \{ expectedOrderCount: orderIds\.length \}\)/);
 assert.equal(schema.properties.smartsheet_pending_local_sync.type, 'boolean');
 assert.equal(schema.properties.smartsheet_pending_local_sync.default, false);
