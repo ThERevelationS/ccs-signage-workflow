@@ -97,6 +97,7 @@ export default function SalesPipeline() {
   const spreadsheetRef = useRef(null);
   const activeFiltersLoadRef = useRef(0);
   const preferenceSaveChainRef = useRef(Promise.resolve());
+  const preferenceIdentityRef = useRef("");
   const [saveSyncState, setSaveSyncState] = useState({ busy: false, ok: null, message: "" });
 
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function SalesPipeline() {
     // Fail closed while identity/session changes so a previous user's state
     // cannot remain visible in a newly authenticated session.
     activeFiltersLoadRef.current += 1;
+    preferenceIdentityRef.current = `${String(currentUser?.email || "").trim().toLowerCase()}|${String(sessionToken || "").trim()}`;
     setActiveFilters([]);
     setActiveColumnPreset(null);
     setFilterStatus("all");
@@ -186,13 +188,18 @@ export default function SalesPipeline() {
       attention_filter: attention,
       column_preset_id: columnPresetId,
     };
+    const queuedIdentity = `${String(currentUser.email).trim().toLowerCase()}|${String(sessionToken).trim()}`;
+    const queuedSessionToken = sessionToken;
     preferenceSaveChainRef.current = preferenceSaveChainRef.current
       .catch(() => undefined)
-      .then(() => saveSalesPipelinePreferencesSafely({
-        sessionToken,
-        preferences,
-        label: "Sales Pipeline filter preferences",
-      }))
+      .then(() => {
+        if (preferenceIdentityRef.current !== queuedIdentity) return undefined;
+        return saveSalesPipelinePreferencesSafely({
+          sessionToken: queuedSessionToken,
+          preferences,
+          label: "Sales Pipeline filter preferences",
+        });
+      })
       .catch((error) => {
         console.error("Could not save Sales Pipeline filter preferences:", error);
       });
