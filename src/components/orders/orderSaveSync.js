@@ -46,6 +46,12 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       ? { ok: true, message: "Saved changes are already synchronized." }
       : { ok: false, message: "Smartsheet returned an unexpected Order sync result when no Orders were requested." };
   }
+  if (result?.success !== true || result?.sync_complete !== true || result?.needs_review !== false) {
+    return {
+      ok: false,
+      message: "Smartsheet did not return an explicit successful Order sync confirmation. The requested Orders will stay queued.",
+    };
+  }
   const orderResults = results.filter((row) => row?.dataset === "orders");
   if (orderResults.length !== 1 || results.length !== 1) {
     return { ok: false, message: "Smartsheet did not return exactly one isolated, verifiable Order sync result." };
