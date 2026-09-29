@@ -27,12 +27,15 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
 
 export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
   const expected = Math.max(0, Number(expectedOrderCount) || 0);
-  const item = Array.isArray(result?.results) ? result.results.find((row) => row?.dataset === "orders") : null;
-  if (!item) {
-    return expected === 0 && result?.sync_complete === true
+  const orderResults = Array.isArray(result?.results)
+    ? result.results.filter((row) => row?.dataset === "orders")
+    : [];
+  if (orderResults.length !== 1) {
+    return expected === 0 && orderResults.length === 0 && result?.sync_complete === true
       ? { ok: true, message: "Saved changes are already synchronized." }
-      : { ok: false, message: "Smartsheet did not return a verifiable Order sync result." };
+      : { ok: false, message: "Smartsheet did not return exactly one verifiable Order sync result." };
   }
+  const [item] = orderResults;
   if (expected > 0 && Number(item?.records_examined) !== expected) {
     return {
       ok: false,
