@@ -32,12 +32,14 @@ export function summarizeSavedOrderSync(result) {
       ? { ok: true, message: "Saved changes are already synchronized." }
       : { ok: false, message: "Smartsheet did not return a verifiable Order sync result." };
   }
-  if (result?.needs_review || item?.skipped || Number(item?.errors || 0) > 0 || Number(item?.conflicts || 0) > 0) {
+  if (result?.sync_complete !== true || result?.needs_review || item?.skipped || Number(item?.errors || 0) > 0 || Number(item?.conflicts || 0) > 0) {
     return {
       ok: false,
       message: item?.reason ||
         item?.error_details?.[0] ||
-        `${Number(item?.conflicts || 0)} conflict(s) and ${Number(item?.errors || 0)} error(s) need review.`,
+        (result?.sync_complete !== true
+          ? "Smartsheet did not confirm that the Order sync completed."
+          : `${Number(item?.conflicts || 0)} conflict(s) and ${Number(item?.errors || 0)} error(s) need review.`),
     };
   }
   const created = Number(item?.created || 0);
