@@ -40,8 +40,9 @@ assert.match(backend, /\.\.\.\(activeDirection \? \{ direction: activeDirection 
 assert.match(backend, /snapshotWriteFailures \+= batch\.length/);
 assert.match(backend, /updatedCount = Math\.max\(0, updatedCount - batch\.length\)/);
 assert.match(backend, /snapshot_write_failures: snapshotWriteFailures/);
-assert.match(backend, /Order sync metadata was not confirmed/);
-assert.match(backend, /errors\.push\(`Order sync metadata was not confirmed/);
+assert.match(backend, /const datasetLabel = dataset === 'sales' \? 'Sales' : 'Order'/);
+assert.match(backend, /sync metadata was not confirmed/);
+assert.match(backend, /errors\.push\([\s\S]*?\$\{datasetLabel\} sync metadata was not confirmed/);
 const salesPath = backend.slice(backend.indexOf('if (dataset === \'sales\') {'),
   backend.indexOf('// Order-only date preflight'));
 assert.doesNotMatch(salesPath, /orderRunRequiresReview/);
