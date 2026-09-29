@@ -26,10 +26,20 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
 }
 
 export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
-  const expected = Math.max(0, Number(expectedOrderCount) || 0);
+  const expected = (
+    typeof expectedOrderCount === "number" && Number.isSafeInteger(expectedOrderCount) && expectedOrderCount >= 0
+      ? expectedOrderCount
+      : null
+  );
   const readCount = (value) => (
     typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null
   );
+  if (expected === null) {
+    return {
+      ok: false,
+      message: "The requested Order count could not be verified. The Orders will stay queued.",
+    };
+  }
   const results = Array.isArray(result?.results) ? result.results : [];
   const orderResults = results.filter((row) => row?.dataset === "orders");
   if (orderResults.length !== 1 || results.length !== 1) {
