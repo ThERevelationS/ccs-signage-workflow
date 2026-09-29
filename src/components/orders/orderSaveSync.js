@@ -7,7 +7,8 @@ function safeMessage(error, fallback) {
 export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {}) {
   const token = String(sessionToken || "").trim();
   const ids = [...new Set((Array.isArray(orderIds) ? orderIds : [])
-    .map((id) => String(id || "").trim()).filter(Boolean))];
+    .filter((id) => typeof id === "string")
+    .map((id) => id.trim()).filter(Boolean))];
   if (!token) throw new Error("Your Sign Shop session expired. Sign in again before syncing.");
   if (!ids.length) return { sync_complete: true, needs_review: false, results: [] };
 
