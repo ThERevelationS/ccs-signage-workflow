@@ -10,7 +10,7 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
     .filter((id) => typeof id === "string")
     .map((id) => id.trim()).filter(Boolean))];
   if (!token) throw new Error("Your Sign Shop session expired. Sign in again before syncing.");
-  if (!ids.length) return { sync_complete: true, needs_review: false, results: [] };
+  if (!ids.length) return { success: true, sync_complete: true, needs_review: false, results: [] };
 
   try {
     const response = await base44.functions.invoke("smartsheetSyncAction", {
@@ -43,7 +43,7 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
   }
   const results = Array.isArray(result?.results) ? result.results : [];
   if (expected === 0) {
-    return results.length === 0 && result?.sync_complete === true && result?.needs_review !== true
+    return results.length === 0 && result?.success === true && result?.sync_complete === true && result?.needs_review === false
       ? { ok: true, message: "Saved changes are already synchronized." }
       : { ok: false, message: "Smartsheet returned an unexpected Order sync result when no Orders were requested." };
   }
