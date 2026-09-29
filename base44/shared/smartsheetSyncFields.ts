@@ -238,6 +238,31 @@ export function parseRowToFields(
   return out;
 }
 
+// Sales pull safety sometimes needs the exact remote row as a baseline
+// without first applying it to Base44 (for example when a local edit is still
+// waiting to push). Preserve every currently bound remote cell, including blank
+// cells that Smartsheet omits from the row payload.
+export function buildSalesPullSnapshot(
+  row: { cells?: { column_id?: string; columnId?: string; value?: any; display_value?: any; displayValue?: any }[] },
+  bindings: Record<string, string>,
+) {
+  const boundIds = new Set(
+    Object.values(bindings || {}).map((id) => String(id ?? '').trim()).filter((id) => /^\d+$/.test(id)),
+  );
+  const snapshot: Record<string, string | number | null> = {};
+  for (const cell of row?.cells || []) {
+    const columnId = String(cell?.column_id ?? cell?.columnId ?? '').trim();
+    if (!boundIds.has(columnId)) continue;
+    const display = cell?.display_value != null ? cell.display_value : cell?.displayValue;
+    const value = display != null ? display : cell?.value;
+    snapshot[columnId] = value == null ? '' : (typeof value === 'number' ? value : String(value).trim());
+  }
+  for (const columnId of boundIds) {
+    if (!Object.prototype.hasOwnProperty.call(snapshot, columnId)) snapshot[columnId] = '';
+  }
+  return snapshot;
+}
+
 // Order pull snapshots must represent the actual remote row, not a merged
 // Base44 record. This lets a blank Smartsheet cell remain non-destructive while
 // still recording that the remote cell is truly blank for later reconciliation.
