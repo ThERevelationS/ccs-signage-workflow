@@ -427,6 +427,7 @@ async function pullDataset(
   const salesAssigneeTranslationIssues: any[] = [];
   const salesLocalPendingPreserved: string[] = [];
   const salesPendingSnapshotRepairs: any[] = [];
+  const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
   let salesMissingCustomerRowsSkipped = 0;
@@ -438,6 +439,7 @@ async function pullDataset(
     if (dataset === 'orders' && duplicateOrderRowIds.has(rowId)) continue;
 
     const rawFields = parseRowToFields(row, bindings, dataset);
+    let salesAssigneeTranslationUnresolved = false;
     // Normalize enum fields to valid Base44 values
     const fieldValues: Record<string, any> = {};
     for (const [key, val] of Object.entries(rawFields)) {
@@ -465,6 +467,7 @@ async function pullDataset(
         if (resolution.name) {
           fieldValues[key] = resolution.name;
         } else if (String(val ?? '').trim()) {
+          salesAssigneeTranslationUnresolved = true;
           salesAssigneeTranslationIssues.push({
             row_id: rowId,
             value: cleanText(val, 120),
@@ -481,6 +484,23 @@ async function pullDataset(
     const salesParentRowId = dataset === 'sales' && /^\d+$/.test(cleanText(row?.parent_id, 40))
       ? cleanText(row.parent_id, 40) : '';
     const existing = recordsByRowId[rowId];
+    let salesRemoteSnapshot: Record<string, string | number | null> | null = null;
+    if (dataset === 'sales') {
+      salesRemoteSnapshot = buildSalesPullSnapshot(row, bindings);
+      if (salesAssigneeTranslationUnresolved) {
+        const assigneeColumnId = cleanText(bindings?.current_task_assigned_to, 40);
+        if (assigneeColumnId) {
+          const priorSnapshot = existing?.smartsheet_sync_snapshot;
+          if (priorSnapshot && typeof priorSnapshot === 'object' && !Array.isArray(priorSnapshot) &&
+              Object.prototype.hasOwnProperty.call(priorSnapshot, assigneeColumnId)) {
+            salesRemoteSnapshot[assigneeColumnId] = priorSnapshot[assigneeColumnId];
+          } else {
+            const localSnapshot = existing ? buildSnapshot(existing, bindings, 'sales') : {};
+            salesRemoteSnapshot[assigneeColumnId] = localSnapshot[assigneeColumnId] ?? '';
+          }
+        }
+      }
+    }
     if (dataset === 'sales' && existing) {
       const priorSnapshot = existing?.smartsheet_sync_snapshot;
       const hasVerifiedBaseline = Boolean(
@@ -506,7 +526,7 @@ async function pullDataset(
         // check. We may still seed newly-added binding columns from the actual
         // remote row so an old snapshot does not block that safe push.
         salesLocalPendingPreserved.push(existing.id);
-        const remoteSnapshot = buildSalesPullSnapshot(row, bindings);
+        const remoteSnapshot = salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings);
         const repairedSnapshot = { ...priorSnapshot };
         let repaired = false;
         for (const [columnId, remoteValue] of Object.entries(remoteSnapshot)) {
