@@ -56,6 +56,8 @@ console.log('PASS explicit Save & Sync can create only durable pending new Order
 
 assert.match(client, /action: "push_saved_orders"/);
 assert.match(client, /order_ids: ids/);
+assert.match(client, /result\?\.sync_complete !== true \|\| result\?\.needs_review/);
+assert.match(client, /Smartsheet did not confirm that the Order sync completed\./);
 assert.equal(schema.properties.smartsheet_pending_local_sync.type, 'boolean');
 assert.equal(schema.properties.smartsheet_pending_local_sync.default, false);
 assert.match(ui, /pendingSyncIdsRef = useRef\(new Set\(\)\)/);
