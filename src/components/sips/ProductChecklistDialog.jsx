@@ -2445,7 +2445,7 @@ export default function ProductChecklistDialog({
                       <div id="sips-completed-items">
                       <ChecklistCompletedSection
                         completedChecklist={completedChecklist}
-                        dropdownConditions={dropdownConditions}
+                        dropdownOptionsByChecklistItemId={dropdownOptionsByChecklistItemId}
                         users={users}
                         isRegistered={isRegistered}
                         updateChecklistItem={updateChecklistItem}
