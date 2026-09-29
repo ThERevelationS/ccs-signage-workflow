@@ -129,6 +129,23 @@ export default function ProductChecklistDialog({
     () => new Map(dropdownConditions.map(condition => [condition.name, condition])),
     [dropdownConditions]
   );
+  const { dropdownConditionById, dropdownConditionOrderById } = useMemo(() => ({
+    dropdownConditionById: new Map(dropdownConditions.map(condition => [condition.id, condition])),
+    dropdownConditionOrderById: new Map(dropdownConditions.map((condition, index) => [condition.id, index])),
+  }), [dropdownConditions]);
+  const dropdownOptionsByChecklistItemId = useMemo(() => {
+    const optionsByItemId = new Map();
+    checklist.forEach(item => {
+      if (!Array.isArray(item.dropdown_ids) || item.dropdown_ids.length === 0) return;
+      const options = item.dropdown_ids
+        .map(id => dropdownConditionById.get(id))
+        .filter(Boolean)
+        .sort((a, b) => (dropdownConditionOrderById.get(a.id) ?? Number.MAX_SAFE_INTEGER)
+          - (dropdownConditionOrderById.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+      optionsByItemId.set(item.id, options);
+    });
+    return optionsByItemId;
+  }, [checklist, dropdownConditionById, dropdownConditionOrderById]);
   const itemAttentionLabelById = useMemo(() => {
     const labels = new Map();
     checklist.forEach(item => {
@@ -270,8 +287,7 @@ export default function ProductChecklistDialog({
 
   const getDropdownName = (dropdownId) => {
     if (!dropdownId) return null;
-    const dd = dropdownConditions.find(d => d.id === dropdownId);
-    return dd?.name || null;
+    return dropdownConditionById.get(dropdownId)?.name || null;
   };
 
   const _handleOtherDropdownSelect = (itemId, selectedDropdownId) => {
@@ -1665,8 +1681,7 @@ export default function ProductChecklistDialog({
                                 </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
-                                {dropdownConditions
-                                  .filter(dd => (displayItem.dropdown_ids || []).includes(dd.id))
+                                {(dropdownOptionsByChecklistItemId.get(displayItem.id) || [])
                                   .map(dd => (
                                     <SelectItem key={dd.id} value={dd.name}>
                                       {dd.name} {dd.is_completed && '(Completed)'}
@@ -1917,8 +1932,7 @@ export default function ProductChecklistDialog({
                                         </SelectValue>
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {dropdownConditions
-                                          .filter(dd => (detail.dropdown_ids || []).includes(dd.id))
+                                        {(dropdownOptionsByChecklistItemId.get(detail.id) || [])
                                           .map(dd => (
                                             <SelectItem key={dd.id} value={dd.name}>
                                               {dd.name} {dd.is_completed && '(Completed)'}
@@ -2201,8 +2215,7 @@ export default function ProductChecklistDialog({
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {dropdownConditions
-                                    .filter(dd => (stDisplayItem.dropdown_ids || []).includes(dd.id))
+                                  {(dropdownOptionsByChecklistItemId.get(stDisplayItem.id) || [])
                                     .map(dd => (
                                       <SelectItem key={dd.id} value={dd.name}>
                                         {dd.name} {dd.is_completed ? '(Completed)' : '(Continued)'}
