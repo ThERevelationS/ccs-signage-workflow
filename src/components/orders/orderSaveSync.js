@@ -27,6 +27,10 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
 
 export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
   const expected = Math.max(0, Number(expectedOrderCount) || 0);
+  const readCount = (value) => {
+    const count = Number(value);
+    return Number.isSafeInteger(count) && count >= 0 ? count : null;
+  };
   const orderResults = Array.isArray(result?.results)
     ? result.results.filter((row) => row?.dataset === "orders")
     : [];
@@ -36,30 +40,39 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       : { ok: false, message: "Smartsheet did not return exactly one verifiable Order sync result." };
   }
   const [item] = orderResults;
-  if (expected > 0 && Number(item?.records_examined) !== expected) {
+  const recordsExamined = readCount(item?.records_examined);
+  const created = readCount(item?.created);
+  const updated = readCount(item?.updated);
+  const unchanged = readCount(item?.unchanged_skipped);
+  const errors = readCount(item?.errors);
+  const conflicts = readCount(item?.conflicts);
+  if ([recordsExamined, created, updated, unchanged, errors, conflicts].some((count) => count === null)) {
     return {
       ok: false,
-      message: `Smartsheet verified ${Math.max(0, Number(item?.records_examined) || 0)} of ${expected} requested Orders. The remaining Orders will stay queued.`,
+      message: "Smartsheet returned invalid Order sync counts. The requested Orders will stay queued.",
     };
   }
-  const created = Math.max(0, Number(item?.created) || 0);
-  const updated = Math.max(0, Number(item?.updated) || 0);
-  const unchanged = Math.max(0, Number(item?.unchanged_skipped) || 0);
+  if (expected > 0 && recordsExamined !== expected) {
+    return {
+      ok: false,
+      message: `Smartsheet verified ${recordsExamined} of ${expected} requested Orders. The remaining Orders will stay queued.`,
+    };
+  }
   const accounted = created + updated + unchanged;
-  if (expected > 0 && accounted !== expected && Number(item?.errors || 0) === 0 && Number(item?.conflicts || 0) === 0) {
+  if (expected > 0 && accounted !== expected && errors === 0 && conflicts === 0) {
     return {
       ok: false,
       message: `Smartsheet accounted for ${accounted} of ${expected} requested Orders. Unaccounted Orders will stay queued.`,
     };
   }
-  if (result?.sync_complete !== true || result?.needs_review || item?.skipped || Number(item?.errors || 0) > 0 || Number(item?.conflicts || 0) > 0) {
+  if (result?.sync_complete !== true || result?.needs_review || item?.skipped || errors > 0 || conflicts > 0) {
     return {
       ok: false,
       message: item?.reason ||
         item?.error_details?.[0] ||
         (result?.sync_complete !== true
           ? "Smartsheet did not confirm that the Order sync completed."
-          : `${Number(item?.conflicts || 0)} conflict(s) and ${Number(item?.errors || 0)} error(s) need review.`),
+          : `${conflicts} conflict(s) and ${errors} error(s) need review.`),
     };
   }
   const changed = updated + created;
