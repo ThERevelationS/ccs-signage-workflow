@@ -8,6 +8,12 @@ const MAX_COLUMNS = 250;
 const MAX_JSON_CHARS = 200_000;
 const MAX_ATTEMPTS = 4;
 const SALES_INFORMATION_FILTERS = new Set(['all', 'lead', 'quoted', 'follow_up', 'won', 'lost', 'on_hold']);
+const SALES_SORT_COLUMNS = new Set([
+  'client_name', 'title', 'lead_source', 'current_task_deadline', 'current_task_assigned_to',
+  'designer', 'project_manager', 'estimator', 'corbridge_invoice_number', 'estimate_amount',
+  'date_initial_contact', 'site_survey_date', 'date_estimate_sent', 'date_order_created',
+  'project_install_date', 'permit_submitted_date', 'permit_approved_date', 'created_date', 'updated_date',
+]);
 const SALES_ATTENTION_FILTERS = new Set([
   'all', 'overdue', 'today', 'upcoming', 'needs_attention', 'due', 'no_next_action',
   'quote_no_followup', 'quote_aged', 'near_close', 'close_overdue', 'stale', 'stage_aged',
@@ -117,6 +123,50 @@ async function saveSalesPipelinePreferences(AuthorizedEmail: any, actor: any, va
     }
   }
   throw Object.assign(new Error('Sales Pipeline preferences changed repeatedly. Reload before retrying.'), { status: 409 });
+}
+
+function cleanDefaultSort(value: any) {
+  const column = cleanText(value?.column, 120);
+  const direction = cleanText(value?.direction, 20).toLowerCase();
+  return {
+    column: SALES_SORT_COLUMNS.has(column) ? column : 'created_date',
+    direction: direction === 'asc' ? 'asc' : 'desc',
+  };
+}
+
+async function loadDefaultSortRecord(GlobalSettings: any) {
+  const rows = await loadAllEntityRows({ entity: GlobalSettings, sort: null, label: 'Sales Pipeline default sort' });
+  const matches = rows.filter((row: any) => row?.setting_key === 'salesPipelineDefaultSort');
+  if (matches.length > 1) throw Object.assign(new Error('Sales Pipeline default sort has duplicate settings records. No changes were made.'), { status: 409 });
+  return matches[0] || null;
+}
+
+async function saveDefaultSort(GlobalSettings: any, body: any) {
+  const next = cleanDefaultSort(body?.value);
+  const current = await loadDefaultSortRecord(GlobalSettings);
+  if (!current?.id) {
+    let created: any = null;
+    let createError: any = null;
+    try { created = await GlobalSettings.create({ setting_key: 'salesPipelineDefaultSort', setting_value: next }); } catch (error) { createError = error; }
+    const verified = await loadDefaultSortRecord(GlobalSettings);
+    if (verified?.id && JSON.stringify(cleanDefaultSort(verified.setting_value)) === JSON.stringify(next)) return verified;
+    if (createError) throw createError;
+    throw new Error('Sales Pipeline default sort create could not be verified.');
+  }
+  const expected = cleanText(body?.expected_updated_date, 200);
+  if (!expected || String(current.updated_date || '') !== expected) {
+    throw Object.assign(new Error('Sales Pipeline default sort changed in another session. Reload before saving.'), { status: 409 });
+  }
+  const result = await GlobalSettings.updateMany(
+    { id: current.id, setting_key: 'salesPipelineDefaultSort', updated_date: current.updated_date },
+    { $set: { setting_value: next } },
+  );
+  if (!result || result.updated !== 1) throw Object.assign(new Error('Sales Pipeline default sort changed while saving. Reload before retrying.'), { status: 409 });
+  const saved = await GlobalSettings.get(current.id).catch(() => null);
+  if (!saved?.id || JSON.stringify(cleanDefaultSort(saved.setting_value)) !== JSON.stringify(next)) {
+    throw new Error('Sales Pipeline default sort saved but could not be verified.');
+  }
+  return saved;
 }
 
 async function nameTypeMatches(SalesFilter: any, name: string, type: string) {
@@ -273,6 +323,18 @@ Deno.serve(async (req) => {
     const action = String(body?.action || '').trim();
     const SalesFilter = base44.asServiceRole.entities.SalesFilter;
 
+    if (action === 'default_sort_get') {
+      if (actor?.role !== 'admin') return Response.json({ error: 'Admin access is required.' }, { status: 403 });
+      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
+      const record = await loadDefaultSortRecord(GlobalSettings);
+      return Response.json({ record, value: cleanDefaultSort(record?.setting_value) });
+    }
+    if (action === 'default_sort_set') {
+      if (actor?.role !== 'admin') return Response.json({ error: 'Admin access is required.' }, { status: 403 });
+      const GlobalSettings = base44.asServiceRole.entities.GlobalSettings;
+      const record = await saveDefaultSort(GlobalSettings, body);
+      return Response.json({ record, value: cleanDefaultSort(record?.setting_value) });
+    }
     if (action === 'roster') {
       const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
       return Response.json({ users: await loadSalesRoster(AuthorizedEmail) });
