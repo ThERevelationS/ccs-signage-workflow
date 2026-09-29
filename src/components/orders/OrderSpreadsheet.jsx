@@ -417,11 +417,18 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
 
   const saveAndSync = async () => {
     if (syncInFlightRef.current || saveInFlightRef.current || dateNeededSaveInFlightRef.current) return false;
+    // Reserve the full Save & Sync operation before the first await. Without this,
+    // two rapid clicks can both pass the guard when there are no unsaved Base44
+    // fields, then both push the same durable pending Orders after the await yields.
+    syncInFlightRef.current = true;
     setSaveError('');
     setSyncMessage('');
 
     const saveResult = await saveAllChanges();
-    if (!saveResult?.complete) return false;
+    if (!saveResult?.complete) {
+      syncInFlightRef.current = false;
+      return false;
+    }
 
     const syncTargets = [...pendingSyncIdsRef.current].map((id) => ({
       id,
@@ -429,11 +436,11 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }));
     const orderIds = syncTargets.map(({ id }) => id);
     if (orderIds.length === 0) {
+      syncInFlightRef.current = false;
       setSyncMessage('No new Order changes need Smartsheet sync.');
       return true;
     }
 
-    syncInFlightRef.current = true;
     setIsSyncing(true);
     try {
       const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds });
