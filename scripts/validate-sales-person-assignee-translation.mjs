@@ -120,8 +120,9 @@ check(assigneeSelect.includes("const selectedName = resolvedValue.name || value;
 check(syncAction.includes("canonicalBase44SalesAssignee(val, salesAssigneeUsers)") &&
       syncAction.includes("fieldValues[key] = resolution.name;"),
   "Sales Smartsheet pull must write canonical authorized full names into Base44");
-check(syncAction.includes("assignee_translation_review_required") &&
-      syncAction.includes("No Sales records were changed."),
-  "Unresolved or ambiguous Smartsheet assignees must block the Sales pull before writes");
+check(syncAction.includes("assignee_translation_review_required: salesAssigneeTranslationIssues.length") &&
+      syncAction.includes("linked records keep their existing Base44 assignee") &&
+      !syncAction.includes("No Sales records were changed."),
+  "Unresolved or ambiguous historical Smartsheet assignees must be reported without freezing the entire Sales pull");
 
 console.log(`Sales person alias + Smartsheet first-name translation: ${checks}/${checks} PASS.`);
