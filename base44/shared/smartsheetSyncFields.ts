@@ -246,16 +246,35 @@ export function buildSalesPullSnapshot(
   row: { cells?: { column_id?: string; columnId?: string; value?: any; display_value?: any; displayValue?: any }[] },
   bindings: Record<string, string>,
 ) {
-  const boundIds = new Set(
-    Object.values(bindings || {}).map((id) => String(id ?? '').trim()).filter((id) => /^\d+$/.test(id)),
-  );
+  const fieldsByColumn = new Map<string, MappableField>();
+  for (const field of SALES_MAPPABLE_FIELDS) {
+    const columnId = String(bindings?.[field.key] ?? '').trim();
+    if (/^\d+$/.test(columnId) && !fieldsByColumn.has(columnId)) fieldsByColumn.set(columnId, field);
+  }
+  const boundIds = new Set(fieldsByColumn.keys());
   const snapshot: Record<string, string | number | null> = {};
   for (const cell of row?.cells || []) {
     const columnId = String(cell?.column_id ?? cell?.columnId ?? '').trim();
-    if (!boundIds.has(columnId)) continue;
+    const field = fieldsByColumn.get(columnId);
+    if (!field) continue;
     const display = cell?.display_value != null ? cell.display_value : cell?.displayValue;
-    const value = display != null ? display : cell?.value;
-    snapshot[columnId] = value == null ? '' : (typeof value === 'number' ? value : String(value).trim());
+    const preferRaw = field.type === 'number' || field.type === 'date' || field.key === 'est_inv_at';
+    const raw = preferRaw
+      ? (cell?.value != null && cell.value !== '' ? cell.value : display)
+      : (display != null ? display : cell?.value);
+
+    if (raw == null || raw === '') {
+      snapshot[columnId] = '';
+    } else if (field.key === 'current_task_assigned_to') {
+      snapshot[columnId] = smartsheetSalesAssigneeLabel(raw);
+    } else if (field.type === 'number') {
+      const number = Number(raw);
+      snapshot[columnId] = Number.isFinite(number) ? number : String(raw).trim();
+    } else if (field.type === 'date') {
+      snapshot[columnId] = dateStamp(raw) || String(raw).trim();
+    } else {
+      snapshot[columnId] = String(raw).trim();
+    }
   }
   for (const columnId of boundIds) {
     if (!Object.prototype.hasOwnProperty.call(snapshot, columnId)) snapshot[columnId] = '';
