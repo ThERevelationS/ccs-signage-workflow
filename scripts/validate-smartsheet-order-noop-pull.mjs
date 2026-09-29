@@ -37,7 +37,7 @@ console.log('PASS blank Order cells preserve Base44 fields while the remote snap
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 assert.match(backend, /const expectedOrderSnapshot = buildOrderPullSnapshot\(row, bindings\)/);
 assert.match(backend, /_remoteSnapshot: buildOrderPullSnapshot\(row, bindings\)/);
-assert.match(backend, /const snapshot = dataset === 'orders' \? _remoteSnapshot : buildSnapshot/);
+assert.match(backend, /const snapshot = _remoteSnapshot;/);
 assert.match(backend, /orderPulledFieldsUnchanged\(existing, fieldValues\) &&[\s\S]*?orderPullSnapshotAligned\(existing, expectedOrderSnapshot\)[\s\S]*?unchangedSkipped\+\+[\s\S]*?continue/);
 assert.ok(backend.indexOf("orderPulledFieldsUnchanged(existing, fieldValues)") < backend.indexOf("toUpdate.push({ id: existing.id"));
 assert.match(backend, /unchanged_skipped: unchangedSkipped/);
