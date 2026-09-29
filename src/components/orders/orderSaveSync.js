@@ -38,6 +38,12 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       : { ok: false, message: "Smartsheet did not return exactly one isolated, verifiable Order sync result." };
   }
   const [item] = orderResults;
+  if (item?.direction !== "push") {
+    return {
+      ok: false,
+      message: "Smartsheet did not return a verifiable Order push result. The requested Orders will stay queued.",
+    };
+  }
   const recordsExamined = readCount(item?.records_examined);
   const created = readCount(item?.created);
   const updated = readCount(item?.updated);
