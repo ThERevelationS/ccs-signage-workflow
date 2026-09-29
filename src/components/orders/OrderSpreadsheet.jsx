@@ -327,11 +327,14 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       ordersData.forEach(order => {
         originalOrdersRef.current[order.id] = { ...order };
       });
+      setIsLoading(false);
+      return true;
     } catch (error) {
       console.error("Error loading data:", error);
       setReadError(error?.message || "Orders could not be verified completely.");
+      setIsLoading(false);
+      return false;
     }
-    setIsLoading(false);
   };
 
   const saveAllChanges = async () => {
@@ -456,7 +459,8 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // committed successfully. Re-read durable Order markers before telling the
       // user to retry so an acknowledged-on-server sync is not pushed again.
       try {
-        await loadData(false);
+        const verificationLoaded = await loadData(false);
+        if (!verificationLoaded) throw new Error('Authoritative Order verification reload failed.');
         const unresolvedTargets = syncTargets.filter(({ id }) => pendingSyncIdsRef.current.has(id));
         if (unresolvedTargets.length === 0) {
           setLastSynced(new Date());
