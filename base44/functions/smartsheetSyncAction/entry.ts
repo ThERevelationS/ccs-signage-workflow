@@ -18,6 +18,7 @@ import { auditOrderCreateAttempts, verifyOrderCreateAuditSheetIdentity } from '.
 import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsheetOrderDateTranslation.mjs';
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
+import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
 import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
@@ -1340,8 +1341,59 @@ Deno.serve(async (req) => {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales'],
+        supported_actions: ['status', 'config_get', 'config_save', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
+      });
+    }
+
+    if (action === 'recover_stale_order_run') {
+      const records = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+      const matches = Array.isArray(records) ? records.filter((record: any) => record?.id) : (records?.id ? [records] : []);
+      if (matches.length !== 1) {
+        return Response.json({ success: false,
+          error: `Smartsheet sync status has ${matches.length} records. Recovery requires exactly one status record.` }, { status: 409 });
+      }
+      const record = matches[0];
+      const current = record?.setting_value || {};
+      const expectedStartedAt = cleanText(body?.expected_started_at, 80);
+      if (!expectedStartedAt || expectedStartedAt !== cleanText(current?.started_at, 80)) {
+        return Response.json({ success: false,
+          error: 'The sync run changed before recovery. Reload the status before retrying.' }, { status: 409 });
+      }
+      const classification = classifyRecoverableStaleOrderSync(current, Date.now());
+      if (!classification.recoverable) {
+        const reason = classification.reason === 'heartbeat_fresh'
+          ? 'This Order sync is still reporting recent progress and cannot be closed as stalled.'
+          : 'The current sync status is not a recoverable stalled Order run.';
+        return Response.json({ success: false, error: reason, stale_state: classification.reason }, { status: 409 });
+      }
+
+      const recoveredAt = new Date().toISOString();
+      const nextValue = {
+        ...recoveredStaleOrderSyncValue(current, recoveredAt),
+        updated_at: recoveredAt,
+        stale_recovered_by: cleanText(adminActor?.email, 320),
+      };
+      const updateResult = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+        { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+        { $set: { setting_value: nextValue } },
+      );
+      if (!updateResult || updateResult.updated !== 1) {
+        return Response.json({ success: false,
+          error: 'The sync status changed while recovery was being applied. Reload before retrying.' }, { status: 409 });
+      }
+      const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);
+      if (verified?.setting_value?.status !== 'needs_review' ||
+          verified?.setting_value?.stale_recovered_at !== recoveredAt ||
+          verified?.setting_value?.started_at !== expectedStartedAt) {
+        return Response.json({ success: false,
+          error: 'The stalled-run recovery write could not be verified. Reload before starting another sync.' }, { status: 500 });
+      }
+      return Response.json({
+        success: true,
+        recovered: true,
+        status: verified.setting_value,
+        message: 'The stalled Order sync was closed as Needs review. Its final outcome remains unverified.',
       });
     }
 
