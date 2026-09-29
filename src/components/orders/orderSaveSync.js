@@ -92,8 +92,8 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       message: `Smartsheet verified ${recordsExamined} of ${expected} requested Orders. The remaining Orders will stay queued.`,
     };
   }
-  const accounted = created + updated + unchanged;
-  if (expected > 0 && accounted !== expected && errors === 0 && conflicts === 0) {
+  const accounted = created + updated + unchanged + errors + conflicts;
+  if (expected > 0 && accounted !== expected) {
     return {
       ok: false,
       message: `Smartsheet accounted for ${accounted} of ${expected} requested Orders. Unaccounted Orders will stay queued.`,
