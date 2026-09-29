@@ -1376,6 +1376,29 @@ async function pushDataset(
           id: existingRowId,
           cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
         }]);
+        if (dataset === 'sales') {
+          const verifyResult = await smartsheetGet(
+            `/sheets/${sheetId}/rows?rowIds=${existingRowId}&columnIds=${cells.map((c) => c.columnId).join(',')}&exclude=nonexistentCells`,
+            token,
+          );
+          const verifiedRows = normalizeSheetRows(verifyResult.body);
+          const verifiedRow = verifiedRows.length === 1 && verifiedRows[0]?.id === existingRowId
+            ? verifiedRows[0]
+            : null;
+          const expectedSnapshot = buildSnapshot(record, bindings, 'sales');
+          const actualSnapshot = verifiedRow
+            ? buildSalesPullSnapshot({ cells: verifiedRow.cells }, bindings)
+            : null;
+          if (!actualSnapshot || !salesSnapshotsEqual(
+            expectedSnapshot,
+            actualSnapshot,
+            cleanText(bindings?.current_task_assigned_to, 40),
+          )) {
+            throw new Error(
+              'Sales Smartsheet update could not be verified by read-back. Base44 sync metadata was not advanced.'
+            );
+          }
+        }
         updated.push(record.id);
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
