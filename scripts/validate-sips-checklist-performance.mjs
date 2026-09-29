@@ -8,6 +8,10 @@ const source = readFileSync(
   new URL("../src/components/sips/ProductChecklistDialog.jsx", import.meta.url),
   "utf8"
 );
+const completedSource = readFileSync(
+  new URL("../src/components/sips/ChecklistCompletedSection.jsx", import.meta.url),
+  "utf8"
+);
 
 let passed = 0;
 function check(name, run) {
@@ -65,6 +69,21 @@ check("status condition options are indexed instead of scanning all conditions p
 check("indexed condition options preserve configured global condition order", () => {
   assert.match(source, /dropdownConditionOrderById: new Map\(dropdownConditions\.map\(\(condition, index\) => \[condition\.id, index\]\)\)/);
   assert.match(source, /\.sort\(\(a, b\) => \(dropdownConditionOrderById\.get\(a\.id\)/);
+});
+
+check("completed section reuses indexed status options", () => {
+  assert.match(source, /dropdownOptionsByChecklistItemId=\{dropdownOptionsByChecklistItemId\}/);
+  assert.match(completedSource, /dropdownOptionsByChecklistItemId\.get\(item\.id\)/);
+  assert.match(completedSource, /dropdownOptionsByChecklistItemId\.get\(stItem\.id\)/);
+  assert.equal(/dropdownConditions\.filter\(/.test(completedSource), false);
+});
+
+check("completed section memoizes visible groups and count in one pass", () => {
+  assert.match(completedSource, /const \{ renderGroups, totalCount \} = useMemo\(\(\) => \{/);
+  assert.match(completedSource, /Object\.entries\(completedChecklist\)\.forEach/);
+  assert.match(completedSource, /return \{ renderGroups: groups, totalCount: count \};/);
+  assert.match(completedSource, /\}, \[completedChecklist\]\);/);
+  assert.match(completedSource, /renderGroups\.map/);
 });
 
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
