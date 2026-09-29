@@ -742,9 +742,9 @@ async function pullDataset(
     }
   }
 
-  // Order sync metadata is part of verified success, not a best-effort log.
-  // Failed batches may have applied fields or some metadata: report them for
-  // review rather than falsely declaring every Order fully synchronized.
+  // Reconciliation metadata is part of verified success for both datasets.
+  // A bulkUpdate acknowledgement alone is not enough: Base44 has previously
+  // acknowledged writes while silently omitting individual fields.
   let snapshotWriteFailures = 0;
   const verifiedMetadataExpected: any[] = [];
   const snapshotBatchSize = 100;
@@ -752,46 +752,53 @@ async function pullDataset(
     const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
-      if (dataset === 'orders') verifiedMetadataExpected.push(...batch);
+      verifiedMetadataExpected.push(...batch);
     } catch (error: any) {
-      if (dataset === 'orders') {
-        snapshotWriteFailures += batch.length;
-        updatedCount = Math.max(0, updatedCount - batch.length);
-        errors.push(`Order sync metadata was not confirmed for ${batch.length} records (IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). Review before treating this pull as complete: ${error?.message || 'unknown error'}`);
-      }
-      // Preserve the existing Sales metadata behavior (separate project).
+      snapshotWriteFailures += batch.length;
+      if (dataset === 'orders') updatedCount = Math.max(0, updatedCount - batch.length);
+      const datasetLabel = dataset === 'sales' ? 'Sales' : 'Order';
+      errors.push(
+        `${datasetLabel} sync metadata was not confirmed for ${batch.length} records ` +
+        `(IDs: ${batch.slice(0, 5).map((row: any) => row.id).join(', ')}). ` +
+        `Review before treating this pull as complete: ${error?.message || 'unknown error'}`
+      );
     }
   }
 
-  // Order-only read-after-write for reconciliation metadata. Base44 bulkUpdate
-  // has previously acknowledged writes while silently omitting individual
-  // fields, so the snapshot/timestamp must be re-read before success is final.
-  if (dataset === 'orders' && verifiedMetadataExpected.length) {
+  // Re-read every metadata write by permanent Base44 ID before declaring the
+  // pull healthy. This catches silently dropped Sales snapshots/timestamps too.
+  if (verifiedMetadataExpected.length) {
     try {
       const metadataRows = await loadAllEntityRows({
-        entity: base44.asServiceRole.entities.Order,
+        entity: dataset === 'sales'
+          ? base44.asServiceRole.entities.WorkOrder
+          : base44.asServiceRole.entities.Order,
         query: { smartsheet_sheet_id: sheetId },
         sort: 'id',
-        label: 'Order Form sync metadata verification',
+        label: dataset === 'sales'
+          ? 'Sales Smartsheet sync metadata verification'
+          : 'Order Form sync metadata verification',
       });
-      const metadataFailures = findUnverifiedOrderSyncMetadata(
+      const metadataFailures = findUnverifiedSyncMetadata(
         verifiedMetadataExpected,
         metadataRows.filter((record: any) => !record?.deleted),
       );
       if (metadataFailures.length) {
         snapshotWriteFailures += metadataFailures.length;
-        updatedCount = Math.max(0, updatedCount - metadataFailures.length);
+        if (dataset === 'orders') updatedCount = Math.max(0, updatedCount - metadataFailures.length);
+        const datasetLabel = dataset === 'sales' ? 'Sales' : 'Order';
         errors.push(
-          `Order sync metadata read-back failed for ${metadataFailures.length} records ` +
+          `${datasetLabel} sync metadata read-back failed for ${metadataFailures.length} records ` +
           `(IDs: ${metadataFailures.slice(0, 5).map((item: any) => item.id || 'unknown').join(', ')}). ` +
           `Snapshot/timestamp was not verified; review before treating this pull as complete.`
         );
       }
     } catch (error: any) {
       snapshotWriteFailures += verifiedMetadataExpected.length;
-      updatedCount = Math.max(0, updatedCount - verifiedMetadataExpected.length);
+      if (dataset === 'orders') updatedCount = Math.max(0, updatedCount - verifiedMetadataExpected.length);
+      const datasetLabel = dataset === 'sales' ? 'Sales' : 'Order';
       errors.push(
-        `Order sync metadata could not be re-read for ${verifiedMetadataExpected.length} records. ` +
+        `${datasetLabel} sync metadata could not be re-read for ${verifiedMetadataExpected.length} records. ` +
         `Review before treating this pull as complete: ${error?.message || 'unknown error'}`
       );
     }
