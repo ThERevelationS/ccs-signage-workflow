@@ -25,6 +25,7 @@ import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConf
 import {
   buildCells,
   buildOrderPullSnapshot,
+  buildSalesPullSnapshot,
   buildSnapshot,
   parseRowToFields,
 } from '../../shared/smartsheetSyncFields.ts';
@@ -34,6 +35,7 @@ import {
   salesPullSnapshotAligned,
   salesPushRecordUnchanged,
   salesPushSnapshotNeedsReview,
+  salesRecordHasLocalChangesSinceSnapshot,
   classifySalesEstInvPreview,
   verifiedSalesPreviewColumn,
   salesRunRequiresReview,
@@ -418,6 +420,9 @@ async function pullDataset(
   const toCreate: any[] = [];
   const toUpdate: any[] = [];
   const salesAssigneeTranslationIssues: any[] = [];
+  const salesLocalPendingPreserved: string[] = [];
+  const salesPendingSnapshotRepairs: any[] = [];
+  const salesPullBaselineReviewRequired: string[] = [];
   const orderLocalPendingConflicts: string[] = [];
   let salesMissingCustomerRowsSkipped = 0;
   let unchangedSkipped = 0;
@@ -471,6 +476,49 @@ async function pullDataset(
     const salesParentRowId = dataset === 'sales' && /^\d+$/.test(cleanText(row?.parent_id, 40))
       ? cleanText(row.parent_id, 40) : '';
     const existing = recordsByRowId[rowId];
+    if (dataset === 'sales' && existing) {
+      const priorSnapshot = existing?.smartsheet_sync_snapshot;
+      const hasVerifiedBaseline = Boolean(
+        existing?.smartsheet_last_synced_at &&
+        priorSnapshot && typeof priorSnapshot === 'object' && !Array.isArray(priorSnapshot),
+      );
+      if (!hasVerifiedBaseline) {
+        // With no trustworthy three-way baseline, do not guess whether Base44
+        // or Smartsheet is newer. Preserve the linked WorkOrder and require
+        // review instead of overwriting either side.
+        salesPullBaselineReviewRequired.push(existing.id);
+        continue;
+      }
+
+      const expectedLocalSnapshot = buildSnapshot(existing, bindings, 'sales');
+      if (salesRecordHasLocalChangesSinceSnapshot(
+        existing,
+        expectedLocalSnapshot,
+        cleanText(bindings?.current_task_assigned_to, 40),
+      )) {
+        // Base44 changed after the last verified sync. Pull must not erase that
+        // work before push gets a chance to perform the ordinary remote conflict
+        // check. We may still seed newly-added binding columns from the actual
+        // remote row so an old snapshot does not block that safe push.
+        salesLocalPendingPreserved.push(existing.id);
+        const remoteSnapshot = buildSalesPullSnapshot(row, bindings);
+        const repairedSnapshot = { ...priorSnapshot };
+        let repaired = false;
+        for (const [columnId, remoteValue] of Object.entries(remoteSnapshot)) {
+          if (!Object.prototype.hasOwnProperty.call(repairedSnapshot, columnId)) {
+            repairedSnapshot[columnId] = remoteValue;
+            repaired = true;
+          }
+        }
+        if (repaired) {
+          salesPendingSnapshotRepairs.push({
+            id: existing.id,
+            smartsheet_sync_snapshot: repairedSnapshot,
+          });
+        }
+        continue;
+      }
+    }
     if (dataset === 'orders' && existing?.smartsheet_pending_local_sync === true) {
       // A local Order edit that has been durably saved but not yet pushed is
       // authoritative until Save & Sync resolves it. Never let background pull
@@ -514,6 +562,10 @@ async function pullDataset(
         newRecord.smartsheet_parent_row_id = salesParentRowId;
         if (!newRecord.title) newRecord.title = newRecord.client_name;
         newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
+        // A record created from this remote row already has a known sync
+        // baseline. Persist it with the record so the immediately following
+        // push stage cannot classify the new link as an unsafe missing snapshot.
+        newRecord.smartsheet_sync_snapshot = buildSnapshot(newRecord, bindings, 'sales');
       } else {
         if (!newRecord.customer_name) newRecord.customer_name = 'Unknown';
         if (!newRecord.request_type) newRecord.request_type = 'Other';
@@ -554,7 +606,7 @@ async function pullDataset(
   // 2. Order-only verified read-back repairs changed date and text-option
   //    fields before advancing the sync snapshot. Existing Sales behavior
   //    remains unchanged.
-  const snapshotUpdates: any[] = [];
+  const snapshotUpdates: any[] = [...salesPendingSnapshotRepairs];
   const orderDateVerifications: any[] = [];
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
@@ -759,6 +811,10 @@ async function pullDataset(
       missing_customer_rows_skipped: salesMissingCustomerRowsSkipped,
       assignee_translation_review_required: salesAssigneeTranslationIssues.length,
       assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
+      local_pending_preserved: salesLocalPendingPreserved.length,
+      local_pending_record_ids: salesLocalPendingPreserved.slice(0, 20),
+      snapshot_review_required: salesPullBaselineReviewRequired.length,
+      snapshot_review_record_ids: salesPullBaselineReviewRequired.slice(0, 20),
     } : {}),
     ...(dataset === 'orders' ? {
       snapshot_write_failures: snapshotWriteFailures,
@@ -925,7 +981,12 @@ async function pushDataset(
           sort: 'id',
           label: 'Sales Pipeline targeted Save & Sync WorkOrders',
         })
-      : await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
+      : await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: { in_pipeline: true },
+          sort: 'id',
+          label: 'Sales Pipeline full Smartsheet push WorkOrders',
+        });
   } else {
     records = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.Order,
