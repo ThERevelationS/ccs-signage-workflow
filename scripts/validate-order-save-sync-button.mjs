@@ -9,6 +9,8 @@ assert.match(page, /onClick=\{\(\) => spreadsheetRef\.current\?\.saveAndSync\?\.
 assert.match(page, /saveStatus\.isSyncing \? \"Syncing\.\.\.\" : saveStatus\.isSaving \? \"Saving\.\.\.\" : \"Save & Sync\"/, 'Save button must show progress');
 assert.match(page, /disabled=\{saveStatus\.isSaving \|\| saveStatus\.isSyncing\}/, 'Save button must prevent duplicate clicks');
 assert.match(page, /onSaveStatusChange=\{setSaveStatus\}/, 'Order Form must consume authoritative save status');
-assert.match(sheet, /const saveResult = await saveAllChanges\(\);[\s\S]*?if \(!saveResult\?\.complete\) return false;[\s\S]*?pushSavedOrdersToSmartsheet/, 'Smartsheet push must happen only after Base44 save completes');
+assert.match(sheet, /const saveResult = await saveAllChanges\(\);[\s\S]*?if \(!saveResult\?\.complete\) \{[\s\S]*?return false;[\s\S]*?pushSavedOrdersToSmartsheet/, 'Smartsheet push must happen only after Base44 save completes');
+const saveAndSyncBody = sheet.slice(sheet.indexOf('const saveAndSync = async () =>'), sheet.indexOf('// Existing internal/manual callers'));
+assert.ok(saveAndSyncBody.indexOf('syncInFlightRef.current = true') < saveAndSyncBody.indexOf('await saveAllChanges()'), 'Save & Sync must reserve its single-flight guard before the first await');
 
 console.log('Order Save & Sync button validation PASS');
