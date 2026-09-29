@@ -1052,6 +1052,16 @@ async function pushDataset(
     ? [...new Set(options.recordIds.map((id) => cleanText(id, 80)).filter(Boolean))]
     : [];
   let records: any[] = [];
+  if (dataset === 'orders' && options?.onlyPendingOrderRecords && requestedRecordIds.length === 0 &&
+      typeof options?.reportOrderProgress === 'function') {
+    try {
+      await options.reportOrderProgress({
+        phase: 'preflight', current: 0, total: 0,
+        item_label: 'Loading locally changed Order records',
+        detail: 'Querying only Orders durably marked for Smartsheet Save & Sync',
+      });
+    } catch { /* progress UI must never corrupt sync work */ }
+  }
   if (dataset === 'sales') {
     records = requestedRecordIds.length
       ? await loadAllEntityRows({
@@ -1067,17 +1077,23 @@ async function pushDataset(
           label: 'Sales Pipeline full Smartsheet push WorkOrders',
         });
   } else {
+    const orderQuery = requestedRecordIds.length
+      ? { id: { $in: requestedRecordIds } }
+      : options?.onlyPendingOrderRecords
+        ? { smartsheet_pending_local_sync: true }
+        : undefined;
     records = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.Order,
-      ...(requestedRecordIds.length ? { query: { id: { $in: requestedRecordIds } } } : {}),
+      ...(orderQuery ? { query: orderQuery } : {}),
       sort: 'id',
-      label: requestedRecordIds.length ? 'Order Form targeted Save & Sync Orders' : 'Order Form Smartsheet push Orders',
+      label: requestedRecordIds.length
+        ? 'Order Form targeted Save & Sync Orders'
+        : options?.onlyPendingOrderRecords
+          ? 'Order Form pending local Smartsheet push Orders'
+          : 'Order Form Smartsheet push Orders',
     });
   }
   records = (Array.isArray(records) ? records : []).filter((r: any) => !r?.deleted);
-  if (dataset === 'orders' && options?.onlyPendingOrderRecords && requestedRecordIds.length === 0) {
-    records = records.filter((record: any) => record?.smartsheet_pending_local_sync === true);
-  }
   if (requestedRecordIds.length) {
     const foundIds = new Set(records.map((record: any) => String(record?.id || '')));
     const missingIds = requestedRecordIds.filter((id) => !foundIds.has(id));
