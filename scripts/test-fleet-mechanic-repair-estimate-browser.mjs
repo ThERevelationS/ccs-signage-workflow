@@ -223,7 +223,7 @@ try {
     assert.equal(await page.getByLabel("Estimated labor hours").inputValue(),"1.5");
     await page.evaluate(() => window.__fleetMechanicEstimateFixture.releaseDeferredBootstrap());
     await page.waitForTimeout(50);
-    await page.getByText("Second synthetic repair",{exact:true}).waitFor();
+    await page.getByRole("heading",{name:"Second synthetic repair",exact:true}).waitFor();
     assert.equal(await page.getByLabel("Estimated labor hours").inputValue(),"1.5");
     assert.equal(await page.getByText(/Repair estimate request could not be confirmed/i).count(),0);
     assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap"]);
