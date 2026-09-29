@@ -526,18 +526,13 @@ async function pullDataset(
     }
   }
 
-  if (dataset === 'sales' && salesAssigneeTranslationIssues.length) {
-    return {
-      dataset,
-      direction: 'pull',
-      sheet_id: sheetId,
-      skipped: true,
-      reason: 'Smartsheet Task Assigned To contains names that cannot be translated to one authorized Base44 full name. No Sales records were changed.',
-      assignee_translation_review_required: salesAssigneeTranslationIssues.length,
-      assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
-    };
-  }
-
+  // Historical Smartsheet assignee labels can outlive the current authorized
+  // Base44 roster. They must not freeze the entire Sales mirror. For unresolved
+  // or ambiguous labels, current_task_assigned_to is deliberately omitted from
+  // fieldValues above: linked records keep their existing Base44 assignee and
+  // new records remain unassigned, while every other safe mapped field can
+  // still pull. Report the legacy labels so admins can clean them up without
+  // turning one stale picklist value into a sheet-wide outage.
   let createdCount = 0;
   let updatedCount = 0;
   const errors: string[] = [];
@@ -760,7 +755,11 @@ async function pullDataset(
     created: createdCount,
     updated: updatedCount,
     unchanged_skipped: unchangedSkipped,
-    ...(dataset === 'sales' ? { missing_customer_rows_skipped: salesMissingCustomerRowsSkipped } : {}),
+    ...(dataset === 'sales' ? {
+      missing_customer_rows_skipped: salesMissingCustomerRowsSkipped,
+      assignee_translation_review_required: salesAssigneeTranslationIssues.length,
+      assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
+    } : {}),
     ...(dataset === 'orders' ? {
       snapshot_write_failures: snapshotWriteFailures,
       conflicts: orderLocalPendingConflicts.length,
