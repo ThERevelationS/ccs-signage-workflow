@@ -557,11 +557,19 @@ async function pullDataset(
       ));
     }
     if (existing) {
-      // A no-op pull must not bump updated_date or rewrite working Sales data.
-      // If the snapshot is missing/stale, retain the existing reconciliation path.
+      // A no-op Sales pull must not rewrite business fields. If those fields
+      // already agree but the stored snapshot is stale/incomplete, reconcile only
+      // the exact remote snapshot metadata and verify that write later.
       if (dataset === 'sales' && salesPulledFieldsUnchanged(existing, fieldValues) &&
-          cleanText(existing?.smartsheet_parent_row_id, 40) === salesParentRowId &&
-          salesPullSnapshotAligned(existing, buildSnapshot(existing, bindings, 'sales'))) {
+          cleanText(existing?.smartsheet_parent_row_id, 40) === salesParentRowId) {
+        const remoteSnapshot = salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings);
+        if (!salesPullSnapshotAligned(existing, remoteSnapshot)) {
+          salesSnapshotOnlyUpdates.push({
+            id: existing.id,
+            smartsheet_sync_snapshot: remoteSnapshot,
+            ...(salesAssigneeTranslationUnresolved ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
+          });
+        }
         unchangedSkipped++;
         continue;
       }
@@ -574,9 +582,16 @@ async function pullDataset(
         }
       }
       toUpdate.push({ id: existing.id, _existing: existing,
-        ...(dataset === 'orders' ? { _remoteSnapshot: buildOrderPullSnapshot(row, bindings) } : {}),
+        ...(dataset === 'orders'
+          ? { _remoteSnapshot: buildOrderPullSnapshot(row, bindings) }
+          : dataset === 'sales'
+            ? {
+                _remoteSnapshot: salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings),
+                _salesAssigneeNeedsReview: salesAssigneeTranslationUnresolved,
+              }
+            : {}),
         ...(dataset === 'sales' ? { smartsheet_parent_row_id: salesParentRowId } : {}),
-        ...fieldValues, smartsheet_last_synced_at: new Date().toISOString() });
+        ...fieldValues });
     } else if (profile?.create_base44_from_smartsheet) {
       const newRecord: any = { ...fieldValues };
       if (dataset === 'sales') {
@@ -588,9 +603,9 @@ async function pullDataset(
         if (!newRecord.title) newRecord.title = newRecord.client_name;
         newRecord.in_pipeline = shouldCreateSmartsheetSalesRecordInPipeline(newRecord);
         // A record created from this remote row already has a known sync
-        // baseline. Persist it with the record so the immediately following
-        // push stage cannot classify the new link as an unsafe missing snapshot.
-        newRecord.smartsheet_sync_snapshot = buildSnapshot(newRecord, bindings, 'sales');
+        // baseline. Store the actual remote cells (with any unresolved assignee
+        // held at the conservative local baseline above), not a local reconstruction.
+        newRecord.smartsheet_sync_snapshot = salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings);
       } else {
         if (!newRecord.customer_name) newRecord.customer_name = 'Unknown';
         if (!newRecord.request_type) newRecord.request_type = 'Other';
@@ -626,35 +641,37 @@ async function pullDataset(
   }
 
   // Hybrid update strategy:
-  // 1. bulkUpdate for all fields (fast, no rate limits) — but it can silently
-  //    drop Order dates or their companion text choices.
-  // 2. Order-only verified read-back repairs changed date and text-option
-  //    fields before advancing the sync snapshot. Existing Sales behavior
-  //    remains unchanged.
-  const snapshotUpdates: any[] = [...salesPendingSnapshotRepairs];
+  // 1. bulkUpdate business fields without claiming sync completion.
+  // 2. Order-only date/text repairs run before metadata advancement.
+  // 3. Sales and Order snapshot/timestamp metadata is written separately and
+  //    read back before the pull can be treated as verified.
+  const snapshotUpdates: any[] = [...salesPendingSnapshotRepairs, ...salesSnapshotOnlyUpdates];
   const orderDateVerifications: any[] = [];
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     const batch = toUpdate.slice(i, i + bulkBatchSize);
-    const payload = batch.map(({ id, _existing, _remoteSnapshot, ...fields }: any) => {
+    const payload = batch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
-      return { id, ...(dataset === 'orders' ? withoutUnverifiedTimestamp : fields) };
+      return { id, ...withoutUnverifiedTimestamp };
     });
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
       updatedCount += payload.length;
       for (const rec of batch) {
         if (rec._existing) {
-          const { id, _existing, _remoteSnapshot, ...fields } = rec;
-          const merged = { ..._existing, ...fields };
-          const snapshot = dataset === 'orders' ? _remoteSnapshot : buildSnapshot(merged, bindings, dataset);
+          const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields } = rec;
+          const snapshot = _remoteSnapshot;
           if (dataset === 'orders') {
             const changes = changedPulledOrderDates(_existing, fields);
             if (Object.keys(changes).length) {
               orderDateVerifications.push({ id, previous: _existing, changes, snapshot });
             } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot,
               smartsheet_last_synced_at: new Date().toISOString() });
-          } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot });
+          } else snapshotUpdates.push({
+            id,
+            smartsheet_sync_snapshot: snapshot,
+            ...(_salesAssigneeNeedsReview ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
+          });
         }
       }
     } catch (err: any) {
