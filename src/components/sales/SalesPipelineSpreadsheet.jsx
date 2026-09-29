@@ -2070,7 +2070,14 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (filter.filterType === 'selected' && filter.selectedValues?.length > 0) {
         result = result.filter(item => {
           const value = item[sortConfig.key];
-          return value != null && filter.selectedValues.includes(String(value));
+          if (value == null) return false;
+          if (isSalesUserFilterField(sortConfig.key)) {
+            const roleUsers = salesFilterUsersForField(sortConfig.key, users);
+            return filter.selectedValues.some((selectedValue) =>
+              personValuesReferToSameUser(value, selectedValue, roleUsers)
+            );
+          }
+          return filter.selectedValues.includes(String(value));
         });
       }
       
