@@ -98,7 +98,8 @@ const remote = buildSalesPullSnapshot({
 assert.equal(remote[estInvColumn], "12345", "Remote Est / Inv baseline must prefer the canonical raw identifier over formatted display text.");
 assert.equal(remote["5655853885876100"], 450, "Remote numeric snapshots must use canonical numeric values instead of currency display text.");
 assert.equal(remote[assigneeColumn], "Brett", "Remote assignee baseline must normalize to the same first-name representation used by push snapshots.");
-assert.equal(remote["4072653460557700"], "", "A bound-but-omitted Smartsheet cell must baseline as blank.");
+assert.equal(remote["4072653460557700"], null, "A bound-but-omitted ordinary Sales cell must baseline with the same null representation used by push snapshots.");
+assert.equal(remote["2555898341156740"], "", "A bound-but-omitted notes cell must retain the canonical empty serialized-notes representation.");
 
 const metadataExpected = [{
   id: "wo-1",
@@ -161,6 +162,11 @@ assert.match(
   backend,
   /verifiedMetadataExpected\.push\(\.\.\.batch\)[\s\S]*?Sales Smartsheet sync metadata verification[\s\S]*?findUnverifiedSyncMetadata/,
   "Sales snapshot/timestamp writes must be re-read and verified before the pull is healthy.",
+);
+assert.match(
+  backend,
+  /dataset === 'sales'[\s\S]*?buildSalesPullSnapshot\(\{ cells: currentSmartsheetCells \}, bindings\)[\s\S]*?return false;/,
+  "Sales push conflict detection must compare canonical remote snapshots instead of formatted display values.",
 );
 assert.match(
   backend,
