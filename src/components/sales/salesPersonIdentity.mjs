@@ -69,3 +69,9 @@ export function buildSalesPersonSelectModel(value, users = [], role = null) {
     : "";
   return { canonical, options, legacy, resolution };
 }
+
+export function salesPersonSearchText(value, users = [], role = null) {
+  const raw = clean(value);
+  const canonical = buildSalesPersonSelectModel(value, users, role).canonical;
+  return [...new Set([raw, canonical].filter(Boolean))].join(" ");
+}
