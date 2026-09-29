@@ -42,6 +42,11 @@ check(page.includes('const { isRegistered, currentUser, sessionToken } = useAuth
   "Sales page must restore preferences from the custom Sign Shop session");
 check(page.includes("preferenceSaveChainRef = useRef(Promise.resolve())"),
   "Rapid preference writes must be serialized");
+check(page.includes('preferenceIdentityRef = useRef("")') &&
+      page.includes("preferenceIdentityRef.current = `${String(currentUser?.email") &&
+      page.includes("if (preferenceIdentityRef.current !== queuedIdentity) return undefined") &&
+      page.includes("sessionToken: queuedSessionToken"),
+  "Queued preference writes must be discarded after the authenticated identity/session changes");
 check(page.includes("loadSalesPipelinePreferencesSafely({ sessionToken") &&
       page.includes("Promise.all(["),
   "Saved presets and active preferences must load together on login");
