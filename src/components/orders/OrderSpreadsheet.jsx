@@ -437,7 +437,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     setIsSyncing(true);
     try {
       const result = await pushSavedOrdersToSmartsheet({ sessionToken, orderIds });
-      const summary = summarizeSavedOrderSync(result);
+      const summary = summarizeSavedOrderSync(result, { expectedOrderCount: orderIds.length });
       if (!summary.ok) throw new Error(summary.message);
       clearSyncedOrderIds(syncTargets);
       const safelySyncedIds = new Set(syncTargets
