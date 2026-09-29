@@ -862,6 +862,7 @@ async function pullDataset(
       assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
       local_pending_preserved: salesLocalPendingPreserved.length,
       local_pending_record_ids: salesLocalPendingPreserved.slice(0, 20),
+      snapshot_write_failures: snapshotWriteFailures,
       snapshot_review_required: salesPullBaselineReviewRequired.length,
       snapshot_review_record_ids: salesPullBaselineReviewRequired.slice(0, 20),
     } : {}),
