@@ -45,7 +45,17 @@ assert.equal(orderSyncLiveProgress({
 }, { enabled: true, now }).stalled, true);
 assert.equal(orderSyncLiveProgress(running, { enabled: false, now }).show, false);
 assert.equal(orderSyncLiveProgress(running, { enabled: false, now }).stalled, false);
-console.log('PASS Order Form detects a quiet running sync after five minutes without changing other CCS pages');
+const longRunningSalesStage = {
+  status: 'running',
+  total_steps: 4,
+  completed_steps: 0,
+  current_step_label: 'Sales Pipeline → Smartsheet',
+  started_at: new Date(now - ORDER_SYNC_HEARTBEAT_STALE_MS - 60_000).toISOString(),
+  updated_at: new Date(now - ORDER_SYNC_HEARTBEAT_STALE_MS - 60_000).toISOString(),
+};
+assert.equal(orderSyncLiveProgress(longRunningSalesStage, { enabled: true, now }).show, false);
+assert.equal(orderSyncLiveProgress(longRunningSalesStage, { enabled: true, now }).stalled, false);
+console.log('PASS Order Form applies the five-minute heartbeat timeout only to Order progress, not long-running Sales stages');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const widget = readFileSync('src/components/admin/SmartsheetSyncWidget.jsx', 'utf8');
