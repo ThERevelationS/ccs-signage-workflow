@@ -31,13 +31,12 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
     const count = Number(value);
     return Number.isSafeInteger(count) && count >= 0 ? count : null;
   };
-  const orderResults = Array.isArray(result?.results)
-    ? result.results.filter((row) => row?.dataset === "orders")
-    : [];
-  if (orderResults.length !== 1) {
-    return expected === 0 && orderResults.length === 0 && result?.sync_complete === true
+  const results = Array.isArray(result?.results) ? result.results : [];
+  const orderResults = results.filter((row) => row?.dataset === "orders");
+  if (orderResults.length !== 1 || results.length !== 1) {
+    return expected === 0 && results.length === 0 && result?.sync_complete === true
       ? { ok: true, message: "Saved changes are already synchronized." }
-      : { ok: false, message: "Smartsheet did not return exactly one verifiable Order sync result." };
+      : { ok: false, message: "Smartsheet did not return exactly one isolated, verifiable Order sync result." };
   }
   const [item] = orderResults;
   const recordsExamined = readCount(item?.records_examined);
