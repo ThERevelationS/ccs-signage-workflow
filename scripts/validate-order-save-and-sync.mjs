@@ -56,6 +56,9 @@ console.log('PASS explicit Save & Sync can create only durable pending new Order
 
 assert.match(client, /action: "push_saved_orders"/);
 assert.match(client, /order_ids: ids/);
+assert.ok(client.includes('.filter((id) => typeof id === "string")'));
+assert.ok(client.includes('.map((id) => id.trim()).filter(Boolean)'));
+assert.doesNotMatch(client, /String\(id \|\| ""\)\.trim\(\)/);
 assert.match(client, /result\?\.sync_complete !== true \|\| result\?\.needs_review/);
 assert.match(client, /Smartsheet did not confirm that the Order sync completed\./);
 assert.match(client, /expectedOrderCount = 0/);
