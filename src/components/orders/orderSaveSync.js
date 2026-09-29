@@ -6,11 +6,15 @@ function safeMessage(error, fallback) {
 
 export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {}) {
   const token = String(sessionToken || "").trim();
-  const ids = [...new Set((Array.isArray(orderIds) ? orderIds : [])
+  const rawIds = Array.isArray(orderIds) ? orderIds : [];
+  const ids = [...new Set(rawIds
     .filter((id) => typeof id === "string")
     .map((id) => id.trim()).filter(Boolean))];
   if (!token) throw new Error("Your Sign Shop session expired. Sign in again before syncing.");
   if (!ids.length) return { success: true, sync_complete: true, needs_review: false, results: [] };
+  if (ids.length !== rawIds.length || ids.some((id) => !/^[A-Za-z0-9_-]{6,80}$/.test(id))) {
+    throw new Error("Saved Orders contain an invalid or duplicate permanent ID. Reload before syncing.");
+  }
 
   try {
     const response = await base44.functions.invoke("smartsheetSyncAction", {
