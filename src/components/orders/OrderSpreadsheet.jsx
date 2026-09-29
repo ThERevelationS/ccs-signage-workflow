@@ -452,6 +452,16 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setSyncMessage(summary.message);
       return true;
     } catch (error) {
+      // The request can lose its response after Smartsheet and Base44 have already
+      // committed successfully. Re-read durable Order markers before telling the
+      // user to retry so an acknowledged-on-server sync is not pushed again.
+      await loadData(false);
+      const unresolvedTargets = syncTargets.filter(({ id }) => pendingSyncIdsRef.current.has(id));
+      if (unresolvedTargets.length === 0) {
+        setLastSynced(new Date());
+        setSyncMessage('Saved changes are synchronized.');
+        return true;
+      }
       setSaveError(`Saved in Base44, but Smartsheet sync needs attention: ${error?.message || 'Sync could not be verified.'}`);
       return false;
     } finally {
