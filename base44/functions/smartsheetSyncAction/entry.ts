@@ -1744,9 +1744,14 @@ Deno.serve(async (req) => {
       if (!/^\d+$/.test(sheetId) || !/^\d+$/.test(columnId)) {
         return Response.json({ success: false, error: 'A verified Sales sheet and Est / Inv # binding are required.' }, { status: 400 });
       }
-      // Match the CURRENT Sales push window exactly; never describe the sample
-      // as complete coverage of the entire historic WorkOrder archive.
-      const raw = await base44.asServiceRole.entities.WorkOrder.filter({ in_pipeline: true }, '-updated_date', 500);
+      // Match the CURRENT full Sales push population exactly; never describe
+      // the sample as complete coverage of the entire historic WorkOrder archive.
+      const raw = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        query: { in_pipeline: true },
+        sort: 'id',
+        label: 'Sales snapshot preview full push population',
+      });
       if (!Array.isArray(raw)) throw new Error('Sales snapshot preview could not verify its read window.');
       const records = raw.filter((r: any) => !r?.deleted);
       const candidates = records.filter((record: any) => {
@@ -1757,7 +1762,7 @@ Deno.serve(async (req) => {
             Array.isArray(prior) || !Object.prototype.hasOwnProperty.call(prior, columnId));
       });
       const limit = Math.max(1, Math.min(25, Math.floor(Number(body?.sample_size) || 20)));
-      const offset = Math.max(0, Math.min(499, Math.floor(Number(body?.sample_offset) || 0)));
+      const offset = Math.max(0, Math.min(9999, Math.floor(Number(body?.sample_offset) || 0)));
       const sample = candidates.slice(offset, offset + limit);
       if (sample.length === 0) {
         return Response.json({
