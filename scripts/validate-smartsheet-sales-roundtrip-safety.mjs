@@ -6,6 +6,7 @@ import {
 } from "../base44/shared/smartsheetSyncFields.ts";
 import {
   salesRecordHasLocalChangesSinceSnapshot,
+  salesSnapshotsEqual,
 } from "../base44/shared/smartsheetSalesSafety.mjs";
 import {
   findUnverifiedSyncMetadata,
@@ -100,6 +101,25 @@ assert.equal(remote["5655853885876100"], 450, "Remote numeric snapshots must use
 assert.equal(remote[assigneeColumn], "Brett", "Remote assignee baseline must normalize to the same first-name representation used by push snapshots.");
 assert.equal(remote["4072653460557700"], null, "A bound-but-omitted ordinary Sales cell must baseline with the same null representation used by push snapshots.");
 assert.equal(remote["2555898341156740"], "", "A bound-but-omitted notes cell must retain the canonical empty serialized-notes representation.");
+assert.equal(salesSnapshotsEqual(
+  buildSnapshot(base, bindings, "sales"),
+  buildSalesPullSnapshot({
+    cells: [
+      { column_id: "3087579177346948", value: "Example Client", display_value: "Example Client" },
+      { column_id: "4072653460557700", value: "Web", display_value: "Web" },
+      { column_id: estInvColumn, value: 12345, display_value: "12,345" },
+      { column_id: "5655853885876100", value: 450, display_value: "$450.00" },
+      { column_id: "4783818077955972", value: "Complete Estimate for Review", display_value: "Complete Estimate for Review" },
+      { column_id: assigneeColumn, value: "Brett", display_value: "Brett" },
+    ],
+  }, bindings),
+  assigneeColumn,
+), true, "Sales PUT read-back must accept canonically equal remote values despite display formatting.");
+assert.equal(salesSnapshotsEqual(
+  buildSnapshot(base, bindings, "sales"),
+  { ...buildSnapshot(base, bindings, "sales"), "5655853885876100": 451 },
+  assigneeColumn,
+), false, "Sales PUT read-back must reject a silently different persisted value.");
 
 const metadataExpected = [{
   id: "wo-1",
@@ -183,6 +203,17 @@ assert.match(
   /const newRowId = String\(result\?\.body\?\.result\?\.id \|\| result\?\.body\?\.id \|\| ''\)\.trim\(\);[\s\S]*?if \(!\/\^\\d\+\$\/\.test\(newRowId\)\) \{[\s\S]*?Sales Smartsheet create returned no usable permanent row ID/,
   "Sales create must fail closed when Smartsheet acknowledges POST without a usable permanent row ID.",
 );
+assert.match(
+  backend,
+  /await smartsheetWrite\('PUT'[\s\S]*?if \(dataset === 'sales'\)[\s\S]*?const verifyResult = await smartsheetGet\([\s\S]*?salesSnapshotsEqual\([\s\S]*?Sales Smartsheet update could not be verified by read-back[\s\S]*?updated\.push\(record\.id\)/,
+  "Existing Sales-row PUT must be read back and canonically verified before it is counted updated or Base44 sync metadata advances.",
+);
+const salesPutVerificationIndex = backend.indexOf("Sales Smartsheet update could not be verified by read-back");
+const salesUpdatedIndex = backend.indexOf("updated.push(record.id);", salesPutVerificationIndex);
+const salesMetadataIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesPutVerificationIndex);
+assert.ok(salesPutVerificationIndex >= 0 && salesUpdatedIndex > salesPutVerificationIndex && salesMetadataIndex > salesUpdatedIndex,
+  "Sales PUT verification must occur before updated accounting and snapshot/timestamp persistence.");
+
 const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
 const salesCreatedIndex = backend.indexOf("created.push(record.id);", salesCreateGuardIndex);
 const salesSnapshotIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesCreateGuardIndex);
