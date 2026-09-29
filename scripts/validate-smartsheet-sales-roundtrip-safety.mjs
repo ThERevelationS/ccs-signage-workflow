@@ -178,5 +178,15 @@ assert.match(
   /newRecord\.smartsheet_sync_snapshot = salesRemoteSnapshot \|\| buildSalesPullSnapshot\(row, bindings\)/,
   "Sales rows created from Smartsheet must start from the canonical remote snapshot baseline.",
 );
+assert.match(
+  backend,
+  /const newRowId = String\(result\?\.body\?\.result\?\.id \|\| result\?\.body\?\.id \|\| ''\)\.trim\(\);[\s\S]*?if \(!\/\^\\d\+\$\/\.test\(newRowId\)\) \{[\s\S]*?Sales Smartsheet create returned no usable permanent row ID/,
+  "Sales create must fail closed when Smartsheet acknowledges POST without a usable permanent row ID.",
+);
+const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
+const salesCreatedIndex = backend.indexOf("created.push(record.id);", salesCreateGuardIndex);
+const salesSnapshotIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesCreateGuardIndex);
+assert.ok(salesCreateGuardIndex >= 0 && salesCreatedIndex > salesCreateGuardIndex && salesSnapshotIndex > salesCreatedIndex,
+  "Sales create must validate the permanent row ID before counting creation or advancing snapshot metadata.");
 
 console.log("Smartsheet Sales round-trip safety validation passed.");
