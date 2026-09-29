@@ -61,6 +61,9 @@ assert.match(client, /Smartsheet did not confirm that the Order sync completed\.
 assert.match(client, /expectedOrderCount = 0/);
 assert.match(client, /Number\(item\?\.records_examined\) !== expected/);
 assert.match(client, /The remaining Orders will stay queued\./);
+assert.ok(client.includes('const accounted = created + updated + unchanged'));
+assert.ok(client.includes('accounted !== expected'));
+assert.ok(client.includes('Unaccounted Orders will stay queued.'));
 assert.match(ui, /summarizeSavedOrderSync\(result, \{ expectedOrderCount: orderIds\.length \}\)/);
 assert.equal(schema.properties.smartsheet_pending_local_sync.type, 'boolean');
 assert.equal(schema.properties.smartsheet_pending_local_sync.default, false);
