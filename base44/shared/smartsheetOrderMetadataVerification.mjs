@@ -11,9 +11,10 @@ function sameMetadataValue(left, right) {
   return JSON.stringify(normalizeMetadataValue(left)) === JSON.stringify(normalizeMetadataValue(right));
 }
 
-// Order Form only. A successful bulkUpdate response is not sufficient evidence
-// that the reconciliation snapshot/timestamp actually persisted.
-export function findUnverifiedOrderSyncMetadata(expectedUpdates = [], records = []) {
+// A successful bulkUpdate response is not sufficient evidence that sync
+// reconciliation metadata actually persisted. This comparison is dataset
+// agnostic; the Order-named export below is retained for existing callers/tests.
+export function findUnverifiedSyncMetadata(expectedUpdates = [], records = []) {
   const byId = new Map(
     (Array.isArray(records) ? records : [])
       .filter(record => record?.id)
@@ -45,3 +46,5 @@ export function findUnverifiedOrderSyncMetadata(expectedUpdates = [], records = 
   }
   return failures;
 }
+
+export const findUnverifiedOrderSyncMetadata = findUnverifiedSyncMetadata;
