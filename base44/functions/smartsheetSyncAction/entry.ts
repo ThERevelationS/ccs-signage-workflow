@@ -217,6 +217,35 @@ function detectConflict(
 ): boolean {
   if (!snapshot || typeof snapshot !== 'object') return false; // no prior sync → no conflict
   const bindingColumnIds = new Set(Object.values(bindings || {}).map((id) => String(id).trim()).filter((id) => /^\d+$/.test(id)));
+
+  if (dataset === 'sales') {
+    // Compare the same canonical representation used by Sales pull/push
+    // snapshots. Raw displayValue can contain currency/formatting that would
+    // otherwise create false conflicts against numeric or normalized values.
+    const currentSnapshot = buildSalesPullSnapshot({ cells: currentSmartsheetCells }, bindings);
+    for (const columnId of bindingColumnIds) {
+      if (!Object.prototype.hasOwnProperty.call(snapshot, columnId)) return true;
+      const current = currentSnapshot[columnId];
+      const previous = snapshot[columnId];
+      const currentBlank = current == null || String(current).trim() === '';
+      const previousBlank = previous == null || String(previous).trim() === '';
+      if (currentBlank || previousBlank) {
+        if (!(currentBlank && previousBlank)) return true;
+        continue;
+      }
+      if (typeof current === 'number' || typeof previous === 'number') {
+        const a = Number(current);
+        const b = Number(previous);
+        if (Number.isFinite(a) && Number.isFinite(b)) {
+          if (a !== b) return true;
+          continue;
+        }
+      }
+      if (String(current).trim() !== String(previous).trim()) return true;
+    }
+    return false;
+  }
+
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   const seenBoundColumnIds = new Set<string>();
   for (const cell of currentSmartsheetCells) {
