@@ -1367,7 +1367,11 @@ function LayoutContent({ children }) {
         </motion.main>
 
         {/* Smartsheet Sync Status Widget — persistent on every page */}
-        <SmartsheetSyncWidget compactOrderForm={location.pathname.replace(/\/+$/, '').toLowerCase() === '/orderform'} />
+        <SmartsheetSyncWidget
+          compactOrderForm={location.pathname.replace(/\/+$/, '').toLowerCase() === '/orderform'}
+          sessionToken={sessionToken}
+          currentUser={currentUser}
+        />
 
         {/* Add Task Dialog */}
         <AddTaskDialog 
