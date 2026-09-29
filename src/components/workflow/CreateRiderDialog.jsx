@@ -9,11 +9,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
-import { base44 } from "@/api/base44Client";
 import { createWorkOrderWithRecovery } from "@/components/workflow/workOrderPersistence";
-import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
-
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
+import { useAuth } from "@/components/auth/EmailGate";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const STAGES = [
   { value: "estimating", label: "Estimating" },
@@ -166,6 +164,7 @@ function TaskItem({ task, expanded, onToggleExpand, onRemove, onAddSubTask, onRe
 }
 
 export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, onCreated }) {
+  const { sessionToken } = useAuth();
   const [title, setTitle] = useState("");
   const [stage, setStage] = useState(parentWorkOrder?.current_stage || "permitting");
   const [assignedTo, setAssignedTo] = useState("");
@@ -180,7 +179,6 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
 
   useEffect(() => {
     if (isOpen) {
-      loadUsers();
       // Reset form
       setTitle(`${parentWorkOrder?.title || ''} - Rider`);
       setStage(parentWorkOrder?.current_stage || "permitting");
@@ -281,14 +279,28 @@ export default function CreateRiderDialog({ isOpen, onClose, parentWorkOrder, on
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
-  const loadUsers = async () => {
-    const usersData = await loadAllEntityRows({
-      entity: AuthorizedEmail,
-      sort: null,
-      label: "Rider creation authorized users",
-    });
-    setUsers(usersData);
-  };
+  useEffect(() => {
+    if (!isOpen || !sessionToken) {
+      setUsers([]);
+      return;
+    }
+
+    let cancelled = false;
+    loadAuthorizedUserDirectory({ sessionToken })
+      .then((directory) => {
+        if (!cancelled) setUsers(directory.users);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setUsers([]);
+          console.error("Error loading Rider assignment users:", error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, sessionToken]);
 
   const handleCreate = async () => {
     if (!title.trim()) return;
