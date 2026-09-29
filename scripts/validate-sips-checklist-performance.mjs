@@ -52,4 +52,19 @@ check("task and detail render setup no longer filters the same item children", (
   assert.equal(/stItemChildren\.filter\(i => i\.type === 'detail'\)/.test(source), false);
 });
 
+check("status condition options are indexed instead of scanning all conditions per row", () => {
+  assert.match(source, /const \{ dropdownConditionById, dropdownConditionOrderById \} = useMemo/);
+  assert.match(source, /const dropdownOptionsByChecklistItemId = useMemo/);
+  assert.match(source, /dropdownOptionsByChecklistItemId\.get\(displayItem\.id\)/);
+  assert.match(source, /dropdownOptionsByChecklistItemId\.get\(detail\.id\)/);
+  assert.match(source, /dropdownOptionsByChecklistItemId\.get\(stDisplayItem\.id\)/);
+  assert.equal(/dropdownConditions\s*\n\s*\.filter\(dd =>/.test(source), false);
+  assert.equal(/dropdownConditions\.find\(d => d\.id === dropdownId\)/.test(source), false);
+});
+
+check("indexed condition options preserve configured global condition order", () => {
+  assert.match(source, /dropdownConditionOrderById: new Map\(dropdownConditions\.map\(\(condition, index\) => \[condition\.id, index\]\)\)/);
+  assert.match(source, /\.sort\(\(a, b\) => \(dropdownConditionOrderById\.get\(a\.id\)/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
