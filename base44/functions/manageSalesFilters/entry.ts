@@ -14,6 +14,12 @@ const SALES_SORT_COLUMNS = new Set([
   'date_initial_contact', 'site_survey_date', 'date_estimate_sent', 'date_order_created',
   'project_install_date', 'permit_submitted_date', 'permit_approved_date', 'created_date', 'updated_date',
 ]);
+const SALES_SORT_COLUMNS = new Set([
+  'client_name', 'title', 'lead_source', 'current_task_deadline', 'current_task_assigned_to',
+  'designer', 'project_manager', 'estimator', 'corbridge_invoice_number', 'estimate_amount',
+  'date_initial_contact', 'site_survey_date', 'date_estimate_sent', 'date_order_created',
+  'project_install_date', 'permit_submitted_date', 'permit_approved_date', 'created_date', 'updated_date',
+]);
 const SALES_ATTENTION_FILTERS = new Set([
   'all', 'overdue', 'today', 'upcoming', 'needs_attention', 'due', 'no_next_action',
   'quote_no_followup', 'quote_aged', 'near_close', 'close_overdue', 'stale', 'stage_aged',
