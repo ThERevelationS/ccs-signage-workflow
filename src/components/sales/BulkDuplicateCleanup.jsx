@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Trash2, Check, Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { softDeleteWorkOrderFromLoadedSnapshot } from "@/components/workflow/workOrderPersistence";
+import { useAuth } from "@/components/auth/EmailGate";
+import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
+import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 
@@ -28,7 +31,7 @@ function scoreRecord(wo) {
   return score;
 }
 
-function DuplicateGroup({ group, onResolved }) {
+function DuplicateGroup({ group, onResolved, users }) {
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [keeping, setKeeping] = useState(null);
@@ -139,7 +142,7 @@ function DuplicateGroup({ group, onResolved }) {
                   )}
                   <div className="flex flex-wrap gap-3 text-gray-500">
                     {wo.estimate_amount && <span>${Number(wo.estimate_amount).toLocaleString()}</span>}
-                    {wo.current_task_assigned_to && <span>→ {wo.current_task_assigned_to}</span>}
+                    {wo.current_task_assigned_to && <span>→ {buildSalesPersonSelectModel(wo.current_task_assigned_to, users, "Task Assigned").canonical}</span>}
                     {wo.work_notes?.length > 0 && <span>{wo.work_notes.length} notes</span>}
                     {wo.notes?.length > 0 && <span>{wo.notes.length} tasks</span>}
                     <span className="text-gray-400">Created: {new Date(wo.created_date).toLocaleDateString()}</span>
@@ -164,7 +167,9 @@ function DuplicateGroup({ group, onResolved }) {
 }
 
 export default function BulkDuplicateCleanup() {
+  const { sessionToken } = useAuth();
   const [groups, setGroups] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [readError, setReadError] = useState("");
   const [actionError, setActionError] = useState("");
@@ -174,12 +179,16 @@ export default function BulkDuplicateCleanup() {
     setLoading(true);
     setReadError("");
     try {
-      const all = await loadAllEntityRows({
+      const [all, usersData] = await Promise.all([
+        loadAllEntityRows({
         entity: WorkOrder,
         query: { deleted: { $ne: true }, completed: { $ne: true }, is_rider: { $ne: true } },
         sort: "created_date",
         label: "Duplicate Cleanup Work Orders",
-      });
+        }),
+        loadSalesPersonRosterSafely({ sessionToken, label: "Duplicate Cleanup authorized users" }),
+      ]);
+      setUsers(usersData);
 
     // Normalize: strip punctuation, collapse whitespace
     const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
@@ -368,7 +377,7 @@ export default function BulkDuplicateCleanup() {
 
       <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
         {groups.map((group, idx) => (
-          <DuplicateGroup key={group[0].client_name + idx} group={group} onResolved={handleResolved} />
+          <DuplicateGroup key={group[0].client_name + idx} group={group} onResolved={handleResolved} users={users} />
         ))}
       </div>
     </div>
