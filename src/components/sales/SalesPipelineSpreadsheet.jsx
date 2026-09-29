@@ -2116,11 +2116,25 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const key = sortConfig.key;
     const isDateField = key.includes('date') || key === 'current_task_deadline';
     const isNumberField = key === 'estimate_amount';
+    const personRoleByField = {
+      sales_rep: null,
+      current_task_assigned_to: "Task Assigned",
+      designer: "Designer",
+      project_manager: "PM",
+      estimator: "Estimator",
+    };
+    const isPersonField = Object.prototype.hasOwnProperty.call(personRoleByField, key);
     const dir = sortConfig.direction === 'asc' ? 1 : -1;
     
     return result.sort((a, b) => {
       let aVal = a[key] ?? '';
       let bVal = b[key] ?? '';
+
+      if (isPersonField) {
+        const role = personRoleByField[key];
+        aVal = buildSalesPersonSelectModel(aVal, users, role).canonical;
+        bVal = buildSalesPersonSelectModel(bVal, users, role).canonical;
+      }
       
       if (isDateField) {
         const aDate = aVal ? new Date(aVal) : null;
@@ -2137,7 +2151,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters, users]);
 
   const filteredWorkOrders = sortedWorkOrders;
   const filteredWorkOrdersRef = useRef(filteredWorkOrders);
