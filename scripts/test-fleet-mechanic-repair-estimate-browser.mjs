@@ -28,7 +28,7 @@ try {
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 0;',
     'const workOrder = {id:"wo-mechanic",work_order_number:"WO-SYNTH-MECH",title:"Synthetic mechanic repair",description:"Synthetic recovery fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-mechanic",updated_date:"wo-rev-1",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}};',
-    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false};',
+    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false,submitThenLoseAck:false,concurrentDraftOnSubmit:false,ccsTakesOwnershipOnSubmit:false,statusChangesOnSubmit:""};',
     'window.__fleetMechanicEstimateFixture = state;',
     'const publicEstimate = () => {',
     ' if (!state.estimate) return [];',
@@ -50,7 +50,16 @@ try {
     '   if (state.saveThenLoseAck) {state.saveThenLoseAck=false;throw new Error("Synthetic lost first-save acknowledgment");}',
     '   return {data:{success:true,estimate:clone(row)}};',
     ' }',
-    ' if (payload.action === "estimate_submit") throw new Error("Unexpected synthetic estimate_submit");',
+    ' if (payload.action === "estimate_submit") {',
+    '   if (!state.estimate || state.owner !== "mechanic") return {data:{error:"CCS or another mechanic already manages the estimate for this work order."}};',
+    '   if (state.concurrentDraftOnSubmit) {state.concurrentDraftOnSubmit=false;state.estimate={...state.estimate,estimated_labor_hours:8.75,notes:"Concurrent server draft",status:"changes_requested",updated_date:"estimate-rev-"+(++revision)};return {data:{error:"Mechanic Fleet repair estimate changed since it was loaded. Refresh before saving."}};}',
+    '   if (state.ccsTakesOwnershipOnSubmit) {state.ccsTakesOwnershipOnSubmit=false;state.owner="ccs";state.estimate={id:"estimate-admin",work_order_id:workOrder.id,status:"draft",updated_date:"admin-rev-"+(++revision)};return {data:{error:"CCS or another mechanic already manages the estimate for this work order."}};}',
+    '   if (state.statusChangesOnSubmit) {const next=state.statusChangesOnSubmit;state.statusChangesOnSubmit="";state.estimate={...state.estimate,status:next,updated_date:"estimate-rev-"+(++revision)};return {data:{error:"Only a draft or changes-requested estimate can be submitted."}};}',
+    '   const row={...state.estimate,status:"submitted",updated_date:"estimate-rev-"+(++revision)};',
+    '   state.estimate=row;',
+    '   if (state.submitThenLoseAck) {state.submitThenLoseAck=false;throw new Error("Synthetic lost submit acknowledgment");}',
+    '   return {data:{success:true,estimate:clone(row),auto_approved:false}};',
+    ' }',
     ' throw new Error("Unexpected synthetic action: "+payload.action);',
     '}}};',
   ].join("\n"));
@@ -139,7 +148,50 @@ try {
     assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap","bootstrap"]);
   });
 
-  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/3 PASS");
+  await run("Desktop: lost submit acknowledgement reconciles committed submitted status without replay",1440,async page => {
+    await page.getByLabel("Estimated labor hours").fill("4");
+    await page.getByLabel("Labor rate / hr").fill("140");
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.submitThenLoseAck = true; });
+    await page.getByRole("button",{name:"Submit Estimate"}).click();
+    await page.getByText(/Current server estimate reloaded as submitted.*Nothing was resubmitted automatically/i).waitFor();
+    await page.getByText(/Submitted to CCS and waiting for an approval decision/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap"]);
+  });
+
+  await run("Desktop: concurrent draft change before submit reloads authoritative mechanic version",1440,async page => {
+    await page.getByLabel("Estimated labor hours").fill("4.5");
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.concurrentDraftOnSubmit = true; });
+    await page.getByRole("button",{name:"Submit Estimate"}).click();
+    await page.getByText(/Current server estimate reloaded as changes requested.*Nothing was resubmitted automatically/i).waitFor();
+    assert.equal(await page.getByLabel("Estimated labor hours").inputValue(),"8.75");
+    assert.equal(await page.getByLabel("Estimate notes").inputValue(),"Concurrent server draft");
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),1);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),1);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap"]);
+  });
+
+  await run("Desktop: ownership transfer between draft save and submit becomes read-only after verification",1440,async page => {
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.ccsTakesOwnershipOnSubmit = true; });
+    await page.getByRole("button",{name:"Submit Estimate"}).click();
+    await page.getByText(/CCS is managing an internal repair estimate/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap"]);
+  });
+
+  await run("Mobile: status change between draft save and submit reloads approved server state",390,async page => {
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.statusChangesOnSubmit = "approved"; });
+    await page.getByRole("button",{name:"Submit Estimate"}).click();
+    await page.getByText(/Current server estimate reloaded as approved.*Nothing was resubmitted automatically/i).waitFor();
+    await page.getByText(/CCS Fleet has approved this estimate/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap"]);
+  });
+
+  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/7 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
