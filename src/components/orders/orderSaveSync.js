@@ -25,12 +25,19 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
   }
 }
 
-export function summarizeSavedOrderSync(result) {
+export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {}) {
+  const expected = Math.max(0, Number(expectedOrderCount) || 0);
   const item = Array.isArray(result?.results) ? result.results.find((row) => row?.dataset === "orders") : null;
   if (!item) {
-    return result?.sync_complete === true
+    return expected === 0 && result?.sync_complete === true
       ? { ok: true, message: "Saved changes are already synchronized." }
       : { ok: false, message: "Smartsheet did not return a verifiable Order sync result." };
+  }
+  if (expected > 0 && Number(item?.records_examined) !== expected) {
+    return {
+      ok: false,
+      message: `Smartsheet verified ${Math.max(0, Number(item?.records_examined) || 0)} of ${expected} requested Orders. The remaining Orders will stay queued.`,
+    };
   }
   if (result?.sync_complete !== true || result?.needs_review || item?.skipped || Number(item?.errors || 0) > 0 || Number(item?.conflicts || 0) > 0) {
     return {
