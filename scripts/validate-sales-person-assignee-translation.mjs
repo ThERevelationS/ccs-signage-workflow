@@ -104,8 +104,8 @@ check(spreadsheet.includes('current_task_assigned_to: "Task Assigned"') &&
       spreadsheet.includes('estimator: "Estimator"') &&
       spreadsheet.includes('designer: "Designer"'),
   "Preset identity matching must use the same role scopes as the filter editor");
-same((spreadsheet.match(/personValuesReferToSameUser\(/g) || []).length, 4,
-  "Is/Equals, Is Not, Is One Of and Is Not One Of must all use person alias matching");
+same((spreadsheet.match(/personValuesReferToSameUser\(/g) || []).length, 5,
+  "Preset equality operators and selected-value column filters must all use person alias matching");
 check(spreadsheet.includes("values.some((val) => fieldValue == val)") &&
       spreadsheet.includes("fieldValue != condValue") &&
       spreadsheet.includes("fv == value"),
