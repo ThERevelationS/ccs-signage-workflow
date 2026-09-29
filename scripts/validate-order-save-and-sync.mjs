@@ -67,7 +67,8 @@ assert.ok(client.includes('The requested Order count could not be verified. The 
 assert.doesNotMatch(client, /Math\.max\(0, Number\(expectedOrderCount\)/);
 assert.ok(client.includes('const results = Array.isArray(result?.results) ? result.results : []'));
 assert.ok(client.includes('if (expected === 0)'));
-assert.ok(client.includes('results.length === 0 && result?.sync_complete === true && result?.needs_review !== true'));
+assert.ok(client.includes('results.length === 0 && result?.success === true && result?.sync_complete === true && result?.needs_review === false'));
+assert.ok(client.includes('return { success: true, sync_complete: true, needs_review: false, results: [] }'));
 assert.ok(client.includes('unexpected Order sync result when no Orders were requested'));
 assert.ok(client.includes('const orderResults = results.filter((row) => row?.dataset === "orders")'));
 assert.ok(client.includes('orderResults.length !== 1 || results.length !== 1'));
