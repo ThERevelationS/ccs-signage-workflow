@@ -39,6 +39,16 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       message: `Smartsheet verified ${Math.max(0, Number(item?.records_examined) || 0)} of ${expected} requested Orders. The remaining Orders will stay queued.`,
     };
   }
+  const created = Math.max(0, Number(item?.created) || 0);
+  const updated = Math.max(0, Number(item?.updated) || 0);
+  const unchanged = Math.max(0, Number(item?.unchanged_skipped) || 0);
+  const accounted = created + updated + unchanged;
+  if (expected > 0 && accounted !== expected && Number(item?.errors || 0) === 0 && Number(item?.conflicts || 0) === 0) {
+    return {
+      ok: false,
+      message: `Smartsheet accounted for ${accounted} of ${expected} requested Orders. Unaccounted Orders will stay queued.`,
+    };
+  }
   if (result?.sync_complete !== true || result?.needs_review || item?.skipped || Number(item?.errors || 0) > 0 || Number(item?.conflicts || 0) > 0) {
     return {
       ok: false,
@@ -49,10 +59,7 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
           : `${Number(item?.conflicts || 0)} conflict(s) and ${Number(item?.errors || 0)} error(s) need review.`),
     };
   }
-  const created = Number(item?.created || 0);
-  const updated = Number(item?.updated || 0);
   const changed = updated + created;
-  const unchanged = Number(item?.unchanged_skipped || 0);
   let message = "Saved changes are synchronized.";
   if (created > 0 && updated > 0) {
     message = `${created} new Order${created === 1 ? "" : "s"} added and ${updated} existing Order${updated === 1 ? "" : "s"} updated in Smartsheet.`;
