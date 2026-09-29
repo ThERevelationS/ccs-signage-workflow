@@ -61,7 +61,10 @@ const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', '
 const widget = readFileSync('src/components/admin/SmartsheetSyncWidget.jsx', 'utf8');
 
 assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
-assert.match(backend, /records = records\.filter\(\(record: any\) => record\?\.smartsheet_pending_local_sync === true\)/);
+assert.match(backend, /phase: 'preflight', current: 0, total: 0/);
+assert.match(backend, /item_label: 'Loading locally changed Order records'/);
+assert.match(backend, /options\?\.onlyPendingOrderRecords[\s\S]*?\{ smartsheet_pending_local_sync: true \}/);
+assert.doesNotMatch(backend, /records = records\.filter\(\(record: any\) => record\?\.smartsheet_pending_local_sync === true\)/);
 assert.match(backend, /orderPushTimeBudgetMs: 4 \* 60 \* 1000/);
 assert.match(backend, /reportOrderProgress: async \(progress: any\) => saveSyncStatus/);
 assert.match(backend, /progress_current: Number\(progress\?\.current\) \|\| 0/);
