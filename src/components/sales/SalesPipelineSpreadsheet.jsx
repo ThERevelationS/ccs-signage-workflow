@@ -40,7 +40,7 @@ import SalesPipelineTableBody from "@/components/sales/SalesPipelineTableBody";
 import { getVisibleSalesColumnIds, getSalesColumnLayout } from "@/components/sales/salesColumnCatalog.mjs";
 import { isSalesDateFilterField, salesDateFilterEquals, compareSalesDateFilterRange } from "@/components/sales/salesDateFilterRange.mjs";
 import { personValuesReferToSameUser } from "@/components/admin/smartsheetTranslationModel.js";
-import { buildSalesPersonSelectModel, salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
+import { buildSalesPersonSelectModel, salesPersonSearchText, salesPersonUsersForRole } from "@/components/sales/salesPersonIdentity.mjs";
 import SalesPipelineDialogsAndEditList from "@/components/sales/SalesPipelineDialogsAndEditList";
 import SalesImportPreviewDialog from "@/components/sales/SalesImportPreviewDialog";
 import SalesImportHistoryDialog from "@/components/sales/SalesImportHistoryDialog";
@@ -2038,10 +2038,11 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           wo.contact_name,
           wo.contact_email,
           wo.contact_phone,
-          wo.sales_rep,
-          wo.estimator,
-          wo.project_manager,
-          wo.current_task_assigned_to,
+          salesPersonSearchText(wo.sales_rep, users),
+          salesPersonSearchText(wo.estimator, users, "Estimator"),
+          salesPersonSearchText(wo.project_manager, users, "PM"),
+          salesPersonSearchText(wo.designer, users, "Designer"),
+          salesPersonSearchText(wo.current_task_assigned_to, users, "Task Assigned"),
           wo.current_task_description,
           wo.description,
           wo.est_inv_at,
