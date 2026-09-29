@@ -63,7 +63,7 @@ assert.ok(client.includes('const orderResults = Array.isArray(result?.results)')
 assert.ok(client.includes('result.results.filter((row) => row?.dataset === "orders")'));
 assert.ok(client.includes('orderResults.length !== 1'));
 assert.ok(client.includes('exactly one verifiable Order sync result'));
-assert.match(client, /Number\(item\?\.records_examined\) !== expected/);
+assert.match(client, /recordsExamined !== expected/);
 assert.match(client, /The remaining Orders will stay queued\./);
 assert.ok(client.includes('Number.isSafeInteger(count) && count >= 0 ? count : null'));
 assert.ok(client.includes('[recordsExamined, created, updated, unchanged, errors, conflicts].some((count) => count === null)'));
