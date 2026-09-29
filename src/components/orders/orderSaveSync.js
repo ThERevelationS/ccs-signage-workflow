@@ -99,7 +99,16 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
       message: `Smartsheet accounted for ${accounted} of ${expected} requested Orders. Unaccounted Orders will stay queued.`,
     };
   }
-  if (result?.sync_complete !== true || result?.needs_review || item?.skipped || errors > 0 || conflicts > 0) {
+  const remainingRecords = item?.remaining_records === undefined ? 0 : readCount(item.remaining_records);
+  if (remainingRecords === null || remainingRecords > 0) {
+    return {
+      ok: false,
+      message: remainingRecords === null
+        ? "Smartsheet returned an invalid remaining Order count. The requested Orders will stay queued."
+        : `Smartsheet still has ${remainingRecords} Order${remainingRecords === 1 ? "" : "s"} queued. Save & Sync is not complete yet.`,
+    };
+  }
+  if (result?.sync_complete !== true || result?.needs_review || item?.skipped || item?.partial || item?.time_budget_reached || errors > 0 || conflicts > 0) {
     return {
       ok: false,
       message: item?.reason ||
