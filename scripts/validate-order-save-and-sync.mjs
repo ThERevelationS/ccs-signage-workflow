@@ -73,6 +73,8 @@ assert.match(ui, /const orderIds = syncTargets\.map\(\(\{ id \}\) => id\)/);
 assert.match(ui, /pushSavedOrdersToSmartsheet\(\{ sessionToken, orderIds \}\)/);
 assert.match(ui, /pendingSyncVersionRef\.current\.get\(id\) !== target\?\.version/);
 assert.match(ui, /clearSyncedOrderIds\(syncTargets\)/);
+assert.match(ui, /catch \(error\) \{[\s\S]*?await loadData\(false\);[\s\S]*?unresolvedTargets = syncTargets\.filter\(\(\{ id \}\) => pendingSyncIdsRef\.current\.has\(id\)\)/);
+assert.match(ui, /unresolvedTargets\.length === 0[\s\S]*?setLastSynced\(new Date\(\)\)[\s\S]*?Saved changes are synchronized/);
 assert.match(ui, /smartsheet_pending_local_sync: false/);
 assert.match(createSafety, /smartsheet_pending_local_sync: false/);
 assert.match(ui, /Saved in Base44, but Smartsheet sync needs attention/);
