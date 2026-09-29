@@ -19,7 +19,7 @@ import { auditOrderDateParity, orderDateOptionField } from '../../shared/smartsh
 import { changedPulledOrderDates, verifyPulledOrderDates } from '../../shared/smartsheetOrderDatePersistence.mjs';
 import { orderRunRequiresReview } from '../../shared/smartsheetOrderRunSafety.mjs';
 import { classifyRecoverableStaleOrderSync, recoveredStaleOrderSyncValue } from '../../shared/smartsheetOrderStaleRunSafety.mjs';
-import { findUnverifiedOrderSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
+import { findUnverifiedSyncMetadata } from '../../shared/smartsheetOrderMetadataVerification.mjs';
 import { orderPulledFieldsUnchanged, orderPullSnapshotAligned, orderPushRecordUnchanged } from '../../shared/smartsheetOrderPullSafety.mjs';
 import { orderMissingBoundCellConflicts } from '../../shared/smartsheetOrderConflictSafety.mjs';
 import {
@@ -340,7 +340,12 @@ async function pullDataset(
   const entityName = dataset === 'sales' ? 'WorkOrder' : 'Order';
   let existingRecords: any[] = [];
   if (dataset === 'sales') {
-    existingRecords = await base44.asServiceRole.entities.WorkOrder.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
+    existingRecords = await loadAllEntityRows({
+      entity: base44.asServiceRole.entities.WorkOrder,
+      query: { smartsheet_sheet_id: sheetId },
+      sort: 'id',
+      label: 'Sales Smartsheet pull linked WorkOrders',
+    });
   } else {
     existingRecords = await loadAllEntityRows({
       entity: base44.asServiceRole.entities.Order,
