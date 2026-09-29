@@ -48,9 +48,7 @@ export function summarizeSavedOrderSync(result, { expectedOrderCount = 0 } = {})
   }
   const orderResults = results.filter((row) => row?.dataset === "orders");
   if (orderResults.length !== 1 || results.length !== 1) {
-    return expected === 0 && results.length === 0 && result?.sync_complete === true
-      ? { ok: true, message: "Saved changes are already synchronized." }
-      : { ok: false, message: "Smartsheet did not return exactly one isolated, verifiable Order sync result." };
+    return { ok: false, message: "Smartsheet did not return exactly one isolated, verifiable Order sync result." };
   }
   const [item] = orderResults;
   if (item?.direction !== "push") {
