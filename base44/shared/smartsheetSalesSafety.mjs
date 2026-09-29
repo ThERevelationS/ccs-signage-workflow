@@ -95,6 +95,21 @@ function sameKnownSalesSnapshotValue(columnId, current, previous, assigneeColumn
   return String(current).trim() === String(previous).trim();
 }
 
+export function salesSnapshotsEqual(expectedSnapshot = {}, actualSnapshot = {}, assigneeColumnId = "") {
+  const expectedColumns = Object.keys(expectedSnapshot || {});
+  if (expectedColumns.length === 0 || !actualSnapshot || typeof actualSnapshot !== "object" ||
+      Array.isArray(actualSnapshot)) return false;
+  return expectedColumns.every((columnId) =>
+    Object.prototype.hasOwnProperty.call(actualSnapshot, columnId) &&
+    sameKnownSalesSnapshotValue(
+      columnId,
+      expectedSnapshot[columnId],
+      actualSnapshot[columnId],
+      assigneeColumnId,
+    )
+  );
+}
+
 // Detect local Base44 edits without treating a newly-added Smartsheet binding
 // as a local change. Only columns that already existed in the last verified
 // snapshot are comparable. This lets pull safely fill a new binding baseline
