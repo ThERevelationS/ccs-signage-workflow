@@ -63,6 +63,8 @@ assert.ok(client.includes('const results = Array.isArray(result?.results) ? resu
 assert.ok(client.includes('const orderResults = results.filter((row) => row?.dataset === "orders")'));
 assert.ok(client.includes('orderResults.length !== 1 || results.length !== 1'));
 assert.ok(client.includes('exactly one isolated, verifiable Order sync result'));
+assert.ok(client.includes('item?.direction !== "push"'));
+assert.ok(client.includes('Smartsheet did not return a verifiable Order push result. The requested Orders will stay queued.'));
 assert.match(client, /recordsExamined !== expected/);
 assert.match(client, /The remaining Orders will stay queued\./);
 assert.ok(client.includes('typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null'));
