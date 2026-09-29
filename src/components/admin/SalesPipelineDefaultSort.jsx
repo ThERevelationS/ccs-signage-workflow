@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Check, ArrowUp, ArrowDown } from "lucide-react";
-import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
+import { loadSalesDefaultSortSafely, saveSalesDefaultSortSafely } from "@/components/sales/salesFilterPersistence";
 
 const SORTABLE_COLUMNS = [
   { value: "client_name", label: "Customer" },
@@ -29,6 +29,7 @@ const SORTABLE_COLUMNS = [
 ];
 
 export default function SalesPipelineDefaultSort() {
+  const { sessionToken } = useAuth();
   const [sortColumn, setSortColumn] = useState("created_date");
   const [sortDirection, setSortDirection] = useState("desc");
   const [saving, setSaving] = useState(false);
@@ -39,18 +40,20 @@ export default function SalesPipelineDefaultSort() {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [sessionToken]);
 
   const loadSettings = async () => {
     try {
-      const record = await loadSingleGlobalSetting({
-        entity: base44.entities.GlobalSettings,
-        settingKey: "salesPipelineDefaultSort",
-        label: "Sales Pipeline default sort",
-      });
-      setSettingRecord(record);
-      setSortColumn(record?.setting_value?.column || "created_date");
-      setSortDirection(record?.setting_value?.direction || "desc");
+      if (!sessionToken) {
+        setSettingRecord(null);
+        setSortColumn("created_date");
+        setSortDirection("desc");
+        return;
+      }
+      const loaded = await loadSalesDefaultSortSafely({ sessionToken });
+      setSettingRecord(loaded.record);
+      setSortColumn(loaded.value?.column || "created_date");
+      setSortDirection(loaded.value?.direction || "desc");
     } catch (error) {
       console.error("Error loading default sort settings:", error);
       setSettingsError(error?.message || "Sales Pipeline default sort could not be loaded safely.");
@@ -64,16 +67,14 @@ export default function SalesPipelineDefaultSort() {
     setSettingsError("");
     try {
       const settingValue = { column: sortColumn, direction: sortDirection };
-      const savedRecord = await saveGlobalSettingValueIfUnchanged({
-        entity: base44.entities.GlobalSettings,
-        loadedRecord: settingRecord,
-        settingKey: "salesPipelineDefaultSort",
-        nextValue: settingValue,
-        label: "Sales Pipeline default sort",
+      const result = await saveSalesDefaultSortSafely({
+        sessionToken,
+        record: settingRecord,
+        value: settingValue,
       });
-      setSettingRecord(savedRecord);
-      setSortColumn(savedRecord?.setting_value?.column || sortColumn);
-      setSortDirection(savedRecord?.setting_value?.direction || sortDirection);
+      setSettingRecord(result.record);
+      setSortColumn(result.value?.column || sortColumn);
+      setSortDirection(result.value?.direction || sortDirection);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
