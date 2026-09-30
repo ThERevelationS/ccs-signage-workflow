@@ -1003,20 +1003,68 @@ async function saveSyncConfigIfUnchanged(base44: any, body: any) {
   return safeConfigRecord(saved);
 }
 
-// Store the last sync run status so the persistent UI widget can show it
-// on every page. Best-effort — never blocks the sync itself.
-async function saveSyncStatus(base44: any, status: any) {
+async function loadSingleSyncStatusRecord(base44: any) {
+  const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+  const matches = Array.isArray(existing) ? existing.filter((record: any) => record?.id) : (existing?.id ? [existing] : []);
+  if (matches.length !== 1) {
+    throw Object.assign(new Error(`Smartsheet sync status has ${matches.length} records. Exactly one coordinator record is required before starting a sync.`), { status: 409 });
+  }
+  return matches[0];
+}
+
+async function claimSyncRun(base44: any, status: any) {
+  const record = await loadSingleSyncStatusRecord(base44);
+  const current = record?.setting_value || {};
+  if (current?.status === 'running') {
+    const classification = classifyRecoverableStaleOrderSync(current, Date.now());
+    const detail = classification?.recoverable
+      ? 'The existing Order sync is stale and must be closed for review before another sync can start.'
+      : 'Another Smartsheet sync is already running.';
+    throw Object.assign(new Error(detail), { status: 409 });
+  }
+  const value = { ...status, updated_at: new Date().toISOString() };
+  const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+    { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+    { $set: { setting_value: value } },
+  );
+  if (!result || result.updated !== 1) {
+    throw Object.assign(new Error('Another Smartsheet sync claimed the coordinator first. Reload before retrying.'), { status: 409 });
+  }
+  const verified = await base44.asServiceRole.entities.GlobalSettings.get(record.id).catch(() => null);
+  if (verified?.setting_value?.status !== 'running' ||
+      verified?.setting_value?.started_at !== status?.started_at ||
+      verified?.setting_value?.action !== status?.action) {
+    throw Object.assign(new Error('Smartsheet sync coordinator claim could not be verified. No sync work was started.'), { status: 409 });
+  }
+  return verified;
+}
+
+async function syncRunOwned(base44: any, startedAt: string) {
+  const record = await loadSingleSyncStatusRecord(base44);
+  return record?.setting_value?.status === 'running' &&
+    cleanText(record?.setting_value?.started_at, 80) === cleanText(startedAt, 80);
+}
+
+async function assertSyncRunOwnership(base44: any, startedAt: string) {
+  if (!(await syncRunOwned(base44, startedAt))) {
+    throw Object.assign(new Error('This Smartsheet sync no longer owns the active run coordinator. No further sync writes are allowed.'), { status: 409 });
+  }
+}
+
+// Status updates are run-identity scoped. A timed-out/recovered older process
+// cannot overwrite the status of a newer run that claimed the coordinator.
+async function saveSyncStatusForRun(base44: any, status: any, startedAt: string) {
   try {
-    const existing = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
-    const record = Array.isArray(existing) ? existing[0] : existing;
-    const value = { ...status, updated_at: new Date().toISOString() };
-    if (record?.id) {
-      await base44.asServiceRole.entities.GlobalSettings.update(record.id, { setting_value: value });
-    } else {
-      await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: 'smartsheetSyncStatus', setting_value: value });
-    }
+    const record = await loadSingleSyncStatusRecord(base44);
+    if (cleanText(record?.setting_value?.started_at, 80) !== cleanText(startedAt, 80)) return false;
+    const value = { ...status, started_at: startedAt, updated_at: new Date().toISOString() };
+    const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
+      { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
+      { $set: { setting_value: value } },
+    );
+    return Boolean(result && result.updated === 1);
   } catch {
-    // non-critical — sync status display is best-effort
+    return false;
   }
 }
 
