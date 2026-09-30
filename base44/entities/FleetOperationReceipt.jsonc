@@ -16,7 +16,9 @@
         "maintenance_reschedule",
         "request_receive",
         "scheduled_generation",
-        "notification"
+        "notification",
+        "mechanic_start",
+        "mechanic_progress_save"
       ]
     },
     "target_entity": {
