@@ -424,7 +424,11 @@ Deno.serve(async (req) => {
     const grant = await validateGrant(Access,body?.token);
     if (!grant) return json({error:'This mechanic portal link is invalid, expired, or revoked.'},{status:403});
     const allowed = new Set(Array.isArray(grant.allowed_actions) && grant.allowed_actions.length ? grant.allowed_actions : ['bootstrap','start','save']);
-    if (!allowed.has(action)) return json({error:'This mechanic link is not allowed to perform that action.'},{status:403});
+    const statusMutationAction = action === 'mutation_status' ? String(body?.mutation_action || '').trim() : '';
+    if (action === 'mutation_status') {
+      if (!MECHANIC_MUTATION_TYPES[statusMutationAction]) return json({error:'Unsupported mechanic mutation status request.'},{status:400});
+      if (!allowed.has(statusMutationAction)) return json({error:'This mechanic link is not allowed to verify that action.'},{status:403});
+    } else if (!allowed.has(action)) return json({error:'This mechanic link is not allowed to perform that action.'},{status:403});
     await Access.update(grant.id,{last_used_at:nowIso()}).catch(()=>null);
 
     if (action === 'bootstrap') return json(await portalPayload(base44,grant));
