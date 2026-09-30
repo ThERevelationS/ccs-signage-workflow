@@ -1081,6 +1081,7 @@ async function pushDataset(
     onlyPendingOrderRecords?: boolean;
     orderPushTimeBudgetMs?: number;
     reportOrderProgress?: (progress: any) => Promise<void> | void;
+    assertRunOwnership?: () => Promise<void> | void;
     respectSalesCreateSetting?: boolean;
   } = {},
 ) {
