@@ -1295,11 +1295,11 @@ async function pushDataset(
   // a backup. Read every Smartsheet page, persist a private Google Drive JSON
   // snapshot and read the exact file back before writing ANY Order row.
   // The legacy Sales backup path remains unchanged (outside Order scope).
-  if (dataset === 'orders' && globalConfig?.backup_before_write) {
+  if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write) {
     try {
       const connection = await base44.asServiceRole.connectors.getConnection('googledrive');
       const driveToken = cleanText(connection?.accessToken, 8000);
-      if (!driveToken) throw new Error('Google Drive backup is not connected. No Order rows were written.');
+      if (!driveToken) throw new Error(`Google Drive backup is not connected. No ${dataset === 'sales' ? 'Sales' : 'Order'} rows were written.`);
       const driveFetch = async (url: string, init: any) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -1311,15 +1311,16 @@ async function pushDataset(
         } finally { clearTimeout(timeout); }
       };
       await createVerifiedOrderSheetBackup({
+        dataset,
         sheetId,
         readPage: async (page: number, pageSize: number) =>
           (await smartsheetGet(`/sheets/${sheetId}?page=${page}&pageSize=${pageSize}`, token)).body,
         verifySource: async () =>
           (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body,
         upload: async ({ filename, content }: any) => {
-          const boundary = `ccsOrderBackup${crypto.randomUUID().replace(/-/g, '')}`;
+          const boundary = `ccs${dataset === 'sales' ? 'Sales' : 'Order'}Backup${crypto.randomUUID().replace(/-/g, '')}`;
           const metadata = { name: filename, mimeType: 'application/json',
-            description: 'CCS Order Request pre-sync row/column backup (attachments excluded)' };
+            description: `CCS ${dataset === 'sales' ? 'Sales Pipeline' : 'Order Request'} pre-sync row/column backup (attachments excluded)` };
           const multipart = new Blob([
             `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
             JSON.stringify(metadata),
