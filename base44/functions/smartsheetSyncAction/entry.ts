@@ -1349,13 +1349,15 @@ async function pushDataset(
           const expectedType = `smartsheet_${dataset === 'sales' ? 'sales' : 'orders'}`;
           const expectedDataType = `${expectedType}_sheet_${sheetId}`;
           const expectedTrigger = dataset === 'sales' ? 'smartsheet_sales_prewrite' : 'smartsheet_order_prewrite';
+          const expectedFilename = `${backup.filename} [Google Drive ID: ${backup.drive_file_id}]`;
           const verifiedResult = Array.isArray(verifiedLog?.results) ? verifiedLog.results[0] : null;
           if (verifiedLog?.id !== savedLog.id ||
               verifiedLog?.triggered_by !== expectedTrigger ||
-              !Array.isArray(verifiedLog?.data_types) || verifiedLog.data_types[0] !== expectedDataType ||
+              !Array.isArray(verifiedLog?.data_types) || verifiedLog.data_types.length !== 1 || verifiedLog.data_types[0] !== expectedDataType ||
+              !Array.isArray(verifiedLog?.results) || verifiedLog.results.length !== 1 ||
               verifiedLog?.success_count !== 1 || verifiedLog?.error_count !== 0 ||
               verifiedResult?.type !== expectedType || verifiedResult?.success !== true ||
-              !String(verifiedResult?.filename || '').includes(`[Google Drive ID: ${backup.drive_file_id}]`)) {
+              verifiedResult?.filename !== expectedFilename) {
             throw new Error(`${dataset === 'sales' ? 'Sales' : 'Order'} backup file was verified but its persisted BackupLog could not be read back exactly.`);
           }
         }
