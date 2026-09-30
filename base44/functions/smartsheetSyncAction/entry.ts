@@ -317,6 +317,7 @@ async function pullDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
+  options: { assertRunOwnership?: () => Promise<void> | void } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -662,6 +663,7 @@ async function pullDataset(
 
   // Bulk create in batches of 100 to avoid rate limits
   for (let i = 0; i < toCreate.length; i += 100) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = toCreate.slice(i, i + 100);
     try {
       const result = await base44.asServiceRole.entities[entityName].bulkCreate(batch);
@@ -680,6 +682,7 @@ async function pullDataset(
   const orderDateVerifications: any[] = [];
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = toUpdate.slice(i, i + bulkBatchSize);
     const payload = batch.map(({ id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields }: any) => {
       const { smartsheet_last_synced_at, ...withoutUnverifiedTimestamp } = fields;
@@ -742,6 +745,7 @@ async function pullDataset(
   const FIX_CONCURRENCY = 3;
   let fixApplied = 0;
   for (let i = 0; i < fixIds.length; i += FIX_CONCURRENCY) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = fixIds.slice(i, i + FIX_CONCURRENCY);
     const results = await Promise.allSettled(
       batch.map(async (rid) => {
@@ -762,6 +766,7 @@ async function pullDataset(
   // remains safe, verify the permanent Order, then record sync evidence.
   if (dataset === 'orders') {
     for (const item of orderDateVerifications) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       try {
         await verifyPulledOrderDates(base44.asServiceRole.entities.Order, item.id, item.previous, item.changes);
         snapshotUpdates.push({ id: item.id, smartsheet_sync_snapshot: item.snapshot,
@@ -780,6 +785,7 @@ async function pullDataset(
   const verifiedMetadataExpected: any[] = [];
   const snapshotBatchSize = 100;
   for (let i = 0; i < snapshotUpdates.length; i += snapshotBatchSize) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const batch = snapshotUpdates.slice(i, i + snapshotBatchSize);
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(batch);
