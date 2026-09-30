@@ -161,6 +161,19 @@
     "total_cost": {
       "type": "number"
     },
+    "mechanic_operation_key": {
+      "type": "string",
+      "description": "Durable receipt key for the most recently applied external mechanic start/progress mutation."
+    },
+    "mechanic_operation_fingerprint": {
+      "type": "string",
+      "description": "SHA-256 payload fingerprint bound to mechanic_operation_key so a request id cannot be reused with different mechanic data."
+    },
+    "mechanic_operation_applied_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server timestamp for the most recently applied external mechanic mutation."
+    },
     "completion_receipt_key": {
       "type": "string",
       "description": "Idempotency receipt for a completion operation."
