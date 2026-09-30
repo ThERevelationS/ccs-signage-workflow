@@ -442,6 +442,62 @@ Deno.serve(async (req) => {
     if (grantScope.scope_mode === 'selected_equipment' && !new Set(grantScope.allowed_equipment_ids).has(String(current.equipment_id || ''))) {
       return json({error:'This Fleet work order is outside this mechanic link\'s allowed equipment scope.'},{status:403});
     }
+
+    const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
+    if (action === 'mutation_status') {
+      const requestId = mechanicRequestId(body?.request_id);
+      if (!requestId) return json({error:'A valid mechanic request id is required.'},{status:400});
+      const operationKey = mechanicOperationKey(grant.id,id,statusMutationAction,requestId);
+      const rows = await Receipt.filter({operation_key:operationKey});
+      if ((rows || []).length > 1) return json({error:'Duplicate mechanic operation receipts exist. CCS must review Fleet integrity before this request can continue.'},{status:409});
+      const receipt = canonicalReceipt(rows || []);
+      if (!receipt) return json({success:true,status:'not_found',request_id:requestId,work_order:sanitizeWorkOrder(current)});
+      if (workOrderHasMechanicReceipt(current,receipt)) {
+        await markMechanicReceiptApplied(Receipt,receipt,current,receipt.status !== 'applied');
+        return json({success:true,status:'applied',request_id:requestId,recovered:receipt.status !== 'applied',work_order:sanitizeWorkOrder(current)});
+      }
+      return json({success:true,status:receipt.status || 'started',request_id:requestId,error_message:receipt.error_message || '',work_order:sanitizeWorkOrder(current)});
+    }
+
+    let mechanicMutation: any = null;
+    if (MECHANIC_MUTATION_TYPES[action]) {
+      const requestId = mechanicRequestId(body?.request_id);
+      if (!requestId) return json({error:'A valid mechanic request id is required.'},{status:400});
+      const fingerprint = await mechanicMutationFingerprint(action,body);
+      const operationKey = mechanicOperationKey(grant.id,id,action,requestId);
+      const exactRows = await Receipt.filter({operation_key:operationKey});
+      if ((exactRows || []).length > 1) return json({error:'Duplicate mechanic operation receipts exist. CCS must review Fleet integrity before retrying this request.'},{status:409});
+      const exactReceipt = canonicalReceipt(exactRows || []);
+      if (exactReceipt) {
+        if (String(exactReceipt.payload_fingerprint || '') !== fingerprint) return json({error:'This mechanic request id was already used with different data. Nothing was replayed.'},{status:409});
+        if (workOrderHasMechanicReceipt(current,exactReceipt)) {
+          await markMechanicReceiptApplied(Receipt,exactReceipt,current,exactReceipt.status !== 'applied');
+          return json({success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId,work_order:sanitizeWorkOrder(current)});
+        }
+        if (exactReceipt.status === 'applied') return json({success:true,reused:true,request_id:requestId,work_order:sanitizeWorkOrder(current)});
+        if (exactReceipt.status === 'started') return json({error:'This mechanic request is still being verified. Check current server state before retrying.'},{status:409});
+        return json({error:'This mechanic request previously failed and was not replayed. Check current server state before trying again.'},{status:409});
+      }
+
+      const unresolved = await Receipt.filter({
+        target_entity:'FleetMaintenanceWorkOrder',
+        target_id:id,
+        status:'started',
+        operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)},
+      });
+      for (const receipt of (unresolved || [])) {
+        if (workOrderHasMechanicReceipt(current,receipt)) await markMechanicReceiptApplied(Receipt,receipt,current,true);
+      }
+      const stillUnresolved = await Receipt.filter({
+        target_entity:'FleetMaintenanceWorkOrder',
+        target_id:id,
+        status:'started',
+        operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)},
+      });
+      if ((stillUnresolved || []).length) return json({error:'A previous mechanic update for this work order is still unresolved. Check current server state before making another change.'},{status:409});
+      mechanicMutation = {requestId,fingerprint,operationKey,operationType:MECHANIC_MUTATION_TYPES[action]};
+    }
+
     if (!ACTIVE.has(current.status)) return json({error:'Only active Fleet work orders can be changed from the mechanic portal.'},{status:409});
     const expected = String(body?.expected_updated_date || '').trim();
     if (!expected || expected !== String(current.updated_date || '')) return json({error:'This Fleet work order changed since it was opened. Refresh before saving.'},{status:409});
