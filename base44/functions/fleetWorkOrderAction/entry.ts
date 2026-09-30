@@ -43,7 +43,8 @@ const safePatch = (body: any) => {
     'equipment_id', 'maintenance_task_id', 'title', 'description', 'type', 'priority',
     'status', 'assigned_to', 'started_date', 'projected_completion_date', 'completed_date',
     'actual_hours', 'parts_used', 'fluids_used', 'corrective_action', 'before_photos',
-    'after_photos', 'problem_photos', 'notes', 'total_cost'
+    'after_photos', 'problem_photos', 'notes', 'total_cost',
+    'mechanic_operation_key', 'mechanic_operation_fingerprint', 'mechanic_operation_applied_at'
   ];
   const out: any = {};
   for (const key of allowed) if (Object.prototype.hasOwnProperty.call(body || {}, key)) out[key] = body[key];
