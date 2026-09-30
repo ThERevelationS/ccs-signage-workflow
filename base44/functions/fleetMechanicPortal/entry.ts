@@ -93,6 +93,26 @@ async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: a
   return { ...receipt, status:'applied' };
 }
 
+async function claimMechanicReceipt(Receipt: any, data: any) {
+  const created = await Receipt.create({ ...data, status:'started', started_at:nowIso() });
+  await new Promise(resolve => setTimeout(resolve,50));
+  const rows = await Receipt.filter({ operation_key:data.operation_key });
+  const winner = canonicalReceipt(rows) || created;
+  if (String(winner.id || '') !== String(created.id || '')) {
+    await Receipt.delete(created.id).catch(()=>null);
+    return { receipt:winner, owner:false };
+  }
+  return { receipt:created, owner:true };
+}
+
+async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
+  await Receipt.update(receipt.id, {
+    status:'failed',
+    failed_at:nowIso(),
+    error_message:clean(error instanceof Error ? error.message : error,1200),
+  }).catch(()=>null);
+}
+
 async function readJson(req: Request) {
   const declared = Number(req.headers.get('content-length') || 0);
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return { payload:null, error:'Mechanic portal request is too large.', status:413 };
