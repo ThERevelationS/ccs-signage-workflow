@@ -1338,12 +1338,13 @@ async function pushDataset(
         log: async (backup: any) => {
           const savedLog = await base44.asServiceRole.entities.BackupLog.create({
             backup_type: 'scheduled',
-            data_types: [`smartsheet_orders_sheet_${sheetId}`],
-            results: [{ type: 'smartsheet_orders',
+            data_types: [`smartsheet_${dataset === 'sales' ? 'sales' : 'orders'}_sheet_${sheetId}`],
+            results: [{ type: `smartsheet_${dataset === 'sales' ? 'sales' : 'orders'}`,
               filename: `${backup.filename} [Google Drive ID: ${backup.drive_file_id}]`, success: true }],
-            success_count: 1, error_count: 0, triggered_by: 'smartsheet_order_prewrite',
+            success_count: 1, error_count: 0,
+            triggered_by: dataset === 'sales' ? 'smartsheet_sales_prewrite' : 'smartsheet_order_prewrite',
           });
-          if (!savedLog?.id) throw new Error('Order backup file was verified but its BackupLog record was not confirmed.');
+          if (!savedLog?.id) throw new Error(`${dataset === 'sales' ? 'Sales' : 'Order'} backup file was verified but its BackupLog record was not confirmed.`);
         }
       });
     } catch (err) {
