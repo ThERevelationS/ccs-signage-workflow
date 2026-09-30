@@ -1500,6 +1500,24 @@ async function pushDataset(
           smartsheet_row_id: newRowId,
           smartsheet_sheet_id: sheetId,
         });
+        // A successful Base44 update acknowledgement is not sufficient evidence
+        // that the permanent Sales link persisted. Verify the exact record before
+        // advancing snapshot/timestamp metadata; otherwise a later retry could
+        // create a duplicate Smartsheet row while the first remote row still exists.
+        const verifiedLinkRows = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: { id: record.id },
+          sort: 'id',
+          label: 'Sales create permanent link verification',
+        });
+        const verifiedLink = verifiedLinkRows.length === 1 ? verifiedLinkRows[0] : null;
+        if (!verifiedLink ||
+            cleanText(verifiedLink?.smartsheet_row_id, 40) !== newRowId ||
+            cleanText(verifiedLink?.smartsheet_sheet_id, 40) !== sheetId) {
+          throw new Error(
+            'Sales permanent Smartsheet link could not be verified after create. The remote row may exist; Base44 sync metadata was not advanced. Review Smartsheet before retrying.'
+          );
+        }
         salesSuccessfulWrite = 'created';
       }
       // Store fresh snapshot + timestamp on the record
