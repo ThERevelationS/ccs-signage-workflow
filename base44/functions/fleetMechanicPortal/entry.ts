@@ -117,8 +117,15 @@ async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
 async function updateMechanicReceiptSummary(Receipt: any, receipt: any, patch: any) {
   const latest = await Receipt.get(receipt.id).catch(()=>receipt);
   const resultSummary = {...(latest?.result_summary || receipt?.result_summary || {}),...(patch || {})};
-  const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
-  return updated || {...latest,result_summary:resultSummary};
+  try {
+    const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
+    return updated || {...latest,result_summary:resultSummary};
+  } catch (firstError) {
+    await new Promise(resolve=>setTimeout(resolve,40));
+    const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
+    if (!updated) throw firstError;
+    return updated;
+  }
 }
 
 async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
