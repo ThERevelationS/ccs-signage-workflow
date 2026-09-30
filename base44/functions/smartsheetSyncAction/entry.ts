@@ -1709,7 +1709,7 @@ Deno.serve(async (req) => {
 
       const startedAt = new Date().toISOString();
       const requestedBy = cleanText(adminActor?.email, 320);
-      await saveSyncStatus(base44, {
+      await claimSyncRun(base44, {
         status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
         requested_order_ids: orderIds, requested_by: requestedBy, results: [],
@@ -1719,8 +1719,8 @@ Deno.serve(async (req) => {
         recordIds: orderIds,
         requireOrderPendingMarker: true,
         orderPushTimeBudgetMs: 4 * 60 * 1000,
-        reportOrderProgress: async (progress: any) => saveSyncStatus(base44, {
-          status: 'running', started_at: startedAt, action,
+        reportOrderProgress: async (progress: any) => saveSyncStatusForRun(base44, {
+          status: 'running', action,
           total_steps: 1, completed_steps: 0, current_step_label: 'Order Form → Smartsheet',
           requested_order_ids: orderIds, requested_by: requestedBy, results: [],
           progress_dataset: 'orders', progress_direction: 'push',
@@ -1732,19 +1732,20 @@ Deno.serve(async (req) => {
           progress_record_id: cleanText(progress?.record_id, 100),
           progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
           progress_updated_at: new Date().toISOString(),
-        }),
+        }, startedAt),
+        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt),
         // Explicit Save & Sync may create a row for a brand-new Order without
         // enabling automatic/background Order creation for any other path.
         allowExplicitOrderCreate: true,
       });
       const result = { ...pushResult, dataset: 'orders', direction: 'push' };
       const needsReview = orderRunRequiresReview([result]);
-      await saveSyncStatus(base44, {
+      await saveSyncStatusForRun(base44, {
         status: needsReview ? 'needs_review' : 'completed', needs_review: needsReview,
         completed_at: new Date().toISOString(), action, total_steps: 1, completed_steps: 1,
         current_step_label: '', requested_order_ids: orderIds,
         requested_by: requestedBy, results: [result],
-      });
+      }, startedAt);
       return Response.json({ success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result] });
     }
