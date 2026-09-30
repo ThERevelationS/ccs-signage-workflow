@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Temporary Storage Trailer application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TST.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Temporary Storage Trailer",
+  "checkedAt": "2026-09-29",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 177582,
+  "sha256": "99f7a0307e9dac44365e98fa085553155361002c7b564a1c2992980917689dd3",
+  "lastModified": "Fri, 06 Sep 2024 15:18:42 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/temporary-storage-trailer-2026-09-29.pdf",
+  "purpose": "current_temporary_storage_trailer_application_source_identity",
+  "evidenceScope": "The preserved current Boone County Planning Commission Applications and Forms page directly links TST.pdf under the label Temporary Storage Trailer, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-09-29. This establishes current source identity and category availability only. It does not by itself establish when a Temporary Storage Trailer application is required, which addresses or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, duration limit, or applicability to a particular sign or permitting project."
+}
