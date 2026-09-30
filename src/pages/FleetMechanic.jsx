@@ -349,7 +349,7 @@ export default function FleetMechanic() {
     <main className="max-w-5xl mx-auto px-4 pb-12">
       <div className="py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div><h1 className="text-2xl font-bold text-slate-950">Fleet Maintenance</h1><p className="text-sm text-slate-500 mt-1">Standalone mechanic portal · active CCS Fleet maintenance only</p></div>
-        <button onClick={()=>load(true)} disabled={refreshing} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm disabled:opacity-50">{refreshing?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh</button>
+        <button onClick={()=>load(true)} disabled={refreshing||!!busy} className="min-h-11 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm disabled:opacity-50">{refreshing?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Refresh</button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-5">
