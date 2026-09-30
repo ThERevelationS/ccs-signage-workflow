@@ -2360,7 +2360,7 @@ Deno.serve(async (req) => {
       }
 
       const runStartedAt = new Date().toISOString();
-      await saveSyncStatus(base44, {
+      await claimSyncRun(base44, {
         status: 'running',
         started_at: runStartedAt,
         action,
@@ -2392,9 +2392,8 @@ Deno.serve(async (req) => {
           if (wantPull) {
             activeDirection = 'pull';
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'pull')?.label || '';
-            await saveSyncStatus(base44, {
+            await saveSyncStatusForRun(base44, {
               status: 'running',
-              started_at: runStartedAt,
               action,
               total_steps: steps.length,
               completed_steps: completedSteps,
@@ -2407,23 +2406,24 @@ Deno.serve(async (req) => {
                 progress_detail: 'Downloading the configured Smartsheet by permanent row and column IDs',
                 progress_updated_at: new Date().toISOString(),
               } : {}),
+            }, runStartedAt);
+            const pullResult = await pullDataset(base44, token, dataset, profile, config, {
+              assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
             });
-            const pullResult = await pullDataset(base44, token, dataset, profile, config);
             results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
             completedSteps++;
           }
           if (wantPush) {
             activeDirection = 'push';
             const stepLabel = steps.find(s => s.dataset === dataset && s.direction === 'push')?.label || '';
-            await saveSyncStatus(base44, {
+            await saveSyncStatusForRun(base44, {
               status: 'running',
-              started_at: runStartedAt,
               action,
               total_steps: steps.length,
               completed_steps: completedSteps,
               current_step_label: stepLabel,
               results,
-            });
+            }, runStartedAt);
             const pushResult = await pushDataset(base44, token, dataset, profile, config,
               dataset === 'orders' ? {
                 // A normal combined sync must never reinterpret every preserved
@@ -2431,8 +2431,8 @@ Deno.serve(async (req) => {
                 // Order edits are eligible for the background push step.
                 onlyPendingOrderRecords: action === 'run_sync',
                 orderPushTimeBudgetMs: 4 * 60 * 1000,
-                reportOrderProgress: async (progress: any) => saveSyncStatus(base44, {
-                  status: 'running', started_at: runStartedAt, action,
+                reportOrderProgress: async (progress: any) => saveSyncStatusForRun(base44, {
+                  status: 'running', action,
                   total_steps: steps.length, completed_steps: completedSteps,
                   current_step_label: stepLabel, results,
                   progress_dataset: 'orders', progress_direction: 'push',
@@ -2444,7 +2444,8 @@ Deno.serve(async (req) => {
                   progress_record_id: cleanText(progress?.record_id, 100),
                   progress_smartsheet_row_id: cleanText(progress?.smartsheet_row_id, 40),
                   progress_updated_at: new Date().toISOString(),
-                }),
+                }, runStartedAt),
+                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
               } : {});
 
             results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
@@ -2459,7 +2460,7 @@ Deno.serve(async (req) => {
       // Both datasets must report blocked stages and partial writes honestly.
       // Sales review rules remain unchanged; Order review is strictly isolated.
       const runNeedsReview = salesRunRequiresReview(results) || orderRunRequiresReview(results);
-      await saveSyncStatus(base44, {
+      await saveSyncStatusForRun(base44, {
         status: runNeedsReview ? 'needs_review' : 'completed',
         needs_review: runNeedsReview,
         completed_at: new Date().toISOString(),
@@ -2467,7 +2468,7 @@ Deno.serve(async (req) => {
         completed_steps: steps.length,
         current_step_label: '',
         results,
-      });
+      }, runStartedAt);
 
       return Response.json({
         success: true,
