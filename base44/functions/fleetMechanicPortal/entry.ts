@@ -555,7 +555,47 @@ Deno.serve(async (req) => {
         operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)},
       });
       for (const receipt of (unresolved || [])) {
-        if (workOrderHasMechanicReceipt(current,receipt)) await markMechanicReceiptApplied(Receipt,receipt,current,true);
+        if (workOrderHasMechanicReceipt(current,receipt)) {
+          await markMechanicReceiptApplied(Receipt,receipt,current,true);
+          await resolveReusedUploadReceipt(Receipt,receipt);
+          continue;
+        }
+        if (String(receipt?.result_summary?.grant_id || '') !== String(grant.id || '')) continue;
+        if (!ACTIVE.has(current.status)) {
+          await failMechanicReceipt(Receipt,receipt,'The Fleet work order is no longer active, so the interrupted mechanic request was not resumed.');
+          continue;
+        }
+        const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
+        if (!recovery.recoverable) {
+          const reason = recovery.reason === 'work_order_version_changed'
+            ? 'The Fleet work order changed before this interrupted mechanic request could be recovered. Uploaded photo evidence remains recorded for an identical retry.'
+            : recovery.reason === 'incomplete_upload_evidence'
+              ? 'The mechanic photo upload was interrupted before all photo evidence was recorded. Recorded uploads will be reused by an identical retry.'
+              : 'The interrupted mechanic request does not contain enough durable evidence to resume automatically.';
+          await failMechanicReceipt(Receipt,receipt,reason);
+          continue;
+        }
+        try {
+          const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
+            action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
+          });
+          if (result?.data?.error) {
+            await failMechanicReceipt(Receipt,receipt,result.data.error);
+            continue;
+          }
+          const updated = result?.data?.work_order || await WorkOrder.get(id);
+          await markMechanicReceiptApplied(Receipt,receipt,updated,true);
+          await resolveReusedUploadReceipt(Receipt,receipt);
+          return json({error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true,work_order:sanitizeWorkOrder(updated)},{status:409});
+        } catch (error) {
+          const fresh = await WorkOrder.get(id).catch(()=>null);
+          if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
+            await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
+            await resolveReusedUploadReceipt(Receipt,receipt);
+            return json({error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true,work_order:sanitizeWorkOrder(fresh)},{status:409});
+          }
+          await failMechanicReceipt(Receipt,receipt,error);
+        }
       }
       const stillUnresolved = await Receipt.filter({
         target_entity:'FleetMaintenanceWorkOrder',
