@@ -1147,6 +1147,16 @@ export default function ProductChecklistDialog({
     });
     return results;
   }, [checklistSearchIndexData, normalizedChecklistSearch]);
+  // Search typing and inline editor state cause frequent renders. Collapse-all
+  // state should only be recomputed when the relevant hierarchy/state changes.
+  const allDetailsCollapsed = useMemo(
+    () => expandableChecklistIds.length > 0 && expandableChecklistIds.every(id => expandedItems[id] === false),
+    [expandableChecklistIds, expandedItems]
+  );
+  const allProductsCollapsed = useMemo(
+    () => activeProductNames.length > 0 && activeProductNames.every(productName => collapsedProducts[productName] === true),
+    [activeProductNames, collapsedProducts]
+  );
 
   if (isLoading) {
     return (
@@ -1160,7 +1170,6 @@ export default function ProductChecklistDialog({
     );
   }
 
-  const allDetailsCollapsed = expandableChecklistIds.length > 0 && expandableChecklistIds.every(id => expandedItems[id] === false);
   const toggleAllDetails = () => {
     const nextExpanded = { ...expandedItems };
     expandableChecklistIds.forEach(id => {
@@ -1168,7 +1177,6 @@ export default function ProductChecklistDialog({
     });
     setExpandedItems(nextExpanded);
   };
-  const allProductsCollapsed = activeProductNames.length > 0 && activeProductNames.every(productName => collapsedProducts[productName] === true);
   const toggleAllProducts = () => {
     setCollapsedProducts(prev => {
       const nextCollapsed = { ...prev };
@@ -1184,6 +1192,19 @@ export default function ProductChecklistDialog({
       if (Object.values(group.subTemplates).some(items => items.some(item => item.id === itemId))) return productName;
     }
     return null;
+  };
+  const findRenderedChecklistItemElement = (candidateIds) => {
+    const ids = candidateIds.filter(Boolean).map(String);
+    for (const id of ids) {
+      if (window.CSS?.escape) {
+        const directMatch = document.querySelector(`[data-sips-checklist-item-id="${window.CSS.escape(id)}"]`);
+        if (directMatch) return directMatch;
+      }
+    }
+    // Fallback for browsers without CSS.escape. Keep the compatibility path
+    // isolated so modern browsers avoid scanning every rendered checklist row.
+    return Array.from(document.querySelectorAll("[data-sips-checklist-item-id]"))
+      .find(element => ids.includes(element.dataset.sipsChecklistItemId)) || null;
   };
   const getTopLevelChecklistId = (item) => {
     let current = item;
@@ -1229,8 +1250,7 @@ export default function ProductChecklistDialog({
 
     setFocusedNeedsInputId(scrollTargetId);
     window.setTimeout(() => {
-      const targetElement = Array.from(document.querySelectorAll("[data-sips-checklist-item-id]"))
-        .find(element => element.dataset.sipsChecklistItemId === String(scrollTargetId));
+      const targetElement = findRenderedChecklistItemElement([scrollTargetId]);
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
   };
@@ -1249,9 +1269,7 @@ export default function ProductChecklistDialog({
     setChecklistSearchIndex(nextIndex);
 
     window.setTimeout(() => {
-      const candidateIds = [item.id, item.parent_id, topLevelId].filter(Boolean).map(String);
-      const targetElement = Array.from(document.querySelectorAll("[data-sips-checklist-item-id]"))
-        .find(element => candidateIds.includes(element.dataset.sipsChecklistItemId));
+      const targetElement = findRenderedChecklistItemElement([item.id, item.parent_id, topLevelId]);
       targetElement?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
   };
