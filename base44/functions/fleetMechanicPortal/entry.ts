@@ -33,6 +33,66 @@ async function sha256(value: string) {
   return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2,'0')).join('');
 }
 
+const MECHANIC_MUTATION_TYPES: Record<string,string> = {
+  start:'mechanic_start',
+  save:'mechanic_progress_save',
+};
+
+function canonicalReceipt(rows: any[] = []) {
+  return [...rows].sort((a:any,b:any) => {
+    const byCreated = String(a?.created_date || '').localeCompare(String(b?.created_date || ''));
+    return byCreated || String(a?.id || '').localeCompare(String(b?.id || ''));
+  })[0] || null;
+}
+
+function mechanicRequestId(value: unknown) {
+  const id = String(value || '').trim();
+  return /^[A-Za-z0-9_-]{16,120}$/.test(id) ? id : '';
+}
+
+function mechanicOperationKey(grantId: unknown, workOrderId: string, action: string, requestId: string) {
+  return `mechanic:${String(grantId || '').trim()}:${workOrderId}:${action}:${requestId}`;
+}
+
+async function mechanicMutationFingerprint(action: string, body: any) {
+  if (action === 'start') return sha256(JSON.stringify({ action, note:clean(body?.note,1200) }));
+  const photoHashes = [];
+  for (const item of (Array.isArray(body?.photos) ? body.photos : [])) {
+    photoHashes.push({ type:clean(item?.type,40).toLowerCase(), sha256:await sha256(String(item?.data || '')) });
+  }
+  return sha256(JSON.stringify({
+    action,
+    actual_hours:String(body?.actual_hours ?? '').trim(),
+    corrective_action:clean(body?.corrective_action,5000),
+    mechanic_note:clean(body?.mechanic_note,2000),
+    photos:photoHashes,
+  }));
+}
+
+function workOrderHasMechanicReceipt(current: any, receipt: any) {
+  return !!receipt?.operation_key &&
+    String(current?.mechanic_operation_key || '') === String(receipt.operation_key || '') &&
+    String(current?.mechanic_operation_fingerprint || '') === String(receipt.payload_fingerprint || '');
+}
+
+async function markMechanicReceiptApplied(Receipt: any, receipt: any, current: any, recovered = false) {
+  if (receipt?.status !== 'applied') {
+    await Receipt.update(receipt.id, {
+      status:'applied',
+      applied_at:receipt?.applied_at || nowIso(),
+      failed_at:null,
+      error_message:'',
+      result_summary:{
+        ...(receipt?.result_summary || {}),
+        work_order_updated_date:current?.updated_date || '',
+        work_order_status:current?.status || '',
+        recovered_from_work_order_marker:recovered === true,
+      },
+    });
+  }
+  return { ...receipt, status:'applied' };
+}
+
 async function readJson(req: Request) {
   const declared = Number(req.headers.get('content-length') || 0);
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return { payload:null, error:'Mechanic portal request is too large.', status:413 };
