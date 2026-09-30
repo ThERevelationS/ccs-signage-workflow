@@ -86,4 +86,19 @@ check("completed section memoizes visible groups and count in one pass", () => {
   assert.match(completedSource, /renderGroups\.map/);
 });
 
+check("collapse-all state is memoized across unrelated checklist renders", () => {
+  assert.match(source, /const allDetailsCollapsed = useMemo\(/);
+  assert.match(source, /\[expandableChecklistIds, expandedItems\]/);
+  assert.match(source, /const allProductsCollapsed = useMemo\(/);
+  assert.match(source, /\[activeProductNames, collapsedProducts\]/);
+});
+
+check("search and Needs Input navigation use direct rendered-row lookup first", () => {
+  assert.match(source, /const findRenderedChecklistItemElement = \(candidateIds\) => \{/);
+  assert.match(source, /document\.querySelector\(`\[data-sips-checklist-item-id=/);
+  assert.match(source, /window\.CSS\?\.escape/);
+  assert.match(source, /findRenderedChecklistItemElement\(\[scrollTargetId\]\)/);
+  assert.match(source, /findRenderedChecklistItemElement\(\[item\.id, item\.parent_id, topLevelId\]\)/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
