@@ -1352,21 +1352,15 @@ async function pushDataset(
         errors: 0, error_details: [], conflict_record_ids: [] };
     }
   } else if (dataset === 'sales' && globalConfig?.backup_before_write) {
-    // Preserve existing Sales Pipeline behavior; audited in its own project.
-    try {
-      const backupResult = await smartsheetGet(`/sheets/${sheetId}?pageSize=200`, token);
-      const backupRows = normalizeSheetRows(backupResult.body);
-      await base44.asServiceRole.entities.BackupLog.create({
-        backup_type: 'scheduled',
-        data_types: [`smartsheet_${dataset}_sheet_${sheetId}`],
-        results: [{ type: `smartsheet_${dataset}`,
-          filename: `sheet_${sheetId}_pre_sync_${new Date().toISOString()}`, success: true }],
-        success_count: 1, error_count: 0, triggered_by: 'smartsheet_sync',
-      });
-      void backupRows;
-    } catch (err) {
-      return { dataset, skipped: true, reason: `Backup before write failed: ${(err as any)?.message || 'unknown error'}` };
-    }
+    // The former Sales path fetched only one page, discarded it, then logged
+    // success without a recoverable artifact. Never represent that as a backup.
+    // Fail closed until Sales uses the verified persisted/read-back backup path.
+    return {
+      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
+      reason: 'Sales backup-before-write is enabled, but no recoverable Sales backup artifact can currently be verified. No Smartsheet rows were written.',
+      records_examined: records.length, created: 0, updated: 0, conflicts: 0,
+      errors: 0, error_details: [], conflict_record_ids: [],
+    };
   }
 
   const created: string[] = [];
