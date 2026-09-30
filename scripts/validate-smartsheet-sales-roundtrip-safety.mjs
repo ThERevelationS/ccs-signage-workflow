@@ -215,9 +215,22 @@ assert.ok(salesPutVerificationIndex >= 0 && salesMetadataIndex > salesPutVerific
   "Sales PUT success accounting must occur only after Smartsheet and Base44 metadata verification.");
 
 const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
+const salesLinkVerificationIndex = backend.indexOf("Sales create permanent link verification", salesCreateGuardIndex);
+const salesLinkFailureIndex = backend.indexOf("Sales permanent Smartsheet link could not be verified after create", salesLinkVerificationIndex);
 const salesCreatedIndex = backend.indexOf("if (salesSuccessfulWrite === 'created') created.push(record.id);", salesCreateGuardIndex);
-assert.ok(salesCreateGuardIndex >= 0 && salesMetadataIndex > salesCreateGuardIndex && salesCreatedIndex > salesMetadataIndex,
-  "Sales create must validate the permanent row ID and Base44 metadata before counting creation.");
+assert.ok(
+  salesCreateGuardIndex >= 0 &&
+  salesLinkVerificationIndex > salesCreateGuardIndex &&
+  salesLinkFailureIndex > salesLinkVerificationIndex &&
+  salesMetadataIndex > salesLinkFailureIndex &&
+  salesCreatedIndex > salesMetadataIndex,
+  "Sales create must verify its permanent Base44 row/sheet link and metadata before counting creation.",
+);
+assert.match(
+  backend,
+  /label: 'Sales create permanent link verification'[\s\S]*?cleanText\(verifiedLink\?\.smartsheet_row_id, 40\) !== newRowId[\s\S]*?cleanText\(verifiedLink\?\.smartsheet_sheet_id, 40\) !== sheetId/,
+  "Sales create must read back and verify both permanent link IDs before advancing sync metadata.",
+);
 assert.match(
   backend,
   /label: 'Sales push sync metadata verification'[\s\S]*?findUnverifiedSyncMetadata\(\[expectedMetadata\], verifiedMetadataRows\)[\s\S]*?Sales Base44 sync metadata could not be verified/,
