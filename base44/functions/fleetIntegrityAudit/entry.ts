@@ -258,7 +258,12 @@ Deno.serve(async (req) => {
     add('warning','completed_inspection_missing_timestamp','Passed/failed inspections without completion timestamps',incompleteCompletedInspections.map((row:any)=>({id:row.id,status:row.status,equipment_id:row.equipment_id})),'Completed inspection history should carry a completion timestamp.');
 
     const unresolvedReceipts = receipts.filter((r:any)=>['started','failed'].includes(r.status));
-    add('error','unresolved_operation_receipts','Unresolved Fleet operation receipts',unresolvedReceipts.map((r:any)=>({id:r.id,operation_key:r.operation_key,operation_type:r.operation_type,status:r.status,error:r.error_message || ''})),'Unresolved receipts can indicate an interrupted or ambiguous side effect and must not be silently replayed.');
+    add('error','unresolved_operation_receipts','Unresolved Fleet operation receipts',unresolvedReceipts.map((r:any)=>({
+      id:r.id,operation_key:r.operation_key,operation_type:r.operation_type,status:r.status,error:r.error_message || '',
+      uploaded_photo_urls:Array.isArray(r?.result_summary?.uploaded_photo_urls) ? r.result_summary.uploaded_photo_urls : [],
+      reused_upload_receipt_id:r?.result_summary?.reused_upload_receipt_id || '',
+      upload_evidence_updated_at:r?.result_summary?.upload_evidence_updated_at || '',
+    })),'Unresolved receipts can indicate an interrupted or ambiguous side effect and must not be silently replayed. Mechanic photo upload evidence is retained here for recovery or admin review.');
     const unresolvedQueue = queue.filter((r:any)=>['pending','sending','failed'].includes(r.status));
     add('warning','unresolved_notification_queue','Unresolved Fleet notification jobs',unresolvedQueue.map((r:any)=>({id:r.id,event_type:r.event_type,status:r.status,attempts:r.attempts,last_error:r.last_error || ''})),'Pending/sending/failed email jobs should be visible to Fleet admins.');
 
