@@ -15,12 +15,14 @@ import {
   Calendar
 } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
+import { useAuth } from "@/components/auth/EmailGate";
+import { loadAuthorizedUserDirectory } from "@/components/user/authorizedUserDirectoryPersistence";
 
 const WorkOrder = base44.entities.WorkOrder;
-const AuthorizedEmail = base44.entities.AuthorizedEmail;
 const UserCapacity = base44.entities.UserCapacity;
 
 export default function ResourceAllocationView({ compact = false }) {
+  const { sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [userCapacities, setUserCapacities] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
@@ -28,14 +30,21 @@ export default function ResourceAllocationView({ compact = false }) {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    if (!sessionToken) {
+      setUsers([]);
+      setUserCapacities([]);
+      setWorkOrders([]);
+      setIsLoading(false);
+      return;
+    }
     loadData();
-  }, []);
+  }, [sessionToken]);
   
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [usersData, capacitiesData, ordersData] = await Promise.all([
-        loadAllEntityRows({ entity: AuthorizedEmail, sort: null, label: "Resource Allocation authorized users" }),
+      const [directory, capacitiesData, ordersData] = await Promise.all([
+        loadAuthorizedUserDirectory({ sessionToken }),
         loadAllEntityRows({ entity: UserCapacity, sort: null, label: "Resource Allocation user capacities" }),
         loadAllEntityRows({
           entity: WorkOrder,
@@ -44,10 +53,11 @@ export default function ResourceAllocationView({ compact = false }) {
           label: "Resource Allocation Work Orders",
         })
       ]);
-      setUsers(usersData);
+      setUsers(directory.users);
       setUserCapacities(capacitiesData);
       setWorkOrders(ordersData);
     } catch (error) {
+      setUsers([]);
       console.error("Error loading data:", error);
     }
     setIsLoading(false);
