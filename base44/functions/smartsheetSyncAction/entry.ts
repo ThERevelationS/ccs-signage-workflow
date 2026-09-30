@@ -1291,10 +1291,10 @@ async function pushDataset(
     });
   }
 
-  // Order-only: a successful BackupLog without any saved sheet bytes is not
-  // a backup. Read every Smartsheet page, persist a private Google Drive JSON
-  // snapshot and read the exact file back before writing ANY Order row.
-  // The legacy Sales backup path remains unchanged (outside Order scope).
+  // A successful BackupLog without saved sheet bytes is not a backup. For both
+  // Order Request and Sales Pipeline, read every Smartsheet page, persist a
+  // private Google Drive JSON snapshot, and read the exact file back before
+  // writing ANY row.
   if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write) {
     try {
       const connection = await base44.asServiceRole.connectors.getConnection('googledrive');
@@ -1353,16 +1353,6 @@ async function pushDataset(
         records_examined: records.length, created: 0, updated: 0, conflicts: 0,
         errors: 0, error_details: [], conflict_record_ids: [] };
     }
-  } else if (dataset === 'sales' && globalConfig?.backup_before_write) {
-    // The former Sales path fetched only one page, discarded it, then logged
-    // success without a recoverable artifact. Never represent that as a backup.
-    // Fail closed until Sales uses the verified persisted/read-back backup path.
-    return {
-      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
-      reason: 'Sales backup-before-write is enabled, but no recoverable Sales backup artifact can currently be verified. No Smartsheet rows were written.',
-      records_examined: records.length, created: 0, updated: 0, conflicts: 0,
-      errors: 0, error_details: [], conflict_record_ids: [],
-    };
   }
 
   const created: string[] = [];
