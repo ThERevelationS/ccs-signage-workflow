@@ -60,7 +60,7 @@ export async function createVerifiedOrderSheetBackup({
       current.version === version && current.totalRowCount === totalRows;
   };
   if (!(await unchanged())) {
-    throw new Error('Order Request changed after backup pagination. No Smartsheet write was attempted.');
+    throw new Error(`${label} changed after backup pagination. No Smartsheet write was attempted.`);
   }
 
   const timestamp = String(capturedAt).replace(/[:.]/g, '-');
@@ -87,7 +87,7 @@ export async function createVerifiedOrderSheetBackup({
     throw new Error('Order pre-write backup readback did not match the original complete sheet snapshot.');
   }
   if (!(await unchanged())) {
-    throw new Error('Order Request changed while backup was being verified. No Smartsheet write was attempted.');
+    throw new Error(`${label} changed while backup was being verified. No Smartsheet write was attempted.`);
   }
   // A successful log records where the actual recoverable artifact lives.
   // Failure to record the backup also blocks writes, even when upload succeeded.
