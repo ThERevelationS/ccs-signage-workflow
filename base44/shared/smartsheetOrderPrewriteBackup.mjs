@@ -7,8 +7,10 @@ import { createSmartsheetOrderPageGuard } from './smartsheetOrderPageGuard.mjs';
 export async function createVerifiedOrderSheetBackup({
   sheetId, readPage, verifySource, upload, readBack, log,
   capturedAt = new Date().toISOString(), pageSize = 200, maxPages = 100,
-  maxBytes = 25_000_000,
+  maxBytes = 25_000_000, dataset = 'orders',
 }) {
+  const isSales = dataset === 'sales';
+  const label = isSales ? 'Sales Pipeline' : 'Order Request';
   const permanentSheetId = String(sheetId ?? '').trim();
   if (!/^\d+$/.test(permanentSheetId) ||
       ![readPage, verifySource, upload, readBack, log].every(fn => typeof fn === 'function')) {
@@ -62,9 +64,10 @@ export async function createVerifiedOrderSheetBackup({
   }
 
   const timestamp = String(capturedAt).replace(/[:.]/g, '-');
-  const filename = `CCS_OrderRequest_${permanentSheetId}_pre_sync_${timestamp}.json`;
+  const artifactName = isSales ? 'SalesPipeline' : 'OrderRequest';
+  const filename = `CCS_${artifactName}_${permanentSheetId}_pre_sync_${timestamp}.json`;
   const content = JSON.stringify({
-    format: 'ccs-order-request-smartsheet-prewrite-v1',
+    format: isSales ? 'ccs-sales-pipeline-smartsheet-prewrite-v1' : 'ccs-order-request-smartsheet-prewrite-v1',
     sheet_id: permanentSheetId, sheet_version: version,
     total_row_count: totalRows, captured_at: capturedAt,
     scope: 'row_and_column_data_no_attachments',
