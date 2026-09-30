@@ -724,7 +724,8 @@ Deno.serve(async (req) => {
       const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
       const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
       const priorFailed = decoded.photos.length ? await Receipt.filter({target_entity:'FleetMaintenanceWorkOrder',target_id:id,status:'failed',operation_type:'mechanic_progress_save'}) : [];
-      const reusable = selectReusableMechanicUploads(priorFailed || [],mechanicMutation.fingerprint,decoded.photos.length);
+      const sameGrantFailed = (priorFailed || []).filter((row:any)=>String(row?.result_summary?.grant_id || '') === String(grant.id || ''));
+      const reusable = selectReusableMechanicUploads(sameGrantFailed,mechanicMutation.fingerprint,decoded.photos.length);
       const claim = await claimMechanicReceipt(Receipt,{
         operation_key:mechanicMutation.operationKey,
         operation_type:mechanicMutation.operationType,
