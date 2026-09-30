@@ -209,16 +209,15 @@ assert.match(
   "Existing Sales-row PUT must be read back and canonically verified before it is counted updated or Base44 sync metadata advances.",
 );
 const salesPutVerificationIndex = backend.indexOf("Sales Smartsheet update could not be verified by read-back");
-const salesUpdatedIndex = backend.indexOf("updated.push(record.id);", salesPutVerificationIndex);
-const salesMetadataIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesPutVerificationIndex);
-assert.ok(salesPutVerificationIndex >= 0 && salesUpdatedIndex > salesPutVerificationIndex && salesMetadataIndex > salesUpdatedIndex,
-  "Sales PUT verification must occur before updated accounting and snapshot/timestamp persistence.");
+const salesMetadataIndex = backend.indexOf("Sales Base44 sync metadata could not be verified after the Smartsheet write", salesPutVerificationIndex);
+const salesUpdatedIndex = backend.indexOf("else if (salesSuccessfulWrite === 'updated') updated.push(record.id);", salesMetadataIndex);
+assert.ok(salesPutVerificationIndex >= 0 && salesMetadataIndex > salesPutVerificationIndex && salesUpdatedIndex > salesMetadataIndex,
+  "Sales PUT success accounting must occur only after Smartsheet and Base44 metadata verification.");
 
 const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
-const salesCreatedIndex = backend.indexOf("created.push(record.id);", salesCreateGuardIndex);
-const salesSnapshotIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesCreateGuardIndex);
-assert.ok(salesCreateGuardIndex >= 0 && salesCreatedIndex > salesCreateGuardIndex && salesSnapshotIndex > salesCreatedIndex,
-  "Sales create must validate the permanent row ID before counting creation or advancing snapshot metadata.");
+const salesCreatedIndex = backend.indexOf("if (salesSuccessfulWrite === 'created') created.push(record.id);", salesCreateGuardIndex);
+assert.ok(salesCreateGuardIndex >= 0 && salesMetadataIndex > salesCreateGuardIndex && salesCreatedIndex > salesMetadataIndex,
+  "Sales create must validate the permanent row ID and Base44 metadata before counting creation.");
 assert.match(
   backend,
   /label: 'Sales push sync metadata verification'[\s\S]*?findUnverifiedSyncMetadata\(\[expectedMetadata\], verifiedMetadataRows\)[\s\S]*?Sales Base44 sync metadata could not be verified/,
