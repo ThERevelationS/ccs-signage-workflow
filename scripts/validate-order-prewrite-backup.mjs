@@ -123,8 +123,10 @@ console.log('PASS wrong sheet, incomplete/moving sheet, duplicate IDs, malformed
   assert.equal(setup.calls.length,0);
 }
 const backend = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts',import.meta.url),'utf8');
-const orderBranch = backend.slice(backend.indexOf("if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write)"),
-  backend.indexOf("else if (dataset === 'sales' && globalConfig?.backup_before_write)"));
+const backupStart = backend.indexOf("if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write)");
+const backupEnd = backend.indexOf("\n  const created: string[] = [];", backupStart);
+assert.ok(backupStart >= 0 && backupEnd > backupStart, 'shared Order/Sales backup gate must have stable boundaries');
+const orderBranch = backend.slice(backupStart, backupEnd);
 assert.match(orderBranch, /createVerifiedOrderSheetBackup\(\{[\s\S]*?dataset,/);
 assert.match(orderBranch, /connectors\.getConnection\('googledrive'\)/);
 assert.match(orderBranch, /uploadType=multipart/);
