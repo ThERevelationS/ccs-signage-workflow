@@ -1349,7 +1349,7 @@ async function pushDataset(
       });
     } catch (err) {
       return { dataset, direction: 'push', sheet_id: sheetId, skipped: true,
-        reason: `Recoverable Order backup could not be verified; no Smartsheet rows were written: ${(err as any)?.message || 'unknown error'}`,
+        reason: `Recoverable ${dataset === 'sales' ? 'Sales' : 'Order'} backup could not be verified; no Smartsheet rows were written: ${(err as any)?.message || 'unknown error'}`,
         records_examined: records.length, created: 0, updated: 0, conflicts: 0,
         errors: 0, error_details: [], conflict_record_ids: [] };
     }
