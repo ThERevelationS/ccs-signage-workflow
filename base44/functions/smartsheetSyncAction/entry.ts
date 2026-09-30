@@ -1345,6 +1345,19 @@ async function pushDataset(
             triggered_by: dataset === 'sales' ? 'smartsheet_sales_prewrite' : 'smartsheet_order_prewrite',
           });
           if (!savedLog?.id) throw new Error(`${dataset === 'sales' ? 'Sales' : 'Order'} backup file was verified but its BackupLog record was not confirmed.`);
+          const verifiedLog = await base44.asServiceRole.entities.BackupLog.get(savedLog.id);
+          const expectedType = `smartsheet_${dataset === 'sales' ? 'sales' : 'orders'}`;
+          const expectedDataType = `${expectedType}_sheet_${sheetId}`;
+          const expectedTrigger = dataset === 'sales' ? 'smartsheet_sales_prewrite' : 'smartsheet_order_prewrite';
+          const verifiedResult = Array.isArray(verifiedLog?.results) ? verifiedLog.results[0] : null;
+          if (verifiedLog?.id !== savedLog.id ||
+              verifiedLog?.triggered_by !== expectedTrigger ||
+              !Array.isArray(verifiedLog?.data_types) || verifiedLog.data_types[0] !== expectedDataType ||
+              verifiedLog?.success_count !== 1 || verifiedLog?.error_count !== 0 ||
+              verifiedResult?.type !== expectedType || verifiedResult?.success !== true ||
+              !String(verifiedResult?.filename || '').includes(`[Google Drive ID: ${backup.drive_file_id}]`)) {
+            throw new Error(`${dataset === 'sales' ? 'Sales' : 'Order'} backup file was verified but its persisted BackupLog could not be read back exactly.`);
+          }
         }
       });
     } catch (err) {
