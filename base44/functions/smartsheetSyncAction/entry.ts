@@ -1196,6 +1196,7 @@ async function pushDataset(
   if (records.length > massLimit) {
     return {
       dataset,
+      direction: 'push',
       skipped: true,
       reason: `${records.length} records exceed the mass-change hard stop of ${massLimit}. Raise the limit or narrow the pipeline.`,
     };
