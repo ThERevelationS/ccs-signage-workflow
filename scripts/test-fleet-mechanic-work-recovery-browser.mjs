@@ -36,7 +36,7 @@ try {
     'const applySave = payload => {',
     ' const note=String(payload.mechanic_note||"").trim();',
     ' const appended=note ? "[Mechanic – Synthetic Mechanic]\\n"+note : "";',
-    ' const urls=(payload.photos||[]).map(()=> "https://synthetic.invalid/photo-"+(++state.photoWrites)+".jpg");',
+    ' const urls=(payload.photos||[]).map(()=> {state.photoWrites++;return "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";});',
     ' state.work={...state.work,actual_hours:payload.actual_hours===""?state.work.actual_hours:Number(payload.actual_hours),corrective_action:String(payload.corrective_action||""),notes:[state.work.notes,appended].filter(Boolean).join("\\n\\n"),after_photos:[...(state.work.after_photos||[]),...urls],updated_date:"wo-rev-"+(++revision)};',
     ' state.receipt={action:"save",requestId:payload.request_id,status:"applied"};',
     '};',
