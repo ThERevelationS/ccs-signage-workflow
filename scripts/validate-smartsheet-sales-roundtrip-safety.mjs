@@ -190,6 +190,16 @@ assert.match(
 );
 assert.match(
   backend,
+  /label: 'Sales pull business-field verification'[\s\S]*?salesPulledFieldsUnchanged\(persisted, item\.expectedFields\)[\s\S]*?Snapshot\/timestamp not advanced[\s\S]*?updatedCount\+\+;[\s\S]*?snapshotUpdates\.push/,
+  "Sales pull must read back and canonically verify WorkOrder business fields before counting the update or advancing sync metadata.",
+);
+assert.match(
+  backend,
+  /business_field_write_failures: salesBusinessWriteFailureIds\.length[\s\S]*?business_field_write_failure_ids: salesBusinessWriteFailureIds\.slice\(0, 20\)/,
+  "Sales pull results must expose business-field persistence failures for review.",
+);
+assert.match(
+  backend,
   /verifiedMetadataExpected\.push\(\.\.\.batch\)[\s\S]*?Sales Smartsheet sync metadata verification[\s\S]*?findUnverifiedSyncMetadata/,
   "Sales snapshot/timestamp writes must be re-read and verified before the pull is healthy.",
 );
