@@ -1451,10 +1451,28 @@ async function pushDataset(
           throw new Error('Order changed while Smartsheet sync was running. The newer revision remains queued for Save & Sync.');
         }
       } else {
+        const syncedAt = new Date().toISOString();
+        const expectedMetadata = {
+          id: record.id,
+          smartsheet_sync_snapshot: snapshot,
+          smartsheet_last_synced_at: syncedAt,
+        };
         await base44.asServiceRole.entities.WorkOrder.update(record.id, {
           smartsheet_sync_snapshot: snapshot,
-          smartsheet_last_synced_at: new Date().toISOString(),
+          smartsheet_last_synced_at: syncedAt,
         });
+        const verifiedMetadataRows = await loadAllEntityRows({
+          entity: base44.asServiceRole.entities.WorkOrder,
+          query: { id: record.id },
+          sort: 'id',
+          label: 'Sales push sync metadata verification',
+        });
+        const metadataFailures = findUnverifiedSyncMetadata(expectedMetadata ? [expectedMetadata] : [], verifiedMetadataRows);
+        if (metadataFailures.length) {
+          throw new Error(
+            'Sales Base44 sync metadata could not be verified after the Smartsheet write. Review this record before treating it as synchronized.'
+          );
+        }
       }
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
