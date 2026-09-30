@@ -1231,6 +1231,7 @@ async function pushDataset(
     if (dataset !== 'orders' || typeof options?.reportOrderProgress !== 'function') return;
     try { await options.reportOrderProgress(progress); } catch { /* progress UI must never corrupt sync work */ }
   };
+  if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
   const orderProgressItemLabel = (record: any) => {
     const row = Number.isFinite(Number(record?.row_number)) ? `#${Number(record.row_number)}` : '';
     const customer = cleanText(record?.customer_name, 72) || 'Unnamed customer';
@@ -1373,6 +1374,7 @@ async function pushDataset(
       orderTimeBudgetReached = true;
       break;
     }
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     const record = pendingRecords[recordIndex];
     orderProcessedCount = recordIndex + 1;
     if (dataset === 'orders') {
