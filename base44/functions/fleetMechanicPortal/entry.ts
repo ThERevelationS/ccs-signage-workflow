@@ -3,6 +3,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
+import { buildMechanicRecoveryPatch, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
@@ -110,6 +111,27 @@ async function failMechanicReceipt(Receipt: any, receipt: any, error: unknown) {
     status:'failed',
     failed_at:nowIso(),
     error_message:clean(error instanceof Error ? error.message : error,1200),
+  }).catch(()=>null);
+}
+
+async function updateMechanicReceiptSummary(Receipt: any, receipt: any, patch: any) {
+  const latest = await Receipt.get(receipt.id).catch(()=>receipt);
+  const resultSummary = {...(latest?.result_summary || receipt?.result_summary || {}),...(patch || {})};
+  const updated = await Receipt.update(receipt.id,{result_summary:resultSummary});
+  return updated || {...latest,result_summary:resultSummary};
+}
+
+async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
+  const sourceId = String(receipt?.result_summary?.reused_upload_receipt_id || '').trim();
+  if (!sourceId) return;
+  const source = await Receipt.get(sourceId).catch(()=>null);
+  if (!source || source.status !== 'failed' || String(source.payload_fingerprint || '') !== String(receipt.payload_fingerprint || '')) return;
+  await Receipt.update(source.id,{
+    status:'applied',
+    applied_at:nowIso(),
+    failed_at:null,
+    error_message:'',
+    result_summary:{...(source.result_summary || {}),resolved_by_operation_key:receipt.operation_key || '',resolved_by_retry:true},
   }).catch(()=>null);
 }
 
