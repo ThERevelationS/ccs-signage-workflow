@@ -34,7 +34,7 @@ const receipt = (overrides={}) => ({
     mutation_plan:{
       actual_hours:2.5,
       corrective_action:"Replaced belt",
-      appended_note:"[Mechanic – Test]\\nCompleted repair",
+      appended_note:"[Mechanic – Test]\nCompleted repair",
     },
   },
   ...overrides,
