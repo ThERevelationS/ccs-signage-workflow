@@ -335,7 +335,11 @@ async function pullDataset(
   const allRows: any[] = [];
   let page = 1;
   const pageSize = 200;
-  const orderPageGuard = dataset === 'orders' ? createSmartsheetOrderPageGuard({ pageSize, maxPages: 100 }) : null;
+  const sheetPageGuard = createSmartsheetOrderPageGuard({
+    pageSize,
+    maxPages: 100,
+    datasetLabel: dataset === 'sales' ? 'Sales Pipeline' : 'Order Form',
+  });
   let totalRowCount = 0;
   while (page <= 100) {
     const params = new URLSearchParams({
@@ -345,16 +349,16 @@ async function pullDataset(
       exclude: 'nonexistentCells',
     });
     const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
-    if (orderPageGuard) verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
+    verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
     const rows = normalizeSheetRows(result.body);
-    const orderPageComplete = orderPageGuard ? orderPageGuard.accept(page, result.body, rows) : false;
+    const pageComplete = sheetPageGuard.accept(page, result.body, rows);
     if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
     allRows.push(...rows);
-    if (orderPageGuard ? orderPageComplete : (allRows.length >= totalRowCount || rows.length === 0)) break;
+    if (pageComplete) break;
     page++;
   }
-  // Never apply a partial Order Request download to live Base44 Orders.
-  orderPageGuard?.assertComplete();
+  // Never apply a partial or moving Smartsheet download to live Base44 records.
+  sheetPageGuard.assertComplete();
 
   const massLimit = Math.max(1, Number(globalConfig?.mass_change_limit_count) || 25);
   if (allRows.length > massLimit) {
