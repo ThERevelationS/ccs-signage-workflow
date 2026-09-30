@@ -170,6 +170,16 @@ assert.doesNotMatch(
 );
 assert.match(
   backend,
+  /const sheetPageGuard = createSmartsheetOrderPageGuard\([\s\S]*?datasetLabel: dataset === 'sales' \? 'Sales Pipeline' : 'Order Form'[\s\S]*?sheetPageGuard\.assertComplete\(\)/,
+  "Sales pull must fail closed unless every Smartsheet page is complete and stable.",
+);
+assert.doesNotMatch(
+  backend,
+  /orderPageGuard = dataset === 'orders'/,
+  "Pagination completeness must not remain Order-only.",
+);
+assert.match(
+  backend,
   /salesSnapshotOnlyUpdates\.push\([\s\S]*?smartsheet_sync_snapshot: remoteSnapshot/,
   "Unchanged Sales business fields with stale snapshots must use metadata-only reconciliation.",
 );
