@@ -1187,6 +1187,12 @@ test('late-day missed Clock In recovery reconstructs one auditable Needs Review 
   assert.equal(h.rows.TimeClockPunchException.length, 1);
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'clock_in' && row.request_id === payload.request_id).length, 1);
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'punch_exception' && row.request_id === payload.request_id).length, 1);
+
+  const mismatchedRetry = await h.invoke({ ...payload, claimed_clock_in: '2026-09-28T13:00:00.000Z' });
+  assert.equal(mismatchedRetry.status, 409, JSON.stringify(mismatchedRetry.body));
+  assert.match(mismatchedRetry.body.error, /request id|different Clock In/i);
+  assert.equal(h.rows.TimeEntry.length, 1);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
 });
 
 test('late-day missed Clock In recovery rejects early-day use, old dates, future times, and existing active work', async () => {
@@ -1237,6 +1243,69 @@ test('late-day missed Clock In recovery rejects early-day use, old dates, future
   assert.equal(blockedActive.status, 409, JSON.stringify(blockedActive.body));
   assert.match(blockedActive.body.error, /active shift|state changed/i);
   assert.equal(active.rows.TimeEntry.length, 1);
+});
+
+test('reconstructed missed Clock In remains Needs Review through Clock Out until manager approval resolves its exception', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+
+  const recovered = await h.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'late-clock-in-through-approval-001',
+    claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  const entryId = recovered.body.entry.id;
+  const punchCaseId = recovered.body.punch_exception.id;
+
+  const clockOut = await h.invoke({
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'late-clock-in-clock-out-001',
+    lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+    notes: 'Synthetic missed Clock In reconciliation',
+  });
+  assert.equal(clockOut.status, 200, JSON.stringify(clockOut.body));
+  const completed = h.rows.TimeEntry.find((row) => row.id === entryId);
+  assert.equal(completed.status, 'clocked_out');
+  assert.equal(completed.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(completed.approval_status, 'needs_review');
+  assert.ok(completed.clock_out);
+  const stillPending = h.rows.TimeClockPunchException.find((row) => row.id === punchCaseId);
+  assert.equal(stillPending.status, 'pending_manager_review');
+
+  const approved = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'late-clock-in-manager-approval-001',
+    entry_id: completed.id,
+    expected_updated_date: completed.updated_date,
+    decision: 'approve',
+    note: 'Verified employee-reported arrival',
+  });
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  const approvedEntry = h.rows.TimeEntry.find((row) => row.id === entryId);
+  const resolvedCase = h.rows.TimeClockPunchException.find((row) => row.id === punchCaseId);
+  assert.equal(approvedEntry.approval_status, 'approved');
+  assert.equal(resolvedCase.status, 'resolved');
+  assert.equal(resolvedCase.resolution_audit_id, approved.body.audit_id);
+});
+
+test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [{
+    id: 'closed-today', label: 'Closed Today', start_date: '2026-09-28', end_date: '2026-09-28',
+    status: 'finalized', updated_date: '2026-09-28T18:00:00.000Z',
+  }];
+  const blocked = await h.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'late-clock-in-finalized-period-001',
+    claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.equal(blocked.body.finalized_pay_period_id, 'closed-today');
+  assert.equal(h.rows.TimeEntry.length, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 0);
+  assert.equal(h.rows.TimeClockAudit.length, 0);
 });
 
 test('needs_resolution remains a pay-period finalization blocker', async () => {
