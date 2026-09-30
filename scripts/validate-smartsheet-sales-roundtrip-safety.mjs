@@ -219,5 +219,10 @@ const salesCreatedIndex = backend.indexOf("created.push(record.id);", salesCreat
 const salesSnapshotIndex = backend.indexOf("const snapshot = buildSnapshot(record, bindings, dataset);", salesCreateGuardIndex);
 assert.ok(salesCreateGuardIndex >= 0 && salesCreatedIndex > salesCreateGuardIndex && salesSnapshotIndex > salesCreatedIndex,
   "Sales create must validate the permanent row ID before counting creation or advancing snapshot metadata.");
+assert.match(
+  backend,
+  /label: 'Sales push sync metadata verification'[\s\S]*?findUnverifiedSyncMetadata\(\[expectedMetadata\], verifiedMetadataRows\)[\s\S]*?Sales Base44 sync metadata could not be verified/,
+  "Sales push must read back Base44 snapshot/timestamp metadata and fail closed when persistence cannot be verified.",
+);
 
 console.log("Smartsheet Sales round-trip safety validation passed.");
