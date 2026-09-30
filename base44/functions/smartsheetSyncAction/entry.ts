@@ -1467,7 +1467,7 @@ async function pushDataset(
           sort: 'id',
           label: 'Sales push sync metadata verification',
         });
-        const metadataFailures = findUnverifiedSyncMetadata(expectedMetadata ? [expectedMetadata] : [], verifiedMetadataRows);
+        const metadataFailures = findUnverifiedSyncMetadata([expectedMetadata], verifiedMetadataRows);
         if (metadataFailures.length) {
           throw new Error(
             'Sales Base44 sync metadata could not be verified after the Smartsheet write. Review this record before treating it as synchronized.'
