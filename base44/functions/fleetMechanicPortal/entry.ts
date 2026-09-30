@@ -548,15 +548,51 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'start') {
-      const note = clean(body?.note,1200);
-      const mechanicLine = note ? `[Mechanic – ${grant.name} – ${new Date().toLocaleString('en-US',{timeZone:'America/New_York'})} ET]\n${note}` : '';
-      const notes = [current.notes,mechanicLine].filter(Boolean).join('\n\n');
-      const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
-        action:'update', id, expected_updated_date:expected,
-        work_order:{status:'in_progress',started_date:current.started_date || todayEastern(),notes},
+      const claim = await claimMechanicReceipt(Receipt,{
+        operation_key:mechanicMutation.operationKey,
+        operation_type:mechanicMutation.operationType,
+        target_entity:'FleetMaintenanceWorkOrder',
+        target_id:id,
+        actor_user_id:String(grant.id || ''),
+        payload_fingerprint:mechanicMutation.fingerprint,
+        result_summary:{grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'start',expected_updated_date:expected},
       });
-      if (result?.data?.error) return json({error:result.data.error},{status:409});
-      return json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
+      if (!claim.owner) {
+        if (String(claim.receipt?.payload_fingerprint || '') !== mechanicMutation.fingerprint) return json({error:'This mechanic request id is already bound to different start data.'},{status:409});
+        const fresh = await WorkOrder.get(id).catch(()=>null);
+        if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
+          await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
+          return json({success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+        }
+        if (claim.receipt?.status === 'applied') return json({success:true,reused:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh || current)});
+        return json({error:'This mechanic start request is already in progress. Check current server state before retrying.'},{status:409});
+      }
+      const receipt = claim.receipt;
+      try {
+        const note = clean(body?.note,1200);
+        const mechanicLine = note ? `[Mechanic – ${grant.name} – ${new Date().toLocaleString('en-US',{timeZone:'America/New_York'})} ET]\n${note}` : '';
+        const notes = [current.notes,mechanicLine].filter(Boolean).join('\n\n');
+        const appliedAt = nowIso();
+        const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
+          action:'update', id, expected_updated_date:expected,
+          work_order:{status:'in_progress',started_date:current.started_date || todayEastern(),notes,mechanic_operation_key:mechanicMutation.operationKey,mechanic_operation_fingerprint:mechanicMutation.fingerprint,mechanic_operation_applied_at:appliedAt},
+        });
+        if (result?.data?.error) {
+          await failMechanicReceipt(Receipt,receipt,result.data.error);
+          return json({error:result.data.error},{status:409});
+        }
+        const updated = result?.data?.work_order || await WorkOrder.get(id);
+        await markMechanicReceiptApplied(Receipt,receipt,updated,false);
+        return json({success:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(updated)});
+      } catch (error) {
+        const fresh = await WorkOrder.get(id).catch(()=>null);
+        if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
+          await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
+          return json({success:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+        }
+        await failMechanicReceipt(Receipt,receipt,error);
+        throw error;
+      }
     }
 
     if (action === 'save') {
@@ -567,17 +603,53 @@ Deno.serve(async (req) => {
       const mechanicNote = clean(body?.mechanic_note,2000);
       const decoded = decodePhotos(body?.photos);
       if (decoded.error) return json({error:decoded.error},{status:400});
-      const uploaded = decoded.photos.length ? await uploadPhotos(base44,decoded.photos) : [];
-      const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
-      const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
-      const notes = [current.notes,appended].filter(Boolean).join('\n\n');
-      const afterPhotos = [...(Array.isArray(current.after_photos)?current.after_photos:[]),...uploaded];
-      const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
-        action:'update', id, expected_updated_date:expected,
-        work_order:{actual_hours:actualHours,corrective_action:correctiveAction,notes,after_photos:afterPhotos},
+      const claim = await claimMechanicReceipt(Receipt,{
+        operation_key:mechanicMutation.operationKey,
+        operation_type:mechanicMutation.operationType,
+        target_entity:'FleetMaintenanceWorkOrder',
+        target_id:id,
+        actor_user_id:String(grant.id || ''),
+        payload_fingerprint:mechanicMutation.fingerprint,
+        result_summary:{grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'save',expected_updated_date:expected,photo_count:decoded.photos.length},
       });
-      if (result?.data?.error) return json({error:result.data.error},{status:409});
-      return json({success:true,work_order:sanitizeWorkOrder(result?.data?.work_order || await WorkOrder.get(id))});
+      if (!claim.owner) {
+        if (String(claim.receipt?.payload_fingerprint || '') !== mechanicMutation.fingerprint) return json({error:'This mechanic request id is already bound to different progress data.'},{status:409});
+        const fresh = await WorkOrder.get(id).catch(()=>null);
+        if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
+          await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
+          return json({success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+        }
+        if (claim.receipt?.status === 'applied') return json({success:true,reused:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh || current)});
+        return json({error:'This mechanic progress request is already in progress. Check current server state before retrying.'},{status:409});
+      }
+      const receipt = claim.receipt;
+      try {
+        const uploaded = decoded.photos.length ? await uploadPhotos(base44,decoded.photos) : [];
+        const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
+        const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
+        const notes = [current.notes,appended].filter(Boolean).join('\n\n');
+        const afterPhotos = [...(Array.isArray(current.after_photos)?current.after_photos:[]),...uploaded];
+        const appliedAt = nowIso();
+        const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
+          action:'update', id, expected_updated_date:expected,
+          work_order:{actual_hours:actualHours,corrective_action:correctiveAction,notes,after_photos:afterPhotos,mechanic_operation_key:mechanicMutation.operationKey,mechanic_operation_fingerprint:mechanicMutation.fingerprint,mechanic_operation_applied_at:appliedAt},
+        });
+        if (result?.data?.error) {
+          await failMechanicReceipt(Receipt,receipt,result.data.error);
+          return json({error:result.data.error},{status:409});
+        }
+        const updated = result?.data?.work_order || await WorkOrder.get(id);
+        await markMechanicReceiptApplied(Receipt,receipt,updated,false);
+        return json({success:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(updated)});
+      } catch (error) {
+        const fresh = await WorkOrder.get(id).catch(()=>null);
+        if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
+          await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
+          return json({success:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+        }
+        await failMechanicReceipt(Receipt,receipt,error);
+        throw error;
+      }
     }
 
     return json({error:'Unsupported mechanic portal action.'},{status:400});
