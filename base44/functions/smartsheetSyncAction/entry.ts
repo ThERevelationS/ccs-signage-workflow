@@ -679,11 +679,14 @@ async function pullDataset(
 
   // Hybrid update strategy:
   // 1. bulkUpdate business fields without claiming sync completion.
-  // 2. Order-only date/text repairs run before metadata advancement.
+  // 2. Sales business fields are re-read and canonically verified; Order-only
+  //    date/text repairs run before metadata advancement.
   // 3. Sales and Order snapshot/timestamp metadata is written separately and
   //    read back before the pull can be treated as verified.
   const snapshotUpdates: any[] = [...salesPendingSnapshotRepairs, ...salesSnapshotOnlyUpdates];
   const orderDateVerifications: any[] = [];
+  const salesBusinessVerifications: any[] = [];
+  const salesBusinessWriteFailureIds: string[] = [];
   const bulkBatchSize = 100;
   for (let i = 0; i < toUpdate.length; i += bulkBatchSize) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
@@ -694,7 +697,7 @@ async function pullDataset(
     });
     try {
       await base44.asServiceRole.entities[entityName].bulkUpdate(payload);
-      updatedCount += payload.length;
+      if (dataset === 'orders') updatedCount += payload.length;
       for (const rec of batch) {
         if (rec._existing) {
           const { id, _existing, _remoteSnapshot, _salesAssigneeNeedsReview, ...fields } = rec;
@@ -705,15 +708,76 @@ async function pullDataset(
               orderDateVerifications.push({ id, previous: _existing, changes, snapshot });
             } else snapshotUpdates.push({ id, smartsheet_sync_snapshot: snapshot,
               smartsheet_last_synced_at: new Date().toISOString() });
-          } else snapshotUpdates.push({
-            id,
-            smartsheet_sync_snapshot: snapshot,
-            ...(_salesAssigneeNeedsReview ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
-          });
+          } else {
+            const expectedParentRowId = cleanText(fields?.smartsheet_parent_row_id, 40);
+            const expectedFields = { ...fields };
+            delete expectedFields.smartsheet_parent_row_id;
+            delete expectedFields.smartsheet_last_synced_at;
+            salesBusinessVerifications.push({
+              id,
+              expectedFields,
+              expectedParentRowId,
+              snapshot,
+              salesAssigneeNeedsReview: Boolean(_salesAssigneeNeedsReview),
+            });
+          }
         }
       }
     } catch (err: any) {
       errors.push(`Bulk update batch ${Math.floor(i / bulkBatchSize) + 1}: ${err?.message || 'unknown error'}`);
+    }
+  }
+
+  // Sales pull must verify the actual WorkOrder business fields before it can
+  // count an update or advance snapshot/timestamp metadata. Base44 bulkUpdate
+  // has previously acknowledged writes while silently omitting fields.
+  if (dataset === 'sales' && salesBusinessVerifications.length) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    try {
+      const verifiedSalesRows = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.WorkOrder,
+        query: { smartsheet_sheet_id: sheetId },
+        sort: 'id',
+        label: 'Sales pull business-field verification',
+      });
+      const verifiedSalesById = new Map(
+        verifiedSalesRows
+          .filter((record: any) => !record?.deleted && record?.id)
+          .map((record: any) => [String(record.id), record]),
+      );
+      for (const item of salesBusinessVerifications) {
+        const persisted = verifiedSalesById.get(String(item.id));
+        const businessFieldsVerified = Boolean(
+          persisted && salesPulledFieldsUnchanged(persisted, item.expectedFields),
+        );
+        const parentRowVerified = Boolean(
+          persisted &&
+          cleanText(persisted?.smartsheet_parent_row_id, 40) === item.expectedParentRowId
+        );
+        if (!businessFieldsVerified || !parentRowVerified) {
+          salesBusinessWriteFailureIds.push(String(item.id));
+          errors.push(
+            `Sales ${item.id} business-field read-back did not match the pulled Smartsheet row. ` +
+            `Snapshot/timestamp not advanced; review before treating this pull as complete.`
+          );
+          continue;
+        }
+        updatedCount++;
+        snapshotUpdates.push({
+          id: item.id,
+          smartsheet_sync_snapshot: item.snapshot,
+          ...(item.salesAssigneeNeedsReview ? {} : { smartsheet_last_synced_at: new Date().toISOString() }),
+        });
+      }
+    } catch (error: any) {
+      salesBusinessWriteFailureIds.push(
+        ...salesBusinessVerifications.map((item: any) => String(item.id)),
+      );
+      errors.push(
+        `Sales business-field read-back could not verify ${salesBusinessVerifications.length} records. ` +
+        `Snapshot/timestamp not advanced; review before treating this pull as complete: ` +
+        `${error?.message || 'unknown error'}`
+      );
     }
   }
 
@@ -903,6 +967,8 @@ async function pullDataset(
       assignee_translation_samples: salesAssigneeTranslationIssues.slice(0, 20),
       local_pending_preserved: salesLocalPendingPreserved.length,
       local_pending_record_ids: salesLocalPendingPreserved.slice(0, 20),
+      business_field_write_failures: salesBusinessWriteFailureIds.length,
+      business_field_write_failure_ids: salesBusinessWriteFailureIds.slice(0, 20),
       snapshot_write_failures: snapshotWriteFailures,
       snapshot_review_required: salesPullBaselineReviewRequired.length,
       snapshot_review_record_ids: salesPullBaselineReviewRequired.slice(0, 20),
