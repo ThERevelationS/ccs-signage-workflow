@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import {
   SALES_SYNC_ALLOWED_FIELDS,
   filterSalesColumnBindings,
@@ -160,6 +161,9 @@ assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'push', conflicts:
   'A Sales push conflict must show needs_review.');
 assert(salesRunRequiresReview([{ dataset: 'sales', direction: 'push', errors: 2 }]),
   'Sales push errors must show needs_review.');
+const syncBackend = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts', import.meta.url), 'utf8');
+assert(/if \(records\.length > massLimit\)[\s\S]{0,180}?dataset,[\s\S]{0,80}?direction: 'push',[\s\S]{0,80}?skipped: true/.test(syncBackend),
+  'The Sales mass-change hard stop must remain an attempted push so the coordinator reports needs_review.');
 assert(!salesRunRequiresReview([{ dataset: 'sales', skipped: true, reason: 'Mirror disabled' }]),
   'Intentionally disabled Sales must not appear as an attempted sync failure.');
 assert(!salesRunRequiresReview([{ dataset: 'orders', direction: 'push', skipped: true }]),
