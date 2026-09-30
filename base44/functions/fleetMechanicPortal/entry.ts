@@ -617,6 +617,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'start') {
+      const note = clean(body?.note,1200);
+      const mechanicLine = note ? `[Mechanic – ${grant.name} – ${new Date().toLocaleString('en-US',{timeZone:'America/New_York'})} ET]\n${note}` : '';
       const claim = await claimMechanicReceipt(Receipt,{
         operation_key:mechanicMutation.operationKey,
         operation_type:mechanicMutation.operationType,
@@ -624,7 +626,10 @@ Deno.serve(async (req) => {
         target_id:id,
         actor_user_id:String(grant.id || ''),
         payload_fingerprint:mechanicMutation.fingerprint,
-        result_summary:{grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'start',expected_updated_date:expected},
+        result_summary:{
+          grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'start',expected_updated_date:expected,
+          mutation_plan:{started_date:current.started_date || todayEastern(),appended_note:mechanicLine},
+        },
       });
       if (!claim.owner) {
         if (String(claim.receipt?.payload_fingerprint || '') !== mechanicMutation.fingerprint) return json({error:'This mechanic request id is already bound to different start data.'},{status:409});
@@ -638,13 +643,10 @@ Deno.serve(async (req) => {
       }
       const receipt = claim.receipt;
       try {
-        const note = clean(body?.note,1200);
-        const mechanicLine = note ? `[Mechanic – ${grant.name} – ${new Date().toLocaleString('en-US',{timeZone:'America/New_York'})} ET]\n${note}` : '';
-        const notes = [current.notes,mechanicLine].filter(Boolean).join('\n\n');
-        const appliedAt = nowIso();
+        const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
+        if (!recovery.recoverable) throw new Error('Mechanic start recovery plan could not be constructed safely.');
         const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
-          action:'update', id, expected_updated_date:expected,
-          work_order:{status:'in_progress',started_date:current.started_date || todayEastern(),notes,mechanic_operation_key:mechanicMutation.operationKey,mechanic_operation_fingerprint:mechanicMutation.fingerprint,mechanic_operation_applied_at:appliedAt},
+          action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
         if (result?.data?.error) {
           await failMechanicReceipt(Receipt,receipt,result.data.error);
@@ -672,6 +674,10 @@ Deno.serve(async (req) => {
       const mechanicNote = clean(body?.mechanic_note,2000);
       const decoded = decodePhotos(body?.photos);
       if (decoded.error) return json({error:decoded.error},{status:400});
+      const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
+      const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
+      const priorFailed = decoded.photos.length ? await Receipt.filter({target_entity:'FleetMaintenanceWorkOrder',target_id:id,status:'failed',operation_type:'mechanic_progress_save'}) : [];
+      const reusable = selectReusableMechanicUploads(priorFailed || [],mechanicMutation.fingerprint,decoded.photos.length);
       const claim = await claimMechanicReceipt(Receipt,{
         operation_key:mechanicMutation.operationKey,
         operation_type:mechanicMutation.operationType,
@@ -679,29 +685,31 @@ Deno.serve(async (req) => {
         target_id:id,
         actor_user_id:String(grant.id || ''),
         payload_fingerprint:mechanicMutation.fingerprint,
-        result_summary:{grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'save',expected_updated_date:expected,photo_count:decoded.photos.length},
+        result_summary:{
+          grant_id:grant.id || '',mechanic_name:clean(grant.name,80),request_id:mechanicMutation.requestId,action:'save',expected_updated_date:expected,photo_count:decoded.photos.length,
+          uploaded_photo_urls:[...reusable.urls],reused_upload_receipt_id:reusable.receipt_id || '',reused_upload_operation_key:reusable.operation_key || '',
+          mutation_plan:{actual_hours:actualHours,corrective_action:correctiveAction,appended_note:appended},
+        },
       });
       if (!claim.owner) {
         if (String(claim.receipt?.payload_fingerprint || '') !== mechanicMutation.fingerprint) return json({error:'This mechanic request id is already bound to different progress data.'},{status:409});
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
+          await resolveReusedUploadReceipt(Receipt,claim.receipt);
           return json({success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
         }
         if (claim.receipt?.status === 'applied') return json({success:true,reused:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh || current)});
         return json({error:'This mechanic progress request is already in progress. Check current server state before retrying.'},{status:409});
       }
-      const receipt = claim.receipt;
+      let receipt = claim.receipt;
       try {
-        const uploaded = decoded.photos.length ? await uploadPhotos(base44,decoded.photos) : [];
-        const stamp = new Date().toLocaleString('en-US',{timeZone:'America/New_York'});
-        const appended = mechanicNote ? `[Mechanic – ${grant.name} – ${stamp} ET]\n${mechanicNote}` : '';
-        const notes = [current.notes,appended].filter(Boolean).join('\n\n');
-        const afterPhotos = [...(Array.isArray(current.after_photos)?current.after_photos:[]),...uploaded];
-        const appliedAt = nowIso();
+        const upload = await uploadPhotos(base44,Receipt,receipt,decoded.photos,reusable.urls);
+        receipt = upload.receipt;
+        const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
+        if (!recovery.recoverable) throw new Error('Mechanic progress recovery plan could not be constructed safely.');
         const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
-          action:'update', id, expected_updated_date:expected,
-          work_order:{actual_hours:actualHours,corrective_action:correctiveAction,notes,after_photos:afterPhotos,mechanic_operation_key:mechanicMutation.operationKey,mechanic_operation_fingerprint:mechanicMutation.fingerprint,mechanic_operation_applied_at:appliedAt},
+          action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
         if (result?.data?.error) {
           await failMechanicReceipt(Receipt,receipt,result.data.error);
@@ -709,11 +717,13 @@ Deno.serve(async (req) => {
         }
         const updated = result?.data?.work_order || await WorkOrder.get(id);
         await markMechanicReceiptApplied(Receipt,receipt,updated,false);
+        await resolveReusedUploadReceipt(Receipt,receipt);
         return json({success:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(updated)});
       } catch (error) {
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
+          await resolveReusedUploadReceipt(Receipt,receipt);
           return json({success:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
         }
         await failMechanicReceipt(Receipt,receipt,error);
