@@ -1766,8 +1766,9 @@ Deno.serve(async (req) => {
           error: `${workOrderIds.length} saved Sales WorkOrders exceed the ${saveSyncLimit}-record Save & Sync safety limit.` }, { status: 400 });
       }
 
-      await saveSyncStatus(base44, {
-        status: 'running', started_at: new Date().toISOString(), action,
+      const startedAt = new Date().toISOString();
+      await claimSyncRun(base44, {
+        status: 'running', started_at: startedAt, action,
         total_steps: 1, completed_steps: 0, current_step_label: 'Sales Pipeline → Smartsheet',
         requested_work_order_ids: workOrderIds, requested_by: cleanText(adminActor?.email, 320), results: [],
       });
@@ -1775,15 +1776,16 @@ Deno.serve(async (req) => {
       const pushResult = await pushDataset(base44, token, 'sales', profile, config, {
         recordIds: workOrderIds,
         respectSalesCreateSetting: true,
+        assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt),
       });
       const result = { ...pushResult, dataset: 'sales', direction: 'push' };
       const needsReview = salesRunRequiresReview([result]);
-      await saveSyncStatus(base44, {
+      await saveSyncStatusForRun(base44, {
         status: needsReview ? 'needs_review' : 'completed', needs_review: needsReview,
         completed_at: new Date().toISOString(), total_steps: 1, completed_steps: 1,
         current_step_label: '', requested_work_order_ids: workOrderIds,
         requested_by: cleanText(adminActor?.email, 320), results: [result],
-      });
+      }, startedAt);
       return Response.json({
         success: true, configured: true, write_actions_available: true,
         sync_complete: !needsReview, needs_review: needsReview, results: [result],
