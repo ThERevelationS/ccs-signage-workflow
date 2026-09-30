@@ -60,6 +60,18 @@ const args = () => {
     ['read', 'read', 'version', 'upload', 'readback', 'version', 'log']);
   console.log('PASS paginated sheet preserves complete raw row, contact, column and permanent-ID data; Drive readback and final sheet version precede successful log');
 }
+{
+  const setup = args();
+  const artifact = await createVerifiedOrderSheetBackup({...setup.options, dataset: 'sales'});
+  assert.match(artifact.filename, /^CCS_SalesPipeline_4963691473987460_pre_sync_/);
+  const parsed = JSON.parse(setup.getContent());
+  assert.equal(parsed.format, 'ccs-sales-pipeline-smartsheet-prewrite-v1');
+  assert.equal(parsed.rows.length, 3);
+  assert.equal(parsed.sheet_id, SHEET);
+  assert.deepEqual(setup.calls.map(([kind])=>kind),
+    ['read', 'read', 'version', 'upload', 'readback', 'version', 'log']);
+  console.log('PASS Sales uses the same complete paginated, persisted, byte-read-back-verified backup primitive with a distinct recoverable artifact identity');
+}
 
 async function fails(label, alter, matching, expectedLastStep) {
   const setup = args();
@@ -111,9 +123,9 @@ console.log('PASS wrong sheet, incomplete/moving sheet, duplicate IDs, malformed
   assert.equal(setup.calls.length,0);
 }
 const backend = readFileSync(new URL('../base44/functions/smartsheetSyncAction/entry.ts',import.meta.url),'utf8');
-const orderBranch = backend.slice(backend.indexOf("if (dataset === 'orders' && globalConfig?.backup_before_write)"),
+const orderBranch = backend.slice(backend.indexOf("if ((dataset === 'orders' || dataset === 'sales') && globalConfig?.backup_before_write)"),
   backend.indexOf("else if (dataset === 'sales' && globalConfig?.backup_before_write)"));
-assert.match(orderBranch, /createVerifiedOrderSheetBackup/);
+assert.match(orderBranch, /createVerifiedOrderSheetBackup\(\{[\s\S]*?dataset,/);
 assert.match(orderBranch, /connectors\.getConnection\('googledrive'\)/);
 assert.match(orderBranch, /uploadType=multipart/);
 assert.match(orderBranch, /alt=media/);
@@ -122,4 +134,6 @@ assert.match(orderBranch, /!savedLog\?\.id/);
 assert.match(orderBranch, /skipped: true/);
 assert.match(orderBranch, /no Smartsheet rows were written/);
 assert.doesNotMatch(orderBranch, /smartsheetWrite\(|\.bulkCreate\(|\.bulkUpdate\(/);
-console.log('PASS the Order-only backend requires an actual persistent Drive artifact and verified readback before continuing to writes; legacy Sales branch untouched');
+assert.match(orderBranch, /smartsheet_\$\{dataset === 'sales' \? 'sales' : 'orders'\}_sheet_/);
+assert.match(orderBranch, /smartsheet_sales_prewrite/);
+console.log('PASS the shared Order/Sales backend requires an actual persistent Drive artifact and verified readback before continuing to writes');
