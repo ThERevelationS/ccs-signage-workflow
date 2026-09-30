@@ -1,6 +1,4 @@
 export const ORDER_BACKGROUND_SYNC_POLICY = Object.freeze({
-  mirror_enabled: true,
-  pull_enabled: true,
   push_enabled: false,
   create_base44_from_smartsheet: false,
   create_smartsheet_from_base44: false,
