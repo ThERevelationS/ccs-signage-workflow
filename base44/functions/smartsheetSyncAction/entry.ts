@@ -1418,6 +1418,7 @@ async function pushDataset(
     const existingSheetId = cleanText(record?.smartsheet_sheet_id, 40);
 
     try {
+      let salesSuccessfulWrite: 'created' | 'updated' | null = null;
       if (existingRowId && /^\d+$/.test(existingRowId) && existingSheetId === sheetId) {
         // UPDATE — conflict check first
         if (globalConfig?.backup_before_write !== false && record?.smartsheet_sync_snapshot) {
@@ -1459,7 +1460,8 @@ async function pushDataset(
             );
           }
         }
-        updated.push(record.id);
+        if (dataset === 'orders') updated.push(record.id);
+        else salesSuccessfulWrite = 'updated';
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
         // uncertain create or silently create a second row for an existing link.
@@ -1498,7 +1500,7 @@ async function pushDataset(
           smartsheet_row_id: newRowId,
           smartsheet_sheet_id: sheetId,
         });
-        created.push(record.id);
+        salesSuccessfulWrite = 'created';
       }
       // Store fresh snapshot + timestamp on the record
       const snapshot = buildSnapshot(record, bindings, dataset);
@@ -1533,6 +1535,10 @@ async function pushDataset(
             'Sales Base44 sync metadata could not be verified after the Smartsheet write. Review this record before treating it as synchronized.'
           );
         }
+        // Count Sales success only after both the Smartsheet write/read-back
+        // and Base44 reconciliation metadata have been verified.
+        if (salesSuccessfulWrite === 'created') created.push(record.id);
+        else if (salesSuccessfulWrite === 'updated') updated.push(record.id);
       }
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
