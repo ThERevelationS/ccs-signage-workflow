@@ -337,15 +337,21 @@ function decodePhotos(raw: unknown) {
   return {photos,error:''};
 }
 
-async function uploadPhotos(base44: any, photos: Uint8Array[]) {
-  const urls: string[] = [];
-  for (const bytes of photos) {
-    const result = await base44.asServiceRole.integrations.Core.UploadFile({file:new Blob([bytes],{type:'image/jpeg'})});
+async function uploadPhotos(base44: any, Receipt: any, receipt: any, photos: Uint8Array[], initialUrls: string[] = []) {
+  const urls = [...initialUrls];
+  let currentReceipt = receipt;
+  if (urls.length > photos.length) throw new Error('Stored mechanic photo evidence is inconsistent with the current request.');
+  for (let index = urls.length; index < photos.length; index++) {
+    const result = await base44.asServiceRole.integrations.Core.UploadFile({file:new Blob([photos[index]],{type:'image/jpeg'})});
     const url = String(result?.file_url || '').trim();
     if (!/^https:\/\//i.test(url)) throw new Error('Fleet mechanic photo upload failed.');
     urls.push(url);
+    currentReceipt = await updateMechanicReceiptSummary(Receipt,currentReceipt,{
+      uploaded_photo_urls:[...urls],
+      upload_evidence_updated_at:nowIso(),
+    });
   }
-  return urls;
+  return {urls,receipt:currentReceipt};
 }
 
 Deno.serve(async (req) => {
