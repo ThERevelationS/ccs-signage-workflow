@@ -7,14 +7,15 @@ import { createSmartsheetOrderPageGuard } from './smartsheetOrderPageGuard.mjs';
 export async function createVerifiedOrderSheetBackup({
   sheetId, readPage, verifySource, upload, readBack, log,
   capturedAt = new Date().toISOString(), pageSize = 200, maxPages = 100,
-  maxBytes = 25_000_000,
+  maxBytes = 25_000_000, datasetLabel = 'Order Request',
+  filePrefix = 'CCS_OrderRequest', format = 'ccs-order-request-smartsheet-prewrite-v1',
 }) {
   const permanentSheetId = String(sheetId ?? '').trim();
   if (!/^\d+$/.test(permanentSheetId) ||
       ![readPage, verifySource, upload, readBack, log].every(fn => typeof fn === 'function')) {
     throw new Error('Order pre-write backup is missing its permanent sheet identity or a required operation.');
   }
-  const guard = createSmartsheetOrderPageGuard({ pageSize, maxPages });
+  const guard = createSmartsheetOrderPageGuard({ pageSize, maxPages, datasetLabel });
   let version = null;
   let totalRows = null;
   let columns = null;
@@ -58,13 +59,13 @@ export async function createVerifiedOrderSheetBackup({
       current.version === version && current.totalRowCount === totalRows;
   };
   if (!(await unchanged())) {
-    throw new Error('Order Request changed after backup pagination. No Smartsheet write was attempted.');
+    throw new Error(`${datasetLabel} changed after backup pagination. No Smartsheet write was attempted.`);
   }
 
   const timestamp = String(capturedAt).replace(/[:.]/g, '-');
-  const filename = `CCS_OrderRequest_${permanentSheetId}_pre_sync_${timestamp}.json`;
+  const filename = `${filePrefix}_${permanentSheetId}_pre_sync_${timestamp}.json`;
   const content = JSON.stringify({
-    format: 'ccs-order-request-smartsheet-prewrite-v1',
+    format,
     sheet_id: permanentSheetId, sheet_version: version,
     total_row_count: totalRows, captured_at: capturedAt,
     scope: 'row_and_column_data_no_attachments',
@@ -84,7 +85,7 @@ export async function createVerifiedOrderSheetBackup({
     throw new Error('Order pre-write backup readback did not match the original complete sheet snapshot.');
   }
   if (!(await unchanged())) {
-    throw new Error('Order Request changed while backup was being verified. No Smartsheet write was attempted.');
+    throw new Error(`${datasetLabel} changed while backup was being verified. No Smartsheet write was attempted.`);
   }
   // A successful log records where the actual recoverable artifact lives.
   // Failure to record the backup also blocks writes, even when upload succeeded.
