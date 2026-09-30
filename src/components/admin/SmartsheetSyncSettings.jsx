@@ -26,6 +26,7 @@ import {
   smartsheetWriteControlsLocked,
 } from "@/components/admin/smartsheetSyncSafetyModel";
 import { stableConfigString } from "@/components/admin/smartsheetConfigState.mjs";
+import { enforceOrderBackgroundSyncPolicy } from "../../../base44/shared/smartsheetOrderBackgroundPolicy.mjs";
 
 function normalizeForMatch(value) {
   return String(value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
@@ -137,7 +138,10 @@ function mergeConfig(saved = {}, { writeBackendAvailable = false } = {}) {
     orders: { ...DEFAULT_CONFIG.orders, ...(saved?.orders || {}) },
   };
   if (merged.sales) merged.sales.column_bindings = normalizeBindings(merged.sales.column_bindings);
-  if (merged.orders) merged.orders.column_bindings = normalizeBindings(merged.orders.column_bindings);
+  if (merged.orders) {
+    merged.orders.column_bindings = normalizeBindings(merged.orders.column_bindings);
+    merged.orders = enforceOrderBackgroundSyncPolicy(merged.orders);
+  }
   return enforceSmartsheetBackendSafety(merged, { writeBackendAvailable });
 }
 
@@ -243,9 +247,9 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
           ["mirror_enabled", "Enable mirror", "Master switch for this dataset."],
           ["importer_enabled", "Enable manual importer", "Admin-only spreadsheet fallback."],
           ["pull_enabled", "Pull Smartsheet → Base44", "Updates approved mapped fields only."],
-          ["push_enabled", "Push Base44 → Smartsheet", "Updates approved mapped fields only."],
-          ["create_base44_from_smartsheet", "Create in Base44 from new Smartsheet rows", "Requires client/relationship resolution."],
-          ["create_smartsheet_from_base44", "Create in Smartsheet from new Base44 rows", "Creates one linked row per Base44 record."],
+          ["push_enabled", "Push Base44 → Smartsheet", dataset === "orders" ? "Order Form background push is locked OFF. Use Save & Sync for explicit writes." : "Updates approved mapped fields only."],
+          ["create_base44_from_smartsheet", "Create in Base44 from new Smartsheet rows", dataset === "orders" ? "Order Form automatic creation is locked OFF; unlinked rows are flagged for review." : "Requires client/relationship resolution."],
+          ["create_smartsheet_from_base44", "Create in Smartsheet from new Base44 rows", dataset === "orders" ? "Order Form automatic creation is locked OFF. Save & Sync can explicitly create a row for a new Order." : "Creates one linked row per Base44 record."],
         ].map(([key, label, help]) => (
           <div key={key} className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2">
             <div>
@@ -255,7 +259,7 @@ function IntegrationCard({ title, subtitle, value, onChange, dataset, sessionTok
             <Switch
               checked={Boolean(value[key])}
               onCheckedChange={(checked) => patch({ [key]: checked })}
-              disabled={false}
+              disabled={dataset === "orders" && ["push_enabled", "create_base44_from_smartsheet", "create_smartsheet_from_base44"].includes(key)}
             />
           </div>
         ))}
