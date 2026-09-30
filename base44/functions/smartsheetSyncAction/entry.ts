@@ -1064,7 +1064,8 @@ async function assertSyncRunOwnership(base44: any, startedAt: string) {
 async function saveSyncStatusForRun(base44: any, status: any, startedAt: string) {
   try {
     const record = await loadSingleSyncStatusRecord(base44);
-    if (cleanText(record?.setting_value?.started_at, 80) !== cleanText(startedAt, 80)) return false;
+    if (record?.setting_value?.status !== 'running' ||
+        cleanText(record?.setting_value?.started_at, 80) !== cleanText(startedAt, 80)) return false;
     const value = { ...status, started_at: startedAt, updated_at: new Date().toISOString() };
     const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
       { id: record.id, setting_key: 'smartsheetSyncStatus', updated_date: record.updated_date },
@@ -2446,7 +2447,9 @@ Deno.serve(async (req) => {
                   progress_updated_at: new Date().toISOString(),
                 }, runStartedAt),
                 assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
-              } : {});
+              } : {
+                assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+              });
 
             results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);
             completedSteps++;
@@ -2483,7 +2486,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: false, error: 'Invalid Smartsheet sync action.' }, { status: 400 });
   } catch (error) {
     const status = Number((error as any)?.status || 500);
-    const safeStatus = [400, 401, 403, 429, 502, 503].includes(status) ? status : 500;
+    const safeStatus = [400, 401, 403, 409, 429, 502, 503].includes(status) ? status : 500;
     console.error('smartsheetSyncAction error:', (error as any)?.message || error);
     return Response.json({
       success: false,
