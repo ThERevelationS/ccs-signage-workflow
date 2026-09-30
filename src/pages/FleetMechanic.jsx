@@ -7,6 +7,8 @@ const fmtDate = value => value ? new Date(`${value}T12:00:00`).toLocaleDateStrin
 const blankEstimate = () => ({estimated_labor_hours:"",labor_rate:"",misc_total:"",estimated_completion_date:"",parts_estimate:[],fluids_estimate:[],notes:""});
 const estimateSeed = row => row?.visibility === "mechanic" ? ({estimated_labor_hours:String(row.estimated_labor_hours??""),labor_rate:String(row.labor_rate??""),misc_total:String(row.misc_total??""),estimated_completion_date:row.estimated_completion_date||"",parts_estimate:(row.parts_estimate||[]).map(line=>({...line,quantity:String(line.quantity??""),estimated_cost:String(line.estimated_cost??"")})),fluids_estimate:(row.fluids_estimate||[]).map(line=>({...line,quantity:String(line.quantity??""),estimated_cost:String(line.estimated_cost??"")})),notes:row.notes||""}) : blankEstimate();
 const estimateTotal = form => Number(form.estimated_labor_hours||0)*Number(form.labor_rate||0)+(form.parts_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+(form.fluids_estimate||[]).reduce((sum,line)=>sum+Number(line.quantity||0)*Number(line.estimated_cost||0),0)+Number(form.misc_total||0);
+const ACTIVE_WORK_STATUSES = new Set(["open","assigned","in_progress"]);
+const newMechanicRequestId = () => globalThis.crypto.randomUUID();
 
 function initialToken() {
   if (typeof window === "undefined") return "";
@@ -61,6 +63,7 @@ export default function FleetMechanic() {
   const [actionError, setActionError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const [estimateRecovery, setEstimateRecovery] = useState(null);
+  const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
   const selectedWorkOrderRef = useRef(null);
 
@@ -78,6 +81,34 @@ export default function FleetMechanic() {
       if (!current) return current;
       return all.find(row => row.id === current.id) || current;
     });
+  };
+
+  const applyWorkOrderSnapshot = workOrder => {
+    if (!workOrder?.id) return;
+    setData(current => {
+      if (!current) return current;
+      const active = ACTIVE_WORK_STATUSES.has(workOrder.status);
+      const replace = (rows, include) => {
+        const next = (rows || []).filter(row => row.id !== workOrder.id);
+        if (include) next.unshift(workOrder);
+        return next;
+      };
+      return {...current,active_work_orders:replace(current.active_work_orders,active),recent_completed:replace(current.recent_completed,!active)};
+    });
+    setSelected(current => current?.id === workOrder.id ? workOrder : current);
+  };
+
+  const clearSavedProgressDraft = workOrder => {
+    setPhotos(current => {
+      current.forEach(row => URL.revokeObjectURL(row.preview));
+      return [];
+    });
+    setForm(current => ({
+      ...current,
+      actual_hours:workOrder?.actual_hours ?? current.actual_hours,
+      corrective_action:workOrder?.corrective_action ?? current.corrective_action,
+      mechanic_note:"",
+    }));
   };
 
   const load = async (quiet = false) => {
@@ -137,18 +168,81 @@ export default function FleetMechanic() {
     }
   };
 
+  const recoverWorkMutation = async (recovery, reason = "") => {
+    if (!recovery?.workOrderId || !recovery?.requestId || !recovery?.action) return false;
+    const requestSequence = ++portalRequestRef.current;
+    const recoveryReason = reason || recovery.reason || "The mechanic update could not be confirmed.";
+    setWorkRecovery({...recovery,reason:recoveryReason});
+    setBusy("work-recovery");
+    setRefreshing(true);
+    try {
+      const {data:result} = await base44.functions.invoke("fleetMechanicPortal", {
+        action:"mutation_status",token,work_order_id:recovery.workOrderId,mutation_action:recovery.action,request_id:recovery.requestId,
+      });
+      if (result?.error) throw new Error(result.error);
+      if (requestSequence !== portalRequestRef.current) return false;
+      const fresh = result?.work_order || null;
+      if (fresh) applyWorkOrderSnapshot(fresh);
+      const isSameOpenJob = selectedWorkOrderRef.current === recovery.workOrderId;
+      if (result?.status === "applied") {
+        setWorkRecovery(null);
+        if (isSameOpenJob) {
+          if (recovery.action === "save") clearSavedProgressDraft(fresh);
+          setActionError("");
+          setSavedMessage(recovery.action === "start" ? "Work started. CCS Fleet confirmed the interrupted request." : "Progress saved. CCS Fleet confirmed the interrupted request without replaying it.");
+        }
+        return true;
+      }
+      if (result?.status === "failed" || result?.status === "not_found") {
+        setWorkRecovery(null);
+        if (isSameOpenJob) {
+          setSavedMessage("");
+          setActionError(recovery.action === "start"
+            ? `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed; review it before trying Start Work again.`
+            : `${recoveryReason} The server confirms this request was not applied. Current Fleet state was refreshed and your unsaved progress was kept for review before another save.`);
+        }
+        return false;
+      }
+      setWorkRecovery({...recovery,reason:recoveryReason});
+      if (isSameOpenJob) {
+        setSavedMessage("");
+        setActionError(`${recoveryReason} The server has not confirmed whether this request finished. Nothing was replayed. Use Check Current Server State before trying again.`);
+      }
+      return false;
+    } catch (e) {
+      if (requestSequence !== portalRequestRef.current) return false;
+      setWorkRecovery({...recovery,reason:recoveryReason});
+      if (selectedWorkOrderRef.current === recovery.workOrderId) {
+        const detail = e?.message ? ` (${e.message})` : "";
+        setSavedMessage("");
+        setActionError(`${recoveryReason} Current server state could not be verified${detail}. Nothing was replayed. Use Check Current Server State before trying again.`);
+      }
+      return false;
+    } finally {
+      if (requestSequence === portalRequestRef.current) {
+        setBusy("");
+        setRefreshing(false);
+      }
+    }
+  };
+
   const startJob = async () => {
     if (!selected) return;
+    if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before trying another work-order update."); return; }
+    const recovery = {workOrderId:selected.id,action:"start",requestId:newMechanicRequestId(),reason:"Work-start request could not be confirmed."};
     setBusy("start"); setActionError(""); setSavedMessage("");
     try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
-        action: "start", token, work_order_id: selected.id, expected_updated_date: selected.updated_date,
+        action: "start", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
       });
       if (result?.error) throw new Error(result.error);
+      if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
+      setWorkRecovery(null);
       setSavedMessage("Work started. CCS Fleet has been updated.");
-      await load(true);
-    } catch (e) { setActionError(e?.message || "Work order could not be started."); }
-    finally { setBusy(""); }
+    } catch (e) {
+      const detail = e?.message || "Work order could not be started.";
+      await recoverWorkMutation({...recovery,reason:`Work-start request could not be confirmed: ${detail}.`});
+    } finally { setBusy(""); }
   };
 
   const refreshEstimateState = async (workOrderId, reason = "", showRecoveredMessage = false) => {
@@ -228,21 +322,24 @@ export default function FleetMechanic() {
 
   const saveProgress = async () => {
     if (!selected) return;
+    if (workRecovery?.workOrderId === selected.id) { setActionError("Check the current server state before saving progress again."); return; }
+    const recovery = {workOrderId:selected.id,action:"save",requestId:newMechanicRequestId(),reason:"Progress-save request could not be confirmed."};
     setBusy("save"); setActionError(""); setSavedMessage("");
     try {
       const { data: result } = await base44.functions.invoke("fleetMechanicPortal", {
-        action: "save", token, work_order_id: selected.id, expected_updated_date: selected.updated_date,
+        action: "save", token, work_order_id: selected.id, expected_updated_date: selected.updated_date, request_id:recovery.requestId,
         actual_hours: form.actual_hours, corrective_action: form.corrective_action, mechanic_note: form.mechanic_note,
         photos: photos.map(({type, data}) => ({type, data})),
       });
       if (result?.error) throw new Error(result.error);
+      if (result?.work_order) applyWorkOrderSnapshot(result.work_order);
+      setWorkRecovery(null);
       setSavedMessage("Progress saved to CCS Fleet.");
-      photos.forEach(row => URL.revokeObjectURL(row.preview));
-      setPhotos([]);
-      setForm(prev => ({...prev, mechanic_note:""}));
-      await load(true);
-    } catch (e) { setActionError(e?.message || "Progress could not be saved."); }
-    finally { setBusy(""); }
+      clearSavedProgressDraft(result?.work_order || selected);
+    } catch (e) {
+      const detail = e?.message || "Progress could not be saved.";
+      await recoverWorkMutation({...recovery,reason:`Progress-save request could not be confirmed: ${detail}.`});
+    } finally { setBusy(""); }
   };
 
   if (loading) return <Standalone><div className="min-h-[70vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div></Standalone>;
