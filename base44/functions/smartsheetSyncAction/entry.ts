@@ -8,7 +8,7 @@ import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill
 import { canonicalBase44SalesAssignee } from '../../shared/smartsheetSalesAssigneeTranslation.mjs';
 import { hasMeaningfulSmartsheetSalesCustomer } from '../../shared/smartsheetSalesImportEligibility.mjs';
 import { createSmartsheetOrderPageGuard } from '../../shared/smartsheetOrderPageGuard.mjs';
-import { createVerifiedOrderSheetBackup, createVerifiedSalesSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
+import { createVerifiedOrderSheetBackup } from '../../shared/smartsheetOrderPrewriteBackup.mjs';
 import { summarizeOrderBackupReadiness } from '../../shared/smartsheetOrderBackupReadiness.mjs';
 import { isValidContactEmail, sharedOrderRequestorColumnId } from '../../shared/smartsheetOrderContact.mjs';
 import { auditOrderRequestorContacts } from '../../shared/smartsheetOrderContactAudit.mjs';
