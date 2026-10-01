@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Final Plat application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/FinalPlat.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Final Plat",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 96429,
+  "sha256": "29eef2919d174153bc5f4e663ee91a443203a2a5c88476f1f09430de2e6aa0ae",
+  "lastModified": "Fri, 06 Sep 2024 15:17:53 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/final-plat-2026-10-01.pdf",
+  "purpose": "current_final_plat_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links FinalPlat.pdf under the label Final Plat, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Final Plat is required, which developments, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
