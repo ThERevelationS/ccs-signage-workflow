@@ -1,0 +1,90 @@
+{
+  "name": "FieldAudit",
+  "type": "object",
+  "properties": {
+    "event_key": {
+      "type": "string"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "WorkOrder",
+        "Order"
+      ]
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "field_name": {
+      "type": "string"
+    },
+    "old_value": {
+      "type": "string"
+    },
+    "new_value": {
+      "type": "string"
+    },
+    "value_hash": {
+      "type": "string"
+    },
+    "modified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "app",
+        "smartsheet",
+        "admin"
+      ]
+    },
+    "actor_name": {
+      "type": "string"
+    },
+    "actor_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "committed",
+        "aborted"
+      ]
+    },
+    "preview_truncated": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "event_key",
+    "entity_type",
+    "entity_id",
+    "field_name",
+    "source",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
