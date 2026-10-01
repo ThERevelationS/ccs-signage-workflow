@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Preliminary Plat application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/PreliminaryPlat.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Preliminary Plat",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 111218,
+  "sha256": "d202dee95cd274a676b247cf2fb6d4e860c6e0e6a1f8e222c58a7acd8057c231",
+  "lastModified": "Fri, 06 Sep 2024 15:17:56 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/preliminary-plat-2026-10-01.pdf",
+  "purpose": "current_preliminary_plat_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links PreliminaryPlat.pdf under the label Preliminary Plat, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Preliminary Plat is required, which developments, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
