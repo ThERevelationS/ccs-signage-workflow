@@ -1,0 +1,112 @@
+{
+  "name": "SyncConflict",
+  "type": "object",
+  "properties": {
+    "conflict_key": {
+      "type": "string"
+    },
+    "dataset": {
+      "type": "string",
+      "enum": [
+        "sales",
+        "orders"
+      ]
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "record_label": {
+      "type": "string"
+    },
+    "field_name": {
+      "type": "string"
+    },
+    "field_label": {
+      "type": "string"
+    },
+    "sheet_id": {
+      "type": "string"
+    },
+    "row_id": {
+      "type": "string"
+    },
+    "column_id": {
+      "type": "string"
+    },
+    "local_value": {
+      "type": "string"
+    },
+    "remote_value": {
+      "type": "string"
+    },
+    "baseline_value": {
+      "type": "string"
+    },
+    "local_modified_at": {
+      "type": "string"
+    },
+    "remote_modified_at": {
+      "type": "string"
+    },
+    "local_version": {
+      "type": "string"
+    },
+    "remote_version": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "approved",
+        "resolved",
+        "superseded"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "app",
+        "smartsheet"
+      ]
+    },
+    "resolved_by": {
+      "type": "string"
+    },
+    "resolved_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "conflict_key",
+    "dataset",
+    "entity_id",
+    "field_name",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

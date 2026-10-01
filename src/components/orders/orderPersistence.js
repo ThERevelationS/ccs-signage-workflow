@@ -1,3 +1,4 @@
+import { saveTrackedFields } from '@/components/shared/trackedFieldPersistence';
 import {
   deleteEntityIfUnchanged,
   expectedEntityFields,
@@ -134,15 +135,9 @@ export async function replaceOrderFieldsIfUnchanged({
   if (!recordId) throw new Error(`${label} is missing its Order id.`);
   if (fullVersion) requireLoadedOrderVersion(order, label);
 
-  return replaceEntityFieldsIfUnchanged({
-    entity,
-    id: recordId,
-    expectedUpdatedAt: fullVersion ? order.updated_date : "",
-    expectedFields: expectedFields || expectedOrderFields(order, nextFields),
-    nextFields,
-    guardFields,
-    label,
-  });
+  // Trash transitions retain the existing protected lifecycle path.
+  if (Object.prototype.hasOwnProperty.call(nextFields, 'deleted')) return replaceEntityFieldsIfUnchanged({entity,id:recordId,expectedUpdatedAt:fullVersion?order.updated_date:'',expectedFields:expectedFields||expectedOrderFields(order,nextFields),nextFields,guardFields,label});
+  return saveTrackedFields({entityType:'Order',id:recordId,expectedVersion:fullVersion?order.updated_date:'',expectedFields:expectedFields||expectedOrderFields(order,nextFields),nextFields,guardFields});
 }
 
 export async function softDeleteOrderFromLoadedSnapshot({
