@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Waiver of Requirements application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/WaiverofRequirements.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Waiver of Requirements",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 97026,
+  "sha256": "9f85eff75d8f8f37c365c8298902b91339b0f67f317d214f2a1e73978035f268",
+  "lastModified": "Fri, 06 Sep 2024 15:17:53 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/waiver-of-requirements-2026-10-01.pdf",
+  "purpose": "current_waiver_of_requirements_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links WaiverofRequirements.pdf under the label Waiver of Requirements, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish which requirements may be waived, who qualifies, the approval standard, which parcels or jurisdictions it applies to, every fee or submission step, or applicability to a particular sign project. No waiver availability or sign-project exception should be inferred from this source without additional current official evidence or staff review."
+}
