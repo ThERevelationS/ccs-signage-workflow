@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Conveyance Plat application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ConveyancePlat.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Conveyance Plat",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 148246,
+  "sha256": "f059307b7640b6704a4b619dca4d79000acd9dd2133788b2c78e0e1a1cf22af2",
+  "lastModified": "Fri, 06 Sep 2024 15:18:39 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/conveyance-plat-2026-10-01.pdf",
+  "purpose": "current_conveyance_plat_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links ConveyancePlat.pdf under the label Conveyance Plat, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Conveyance Plat is required, which property transactions, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
