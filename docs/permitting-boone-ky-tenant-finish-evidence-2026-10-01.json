@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Tenant Finish application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TenantFinish.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Tenant Finish",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 93516,
+  "sha256": "f3201126e030d73fdf3da59c6f6c0176d0f637547202599732b4d164ddd7b552",
+  "lastModified": "Fri, 06 Sep 2024 15:17:53 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/tenant-finish-2026-10-01.pdf",
+  "purpose": "current_tenant_finish_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links TenantFinish.pdf under the label Tenant Finish, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Tenant Finish application is required, which addresses or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
