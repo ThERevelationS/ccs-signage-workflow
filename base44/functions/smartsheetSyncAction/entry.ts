@@ -1272,16 +1272,26 @@ async function pushDataset(
   // snapshots. Legacy snapshots can predate the Est / Inv # mapping, and
   // treating a newly mapped field as locally authoritative could overwrite
   // working Smartsheet values. Reconcile these links through reviewed pull first.
-  const snapshotReviewRecords = dataset === 'sales'
+  let snapshotReviewRecords = dataset === 'sales'
     ? records.filter((record: any) =>
         salesPushSnapshotNeedsReview(record, sheetId, buildSnapshot(record, bindings, 'sales')))
     : [];
+  const { findMissingSalesLinks } = await import('../../shared/smartsheetSalesMissingRows.ts');
+  const missingSalesRows = await findMissingSalesLinks(snapshotReviewRecords, sheetId, bindings,
+    async (path: string) => (await smartsheetGet(path, token)).body, verifiedSalesPreviewColumn);
+  records = records.filter((record: any) => !missingSalesRows.has(String(record.id)));
+  snapshotReviewRecords = snapshotReviewRecords.filter((record: any) => !missingSalesRows.has(String(record.id)));
+  const preservedSalesReview = missingSalesRows.size ? {
+    missing_remote_rows_preserved: missingSalesRows.size,
+    missing_remote_record_ids: [...missingSalesRows].slice(0, 20),
+    review_message: `${missingSalesRows.size} Sales records point to rows no longer present in Smartsheet. Local records were preserved; other verified records can sync.`,
+  } : {};
   if (snapshotReviewRecords.length > 0) {
     return {
       dataset, direction: 'push', sheet_id: sheetId, skipped: true,
       reason: `${snapshotReviewRecords.length} linked Sales records have missing or outdated sync snapshots. Review and reconcile before Sales push. No rows were written.`,
       records_examined: records.length,
-      snapshot_review_required: snapshotReviewRecords.length,
+      snapshot_review_required: snapshotReviewRecords.length, ...preservedSalesReview,
       created: 0, updated: 0, unchanged_skipped: 0, conflicts: 0, errors: 0,
       error_details: [], conflict_record_ids: [],
     };
@@ -1297,7 +1307,7 @@ async function pushDataset(
       : records;
   const unchangedSkipped = records.length - pendingRecords.length;
   if (dataset === 'sales' && pendingRecords.length === 0) {
-    return { dataset, sheet_id: sheetId, records_examined: records.length,
+    return { dataset, direction: 'push', sheet_id: sheetId, records_examined: records.length, ...preservedSalesReview,
       created: 0, updated: 0, unchanged_skipped: unchangedSkipped,
       conflicts: 0, errors: 0, error_details: [], conflict_record_ids: [] };
   }
@@ -1495,7 +1505,7 @@ async function pushDataset(
         // UPDATE — conflict check first
         if (globalConfig?.backup_before_write !== false && record?.smartsheet_sync_snapshot) {
           const rowResult = await smartsheetGet(
-            `/sheets/${sheetId}/rows?rowIds=${existingRowId}&columnIds=${cells.map((c) => c.columnId).join(',')}&exclude=nonexistentCells`,
+            `/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}&exclude=nonexistentCells`,
             token,
           );
           const sheetRows = normalizeSheetRows(rowResult.body);
@@ -1511,7 +1521,7 @@ async function pushDataset(
         }]);
         if (dataset === 'sales') {
           const verifyResult = await smartsheetGet(
-            `/sheets/${sheetId}/rows?rowIds=${existingRowId}&columnIds=${cells.map((c) => c.columnId).join(',')}&exclude=nonexistentCells`,
+            `/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}&exclude=nonexistentCells`,
             token,
           );
           const verifiedRows = normalizeSheetRows(verifyResult.body);
@@ -1652,7 +1662,7 @@ async function pushDataset(
     direction: 'push',
     sheet_id: sheetId,
     records_examined: records.length,
-    created: created.length,
+    created: created.length, ...preservedSalesReview,
     updated: updated.length,
     ...((dataset === 'sales' || dataset === 'orders') ? { unchanged_skipped: unchangedSkipped } : {}),
     conflicts: conflicts.length,
@@ -1673,7 +1683,7 @@ async function pushDataset(
   };
 }
 
-Deno.serve(async (req) => {
+export default async function(req: Request): Promise<Response> {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
@@ -1697,7 +1707,9 @@ Deno.serve(async (req) => {
       }
       adminActor = actor;
     } else if (!scheduledRun) {
-      return Response.json({ success: false, error: 'Admin session or verified scheduled workflow is required.' }, { status: 403 });
+      const platformActor = await base44.auth.me().catch(() => null);
+      if (platformActor?.role !== 'admin') return Response.json({ success: false, error: 'Admin session or verified scheduled workflow is required.' }, { status: 403 });
+      adminActor = platformActor;
     }
 
     if (action === 'status') {
@@ -2290,140 +2302,9 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'debug_dates') {
-      // Diagnostic: fetch raw Smartsheet cells for date columns and compare with Base44.
+      const { smartsheetDateDiagnostic } = await import('../../shared/smartsheetDateDiagnostic.ts');
       const { config } = await loadSyncConfig(base44);
-      if (!config) {
-        return Response.json({ success: false, error: 'No sync config.' }, { status: 400 });
-      }
-      const profile = config?.orders || {};
-      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
-      const bindings = profile?.column_bindings || {};
-      const dateOrderedCol = String(bindings?.date_ordered || '').trim();
-      const dateReceivedCol = String(bindings?.date_received || '').trim();
-      const columnIds = [dateOrderedCol, dateReceivedCol].filter((id: string) => /^\d+$/.test(id));
-      if (!columnIds.length) {
-        return Response.json({ success: false, error: 'No date column bindings.' }, { status: 400 });
-      }
-      // Fetch all rows with only the date columns
-      const allRows: any[] = [];
-      let page = 1;
-      const pageSize = 200;
-      let totalRowCount = 0;
-      while (page <= 100) {
-        const params = new URLSearchParams({
-          page: String(page),
-          pageSize: String(pageSize),
-          columnIds: columnIds.join(','),
-          exclude: 'nonexistentCells',
-        });
-        const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
-        const rows = normalizeSheetRows(result.body);
-        if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
-        allRows.push(...rows);
-        if (allRows.length >= totalRowCount || rows.length === 0) break;
-        page++;
-      }
-      // Load Base44 records (non-deleted only)
-      const rawRecords = await base44.asServiceRole.entities.Order.filter({ smartsheet_sheet_id: sheetId }, '-updated_date', 5000);
-      const existingRecords = (Array.isArray(rawRecords) ? rawRecords : []).filter((r: any) => !r?.deleted);
-      const recordsByRowId: Record<string, any> = {};
-      for (const rec of existingRecords) {
-        const rowId = cleanText(rec?.smartsheet_row_id, 40);
-        if (rowId) recordsByRowId[rowId] = rec;
-      }
-      // Compare
-      const parseDate = (v: any) => {
-        const raw = String(v ?? '').trim();
-        if (!raw) return null;
-        const d = new Date(raw);
-        if (Number.isNaN(d.getTime())) return null;
-        return d.toISOString().slice(0, 10);
-      };
-      const discrepancies: any[] = [];
-      let ssHasOrderedB44Missing = 0;
-      let ssHasReceivedB44Missing = 0;
-      let matchedCount = 0;
-      let unmatchedCount = 0;
-      let b44HasReceivedButSsMissing = 0;
-      for (const row of allRows) {
-        const rec = recordsByRowId[row.id];
-        if (!rec) { unmatchedCount++; continue; }
-        matchedCount++;
-        const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
-        const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
-        const ssOrdered = orderedCell?.value ?? orderedCell?.display_value ?? null;
-        const ssReceived = receivedCell?.value ?? receivedCell?.display_value ?? null;
-        const ssOrderedParsed = ssOrdered ? parseDate(ssOrdered) : null;
-        const ssReceivedParsed = ssReceived ? parseDate(ssReceived) : null;
-        if (ssOrderedParsed && !rec.date_ordered) ssHasOrderedB44Missing++;
-        if (ssReceivedParsed && !rec.date_received) ssHasReceivedB44Missing++;
-        if ((ssOrderedParsed && !rec.date_ordered) || (ssReceivedParsed && !rec.date_received)) {
-          discrepancies.push({
-            row_id: row.id,
-            customer: rec.customer_name,
-            b44_ordered: rec.date_ordered,
-            b44_received: rec.date_received,
-            ss_ordered_raw: ssOrdered,
-            ss_ordered_parsed: ssOrderedParsed,
-            ss_received_raw: ssReceived,
-            ss_received_parsed: ssReceivedParsed,
-          });
-        }
-      }
-      // Also fetch ALL columns to verify the bindings point to the right columns
-      const colResult = await smartsheetGet(`/sheets/${sheetId}/columns?includeAll=true`, token);
-      const allColumns = (Array.isArray(colResult.body?.data) ? colResult.body.data : []).map((c: any) => ({
-        id: String(c?.id ?? ''),
-        title: cleanText(c?.title, 300),
-        type: cleanText(c?.type, 80),
-      })).filter((c: any) => c.id);
-      // Count how many Smartsheet rows have values in the date columns
-      let ssRowsWithOrdered = 0;
-      let ssRowsWithReceived = 0;
-      let ssRowsWithValidOrderedDate = 0;
-      let ssRowsWithValidReceivedDate = 0;
-      const nonDateValues: Record<string, string[]> = { ordered: {}, received: {} };
-      for (const row of allRows) {
-        const orderedCell = row.cells.find((c: any) => c.column_id === dateOrderedCol);
-        const receivedCell = row.cells.find((c: any) => c.column_id === dateReceivedCol);
-        const orderedRaw = orderedCell?.value ?? orderedCell?.display_value;
-        const receivedRaw = receivedCell?.value ?? receivedCell?.display_value;
-        if (orderedRaw) ssRowsWithOrdered++;
-        if (receivedRaw) ssRowsWithReceived++;
-        const orderedParsed = orderedRaw ? parseDate(orderedRaw) : null;
-        const receivedParsed = receivedRaw ? parseDate(receivedRaw) : null;
-        if (orderedParsed) ssRowsWithValidOrderedDate++;
-        if (receivedParsed) ssRowsWithValidReceivedDate++;
-        // Track non-date values
-        if (orderedRaw && !orderedParsed) {
-          const key = String(orderedRaw).slice(0, 50);
-          nonDateValues.ordered[key] = (nonDateValues.ordered[key] || 0) + 1;
-        }
-        if (receivedRaw && !receivedParsed) {
-          const key = String(receivedRaw).slice(0, 50);
-          nonDateValues.received[key] = (nonDateValues.received[key] || 0) + 1;
-        }
-      }
-      return Response.json({
-        success: true,
-        total_smartsheet_rows: allRows.length,
-        matched_count: matchedCount,
-        unmatched_count: unmatchedCount,
-        b44_records_total: existingRecords.length,
-        ss_rows_with_ordered: ssRowsWithOrdered,
-        ss_rows_with_received: ssRowsWithReceived,
-        ss_rows_with_valid_ordered_date: ssRowsWithValidOrderedDate,
-        ss_rows_with_valid_received_date: ssRowsWithValidReceivedDate,
-        non_date_values_ordered: nonDateValues.ordered,
-        non_date_values_received: nonDateValues.received,
-        ss_has_ordered_b44_missing: ssHasOrderedB44Missing,
-        ss_has_received_b44_missing: ssHasReceivedB44Missing,
-        discrepancy_count: discrepancies.length,
-        discrepancies: discrepancies.slice(0, 20),
-        bound_date_ordered_col: { id: dateOrderedCol, title: allColumns.find((c: any) => c.id === dateOrderedCol)?.title, type: allColumns.find((c: any) => c.id === dateOrderedCol)?.type },
-        bound_date_received_col: { id: dateReceivedCol, title: allColumns.find((c: any) => c.id === dateReceivedCol)?.title, type: allColumns.find((c: any) => c.id === dateReceivedCol)?.type },
-        all_date_columns: allColumns.filter((c: any) => c.type === 'DATE' || c.title?.toLowerCase().includes('date') || c.title?.toLowerCase().includes('ordered') || c.title?.toLowerCase().includes('received')),
-      });
+      return await smartsheetDateDiagnostic({ base44, config, token, smartsheetGet, normalizeSheetRows, cleanText });
     }
 
     if (action === 'run_sync' || action === 'push_dataset' || action === 'pull_dataset') {
@@ -2590,4 +2471,4 @@ Deno.serve(async (req) => {
       error: safeStatus === 500 ? 'Smartsheet request could not be completed safely.' : (error as any)?.message,
     }, { status: safeStatus });
   }
-});
+}

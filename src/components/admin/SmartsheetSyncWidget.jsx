@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { RefreshCw, Check, AlertTriangle, GitBranch, X } from "lucide-react";
 import { interpretSmartsheetSyncStatus } from "./smartsheetSyncStatusModel.js";
+import SmartsheetSyncResultDetails from "@/components/admin/SmartsheetSyncResultDetails";
 import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
@@ -279,7 +280,8 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
           <div className="px-3 py-2.5 space-y-1.5">
             {results.length > 0 ? (
               results.map((r, i) => (
-                <div key={i} className="flex items-center justify-between text-[11px]">
+                <div key={i} className="space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
                   <span className="font-medium text-gray-700 capitalize">
                     {r.dataset}
                     {r.direction && <span className="text-gray-400 ml-1">({r.direction === 'pull' ? 'SS→B44' : 'B44→SS'})</span>}
@@ -291,8 +293,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
                       {r.created > 0 && <span className="text-green-600">+{r.created}</span>}
                       {r.updated > 0 && <span className="text-blue-600">↑{r.updated}</span>}
                       {r.errors > 0 && <span className="text-red-600">!{r.errors}</span>}
+                      {!r.created && !r.updated && !r.errors && <span>No changes</span>}
                     </span>
                   )}
+                </div>
+                <SmartsheetSyncResultDetails result={r} />
                 </div>
               ))
             ) : (

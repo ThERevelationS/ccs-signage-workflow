@@ -144,6 +144,10 @@ export function buildCells(record: any, bindings: Record<string, string>, datase
     if (sharedContactId && (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (!columnId || !/^\d+$/.test(columnId)) continue;
+    // Pull intentionally does not deserialize legacy sheet notes. An empty
+    // local array is therefore not evidence that the remote notes were deleted.
+    if (dataset === 'sales' && field.key === 'notes_serialized' &&
+        (!Array.isArray(record?.work_notes) || record.work_notes.length === 0)) continue;
     const value = extractFieldValue(record, field);
     cells.push({ columnId, value });
   }
@@ -328,7 +332,11 @@ export function buildSnapshot(record: any, bindings: Record<string, string>, dat
     if (!columnId || !/^\d+$/.test(columnId)) continue;
     const optionField = dataset === 'orders' ? orderDateOptionField(field.key) : '';
     const optionValue = optionField ? cleanText(record?.[optionField], 120) : '';
-    snapshot[columnId] = optionValue || extractFieldValue(record, field);
+    const preserveRemoteNotes = dataset === 'sales' && field.key === 'notes_serialized' &&
+      (!Array.isArray(record?.work_notes) || record.work_notes.length === 0);
+    snapshot[columnId] = preserveRemoteNotes
+      ? (record?.smartsheet_sync_snapshot?.[columnId] ?? '')
+      : optionValue || extractFieldValue(record, field);
   }
   if (sharedContactId) {
     const contactCell = buildSharedOrderContactCell(record, sharedContactId);
