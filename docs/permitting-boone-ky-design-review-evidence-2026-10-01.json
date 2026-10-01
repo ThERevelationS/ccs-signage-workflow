@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Design Review application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/DesignReview.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Design Review",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 145988,
+  "sha256": "c8ebf0386a4ed903f9a498c9ba990d03098d1fc2fae433cbe415371c22bc9654",
+  "lastModified": "Fri, 06 Sep 2024 15:18:38 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/design-review-2026-10-01.pdf",
+  "purpose": "current_design_review_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links DesignReview.pdf under the label Design Review, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when Design Review is required, which projects, properties, districts, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
