@@ -1036,12 +1036,12 @@ export default function WorkOrderDetailsDialog({
                         </Badge>
                       </td>
                       <td className="px-2 py-1.5 text-gray-500">
-                        {format(new Date(note.timestamp), "M/d/yy")}
+                        {note.timestamp && Number.isFinite(Date.parse(note.timestamp)) ? format(new Date(note.timestamp), "M/d/yy") : '—'}
                       </td>
                       <td className="px-2 py-1.5 text-gray-600 text-xs">
                         {note.created_by?.split(' ')[0] || '-'}
                       </td>
-                      <td className="px-2 py-1.5 text-gray-700">
+                      <td className="px-2 py-1.5 text-gray-700 whitespace-pre-wrap break-words">
                         {note.text}
                         {note.sub_tasks && note.sub_tasks.length > 0 && (
                           <span className="text-gray-400 ml-2">({note.sub_tasks.length} sub-tasks)</span>

@@ -3,6 +3,7 @@ import { planFieldPush, recordFieldPullHolds, applyMergedLocalFields } from '../
 import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
+import { planSalesFieldPull } from '../../shared/smartsheetSalesPullPlan.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -32,6 +33,7 @@ import {
   buildSalesPullSnapshot,
   buildSnapshot,
   parseRowToFields,
+  getMappableFields,
 } from '../../shared/smartsheetSyncFields.ts';
 import {
   filterSalesColumnBindings,
@@ -280,6 +282,7 @@ function detectConflict(
 // Normalize Smartsheet text values to Base44 enum values for known enum fields.
 function normalizePullValue(fieldKey: string, value: any): any {
   if (value === null || value === undefined || value === "") return undefined;
+  if (fieldKey === 'work_notes' && Array.isArray(value)) return value;
   const str = String(value).trim();
   if (!str) return undefined;
   const lower = str.toLowerCase();
@@ -320,7 +323,7 @@ async function pullDataset(
   dataset: 'sales' | 'orders',
   profile: any,
   globalConfig: any,
-  options: { assertRunOwnership?: () => Promise<void> | void } = {},
+  options: { assertRunOwnership?: () => Promise<void> | void; recordIds?: string[] } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
   if (!/^\d+$/.test(sheetId)) {
@@ -353,6 +356,17 @@ async function pullDataset(
     });
     const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
     verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
+    if (dataset === 'sales' && page === 1) {
+      for (const field of getMappableFields('sales')) {
+        const id = String(bindings[field.key] || '');
+        if (!id) continue;
+        const column = result.body?.columns?.find(c => String(c.id) === id);
+        if (!column || (field.type === 'date' && column.type !== 'DATE') ||
+            (field.type !== 'date' && ['DATE', 'CHECKBOX'].includes(column.type))) {
+          throw new Error(`Sales ${field.label} column is missing or has an incompatible type. No Sales records were changed.`);
+        }
+      }
+    }
     const rows = normalizeSheetRows(result.body);
     const pageComplete = sheetPageGuard.accept(page, result.body, rows);
     if (page === 1) totalRowCount = Number(result.body?.totalRowCount || 0);
@@ -394,6 +408,8 @@ async function pullDataset(
     });
   }
   existingRecords = (Array.isArray(existingRecords) ? existingRecords : []).filter((r: any) => !r?.deleted);
+  const targetedIds = new Set(options.recordIds || []);
+  if (dataset === 'sales' && targetedIds.size) existingRecords = existingRecords.filter(r => targetedIds.has(r.id));
   const salesAssigneeUsers = dataset === 'sales' && /^\d+$/.test(String(bindings?.current_task_assigned_to ?? '').trim())
     ? await loadAllEntityRows({
         entity: base44.asServiceRole.entities.AuthorizedEmail,
@@ -477,6 +493,7 @@ async function pullDataset(
     if (!rowId || !/^\d+$/.test(rowId)) continue;
     if (dataset === 'orders' && duplicateOrderRowIds.has(rowId)) continue;
 
+    if (dataset === 'sales' && targetedIds.size && !recordsByRowId[rowId]) continue;
     const rawFields = parseRowToFields(row, bindings, dataset);
     let salesAssigneeTranslationUnresolved = false;
     // Normalize enum fields to valid Base44 values
@@ -541,48 +558,15 @@ async function pullDataset(
       }
     }
     if (dataset === 'sales' && existing) {
-      const priorSnapshot = existing?.smartsheet_sync_snapshot;
-      const hasVerifiedBaseline = Boolean(
-        existing?.smartsheet_last_synced_at &&
-        priorSnapshot && typeof priorSnapshot === 'object' && !Array.isArray(priorSnapshot),
-      );
-      if (!hasVerifiedBaseline) {
-        // With no trustworthy three-way baseline, do not guess whether Base44
-        // or Smartsheet is newer. Preserve the linked WorkOrder and require
-        // review instead of overwriting either side.
-        salesPullBaselineReviewRequired.push(existing.id);
-        await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
-        continue;
-      }
-
-      const expectedLocalSnapshot = buildSnapshot(existing, bindings, 'sales');
-      if (salesRecordHasLocalChangesSinceSnapshot(
-        existing,
-        expectedLocalSnapshot,
-        cleanText(bindings?.current_task_assigned_to, 40),
-      )) {
-        // Base44 changed after the last verified sync. Pull must not erase that
-        // work before push gets a chance to perform the ordinary remote conflict
-        // check. We may still seed newly-added binding columns from the actual
-        // remote row so an old snapshot does not block that safe push.
+      const plan = planSalesFieldPull(existing, fieldValues, salesRemoteSnapshot, bindings);
+      for (const key of Object.keys(fieldValues)) delete fieldValues[key];
+      Object.assign(fieldValues, plan.fields);
+      salesRemoteSnapshot = plan.snapshot;
+      if (plan.held.length) {
         salesLocalPendingPreserved.push(existing.id);
-        await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
-        const remoteSnapshot = salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings);
-        const repairedSnapshot = { ...priorSnapshot };
-        let repaired = false;
-        for (const [columnId, remoteValue] of Object.entries(remoteSnapshot)) {
-          if (!Object.prototype.hasOwnProperty.call(repairedSnapshot, columnId)) {
-            repairedSnapshot[columnId] = remoteValue;
-            repaired = true;
-          }
-        }
-        if (repaired) {
-          salesPendingSnapshotRepairs.push({
-            id: existing.id,
-            smartsheet_sync_snapshot: repairedSnapshot,
-          });
-        }
-        continue;
+        salesAssigneeTranslationUnresolved = true; // Do not advance completion while fields are held.
+        await recordFieldPullHolds({ base44, record: existing, dataset,
+          bindings: Object.fromEntries(plan.held.map(field => [field, bindings[field]])), remoteRow: row });
       }
     }
     if (dataset === 'orders' && existing?.smartsheet_pending_local_sync === true) {
@@ -2368,6 +2352,7 @@ export default async function(req: Request): Promise<Response> {
             }, runStartedAt);
             const pullResult = await pullDataset(base44, token, dataset, profile, config, {
               assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+              ...(action === 'pull_dataset' && dataset === 'sales' ? { recordIds: body.work_order_ids || [] } : {}),
             });
             results.push(dataset === 'sales' ? { ...pullResult, direction: 'pull' } : pullResult);
             completedSteps++;

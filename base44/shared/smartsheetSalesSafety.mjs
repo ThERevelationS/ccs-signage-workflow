@@ -3,9 +3,8 @@ import { hasMeaningfulSmartsheetSalesCustomer } from './smartsheetSalesImportEli
 
 // Sales Pipeline Smartsheet boundary safety.
 //
-// The live Sales Pipeline intentionally keeps most sales/workflow fields
-// Base44-only. Persisted Smartsheet config can outlive UI changes, so the
-// backend must never trust column_bindings as its write contract.
+// Only real, supported Workflow business columns participate in Sales sync.
+// Internal identifiers/history and unrelated fields remain Base44-only.
 export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
   "client_name",
   "lead_source",
@@ -13,6 +12,18 @@ export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
   "estimate_amount",
   "current_task_description",
   "current_task_assigned_to",
+  "current_task_deadline",
+  "designer",
+  "project_manager",
+  "estimator",
+  "date_initial_contact",
+  "site_survey_date",
+  "date_estimate_sent",
+  "date_order_created",
+  "project_install_date",
+  "permit_receipt_confirmed_date",
+  "permit_approved_date",
+  "permit_number",
   "notes_serialized",
 ]);
 
@@ -42,6 +53,7 @@ export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
 // Missing/old snapshots still follow the existing reconciliation path.
 export function salesPulledFieldsUnchanged(existing = {}, incoming = {}) {
   return Object.entries(incoming).every(([key, value]) => {
+    if (key === 'work_notes') return JSON.stringify(existing?.work_notes || []) === JSON.stringify(value || []);
     if (!SALES_SYNC_ALLOWED_FIELD_SET.has(key)) return false;
     const current = existing?.[key];
     if (key === "estimate_amount") {
@@ -178,8 +190,14 @@ export function salesRunRequiresReview(results = []) {
     result?.dataset === "sales" && (
       (result?.skipped === true && (result?.direction === "pull" || result?.direction === "push")) ||
       Number(result?.errors || 0) > 0 || Number(result?.conflicts || 0) > 0 ||
-      Number(result?.snapshot_review_required || 0) > 0
+      Number(result?.snapshot_review_required || 0) > 0 ||
+      Number(result?.assignee_translation_review_required || 0) > 0 ||
+      Number(result?.local_pending_preserved || 0) > 0 ||
+      Number(result?.business_field_write_failures || 0) > 0 ||
+      Number(result?.snapshot_write_failures || 0) > 0 ||
+      Number(result?.orphans_flagged_for_review || 0) > 0 ||
+      Number(result?.missing_remote_rows_preserved || 0) > 0 ||
+      Number(result?.duplicate_groups_flagged_for_review || 0) > 0
     )
   );
 }
-

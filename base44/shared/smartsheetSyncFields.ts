@@ -41,6 +41,8 @@ export const SALES_MAPPABLE_FIELDS: MappableField[] = [
   { key: "estimator", label: "Estimator", type: "text" },
   { key: "designer", label: "Designer", type: "text" },
   { key: "surveyor", label: "Surveyor", type: "text" },
+  { key: "site_survey_date", label: "Site Survey Date", type: "date" },
+  { key: "permit_receipt_confirmed_date", label: "Permit Receipt Confirmed", type: "date" },
   { key: "project_manager", label: "Project Manager", type: "text" },
   { key: "current_task_description", label: "Current Task", type: "text" },
   { key: "current_task_assigned_to", label: "Current Task Assigned To", type: "text" },
@@ -96,6 +98,8 @@ const NOTE_TYPE_LABELS: Record<string, string> = {
 export function serializeWorkNotes(workNotes: any[] = []): string {
   if (!Array.isArray(workNotes) || workNotes.length === 0) return "";
   return workNotes.map((note: any) => {
+    // Imported free-text notes have no invented author/date or added wrappers.
+    if (!note?.timestamp && note?.type === 'other' && !note?.sub_tasks?.length) return String(note?.text ?? '').trim();
     const date = dateStamp(note?.timestamp) || "undated";
     const type = NOTE_TYPE_LABELS[String(note?.type || "other")] || NOTE_TYPE_LABELS.other;
     const author = String(note?.created_by ?? "").trim() || "Unknown";
@@ -206,9 +210,7 @@ export function parseRowToFields(
         ? (cell.value != null && cell.value !== '' ? cell.value : display)
         : preferValue
           ? (cell.value != null ? cell.value : (display != null ? display : null))
-          : (dataset === 'orders' && (display === '' || display == null)
-            ? cell.value // Smartsheet sometimes omits displayValue even for populated text cells.
-            : (display != null ? display : cell.value));
+          : (display === '' || display == null ? cell.value : display);
       if (raw === null || raw === undefined || raw === "") continue;
       if (field.type === "number") {
         const num = Number(raw);
@@ -233,7 +235,7 @@ export function parseRowToFields(
           if (stamp) out[field.key] = stamp;
         }
       } else if (field.type === "notes") {
-        // Skip notes on pull — would need complex deserialization
+        out.work_notes = [{ id: Number(row.id), type: 'other', text: String(raw).trim(), sub_tasks: [] }];
       } else {
         out[field.key] = cleanText(raw);
       }
@@ -265,7 +267,7 @@ export function buildSalesPullSnapshot(
     const preferRaw = field.type === 'number' || field.type === 'date' || field.key === 'est_inv_at';
     const raw = preferRaw
       ? (cell?.value != null && cell.value !== '' ? cell.value : display)
-      : (display != null ? display : cell?.value);
+      : (display !== '' && display != null ? display : cell?.value);
 
     if (raw == null || raw === '') {
       snapshot[columnId] = field.type === 'notes' ? '' : null;
