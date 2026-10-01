@@ -11,6 +11,7 @@ export default function TimeClockManagementDashboard({
   timeEntries = [],
   employeeStates = [],
   correctionRequests = [],
+  punchExceptions = [],
   activeLaborSegments = [],
 }) {
   const now = new Date();
@@ -30,6 +31,7 @@ export default function TimeClockManagementDashboard({
   const todayHours = todayEntries.reduce((sum, entry) => sum + Number(entry.total_hours || 0), 0);
   const weekHours = weekEntries.reduce((sum, entry) => sum + Number(entry.total_hours || 0), 0);
   const pendingCorrections = correctionRequests.filter(request => ["pending", "reviewing"].includes(request.status)).length;
+  const punchReportsNeedingReview = punchExceptions.filter(row => ["open", "pending_manager_review", "rejected"].includes(row.status)).length;
   const needsReview = completedEntries.filter(entry => ["unreviewed", "needs_review"].includes(entry.approval_status || "unreviewed")).length;
 
   const clockedIn = employeeStates.filter(state => state.status === "clocked_in");
@@ -92,7 +94,7 @@ export default function TimeClockManagementDashboard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-3">
         <div className="rounded-xl border bg-white p-3">
           <p className="text-xs text-gray-500">Completed Work Today</p>
           <p className="text-xl font-bold text-gray-900">{hoursLabel(todayHours)}</p>
@@ -108,6 +110,10 @@ export default function TimeClockManagementDashboard({
         <div className={`rounded-xl border p-3 ${needsReview ? "border-amber-300 bg-amber-50" : "bg-white"}`}>
           <div className="flex items-center gap-2 text-xs text-gray-600"><CheckCircle2 className="w-3.5 h-3.5" />Shifts To Review</div>
           <p className="text-xl font-bold text-gray-900">{needsReview}</p>
+        </div>
+        <div className={`rounded-xl border p-3 ${punchReportsNeedingReview ? "border-amber-300 bg-amber-50" : "bg-white"}`}>
+          <div className="flex items-center gap-2 text-xs text-gray-600"><FileWarning className="w-3.5 h-3.5" />Punch Reports</div>
+          <p className="text-xl font-bold text-gray-900">{punchReportsNeedingReview}</p>
         </div>
       </div>
 
