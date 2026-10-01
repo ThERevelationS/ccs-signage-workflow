@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Improvement Plan application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ImprovementPlan.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Improvement Plan",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 182491,
+  "sha256": "59aa77477b84b463bc2359758555e25610c8e11d3b46fbf7443961acd3021eae",
+  "lastModified": "Fri, 06 Sep 2024 15:18:43 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/improvement-plan-2026-10-01.pdf",
+  "purpose": "current_improvement_plan_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links ImprovementPlan.pdf under the label Improvement Plan, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when an Improvement Plan is required, which projects, developments, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
