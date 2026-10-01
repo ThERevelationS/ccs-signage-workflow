@@ -4,6 +4,7 @@ import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { planSalesFieldPull } from '../../shared/smartsheetSalesPullPlan.ts';
+import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -481,6 +482,7 @@ async function pullDataset(
   const toUpdate: any[] = [];
   const salesAssigneeTranslationIssues: any[] = [];
   const salesLocalPendingPreserved: string[] = [];
+  const salesPullReviews: any[] = [];
   const salesPendingSnapshotRepairs: any[] = [];
   const salesSnapshotOnlyUpdates: any[] = [];
   const salesPullBaselineReviewRequired: string[] = [];
@@ -565,8 +567,8 @@ async function pullDataset(
       if (plan.held.length) {
         salesLocalPendingPreserved.push(existing.id);
         salesAssigneeTranslationUnresolved = true; // Do not advance completion while fields are held.
-        await recordFieldPullHolds({ base44, record: existing, dataset,
-          bindings: Object.fromEntries(plan.held.map(field => [field, bindings[field]])), remoteRow: row });
+        salesPullReviews.push(...await buildSalesPullReviews(existing,
+          Object.fromEntries(plan.held.map(field => [field, bindings[field]])), row));
       }
     }
     if (dataset === 'orders' && existing?.smartsheet_pending_local_sync === true) {
@@ -641,6 +643,17 @@ async function pullDataset(
       newRecord.smartsheet_sheet_id = sheetId;
       newRecord.smartsheet_last_synced_at = new Date().toISOString();
       toCreate.push(newRecord);
+    }
+  }
+
+  if (salesPullReviews.length) {
+    const priorReviews = await loadAllEntityRows({ entity: base44.asServiceRole.entities.SyncConflict,
+      query: { dataset: 'sales', sheet_id: sheetId }, sort: 'id', label: 'Existing Sales field reviews' });
+    const existingKeys = new Set(priorReviews.map(review => review.conflict_key));
+    const newReviews = salesPullReviews.filter(review => !existingKeys.has(review.conflict_key));
+    for (let i = 0; i < newReviews.length; i += 100) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      await base44.asServiceRole.entities.SyncConflict.upsert(newReviews.slice(i, i + 100), { key: 'conflict_key' });
     }
   }
 
@@ -771,53 +784,9 @@ async function pullDataset(
     }
   }
 
-  // Second pass: fix records where dates should exist but were dropped by bulkUpdate.
-  // Identify date fields for this dataset.
-  const dateFields = dataset === 'orders'
-    ? ['date_ordered', 'date_received', 'date_needed']
-    : ['date_initial_contact', 'date_estimate_sent', 'date_order_created', 'project_install_date',
-       'permit_submitted_date', 'permit_receipt_confirmed_date', 'permit_approved_date',
-       'follow_up_date', 'close_date', 'expected_close_date', 'site_survey_date'];
-
-  const dateFixes: any[] = [];
-  for (const rec of toUpdate) {
-    const { id, _existing, _remoteSnapshot, ...fields } = rec;
-    if (dataset === 'orders') continue; // Verified read-back replaces blind Order date fixes.
-    for (const df of dateFields) {
-      if (fields[df] && (!_existing || _existing[df] !== fields[df])) {
-        // This date should be set — queue a targeted individual update
-        dateFixes.push({ id, field: df, value: fields[df] });
-      }
-    }
-  }
-
-  // Group date fixes by record id to minimize API calls
-  const fixesByRecord: Record<string, Record<string, any>> = {};
-  for (const fix of dateFixes) {
-    if (!fixesByRecord[fix.id]) fixesByRecord[fix.id] = {};
-    fixesByRecord[fix.id][fix.field] = fix.value;
-  }
-
-  // Apply date fixes with individual update() calls, low concurrency.
-  const fixIds = Object.keys(fixesByRecord);
-  const FIX_CONCURRENCY = 3;
-  let fixApplied = 0;
-  for (let i = 0; i < fixIds.length; i += FIX_CONCURRENCY) {
-    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-    const batch = fixIds.slice(i, i + FIX_CONCURRENCY);
-    const results = await Promise.allSettled(
-      batch.map(async (rid) => {
-        await base44.asServiceRole.entities[entityName].update(rid, fixesByRecord[rid]);
-        return rid;
-      })
-    );
-    for (const r of results) {
-      if (r.status === 'fulfilled') fixApplied++;
-    }
-    if (i + FIX_CONCURRENCY < fixIds.length) {
-      await new Promise((res) => setTimeout(res, 200));
-    }
-  }
+  // Sales dates are covered by the business-field read-back above. Never
+  // blindly rewrite thousands of already verified dates individually: that
+  // exhausts rate limits and can overwrite a newer edit after verification.
 
   // Order-only read-after-write: Base44 bulkUpdate may acknowledge dates or
   // text choices that it omitted. Repair only fields whose previous value

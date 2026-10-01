@@ -53,7 +53,13 @@ export function shouldCreateSmartsheetSalesRecordInPipeline(fields = {}) {
 // Missing/old snapshots still follow the existing reconciliation path.
 export function salesPulledFieldsUnchanged(existing = {}, incoming = {}) {
   return Object.entries(incoming).every(([key, value]) => {
-    if (key === 'work_notes') return JSON.stringify(existing?.work_notes || []) === JSON.stringify(value || []);
+    if (key === 'work_notes') {
+      const normalizeNotes = notes => (notes || []).map(note => ({
+        id: note.id, type: note.type, text: note.text,
+        timestamp: note.timestamp || null, sub_tasks: note.sub_tasks || [],
+      }));
+      return JSON.stringify(normalizeNotes(existing?.work_notes)) === JSON.stringify(normalizeNotes(value));
+    }
     if (!SALES_SYNC_ALLOWED_FIELD_SET.has(key)) return false;
     const current = existing?.[key];
     if (key === "estimate_amount") {

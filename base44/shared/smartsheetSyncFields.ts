@@ -148,8 +148,8 @@ export function buildCells(record: any, bindings: Record<string, string>, datase
     if (sharedContactId && (field.key === 'requestor_name' || field.key === 'requestor_email')) continue;
     const columnId = String(bindings?.[field.key] ?? "").trim();
     if (!columnId || !/^\d+$/.test(columnId)) continue;
-    // Pull intentionally does not deserialize legacy sheet notes. An empty
-    // local array is therefore not evidence that the remote notes were deleted.
+    // An empty local array alone is not proof that remote notes were deleted.
+    // Preserve the remote text until an explicit reviewed deletion.
     if (dataset === 'sales' && field.key === 'notes_serialized' &&
         (!Array.isArray(record?.work_notes) || record.work_notes.length === 0)) continue;
     const value = extractFieldValue(record, field);
