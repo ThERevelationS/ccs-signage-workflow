@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Grading Plan application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/GradingPlan.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Grading Plan",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 141814,
+  "sha256": "ddc43c66da95643167dd1510a2b296ca3c3a0fe1f91dc76ddf06c4f4b3adc3a9",
+  "lastModified": "Fri, 06 Sep 2024 15:18:02 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/grading-plan-2026-10-01.pdf",
+  "purpose": "current_grading_plan_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links GradingPlan.pdf under the label Grading Plan, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Grading Plan is required, which projects, parcels, disturbances, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
