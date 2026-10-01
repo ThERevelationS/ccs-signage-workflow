@@ -1,4 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { planFieldPush, recordFieldPullHolds, applyMergedLocalFields } from '../../shared/smartsheetFieldMerge.ts';
+import { trackedConditionalSave } from '../../shared/fieldAudit.ts';
+import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
@@ -548,6 +551,7 @@ async function pullDataset(
         // or Smartsheet is newer. Preserve the linked WorkOrder and require
         // review instead of overwriting either side.
         salesPullBaselineReviewRequired.push(existing.id);
+        await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
         continue;
       }
 
@@ -562,6 +566,7 @@ async function pullDataset(
         // check. We may still seed newly-added binding columns from the actual
         // remote row so an old snapshot does not block that safe push.
         salesLocalPendingPreserved.push(existing.id);
+        await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
         const remoteSnapshot = salesRemoteSnapshot || buildSalesPullSnapshot(row, bindings);
         const repairedSnapshot = { ...priorSnapshot };
         let repaired = false;
@@ -585,6 +590,7 @@ async function pullDataset(
       // authoritative until Save & Sync resolves it. Never let background pull
       // overwrite it; flag the permanent Order ID for review instead.
       orderLocalPendingConflicts.push(existing.id);
+      await recordFieldPullHolds({base44,record:existing,dataset,bindings,remoteRow:row});
       continue;
     }
     if (dataset === 'orders') {
@@ -1286,16 +1292,7 @@ async function pushDataset(
     missing_remote_record_ids: [...missingSalesRows].slice(0, 20),
     review_message: `${missingSalesRows.size} Sales records point to rows no longer present in Smartsheet. Local records were preserved; other verified records can sync.`,
   } : {};
-  if (snapshotReviewRecords.length > 0) {
-    return {
-      dataset, direction: 'push', sheet_id: sheetId, skipped: true,
-      reason: `${snapshotReviewRecords.length} linked Sales records have missing or outdated sync snapshots. Review and reconcile before Sales push. No rows were written.`,
-      records_examined: records.length,
-      snapshot_review_required: snapshotReviewRecords.length, ...preservedSalesReview,
-      created: 0, updated: 0, unchanged_skipped: 0, conflicts: 0, errors: 0,
-      error_details: [], conflict_record_ids: [],
-    };
-  }
+  // Incomplete baselines are reviewed per field, never a reason to block unrelated rows.
 
   // A linked Sales record whose mapped fields still match its last snapshot
   // needs no Smartsheet write or new Base44 sync timestamp. Preserve all
@@ -1466,7 +1463,8 @@ async function pushDataset(
       break;
     }
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-    const record = pendingRecords[recordIndex];
+    let record = pendingRecords[recordIndex];
+    let fieldPlan: any = null;
     orderProcessedCount = recordIndex + 1;
     if (dataset === 'orders') {
       const rowId = cleanText(record?.smartsheet_row_id, 40);
@@ -1494,7 +1492,7 @@ async function pushDataset(
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
     if (sharedContactId && (record.requestor_name || record.requestor_email) &&
         !isValidContactEmail(record.requestor_email)) requestorContactsSkippedNoEmail++;
-    const cells = buildCells(record, bindings, dataset);
+    let cells = buildCells(record, bindings, dataset);
     if (cells.length === 0) continue;
     const existingRowId = cleanText(record?.smartsheet_row_id, 40);
     const existingSheetId = cleanText(record?.smartsheet_sheet_id, 40);
@@ -1502,46 +1500,25 @@ async function pushDataset(
     try {
       let salesSuccessfulWrite: 'created' | 'updated' | null = null;
       if (existingRowId && /^\d+$/.test(existingRowId) && existingSheetId === sheetId) {
-        // UPDATE — conflict check first
-        if (globalConfig?.backup_before_write !== false && record?.smartsheet_sync_snapshot) {
-          const rowResult = await smartsheetGet(
-            `/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}&exclude=nonexistentCells`,
-            token,
-          );
-          const sheetRows = normalizeSheetRows(rowResult.body);
-          const currentCells = sheetRows[0]?.cells || [];
-          if (detectConflict(currentCells, record.smartsheet_sync_snapshot, bindings, dataset)) {
-            conflicts.push(record.id);
-            continue;
-          }
-        }
-        await smartsheetWrite('PUT', `/sheets/${sheetId}/rows`, token, [{
-          id: existingRowId,
-          cells: cells.map((c) => ({ columnId: c.columnId, value: c.value, ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
-        }]);
-        if (dataset === 'sales') {
-          const verifyResult = await smartsheetGet(
-            `/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}&exclude=nonexistentCells`,
-            token,
-          );
-          const verifiedRows = normalizeSheetRows(verifyResult.body);
-          const verifiedRow = verifiedRows.length === 1 && verifiedRows[0]?.id === existingRowId
-            ? verifiedRows[0]
-            : null;
-          const expectedSnapshot = buildSnapshot(record, bindings, 'sales');
-          const actualSnapshot = verifiedRow
-            ? buildSalesPullSnapshot({ cells: verifiedRow.cells }, bindings)
-            : null;
-          if (!actualSnapshot || !salesSnapshotsEqual(
-            expectedSnapshot,
-            actualSnapshot,
-            cleanText(bindings?.current_task_assigned_to, 40),
-          )) {
-            throw new Error(
-              'Sales Smartsheet update could not be verified by read-back. Base44 sync metadata was not advanced.'
-            );
-          }
-        }
+        // Reconcile each field, not an entire row by its last-sync timestamp.
+        const rowResult = await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
+        const currentRows = normalizeSheetRows(rowResult.body);
+        if(currentRows.length !== 1 || currentRows[0].id !== existingRowId)throw new Error('The permanent Smartsheet row is missing. Local data was preserved.');
+        fieldPlan = await planFieldPush({base44,record,dataset,bindings,remoteRow:currentRows[0],rawSheet:rowResult.body,get:async path=>smartsheetGet(path,token),cells});
+        if(fieldPlan.unresolved.length){conflicts.push(record.id);continue;}
+        // Re-read both sides immediately before applying the verified plan.
+        const freshLocal=await base44.asServiceRole.entities[dataset==='sales'?'WorkOrder':'Order'].get(record.id);
+        const freshRemote=await smartsheetGet(`/sheets/${sheetId}/rows/${existingRowId}`,token);
+        if(freshLocal.updated_date!==record.updated_date || String(freshRemote.body?.modifiedAt||'')!==String(currentRows[0].modified_at||''))throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
+        cells=fieldPlan.outgoing;
+        if(cells.length)await smartsheetWrite('PUT',`/sheets/${sheetId}/rows`,token,[{id:existingRowId,cells}]);
+        const verifyResult=await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
+        const verifiedRows=normalizeSheetRows(verifyResult.body);
+        const actualSnapshot=verifiedRows.length===1 && verifiedRows[0].id===existingRowId ? (dataset==='sales'?buildSalesPullSnapshot(verifiedRows[0],bindings):buildOrderPullSnapshot(verifiedRows[0],bindings)):null;
+        const expectedSnapshot={...fieldPlan.remote,...Object.fromEntries(cells.map(c=>[String(c.columnId),c.value]))};
+        if(!actualSnapshot || !salesSnapshotsEqual(expectedSnapshot,actualSnapshot,cleanText(bindings?.current_task_assigned_to,40)))throw new Error('Field reconciliation failed remote read-back; sync completion was not recorded.');
+        record=await applyMergedLocalFields(base44,dataset,record,fieldPlan);
+        fieldPlan.verifiedSnapshot=actualSnapshot;
         if (dataset === 'orders') updated.push(record.id);
         else salesSuccessfulWrite = 'updated';
       } else if (dataset === 'orders') {
@@ -1603,7 +1580,7 @@ async function pushDataset(
         salesSuccessfulWrite = 'created';
       }
       // Store fresh snapshot + timestamp on the record
-      const snapshot = buildSnapshot(record, bindings, dataset);
+      const snapshot = fieldPlan?.verifiedSnapshot || buildSnapshot(record, bindings, dataset);
       if (dataset === 'orders') {
         const finalized = await base44.asServiceRole.entities.Order.updateMany(
           { id: record.id, updated_date: record.updated_date, smartsheet_pending_local_sync: true },
@@ -1619,10 +1596,8 @@ async function pushDataset(
           smartsheet_sync_snapshot: snapshot,
           smartsheet_last_synced_at: syncedAt,
         };
-        await base44.asServiceRole.entities.WorkOrder.update(record.id, {
-          smartsheet_sync_snapshot: snapshot,
-          smartsheet_last_synced_at: syncedAt,
-        });
+        const metadataCommit=await base44.asServiceRole.entities.WorkOrder.updateMany({id:record.id,updated_date:record.updated_date},{$set:{smartsheet_sync_snapshot:snapshot,smartsheet_last_synced_at:syncedAt}});
+        if(metadataCommit?.updated!==1)throw new Error('Sales changed during sync; the newer revision remains pending.');
         const verifiedMetadataRows = await loadAllEntityRows({
           entity: base44.asServiceRole.entities.WorkOrder,
           query: { id: record.id },
@@ -1640,6 +1615,8 @@ async function pushDataset(
         if (salesSuccessfulWrite === 'created') created.push(record.id);
         else if (salesSuccessfulWrite === 'updated') updated.push(record.id);
       }
+      if(fieldPlan?.decisions?.length)await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:fieldPlan.decisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}});
+      await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,status:'open',local_version:pendingRecords[recordIndex].updated_date},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}});
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
     }
@@ -1712,6 +1689,9 @@ export default async function(req: Request): Promise<Response> {
       adminActor = platformActor;
     }
 
+    if (['conflict_list','conflict_count','resolve_conflict'].includes(action)) {
+      return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:state=>claimSyncRun(base44,state),finish:(state,start)=>saveSyncStatusForRun(base44,state,start),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:start=>assertSyncRunOwnership(base44,start)}));
+    }
     if (action === 'status') {
       return Response.json({
         success: true,

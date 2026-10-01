@@ -12,7 +12,7 @@ export async function prepareFieldAudit(base44, type, record, patch, actor, sour
     const old = preview(record[field]), next = preview(value);
     events.push({event_key: crypto.randomUUID(), entity_type: type, entity_id: record.id, field_name: field,
       old_value: old.slice(0, 4000), new_value: next.slice(0, 4000), preview_truncated: old.length > 4000 || next.length > 4000,
-      value_hash: await valueHash(value), modified_at: timestamps[field] || at, source,
+      value_hash: await valueHash(value), ...(timestamps[field] || source === 'app' || source === 'admin' ? {modified_at:timestamps[field] || at} : {}), source,
       actor_name: actor?.full_name || actor?.name || source, actor_email: actor?.email || '', status: 'pending'});
   }
   return events.length ? await base44.asServiceRole.entities.FieldAudit.bulkCreate(events) : [];
