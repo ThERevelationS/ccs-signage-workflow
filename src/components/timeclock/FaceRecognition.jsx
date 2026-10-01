@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Camera, 
@@ -9,9 +9,7 @@ import {
   Scan,
   Square
 } from "lucide-react";
-import * as faceapi from "face-api.js";
-
-const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
+import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
 
 export default function FaceRecognition({ allUsers, onRecognized, isEnrollment = false, onEnrollCapture, mode, onFaceDetected, onCancel }) {
   // Support both old and new prop names
@@ -21,6 +19,10 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const scanIntervalRef = useRef(null);
+  const detectionBusyRef = useRef(false);
+  const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
+  const matchFaceRef = useRef(matchFace);
+  matchFaceRef.current = matchFace;
   
   const [errorMsg, setErrorMsg] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -40,7 +42,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" }
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
         });
         
         if (!mounted) {
@@ -92,11 +94,7 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
     
     const loadModels = async () => {
       try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]);
+        await loadFaceModelsOnce();
         
         if (mounted) {
           setModelsLoaded(true);
@@ -130,57 +128,24 @@ export default function FaceRecognition({ allUsers, onRecognized, isEnrollment =
   const detectFace = async () => {
     if (!videoRef.current || !modelsLoaded) return null;
     
+    if (detectionBusyRef.current) return null;
+    detectionBusyRef.current = true;
     try {
-      const detection = await faceapi
-        .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.3 }))
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+      const detection = await detectDetailedFace(videoRef.current);
+      if (detection && (detection.detection.score < 0.5 || detection.detection.box.width < 80)) {
+        setScanStatus("Move closer and face the light for a clearer capture.");
+        return null;
+      }
       return detection;
     } catch (err) {
       console.error("Detection error:", err);
       return null;
+    } finally {
+      detectionBusyRef.current = false;
     }
   };
 
-  const findMatchingUser = (descriptor) => {
-    let bestMatch = null;
-    let bestDistance = Infinity;
-    // Very strict threshold to prevent face confusion
-    const CONFIDENCE_THRESHOLD = 0.38;
-    // Require match to be clearly better than second-best to avoid ambiguity
-    const SEPARATION_RATIO = 1.5;
-
-    const allMatches = [];
-
-    for (const user of allUsers) {
-      if (!user.face_descriptors?.length) continue;
-      
-      let userBestDistance = Infinity;
-      for (const stored of user.face_descriptors) {
-        const distance = faceapi.euclideanDistance(descriptor, new Float32Array(stored));
-        userBestDistance = Math.min(userBestDistance, distance);
-      }
-      
-      allMatches.push({ user, distance: userBestDistance });
-      if (userBestDistance < bestDistance) {
-        bestDistance = userBestDistance;
-        bestMatch = user;
-      }
-    }
-
-    // Only return match if it's confident AND clearly better than alternatives
-    if (bestDistance <= CONFIDENCE_THRESHOLD && allMatches.length > 0) {
-      allMatches.sort((a, b) => a.distance - b.distance);
-      const secondBest = allMatches[1]?.distance || Infinity;
-      
-      // Ensure best match is significantly better than runner-up
-      if (secondBest / bestDistance >= SEPARATION_RATIO) {
-        return bestMatch;
-      }
-    }
-    
-    return null;
-  };
+  const findMatchingUser = (descriptor) => matchFaceRef.current(descriptor);
 
   const startScanning = () => {
     setIsScanning(true);

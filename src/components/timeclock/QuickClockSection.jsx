@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,8 @@ import ClockOutDialog from "@/components/timeclock/ClockOutDialog";
 import MissedPunchResolutionDialog from "@/components/timeclock/MissedPunchResolutionDialog";
 import LateClockInReviewDialog from "@/components/timeclock/LateClockInReviewDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
-import * as faceapi from "face-api.js";
+import { createFaceMatcher, detectDetailedFace, loadFaceModelsOnce } from '@/components/timeclock/faceScanRuntime';
 import { Html5Qrcode } from "html5-qrcode";
-
-const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -125,6 +123,10 @@ export default function QuickClockSection({
   const faceDetectionBusyRef = useRef(false);
   const recognitionLockedRef = useRef(false);
   const modelsLoadedRef = useRef(false);
+  const faceRunRef = useRef(0);
+  const matchFace = useMemo(() => createFaceMatcher(allUsers || []), [allUsers]);
+  const matchFaceRef = useRef(matchFace);
+  matchFaceRef.current = matchFace;
   const credentialRef = useRef(null);
   const requestRef = useRef({});
   const notificationTimerRef = useRef(null);
@@ -188,6 +190,7 @@ export default function QuickClockSection({
   };
 
   const stopFaceCamera = () => {
+    faceRunRef.current += 1;
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
@@ -224,11 +227,7 @@ export default function QuickClockSection({
   const loadFaceModels = async () => {
     if (modelsLoadedRef.current) return true;
     try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      ]);
+      await loadFaceModelsOnce();
       modelsLoadedRef.current = true;
       return true;
     } catch (err) {
@@ -237,25 +236,7 @@ export default function QuickClockSection({
     }
   };
 
-  const findMatchingUser = (descriptor) => {
-    const matches = [];
-    for (const user of allUsers || []) {
-      if (!Array.isArray(user.face_descriptors) || user.face_descriptors.length === 0) continue;
-      let bestDistance = Infinity;
-      for (const stored of user.face_descriptors) {
-        const distance = faceapi.euclideanDistance(descriptor, new Float32Array(stored));
-        bestDistance = Math.min(bestDistance, distance);
-      }
-      matches.push({ user, distance: bestDistance });
-    }
-
-    matches.sort((a, b) => a.distance - b.distance);
-    const best = matches[0];
-    if (!best || best.distance > 0.38) return null;
-    const second = matches[1]?.distance ?? Infinity;
-    if (second / best.distance < 1.5) return null;
-    return best.user;
-  };
+  const findMatchingUser = (descriptor) => matchFaceRef.current(descriptor);
 
   const credentialPayload = (credential, userEmail) => {
     if (credential?.badgeCode) return { badge_code: credential.badgeCode };
@@ -561,6 +542,7 @@ export default function QuickClockSection({
     }
 
     setRecognitionStatus("Starting camera...");
+    const faceRun = faceRunRef.current;
     try {
       const [modelsReady, stream] = await Promise.all([
         loadFaceModels(),
@@ -568,6 +550,10 @@ export default function QuickClockSection({
           video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
         }),
       ]);
+      if (faceRun !== faceRunRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       if (!modelsReady) {
         stream.getTracks().forEach((track) => track.stop());
         setRecognitionStatus("Face models could not load. Use Secure QR or Username instead.");
@@ -579,27 +565,30 @@ export default function QuickClockSection({
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
+      if (faceRun !== faceRunRef.current) return;
       setRecognitionStatus("Look directly at the camera...");
 
       scanIntervalRef.current = setInterval(async () => {
         if (!videoRef.current || faceDetectionBusyRef.current || recognitionLockedRef.current) return;
         faceDetectionBusyRef.current = true;
         try {
-          const detection = await faceapi
-            .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.3 }))
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+          const detection = await detectDetailedFace(videoRef.current);
+          if (faceRun !== faceRunRef.current) return;
           if (detection) {
+            if (detection.detection.box.width < 80 || detection.detection.score < 0.5) {
+              setRecognitionStatus("Move closer and face the light for a clearer scan.");
+              return;
+            }
             const matched = findMatchingUser(detection.descriptor);
             if (matched) await handleFaceRecognized(matched);
-            else setRecognitionStatus("Face detected but not confidently matched.");
-          }
+            else setRecognitionStatus("Face not recognized. Look straight ahead; if this continues, re-enroll your face in Time Clock Settings.");
+          } else setRecognitionStatus("Look directly at the camera in even lighting.");
         } catch (err) {
           console.warn("Face scan warning:", err);
         } finally {
-          faceDetectionBusyRef.current = false;
+          if (faceRun === faceRunRef.current) faceDetectionBusyRef.current = false;
         }
-      }, 650);
+      }, 120);
     } catch (err) {
       console.error("Camera error:", err);
       stopFaceCamera();
