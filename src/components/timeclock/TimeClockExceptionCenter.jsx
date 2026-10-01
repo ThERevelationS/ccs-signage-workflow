@@ -22,6 +22,12 @@ function formatAge(ms) {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
+function formatPunchTime(value) {
+  if (!value) return "not supplied";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? format(date, "MMM d 'at' h:mm a") : "invalid reported time";
+}
+
 function severityClass(severity) {
   if (severity === "critical") return "border-red-300 bg-red-50 text-red-900";
   if (severity === "warning") return "border-amber-300 bg-amber-50 text-amber-900";
@@ -41,12 +47,14 @@ export default function TimeClockExceptionCenter({
   activeWorkPauses = [],
   activeLaborSegments = [],
   correctionRequests = [],
+  punchExceptions = [],
   onReviewEntry,
   onRefresh,
 }) {
   const nowMs = Date.now();
   const activeEntries = timeEntries.filter(entry => entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data);
   const unresolvedPunchEntries = timeEntries.filter(entry => entry.status === "needs_resolution" && !entry.archived_admin && !entry.archived_test_data);
+  const allEntryById = new Map(timeEntries.filter(entry => !entry.archived_admin && !entry.archived_test_data).map(entry => [entry.id, entry]));
   const activeEntryById = new Map(activeEntries.map(entry => [entry.id, entry]));
   const breakById = new Map(activeBreaks.map(row => [row.id, row]));
   const pauseById = new Map(activeWorkPauses.map(row => [row.id, row]));
@@ -85,6 +93,35 @@ export default function TimeClockExceptionCenter({
       title: "Missed punch awaiting manager review",
       employee: entry.user_name || entry.user_email,
       detail: "The employee reported a missed Clock Out. The old shift is preserved with no fabricated Clock Out and is excluded from active work while its correction awaits manager review. Pay-period finalization remains blocked until it is resolved.",
+      entry,
+    });
+  }
+
+  for (const punchCase of punchExceptions) {
+    if (!["open", "pending_manager_review", "rejected"].includes(punchCase.status)) continue;
+    const entry = allEntryById.get(punchCase.time_entry_id) || null;
+    if (punchCase.exception_type === "missed_clock_out" && entry?.status === "needs_resolution") continue;
+
+    const isLateClockIn = punchCase.exception_type === "late_clock_in";
+    const isMissingEntry = !entry;
+    const title = isMissingEntry
+      ? "Punch exception is missing its linked shift"
+      : isLateClockIn
+        ? "Missed Clock In awaiting manager review"
+        : "Missed Clock Out report needs manager follow-up";
+    const detail = isMissingEntry
+      ? "An auditable punch exception exists but its linked TimeEntry is not available in management data. Investigate before approving or finalizing the affected period."
+      : isLateClockIn
+        ? `Employee reported an earlier arrival of ${formatPunchTime(punchCase.claimed_clock_in)}. The reconstructed shift must remain Needs Review until a manager verifies it.`
+        : `Employee reported a Clock Out of ${formatPunchTime(punchCase.claimed_clock_out)}. Review the linked shift and correction history before approval.`;
+
+    exceptions.push({
+      key: `punch-case:${punchCase.id || punchCase.case_key}`,
+      severity: isMissingEntry || punchCase.status === "open" ? "critical" : "warning",
+      icon: FileWarning,
+      title,
+      employee: punchCase.user_name || punchCase.user_email,
+      detail,
       entry,
     });
   }
