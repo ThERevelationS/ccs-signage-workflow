@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Board of Adjustment (BOA) application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/BOA.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Board of Adjustment (BOA)",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 103276,
+  "sha256": "d68df6cbdf222712e3f31286491b36f4dae140df618727a8e6169930c76626dc",
+  "lastModified": "Fri, 06 Sep 2024 15:17:54 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/board-of-adjustment-2026-10-01.pdf",
+  "purpose": "current_board_of_adjustment_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links BOA.pdf under the label Board of Adjustment (BOA), and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when Board of Adjustment review, a variance, an appeal, or another BOA action is required; which parcels, requests, or jurisdictions qualify; every requirement or fee; submission workflow; approval standard; or applicability to a particular sign project. No BOA, variance, appeal, or sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
