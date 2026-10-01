@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Temporary Use Permit application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/TempUsePermit.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Temporary Use Permit",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 177522,
+  "sha256": "26c0583a93b72019c49fc27dd57f9d4640953218a8f89a7f0109392400122721",
+  "lastModified": "Fri, 06 Sep 2024 15:18:42 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/temporary-use-permit-2026-10-01.pdf",
+  "purpose": "current_temporary_use_permit_application_source_identity",
+  "evidenceScope": "The preserved current Boone County Planning Commission Applications and Forms page directly links TempUsePermit.pdf under the label Temporary Use Permit, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Temporary Use Permit is required, which temporary activities or sign-related projects qualify, which addresses or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, duration limit, or applicability to a particular permitting project."
+}
