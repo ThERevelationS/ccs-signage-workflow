@@ -41,7 +41,7 @@ assert.equal(typeof ExceptionCenter, 'function');
 const email = 'worker@synthetic.invalid';
 const baseProps = {
   employeeStates: [], activeBreaks: [], activeWorkPauses: [],
-  activeLaborSegments: [], correctionRequests: [],
+  activeLaborSegments: [], correctionRequests: [], punchExceptions: [],
   onRefresh: () => {}, onReviewEntry: () => {},
 };
 function render(timeEntries, overrides = {}) {
@@ -91,4 +91,52 @@ assert.match(unresolvedMarkup, /Missed punch awaiting manager review/);
 assert.match(unresolvedMarkup, /no fabricated Clock Out/);
 assert.doesNotMatch(unresolvedMarkup, /Active shift is not linked to employee state/);
 console.log('PASS unresolved missed punch is visible to management without being treated as an active shift');
-console.log('PASS 4/4 Time Clock management exception renderer scenarios');
+
+const lateClockInEntry = {
+  id: 'late-clock-in-entry', user_email: email, user_name: 'Synthetic Employee',
+  status: 'clocked_out', clock_in: '2026-09-28T12:00:00.000Z', clock_out: '2026-09-28T20:00:00.000Z',
+  approval_status: 'needs_review',
+};
+const lateClockInCase = {
+  id: 'late-clock-in-case', user_email: email, user_name: 'Synthetic Employee',
+  time_entry_id: lateClockInEntry.id, exception_type: 'late_clock_in', status: 'pending_manager_review',
+  claimed_clock_in: '2026-09-28T12:00:00.000Z', detected_at: '2026-09-28T20:00:00.000Z',
+};
+const lateClockInMarkup = render([lateClockInEntry], { punchExceptions: [lateClockInCase] });
+assert.match(lateClockInMarkup, /Missed Clock In awaiting manager review/);
+assert.match(lateClockInMarkup, /reconstructed shift must remain Needs Review/);
+assert.match(lateClockInMarkup, /Review/);
+console.log('PASS employee-attested missed Clock In appears directly in Needs Attention');
+
+const resolvedLateClockInMarkup = render([lateClockInEntry], {
+  punchExceptions: [{ ...lateClockInCase, status: 'resolved' }],
+});
+assert.match(resolvedLateClockInMarkup, /No Time Clock exceptions currently need manager attention/);
+assert.doesNotMatch(resolvedLateClockInMarkup, /Missed Clock In awaiting manager review/);
+console.log('PASS resolved punch exception does not remain in Needs Attention');
+
+const dedupedMissedClockOutMarkup = render([{
+  id: 'missed-out-entry', user_email: email, user_name: 'Synthetic Employee',
+  status: 'needs_resolution', clock_in: '2026-09-27T14:00:00.000Z',
+}], {
+  punchExceptions: [{
+    id: 'missed-out-case', user_email: email, user_name: 'Synthetic Employee',
+    time_entry_id: 'missed-out-entry', exception_type: 'missed_clock_out', status: 'pending_manager_review',
+    claimed_clock_out: '2026-09-27T22:00:00.000Z',
+  }],
+});
+assert.equal((dedupedMissedClockOutMarkup.match(/Missed punch awaiting manager review/g) || []).length, 1);
+assert.doesNotMatch(dedupedMissedClockOutMarkup, /Missed Clock Out report needs manager follow-up/);
+console.log('PASS missed Clock Out report is deduplicated against its needs_resolution shift alert');
+
+const orphanPunchCaseMarkup = render([], {
+  punchExceptions: [{
+    id: 'orphan-case', user_email: email, exception_type: 'late_clock_in',
+    status: 'pending_manager_review', time_entry_id: 'missing-entry',
+  }],
+});
+assert.match(orphanPunchCaseMarkup, /Punch exception is missing its linked shift/);
+assert.match(orphanPunchCaseMarkup, /Investigate before approving or finalizing/);
+console.log('PASS orphaned punch exception becomes a critical management integrity alert');
+
+console.log('PASS 8/8 Time Clock management exception renderer scenarios');
