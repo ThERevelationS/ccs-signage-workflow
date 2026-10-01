@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Site Plan application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SitePlan.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Site Plan",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 129492,
+  "sha256": "c08b314c71f5d9a8c6f3bb32b6fb166400d3692246c58fe341d76e7617e3c9cf",
+  "lastModified": "Fri, 06 Sep 2024 15:17:59 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/site-plan-2026-10-01.pdf",
+  "purpose": "current_site_plan_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links Applications/SitePlan.pdf under the label Site Plan, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Site Plan is required, which projects, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. The separately listed Extension of Time of Site Plan form is not this application and is not archived by this evidence record. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
