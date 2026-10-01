@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Zoning Permit (Accessory Structures) current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ZoningPermitAcc.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Zoning Permit (Accessory Structures)",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 461820,
+  "sha256": "f1b89a5a00e77d21971c84c8cae7655ff306efcc8cf35c10bdbb2d94da7a93d9",
+  "lastModified": "Fri, 06 Sep 2024 15:18:59 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/zoning-permit-accessory-structures-2026-10-01.pdf",
+  "purpose": "current_zoning_permit_accessory_structures_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links ZoningPermitAcc.pdf under the label Zoning Permit (Accessory Structures), and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when an accessory-structure zoning permit is required, which structures, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
