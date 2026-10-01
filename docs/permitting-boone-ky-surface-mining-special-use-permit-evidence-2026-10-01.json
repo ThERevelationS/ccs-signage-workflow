@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Surface Mining Special Use Permit application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/SurfaceMining.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Surface Mining Special Use Permit",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 125633,
+  "sha256": "bab7b4e367f3adfcc7449d0cd102694dc44f09f574a99a17eeca3b2e09007412",
+  "lastModified": "Fri, 06 Sep 2024 15:17:58 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/surface-mining-special-use-permit-2026-10-01.pdf",
+  "purpose": "current_surface_mining_special_use_permit_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links SurfaceMining.pdf under the label Surface Mining Special Use Permit, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Surface Mining Special Use Permit is required, which operations, properties, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
