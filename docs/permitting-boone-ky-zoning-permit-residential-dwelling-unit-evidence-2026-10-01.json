@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Zoning Permit (Residential Dwelling Unit) current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ZoningPermitRes.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Zoning Permit (Residential Dwelling Unit)",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 516035,
+  "sha256": "ff8f3fb26e177f894e8c75d845b1b2e9de8b11fbed317a4156339b5e4d7bb51e",
+  "lastModified": "Fri, 06 Sep 2024 15:18:59 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/zoning-permit-residential-dwelling-unit-2026-10-01.pdf",
+  "purpose": "current_zoning_permit_residential_dwelling_unit_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links ZoningPermitRes.pdf under the label Zoning Permit (Residential Dwelling Unit), and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a residential dwelling zoning permit is required, which dwellings, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
