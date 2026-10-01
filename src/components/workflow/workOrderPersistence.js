@@ -214,10 +214,8 @@ export async function replaceWorkOrderArrayFieldIfUnchanged({
 
     const expectedUpdatedAt = String(current.updated_date || "").trim();
     if (!expectedUpdatedAt) throw new Error(`${label} is missing its current Work Order version. Reload before saving.`);
-    const result = await entity.updateMany(
-      { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
-      { $set: { [fieldName]: desired } },
-    );
+    await saveTrackedFields({entityType:'WorkOrder',id,expectedFields:{[fieldName]:expected},nextFields:{[fieldName]:desired}});
+    const result={updated:1};
     if (!result || typeof result.updated !== "number") {
       throw new Error(`${label} conditional replacement result could not be verified.`);
     }
@@ -263,10 +261,8 @@ export async function mutateWorkOrderArrayField({ workOrderId, field, mutate, la
 
     let result;
     try {
-      result = await entity.updateMany(
-        { id, updated_date: expectedUpdatedAt, deleted: { $ne: true } },
-        { $set: { [fieldName]: nextArray } },
-      );
+      await saveTrackedFields({entityType:'WorkOrder',id,expectedFields:{[fieldName]:currentArray},nextFields:{[fieldName]:nextArray}});
+      result={updated:1};
     } catch (error) {
       const afterError = await entity.get(id).catch(() => null);
       if (afterError?.deleted === true) {

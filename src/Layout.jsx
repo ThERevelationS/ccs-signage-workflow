@@ -53,6 +53,7 @@ import AnnouncementBanner from "@/components/announcements/AnnouncementBanner";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import FocusPausePair from "@/components/timeclock/FocusPausePair";
 import SmartsheetSyncWidget from "@/components/admin/SmartsheetSyncWidget";
+import SyncConflictAlert from '@/components/admin/SyncConflictAlert';
 
 // Context for multi-page view
 const MultiPageContext = createContext(null);
@@ -1366,6 +1367,7 @@ function LayoutContent({ children }) {
           </MultiPageContext.Provider>
         </motion.main>
 
+        <SyncConflictAlert currentUser={currentUser} sessionToken={sessionToken}/>
         {/* Smartsheet Sync Status Widget — persistent on every page */}
         <SmartsheetSyncWidget
           compactOrderForm={location.pathname.replace(/\/+$/, '').toLowerCase() === '/orderform'}

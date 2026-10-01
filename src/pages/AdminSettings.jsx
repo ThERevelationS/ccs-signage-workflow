@@ -73,6 +73,7 @@ import SalesPipelineDefaultSort from "@/components/admin/SalesPipelineDefaultSor
 import ResourceAllocationView from "@/components/workflow/ResourceAllocationView";
 import CorebridgeApiSettings from "@/components/admin/CorebridgeApiSettings";
 import SmartsheetSyncSettings from "@/components/admin/SmartsheetSyncSettings";
+import SyncConflictReview from '@/components/admin/SyncConflictReview';
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
@@ -323,7 +324,7 @@ export default function AdminSettings() {
   const { currentUser, sessionToken } = useAuth();
   const isAdmin = currentUser?.role === "admin";
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
-  const initialAdminTab = isAdmin && requestedTab === "smartsheet" ? "smartsheet" : "automations";
+  const initialAdminTab = isAdmin && ['smartsheet','sync_conflicts'].includes(requestedTab) ? requestedTab : 'automations';
   
   const [automations, setAutomations] = useState([]);
   const [emailGroups, setEmailGroups] = useState([]);
@@ -955,6 +956,7 @@ export default function AdminSettings() {
                     <Bot className="w-4 h-4 mr-2" />
                     CoreBridge Migration
                   </TabsTrigger>
+                  <TabsTrigger value="sync_conflicts" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm"><AlertTriangle className="w-4 h-4 mr-2"/>Sync Conflict Review</TabsTrigger>
                   <TabsTrigger value="smartsheet" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
                     <GitBranch className="w-4 h-4 mr-2" />
                     Smartsheet Sync
@@ -1055,6 +1057,7 @@ export default function AdminSettings() {
               <TabsContent value="smartsheet">
                 <SmartsheetSyncSettings sessionToken={sessionToken} />
               </TabsContent>
+              <TabsContent value="sync_conflicts"><SyncConflictReview sessionToken={sessionToken}/></TabsContent>
             </>
           )}
 

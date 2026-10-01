@@ -16,11 +16,16 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
     const column=String(cell.columnId), fields=Object.keys(bindings).filter(f=>String(bindings[f])===column), field=fields[0];
     if(!field)throw new Error('Field mapping could not be verified.');
     if(!rawSheet.columns?.some(c=>String(c.id)===column))throw new Error('Mapped column metadata is missing; no row was written.');
-    const a=local[column], b=remote[column], known=Object.prototype.hasOwnProperty.call(prior,column);
+    let a=local[column]; const b=remote[column], known=Object.prototype.hasOwnProperty.call(prior,column);
+    if(field==='notes_serialized' && record.work_notes?.length===1 && record.work_notes[0].text===String(b ?? '')) {
+      const audit=(await base44.asServiceRole.entities.FieldAudit.filter({entity_type:type,entity_id:record.id,field_name:'work_notes',status:'committed'},{sort:'-created_date',limit:1})).items[0];
+      if(audit?.source==='smartsheet' && audit.value_hash===await valueHash(record.work_notes))a=b;
+    }
     if(same(a,b))continue;
     const localChanged=!known || !same(a,prior[column]), remoteChanged=!known || !same(b,prior[column]);
     let winner='', localAt='', remoteAt='', reason='';
     const rawCell=rawSheet.rows?.find(r=>String(r.id)===remoteRow.id)?.cells?.find(c=>String(c.columnId)===column);
+    if([rawCell?.value,rawCell?.displayValue].some(v=>typeof v==='string' && v.length>4000))throw new Error('A remote cell exceeds the safe sync length. Neither version was truncated or overwritten.');
     if(known && !remoteChanged)winner='app';
     else if(known && !localChanged)winner='smartsheet';
     else {
