@@ -45,6 +45,7 @@ import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import CorrectionRequestAdminPanel from "@/components/timeclock/CorrectionRequestAdminPanel";
 import TimeClockExceptionCenter from "@/components/timeclock/TimeClockExceptionCenter";
 import TimeClockManagementDashboard from "@/components/timeclock/TimeClockManagementDashboard";
+import TimeClockPunchExceptionReport from "@/components/timeclock/TimeClockPunchExceptionReport";
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
 import TimeClockAuditTrail from "@/components/timeclock/TimeClockAuditTrail";
 import TimeClockShiftDetail from "@/components/timeclock/TimeClockShiftDetail";
@@ -54,6 +55,7 @@ const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
 const TimeClockBreak = base44.entities.TimeClockBreak;
 const TimeClockWorkPause = base44.entities.TimeClockWorkPause;
 const TimeClockCorrectionRequest = base44.entities.TimeClockCorrectionRequest;
+const TimeClockPunchException = base44.entities.TimeClockPunchException;
 const TimeClockLaborSegment = base44.entities.TimeClockLaborSegment;
 
 function newRequestId() {
@@ -112,6 +114,7 @@ export default function TimeClockAdmin() {
   const [activeWorkPauses, setActiveWorkPauses] = useState([]);
   const [activeLaborSegments, setActiveLaborSegments] = useState([]);
   const [correctionRequests, setCorrectionRequests] = useState([]);
+  const [punchExceptions, setPunchExceptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState("week");
@@ -145,7 +148,7 @@ export default function TimeClockAdmin() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [entries, states, breaks, workPauses, laborSegments, corrections] = await Promise.all([
+      const [entries, states, breaks, workPauses, laborSegments, corrections, punchExceptionRows] = await Promise.all([
         loadAllEntityRows({
           entity: TimeEntry,
           query: { archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
@@ -181,6 +184,11 @@ export default function TimeClockAdmin() {
           sort: "-requested_at",
           label: "Time Clock active correction requests",
         }),
+        loadAllEntityRows({
+          entity: TimeClockPunchException,
+          sort: "-detected_at",
+          label: "Time Clock punch exception reports",
+        }),
       ]);
       setTimeEntries(entries);
       setEmployeeStates(states);
@@ -188,6 +196,7 @@ export default function TimeClockAdmin() {
       setActiveWorkPauses(workPauses);
       setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
+      setPunchExceptions(punchExceptionRows);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -580,6 +589,7 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         employeeStates={employeeStates}
         correctionRequests={correctionRequests}
+        punchExceptions={punchExceptions}
         activeLaborSegments={activeLaborSegments}
       />
 
@@ -742,8 +752,15 @@ export default function TimeClockAdmin() {
         activeWorkPauses={activeWorkPauses}
         activeLaborSegments={activeLaborSegments}
         correctionRequests={correctionRequests}
+        punchExceptions={punchExceptions}
         onReviewEntry={handleEditEntry}
         onRefresh={loadData}
+      />
+
+      <TimeClockPunchExceptionReport
+        punchExceptions={punchExceptions}
+        timeEntries={timeEntries}
+        onReviewEntry={setDetailEntry}
       />
 
       <div className="clay-card p-4">
