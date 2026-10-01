@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Home Occupation Permit application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/HomeOccupation.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Home Occupation Permit",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 192711,
+  "sha256": "56a2ddf660a15b5240753e45bb362ecd8e9700d058caa35b7b84648b1512beea",
+  "lastModified": "Fri, 06 Sep 2024 15:18:44 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/home-occupation-permit-2026-10-01.pdf",
+  "purpose": "current_home_occupation_permit_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links HomeOccupation.pdf under the label Home Occupation Permit, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Home Occupation Permit is required, which businesses, residences, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval standard, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
