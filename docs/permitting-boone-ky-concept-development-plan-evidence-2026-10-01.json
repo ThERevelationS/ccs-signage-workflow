@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Concept Development Plan application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/CDP.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Concept Development Plan",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 134126,
+  "sha256": "2be3723444528ff920c1138c084951aa7354ed7496f571fbc93cdac64e2520d9",
+  "lastModified": "Fri, 06 Sep 2024 15:18:01 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/concept-development-plan-2026-10-01.pdf",
+  "purpose": "current_concept_development_plan_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links CDP.pdf under the label Concept Development Plan, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Concept Development Plan is required, which projects, parcels, or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
