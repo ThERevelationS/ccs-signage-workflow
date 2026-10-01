@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Zoning Certification Request current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ZoningCertRequest.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Zoning Certification Request",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 134750,
+  "sha256": "8f58ae495fe838e9779470bc6174164ad2b1f31d7975e951d6e9aa733ca28ef0",
+  "lastModified": "Fri, 06 Sep 2024 15:18:01 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/zoning-certification-request-2026-10-01.pdf",
+  "purpose": "current_zoning_certification_request_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page lists Zoning Certification Request and includes a full Applications-path link to ZoningCertRequest.pdf; that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a zoning certification request is required, what determinations it provides, which parcels or jurisdictions it applies to, every fee or submission step, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
