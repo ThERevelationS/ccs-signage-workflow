@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Zoning Map Amendment application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/ZMA.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Zoning Map Amendment",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 121133,
+  "sha256": "78a0fd401145d17aaf133db6a08b72dcb2313b35b7dd1ddc806727f040b37757",
+  "lastModified": "Fri, 06 Sep 2024 15:17:58 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/zoning-map-amendment-2026-10-01.pdf",
+  "purpose": "current_zoning_map_amendment_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links ZMA.pdf under the label Zoning Map Amendment, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a zoning map amendment is required, which parcels or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
