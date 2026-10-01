@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Certificate of Appropriateness application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/CertAppropriateness.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Certificate of Appropriateness",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 96854,
+  "sha256": "f8d3a644ba6c7555788bbaa3b607119168ae2f775cc2f29781b1d455fef167b7",
+  "lastModified": "Fri, 06 Sep 2024 15:17:53 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/certificate-of-appropriateness-2026-10-01.pdf",
+  "purpose": "current_certificate_of_appropriateness_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links CertAppropriateness.pdf under the label Certificate of Appropriateness, and that exact official PDF resolved through the current official redirect and returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when a Certificate of Appropriateness, historic review, architectural review, or design approval is required; which properties, districts, projects, or jurisdictions it applies to; every requirement or fee; submission workflow; approval standard; or applicability to a particular sign project. No historic/design-review or sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
