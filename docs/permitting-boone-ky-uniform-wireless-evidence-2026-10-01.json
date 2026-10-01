@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Uniform Wireless application current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Applications/UniformWireless.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Uniform Wireless",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 141631,
+  "sha256": "7ea68d1eb70ab84766b0593c0125d1ac13600ce44dd8519b56521520496cbfce",
+  "lastModified": "Fri, 06 Sep 2024 15:18:02 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/uniform-wireless-2026-10-01.pdf",
+  "purpose": "current_uniform_wireless_application_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links UniformWireless.pdf under the label Uniform Wireless, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish when the application is required, which wireless facilities or jurisdictions it applies to, every requirement or fee, submission workflow, approval path, or applicability to a particular sign project. No sign-project requirement should be inferred from this source without additional current official evidence or staff review."
+}
