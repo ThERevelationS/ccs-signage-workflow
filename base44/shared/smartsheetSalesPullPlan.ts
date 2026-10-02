@@ -7,6 +7,8 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
   const local = buildSnapshot(record, bindings, 'sales');
   const prior = record.smartsheet_sync_snapshot || {};
   const snapshot = { ...remoteSnapshot }, fields = {}, held = [];
+  // Records untouched locally for over 2 weeks defer to Smartsheet's non-blank values.
+  const stale = Date.now() - Date.parse(record.updated_date || '') > 14 * 86400000;
   for (const [field, value] of Object.entries(incoming)) {
     const binding = field === 'work_notes' ? 'notes_serialized' : field;
     const column = String(bindings[binding] || '');
@@ -15,7 +17,7 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
     const next = field === 'work_notes' ? serializeWorkNotes(value) : value;
     const blank = !String(current ?? '').trim();
     const unchangedLocally = known && same(local[column], prior[column]);
-    if (same(current, next) || unchangedLocally || (!known && blank) || (field === 'work_notes' && blank)) {
+    if (same(current, next) || unchangedLocally || (stale && String(next ?? '').trim()) || (!known && blank) || (field === 'work_notes' && blank)) {
       fields[field] = value;
     } else {
       held.push(binding);
@@ -28,6 +30,7 @@ export function planSalesFieldPull(record, incoming, remoteSnapshot, bindings) {
   for (const [binding, id] of Object.entries(bindings)) {
     const column = String(id), field = binding === 'notes_serialized' ? 'work_notes' : binding;
     if (Object.prototype.hasOwnProperty.call(fields, field) || same(local[column], remoteSnapshot[column])) continue;
+    if (stale && String(remoteSnapshot[column] ?? '').trim()) continue;
     if (Object.prototype.hasOwnProperty.call(prior, column)) snapshot[column] = prior[column];
     else if (String(local[column] ?? '').trim()) {
       delete snapshot[column];
