@@ -1,0 +1,44 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "15 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "time_clock_stale_shift_monitor",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_monitor": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "timeClockAction",
+            "args": {
+              "action": "monitor_stale_shifts",
+              "_workflow_capability": "tuUWh54nBc3cZW9CgI8Ma9yvoio8CJqMWGKknfMZXg4qoPAL"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "description": "Hourly Time Clock stale-shift detection. Creates an auditable open Punch Exception after the existing 18-hour cross-date threshold without changing any punch time.",
+  "name": "Time Clock Stale Shift Monitor"
+}
