@@ -1128,8 +1128,12 @@ async function pushDataset(
     return { dataset, skipped: true, reason: 'No column bindings configured for this dataset.' };
   }
 
+  let lastSalesProgressAt = 0, lastSalesProgressPhase = '';
   const reportSalesProgress = async (progress: any) => {
     if (dataset !== 'sales' || !options.runStartedAt) return;
+    const now = Date.now();
+    if (progress.phase === lastSalesProgressPhase && now-lastSalesProgressAt < 10_000) return;
+    lastSalesProgressAt = now; lastSalesProgressPhase = progress.phase;
     const active = await loadSingleSyncStatusRecord(base44);
     await saveSyncStatusForRun(base44, {...active.setting_value,
       progress_dataset:'sales', progress_direction:'push', progress_phase:progress.phase || 'checking',
@@ -1443,7 +1447,9 @@ async function pushDataset(
       orderTimeBudgetReached = true;
       break;
     }
-    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    // Cached Sales rows that are only compared/held make no writes. Check
+    // ownership immediately before mutations below, not for every read-only row.
+    if (dataset !== 'sales' && typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     let record = pendingRecords[recordIndex];
     let fieldPlan: any = null;
     orderProcessedCount = recordIndex + 1;
@@ -1616,7 +1622,7 @@ async function pushDataset(
   }
 
   if (dataset === 'sales') {
-    await persistSalesReviews(base44,queuedSalesReviews,options?.assertRunOwnership);
+    await persistSalesReviews(base44,queuedSalesReviews,options?.assertRunOwnership,salesReviews);
     await reportSalesProgress({phase:orderTimeBudgetReached?'paused':'finishing',current:orderProcessedCount,total:pendingRecords.length,item_label:'Sales checks finished',detail:`${conflicts.length} records have held value differences; ${errors.length} write errors`});
   }
   if (dataset === 'orders') {

@@ -1,12 +1,11 @@
 import { loadAllEntityRows } from './pagedEntityRows.ts';
 
 // Reviews are field/value-specific, not invalidated by unrelated row metadata.
-export async function persistSalesReviews(base44, reviews, assertOwner) {
+export async function persistSalesReviews(base44, reviews, assertOwner, loadedReviews = null) {
   if (!reviews.length) return;
   const entity = base44.asServiceRole.entities.SyncConflict;
   const ids = [...new Set(reviews.map(r => r.entity_id))];
-  const existing = [];
-  for (let i = 0; i < ids.length; i += 100) existing.push(...await loadAllEntityRows({entity, query:{dataset:'sales', entity_id:{$in:ids.slice(i,i+100)}, status:{$in:['open','approved']}}, sort:'id', label:'Active Sales field reviews'}));
+  const existing = loadedReviews || await loadAllEntityRows({entity,query:{dataset:'sales',entity_id:{$in:ids},status:{$in:['open','approved']}},sort:'id',label:'Active Sales field reviews'});
   const updates = [], additions = [];
   for (const review of reviews) {
     const matches = existing.filter(r => r.entity_id === review.entity_id && r.column_id === review.column_id);
