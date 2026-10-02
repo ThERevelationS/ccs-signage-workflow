@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import bcrypt from 'npm:bcryptjs@2.4.3';
 import { replaceAuthorizedEmailCredentialFieldsIfUnchanged } from '../../shared/authorizedEmailCredentialPersistence.mjs';
 import { signShopSessionPayload } from '../../shared/signShopSession.ts';
+import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
 
 // Fixed bcrypt work factor for invalid/unknown credentials. This is not a real
 // account credential; it only keeps failed-login timing closer to valid-user
@@ -20,25 +21,15 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'Invalid username or password' }, { status: 400 });
     }
 
-    const base44 = createClientFromRequest(req);
+    const base44 = withEmployeeAccessReads(createClientFromRequest(req));
     const uname = username.toLowerCase().trim();
 
     // Look up the user directly on AuthorizedEmail (the credential source of truth).
-    // Respect platform/provider throttling instead of retrying through a 429 signal.
+    // Read retries retain credential and uniqueness checks on every attempt.
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
     let users;
     try {
-      // The background Smartsheet sync shares this rate limit; back off and retry briefly.
-      for (let attempt = 0; ; attempt++) {
-        try {
-          users = await authorized.filter({ username: uname });
-          break;
-        } catch (e) {
-          const s = e?.status || e?.response?.status;
-          if (s !== 429 || attempt >= 5) throw e;
-          await new Promise(r => setTimeout(r, 700 * (attempt + 1)));
-        }
-      }
+      users = await authorized.filter({ username: uname });
     } catch (lookupError) {
       const status = lookupError?.status || lookupError?.response?.status;
       if (status === 429) {

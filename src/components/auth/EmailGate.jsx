@@ -70,13 +70,17 @@ export function AuthProvider({ children }) {
       const data = res?.data || res;
       if (data?.valid && data.user) {
         setCurrentUser(data.user);
-      } else {
+      } else if (data?.valid === false) {
         localStorage.removeItem(TOKEN_KEY);
         clearAdminSettingsAuthorization();
       }
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      clearAdminSettingsAuthorization();
+    } catch (error) {
+      // A temporary service failure is not session revocation. Keep the token
+      // for the next verification, but do not grant access without verification.
+      if ([401, 409].includes(Number(error?.response?.status))) {
+        localStorage.removeItem(TOKEN_KEY);
+        clearAdminSettingsAuthorization();
+      }
     }
     setIsLoading(false);
   }, []);

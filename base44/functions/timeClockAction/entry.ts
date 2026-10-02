@@ -1,5 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25'; import { withEmployeeAccessReads } from '../../shared/employeeAccessReads.ts';
 function b64urlEncode(str: string) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

@@ -1687,9 +1687,10 @@ async function pushDataset(
 
 export default async function(req: Request): Promise<Response> {
   try {
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
+    const backgroundSync = ['run_sync', 'push_dataset', 'pull_dataset'].includes(action);
+    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: backgroundSync ? 1000 : 0 });
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
     const configured = Boolean(token);
 
