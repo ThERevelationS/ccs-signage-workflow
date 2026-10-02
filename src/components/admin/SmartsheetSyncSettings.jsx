@@ -586,7 +586,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
         {syncing && (
           <div className="rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-900 flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-            <span><strong>Sync is running…</strong> Started {syncStartedAt ? new Date(syncStartedAt).toLocaleTimeString() : ""}. Do not close this page until it finishes.</span>
+            <span><strong>Sync is running…</strong> Started {syncStartedAt ? new Date(syncStartedAt).toLocaleTimeString() : ""}. The sync runs on the server, so leaving this page won't stop it; progress also shows in the sync widget.</span>
           </div>
         )}
 

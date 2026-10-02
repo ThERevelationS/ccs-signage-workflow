@@ -4,7 +4,20 @@ import { createSmartsheetOrderPageGuard } from './smartsheetOrderPageGuard.mjs';
 // Smartsheet reads, private Google Drive upload/download, and BackupLog creation.
 // Do not consider a BackupLog row evidence of a backup without byte-for-byte
 // readback of the actual persistent Drive file.
-export async function createVerifiedOrderSheetBackup({
+// Live sheets are edited while people work. If the sheet changes mid-backup,
+// re-take the whole backup (never write on a stale one); fail after 4 tries.
+export async function createVerifiedOrderSheetBackup(options) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await createVerifiedOrderSheetBackupOnce({ ...options, capturedAt: new Date().toISOString() });
+    } catch (error) {
+      if (attempt >= 4 || !/changed (during|after|while)/i.test(String(error?.message))) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
+    }
+  }
+}
+
+async function createVerifiedOrderSheetBackupOnce({
   sheetId, readPage, verifySource, upload, readBack, log,
   capturedAt = new Date().toISOString(), pageSize = 200, maxPages = 100,
   maxBytes = 25_000_000, dataset = 'orders',
