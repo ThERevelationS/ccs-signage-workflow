@@ -10,7 +10,9 @@ import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersisten
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
-import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { smartsheetGet, smartsheetWrite } from '../../shared/smartsheetLegacyTransport.ts';
+import { measureSyncEntities, measuredDriveFetch } from '../../shared/smartsheetTraceIO.ts';
+import { tracedSyncRequest, beginSyncTraceStorage, checkpointSyncTrace, traceSyncStatus } from '../../shared/smartsheetTraceLifecycle.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { normalizeSalesNumber } from '../../shared/smartsheetSalesNumberBackfill.mjs';
 import { canonicalBase44SalesAssignee } from '../../shared/smartsheetSalesAssigneeTranslation.mjs';
@@ -60,81 +62,6 @@ const SETTING_KEY = 'smartsheetSyncConfig';
 
 function cleanText(value: unknown, maxLength = 500) {
   return String(value ?? '').trim().slice(0, maxLength);
-}
-
-function safeUpstreamError(status: number) {
-  if (status === 401 || status === 403) return 'Smartsheet rejected the configured API token or its permissions.';
-  if (status === 404) return 'The requested Smartsheet resource was not found or is not accessible to this token.';
-  if (status === 429) return 'Smartsheet rate-limited the request. Retry later.';
-  if (status >= 500) return 'Smartsheet is temporarily unavailable.';
-  return `Smartsheet returned HTTP ${status}.`;
-}
-
-async function readJson(response: Response) {
-  const declared = Number(response.headers.get('content-length') || 0);
-  if (declared > MAX_RESPONSE_BYTES) {
-    throw Object.assign(new Error('Smartsheet response exceeded the diagnostic size limit.'), { status: 502 });
-  }
-  const text = await response.text();
-  if (text.length > MAX_RESPONSE_BYTES) {
-    throw Object.assign(new Error('Smartsheet response exceeded the diagnostic size limit.'), { status: 502 });
-  }
-  if (!text.trim()) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw Object.assign(new Error('Smartsheet returned an unreadable response.'), { status: 502 });
-  }
-}
-
-// Smartsheet 429s are transient: back off and retry instead of failing the record.
-async function withRateLimitRetry<T>(call: () => Promise<T>): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await call();
-    } catch (error) {
-      if ((error as any)?.upstreamStatus !== 429 || attempt >= 3) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
-    }
-  }
-}
-const smartsheetGet = (path: string, token: string) => withRateLimitRetry(() => smartsheetGetOnce(path, token));
-const smartsheetWrite = (method: 'POST' | 'PUT', path: string, token: string, jsonBody: unknown) =>
-  withRateLimitRetry(() => smartsheetWriteOnce(method, path, token, jsonBody));
-
-async function smartsheetGetOnce(path: string, token: string) {
-  const safePath = String(path || '').trim();
-  if (!safePath.startsWith('/') || safePath.includes('://')) {
-    throw Object.assign(new Error('Invalid Smartsheet API path.'), { status: 400 });
-  }
-  const url = `${API_BASE}${safePath}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
-  try {
-    const response = await safeExternalFetch(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-        'smartsheet-integration-source': 'APPLICATION,CincinnatiCustomSigns,Base44-Smartsheet-Sync',
-      },
-      signal: controller.signal,
-    }, 0);
-    if (!response.ok) {
-      throw Object.assign(new Error(safeUpstreamError(response.status)), {
-        status: response.status === 429 ? 429 : 502,
-        upstreamStatus: response.status,
-      });
-    }
-    return { status: response.status, body: await readJson(response) };
-  } catch (error) {
-    if ((error as any)?.name === 'AbortError') {
-      throw Object.assign(new Error('Smartsheet request timed out.'), { status: 502 });
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 function normalizeSheets(body: any) {
@@ -193,43 +120,6 @@ function numericIdList(value: unknown, maxItems = 100) {
   const source = Array.isArray(value) ? value : [];
   const ids = [...new Set(source.map((item) => cleanText(item, 40)).filter((item) => /^\d+$/.test(item)))];
   return ids.slice(0, maxItems);
-}
-
-async function smartsheetWriteOnce(method: 'POST' | 'PUT', path: string, token: string, jsonBody: unknown) {
-  const safePath = String(path || '').trim();
-  if (!safePath.startsWith('/') || safePath.includes('://')) {
-    throw Object.assign(new Error('Invalid Smartsheet API path.'), { status: 400 });
-  }
-  const url = `${API_BASE}${safePath}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
-  try {
-    const response = await safeExternalFetch(url, {
-      method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'smartsheet-integration-source': 'APPLICATION,CincinnatiCustomSigns,Base44-Smartsheet-Sync',
-      },
-      body: JSON.stringify(jsonBody),
-      signal: controller.signal,
-    }, 0);
-    if (!response.ok) {
-      throw Object.assign(new Error(safeUpstreamError(response.status)), {
-        status: response.status === 429 ? 429 : 502,
-        upstreamStatus: response.status,
-      });
-    }
-    return { status: response.status, body: await readJson(response) };
-  } catch (error) {
-    if ((error as any)?.name === 'AbortError') {
-      throw Object.assign(new Error('Smartsheet write timed out.'), { status: 502 });
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 // Compare current Smartsheet cell values against the last-sync snapshot stored
@@ -1103,6 +993,8 @@ async function assertSyncRunOwnership(base44: any, startedAt: string) {
 // Status updates are run-identity scoped. A timed-out/recovered older process
 // cannot overwrite the status of a newer run that claimed the coordinator.
 async function saveSyncStatusForRun(base44: any, status: any, startedAt: string) {
+  traceSyncStatus(status);
+  await checkpointSyncTrace();
   try {
     const record = await loadSingleSyncStatusRecord(base44);
     if (record?.setting_value?.status !== 'running' ||
@@ -1361,7 +1253,7 @@ async function pushDataset(
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30_000);
         try {
-          const response = await fetch(url, { ...init, signal: controller.signal,
+          const response = await measuredDriveFetch(url, { ...init, signal: controller.signal,
             headers: { Authorization: `Bearer ${driveToken}`, ...(init?.headers || {}) } });
           if (!response.ok) throw new Error(`Google Drive backup verification returned HTTP ${response.status}.`);
           return response;
@@ -1686,12 +1578,12 @@ async function pushDataset(
   };
 }
 
-export default async function(req: Request): Promise<Response> {
+async function smartsheetSyncHandler(req: Request): Promise<Response> {
   try {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const backgroundSync = ['run_sync', 'push_dataset', 'pull_dataset'].includes(action);
-    const base44 = withEntityRateLimitRetry(createClientFromRequest(req), { paceMs: backgroundSync ? 1000 : 0 });
+    const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
     const configured = Boolean(token);
 
@@ -1716,6 +1608,7 @@ export default async function(req: Request): Promise<Response> {
       adminActor = platformActor;
     }
 
+    await beginSyncTraceStorage(base44);
     if (['conflict_list','conflict_count','resolve_conflict'].includes(action)) {
       return Response.json(await handleConflictReview({base44,body,actor:adminActor,token,loadConfig:()=>loadSyncConfig(base44),get:path=>smartsheetGet(path,token),claim:state=>claimSyncRun(base44,state),finish:(state,start)=>saveSyncStatusForRun(base44,state,start),push:(dataset,profile,config,options)=>pushDataset(base44,token,dataset,profile,config,options),assertOwner:start=>assertSyncRunOwnership(base44,start)}));
     }
@@ -2493,4 +2386,8 @@ export default async function(req: Request): Promise<Response> {
       error: safeStatus === 500 ? 'Smartsheet request could not be completed safely.' : (error as any)?.message,
     }, { status: safeStatus });
   }
+}
+
+export default async function(req: Request): Promise<Response> {
+  return await tracedSyncRequest(req, 'smartsheetSyncAction', smartsheetSyncHandler);
 }

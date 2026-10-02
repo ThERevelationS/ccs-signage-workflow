@@ -17,6 +17,7 @@ import {
 import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
 import SmartsheetSalesSnapshotReview from "@/components/admin/SmartsheetSalesSnapshotReview";
 import OrderReviewTools from "@/components/orders/OrderReviewTools";
+import SmartsheetSyncTraces from "@/components/admin/SmartsheetSyncTraces";
 import {
   prepareSmartsheetProfileTargetChange,
   smartsheetProfileTargetLocked,
@@ -767,6 +768,7 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
       />
 
       <OrderReviewTools sessionToken={sessionToken} />
+      <SmartsheetSyncTraces sessionToken={sessionToken} refreshKey={syncResult} />
 
       {syncResult && Array.isArray(syncResult.results) && (
         <div className={`rounded-xl border bg-white p-4 space-y-3 ${syncResult.needs_review ? "border-amber-300" : "border-emerald-200"}`}>

@@ -2,7 +2,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { loadGlobalSettingSingleton } from '../../shared/globalSettingSingleton.ts';
-import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { measuredSmartsheetFetch as safeExternalFetch, measureSyncEntities, observeSmartsheetBody } from '../../shared/smartsheetTraceIO.ts';
+import { tracedSyncRequest, beginSyncTraceStorage } from '../../shared/smartsheetTraceLifecycle.ts';
 
 const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
 const API_BASE = 'https://api.smartsheet.com/2.0';
@@ -42,7 +43,7 @@ async function readJson(response: Response) {
   const text = await response.text();
   if (!text.trim()) return null;
   try {
-    return JSON.parse(text);
+    const body = JSON.parse(text); observeSmartsheetBody(body); return body;
   } catch {
     throw Object.assign(new Error('Smartsheet returned an unreadable metadata response.'), { status: 502 });
   }
@@ -117,9 +118,9 @@ async function assertSafety(base44: any) {
   return config;
 }
 
-Deno.serve(async (req) => {
+async function metadataHandler(req) {
   try {
-    const base44 = createClientFromRequest(req);
+    const base44 = measureSyncEntities(createClientFromRequest(req));
     const body = await req.json().catch(() => ({}));
     let actor = null;
     if (body?.session_token) {
@@ -142,6 +143,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'This Smartsheet column is not approved for metadata option reconciliation.' }, { status: 400 });
     }
 
+    await beginSyncTraceStorage(base44);
     await assertSafety(base44);
 
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
@@ -222,4 +224,7 @@ Deno.serve(async (req) => {
       error: error?.message || 'Smartsheet metadata change could not be completed safely.',
     }, { status });
   }
-});
+}
+export default async function(req) {
+  return await tracedSyncRequest(req, 'smartsheetMetadataAdminAction', metadataHandler);
+}

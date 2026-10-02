@@ -1,4 +1,13 @@
-import { syncTraceContext, newSyncTrace, traceEvent, traceSnapshot } from './smartsheetTraceContext.ts';
+import { syncTraceContext, newSyncTrace, traceEvent, traceSnapshot, traceStage } from './smartsheetTraceContext.ts';
+
+export function traceSyncStatus(status) {
+  const t = syncTraceContext.getStore();
+  if (!t) return;
+  traceEvent('sync_status', { status: status.status, stage: status.current_step_label || '', phase: status.progress_phase || '', current: status.progress_current ?? null, total: status.progress_total ?? null });
+  for (const result of status.results || []) {
+    if (!t.stages.some(s => s.dataset === result.dataset && s.direction === result.direction)) traceStage(result);
+  }
+}
 
 const actions = new Set(['run_sync','push_dataset','pull_dataset','push_saved_sales','push_saved_orders','resolve_conflict','append_options','preview_append_options','save']);
 export async function beginSyncTraceStorage(client) {

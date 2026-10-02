@@ -3,16 +3,18 @@ import { secrets } from 'base44:runtime';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { equivalent, trackedConditionalSave } from '../../shared/fieldAudit.ts';
 import { readRemoteFieldHistory } from '../../shared/smartsheetCellHistory.ts';
-import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
+import { measuredSmartsheetFetch, measureSyncEntities, observeSmartsheetBody } from '../../shared/smartsheetTraceIO.ts';
+import { tracedSyncRequest, beginSyncTraceStorage } from '../../shared/smartsheetTraceLifecycle.ts';
 
 const optionalFields = new Set(('title client_name customer_name customer_id work_order_id description quantity request_type requestor_email requestor_name date_needed date_needed_option date_ordered date_ordered_option vendor date_received receipt_option status row_number current_stage priority assigned_to notes work_notes follow_up due_date start_date is_rider parent_work_order_id rider_stage completed asap in_pipeline sales_status lead_source current_task_deadline current_task_assigned_to designer surveyor site_survey_date site_survey_time site_survey_am_pm project_manager estimator est_inv_at estimate_amount current_task_description date_initial_contact date_estimate_sent date_order_created project_install_date permit_submitted_date permit_receipt_confirmed_date permit_number permit_approved_date actual_cost profit_margin contact_name contact_email contact_phone representative additional_contact follow_up_date sales_last_follow_up_completed_at sales_last_follow_up_outcome close_date expected_close_date sales_last_activity_at sales_stage_changed_at lost_reason project_type install_location address_line_2 billing_address billing_address_line_2 sales_rep permitting township_city county permit_code permit_class property_owner pud parcel_number electrical_ibi electrical_nkyei electrical_nec electrical_city electrical_county customer_is_building_owner customer_is_tenant customer_is_marketing_co business_co_coo_reminder business_co_coo_date install_yes install_no budget_less_than removal_yes removal_no service_repair origination patch paint color products product_1 product_2 product_3 product_4 product_5 product_6 cb_complete cf_complete cc_complete sms_complete production_type sip_checklist mmm_sip_checklist mmm_checklist sip_completed sip_revisit_date image_url files google_drive_folder_url google_drive_file_ids corbridge_invoice_number corbridge_link estimate_id milestones project_health health_override health_notes dependencies').split(' '));
-export default async function(req) {
+async function fieldHistoryHandler(req) {
   try {
-    const base44=createClientFromRequest(req), body=await req.json();
+    const base44=measureSyncEntities(createClientFromRequest(req)), body=await req.json();
     const actor=body.session_token ? await authenticateSignShopSession(base44,body.session_token) : await base44.auth.me();
     if(!actor || !['admin','user'].includes(actor.role))return Response.json({error:'Sign in to access field history.'},{status:401});
     const type=body.entity_type;
     if(!['WorkOrder','Order'].includes(type) || !/^[A-Za-z0-9_-]{6,80}$/.test(String(body.entity_id||'')))return Response.json({error:'Invalid record.'},{status:400});
+    await beginSyncTraceStorage(base44);
     const entity=base44.asServiceRole.entities[type], record=await entity.get(body.entity_id);
     if(!record)return Response.json({error:'Record not found.'},{status:404});
     if(body.action==='save') {
@@ -46,13 +48,16 @@ export default async function(req) {
       if(column && String(profile.smartsheet_sheet_id)===record.smartsheet_sheet_id) {
         try {
           remote=await readRemoteFieldHistory(base44,async path=> {
-            const r=await safeExternalFetch('https://api.smartsheet.com/2.0'+path,{headers:{Authorization:'Bearer '+secrets.get('SMARTSHEET_API_TOKEN')},signal:AbortSignal.timeout(15000)},0);
+            const r=await measuredSmartsheetFetch('https://api.smartsheet.com/2.0'+path,{headers:{Authorization:'Bearer '+secrets.get('SMARTSHEET_API_TOKEN')},signal:AbortSignal.timeout(15000)},0);
             if(!r.ok)throw new Error('Smartsheet field history is temporarily unavailable ('+r.status+').');
-            return await r.json();
+            const body = await r.json(); observeSmartsheetBody(body); return body;
           },record.smartsheet_sheet_id,record.smartsheet_row_id,String(column),Math.max(1,Number(body.remote_page)||1));
         }catch(error){remoteError=error.message;}
       }
     }
     return Response.json({success:true,audit,legacy,remote,remote_error:remoteError,current_value:record[field] ?? null});
   }catch(error){return Response.json({success:false,error:error.message},{status:error.status||500});}
+}
+export default async function(req) {
+  return await tracedSyncRequest(req, 'fieldHistoryAction', fieldHistoryHandler);
 }
