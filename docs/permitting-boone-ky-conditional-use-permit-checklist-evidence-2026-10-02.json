@@ -1,0 +1,17 @@
+{
+  "title": "Boone County Planning Commission — Conditional Use Permit (BOA) checklist current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ConditionalUsePermit_checklist.pdf",
+  "resolvedUrl": "https://cms3.revize.com/revize/boonectyplanning/Documents/Applications Forms/Checklists/ConditionalUsePermit_checklist.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Conditional Use Permit (BOA)",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 102649,
+  "sha256": "d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b",
+  "lastModified": "Fri, 06 Sep 2024 15:17:54 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/conditional-use-permit-checklist-2026-10-02.pdf",
+  "purpose": "current_conditional_use_permit_checklist_source_identity",
+  "archiveStatus": "archived",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page directly links this exact PDF in its Checklists section under the label Conditional Use Permit (BOA). On 2026-10-02 the official bcpcky.org URL redirected to the Boone County Planning Commission Revize-hosted PDF and returned HTTP 200 with application/pdf content. The 102649-byte live file was archived with SHA-256 d2dd9e55aad6283a1496b4147b814143f6005c8a79ca3d14f71388976911778b. This establishes current checklist source identity and current listing only. It does not by itself establish that every checklist instruction, requirement, fee, jurisdiction rule, submission workflow, hearing procedure, approval path, or applicability statement remains current or applies to a particular project."
+}
