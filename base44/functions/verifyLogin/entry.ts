@@ -28,7 +28,17 @@ Deno.serve(async (req) => {
     const authorized = base44.asServiceRole.entities.AuthorizedEmail;
     let users;
     try {
-      users = await authorized.filter({ username: uname });
+      // The background Smartsheet sync shares this rate limit; back off and retry briefly.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          users = await authorized.filter({ username: uname });
+          break;
+        } catch (e) {
+          const s = e?.status || e?.response?.status;
+          if (s !== 429 || attempt >= 5) throw e;
+          await new Promise(r => setTimeout(r, 700 * (attempt + 1)));
+        }
+      }
     } catch (lookupError) {
       const status = lookupError?.status || lookupError?.response?.status;
       if (status === 429) {
