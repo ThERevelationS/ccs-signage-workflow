@@ -1,0 +1,15 @@
+{
+  "title": "Boone County Planning Commission — Public Records Request form current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Forms/PublicRecordsRequest.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Public Records Request",
+  "checkedAt": "2026-10-01",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 172221,
+  "sha256": "3104a1a2c7abd25916ee0f9431cd26b9696d430110a7801bd97ae103af5bb1d5",
+  "lastModified": "Fri, 06 Sep 2024 15:18:42 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/public-records-request-2026-10-01.pdf",
+  "purpose": "current_public_records_request_form_source_identity",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page links Forms/PublicRecordsRequest.pdf under the label Public Records Request, and that exact official PDF returned HTTP 200 with application/pdf content on 2026-10-01. This establishes current source identity and category availability only. It does not by itself establish that a public-records request is part of a normal permit application, when records should be requested, what records are available, response timing, fees, or applicability to a particular sign project. No sign-project requirement or routine permitting workflow step should be inferred from this source without additional current official evidence or staff review."
+}
