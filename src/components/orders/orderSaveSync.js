@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { queueSmartsheetSync } from "@/components/admin/syncRequestQueue";
 
 function safeMessage(error, fallback) {
   return error?.response?.data?.error || error?.data?.error || error?.message || fallback;
@@ -17,7 +17,7 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
   }
 
   try {
-    const response = await base44.functions.invoke("smartsheetSyncAction", {
+    const response = await queueSmartsheetSync({
       action: "push_saved_orders",
       session_token: token,
       order_ids: ids,

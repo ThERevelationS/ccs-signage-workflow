@@ -86,7 +86,22 @@ async function readJson(response: Response) {
   }
 }
 
-async function smartsheetGet(path: string, token: string) {
+// Smartsheet 429s are transient: back off and retry instead of failing the record.
+async function withRateLimitRetry<T>(call: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await call();
+    } catch (error) {
+      if ((error as any)?.upstreamStatus !== 429 || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+  }
+}
+const smartsheetGet = (path: string, token: string) => withRateLimitRetry(() => smartsheetGetOnce(path, token));
+const smartsheetWrite = (method: 'POST' | 'PUT', path: string, token: string, jsonBody: unknown) =>
+  withRateLimitRetry(() => smartsheetWriteOnce(method, path, token, jsonBody));
+
+async function smartsheetGetOnce(path: string, token: string) {
   const safePath = String(path || '').trim();
   if (!safePath.startsWith('/') || safePath.includes('://')) {
     throw Object.assign(new Error('Invalid Smartsheet API path.'), { status: 400 });
@@ -179,7 +194,7 @@ function numericIdList(value: unknown, maxItems = 100) {
   return ids.slice(0, maxItems);
 }
 
-async function smartsheetWrite(method: 'POST' | 'PUT', path: string, token: string, jsonBody: unknown) {
+async function smartsheetWriteOnce(method: 'POST' | 'PUT', path: string, token: string, jsonBody: unknown) {
   const safePath = String(path || '').trim();
   if (!safePath.startsWith('/') || safePath.includes('://')) {
     throw Object.assign(new Error('Invalid Smartsheet API path.'), { status: 400 });
@@ -1045,7 +1060,10 @@ async function loadSingleSyncStatusRecord(base44: any) {
 async function claimSyncRun(base44: any, status: any) {
   const record = await loadSingleSyncStatusRecord(base44);
   const current = record?.setting_value || {};
-  if (current?.status === 'running') {
+  // A run that has saved no progress for 5 minutes was killed by the platform time limit.
+  const lastActivity = Date.parse(String(current?.updated_at || current?.started_at || ''));
+  const abandoned = Number.isFinite(lastActivity) && Date.now() - lastActivity > 5 * 60_000;
+  if (current?.status === 'running' && !abandoned) {
     const classification = classifyRecoverableStaleOrderSync(current, Date.now());
     const detail = classification?.recoverable
       ? 'The existing Order sync is stale and must be closed for review before another sync can start.'
@@ -1499,12 +1517,14 @@ async function pushDataset(
         }
         // Re-read both sides immediately before applying the verified plan.
         const freshLocal=await base44.asServiceRole.entities[dataset==='sales'?'WorkOrder':'Order'].get(record.id);
-        const freshRemote=await smartsheetGet(`/sheets/${sheetId}/rows/${existingRowId}`,token);
-        if(freshLocal.updated_date!==record.updated_date || String(freshRemote.body?.modifiedAt||'')!==String(currentRows[0].modified_at||''))throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
+        // Nothing to write either way: skip the extra Smartsheet reads (rate-limit relief).
+        const nothingToWrite=!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming||{}).length;
+        const freshRemote=nothingToWrite?null:await smartsheetGet(`/sheets/${sheetId}/rows/${existingRowId}`,token);
+        if(freshLocal.updated_date!==record.updated_date || (freshRemote && String(freshRemote.body?.modifiedAt||'')!==String(currentRows[0].modified_at||'')))throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
         cells=fieldPlan.outgoing;
         if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
         if(cells.length)await smartsheetWrite('PUT',`/sheets/${sheetId}/rows`,token,[{id:existingRowId,cells}]);
-        const verifyResult=await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
+        const verifyResult=nothingToWrite?rowResult:await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
         const verifiedRows=normalizeSheetRows(verifyResult.body);
         const actualSnapshot=verifiedRows.length===1 && verifiedRows[0].id===existingRowId ? (dataset==='sales'?buildSalesPullSnapshot(verifiedRows[0],bindings):buildOrderPullSnapshot(verifiedRows[0],bindings)):null;
         const expectedSnapshot={...fieldPlan.remote,...Object.fromEntries(cells.map(c=>[String(c.columnId),c.value]))};
