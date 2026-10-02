@@ -48,6 +48,9 @@ function reportDetail(row) {
   if (row.claimed_clock_out) {
     return `Employee reported prior Clock Out: ${formatDateTime(row.claimed_clock_out)}. The original shift remains auditable through manager review.`;
   }
+  if (row.status === "open" && !row.employee_response && !row.submitted_at) {
+    return "The scheduled monitor detected a long-running active shift. No Clock Out was created or changed; confirm with the employee before any correction.";
+  }
   return "A missed Clock Out was reported. Review the linked shift and correction history before approval.";
 }
 
