@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 const FIVE_MINUTES = 5 * 60 * 1000;
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
+const EIGHT_HOURS = 8 * 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
 function ageMs(value, nowMs) {
@@ -68,6 +69,7 @@ export default function TimeClockExceptionCenter({
   const breaksByEntryId = new Map();
   const pausesByEntryId = new Map();
   const laborByEntryId = new Map();
+  const punchCasesByEntryId = new Map();
 
   const addGrouped = (map, key, row) => {
     if (!key) return;
@@ -84,6 +86,7 @@ export default function TimeClockExceptionCenter({
   for (const row of activeBreaks) addGrouped(breaksByEntryId, row.time_entry_id, row);
   for (const row of activeWorkPauses) addGrouped(pausesByEntryId, row.time_entry_id, row);
   for (const row of activeLaborSegments) addGrouped(laborByEntryId, row.time_entry_id, row);
+  for (const row of punchExceptions) addGrouped(punchCasesByEntryId, row.time_entry_id, row);
 
   for (const entry of unresolvedPunchEntries) {
     exceptions.push({
@@ -215,6 +218,16 @@ export default function TimeClockExceptionCenter({
 
   for (const entry of activeEntries) {
     const age = ageMs(entry.clock_in, nowMs);
+    const linkedPunchCases = punchCasesByEntryId.get(entry.id) || [];
+    const hasActionableMissedClockOutCase = linkedPunchCases.some(row =>
+      row.exception_type === "missed_clock_out" && ["open", "pending_manager_review", "rejected"].includes(row.status)
+    );
+    const entryAcknowledgedMs = new Date(String(entry.stale_shift_acknowledged_at || "")).getTime();
+    const hasFreshWorkedThrough = linkedPunchCases.some(row => {
+      if (row.exception_type !== "missed_clock_out" || row.status !== "worked_through") return false;
+      const untilMs = new Date(String(row.acknowledged_until || "")).getTime();
+      return Number.isFinite(untilMs) && untilMs > nowMs;
+    }) || (Number.isFinite(entryAcknowledgedMs) && (nowMs - entryAcknowledgedMs) < EIGHT_HOURS);
     if (age === null) {
       exceptions.push({
         key: `invalid-clock-in:${entry.id}`,
@@ -226,7 +239,7 @@ export default function TimeClockExceptionCenter({
         entry,
       });
     }
-    if (age !== null && age >= TWENTY_FOUR_HOURS) {
+    if (age !== null && age >= TWENTY_FOUR_HOURS && !hasActionableMissedClockOutCase && !hasFreshWorkedThrough) {
       exceptions.push({
         key: `forgotten:${entry.id}`,
         severity: "critical",
