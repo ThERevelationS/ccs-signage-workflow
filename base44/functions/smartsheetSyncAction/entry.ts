@@ -5,6 +5,8 @@ import { handleConflictReview } from '../../shared/smartsheetConflictReview.ts';
 import { secrets } from 'base44:runtime';
 import { planSalesFieldPull } from '../../shared/smartsheetSalesPullPlan.ts';
 import { buildSalesPullReviews } from '../../shared/smartsheetSalesPullReviews.ts';
+import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersistence.ts';
+import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
@@ -646,16 +648,7 @@ async function pullDataset(
     }
   }
 
-  if (salesPullReviews.length) {
-    const priorReviews = await loadAllEntityRows({ entity: base44.asServiceRole.entities.SyncConflict,
-      query: { dataset: 'sales', sheet_id: sheetId }, sort: 'id', label: 'Existing Sales field reviews' });
-    const existingKeys = new Set(priorReviews.map(review => review.conflict_key));
-    const newReviews = salesPullReviews.filter(review => !existingKeys.has(review.conflict_key));
-    for (let i = 0; i < newReviews.length; i += 100) {
-      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-      await base44.asServiceRole.entities.SyncConflict.upsert(newReviews.slice(i, i + 100), { key: 'conflict_key' });
-    }
-  }
+  await persistSalesReviews(base44, salesPullReviews, options?.assertRunOwnership);
 
   // Historical Smartsheet assignee labels can outlive the current authorized
   // Base44 roster. They must not freeze the entire Sales mirror. For unresolved
@@ -1121,6 +1114,7 @@ async function pushDataset(
     reportOrderProgress?: (progress: any) => Promise<void> | void;
     assertRunOwnership?: () => Promise<void> | void;
     respectSalesCreateSetting?: boolean;
+    runStartedAt?: string;
   } = {},
 ) {
   const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
@@ -1133,6 +1127,17 @@ async function pushDataset(
   if (boundColumnCount === 0) {
     return { dataset, skipped: true, reason: 'No column bindings configured for this dataset.' };
   }
+
+  const reportSalesProgress = async (progress: any) => {
+    if (dataset !== 'sales' || !options.runStartedAt) return;
+    const active = await loadSingleSyncStatusRecord(base44);
+    await saveSyncStatusForRun(base44, {...active.setting_value,
+      progress_dataset:'sales', progress_direction:'push', progress_phase:progress.phase || 'checking',
+      progress_current:Number(progress.current)||0, progress_total:Number(progress.total)||0,
+      progress_item_label:cleanText(progress.item_label,220), progress_detail:cleanText(progress.detail,260),
+      progress_updated_at:new Date().toISOString()}, options.runStartedAt);
+  };
+  await reportSalesProgress({phase:'preflight',item_label:'Loading saved Sales changes'});
 
   // Save & Sync supplies exact permanent record IDs so a button press never
   // expands into a full-dataset push.
@@ -1318,6 +1323,8 @@ async function pushDataset(
     });
   }
 
+  await reportSalesProgress({phase:'backup',total:pendingRecords.length,item_label:'Verifying backup before Sales writes'});
+
   // A successful BackupLog without saved sheet bytes is not a backup. For both
   // Order Request and Sales Pipeline, read every Smartsheet page, persist a
   // private Google Drive JSON snapshot, and read the exact file back before
@@ -1340,8 +1347,11 @@ async function pushDataset(
       await createVerifiedOrderSheetBackup({
         dataset,
         sheetId,
-        readPage: async (page: number, pageSize: number) =>
-          (await smartsheetGet(`/sheets/${sheetId}?page=${page}&pageSize=${pageSize}`, token)).body,
+        readPage: async (page: number, pageSize: number) => {
+          if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+          await reportSalesProgress({phase:'backup',total:pendingRecords.length,item_label:`Reading backup page ${page}`});
+          return (await smartsheetGet(`/sheets/${sheetId}?page=${page}&pageSize=${pageSize}`, token)).body;
+        },
         verifySource: async () =>
           (await smartsheetGet(`/sheets/${sheetId}?page=1&pageSize=1`, token)).body,
         upload: async ({ filename, content }: any) => {
@@ -1403,6 +1413,19 @@ async function pushDataset(
   const errors: string[] = [];
   let requestorContactsSkippedNoEmail = 0;
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
+  const salesReviews = dataset === 'sales' ? await loadAllEntityRows({entity:base44.asServiceRole.entities.SyncConflict,query:{dataset:'sales',sheet_id:sheetId,status:{$in:['open','approved']}},sort:'id',label:'Sales review evidence'}) : [];
+  const queuedSalesReviews: any[] = [];
+  const salesRows = new Map();
+  if (dataset === 'sales') {
+    const linked = pendingRecords.filter(r => r.smartsheet_sheet_id === sheetId && /^\d+$/.test(String(r.smartsheet_row_id)));
+    for (let i=0;i<linked.length;i+=100) {
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+      await reportSalesProgress({phase:'reading',total:pendingRecords.length,item_label:`Reading Sales row batch ${Math.floor(i/100)+1}`});
+      const page = (await smartsheetGet(`/sheets/${sheetId}?rowIds=${linked.slice(i,i+100).map(r=>r.smartsheet_row_id).join(',')}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token)).body;
+      if (String(page?.id)!==sheetId || !Object.values(bindings).every(id=>page.columns?.some(c=>String(c.id)===String(id)))) throw new Error('Sales sheet or column identity could not be verified. No rows were written.');
+      for (const row of normalizeSheetRows(page)) salesRows.set(row.id,{row,raw:{columns:page.columns,rows:page.rows.filter(r=>String(r.id)===row.id)}});
+    }
+  }
   const orderPushStartedAt = Date.now();
   const orderPushTimeBudgetMs = dataset === 'orders'
     ? Math.max(0, Number(options?.orderPushTimeBudgetMs) || 0) : 0;
@@ -1410,6 +1433,11 @@ async function pushDataset(
   let orderTimeBudgetReached = false;
 
   for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
+    if (dataset === 'sales' && Date.now()-orderPushStartedAt >= 90_000) {
+      orderTimeBudgetReached = true;
+      break;
+    }
+    if (dataset === 'sales' && recordIndex % 5 === 0) await reportSalesProgress({phase:'checking',current:recordIndex,total:pendingRecords.length,item_label:pendingRecords[recordIndex]?.client_name,detail:'Checking saved field differences; held values do not block other fields'});
     if (dataset === 'orders' && orderPushTimeBudgetMs > 0 &&
         Date.now() - orderPushStartedAt >= orderPushTimeBudgetMs) {
       orderTimeBudgetReached = true;
@@ -1454,24 +1482,35 @@ async function pushDataset(
       let salesSuccessfulWrite: 'created' | 'updated' | null = null;
       if (existingRowId && /^\d+$/.test(existingRowId) && existingSheetId === sheetId) {
         // Reconcile each field, not an entire row by its last-sync timestamp.
-        const rowResult = await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
-        const currentRows = normalizeSheetRows(rowResult.body);
+        const cached = dataset === 'sales' ? salesRows.get(existingRowId) : null;
+        const rowResult = cached ? {body:cached.raw} : await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
+        const currentRows = cached ? [cached.row] : normalizeSheetRows(rowResult.body);
         if(currentRows.length !== 1 || currentRows[0].id !== existingRowId)throw new Error('The permanent Smartsheet row is missing. Local data was preserved.');
-        fieldPlan = await planFieldPush({base44,record,dataset,bindings,remoteRow:currentRows[0],rawSheet:rowResult.body,get:async path=>smartsheetGet(path,token),cells});
-        if(fieldPlan.unresolved.length){conflicts.push(record.id);continue;}
+        fieldPlan = await planFieldPush({base44,record,dataset,bindings,remoteRow:currentRows[0],rawSheet:rowResult.body,get:async path=>smartsheetGet(path,token),cells,...(dataset==='sales'?{salesReviews,queueSalesReview:review=>queuedSalesReviews.push(review)}:{})});
+        if(fieldPlan.unresolved.length) {
+          conflicts.push(record.id);
+          if(dataset!=='sales' || (!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming).length))continue;
+        }
         // Re-read both sides immediately before applying the verified plan.
         const freshLocal=await base44.asServiceRole.entities[dataset==='sales'?'WorkOrder':'Order'].get(record.id);
         const freshRemote=await smartsheetGet(`/sheets/${sheetId}/rows/${existingRowId}`,token);
         if(freshLocal.updated_date!==record.updated_date || String(freshRemote.body?.modifiedAt||'')!==String(currentRows[0].modified_at||''))throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
         cells=fieldPlan.outgoing;
+        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
         if(cells.length)await smartsheetWrite('PUT',`/sheets/${sheetId}/rows`,token,[{id:existingRowId,cells}]);
         const verifyResult=await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
         const verifiedRows=normalizeSheetRows(verifyResult.body);
         const actualSnapshot=verifiedRows.length===1 && verifiedRows[0].id===existingRowId ? (dataset==='sales'?buildSalesPullSnapshot(verifiedRows[0],bindings):buildOrderPullSnapshot(verifiedRows[0],bindings)):null;
         const expectedSnapshot={...fieldPlan.remote,...Object.fromEntries(cells.map(c=>[String(c.columnId),c.value]))};
         if(!actualSnapshot || !salesSnapshotsEqual(expectedSnapshot,actualSnapshot,cleanText(bindings?.current_task_assigned_to,40)))throw new Error('Field reconciliation failed remote read-back; sync completion was not recorded.');
+        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
         record=await applyMergedLocalFields(base44,dataset,record,fieldPlan);
-        fieldPlan.verifiedSnapshot=actualSnapshot;
+        fieldPlan.verifiedSnapshot={...actualSnapshot};
+        for (const field of fieldPlan.unresolved) {
+          const column=String(bindings[field]);
+          if(Object.prototype.hasOwnProperty.call(record.smartsheet_sync_snapshot||{},column))fieldPlan.verifiedSnapshot[column]=record.smartsheet_sync_snapshot[column];
+          else delete fieldPlan.verifiedSnapshot[column];
+        }
         if (dataset === 'orders') updated.push(record.id);
         else salesSuccessfulWrite = 'updated';
       } else if (dataset === 'orders') {
@@ -1532,7 +1571,8 @@ async function pushDataset(
         }
         salesSuccessfulWrite = 'created';
       }
-      // Store fresh snapshot + timestamp on the record
+      // Store only verified field baselines; held values keep their old evidence.
+      if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       const snapshot = fieldPlan?.verifiedSnapshot || buildSnapshot(record, bindings, dataset);
       if (dataset === 'orders') {
         const finalized = await base44.asServiceRole.entities.Order.updateMany(
@@ -1569,12 +1609,16 @@ async function pushDataset(
         else if (salesSuccessfulWrite === 'updated') updated.push(record.id);
       }
       if(fieldPlan?.decisions?.length)await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:fieldPlan.decisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}});
-      await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,status:'open',local_version:pendingRecords[recordIndex].updated_date},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}});
+      await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,status:'open',local_version:pendingRecords[recordIndex].updated_date,...(fieldPlan?.unresolved?.length?{field_name:{$nin:fieldPlan.unresolved}}:{})},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}});
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
     }
   }
 
+  if (dataset === 'sales') {
+    await persistSalesReviews(base44,queuedSalesReviews,options?.assertRunOwnership);
+    await reportSalesProgress({phase:orderTimeBudgetReached?'paused':'finishing',current:orderProcessedCount,total:pendingRecords.length,item_label:'Sales checks finished',detail:`${conflicts.length} records have held value differences; ${errors.length} write errors`});
+  }
   if (dataset === 'orders') {
     await reportOrderProgress({
       phase: orderTimeBudgetReached ? 'paused' : 'finishing',
@@ -1599,6 +1643,7 @@ async function pushDataset(
     errors: errors.length,
     error_details: errors.slice(0, 10),
     conflict_record_ids: conflicts.slice(0, 10),
+    ...(dataset === 'sales' ? {processed_records:orderProcessedCount,remaining_records:Math.max(0,pendingRecords.length-orderProcessedCount),...(orderTimeBudgetReached?{skipped:true,partial:true,time_budget_reached:true,reason:'Sales push paused safely at its time limit. Remaining changes stay queued.'}:{})} : {}),
     ...(dataset === 'orders' ? {
       requestor_contacts_skipped_no_valid_email: requestorContactsSkippedNoEmail,
       processed_records: orderProcessedCount,
@@ -1655,6 +1700,18 @@ export default async function(req: Request): Promise<Response> {
         supported_actions: ['status', 'config_get', 'config_save', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
+    }
+
+    if (action === 'recover_stale_sales_run') {
+      const record=await loadSingleSyncStatusRecord(base44), current=record.setting_value;
+      const expected=cleanText(body.expected_started_at,80);
+      if(!expected || expected!==current?.started_at || !classifyRecoverableStaleSalesSync(current).recoverable) return Response.json({success:false,error:'Sales is still reporting recent progress or the run changed. Reload before retrying.'},{status:409});
+      const at=new Date().toISOString(), next={...recoveredStaleSalesSyncValue(current,at),updated_at:at};
+      const saved=await base44.asServiceRole.entities.GlobalSettings.updateMany({id:record.id,updated_date:record.updated_date},{$set:{setting_value:next}});
+      if(saved?.updated!==1) return Response.json({success:false,error:'Progress changed during recovery; no run was closed.'},{status:409});
+      const verified=await base44.asServiceRole.entities.GlobalSettings.get(record.id);
+      if(verified.setting_value?.stale_recovered_at!==at)throw new Error('Sales recovery could not be verified.');
+      return Response.json({success:true,recovered:true,status:verified.setting_value});
     }
 
     if (action === 'recover_stale_order_run') {
@@ -1825,6 +1882,7 @@ export default async function(req: Request): Promise<Response> {
       const pushResult = await pushDataset(base44, token, 'sales', profile, config, {
         recordIds: workOrderIds,
         respectSalesCreateSetting: true,
+        runStartedAt: startedAt,
         assertRunOwnership: async () => assertSyncRunOwnership(base44, startedAt),
       });
       const result = { ...pushResult, dataset: 'sales', direction: 'push' };
@@ -2361,6 +2419,7 @@ export default async function(req: Request): Promise<Response> {
                 assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
               } : {
                 assertRunOwnership: async () => assertSyncRunOwnership(base44, runStartedAt),
+                runStartedAt,
               });
 
             results.push(dataset === 'sales' ? { ...pushResult, direction: 'push' } : pushResult);

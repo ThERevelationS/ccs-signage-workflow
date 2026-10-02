@@ -6,7 +6,7 @@ import { canonicalBase44SalesAssignee } from './smartsheetSalesAssigneeTranslati
 const text = v=>String(v ?? '').trim();
 function same(a,b) { return text(a)===text(b) || a!=null && b!=null && text(a)!=='' && text(b)!=='' && Number.isFinite(Number(a)) && Number(a)===Number(b); }
 function historyValue(event, field) { return ['estimate_amount','est_inv_at'].includes(field)?event.value ?? event.displayValue:event.displayValue ?? event.value; }
-export async function planFieldPush({base44, record, dataset, bindings, remoteRow, rawSheet, get, cells}) {
+export async function planFieldPush({base44, record, dataset, bindings, remoteRow, rawSheet, get, cells, salesReviews, queueSalesReview}) {
   const type=dataset==='sales'?'WorkOrder':'Order';
   const remote=dataset==='sales'?buildSalesPullSnapshot(remoteRow,bindings):buildOrderPullSnapshot(remoteRow,bindings);
   const local=buildSnapshot(record,bindings,dataset), prior=record.smartsheet_sync_snapshot || {};
@@ -17,6 +17,7 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
     if(!field)throw new Error('Field mapping could not be verified.');
     if(!rawSheet.columns?.some(c=>String(c.id)===column))throw new Error('Mapped column metadata is missing; no row was written.');
     let a=local[column]; const b=remote[column], known=Object.prototype.hasOwnProperty.call(prior,column);
+    if(same(a,b))continue;
     if(field==='notes_serialized' && record.work_notes?.length===1 && record.work_notes[0].text===String(b ?? '')) {
       const audit=(await base44.asServiceRole.entities.FieldAudit.filter({entity_type:type,entity_id:record.id,field_name:'work_notes',status:'committed'},{sort:'-created_date',limit:1})).items[0];
       if(audit?.source==='smartsheet' && audit.value_hash===await valueHash(record.work_notes))a=b;
@@ -29,21 +30,29 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
     if(known && !remoteChanged)winner='app';
     else if(known && !localChanged)winner='smartsheet';
     else {
-      localAt=await verifiedLocalFieldTime(base44,type,record,field);
+      // Unknown baselines cannot be decided by timestamps, so never spend
+      // hundreds of history requests looking for evidence we cannot use.
+      if(known) localAt=await verifiedLocalFieldTime(base44,type,record,field);
       try {
+        if(known && localAt && field!=='notes_serialized' && !rawCell?.formula) {
         const history=await readRemoteFieldHistory(base44,get,record.smartsheet_sheet_id,record.smartsheet_row_id,column);
         const latest=[...history.data].sort((x,y)=>Date.parse(y.modifiedAt)-Date.parse(x.modifiedAt))[0];
         if(latest && same(historyValue(latest,field),b) && Number.isFinite(Date.parse(latest.modifiedAt)))remoteAt=new Date(latest.modifiedAt).toISOString();
+        }
       }catch(error){reason=error.message;}
       if(known && field!=='notes_serialized' && !rawCell?.formula && localAt && remoteAt && Math.abs(Date.parse(localAt)-Date.parse(remoteAt))>1000)winner=Date.parse(localAt)>Date.parse(remoteAt)?'app':'smartsheet';
       else reason=reason || (!known?'No verified field baseline exists.':field==='notes_serialized'?'Structured notes require an explicit admin choice.':rawCell?.formula?'Formula-driven values require review.':'A verified timestamp is missing or the edit times are tied/too close.');
     }
-    const identity=[dataset,record.id,column,record.updated_date,remoteRow.modified_at,a,b];
+    const identity=dataset==='sales'?[dataset,record.id,column,a,b]:[dataset,record.id,column,record.updated_date,remoteRow.modified_at,a,b];
     const key=await valueHash(identity);
-    const approvals=(await base44.asServiceRole.entities.SyncConflict.filter({conflict_key:key},{limit:2})).items;
+    const approvals=dataset==='sales' && salesReviews ? salesReviews.filter(r=>r.entity_id===record.id && r.column_id===column && r.local_value===preview(a??'') && r.remote_value===preview(b??'')) : (await base44.asServiceRole.entities.SyncConflict.filter({conflict_key:key},{limit:2})).items;
     if(approvals.length>1)throw new Error('Duplicate field reviews require admin attention.');
     if(approvals[0]?.status==='approved') { winner=approvals[0].decision; decisions.push(approvals[0].id); }
     if(!winner) {
+      if(dataset==='sales' && queueSalesReview) {
+        queueSalesReview({conflict_key:key,dataset,entity_id:record.id,record_label:record.client_name||record.title||record.id,field_name:field,field_label:field.replace(/_/g,' '),sheet_id:record.smartsheet_sheet_id,row_id:record.smartsheet_row_id,column_id:column,local_value:preview(a??''),remote_value:preview(b??''),baseline_value:known?preview(prior[column]??''):'Unknown',local_modified_at:localAt,remote_modified_at:remoteAt,local_version:record.updated_date,remote_version:remoteRow.modified_at||'',reason:reason||'Both versions differ; choose which value to keep.',status:'open'});
+        unresolved.push(field); continue;
+      }
       await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,column_id:column,status:{$in:['open','approved']},conflict_key:{$ne:key}},{$set:{status:'superseded'}});
       if(!approvals.length)await base44.asServiceRole.entities.SyncConflict.upsert([{conflict_key:key,dataset,entity_id:record.id,record_label:record.client_name||record.customer_name||record.title||record.id,
         field_name:field,field_label:field.replace(/_/g,' '),sheet_id:record.smartsheet_sheet_id,row_id:record.smartsheet_row_id,column_id:column,

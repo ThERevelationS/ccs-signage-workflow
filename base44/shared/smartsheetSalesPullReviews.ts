@@ -11,7 +11,7 @@ export async function buildSalesPullReviews(record, bindings, remoteRow) {
     const column = String(id), a = local[column], b = remote[column];
     const known = Object.prototype.hasOwnProperty.call(prior, column);
     return {
-      conflict_key: await valueHash(['sales', record.id, column, record.updated_date, remoteRow.modified_at, a, b]),
+      conflict_key: await valueHash(['sales', record.id, column, a, b]),
       dataset: 'sales', entity_id: record.id, record_label: record.client_name || record.title || record.id,
       field_name: field, field_label: field.replace(/_/g, ' '), sheet_id: record.smartsheet_sheet_id,
       row_id: record.smartsheet_row_id, column_id: column,

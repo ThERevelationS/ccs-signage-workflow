@@ -1,8 +1,14 @@
+import { buildSnapshot, buildSalesPullSnapshot } from './smartsheetSyncFields.ts';
+import { preview } from './fieldAudit.ts';
+
 export async function handleConflictReview({base44,body,actor,token,loadConfig,get,claim,finish,push,assertOwner}) {
   if(actor?.role!=='admin')throw Object.assign(new Error('Only admins can review sync conflicts.'),{status:403});
   const entity=base44.asServiceRole.entities.SyncConflict;
   const query={status:body.status==='resolved'?'resolved':{$in:['open','approved']},...(body.dataset==='sales'||body.dataset==='orders'?{dataset:body.dataset}:{})};
-  if(body.action==='conflict_count')return {success:true,count:await entity.count(query)};
+  if(body.action==='conflict_count') {
+    const result=await entity.aggregate({query,countDistinct:'entity_id'}), totals=result.rows[0]||{};
+    return {success:true,count:totals.count||0,record_count:totals.count_distinct_entity_id||0};
+  }
   if(body.action==='conflict_list')return {success:true,page:await entity.filter(query,{sort:'-created_date',limit:25,...(body.cursor?{cursor:body.cursor}:{})}),count:await entity.count(query)};
   if(!['app','smartsheet'].includes(body.decision))throw Object.assign(new Error('Choose which field value to keep.'),{status:400});
   const conflict=await entity.get(String(body.conflict_id||''));
@@ -16,12 +22,13 @@ export async function handleConflictReview({base44,body,actor,token,loadConfig,g
   try {
     const record=await base44.asServiceRole.entities[conflict.dataset==='sales'?'WorkOrder':'Order'].get(conflict.entity_id);
     const remote=await get(`/sheets/${conflict.sheet_id}/rows/${conflict.row_id}`);
-    if(record.deleted || record.updated_date!==conflict.local_version || String(remote.body?.modifiedAt||'')!==conflict.remote_version) {
+    const sameSalesValues = conflict.dataset==='sales' && preview(buildSnapshot(record,profile.column_bindings,'sales')[conflict.column_id]??'')===conflict.local_value && preview(buildSalesPullSnapshot(remote.body,profile.column_bindings)[conflict.column_id]??'')===conflict.remote_value;
+    if(record.deleted || (conflict.dataset==='sales' ? !sameSalesValues : record.updated_date!==conflict.local_version || String(remote.body?.modifiedAt||'')!==conflict.remote_version)) {
       await entity.update(conflict.id,{status:'superseded'});
       throw Object.assign(new Error('One side changed since this review was created. Your choice was not applied; run sync to produce a fresh review.'),{status:409});
     }
     await entity.update(conflict.id,{status:'approved',decision:body.decision,resolved_by:actor.full_name||actor.email});
-    const result=await push(conflict.dataset,profile,config,{recordIds:[conflict.entity_id],respectSalesCreateSetting:true,assertRunOwnership:()=>assertOwner(started)});
+    const result=await push(conflict.dataset,profile,config,{recordIds:[conflict.entity_id],respectSalesCreateSetting:true,runStartedAt:started,assertRunOwnership:()=>assertOwner(started)});
     const needsReview=Boolean(result.skipped || result.conflicts || result.errors || result.snapshot_review_required);
     await finish({status:needsReview?'needs_review':'completed',needs_review:needsReview,completed_at:new Date().toISOString(),completed_steps:1,total_steps:1,current_step_label:'',results:[result]},started);
     return {success:true,needs_review:needsReview,result,message:needsReview?'Choice recorded. Other fields or a sync safeguard still require review; nothing was marked fully synced.':'Chosen field values were reconciled and verified.'};

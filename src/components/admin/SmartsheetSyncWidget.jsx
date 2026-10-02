@@ -71,7 +71,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   if (!config?.global_enabled) return null;
 
   const interpretedStatus = interpretSmartsheetSyncStatus(status);
-  const orderProgress = orderSyncLiveProgress(status, { enabled: compactOrderForm });
+  const orderProgress = orderSyncLiveProgress(status?.progress_dataset === 'sales' ? {...status,progress_dataset:'orders'} : status, { enabled: compactOrderForm || status?.progress_dataset === 'sales' });
   // The shared widget historically waits 30m before declaring a run stale.
   // Order Form now emits frequent heartbeats, so five quiet minutes is enough
   // to say the run is stalled without changing other CCS sync consumers.
@@ -97,17 +97,21 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const progressDetail = orderProgress.detail;
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-  const canRecoverStaleOrderRun = compactOrderForm && isStale && status?.status === 'running' &&
-    orderProgress.heartbeatAgeMs !== null && currentUser?.role === 'admin' && Boolean(sessionToken);
+  const staleSales = isStale && /^Sales Pipeline\b/.test(currentStepLabel) && interpretedStatus.isStale;
+  const canRecoverStaleOrderRun = (compactOrderForm || staleSales) && isStale && status?.status === 'running' &&
+    currentUser?.role === 'admin' && Boolean(sessionToken);
   const recoverStaleRun = async () => {
     if (!canRecoverStaleOrderRun || recoveringStaleRun) return;
     setRecoveryError('');
     setRecoveringStaleRun(true);
     try {
-      await recoverStalledOrderSync({ sessionToken, expectedStartedAt: status?.started_at });
+      if(staleSales) {
+        const response=await base44.functions.invoke('smartsheetSyncAction',{action:'recover_stale_sales_run',session_token:sessionToken,expected_started_at:status.started_at});
+        if(!response.data?.success)throw new Error(response.data?.error||'Sales recovery was not confirmed.');
+      } else await recoverStalledOrderSync({ sessionToken, expectedStartedAt: status?.started_at });
       await loadStatus();
     } catch (error) {
-      setRecoveryError(error?.message || 'The stalled Order sync could not be closed safely.');
+      setRecoveryError(error?.response?.data?.error || error?.message || 'The stalled sync could not be closed safely.');
     } finally {
       setRecoveringStaleRun(false);
     }
