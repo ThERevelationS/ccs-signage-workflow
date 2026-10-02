@@ -139,4 +139,59 @@ assert.match(orphanPunchCaseMarkup, /Punch exception is missing its linked shift
 assert.match(orphanPunchCaseMarkup, /Investigate before approving or finalizing/);
 console.log('PASS orphaned punch exception becomes a critical management integrity alert');
 
-console.log('PASS 8/8 Time Clock management exception renderer scenarios');
+const monitoredOldEntry = {
+  id: 'monitored-old-entry', user_email: email, user_name: 'Synthetic Employee',
+  status: 'clocked_in', clock_in: '2026-09-01T14:00:00.000Z',
+};
+const monitoredOldMarkup = render([monitoredOldEntry], {
+  employeeStates: [{
+    id: 'monitored-state', user_email: email, user_name: 'Synthetic Employee',
+    status: 'clocked_in', active_entry_id: monitoredOldEntry.id,
+    break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
+  }],
+  punchExceptions: [{
+    id: 'monitor-open-case', user_email: email, user_name: 'Synthetic Employee',
+    time_entry_id: monitoredOldEntry.id, exception_type: 'missed_clock_out', status: 'open',
+    detected_at: '2026-09-02T14:00:00.000Z',
+  }],
+});
+assert.match(monitoredOldMarkup, /Missed Clock Out report needs manager follow-up/);
+assert.doesNotMatch(monitoredOldMarkup, /Possible missed clock-out/);
+console.log('PASS scheduled open punch case replaces the duplicate generic old-shift warning');
+
+const acknowledgedOldEntry = {
+  id: 'acknowledged-old-entry', user_email: email, user_name: 'Synthetic Employee',
+  status: 'clocked_in', clock_in: '2026-09-01T14:00:00.000Z',
+};
+const acknowledgedMarkup = render([acknowledgedOldEntry], {
+  employeeStates: [{
+    id: 'acknowledged-state', user_email: email, user_name: 'Synthetic Employee',
+    status: 'clocked_in', active_entry_id: acknowledgedOldEntry.id,
+    break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
+  }],
+  punchExceptions: [{
+    id: 'worked-through-case', user_email: email, user_name: 'Synthetic Employee',
+    time_entry_id: acknowledgedOldEntry.id, exception_type: 'missed_clock_out', status: 'worked_through',
+    acknowledged_until: '2999-01-01T00:00:00.000Z',
+  }],
+});
+assert.doesNotMatch(acknowledgedMarkup, /Possible missed clock-out/);
+assert.match(acknowledgedMarkup, /No Time Clock exceptions currently need manager attention/);
+console.log('PASS fresh Worked Through acknowledgement suppresses stale-shift manager warning');
+
+const expiredAcknowledgementMarkup = render([acknowledgedOldEntry], {
+  employeeStates: [{
+    id: 'expired-state', user_email: email, user_name: 'Synthetic Employee',
+    status: 'clocked_in', active_entry_id: acknowledgedOldEntry.id,
+    break_status: 'working', work_pause_status: 'working', labor_status: 'idle',
+  }],
+  punchExceptions: [{
+    id: 'expired-worked-through-case', user_email: email, user_name: 'Synthetic Employee',
+    time_entry_id: acknowledgedOldEntry.id, exception_type: 'missed_clock_out', status: 'worked_through',
+    acknowledged_until: '2020-01-01T00:00:00.000Z',
+  }],
+});
+assert.match(expiredAcknowledgementMarkup, /Possible missed clock-out/);
+console.log('PASS expired Worked Through acknowledgement allows stale-shift warning to return');
+
+console.log('PASS 11/11 Time Clock management exception renderer scenarios');
