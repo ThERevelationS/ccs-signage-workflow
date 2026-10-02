@@ -194,6 +194,7 @@ function entryAuditSnapshot(entry: any) {
 const COMPANY_TIME_ZONE = 'America/New_York';
 const MISSED_PUNCH_PROMPT_MS = 18 * 60 * 60 * 1000;
 const MISSED_PUNCH_REPROMPT_MS = 8 * 60 * 60 * 1000;
+const STALE_SHIFT_MONITOR_CAPABILITY_HASH = 'f63c5b792d82c0fade5324f96447480a3530b9e8459dc141909ae16782096ed0';
 
 function dateKeyInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
@@ -219,6 +220,28 @@ function minutesOfDayInCompanyTime(value: any) {
   const minute = Number(parts.find(part => part.type === 'minute')?.value);
   if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
   return hour * 60 + minute;
+}
+
+async function hasStaleShiftMonitorCapability(body: any) {
+  const token = String(body?._workflow_capability || '').trim();
+  if (!/^[A-Za-z0-9_-]{40,128}$/.test(token)) return false;
+  const actualHash = await sha256Hex(token);
+  return constantTimeEqual(actualHash, STALE_SHIFT_MONITOR_CAPABILITY_HASH);
+}
+
+function staleShiftMonitorEligibility(entry: any, serverNow: Date) {
+  if (!entry?.id || entry.status !== 'clocked_in' || entry.archived_test_data || entry.archived_admin) {
+    return { eligible: false, reason: 'not_active' };
+  }
+  const clockInMs = new Date(String(entry.clock_in || '')).getTime();
+  if (!Number.isFinite(clockInMs)) return { eligible: false, reason: 'invalid_clock_in' };
+  const crossedCompanyDate = dateKeyInCompanyTime(entry.clock_in) !== dateKeyInCompanyTime(serverNow.toISOString());
+  if (!crossedCompanyDate) return { eligible: false, reason: 'same_company_date' };
+  if ((serverNow.getTime() - clockInMs) < MISSED_PUNCH_PROMPT_MS) return { eligible: false, reason: 'under_threshold' };
+  const acknowledgedMs = new Date(String(entry.stale_shift_acknowledged_at || '')).getTime();
+  const acknowledgementFresh = Number.isFinite(acknowledgedMs) && (serverNow.getTime() - acknowledgedMs) < MISSED_PUNCH_REPROMPT_MS;
+  if (acknowledgementFresh) return { eligible: false, reason: 'fresh_worked_through' };
+  return { eligible: true, reason: 'stale' };
 }
 
 function entryFallsInPeriod(entry: any, startDate: string, endDate: string) {
@@ -250,6 +273,24 @@ async function uniqueRow(entity: any, query: any, label: string) {
   if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
   if (rows.length > 1) throw new Error(`${label} is ambiguous (${rows.length} records).`);
   return rows[0] || null;
+}
+
+async function loadAllFilteredRows(entity: any, query: any, sort: string, label: string) {
+  const rows: any[] = [];
+  const seen = new Set<string>();
+  const pageSize = 500;
+  for (let skip = 0; skip < 50_000; skip += pageSize) {
+    const page = await entity.filter(query, sort, pageSize, skip);
+    if (!Array.isArray(page)) throw new Error(`${label} could not be verified completely.`);
+    for (const row of page) {
+      const id = String(row?.id || '').trim();
+      if (id && seen.has(id)) continue;
+      if (id) seen.add(id);
+      rows.push(row);
+    }
+    if (page.length < pageSize) return rows;
+  }
+  throw new Error(`${label} exceeds the 50,000-record safety limit.`);
 }
 
 async function audit(auditEntity: any, data: any) {
@@ -660,6 +701,169 @@ async function releaseCompletedCorrectionCreateLock(
   if (!freshStatus || freshStatus === 'idle') return true;
   if (freshStatus === 'creating' && String(fresh.correction_create_request_id || '') !== requestId) return true;
   return false;
+}
+
+async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity }: any) {
+  const serverNow = new Date();
+  const activeEntries = await loadAllFilteredRows(
+    entryEntity,
+    { status: 'clocked_in', archived_test_data: { $ne: true }, archived_admin: { $ne: true } },
+    'clock_in',
+    'Active Time Clock shifts',
+  );
+  const clockedInStates = await loadAllFilteredRows(
+    stateEntity,
+    { status: 'clocked_in' },
+    'user_email',
+    'Clocked-in employee states',
+  );
+  const missedClockOutCases = await loadAllFilteredRows(
+    punchExceptionEntity,
+    { exception_type: 'missed_clock_out' },
+    '-detected_at',
+    'Missed Clock Out punch exceptions',
+  );
+
+  const statesByEmail = new Map<string, any[]>();
+  const casesByKey = new Map<string, any[]>();
+  const group = (map: Map<string, any[]>, key: string, row: any) => {
+    if (!key) return;
+    const list = map.get(key) || [];
+    list.push(row);
+    map.set(key, list);
+  };
+  for (const state of clockedInStates) group(statesByEmail, asEmail(state.user_email), state);
+  for (const punchCase of missedClockOutCases) group(casesByKey, String(punchCase.case_key || ''), punchCase);
+
+  const summary = {
+    success: true,
+    scanned: activeEntries.length,
+    stale: 0,
+    created: 0,
+    existing: 0,
+    acknowledged: 0,
+    invalid_clock_in: 0,
+    state_conflicts: 0,
+    case_conflicts: 0,
+    gate_busy: 0,
+    changed_during_scan: 0,
+    errors: 0,
+  };
+
+  for (const observedEntry of activeEntries) {
+    const eligibility = staleShiftMonitorEligibility(observedEntry, serverNow);
+    if (!eligibility.eligible) {
+      if (eligibility.reason === 'fresh_worked_through') summary.acknowledged += 1;
+      else if (eligibility.reason === 'invalid_clock_in') summary.invalid_clock_in += 1;
+      continue;
+    }
+    summary.stale += 1;
+
+    const email = asEmail(observedEntry.user_email);
+    const matchingStates = (statesByEmail.get(email) || []).filter(
+      (state) => state.active_entry_id === observedEntry.id && state.status === 'clocked_in',
+    );
+    if (matchingStates.length !== 1) {
+      summary.state_conflicts += 1;
+      continue;
+    }
+    const state = matchingStates[0];
+    const caseKey = `missed_clock_out:${observedEntry.id}`;
+    const gateEntryId = `punch_exception:${observedEntry.id}`;
+    const requestDigest = await sha256Hex(String(observedEntry.id));
+    const monitorRequestId = `stale-monitor-${requestDigest.slice(0, 32)}`;
+    const monitorPayloadHash = await payloadHash({
+      action: 'monitor_stale_shift',
+      user_email: email,
+      time_entry_id: observedEntry.id,
+      clock_in: observedEntry.clock_in,
+    });
+
+    const knownCases = casesByKey.get(caseKey) || [];
+    if (knownCases.length > 1) {
+      summary.case_conflicts += 1;
+      continue;
+    }
+    if (knownCases.length === 1) {
+      const existingCase = knownCases[0];
+      if (asEmail(existingCase.user_email) !== email || String(existingCase.time_entry_id || '') !== observedEntry.id) {
+        summary.case_conflicts += 1;
+        continue;
+      }
+      const released = await releaseCompletedCorrectionCreateLock(
+        stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash,
+      ).catch(() => false);
+      if (!released) {
+        summary.errors += 1;
+        continue;
+      }
+      summary.existing += 1;
+      continue;
+    }
+
+    const gate = await claimCorrectionCreateLock(
+      stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash,
+    );
+    if (!gate?.acquired) {
+      summary.gate_busy += 1;
+      continue;
+    }
+
+    try {
+      const entry = await entryEntity.get(observedEntry.id).catch(() => null);
+      const freshStateRow = await freshState(stateEntity, state.id).catch(() => null);
+      const freshEligibility = staleShiftMonitorEligibility(entry, serverNow);
+      if (!entry?.id || asEmail(entry.user_email) !== email || !freshEligibility.eligible ||
+          !freshStateRow?.id || freshStateRow.status !== 'clocked_in' || freshStateRow.active_entry_id !== entry.id) {
+        const released = await releaseCorrectionCreateLock(
+          stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash, gate.claim_token,
+        );
+        if (!released) throw new Error('Stale-shift monitor could not verify release after the shift changed.');
+        summary.changed_during_scan += 1;
+        continue;
+      }
+
+      const existingCase = await uniqueRow(punchExceptionEntity, { case_key: caseKey }, 'Missed clock-out case');
+      if (existingCase?.id) {
+        if (asEmail(existingCase.user_email) !== email || String(existingCase.time_entry_id || '') !== entry.id) {
+          throw new Error('Existing missed clock-out case does not match the stale shift.');
+        }
+        const released = await releaseCorrectionCreateLock(
+          stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash, gate.claim_token,
+        );
+        if (!released) throw new Error('Stale-shift monitor could not verify release after concurrent case creation.');
+        summary.existing += 1;
+        continue;
+      }
+
+      const createdCase = await punchExceptionEntity.create({
+        case_key: caseKey,
+        user_email: email,
+        user_name: entry.user_name || email,
+        time_entry_id: entry.id,
+        exception_type: 'missed_clock_out',
+        status: 'open',
+        detected_at: serverNow.toISOString(),
+        detected_clock_in: entry.clock_in,
+        original_snapshot: entryAuditSnapshot(entry),
+        resolution_note: 'Scheduled stale-shift monitor detected an active cross-date shift past the missed-punch review threshold. No punch time was changed.',
+      });
+      if (!createdCase?.id) throw new Error('Stale-shift monitor could not persist the punch exception.');
+
+      const released = await releaseCorrectionCreateLock(
+        stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash, gate.claim_token,
+      );
+      if (!released) throw new Error('Stale-shift monitor created the exception but could not verify lock release.');
+      summary.created += 1;
+    } catch (error) {
+      summary.errors += 1;
+      console.error('Stale-shift monitor entry failed:', observedEntry.id, error?.message || error);
+      // Do not release an uncertain create lock here. The stable monitor request id and
+      // exact payload let a later scheduled run safely recover it without duplicating a case.
+    }
+  }
+
+  return summary;
 }
 
 // Exactly one backend-only coordinator row must be provisioned before this action
@@ -1792,6 +1996,14 @@ Deno.serve(async (req) => {
     const laborEntity = base44.asServiceRole.entities.TimeClockLaborSegment;
     const workOrderEntity = base44.asServiceRole.entities.WorkOrder;
     const timeOffRequestEntity = base44.asServiceRole.entities.TimeOffRequest;
+
+    if (action === 'monitor_stale_shifts') {
+      if (!(await hasStaleShiftMonitorCapability(body))) {
+        return Response.json({ success: false, error: 'Verified scheduled Time Clock workflow is required.' }, { status: 403 });
+      }
+      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity });
+      return Response.json(summary);
+    }
 
     let actor: any = await verifySessionToken(sessionToken, secret, authorized);
     let target: any = null;
