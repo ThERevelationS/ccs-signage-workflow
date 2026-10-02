@@ -107,16 +107,21 @@ export default function TimeClockExceptionCenter({
 
     const isLateClockIn = punchCase.exception_type === "late_clock_in";
     const isMissingEntry = !entry;
+    const isScheduledDetection = punchCase.exception_type === "missed_clock_out" && punchCase.status === "open" && !punchCase.employee_response && !punchCase.submitted_at;
     const title = isMissingEntry
       ? "Punch exception is missing its linked shift"
       : isLateClockIn
         ? "Missed Clock In awaiting manager review"
-        : "Missed Clock Out report needs manager follow-up";
+        : isScheduledDetection
+          ? "Long-running shift detected"
+          : "Missed Clock Out report needs manager follow-up";
     const detail = isMissingEntry
       ? "An auditable punch exception exists but its linked TimeEntry is not available in management data. Investigate before approving or finalizing the affected period."
       : isLateClockIn
         ? `Employee reported an earlier arrival of ${formatPunchTime(punchCase.claimed_clock_in)}. The reconstructed shift must remain Needs Review until a manager verifies it.`
-        : `Employee reported a Clock Out of ${formatPunchTime(punchCase.claimed_clock_out)}. Review the linked shift and correction history before approval.`;
+        : isScheduledDetection
+          ? "The scheduled monitor detected a long-running active shift. No Clock Out was created or changed; confirm with the employee before any correction."
+          : `Employee reported a Clock Out of ${formatPunchTime(punchCase.claimed_clock_out)}. Review the linked shift and correction history before approval.`;
 
     exceptions.push({
       key: `punch-case:${punchCase.id || punchCase.case_key}`,
