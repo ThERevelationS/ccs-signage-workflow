@@ -703,7 +703,7 @@ async function releaseCompletedCorrectionCreateLock(
   return false;
 }
 
-async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity }: any) {
+async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity }: any) {
   const serverNow = new Date();
   const activeEntries = await loadAllFilteredRows(
     entryEntity,
@@ -790,14 +790,30 @@ async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEn
         summary.case_conflicts += 1;
         continue;
       }
-      const released = await releaseCompletedCorrectionCreateLock(
-        stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash,
-      ).catch(() => false);
-      if (!released) {
+      try {
+        await ensureActionAudit(auditEntity, {
+          action: 'punch_exception', outcome: 'confirmed', user_email: email,
+          user_name: observedEntry.user_name || email, actor_email: 'system', actor_role: 'system',
+          authentication_method: 'system', server_timestamp: existingCase.detected_at || serverNow.toISOString(),
+          request_id: monitorRequestId, time_entry_id: observedEntry.id,
+          reason: 'Scheduled stale-shift monitor detected a long-running active shift',
+          details: {
+            payload_hash: monitorPayloadHash,
+            punch_exception_id: existingCase.id,
+            source: 'scheduled_stale_shift_monitor',
+            threshold_hours: MISSED_PUNCH_PROMPT_MS / (60 * 60 * 1000),
+            punch_times_changed: false,
+          },
+        }, 'Scheduled stale-shift monitor audit');
+        const released = await releaseCompletedCorrectionCreateLock(
+          stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash,
+        );
+        if (!released) throw new Error('Stale-shift monitor could not verify completed lock recovery.');
+        summary.existing += 1;
+      } catch (error) {
         summary.errors += 1;
-        continue;
+        console.error('Stale-shift monitor existing-case recovery failed:', observedEntry.id, error?.message || error);
       }
-      summary.existing += 1;
       continue;
     }
 
@@ -850,10 +866,25 @@ async function runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEn
       });
       if (!createdCase?.id) throw new Error('Stale-shift monitor could not persist the punch exception.');
 
+      await ensureActionAudit(auditEntity, {
+        action: 'punch_exception', outcome: 'confirmed', user_email: email,
+        user_name: entry.user_name || email, actor_email: 'system', actor_role: 'system',
+        authentication_method: 'system', server_timestamp: createdCase.detected_at || serverNow.toISOString(),
+        request_id: monitorRequestId, time_entry_id: entry.id,
+        reason: 'Scheduled stale-shift monitor detected a long-running active shift',
+        details: {
+          payload_hash: monitorPayloadHash,
+          punch_exception_id: createdCase.id,
+          source: 'scheduled_stale_shift_monitor',
+          threshold_hours: MISSED_PUNCH_PROMPT_MS / (60 * 60 * 1000),
+          punch_times_changed: false,
+        },
+      }, 'Scheduled stale-shift monitor audit');
+
       const released = await releaseCorrectionCreateLock(
         stateEntity, state.id, monitorRequestId, gateEntryId, monitorPayloadHash, gate.claim_token,
       );
-      if (!released) throw new Error('Stale-shift monitor created the exception but could not verify lock release.');
+      if (!released) throw new Error('Stale-shift monitor created the exception but could not verify audit/lock release.');
       summary.created += 1;
     } catch (error) {
       summary.errors += 1;
@@ -2001,7 +2032,7 @@ Deno.serve(async (req) => {
       if (!(await hasStaleShiftMonitorCapability(body))) {
         return Response.json({ success: false, error: 'Verified scheduled Time Clock workflow is required.' }, { status: 403 });
       }
-      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity });
+      const summary = await runStaleShiftMonitor({ entryEntity, stateEntity, punchExceptionEntity, auditEntity });
       return Response.json(summary);
     }
 
