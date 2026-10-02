@@ -1,0 +1,42 @@
+{
+  "title": "Boone County Planning Commission — Forms baseline reconciliation",
+  "checkedAt": "2026-10-02",
+  "sourcePage": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "uniqueListedForms": 4,
+  "accountedForms": 4,
+  "baselineStatus": "complete_for_preserved_page",
+  "forms": [
+    {
+      "sourceFile": "ExtSitePlan.pdf",
+      "listedLabel": "Extension of Time of Site Plan",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/extension-of-time-site-plan-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-extension-of-time-site-plan-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "PublicRecordsRequest.pdf",
+      "listedLabel": "Public Records Request",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/public-records-request-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-public-records-request-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "SpecialBM.pdf",
+      "listedLabel": "Special Business Meeting (BM, PH, & BOA)",
+      "status": "source_unavailable",
+      "repositoryPath": null,
+      "evidencePath": "docs/permitting-boone-ky-special-business-meeting-source-gap-2026-10-02.json"
+    },
+    {
+      "sourceFile": "45DayWaiver.pdf",
+      "listedLabel": "Time Limit Waiver Request (45 Days)",
+      "status": "source_unavailable",
+      "repositoryPath": null,
+      "evidencePath": "docs/permitting-boone-ky-time-limit-waiver-45-days-source-gap-2026-10-02.json"
+    }
+  ],
+  "duplicateListingNote": "SpecialBM.pdf appears more than once in the preserved page with equivalent label text that differs only by HTML entity encoding; it counts as one unique source.",
+  "scope": "This reconciliation establishes that every unique PDF linked under Documents/Applications Forms/Forms/ on the preserved Boone County Planning Commission page is accounted for as either an archived verified PDF or a verified source-availability gap. It does not assert that these forms are required for any particular sign project.",
+  "nextBaselineCategory": "Checklists",
+  "nextCategoryReason": "The same preserved official page links a separate Documents/Applications Forms/Checklists/ source category that should be baselined independently."
+}
