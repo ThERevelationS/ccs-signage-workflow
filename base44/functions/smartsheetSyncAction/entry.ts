@@ -1456,7 +1456,8 @@ async function pushDataset(
   let orderTimeBudgetReached = false;
 
   for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
-    if (dataset === 'sales' && Date.now()-orderPushStartedAt >= 90_000) {
+    const salesPushTimeBudgetMs = Math.max(60_000, Number(options?.salesPushTimeBudgetMs) || 240_000);
+    if (dataset === 'sales' && Date.now()-orderPushStartedAt >= salesPushTimeBudgetMs) {
       orderTimeBudgetReached = true;
       break;
     }
