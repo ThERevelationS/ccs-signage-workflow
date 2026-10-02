@@ -3,17 +3,47 @@
   "checkedAt": "2026-10-02",
   "sourcePage": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
   "uniqueListedChecklists": 5,
-  "accountedChecklists": 3,
-  "remainingChecklists": 2,
+  "accountedChecklists": 4,
+  "remainingChecklists": 1,
   "baselineStatus": "in_progress_for_preserved_page",
   "checklists": [
-    {"sourceFile":"ChangeNonConformingandAppeals_checklist.pdf","listedLabel":"Change of Non-Conforming Use & Appeals (BOA)","status":"archived","repositoryPath":"public/permitting/sources/boone-ky/change-nonconforming-use-appeals-checklist-2026-10-02.pdf","evidencePath":"docs/permitting-boone-ky-change-nonconforming-use-appeals-checklist-evidence-2026-10-02.json"},
-    {"sourceFile":"ConditionalUsePermit_checklist.pdf","listedLabel":"Conditional Use Permit (BOA)","status":"archived","repositoryPath":"public/permitting/sources/boone-ky/conditional-use-permit-checklist-2026-10-02.pdf","evidencePath":"docs/permitting-boone-ky-conditional-use-permit-checklist-evidence-2026-10-02.json"},
-    {"sourceFile":"SignPermit_checklist.pdf","listedLabel":"Sign Permit","status":"archived","repositoryPath":"public/permitting/sources/boone-ky/sign-permit-checklist.pdf","evidencePath":"docs/permitting-boone-ky-sign-permit-checklist-evidence-2026-09-28.json"},
-    {"sourceFile":"Variance_checklist.pdf","listedLabel":"Variance (BOA)","status":"pending_verification","repositoryPath":null,"evidencePath":null},
-    {"sourceFile":"ZoningMapAmendment_checklist.pdf","listedLabel":"Zoning Map Amendment","status":"pending_verification","repositoryPath":null,"evidencePath":null}
+    {
+      "sourceFile": "ChangeNonConformingandAppeals_checklist.pdf",
+      "listedLabel": "Change of Non-Conforming Use & Appeals (BOA)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/change-nonconforming-use-appeals-checklist-2026-10-02.pdf",
+      "evidencePath": "docs/permitting-boone-ky-change-nonconforming-use-appeals-checklist-evidence-2026-10-02.json"
+    },
+    {
+      "sourceFile": "ConditionalUsePermit_checklist.pdf",
+      "listedLabel": "Conditional Use Permit (BOA)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/conditional-use-permit-checklist-2026-10-02.pdf",
+      "evidencePath": "docs/permitting-boone-ky-conditional-use-permit-checklist-evidence-2026-10-02.json"
+    },
+    {
+      "sourceFile": "SignPermit_checklist.pdf",
+      "listedLabel": "Sign Permit",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-checklist.pdf",
+      "evidencePath": "docs/permitting-boone-ky-sign-permit-checklist-evidence-2026-09-28.json"
+    },
+    {
+      "sourceFile": "Variance_checklist.pdf",
+      "listedLabel": "Variance (BOA)",
+      "status": "source_unavailable",
+      "repositoryPath": null,
+      "evidencePath": "docs/permitting-boone-ky-variance-checklist-source-gap-2026-10-02.json"
+    },
+    {
+      "sourceFile": "ZoningMapAmendment_checklist.pdf",
+      "listedLabel": "Zoning Map Amendment",
+      "status": "pending_verification",
+      "repositoryPath": null,
+      "evidencePath": null
+    }
   ],
   "scope": "This reconciliation inventories every unique PDF linked under Documents/Applications Forms/Checklists/ on the preserved Boone County Planning Commission Applications and Forms page. Archived status means bounded source-identity evidence exists for that checklist. Pending verification means the preserved page lists the source but live source identity has not yet been verified in this baseline. This inventory does not assert that any checklist applies to a particular sign project or that every instruction, requirement, fee, procedure, or approval path inside a listed checklist is current.",
-  "nextChecklist": "Variance_checklist.pdf",
-  "nextChecklistLabel": "Variance (BOA)"
+  "nextChecklist": "ZoningMapAmendment_checklist.pdf",
+  "nextChecklistLabel": "Zoning Map Amendment"
 }

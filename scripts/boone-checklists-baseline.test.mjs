@@ -13,18 +13,25 @@ test('Boone preserved page checklist baseline is complete and bounded', () => {
   assert.equal(listed.size, 5);
   assert.deepEqual([...baselineFiles].sort(), [...listed].sort());
   assert.equal(baseline.uniqueListedChecklists, listed.size);
-  assert.equal(baseline.accountedChecklists, 3);
-  assert.equal(baseline.remainingChecklists, 2);
+  assert.equal(baseline.accountedChecklists, 4);
+  assert.equal(baseline.remainingChecklists, 1);
   assert.equal(baseline.baselineStatus, 'in_progress_for_preserved_page');
   const archived = baseline.checklists.filter((entry) => entry.status === 'archived');
+  const gaps = baseline.checklists.filter((entry) => entry.status === 'source_unavailable');
   const pending = baseline.checklists.filter((entry) => entry.status === 'pending_verification');
   assert.equal(archived.length, 3);
-  assert.equal(pending.length, 2);
+  assert.equal(gaps.length, 1);
+  assert.equal(pending.length, 1);
   for (const entry of archived) {
     assert.ok(entry.repositoryPath && existsSync(entry.repositoryPath));
     assert.ok(entry.evidencePath && existsSync(entry.evidencePath));
   }
-  assert.deepEqual(pending.map((entry) => entry.sourceFile).sort(), ['Variance_checklist.pdf', 'ZoningMapAmendment_checklist.pdf']);
-  assert.equal(baseline.nextChecklist, 'Variance_checklist.pdf');
+  for (const entry of gaps) {
+    assert.equal(entry.repositoryPath, null);
+    assert.ok(entry.evidencePath && existsSync(entry.evidencePath));
+  }
+  assert.deepEqual(gaps.map((entry) => entry.sourceFile), ['Variance_checklist.pdf']);
+  assert.deepEqual(pending.map((entry) => entry.sourceFile), ['ZoningMapAmendment_checklist.pdf']);
+  assert.equal(baseline.nextChecklist, 'ZoningMapAmendment_checklist.pdf');
   assert.match(baseline.scope, /does not assert that any checklist applies to a particular sign project/i);
 });
