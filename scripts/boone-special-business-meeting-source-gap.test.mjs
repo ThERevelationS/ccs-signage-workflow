@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+
+const evidence = JSON.parse(readFileSync('docs/permitting-boone-ky-special-business-meeting-source-gap-2026-10-02.json', 'utf8'));
+const applicationsHtml = readFileSync('public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html', 'utf8');
+
+test('Boone Special Business Meeting source gap is preserved without inventing a PDF archive', () => {
+  assert.equal(evidence.listedLabel, 'Special Business Meeting (BM, PH, & BOA)');
+  assert.equal(evidence.archiveStatus, 'not_archived_source_unavailable');
+  assert.equal(evidence.repositoryPath, null);
+  assert.match(applicationsHtml, /Forms\/SpecialBM\.pdf[^>]*>[\s\S]*?Special Business Meeting/i);
+  assert.equal(evidence.verificationAttempts.length, 2);
+  for (const attempt of evidence.verificationAttempts) {
+    assert.equal(attempt.httpStatus, 403);
+    assert.equal(attempt.contentType, 'text/html');
+  }
+  assert.equal(existsSync('public/permitting/sources/boone-ky/special-business-meeting-2026-10-02.pdf'), false);
+  assert.match(evidence.evidenceScope, /no PDF archive, byte count, PDF hash, form contents/i);
+  assert.match(evidence.evidenceScope, /source-availability gap only/i);
+  assert.match(evidence.evidenceScope, /HTML denial responses are not archived as the form/i);
+});
