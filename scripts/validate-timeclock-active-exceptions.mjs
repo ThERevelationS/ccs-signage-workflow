@@ -155,7 +155,10 @@ const monitoredOldMarkup = render([monitoredOldEntry], {
     detected_at: '2026-09-02T14:00:00.000Z',
   }],
 });
-assert.match(monitoredOldMarkup, /Missed Clock Out report needs manager follow-up/);
+assert.match(monitoredOldMarkup, /Long-running shift detected/);
+assert.match(monitoredOldMarkup, /scheduled monitor detected a long-running active shift/);
+assert.match(monitoredOldMarkup, /No Clock Out was created or changed/);
+assert.doesNotMatch(monitoredOldMarkup, /Employee reported a Clock Out/);
 assert.doesNotMatch(monitoredOldMarkup, /Possible missed clock-out/);
 console.log('PASS scheduled open punch case replaces the duplicate generic old-shift warning');
 
