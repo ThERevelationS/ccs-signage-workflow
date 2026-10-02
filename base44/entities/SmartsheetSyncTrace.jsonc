@@ -1,0 +1,90 @@
+{
+  "name": "SmartsheetSyncTrace",
+  "type": "object",
+  "properties": {
+    "sync_run_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_checkpoint_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "processing",
+        "completed",
+        "needs_review",
+        "failed",
+        "rejected"
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "sync_run_id",
+    "source",
+    "action",
+    "requested_at",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
