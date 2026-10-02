@@ -1,0 +1,26 @@
+{
+  "title": "Boone County Planning Commission — Time Limit Waiver Request (45 Days) form source availability gap",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Forms/45DayWaiver.pdf",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "listedLabel": "Time Limit Waiver Request (45 Days)",
+  "checkedAt": "2026-10-02",
+  "archiveStatus": "not_archived_source_unavailable",
+  "verificationAttempts": [
+    {
+      "method": "direct_get_browser_user_agent",
+      "httpStatus": 403,
+      "contentType": "text/html",
+      "bytes": 118,
+      "sha256": "58bf2215b395dcac74c009aa98701854e43cbe54a1cd3a95fee6a647ca9910d4"
+    },
+    {
+      "method": "direct_get_browser_headers_with_official_referrer",
+      "httpStatus": 403,
+      "contentType": "text/html",
+      "bytes": 520,
+      "sha256": "8b73b6ccd7091d6d9d23adaab2baae3c4abf6de06df8efdd03215ee9376fa035"
+    }
+  ],
+  "repositoryPath": null,
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page lists Time Limit Waiver Request (45 Days) and links Forms/45DayWaiver.pdf. On 2026-10-02, two bounded fetch attempts to that exact official URL returned HTTP 403 with text/html rather than a PDF, including a retry using browser-style headers and the official page as referrer. Therefore no PDF archive, byte count, PDF hash, form contents, filing requirements, fees, deadlines, eligibility standards, approval standards, or sign-project applicability are claimed. This record preserves a source-availability gap only; the HTML denial responses are not archived as the form."
+}
