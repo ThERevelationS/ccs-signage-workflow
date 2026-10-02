@@ -73,6 +73,12 @@ const rows = [
     detected_at: '2026-09-25T20:00:00.000Z', submitted_at: '2026-09-25T20:00:00.000Z',
     claimed_clock_in: '2026-09-25T12:00:00.000Z',
   },
+  {
+    id: 'monitor-case', user_email: employee, user_name: 'Synthetic Employee',
+    time_entry_id: 'late-entry', exception_type: 'missed_clock_out', status: 'open',
+    detected_at: '2026-09-29T13:00:00.000Z',
+    resolution_note: 'Scheduled stale-shift monitor detected an active cross-date shift past the missed-punch review threshold. No punch time was changed.',
+  },
 ];
 
 const markup = renderToStaticMarkup(React.createElement(PunchReport, {
@@ -81,17 +87,20 @@ const markup = renderToStaticMarkup(React.createElement(PunchReport, {
   onReviewEntry: () => {},
 }));
 assert.match(markup, /Punch Exception Reports/);
-assert.match(markup, /2 need review/);
+assert.match(markup, /3 need review/);
 assert.match(markup, /Missed Clock In/);
 assert.match(markup, /Missed Clock Out/);
 assert.match(markup, /Worked Through/);
 assert.match(markup, /Employee reported arrival/);
 assert.match(markup, /Employee reported prior Clock Out/);
 assert.match(markup, /No Clock Out was invented or changed/);
+assert.match(markup, /scheduled monitor detected a long-running active shift/);
+assert.match(markup, /No Clock Out was created or changed/);
+assert.match(markup, /confirm with the employee before any correction/);
 assert.match(markup, /Shift Needs Review/);
 assert.match(markup, /View Shift/);
 assert.match(markup, /audit history, not automatic payroll approval/);
-console.log('PASS punch report shows actionable, historical, employee-attested, and review context');
+console.log('PASS punch report distinguishes scheduled detection from employee-attested punch reports');
 
 const emptyMarkup = renderToStaticMarkup(React.createElement(PunchReport, {
   punchExceptions: [],
