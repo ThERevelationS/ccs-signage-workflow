@@ -25,7 +25,10 @@ export function createSmartsheetOrderPageGuard({ pageSize = 200, maxPages = 100,
       }
       expectedTotal = total;
       expectedVersion = version;
-    } else if (total !== expectedTotal || version !== expectedVersion) {
+    } else if (total !== expectedTotal) {
+      // Cell edits bump the sheet version on a live sheet; only a changed row
+      // count (rows added/removed, so pages may shift) invalidates the read.
+      // Distinct-ID and complete-count checks below still apply.
       throw new Error(`${datasetLabel} Smartsheet changed during pagination. No records were imported.`);
     }
     if (rows.length > pageSize) {
