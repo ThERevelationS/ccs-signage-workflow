@@ -1,0 +1,17 @@
+{
+  "title": "Boone County Planning Commission — Change of Non-Conforming Use & Appeals (BOA) checklist current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ChangeNonConformingandAppeals_checklist.pdf",
+  "resolvedUrl": "https://cms3.revize.com/revize/boonectyplanning/Documents/Applications Forms/Checklists/ChangeNonConformingandAppeals_checklist.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Change of Non-Conforming Use & Appeals (BOA)",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 100511,
+  "sha256": "28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63",
+  "lastModified": "Fri, 06 Sep 2024 15:17:54 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/change-nonconforming-use-appeals-checklist-2026-10-02.pdf",
+  "purpose": "current_change_nonconforming_appeals_checklist_source_identity",
+  "archiveStatus": "archived",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page directly links this exact PDF in its Checklists section under the label Change of Non-Conforming Use & Appeals (BOA). On 2026-10-02 the official bcpcky.org URL redirected to the Boone County Planning Commission Revize-hosted PDF and returned HTTP 200 with application/pdf content. The 100511-byte live file was archived with SHA-256 28a67406a9556617b1a711957093c321ff43520c517afbee3c7690dca0bbbe63. This establishes current checklist source identity and current listing only. It does not by itself establish that every checklist instruction, requirement, fee, jurisdiction rule, submission workflow, appeal procedure, approval path, or applicability statement remains current or applies to a particular project."
+}
