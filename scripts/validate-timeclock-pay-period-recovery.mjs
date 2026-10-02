@@ -8,6 +8,9 @@ import { resolve } from 'node:path';
 import { transformSync } from 'esbuild';
 
 const secret = 'synthetic-session-signing-key';
+const staleMonitorWorkflow = readFileSync(new URL('../base44/workflows/Time Clock Stale Shift Monitor.jsonc', import.meta.url), 'utf8');
+const staleMonitorCapability = staleMonitorWorkflow.match(/"_workflow_capability"\s*:\s*"([^"]+)"/)?.[1] || '';
+assert.ok(staleMonitorCapability, 'Synthetic stale-shift monitor workflow capability must be present');
 const source = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
 const compiled = transformSync(
   source.replace("import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';",
@@ -950,6 +953,170 @@ function setupStaleMissedPunch({ serverNow = '2026-09-29T12:00:00.000Z', clockIn
   });
   return h;
 }
+
+test('scheduled stale-shift monitor rejects ordinary authenticated calls without its workflow capability', async () => {
+  const h = setupStaleMissedPunch();
+  const before = structuredClone(h.rows.TimeEntry[0]);
+  const noCapability = await h.invoke({ action: 'monitor_stale_shifts' });
+  assert.equal(noCapability.status, 403, JSON.stringify(noCapability.body));
+  const wrongCapability = await h.invoke({
+    action: 'monitor_stale_shifts',
+    _workflow_capability: 'wrong_capability_but_long_enough_for_format_1234567890',
+  });
+  assert.equal(wrongCapability.status, 403, JSON.stringify(wrongCapability.body));
+  assert.deepEqual(h.rows.TimeEntry[0], before);
+  assert.equal(h.rows.TimeClockPunchException.length, 0);
+  assert.equal(h.rows.TimeClockAudit.length, 0);
+});
+
+test('scheduled stale-shift monitor creates one audited open case without changing the punch and is idempotent', async () => {
+  const h = setupStaleMissedPunch();
+  const before = structuredClone(h.rows.TimeEntry[0]);
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+
+  const first = await h.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(first.body.stale, 1);
+  assert.equal(first.body.created, 1);
+  assert.equal(first.body.errors, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  const punchCase = h.rows.TimeClockPunchException[0];
+  assert.equal(punchCase.case_key, `missed_clock_out:${before.id}`);
+  assert.equal(punchCase.exception_type, 'missed_clock_out');
+  assert.equal(punchCase.status, 'open');
+  assert.equal(punchCase.detected_clock_in, before.clock_in);
+  assert.equal(punchCase.original_snapshot.clock_in, before.clock_in);
+  assert.match(punchCase.resolution_note, /No punch time was changed/);
+  assert.equal(h.rows.TimeEntry[0].clock_in, before.clock_in);
+  assert.equal(h.rows.TimeEntry[0].clock_out, undefined);
+  assert.equal(h.rows.TimeEntry[0].status, 'clocked_in');
+  assert.equal(state.status, 'clocked_in');
+  assert.equal(state.active_entry_id, before.id);
+  assert.equal(state.correction_create_status, 'idle');
+
+  const monitorAudits = h.rows.TimeClockAudit.filter((row) =>
+    row.action === 'punch_exception' && row.details?.source === 'scheduled_stale_shift_monitor'
+  );
+  assert.equal(monitorAudits.length, 1);
+  assert.equal(monitorAudits[0].authentication_method, 'system');
+  assert.equal(monitorAudits[0].actor_role, 'system');
+  assert.equal(monitorAudits[0].details.punch_times_changed, false);
+  assert.equal(monitorAudits[0].details.punch_exception_id, punchCase.id);
+
+  const retry = await h.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.created, 0);
+  assert.equal(retry.body.existing, 1);
+  assert.equal(retry.body.errors, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.details?.source === 'scheduled_stale_shift_monitor').length, 1);
+});
+
+test('scheduled stale-shift monitor preserves ordinary overnight and freshly acknowledged long shifts', async () => {
+  const overnight = setupStaleMissedPunch({
+    serverNow: '2026-09-29T05:00:00.000Z',
+    clockIn: '2026-09-28T11:30:00.000Z',
+  });
+  const overnightRun = await overnight.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(overnightRun.status, 200, JSON.stringify(overnightRun.body));
+  assert.equal(overnightRun.body.stale, 0);
+  assert.equal(overnightRun.body.created, 0);
+  assert.equal(overnight.rows.TimeClockPunchException.length, 0);
+  assert.equal(overnight.rows.TimeEntry[0].status, 'clocked_in');
+
+  const acknowledged = setupStaleMissedPunch();
+  acknowledged.rows.TimeEntry[0].stale_shift_acknowledged_at = '2026-09-29T08:00:00.000Z';
+  const acknowledgedRun = await acknowledged.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(acknowledgedRun.status, 200, JSON.stringify(acknowledgedRun.body));
+  assert.equal(acknowledgedRun.body.acknowledged, 1);
+  assert.equal(acknowledgedRun.body.created, 0);
+  assert.equal(acknowledged.rows.TimeClockPunchException.length, 0);
+  assert.equal(acknowledged.rows.TimeEntry[0].status, 'clocked_in');
+});
+
+test('scheduled stale-shift monitor serializes against employee missed-punch recovery without duplicate cases', async () => {
+  const h = setupStaleMissedPunch();
+  let monitorClaimed;
+  const claimed = new Promise((resolve) => { monitorClaimed = resolve; });
+  let releaseMonitor;
+  h.setAfterRowUpdate(async (name, _query, _update, row) => {
+    if (name === 'TimeClockEmployeeState' && row.correction_create_status === 'creating' &&
+        String(row.correction_create_request_id || '').startsWith('stale-monitor-')) {
+      monitorClaimed();
+      await new Promise((resolve) => { releaseMonitor = resolve; });
+    }
+  });
+
+  const monitorPromise = h.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  await claimed;
+  const competingEmployee = await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'employee-during-monitor-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  assert.equal(competingEmployee.status, 409, JSON.stringify(competingEmployee.body));
+  assert.match(competingEmployee.body.error, /correction submission|processed/i);
+  assert.equal(h.rows.TimeClockPunchException.length, 0);
+
+  releaseMonitor();
+  const monitor = await monitorPromise;
+  assert.equal(monitor.status, 200, JSON.stringify(monitor.body));
+  assert.equal(monitor.body.created, 1);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  h.setAfterRowUpdate(null);
+
+  const employeeRetry = await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'employee-during-monitor-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  assert.equal(employeeRetry.status, 200, JSON.stringify(employeeRetry.body));
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'pending_manager_review');
+  assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
+});
+
+test('scheduled stale-shift monitor recovers a persisted case with stranded exact monitor gate and missing audit', async () => {
+  const h = setupStaleMissedPunch();
+  const first = await h.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  const punchCase = h.rows.TimeClockPunchException[0];
+  const monitorAudit = h.rows.TimeClockAudit.find((row) => row.details?.source === 'scheduled_stale_shift_monitor');
+  const state = h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email);
+  assert.ok(punchCase?.id && monitorAudit?.id);
+
+  h.rows.TimeClockAudit = h.rows.TimeClockAudit.filter((row) => row.id !== monitorAudit.id);
+  Object.assign(state, {
+    correction_create_status: 'creating',
+    correction_create_request_id: monitorAudit.request_id,
+    correction_create_time_entry_id: `punch_exception:${h.rows.TimeEntry[0].id}`,
+    correction_create_payload_hash: monitorAudit.details.payload_hash,
+    correction_create_claim_token: 'synthetic-stranded-monitor-token',
+    correction_create_started_at: '2026-09-29T11:00:00.000Z',
+  });
+
+  const recovered = await h.invoke({
+    action: 'monitor_stale_shifts', _workflow_capability: staleMonitorCapability,
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.existing, 1);
+  assert.equal(recovered.body.errors, 0);
+  assert.equal(h.rows.TimeClockPunchException.length, 1);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.details?.source === 'scheduled_stale_shift_monitor').length, 1);
+  assert.equal(state.correction_create_status, 'idle');
+});
 
 test('long cross-date shift prompts without mutating the active punch', async () => {
   const h = setupStaleMissedPunch();
