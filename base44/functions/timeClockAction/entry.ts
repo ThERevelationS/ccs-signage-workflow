@@ -2487,6 +2487,33 @@ Deno.serve(async (req) => {
         return stillLocked.length === 0;
       };
 
+      const invalidateReopenedFinalizationSnapshot = async () => {
+        const summary = period.finalized_summary;
+        if (!summary || typeof summary !== 'object') return false;
+        if (summary.snapshot_active === false && String(summary.invalidated_by_reopen_request_id || '') === requestId) return true;
+        const invalidatedSummary = {
+          ...summary,
+          snapshot_active: false,
+          invalidated_at: new Date().toISOString(),
+          invalidated_by: actorEmail,
+          invalidated_by_reopen_request_id: requestId,
+          invalidation_reason: note,
+        };
+        const invalidated = await payPeriodEntity.updateMany(
+          { id: period.id, status: 'review', last_request_id: requestId },
+          { $set: { finalized_summary: invalidatedSummary } },
+        );
+        if (!invalidated || invalidated.updated !== 1) {
+          const latest = await payPeriodEntity.get(period.id).catch(() => null);
+          return Boolean(latest?.status === 'review' &&
+            String(latest.last_request_id || '') === requestId &&
+            latest.finalized_summary?.snapshot_active === false &&
+            String(latest.finalized_summary?.invalidated_by_reopen_request_id || '') === requestId);
+        }
+        period = await payPeriodEntity.get(period.id);
+        return true;
+      };
+
       if (decision === 'reopen' && period.status === 'review' && String(period.last_request_id || '') === requestId) {
         if (!await unlockFinalizedPeriodEntries()) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its original entry locks could not be safely cleared. Retry the same reopen action or request admin investigation.' }, { status: 409 });
         if (!await ensureStatusAuditConfirmed(true)) return Response.json({ success: false, retry_same_request: true, error: 'The period was reopened but its audit is still being finalized. Retry the same reopen action.' }, { status: 409 });
