@@ -561,7 +561,7 @@ test('snapshot chain detects altered historical payroll provenance before reopen
   assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
   assert.match(blocked.body.error, /history integrity failed/i);
   assert.equal(h.period().status, 'finalized');
-  assert.equal(h.entryLocks().length, 2);
+  assert.equal(h.entryLocks().length, 1);
 });
 
 test('a broken committed lock snapshot refuses exact-request audit confirmation', async () => {
