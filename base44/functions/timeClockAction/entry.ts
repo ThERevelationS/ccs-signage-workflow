@@ -2637,6 +2637,11 @@ Deno.serve(async (req) => {
           return Response.json({ success: false, error: 'This period has entry locks that cannot be attributed to this exact finalization. Admin investigation is required.' }, { status: 409 });
         }
         let unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
+        let approvalEvidenceMissing: any[] = [];
+        for (const approvedEntry of completedEntries.filter((row: any) => row.approval_status === 'approved' && row.approval_request_id)) {
+          const evidence = await auditEntity.filter({ action: 'time_approval', request_id: approvedEntry.approval_request_id });
+          if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) || String(evidence[0]?.time_entry_id || '') !== String(approvedEntry.id || '')) approvalEvidenceMissing.push(approvedEntry);
+        }
         let lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
         let activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
         if (!Array.isArray(activeCorrections)) throw new Error('Correction readiness lookup did not return a record list.');
