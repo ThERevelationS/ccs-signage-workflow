@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Download } from "lucide-react";
 import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAudit";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
+import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function AdminPermittingSettings() {
@@ -174,6 +175,7 @@ export default function AdminPermittingSettings() {
           {[
             { key: "batch", label: "Batch Updates" },
             { key: "monitoring", label: "Change Monitoring" },
+            { key: "authority", label: "Rewrite Authority" },
             { key: "audit", label: "AI Accuracy Auditor" }
           ].map(tab => (
             <button
@@ -203,6 +205,13 @@ export default function AdminPermittingSettings() {
         )}
 
         {activeTab === "monitoring" && <JurisdictionMonitoringSettings />}
+
+        {activeTab === "authority" && (
+          <JurisdictionRewriteAuthorityAdmin
+            jurisdictions={jurisdictions}
+            onJurisdictionUpdated={(updated) => setJurisdictions((current) => current.map((item) => item.id === updated.id ? updated : item))}
+          />
+        )}
 
         {activeTab === "audit" && (
           <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
