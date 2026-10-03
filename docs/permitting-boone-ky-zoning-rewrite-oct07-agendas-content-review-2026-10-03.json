@@ -1,0 +1,80 @@
+{
+  "title": "Boone County 2026 zoning rewrite \u2014 October 7 Business Meeting and Public Hearing agenda content review",
+  "checkedAt": "2026-10-03",
+  "extractionMethod": "pypdf text extraction from repository-archived official PDFs; temporary extraction tooling installed under /tmp only and not added to app dependencies",
+  "records": [
+    {
+      "id": "oct07_business_agenda",
+      "date": "2026-10-07",
+      "meeting": "Business Meeting",
+      "recordType": "agenda",
+      "sourcePath": "public/permitting/sources/boone-ky/planning-commission-2026-10-07-business-agenda.pdf",
+      "bytes": 342409,
+      "sha256": "324f1f500ab9f11a2c1bb2c5266473d9526bd56c5b62a99aadb85c20a715b76f",
+      "pages": 2,
+      "extractedCharacters": 4361,
+      "extractedTextPath": "docs/planning-commission-2026-10-07-business-agenda-extracted-text-2026-10-03.txt",
+      "reviewTerms": {
+        "zoning ordinance": 0,
+        "zoning regulations": 0,
+        "zoning regulation": 0,
+        "ordinance update": 0,
+        "zoning update": 0,
+        "2026 zoning": 0,
+        "rewrite": 0,
+        "article 34": 0,
+        "text amendment": 0,
+        "text amendments": 0,
+        "regulation update": 0,
+        "regulations update": 0,
+        "adoption": 0,
+        "effective date": 0
+      },
+      "rewriteAdoptionActionFound": false,
+      "boundedFindings": [
+        "No reviewed zoning-rewrite/adoption target term appears in the reliably extracted full two-page agenda.",
+        "The agenda lists four project-specific plan-review actions, not a zoning-ordinance rewrite action.",
+        "One project-specific item combines a zoning map amendment with a Conditional Use Permit for an Electronic Message Board/Screen; this is not treated as Article 34 or zoning-rewrite adoption evidence.",
+        "The agenda includes Long Range Planning/Comprehensive Plan only as a standing Committee Reports heading and does not identify a rewrite item under that heading."
+      ]
+    },
+    {
+      "id": "oct07_public_hearing_agenda",
+      "date": "2026-10-07",
+      "meeting": "Public Hearing",
+      "recordType": "agenda",
+      "sourcePath": "public/permitting/sources/boone-ky/planning-commission-2026-10-07-public-hearing-agenda.pdf",
+      "bytes": 581611,
+      "sha256": "1e14c2b92bad57b91e6427872c6c781a937b04ad6b7b1102ec6a860910e2984a",
+      "pages": 2,
+      "extractedCharacters": 3338,
+      "extractedTextPath": "docs/planning-commission-2026-10-07-public-hearing-agenda-extracted-text-2026-10-03.txt",
+      "reviewTerms": {
+        "zoning ordinance": 0,
+        "zoning regulations": 0,
+        "zoning regulation": 0,
+        "ordinance update": 0,
+        "zoning update": 0,
+        "2026 zoning": 0,
+        "rewrite": 0,
+        "article 34": 0,
+        "text amendment": 0,
+        "text amendments": 0,
+        "regulation update": 0,
+        "regulations update": 0,
+        "adoption": 0,
+        "effective date": 0
+      },
+      "rewriteAdoptionActionFound": false,
+      "boundedFindings": [
+        "No reviewed zoning-rewrite/adoption target term appears in the reliably extracted full two-page agenda.",
+        "The agenda lists four project-specific public-hearing items: three zoning map amendments and one change of concept development plan.",
+        "The development-sign reference is part of the project-specific Shoppes at Hebron Pointe concept-plan request and is not treated as Article 34 or zoning-rewrite adoption evidence."
+      ]
+    }
+  ],
+  "reviewStatus": "october7_agendas_reviewed_no_rewrite_adoption_item_found",
+  "remainingAuthorityReview": "October 7, 2026 Business Meeting and Public Hearing minutes were not linked on the official Planning Commission index snapshot archived on 2026-10-03, so final action/effectiveness remains unresolved.",
+  "authorityBoundary": "These two reviewed October 7 agendas do not schedule or identify adoption of the 2026 zoning rewrite. This is a bounded finding about the agendas only; it does not prove that no action occurred during the meetings or in later legislative-body proceedings.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless newer reviewed official action records establish final adoption and effectiveness of replacement text."
+}
