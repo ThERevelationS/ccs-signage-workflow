@@ -1,0 +1,40 @@
+{
+  "title": "City of Florence — 2026 enacted ordinances zoning-rewrite authority check",
+  "checkedAt": "2026-10-03",
+  "jurisdiction": "City of Florence, Kentucky",
+  "legislativeBody": "Florence City Council",
+  "officialSource": {
+    "sourceUrl": "https://florence-ky.gov/publication-of-bid-solicitations-enacted-ordinances/",
+    "sourceType": "Official City of Florence Publication of Bid Solicitations & Enacted Ordinances page",
+    "freshOfficialPageReview": true,
+    "directArchiveAttemptHttpStatus": 403,
+    "repositorySnapshotArchived": false,
+    "archiveGap": "The official Florence page was reviewable through current web indexing, but a direct sandbox retrieval on 2026-10-03 returned HTTP 403. No denial/challenge body is treated as ordinance content and no fabricated local snapshot is created."
+  },
+  "latestReviewed2026EnactedOrdinance": {
+    "number": "O-21-2026",
+    "enactedDate": "2026-09-01",
+    "subject": "2026 property, franchise, financial-institution, police and fire retirement tax levy"
+  },
+  "reviewed2026ZoningTextAmendments": [
+    {
+      "number": "O-3-2026",
+      "enactedDate": "2026-02-24",
+      "scope": "Commercial parking; freight container; freight terminal; semitrailer; trailer; truck; truck tractor zoning text amendments.",
+      "comprehensiveRewrite": false,
+      "article34Replacement": false
+    },
+    {
+      "number": "O-6-2026",
+      "enactedDate": "2026-03-17",
+      "scope": "Manufactured home; qualified manufactured home; mobile home zoning text amendments.",
+      "comprehensiveRewrite": false,
+      "article34Replacement": false
+    }
+  ],
+  "rewriteOrArticle34SignEnactmentFound": false,
+  "authorityFinding": "The official City of Florence enacted-ordinances publication, reviewed on 2026-10-03, lists 2026 enactments through O-21-2026 dated September 1, 2026. The reviewed publication contains no Article 34 or sign-regulation enactment and no ordinance description adopting the 2026 comprehensive Boone County zoning-regulations rewrite. O-3-2026 and O-6-2026 are real Boone County Planning Unit zoning text amendments but are narrow subject amendments and must not be classified as the comprehensive rewrite.",
+  "authorityBoundary": "This establishes only the contents of the official Florence enacted-ordinances publication reviewed on 2026-10-03. It does not prove that no unposted ordinance exists, does not establish what Florence City Council may do after that date, and does not establish adoption by Boone County, Union, or Walton.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Article 34 provisions applicable to the City of Florence unless newer reviewed Florence legislative action and effective-date evidence establishes replacement text.",
+  "nextLogicalAuthorityTarget": "Inspect City of Union 2026 Commission agendas, approved minutes, and ordinance records for any comprehensive Boone County zoning-regulations rewrite adoption item."
+}
