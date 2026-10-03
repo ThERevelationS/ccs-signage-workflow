@@ -2158,46 +2158,51 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
 
   // Pre-compute sort values for faster sorting
   const sortedWorkOrders = useMemo(() => {
-    // First filter
+    const viewRowFor = (row) => projectSalesRowForLiveView(row, liveEditPinsRef.current[row.id] || null);
+
+    // Filters evaluate against the row as it looked before this user's local
+    // edits, while the actual row rendered on screen keeps its newest values.
+    // Remote edits to non-protected fields still affect filter membership live.
     let result = scopedWorkOrders.filter(wo => {
-      if (!matchesAttentionFilter(wo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities)) return false;
+      const viewWo = viewRowFor(wo);
+      if (!matchesAttentionFilter(viewWo, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities)) return false;
 
       if (filterStatus !== "all" && !filterStatus.startsWith("custom_")) {
-        if (wo.sales_status !== filterStatus) return false;
+        if (viewWo.sales_status !== filterStatus) return false;
       }
       
       if (filterStatus.startsWith("custom_")) {
         const filterId = filterStatus.replace("custom_", "");
         const customFilter = customFilters.find(f => f.id === filterId);
-        if (customFilter && !applyCustomFilter(wo, customFilter.conditions)) return false;
+        if (customFilter && !applyCustomFilter(viewWo, customFilter.conditions)) return false;
       }
       
       if (searchTerm) {
         const search = searchTerm.toLowerCase();
         const searchable = [
-          wo.title,
-          wo.client_name,
-          wo.contact_name,
-          wo.contact_email,
-          wo.contact_phone,
-          salesPersonSearchText(wo.sales_rep, users),
-          salesPersonSearchText(wo.estimator, users, "Estimator"),
-          salesPersonSearchText(wo.project_manager, users, "PM"),
-          salesPersonSearchText(wo.designer, users, "Designer"),
-          salesPersonSearchText(wo.current_task_assigned_to, users, "Task Assigned"),
-          wo.current_task_description,
-          wo.description,
-          wo.est_inv_at,
-          wo.corbridge_invoice_number,
-          wo.install_location,
-          wo.billing_address,
-          wo.township_city,
-          wo.county,
-          wo.project_type,
-          wo.lead_source,
-          wo.expected_close_date,
-          wo.sales_last_follow_up_outcome,
-          wo.lost_reason,
+          viewWo.title,
+          viewWo.client_name,
+          viewWo.contact_name,
+          viewWo.contact_email,
+          viewWo.contact_phone,
+          salesPersonSearchText(viewWo.sales_rep, users),
+          salesPersonSearchText(viewWo.estimator, users, "Estimator"),
+          salesPersonSearchText(viewWo.project_manager, users, "PM"),
+          salesPersonSearchText(viewWo.designer, users, "Designer"),
+          salesPersonSearchText(viewWo.current_task_assigned_to, users, "Task Assigned"),
+          viewWo.current_task_description,
+          viewWo.description,
+          viewWo.est_inv_at,
+          viewWo.corbridge_invoice_number,
+          viewWo.install_location,
+          viewWo.billing_address,
+          viewWo.township_city,
+          viewWo.county,
+          viewWo.project_type,
+          viewWo.lead_source,
+          viewWo.expected_close_date,
+          viewWo.sales_last_follow_up_outcome,
+          viewWo.lost_reason,
         ].filter(Boolean).join(' ').toLowerCase();
         if (!searchable.includes(search)) return false;
       }
@@ -2211,7 +2216,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       if (filter.filterType === 'selected' && filter.selectedValues?.length > 0) {
         result = result.filter(item => {
-          const value = item[sortConfig.key];
+          const viewItem = viewRowFor(item);
+          const value = viewItem[sortConfig.key];
           if (value == null) return false;
           if (isSalesUserFilterField(sortConfig.key)) {
             const roleUsers = salesFilterUsersForField(sortConfig.key, users);
@@ -2226,7 +2232,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (filter.filterType === 'range' && filter.dateRange) {
         const { from, to } = filter.dateRange;
         result = result.filter(item => {
-          const value = item[sortConfig.key];
+          const value = viewRowFor(item)[sortConfig.key];
           if (!value) return false;
           const date = new Date(value);
           if (isNaN(date.getTime())) return false;
@@ -2239,7 +2245,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (filter.filterType === 'range' && filter.numberRange) {
         const { from, to } = filter.numberRange;
         result = result.filter(item => {
-          const value = parseFloat(item[sortConfig.key]);
+          const value = parseFloat(viewRowFor(item)[sortConfig.key]);
           if (isNaN(value)) return false;
           if (from !== null && value < from) return false;
           if (to !== null && value > to) return false;
@@ -2251,10 +2257,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     if (!sortConfig.key) {
       if (attentionFilter === "needs_attention") {
         return [...result].sort((a, b) => {
-          const scoreDiff = getSalesAttentionScore(b, parseLocalDate(todayStamp)) - getSalesAttentionScore(a, parseLocalDate(todayStamp));
+          const viewA = viewRowFor(a);
+          const viewB = viewRowFor(b);
+          const scoreDiff = getSalesAttentionScore(viewB, parseLocalDate(todayStamp)) - getSalesAttentionScore(viewA, parseLocalDate(todayStamp));
           if (scoreDiff !== 0) return scoreDiff;
-          const aValue = Number(a.estimate_amount ?? 0) || 0;
-          const bValue = Number(b.estimate_amount ?? 0) || 0;
+          const aValue = Number(viewA.estimate_amount ?? 0) || 0;
+          const bValue = Number(viewB.estimate_amount ?? 0) || 0;
           return bValue - aValue;
         });
       }
@@ -2276,8 +2284,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const dir = sortConfig.direction === 'asc' ? 1 : -1;
     
     return result.sort((a, b) => {
-      let aVal = a[key] ?? '';
-      let bVal = b[key] ?? '';
+      const viewA = viewRowFor(a);
+      const viewB = viewRowFor(b);
+      let aVal = viewA[key] ?? '';
+      let bVal = viewB[key] ?? '';
 
       if (isPersonField) {
         const role = personRoleByField[key];
@@ -2300,7 +2310,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       
       return aVal < bVal ? -dir : aVal > bVal ? dir : 0;
     });
-  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters, users]);
+  }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters, users, liveEditPinVersion]);
 
   const filteredWorkOrders = sortedWorkOrders;
   const filteredWorkOrdersRef = useRef(filteredWorkOrders);
