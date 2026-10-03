@@ -2899,17 +2899,21 @@ Deno.serve(async (req) => {
         }
         const entrySnapshotHash = await payloadHash(snapshotRows);
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
-        const summary = {
+        const priorHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
+        const previousHistoryHash = await payloadHash(priorHistory);
+        const summaryCore = {
           entry_count: completedEntries.length,
           employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size,
           total_hours: totalHours,
           lock_timestamp: lockTimestamp,
           locked_by: actorEmail,
           request_id: requestId,
-          snapshot_version: 1,
-          snapshot_active: true,
+          snapshot_version: 2,
           entry_snapshot_hash: entrySnapshotHash,
+          previous_history_hash: previousHistoryHash,
         };
+        const snapshotChainHash = await payloadHash(summaryCore);
+        const summary = { ...summaryCore, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
