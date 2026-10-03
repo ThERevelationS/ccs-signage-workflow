@@ -76,7 +76,7 @@ assert.match(backend, /Remaining Orders stay queued for the next sync/);
 console.log('PASS combined Order sync pushes only durable local edits, emits row-level heartbeat data, and stops safely before platform timeout');
 
 assert.match(widget, /compactOrderForm && status\?\.status === 'running' \? 1000 : 5000/);
-assert.match(widget, /orderSyncLiveProgress\(status, \{ enabled: compactOrderForm \}\)/);
+assert.match(widget, /orderSyncLiveProgress\([\s\S]*?enabled: compactOrderForm \|\| status\?\.progress_dataset === 'sales'/);
 assert.match(widget, /\$\{progressCurrent\.toLocaleString\(\)\} \/ \$\{progressTotal\.toLocaleString\(\)\} line items/);
 assert.match(widget, /progressItemLabel/);
 assert.match(widget, /progressDetail/);
