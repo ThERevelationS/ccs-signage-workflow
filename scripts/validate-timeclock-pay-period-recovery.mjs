@@ -1645,6 +1645,17 @@ test('needs_resolution remains a pay-period finalization blocker', async () => {
   assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
 });
 
+test('pay-period finalization requires audit evidence for request-marked approvals', async () => {
+  const h = setup();
+  const entry = h.rows.TimeEntry[0];
+  entry.approval_status = 'approved';
+  entry.approval_request_id = 'synthetic-no-audit';
+  const result = await h.invoke({ action: 'pay_period_status', target_email: employee.email, request_id: 'evidence-check-001', pay_period_id: 'synthetic-period', decision: 'finalize', note: '' });
+  assert.equal(result.status, 409, JSON.stringify(result.body));
+  assert.equal(h.period().status, 'review');
+  assert.equal(h.entryLocks().length, 0);
+});
+
 test('final corrected-shift approval is bound to terminal correction evidence', async () => {
   const approvalSlice = source.slice(source.indexOf('const verifyResolvedCorrectionForApproval'), source.indexOf('if (action === \'admin_archive_entry\')'));
   assert.match(approvalSlice, /approved_modified/);
