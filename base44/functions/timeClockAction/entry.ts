@@ -2444,10 +2444,29 @@ Deno.serve(async (req) => {
       if (current && current.snapshot_active !== false) {
         const check = await verifySummary(current, history, 'Current payroll generation');
         if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
+        if (!Array.isArray(lockedEntries) || lockedEntries.length !== Number(current.entry_count || 0)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll generation no longer matches its locked shift count.', pay_period_id: period.id, generations: [] });
+        const shiftEvidence = [];
+        const snapshotRows = [];
+        for (const entry of [...lockedEntries].sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))) {
+          if (String(entry.pay_period_locked_at || '') !== String(current.lock_timestamp || '') || asEmail(entry.pay_period_locked_by) !== asEmail(current.locked_by) || entry.status !== 'clocked_out' || entry.approval_status !== 'approved') return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift locks no longer match the finalized generation.', pay_period_id: period.id, generations: [] });
+          let approvalEvidence = null;
+          if (entry.approval_request_id) {
+            const evidence = await auditEntity.filter({ action: 'time_approval', request_id: entry.approval_request_id });
+            if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) || String(evidence[0]?.time_entry_id || '') !== String(entry.id || '')) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval evidence no longer matches the finalized generation.', pay_period_id: period.id, generations: [] });
+            approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+          }
+          const snapshotRow = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
+          snapshotRows.push(snapshotRow);
+          shiftEvidence.push({ ...snapshotRow, lunch_minutes: Number(entry.lunch_minutes || 0), notes: entry.notes || '', pay_period_locked_at: entry.pay_period_locked_at || '', pay_period_locked_by: asEmail(entry.pay_period_locked_by) });
+        }
+        const evidenceHash = await payloadHash(snapshotRows);
+        if (!String(current.entry_snapshot_hash || '') || !constantTimeEqual(String(current.entry_snapshot_hash), evidenceHash)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift evidence does not reproduce the finalized snapshot hash.', pay_period_id: period.id, generations: [] });
         generations.push({
           generation: history.length + 1, state: 'active', finalized_at: current.lock_timestamp || '', finalized_by: current.locked_by || '',
           entry_count: Number(current.entry_count || 0), employee_count: Number(current.employee_count || 0), total_hours: Number(current.total_hours || 0),
           request_id: current.request_id || '', entry_snapshot_hash: current.entry_snapshot_hash || '',
+          shift_evidence_verified: true, shift_evidence_hash: evidenceHash, shifts: shiftEvidence,
         });
       }
       return Response.json({
