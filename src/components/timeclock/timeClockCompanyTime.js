@@ -107,7 +107,7 @@ export function parseCompanyDateTimeInput(value) {
       ok: false,
       ambiguous: true,
       candidates: unique,
-      error: `That ${TIME_CLOCK_COMPANY_TIME_LABEL} occurs twice because daylight saving time is ending. Do not guess which occurrence applies; verify the exact punch before approving an edited time.`,
+      error: `That ${TIME_CLOCK_COMPANY_TIME_LABEL} occurs twice because daylight saving time is ending. Do not guess which occurrence applies; verify the exact punch before submitting the time.`,
     };
   }
   return {
