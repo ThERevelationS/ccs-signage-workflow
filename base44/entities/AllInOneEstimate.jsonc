@@ -19,6 +19,14 @@
       "type": "string",
       "description": "Linked shared Customer record id."
     },
+    "opportunity_id": {
+      "type": "string",
+      "description": "Optional canonical Opportunity link. Blank is valid for legacy/direct-created Estimates."
+    },
+    "estimating_request_id": {
+      "type": "string",
+      "description": "Optional EstimatingRequest link preserving the pre-estimate handoff identity."
+    },
     "work_order_id": {
       "type": "string",
       "description": "Optional linked WorkOrder id \u2014 ties this estimate to a job in the workflow."
