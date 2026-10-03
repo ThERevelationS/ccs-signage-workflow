@@ -2,6 +2,7 @@ import { buildSnapshot, buildSalesPullSnapshot, buildOrderPullSnapshot, parseRow
 import { valueHash, verifiedLocalFieldTime, trackedConditionalSave, preview } from './fieldAudit.ts';
 import { readRemoteFieldHistory } from './smartsheetCellHistory.ts';
 import { canonicalBase44SalesAssignee } from './smartsheetSalesAssigneeTranslation.mjs';
+import { latestVerifiedOrderColumnEditTime, orderPreservedRemoteBlankNeedsReview } from './smartsheetOrderBlankSafety.mjs';
 
 const text = v=>String(v ?? '').trim();
 function same(a,b) { return text(a)===text(b) || a!=null && b!=null && text(a)!=='' && text(b)!=='' && Number.isFinite(Number(a)) && Number(a)===Number(b); }
@@ -27,7 +28,26 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
     let winner='', localAt='', remoteAt='', reason='';
     const rawCell=rawSheet.rows?.find(r=>String(r.id)===remoteRow.id)?.cells?.find(c=>String(c.columnId)===column);
     if([rawCell?.value,rawCell?.displayValue].some(v=>typeof v==='string' && v.length>4000))throw new Error('A remote cell exceeds the safe sync length. Neither version was truncated or overwritten.');
-    if(known && !remoteChanged)winner='app';
+    let preservedBlankNeedsReview=false;
+    if(dataset==='orders' && known && text(a) && !text(b) && !text(prior[column])) {
+      const fieldTimes=[];
+      for(const candidateField of fields) fieldTimes.push(await verifiedLocalFieldTime(base44,type,record,candidateField));
+      localAt=latestVerifiedOrderColumnEditTime(fieldTimes);
+      preservedBlankNeedsReview=orderPreservedRemoteBlankNeedsReview({
+        localValue:a,
+        remoteValue:b,
+        priorValue:prior[column],
+        lastSyncedAt:record.smartsheet_last_synced_at,
+        localEditedAt:localAt,
+      });
+      if(preservedBlankNeedsReview) {
+        reason='Smartsheet is blank while Base44 retains an older nonblank value. That Base44 field has no verified edit after the blank was observed, so Save & Sync will not repopulate Smartsheet without review.';
+      }
+    }
+    if(preservedBlankNeedsReview) {
+      // Deliberately leave winner empty so the normal conflict/review path below
+      // preserves both values. An approved review can still choose either side.
+    } else if(known && !remoteChanged)winner='app';
     else if(known && !localChanged)winner='smartsheet';
     else {
       // Unknown baselines cannot be decided by timestamps, so never spend
