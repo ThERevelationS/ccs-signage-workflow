@@ -6,11 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarRange, CheckCircle2, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
+import { AlertTriangle, CalendarRange, CheckCircle2, ChevronDown, ChevronRight, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
 const COMPANY_TIME_ZONE = "America/New_York";
+
+function formatEvidenceTime(value) {
+  if (!value) return "Unavailable";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: COMPANY_TIME_ZONE, month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short",
+  }).format(date);
+}
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -139,6 +149,7 @@ export default function PayPeriodManager({
   const [historyPeriod, setHistoryPeriod] = useState(null);
   const [historyResult, setHistoryResult] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [expandedGenerations, setExpandedGenerations] = useState({});
   const recoveryAttemptedRef = useRef(false);
 
   const loadPeriods = async () => {
@@ -274,7 +285,7 @@ export default function PayPeriodManager({
 
   const openHistory = async (period) => {
     if (!period?.id || historyLoading) return;
-    setHistoryPeriod(period); setHistoryResult(null); setHistoryLoading(true);
+    setHistoryPeriod(period); setHistoryResult(null); setExpandedGenerations({}); setHistoryLoading(true);
     try {
       const result = await invoke({ action: "pay_period_history_verify", pay_period_id: period.id, session_token: sessionToken });
       setHistoryResult(result);
@@ -469,8 +480,29 @@ export default function PayPeriodManager({
                 {(historyResult.generations || []).map((generation) => (
                   <div key={`${generation.generation}:${generation.request_id}`} className="rounded-lg border bg-white p-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Generation {generation.generation}</span><Badge variant="outline" className={generation.state === "active" ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{generation.state === "active" ? "Current" : "Retired"}</Badge></div>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600"><span>{generation.entry_count} shifts · {Number(generation.total_hours || 0).toFixed(2)} hours</span><span>{generation.employee_count} employee{generation.employee_count === 1 ? "" : "s"}</span><span>Finalized by {generation.finalized_by || "Unknown"}</span><span>{generation.finalized_at || "Finalization time unavailable"}</span></div>
-                    {generation.state === "retired" && <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800">Reopened by {generation.invalidated_by || "Unknown"}{generation.invalidated_at ? ` on ${generation.invalidated_at}` : ""}.{generation.invalidation_reason ? <> Reason: {generation.invalidation_reason}</> : null}</div>}
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600"><span>{generation.entry_count} shifts · {Number(generation.total_hours || 0).toFixed(2)} hours</span><span>{generation.employee_count} employee{generation.employee_count === 1 ? "" : "s"}</span><span>Finalized by {generation.finalized_by || "Unknown"}</span><span>{formatEvidenceTime(generation.finalized_at)}</span></div>
+                    {generation.state === "retired" && <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800">Reopened by {generation.invalidated_by || "Unknown"}{generation.invalidated_at ? ` on ${formatEvidenceTime(generation.invalidated_at)}` : ""}.{generation.invalidation_reason ? <> Reason: {generation.invalidation_reason}</> : null}</div>}
+                    {generation.shift_evidence_verified && Array.isArray(generation.shifts) ? (
+                      <div className="mt-3">
+                        <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setExpandedGenerations((current) => ({ ...current, [generation.generation]: !current[generation.generation] }))}>
+                          {expandedGenerations[generation.generation] ? <ChevronDown className="w-4 h-4 mr-1" /> : <ChevronRight className="w-4 h-4 mr-1" />}
+                          {expandedGenerations[generation.generation] ? "Hide" : "Inspect"} {generation.shifts.length} verified shift{generation.shifts.length === 1 ? "" : "s"}
+                        </Button>
+                        {expandedGenerations[generation.generation] && (
+                          <div className="mt-2 space-y-2">
+                            {generation.shifts.map((shift) => (
+                              <div key={shift.id} className="rounded-lg border bg-gray-50 p-3 text-xs">
+                                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-gray-900">{shift.user_email || "Unknown employee"}</span><span className="font-semibold text-gray-700">{Number(shift.total_hours || 0).toFixed(2)} hours</span></div>
+                                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-gray-600"><span>Clock in: {formatEvidenceTime(shift.clock_in)}</span><span>Clock out: {formatEvidenceTime(shift.clock_out)}</span><span>Approval: {shift.approval_status || "Unknown"}</span><span>Approval evidence: {shift.approval_evidence?.outcome || (shift.approval_request_id ? "Missing" : "Legacy/no request")}</span></div>
+                                {shift.approval_request_id && <div className="mt-1 font-mono text-[10px] text-gray-400 break-all">Approval request {shift.approval_request_id}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded bg-gray-50 p-2 text-xs text-gray-500">Exact shift-level evidence is not available for this older generation; its aggregate snapshot/provenance remains verified.</div>
+                    )}
                     <div className="mt-2 font-mono text-[10px] text-gray-400 break-all">Snapshot {generation.entry_snapshot_hash}</div>
                   </div>
                 ))}
