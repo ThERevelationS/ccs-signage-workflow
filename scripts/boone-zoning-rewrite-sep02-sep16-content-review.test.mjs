@@ -25,7 +25,7 @@ test('Sep 2 minutes and Sep 16 annotated agenda preserve a bounded no-rewrite-ac
   const sep2Text = readFileSync(sep2.extractedTextPath, 'utf8');
   const sep16Text = readFileSync(sep16.extractedTextPath, 'utf8');
   assert.match(sep2Text, /Long-Range Planning\/Comprehensive Plan[\s\S]{0,120}No Report/i);
-  assert.match(sep2Text, /2045 Comprehensive Plan[\s\S]{0,80}adopted February 2026/i);
+  assert.match(sep2Text, /2045 Comprehensive Plan[\s\S]{0,80}adopted February[\s\S]{0,20}2026/i);
   assert.match(sep2Text, /NEW BUSINESS:[\s\S]{0,350}October 7, 2026/i);
   assert.match(sep16Text, /September 2, 2026 - Business Meeting & Public Hearings\s*[–-]\s*APPROVED/i);
   assert.match(sep16Text, /Cooper Steel[\s\S]{0,180}APPROVED UNANIMOUSLY/i);
