@@ -397,6 +397,22 @@ test('ordinary finalization, audit, and exact-request reuse', async () => {
   assert.equal(h.audit(finalizeRequest).length, 1);
 });
 
+test('finalized payroll snapshot binds exact locked entry and approval evidence', async () => {
+  const h = setup({ entryCount: 2 });
+  const requestId = 'snapshot-bound-finalize-001';
+  const first = await h.action('finalize', requestId);
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(h.period().finalized_summary.snapshot_version, 1);
+  assert.match(h.period().finalized_summary.entry_snapshot_hash, /^[a-f0-9]{64}$/);
+
+  // A finalized row must not be able to drift while an exact lost-response retry
+  // silently confirms the old finalization.
+  h.entryLocks()[0].total_hours = Number(h.entryLocks()[0].total_hours || 0) + 0.25;
+  const retry = await h.action('finalize', requestId);
+  assert.equal(retry.status, 409, JSON.stringify(retry.body));
+  assert.match(retry.body.error, /payroll snapshot no longer matches/i);
+});
+
 test('partial entry writes recover using exactly the original lock marker', async () => {
   const h = setup({ entryCount: 2 });
   let interrupt = true;
