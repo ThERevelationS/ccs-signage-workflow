@@ -101,4 +101,20 @@ check("search and Needs Input navigation use direct rendered-row lookup first", 
   assert.match(source, /findRenderedChecklistItemElement\(\[item\.id, item\.parent_id, topLevelId\]\)/);
 });
 
+check("row display hierarchy metadata is memoized instead of rebuilt per render", () => {
+  assert.match(source, /const checklistRenderMetaById = useMemo\(\(\) => \{/);
+  assert.match(source, /displayItem: \{ \.\.\.item, tasks, details \}/);
+  assert.match(source, /attentionLabel: itemAttentionLabelById\.get\(item\.id\) \|\| null/);
+  assert.match(source, /const renderMeta = checklistRenderMetaById\.get\(rawItem\.id\);/);
+  assert.equal(/const itemTasks = checklistChildrenByParentType\.get\(item\.id\)/.test(source), false);
+  assert.equal(/const stItemTasks = checklistChildrenByParentType\.get\(stItem\.id\)/.test(source), false);
+});
+
+check("attention badges use one memoized row lookup", () => {
+  assert.equal(/getItemAttentionLabel\(/.test(source), false);
+  assert.match(source, /const \{ displayItem, isCompleted: isItemCompleted, attentionLabel \} = renderMeta;/);
+  assert.match(source, /const detailAttentionLabel = detailRenderMeta\?\.attentionLabel \|\| null;/);
+  assert.match(source, /const \{ displayItem: stDisplayItem, isCompleted: isStItemCompleted, attentionLabel \} = renderMeta;/);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
