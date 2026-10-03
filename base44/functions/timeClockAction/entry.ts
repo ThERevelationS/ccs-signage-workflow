@@ -2408,6 +2408,51 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (action === 'pay_period_history_verify') {
+      if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to verify payroll history.' }, { status: 403 });
+      const payPeriodId = String(body.pay_period_id || '').trim();
+      if (!payPeriodId) return Response.json({ success: false, error: 'Pay period is required.' }, { status: 400 });
+      const period = await payPeriodEntity.get(payPeriodId).catch(() => null);
+      if (!period) return Response.json({ success: false, error: 'Pay period was not found.' }, { status: 404 });
+      const history = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
+      const verifySummary = async (summary: any, prefix: any[], label: string) => {
+        if (!summary || typeof summary !== 'object' || Number(summary.snapshot_version || 0) < 2) return { verified: false, legacy: true, error: `${label} predates tamper-evident payroll history verification.` };
+        const prefixHash = await payloadHash(prefix);
+        const chainHash = await payloadHash({
+          entry_count: summary.entry_count, employee_count: summary.employee_count, total_hours: summary.total_hours,
+          lock_timestamp: summary.lock_timestamp, locked_by: summary.locked_by, request_id: summary.request_id,
+          snapshot_version: summary.snapshot_version, entry_snapshot_hash: summary.entry_snapshot_hash,
+          previous_history_hash: summary.previous_history_hash,
+        });
+        if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
+        return { verified: true, legacy: false };
+      };
+      const generations = [];
+      for (let index = 0; index < history.length; index += 1) {
+        const summary = history[index];
+        const check = await verifySummary(summary, history.slice(0, index), `Historical generation ${index + 1}`);
+        if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        generations.push({
+          generation: index + 1, state: 'retired', finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
+          entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
+          request_id: summary.request_id || '', entry_snapshot_hash: summary.entry_snapshot_hash || '', invalidated_at: summary.invalidated_at || '',
+          invalidated_by: summary.invalidated_by || '', invalidation_reason: summary.invalidation_reason || '',
+          invalidated_by_reopen_request_id: summary.invalidated_by_reopen_request_id || '',
+        });
+      }
+      const current = period.finalized_summary;
+      if (current && current.snapshot_active !== false) {
+        const check = await verifySummary(current, history, 'Current payroll generation');
+        if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        generations.push({
+          generation: history.length + 1, state: 'active', finalized_at: current.lock_timestamp || '', finalized_by: current.locked_by || '',
+          entry_count: Number(current.entry_count || 0), employee_count: Number(current.employee_count || 0), total_hours: Number(current.total_hours || 0),
+          request_id: current.request_id || '', entry_snapshot_hash: current.entry_snapshot_hash || '',
+        });
+      }
+      return Response.json({ success: true, verified: true, legacy: false, pay_period_id: period.id, period_status: period.status, generations });
+    }
+
     if (action === 'pay_period_status') {
       if (actor.role !== 'admin') return Response.json({ success: false, error: 'Administrator access is required to manage pay periods.' }, { status: 403 });
       const periodId = String(body?.pay_period_id || '').trim();
