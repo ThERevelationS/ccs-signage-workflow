@@ -2212,10 +2212,21 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         query: { smartsheet_sheet_id: sheetId }, sort: 'id',
         label: 'Order Form read-only date parity review',
       });
-      const audit = auditOrderDateParity(orders, sheetRows, bindings, sheetId);
+      const dateFieldAudits = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.FieldAudit,
+        query: {
+          entity_type: 'Order',
+          status: 'committed',
+          field_name: { $in: dateFields },
+        },
+        sort: 'modified_at',
+        label: 'Order Form read-only date edit evidence',
+      });
+      const audit = auditOrderDateParity(orders, sheetRows, bindings, sheetId, dateFieldAudits);
       return Response.json({ success: true, ...audit, sheet_id: sheetId,
         sheet_version: sheetVersion, sheet_download_verified: true,
         date_columns: dateColumns,
+        date_field_audit_events: dateFieldAudits.length,
         sync_global_enabled: config?.global_enabled === true,
         sync_observation_mode: config?.observation_mode !== false,
       });
