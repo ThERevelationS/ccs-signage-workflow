@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarRange, CheckCircle2, FileLock2, Loader2, LockKeyhole, RotateCcw } from "lucide-react";
+import { AlertTriangle, CalendarRange, CheckCircle2, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
@@ -136,6 +136,9 @@ export default function PayPeriodManager({
   const [actionDecision, setActionDecision] = useState("");
   const [actionNote, setActionNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [historyPeriod, setHistoryPeriod] = useState(null);
+  const [historyResult, setHistoryResult] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const recoveryAttemptedRef = useRef(false);
 
   const loadPeriods = async () => {
@@ -269,6 +272,17 @@ export default function PayPeriodManager({
     }
   };
 
+  const openHistory = async (period) => {
+    if (!period?.id || historyLoading) return;
+    setHistoryPeriod(period); setHistoryResult(null); setHistoryLoading(true);
+    try {
+      const result = await invoke({ action: "pay_period_history_verify", pay_period_id: period.id, session_token: sessionToken });
+      setHistoryResult(result);
+    } catch (err) {
+      setHistoryResult({ verified: false, error: err?.message || "Payroll history could not be verified.", generations: [] });
+    } finally { setHistoryLoading(false); }
+  };
+
   const openAction = (period, decision) => {
     const key = `${decision}:${period?.id || ""}`;
     const stored = storedPeriodRequest(key);
@@ -366,6 +380,9 @@ export default function PayPeriodManager({
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {(period.finalized_summary || (period.finalized_summary_history || []).length > 0) && (
+                      <Button size="sm" variant="outline" onClick={() => openHistory(period)}><History className="w-4 h-4 mr-1" />Payroll History</Button>
+                    )}
                     {period.status === "open" && <Button size="sm" variant="outline" onClick={() => openAction(period, "review")}>Begin Review</Button>}
                     {period.status === "review" && (
                       <Button size="sm" onClick={() => openAction(period, "finalize")} disabled={!readiness.ready} className="bg-green-600 hover:bg-green-700">
@@ -414,6 +431,32 @@ export default function PayPeriodManager({
           })}
         </div>
       )}
+
+      <Dialog open={!!historyPeriod} onOpenChange={(open) => { if (!open && !historyLoading) { setHistoryPeriod(null); setHistoryResult(null); } }}>
+        <DialogContent className="clay-card border-none max-w-2xl">
+          <DialogHeader><DialogTitle>Verified Payroll History</DialogTitle></DialogHeader>
+          {historyLoading ? (
+            <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain…</div>
+          ) : historyResult?.verified ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"><ShieldCheck className="w-5 h-5 shrink-0" /><span>Server verification passed. Every displayed payroll generation is bound to the tamper-evident snapshot chain.</span></div>
+              <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
+                {(historyResult.generations || []).map((generation) => (
+                  <div key={`${generation.generation}:${generation.request_id}`} className="rounded-lg border bg-white p-3 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Generation {generation.generation}</span><Badge variant="outline" className={generation.state === "active" ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}>{generation.state === "active" ? "Current" : "Retired"}</Badge></div>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-600"><span>{generation.entry_count} shifts · {Number(generation.total_hours || 0).toFixed(2)} hours</span><span>{generation.employee_count} employee{generation.employee_count === 1 ? "" : "s"}</span><span>Finalized by {generation.finalized_by || "Unknown"}</span><span>{generation.finalized_at || "Finalization time unavailable"}</span></div>
+                    {generation.state === "retired" && <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800">Reopened by {generation.invalidated_by || "Unknown"}{generation.invalidated_at ? ` on ${generation.invalidated_at}` : ""}.{generation.invalidation_reason ? <> Reason: {generation.invalidation_reason}</> : null}</div>}
+                    <div className="mt-2 font-mono text-[10px] text-gray-400 break-all">Snapshot {generation.entry_snapshot_hash}</div>
+                  </div>
+                ))}
+                {(historyResult.generations || []).length === 0 && <div className="rounded-lg border bg-gray-50 p-3 text-sm text-gray-600">No finalized payroll generations are recorded for this period.</div>}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"><ShieldX className="w-5 h-5 shrink-0" /><span>{historyResult?.error || "Payroll history was not verified. No snapshot history is being presented as trusted."}</span></div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreate} onOpenChange={(open) => { if (!busy) setShowCreate(open); }}>
         <DialogContent className="clay-card border-none max-w-lg">
