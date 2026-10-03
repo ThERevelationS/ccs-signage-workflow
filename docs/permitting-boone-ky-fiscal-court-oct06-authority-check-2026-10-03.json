@@ -1,0 +1,44 @@
+{
+  "title": "Boone County Fiscal Court \u2014 October 6, 2026 agenda and minutes-index authority check",
+  "checkedAt": "2026-10-03",
+  "minutesIndex": {
+    "sourceUrl": "https://boonecountyky.org/government/boone_county_fiscal_court/fiscal_court_meeting_minutes.php",
+    "repositoryPath": "public/permitting/sources/boone-ky/fiscal-court-meeting-minutes-index-2026-10-03.html",
+    "httpStatus": 200,
+    "bytes": 952505,
+    "sha256": "db52722953d1032cfbc7c3005028f9229289d23f7d8767aea20f38839639be96",
+    "latestLinked2026RegularMeetingMinutes": "2026-09-08"
+  },
+  "agenda": {
+    "sourceUrl": "https://boonecountyky.org/Documents/Government/Boone%20County%20Fiscal%20Court/Fiscal%20Court%20Agenda/Agenda.pdf",
+    "repositoryPath": "public/permitting/sources/boone-ky/fiscal-court-agenda-2026-10-06.pdf",
+    "bytes": 150444,
+    "sha256": "0622d49f9228630c6f54f743221005cfd5f8430d2f3a2527fcf5b2a163e3034e",
+    "pages": 2,
+    "meetingDate": "2026-10-06",
+    "meetingTime": "08:30",
+    "extractedTextPath": "docs/fiscal-court-agenda-2026-10-06-extracted-text-2026-10-03.txt",
+    "reviewTerms": {
+      "zoning ordinance": 0,
+      "zoning regulations": 0,
+      "ordinance update": 0,
+      "zoning update": 0,
+      "rewrite": 0,
+      "article 34": 0,
+      "adoption": 0,
+      "effective date": 0,
+      "planning commission": 0
+    },
+    "ordinancesAgendaText": "ITEM IV. ORDINANCES \u2014 A. None.",
+    "nextFiscalCourtMeeting": "2026-10-20 17:30",
+    "referencesApprovalOfMinutesFor": [
+      "2026-09-22 regular meeting",
+      "2026-09-24 caucus meeting"
+    ]
+  },
+  "rewriteAdoptionItemFound": false,
+  "authorityBoundary": "As of 2026-10-03, the official Boone County Fiscal Court current agenda is for the upcoming October 6, 2026 meeting. Its Ordinances section states None, and the reliably extracted agenda contains no reviewed zoning-rewrite/adoption/effective-date target term. This establishes only what was scheduled on that posted agenda; it does not establish what action may ultimately occur at the October 6 meeting, whether an agenda may later be amended, or whether another legislative body has acted.",
+  "minutesBoundary": "The live Fiscal Court minutes index links 2026 regular-meeting minutes through September 8. The October 6 agenda itself references approval of September 22 regular-meeting and September 24 caucus-meeting minutes, so absence of later links on the index is not treated as proof that later meetings or minutes do not exist.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless reviewed official action records establish final adoption and effectiveness of replacement text.",
+  "nextLogicalAuthorityTarget": "After October 6, recheck the official Fiscal Court agenda/minutes for posted October 6 action records; otherwise inspect the October 20 agenda when posted for zoning-rewrite adoption items."
+}

@@ -62,8 +62,14 @@ function offsetMinutesAt(timestampMs) {
   return sign * (Number(match[2]) * 60 + Number(match[3] || 0));
 }
 
-export function parseCompanyDateTimeInput(value) {
+export function parseCompanyDateTimeInput(value, preservedIso = null) {
   const normalized = String(value || "").trim();
+  if (preservedIso && companyDateTimeInputFromIso(preservedIso) === normalized) {
+    const preserved = new Date(String(preservedIso));
+    if (Number.isFinite(preserved.getTime())) {
+      return { ok: true, iso: preserved.toISOString(), ambiguous: false, preserved: true };
+    }
+  }
   const match = normalized.match(inputPattern);
   if (!match) {
     return { ok: false, error: `Enter a valid date and time in ${TIME_CLOCK_COMPANY_TIME_LABEL}.` };
