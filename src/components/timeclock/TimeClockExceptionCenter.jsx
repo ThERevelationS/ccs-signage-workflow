@@ -50,6 +50,7 @@ export default function TimeClockExceptionCenter({
   correctionRequests = [],
   punchExceptions = [],
   onReviewEntry,
+  onReviewCorrection,
   onRefresh,
 }) {
   const nowMs = Date.now();
@@ -70,6 +71,7 @@ export default function TimeClockExceptionCenter({
   const pausesByEntryId = new Map();
   const laborByEntryId = new Map();
   const punchCasesByEntryId = new Map();
+  const pendingCorrectionByEntryId = new Map();
 
   const addGrouped = (map, key, row) => {
     if (!key) return;
@@ -87,8 +89,14 @@ export default function TimeClockExceptionCenter({
   for (const row of activeWorkPauses) addGrouped(pausesByEntryId, row.time_entry_id, row);
   for (const row of activeLaborSegments) addGrouped(laborByEntryId, row.time_entry_id, row);
   for (const row of punchExceptions) addGrouped(punchCasesByEntryId, row.time_entry_id, row);
+  for (const request of correctionRequests) {
+    if (request?.time_entry_id && ["pending", "reviewing"].includes(request.status)) {
+      pendingCorrectionByEntryId.set(request.time_entry_id, request);
+    }
+  }
 
   for (const entry of unresolvedPunchEntries) {
+    const correctionRequest = pendingCorrectionByEntryId.get(entry.id) || null;
     exceptions.push({
       key: `punch-resolution:${entry.id}`,
       severity: "critical",
@@ -97,6 +105,7 @@ export default function TimeClockExceptionCenter({
       employee: entry.user_name || entry.user_email,
       detail: "The employee reported a missed Clock Out. The old shift is preserved with no fabricated Clock Out and is excluded from active work while its correction awaits manager review. Pay-period finalization remains blocked until it is resolved.",
       entry,
+      correctionRequest,
     });
   }
 
@@ -625,6 +634,7 @@ export default function TimeClockExceptionCenter({
   }
 
   for (const request of correctionRequests) {
+    if (request?.time_entry_id && unresolvedPunchEntries.some(entry => entry.id === request.time_entry_id)) continue;
     exceptions.push({
       key: `correction:${request.id}`,
       severity: "info",
@@ -632,6 +642,7 @@ export default function TimeClockExceptionCenter({
       title: request.status === "reviewing" ? "Correction review in progress" : "Employee correction request pending",
       employee: request.user_name || request.user_email,
       detail: request.employee_reason || "A completed shift has a correction request awaiting manager review.",
+      correctionRequest: request,
     });
   }
 
@@ -684,11 +695,15 @@ export default function TimeClockExceptionCenter({
                       <p className="text-xs mt-1 opacity-90">{item.detail}</p>
                     </div>
                   </div>
-                  {item.entry && typeof onReviewEntry === "function" && (
-                    <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.entry)} className="shrink-0 bg-white/80">
-                      Review
+                  {item.correctionRequest && typeof onReviewCorrection === "function" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onReviewCorrection(item.correctionRequest)} className="shrink-0 bg-white/80">
+                      Review Correction
                     </Button>
-                  )}
+                  ) : item.entry && typeof onReviewEntry === "function" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.entry)} className="shrink-0 bg-white/80">
+                      Review Shift
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             );
