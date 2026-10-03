@@ -1,0 +1,17 @@
+{
+  "title": "Boone County Planning Commission — 2026 Zoning Ordinance Update status boundary",
+  "sourceUrl": "https://bcpcky.org/_T18_R30.php",
+  "linkedFrom": "public/permitting/sources/boone-ky/planning-commission-home-page-2026-09-28.html",
+  "homepageNewsDate": "August 07, 2026",
+  "homepageNewsTitle": "2026 Zoning Update",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "contentType": "text/html; charset=UTF-8",
+  "bytes": 43562,
+  "sha256": "22c904231e29062ae598e4da401818be142648fed970f2ad26a6581f2ab96a44",
+  "rewriteUrl": "https://online.encodeplus.com/regs/boonecounty-ky-rewrite/",
+  "countyStatusText": "The 2026 Zoning Ordinance Update has begun. You can review the update and other project information using the following link:",
+  "authorityBoundary": "update_in_progress_not_adoption_evidence",
+  "adoptedSignAuthority": "The separately archived adopted Boone County Zoning Regulations Article 34 remains the sign-regulation authority unless newer official evidence establishes adoption/effectiveness of replacement text.",
+  "evidenceScope": "The current Boone County Planning Commission news page establishes that a 2026 Zoning Ordinance Update is underway and directs readers to the separate EncodePlus rewrite site. The inspected county page does not state that the rewrite has been adopted, enacted, or made effective. Therefore the rewrite must not replace, override, or silently modify the separately archived adopted Article 34 sign rules based on this page alone. Any future promotion of rewrite text to adopted authority requires separate official adoption/effective-date evidence."
+}
