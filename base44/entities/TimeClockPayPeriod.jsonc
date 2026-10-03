@@ -76,7 +76,14 @@
     },
     "finalized_summary": {
       "type": "object",
-      "description": "Snapshot summary captured when finalized"
+      "description": "Current or most recently retired payroll snapshot summary"
+    },
+    "finalized_summary_history": {
+      "type": "array",
+      "description": "History of retired payroll snapshots across reopen and re-finalize cycles",
+      "items": {
+        "type": "object"
+      }
     }
   },
   "required": [
