@@ -593,6 +593,13 @@ export function useColumnSorting(storageKeyPrefix, userEmail) {
     setSortConfig({ key: null, direction: 'asc', customFilter: null });
   };
 
+  const clearCustomFilter = () => {
+    setSortConfig((current) => ({
+      ...current,
+      customFilter: null,
+    }));
+  };
+
   // Apply sorting and filtering to data
   const applySortAndFilter = (data, fieldName) => {
     if (!sortConfig.key) return data;
@@ -643,6 +650,7 @@ export function useColumnSorting(storageKeyPrefix, userEmail) {
     handleSort,
     handleCustomSort,
     clearSort,
+    clearCustomFilter,
     applySortAndFilter
   };
 }
