@@ -402,7 +402,9 @@ test('finalized payroll snapshot binds exact locked entry and approval evidence'
   const requestId = 'snapshot-bound-finalize-001';
   const first = await h.action('finalize', requestId);
   assert.equal(first.status, 200, JSON.stringify(first.body));
-  assert.equal(h.period().finalized_summary.snapshot_version, 1);
+  assert.equal(h.period().finalized_summary.snapshot_version, 2);
+  assert.match(h.period().finalized_summary.previous_history_hash, /^[a-f0-9]{64}$/);
+  assert.match(h.period().finalized_summary.snapshot_chain_hash, /^[a-f0-9]{64}$/);
   assert.match(h.period().finalized_summary.entry_snapshot_hash, /^[a-f0-9]{64}$/);
 
   // A finalized row must not be able to drift while an exact lost-response retry
@@ -544,6 +546,22 @@ test('reopen retires the prior payroll snapshot and re-finalize replaces it auth
   assert.equal(h.period().finalized_summary_history[1].invalidated_by_reopen_request_id, secondReopen);
   assert.equal((await h.action('reopen', secondReopen, 'Second payroll correction')).status, 200);
   assert.equal(h.period().finalized_summary_history.length, 2);
+});
+
+test('snapshot chain detects altered historical payroll provenance before reopen', async () => {
+  const h = setup();
+  assert.equal((await h.action('finalize', 'chain-first-finalize-001')).status, 200);
+  assert.equal((await h.action('reopen', 'chain-first-reopen-001', 'First correction')).status, 200);
+  assert.equal((await h.action('finalize', 'chain-second-finalize-001')).status, 200);
+  assert.equal(h.period().finalized_summary.snapshot_version, 2);
+  assert.equal(h.period().finalized_summary_history.length, 1);
+
+  h.period().finalized_summary_history[0].invalidation_reason = 'tampered reason';
+  const blocked = await h.action('reopen', 'chain-second-reopen-001', 'Second correction');
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /history integrity failed/i);
+  assert.equal(h.period().status, 'finalized');
+  assert.equal(h.entryLocks().length, 2);
 });
 
 test('a broken committed lock snapshot refuses exact-request audit confirmation', async () => {
