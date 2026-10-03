@@ -521,17 +521,29 @@ test('reopen retires the prior payroll snapshot and re-finalize replaces it auth
   assert.equal(h.period().finalized_summary.invalidated_by_reopen_request_id, reopenRequest);
   assert.equal(h.period().finalized_summary.request_id, firstRequest);
   assert.equal(h.entryLocks().length, 0);
+  assert.equal(h.period().finalized_summary_history.length, 1);
+  assert.equal(h.period().finalized_summary_history[0].request_id, firstRequest);
+  assert.equal(h.period().finalized_summary_history[0].invalidated_by_reopen_request_id, reopenRequest);
 
   assert.equal((await h.action('finalize', secondRequest)).status, 200);
   assert.equal(h.period().status, 'finalized');
   assert.equal(h.period().finalized_summary.snapshot_active, true);
   assert.equal(h.period().finalized_summary.request_id, secondRequest);
   assert.equal(h.period().finalized_summary.invalidated_by_reopen_request_id, undefined);
+  assert.equal(h.period().finalized_summary_history.length, 1);
 
   const staleRetry = await h.action('finalize', firstRequest);
   assert.equal(staleRetry.status, 409, JSON.stringify(staleRetry.body));
   assert.equal(h.period().finalized_summary.request_id, secondRequest);
   assert.equal(h.period().finalized_summary.snapshot_active, true);
+
+  const secondReopen = 'snapshot-lifecycle-reopen-002';
+  assert.equal((await h.action('reopen', secondReopen, 'Second payroll correction')).status, 200);
+  assert.equal(h.period().finalized_summary_history.length, 2);
+  assert.deepEqual(h.period().finalized_summary_history.map((item) => item.request_id), [firstRequest, secondRequest]);
+  assert.equal(h.period().finalized_summary_history[1].invalidated_by_reopen_request_id, secondReopen);
+  assert.equal((await h.action('reopen', secondReopen, 'Second payroll correction')).status, 200);
+  assert.equal(h.period().finalized_summary_history.length, 2);
 });
 
 test('a broken committed lock snapshot refuses exact-request audit confirmation', async () => {
