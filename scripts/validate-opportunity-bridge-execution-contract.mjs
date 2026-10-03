@@ -24,9 +24,8 @@ const source = {
 };
 const snap = bridgeSourceSnapshot(source);
 assert.deepEqual(Object.keys(snap), [
-  'id','opportunity_id','customer_id','estimate_id','sales_status','in_pipeline',
-  'current_task_description','date_order_created','smartsheet_sheet_id',
-  'smartsheet_row_id','sales_import_source_id','updated_date'
+  'id','opportunity_id','sales_status','in_pipeline',
+  'current_task_description','date_order_created','updated_date'
 ]);
 assert.equal(snap.sales_status, 'lead');
 assert.equal(snap.current_task_description, 'Completed Sale');
