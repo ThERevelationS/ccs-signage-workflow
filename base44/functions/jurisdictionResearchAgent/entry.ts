@@ -115,6 +115,7 @@ Return ONLY valid JSON with this structure. Leave fields null if not found:
   "height_allowances": "Specific height regulations by location type",
   "setback_rules": "Setback distance requirements from official code",
   "lighting_allowances": "Illumination and lighting restrictions",
+  "authority_candidate": { "is_comprehensive_rewrite": false, "kind": "current_adopted|comprehensive_rewrite|zoning_rewrite|narrow_amendment|unknown", "notes": "Explain the authority classification" },
   ${includeParentCounty && jurisdictionType !== 'county' ? `"parent_county": {
     "name": "Parent County Name",
     "website_url": "https://official-county-url.gov",
