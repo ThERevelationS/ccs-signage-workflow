@@ -1,0 +1,27 @@
+{
+  "title": "Boone County Planning Commission — October 7, 2026 minutes index recheck",
+  "checkedAt": "2026-10-03",
+  "sourceUrl": "https://bcpcky.org/commission_boards/planning_commission_agendas_and_minutes.php",
+  "priorSnapshotPath": "public/permitting/sources/boone-ky/planning-commission-agendas-minutes-index-2026-10-03.html",
+  "liveHttpStatus": 200,
+  "liveContentType": "text/html; charset=UTF-8",
+  "liveBytes": 126035,
+  "liveSha256": "3071ded416e58f648e842f7eba567be9fc9b5a4255974ef4b0d2a87c578a2560",
+  "matchesPriorSnapshot": true,
+  "october7BusinessMeeting": {
+    "agendaLinked": true,
+    "minutesLinked": false
+  },
+  "october7PublicHearing": {
+    "agendaLinked": true,
+    "minutesLinked": false
+  },
+  "authorityBoundary": "The official Planning Commission index was rechecked and remains byte-for-byte identical to the archived snapshot. It still does not link October 7 Business Meeting or Public Hearing minutes. This establishes current index-link status only; it does not establish that minutes do not exist elsewhere, that no action occurred at the meetings, or that the 2026 zoning rewrite was or was not adopted.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless reviewed official action records establish final adoption and effectiveness of replacement text.",
+  "nextOfficialAuthorityTarget": {
+    "body": "Boone County Fiscal Court",
+    "minutesPath": "government/boone_county_fiscal_court/fiscal_court_meeting_minutes.php",
+    "agendaPath": "Documents/Government/Boone County Fiscal Court/Fiscal Court Agenda/Agenda.pdf",
+    "reason": "The rewrite schedule identifies October-December 2026 as legislative-body adoption, and the Boone County site exposes Fiscal Court agenda/minutes records as the next official legislative-body source to inspect."
+  }
+}
