@@ -26,12 +26,14 @@ check(loader.includes("if (requestId !== activeFiltersLoadRef.current) return;")
   "A stale async response cannot overwrite a newer user's saved filters.");
 check(loader.includes("email?.toLowerCase() === userEmail"),
   "Stored selection email matching is case-insensitive.");
-check(loader.includes("setActiveColumnPreset(columnPreset || null);"),
-  "Reloading removes a column preset that is no longer selected.");
-check(loader.includes('const selectedId = current.slice("custom_".length);') &&
-  loader.includes('f.type === "filter" && f.id === selectedId') &&
-  loader.includes('? current : "all"'),
-  "Reloading clears a custom information filter that is no longer selected.");
+check(loader.includes('const savedColumnId = String(preferences?.column_preset_id || "default");') &&
+  loader.includes('selected.find((filter) => filter.type === "column_preset" && filter.id === savedColumnId) || null') &&
+  loader.includes("setActiveColumnPreset(restoredColumn);"),
+  "Reloading restores only a selected column preset and otherwise clears it.");
+check(loader.includes('const savedInformation = String(preferences?.information_filter || "all");') &&
+  loader.includes('selected.some((filter) => filter.type === "filter" && filter.id === savedInformation.slice("custom_".length))') &&
+  loader.includes("setFilterStatus(restoredInformation);"),
+  "Reloading restores a saved custom information filter only when that filter is still selected.");
 check(page.match(/loadActiveFilters\(\);/g)?.length >= 3,
   "Identity initialization and both management-dialog close paths still reload saved selections.");
 check(page.includes('activeColumnPreset={activeColumnPreset}') &&
