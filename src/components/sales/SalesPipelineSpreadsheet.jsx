@@ -1816,17 +1816,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [currentUser, users]);
 
   const scopedWorkOrders = useMemo(() => workOrders.filter((wo) => {
-    const legacyClosed = isLegacyClosedSalesRecord(wo);
-    const trustedOutcome = isTrustedSalesOutcome(wo);
-    if (recordScope === "current") return isCurrentPipelineOpportunity(wo);
+    const viewWo = projectSalesRowForLiveView(wo, liveEditPinsRef.current[wo.id] || null);
+    const legacyClosed = isLegacyClosedSalesRecord(viewWo);
+    const trustedOutcome = isTrustedSalesOutcome(viewWo);
+    if (recordScope === "current") return isCurrentPipelineOpportunity(viewWo);
     if (recordScope === "outcomes") {
       if (!trustedOutcome) return false;
       if (!outcomeCutoffStamp) return true;
-      return Boolean(wo.close_date) && wo.close_date >= outcomeCutoffStamp && wo.close_date <= todayStamp;
+      return Boolean(viewWo.close_date) && viewWo.close_date >= outcomeCutoffStamp && viewWo.close_date <= todayStamp;
     }
     if (recordScope === "history") return legacyClosed;
     return true;
-  }), [workOrders, recordScope, outcomeCutoffStamp, todayStamp]);
+  }), [workOrders, recordScope, outcomeCutoffStamp, todayStamp, liveEditPinVersion]);
 
   const pipelineSummary = useMemo(() => {
     const operational = scopedWorkOrders.filter(isCurrentPipelineOpportunity);
