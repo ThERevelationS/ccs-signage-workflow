@@ -4637,7 +4637,10 @@ Deno.serve(async (req) => {
           const punchReconciled = await reconcileMissedClockOutTerminal(correctionRequest, punchResolutionAuditId);
           if (punchReconciled.investigation) return Response.json({ success: false, error: 'The correction review is complete but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
           if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The correction review is complete but its Punch Exception is still being finalized. Retry the same review.' }, { status: 409 });
-          return Response.json({ success: true, request: correctionRequest, review_audit_id: reviewAuditResult.audit.id, reused: true });
+          const convergenceAuditId = correctionRequest.status === 'rejected' ? reviewAuditResult.audit.id : String(correctionRequest.applied_audit_id || '');
+          const convergence = await verifyCorrectionReviewConvergence(correctionRequest, convergenceAuditId);
+          if (!convergence.ok) return Response.json({ success: false, error: 'The completed correction review has not converged with its TimeEntry and audit evidence. Admin investigation is required.' }, { status: 409 });
+          return Response.json({ success: true, request: correctionRequest, entry: convergence.entry, review_audit_id: reviewAuditResult.audit.id, reused: true });
         }
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
       }
@@ -4799,7 +4802,9 @@ Deno.serve(async (req) => {
         const punchReconciled = await reconcileMissedClockOutTerminal(savedRequest, reviewAuditResult.audit.id);
         if (punchReconciled.investigation) return Response.json({ success: false, error: 'The rejection was saved but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
         if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The rejection was saved but its Punch Exception could not be finalized. Retry the same review.' }, { status: 409 });
-        return Response.json({ success: true, request: savedRequest, review_audit_id: reviewAuditResult.audit.id });
+        const convergence = await verifyCorrectionReviewConvergence(savedRequest, reviewAuditResult.audit.id);
+        if (!convergence.ok) return Response.json({ success: false, error: 'The rejected correction has not converged with its TimeEntry and review evidence. Admin investigation is required.' }, { status: 409 });
+        return Response.json({ success: true, request: savedRequest, entry: convergence.entry, review_audit_id: reviewAuditResult.audit.id });
       }
 
       let entry = await entryEntity.get(correctionRequest.time_entry_id).catch(() => null);
@@ -4962,7 +4967,9 @@ Deno.serve(async (req) => {
       const punchReconciled = await reconcileMissedClockOutTerminal(savedRequest, correctionAuditId);
       if (punchReconciled.investigation) return Response.json({ success: false, error: 'The correction was applied but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
       if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied but its Punch Exception could not be finalized. Retry the same review.' }, { status: 409 });
-      return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
+      const convergence = await verifyCorrectionReviewConvergence(savedRequest, correctionAuditId);
+      if (!convergence.ok) return Response.json({ success: false, error: 'The applied correction has not converged with its TimeEntry and audit evidence. Admin investigation is required.' }, { status: 409 });
+      return Response.json({ success: true, request: savedRequest, entry: convergence.entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
     }
 
     if (action === 'admin_correct_entry') {
