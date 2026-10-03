@@ -10,6 +10,14 @@ const REGULATORY_FIELDS = Object.freeze([
   "lighting_allowances",
 ]);
 
+const REWRITE_SOURCE_PATTERNS = Object.freeze([
+  /\b(?:draft|proposed)\b.{0,80}\b(?:zoning|sign|code|ordinance|regulation)/i,
+  /\b(?:zoning|sign|code|ordinance|regulation)\b.{0,80}\b(?:draft|proposed)\b/i,
+  /\bcomprehensive\b.{0,60}\b(?:rewrite|replacement|update|revision)\b/i,
+  /\b(?:rewrite|replacement)\b.{0,60}\b(?:zoning|sign|code|ordinance|regulation)/i,
+  /\b(?:zoning|sign|code|ordinance|regulation)\b.{0,60}\b(?:rewrite|replacement)\b/i,
+]);
+
 function sameJurisdiction(jurisdiction, authority) {
   const jurisdictionId = norm(jurisdiction?.id);
   const authorityId = norm(authority?.jurisdiction_id || authority?.jurisdictionId || authority?.id);
@@ -20,11 +28,40 @@ function sameJurisdiction(jurisdiction, authority) {
   return !!jurisdictionName && !!authorityName && jurisdictionName === authorityName;
 }
 
+function sourceStrings(data = {}) {
+  const values = [];
+  const add = (value) => {
+    if (typeof value === "string" && value.trim()) values.push(value.trim());
+  };
+  const addSource = (source) => {
+    if (!source || typeof source !== "object") return;
+    for (const key of ["title", "name", "label", "url", "source_url", "description", "notes"]) add(source[key]);
+  };
+
+  for (const key of ["source_url", "sourceUrl", "official_source_url", "notes", "summary"]) add(data?.[key]);
+  for (const collection of [data?.documents, data?.sources, data?.source_documents, data?.official_sources]) {
+    if (Array.isArray(collection)) collection.forEach(addSource);
+  }
+  return values;
+}
+
+export function classifyRewriteSourceAuthority(data = {}) {
+  const matchedSignals = [];
+  for (const value of sourceStrings(data)) {
+    if (REWRITE_SOURCE_PATTERNS.some((pattern) => pattern.test(value))) matchedSignals.push(value);
+  }
+  return {
+    isComprehensiveRewrite: matchedSignals.length > 0,
+    matchedSignals: [...new Set(matchedSignals)],
+  };
+}
+
 export function isComprehensiveRewriteResearch(data = {}) {
   const candidate = data?.authority_candidate;
-  return candidate?.is_comprehensive_rewrite === true ||
+  const modelFlagged = candidate?.is_comprehensive_rewrite === true ||
     norm(candidate?.kind) === "comprehensive_rewrite" ||
     norm(candidate?.kind) === "zoning_rewrite";
+  return modelFlagged || classifyRewriteSourceAuthority(data).isComprehensiveRewrite;
 }
 
 export function assessStoredRewriteAuthority(jurisdiction = {}) {
