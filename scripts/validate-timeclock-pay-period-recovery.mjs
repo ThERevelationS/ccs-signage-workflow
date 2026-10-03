@@ -1645,6 +1645,16 @@ test('needs_resolution remains a pay-period finalization blocker', async () => {
   assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
 });
 
+test('final corrected-shift approval is bound to terminal correction evidence', async () => {
+  const approvalSlice = source.slice(source.indexOf('const verifyResolvedCorrectionForApproval'), source.indexOf('if (action === \'admin_archive_entry\')'));
+  assert.match(approvalSlice, /approved_modified/);
+  assert.match(approvalSlice, /applied_audit_id/);
+  assert.match(approvalSlice, /details\?\.corrected/);
+  assert.match(approvalSlice, /correction_request_id/);
+  assert.match(approvalSlice, /verifyResolvedCorrectionForApproval\(entry\)/);
+  assert.match(approvalSlice, /verifyResolvedCorrectionForApproval\(savedEntry\)/);
+});
+
 // Export the same real backend VM for isolated browser acceptance. Test registration
 // has no side effects against live Base44; execute the CLI suite only when direct.
 export { setup as setupSyntheticTimeClock };
