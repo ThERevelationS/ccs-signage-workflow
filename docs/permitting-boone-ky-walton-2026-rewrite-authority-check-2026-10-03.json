@@ -1,0 +1,81 @@
+{
+  "title": "City of Walton \u2014 2026 Boone zoning-rewrite legislative authority check",
+  "checkedAt": "2026-10-03",
+  "jurisdiction": "City of Walton",
+  "legislativeBody": "Walton City Council",
+  "officialSources": {
+    "minutesIndex": {
+      "sourceUrl": "https://cityofwalton.org/government/city-council-minutes/",
+      "repositoryPath": "public/permitting/sources/boone-ky/walton-city-council-minutes-index-2026-10-03.html",
+      "bytes": 469190,
+      "sha256": "b7d8e90eb444124886912bb6c4f2ea132ada5770194892eac5f892332c3b145e"
+    },
+    "ordinanceIndex": {
+      "sourceUrl": "https://cityofwalton.org/current-ordinances/",
+      "repositoryPath": "public/permitting/sources/boone-ky/walton-current-ordinances-index-2026-10-03.html",
+      "bytes": 569230,
+      "sha256": "d29c30bee7ab51fa1536933a769980be0c659fd8f93c5330b7119bae5a1730c2"
+    },
+    "september1Agenda": {
+      "sourceUrl": "https://cityofwalton.org/wp-content/uploads/2026/09/September-2026-Special-Meeting-Caucus-Agenda.pdf",
+      "repositoryPath": "public/permitting/sources/boone-ky/walton-september-1-2026-special-caucus-agenda.pdf",
+      "bytes": 143879,
+      "sha256": "2d8133d397b64f060866a140cc7be71a0a705801ded5c92835b308a2bcea48b7"
+    },
+    "september8Agenda": {
+      "sourceUrl": "https://cityofwalton.org/wp-content/uploads/2026/09/September-2026-2-Council-Agenda.pdf",
+      "repositoryPath": "public/permitting/sources/boone-ky/walton-september-8-2026-council-agenda.pdf",
+      "bytes": 146231,
+      "sha256": "621caf759813cb4928e73644851adf711c06ef2b0cfae0ceabb18298e5131897"
+    }
+  },
+  "reviewedSeptemberOrdinances": [
+    {
+      "number": "2026-11",
+      "agendaDate": "2026-09-01",
+      "subject": "Personnel and pay classification plan amendment for Public Works staffing",
+      "rewriteReplacement": false
+    },
+    {
+      "number": "2026-12",
+      "agendaDate": "2026-09-01",
+      "subject": "Personnel and pay classification plan amendment for Public Works staffing",
+      "rewriteReplacement": false
+    },
+    {
+      "number": "2026-15",
+      "agendaDate": "2026-09-01",
+      "subject": "FY 2026/2027 budget amendment for Public Works staffing",
+      "rewriteReplacement": false
+    },
+    {
+      "number": "2026-13",
+      "agendaDate": "2026-09-08",
+      "subject": "Community-event street and sidewalk mobility-device restrictions",
+      "rewriteReplacement": false
+    },
+    {
+      "number": "2026-14",
+      "agendaDate": "2026-09-08",
+      "subject": "Long-term residential rental license and safety inspection program",
+      "rewriteReplacement": false
+    },
+    {
+      "number": "2026-16",
+      "agendaDate": "2026-09-08",
+      "subject": "2026 ad valorem tax rates; first reading",
+      "rewriteReplacement": false
+    }
+  ],
+  "knownNarrowZoningAmendment": {
+    "number": "2026-03",
+    "subject": "Boone County Zoning Regulations text amendments for qualified manufactured homes following 2025 House Bill 160 and KRS 100.348",
+    "rewriteReplacement": false,
+    "signArticle34Replacement": false
+  },
+  "ordinanceIndexPlaceholderBoundary": "The Current Ordinances page displays Ordinance 2026-11 through 2026-15 as headings with blank descriptions and blank download hrefs. Those placeholders are not treated as ordinance-content evidence. Their subjects are instead established from the official September 1 and September 8 agendas.",
+  "authorityFinding": "Through the reviewed September 8, 2026 Walton City Council agenda and the City current-ordinances publication available on 2026-10-03, no reviewed legislative item establishes adoption of the 2026 comprehensive Boone County zoning-regulations rewrite or replacement of Article 34 sign regulations for Walton.",
+  "authorityBoundary": "This is a bounded record finding through the latest posted September Council agenda reviewed here. It does not establish what Walton may do at future meetings, including the posted October 6 caucus and October 8 Council meeting dates, and blank ordinance-page placeholders are not treated as enactments.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 provisions applicable to the City of Walton unless newer reviewed official Walton legislative action and effectiveness evidence establishes replacement text.",
+  "nextLogicalAuthorityTarget": "Consolidate the Boone County, Florence, Union, and Walton findings into a machine-readable adoption-status matrix that prevents the scanner from promoting the 2026 rewrite until jurisdiction-specific adoption and effective-date evidence is verified."
+}
