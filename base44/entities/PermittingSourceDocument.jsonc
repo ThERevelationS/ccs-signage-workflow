@@ -1,0 +1,228 @@
+{
+  "name": "PermittingSourceDocument",
+  "type": "object",
+  "description": "Standardized source-evidence record for a single archived permitting document. One record per official source file (adopted code section, application form, fee schedule, checklist, legislative evidence, rewrite draft, etc.). Migrated from JurisdictionProfile.documents[] by linking (originals kept intact); jurisdiction_profile_doc_id references the original document id.",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Human-readable title of the source document."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Name of the jurisdiction this source belongs to (e.g. 'Boone County')."
+    },
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "Canonical JurisdictionProfile record id this source belongs to, when linked."
+    },
+    "jurisdiction_profile_doc_id": {
+      "type": "string",
+      "description": "Original JurisdictionProfile.documents[].id this record was migrated from, so both stay consistent. Blank for sources archived directly into PermittingSourceDocument."
+    },
+    "issuing_office": {
+      "type": "string",
+      "description": "Official office that publishes the source (e.g. 'Boone County Planning Commission', 'Boone County Building Department')."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "sign_ordinance",
+        "permit_application",
+        "zoning_code",
+        "fee_schedule",
+        "checklist",
+        "legislative_record",
+        "gis_resource",
+        "portal_instruction",
+        "other"
+      ],
+      "description": "Kind of source document."
+    },
+    "category": {
+      "type": "string",
+      "description": "Free-text category label for grouping (e.g. 'adopted_code', 'rewrite_draft', 'legislative_evidence')."
+    },
+    "official_url": {
+      "type": "string",
+      "description": "Exact official URL the source was retrieved from."
+    },
+    "online_form_url": {
+      "type": "string",
+      "description": "Online application/form portal URL when distinct from the official_url."
+    },
+    "archived_file_path": {
+      "type": "string",
+      "description": "Repository path to the archived file (e.g. public/permitting/sources/boone-ky/...)."
+    },
+    "archived_file_url": {
+      "type": "string",
+      "description": "Storage file_url for the archived copy when uploaded to app storage."
+    },
+    "file_hash_sha256": {
+      "type": "string",
+      "description": "SHA-256 hash of the archived file bytes."
+    },
+    "file_bytes": {
+      "type": "number",
+      "description": "Byte count of the archived file."
+    },
+    "http_outcome": {
+      "type": "string",
+      "description": "HTTP status / outcome of the retrieval (e.g. '200', '404', 'manual')."
+    },
+    "retrieval_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source was retrieved/archived. Distinct from effective_or_adopted_date."
+    },
+    "document_revision_date": {
+      "type": "string",
+      "description": "Revision date printed on the document itself, when known."
+    },
+    "effective_or_adopted_date": {
+      "type": "string",
+      "description": "Official effective or adopted date of the content. Distinct from retrieval_timestamp."
+    },
+    "content_status": {
+      "type": "string",
+      "enum": [
+        "current",
+        "historical",
+        "draft",
+        "proposed",
+        "superseded"
+      ],
+      "default": "current",
+      "description": "Whether the content is current, historical, draft, proposed, or superseded."
+    },
+    "authority_confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "unverified"
+      ],
+      "default": "unverified",
+      "description": "Confidence that this source is the authoritative current source for its subject."
+    },
+    "jurisdiction_scope": {
+      "type": "string",
+      "description": "Scope of applicability (e.g. 'unincorporated Boone County', 'Florence Main Street overlay', 'countywide right-of-way')."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "Reference to a source document this one supersedes, when verified."
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "Reference to a source document that supersedes this one, when verified."
+    },
+    "last_checked": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source was last checked against the official URL for changes."
+    },
+    "last_changed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source content was last observed to have changed at the official URL."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "needs_verification",
+        "verified",
+        "historical",
+        "gap_recorded"
+      ],
+      "default": "needs_verification",
+      "description": "Human review status. 'gap_recorded' means no official source found and the gap is documented."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Employee who last verified or reviewed this source."
+    },
+    "notes_gaps": {
+      "type": "string",
+      "description": "Explicit gaps, caveats, applicability notes, and supersession relationships."
+    },
+    "extracted_text": {
+      "type": "string",
+      "description": "Searchable extracted text from the archived file, when practical."
+    },
+    "derived_facts": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Structured facts derived from the source (fee amounts, permit exemptions, etc.)."
+    },
+    "authority_classification": {
+      "type": "string",
+      "enum": [
+        "current_adopted",
+        "draft_proposed",
+        "comprehensive_rewrite",
+        "narrow_amendment",
+        "historical",
+        "superseded",
+        "application_form",
+        "checklist",
+        "fee_schedule",
+        "administrative_guidance",
+        "legislative_evidence",
+        "effective_date_evidence",
+        "unknown_review_required"
+      ],
+      "default": "unknown_review_required",
+      "description": "Deterministic authority classification produced by the source classifier. Draft/comprehensive_rewrite classifications trigger rewrite protection via the authority gate."
+    },
+    "matched_signals": {
+      "type": "array",
+      "description": "Deterministic signals/evidence that led to the authority_classification.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "classified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the authority_classification was computed and persisted."
+    }
+  },
+  "required": [
+    "title",
+    "jurisdiction_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

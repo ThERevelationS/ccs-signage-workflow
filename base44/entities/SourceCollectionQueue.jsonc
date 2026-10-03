@@ -1,0 +1,117 @@
+{
+  "name": "SourceCollectionQueue",
+  "type": "object",
+  "description": "Collection-queue row tracking source-gathering progress for one jurisdiction. Seeded with all KY and OH counties; Boone County KY is marked verified_current with its completed archive summary.",
+  "properties": {
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Name of the jurisdiction (e.g. 'Boone County')."
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation (KY, OH)."
+    },
+    "jurisdiction_type": {
+      "type": "string",
+      "enum": [
+        "county",
+        "city",
+        "village",
+        "township",
+        "planning_unit"
+      ],
+      "default": "county",
+      "description": "Type of jurisdiction."
+    },
+    "authority_note": {
+      "type": "string",
+      "description": "Plain-language note about the jurisdiction's current sign-regulation authority status."
+    },
+    "source_category": {
+      "type": "string",
+      "enum": [
+        "sign_regulations",
+        "zoning_code",
+        "forms",
+        "fee_schedule",
+        "portal",
+        "contacts",
+        "electrical",
+        "right_of_way",
+        "other"
+      ],
+      "default": "sign_regulations",
+      "description": "Primary source category being collected for this queue row."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "source_discovery",
+        "sources_found",
+        "archive_incomplete",
+        "extraction_pending",
+        "verification_pending",
+        "verified_current",
+        "partial_gaps",
+        "blocked",
+        "monitoring_enabled",
+        "re_review_required"
+      ],
+      "default": "not_started",
+      "description": "Collection progress status."
+    },
+    "missing_next": {
+      "type": "string",
+      "description": "Short human-readable description of exactly what is missing next."
+    },
+    "source_document_refs": {
+      "type": "array",
+      "description": "List of PermittingSourceDocument record ids linked to this jurisdiction's collection.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "last_activity": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the queue row was last updated."
+    }
+  },
+  "required": [
+    "jurisdiction_name",
+    "state"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

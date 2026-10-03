@@ -47,11 +47,32 @@ function sourceStrings(data = {}) {
   return values;
 }
 
+// Source objects may carry a persisted authority_classification (PermittingSourceDocument).
+// draft_proposed / comprehensive_rewrite classifications are rewrite signals that feed
+// the same gate flow as the text-pattern scanner, so protection is never duplicated.
+const REWRITE_CLASSIFICATIONS = Object.freeze(["draft_proposed", "comprehensive_rewrite"]);
+
+function classifiedRewriteSources(data = {}) {
+  const signals = [];
+  const collect = (source) => {
+    if (!source || typeof source !== "object") return;
+    const classification = String(source.authority_classification || "").toLowerCase();
+    if (REWRITE_CLASSIFICATIONS.includes(classification)) {
+      signals.push(`authority_classification:${classification}`);
+    }
+  };
+  for (const collection of [data?.documents, data?.sources, data?.source_documents, data?.official_sources]) {
+    if (Array.isArray(collection)) collection.forEach(collect);
+  }
+  return signals;
+}
+
 export function classifyRewriteSourceAuthority(data = {}) {
   const matchedSignals = [];
   for (const value of sourceStrings(data)) {
     if (REWRITE_SOURCE_PATTERNS.some((pattern) => pattern.test(value))) matchedSignals.push(value);
   }
+  for (const signal of classifiedRewriteSources(data)) matchedSignals.push(signal);
   return {
     isComprehensiveRewrite: matchedSignals.length > 0,
     matchedSignals: [...new Set(matchedSignals)],
