@@ -14,6 +14,14 @@
       "type": "string",
       "description": "Linked shared Customer (Client) record id."
     },
+    "opportunity_id": {
+      "type": "string",
+      "description": "Optional transitional link to the canonical Opportunity. Blank on legacy/unmigrated WorkOrders."
+    },
+    "estimating_request_id": {
+      "type": "string",
+      "description": "Optional link to the EstimatingRequest that produced or is associated with this WorkOrder. Blank is valid during compatibility migration."
+    },
     "estimate_id": {
       "type": "string",
       "description": "Linked AllInOneEstimate id, when this job was created from an estimate."
