@@ -1,0 +1,19 @@
+{
+  "title": "Boone County Planning Commission — 2026 zoning rewrite adoption-records discovery target",
+  "checkedAt": "2026-10-03",
+  "sourcePage": "public/permitting/sources/boone-ky/planning-commission-home-page-2026-09-28.html",
+  "officialRecordsPath": "commission_boards/meeting_agendas.php",
+  "officialRecordsLabel": "Meeting Agendas and Minutes",
+  "targetWindow": ["2026-09", "2026-10"],
+  "targetEvidence": [
+    "Planning Commission agenda or minutes naming the 2026 zoning ordinance update/rewrite",
+    "public-hearing notice or action",
+    "motion, vote, recommendation, adoption, or transmittal action",
+    "legislative-body adoption action",
+    "ordinance number and effective date if adopted"
+  ],
+  "currentAuthorityBoundary": "Do not promote draft/rewrite text over the separately archived adopted Article 34 sign regulations unless official action records establish adoption and effectiveness.",
+  "retrievalStatus": "not_verified_in_this_chunk",
+  "retrievalNote": "The preserved official Planning Commission homepage identifies Meeting Agendas and Minutes as the authoritative records target. Automated retrieval attempts in this chunk were blocked by the execution environment before a source response could be established, so that tool failure is not recorded as source evidence and no claim is made about September/October meeting contents.",
+  "scope": "This record establishes the exact official records target and evidence needed to resolve rewrite authority. It does not claim that adoption did or did not occur."
+}
