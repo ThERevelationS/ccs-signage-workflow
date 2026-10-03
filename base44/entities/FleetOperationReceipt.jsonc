@@ -32,7 +32,8 @@
       "enum": [
         "started",
         "applied",
-        "failed"
+        "failed",
+        "cancelled"
       ],
       "default": "started"
     },
