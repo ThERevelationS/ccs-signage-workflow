@@ -353,14 +353,14 @@ export default function TimeClockAdmin() {
       setTimeEntryError("Enter a correction reason before saving.");
       return;
     }
-    const parsedClockIn = parseCompanyDateTimeInput(editingClockInInput);
+    const parsedClockIn = parseCompanyDateTimeInput(editingClockInInput, editingEntryBaseline.clock_in);
     if (!parsedClockIn.ok) {
       setTimeEntryError(`Clock In: ${parsedClockIn.error}`);
       return;
     }
     let parsedClockOut = null;
     if (editingClockOutInput) {
-      parsedClockOut = parseCompanyDateTimeInput(editingClockOutInput);
+      parsedClockOut = parseCompanyDateTimeInput(editingClockOutInput, editingEntryBaseline.clock_out);
       if (!parsedClockOut.ok) {
         setTimeEntryError(`Clock Out: ${parsedClockOut.error}`);
         return;
