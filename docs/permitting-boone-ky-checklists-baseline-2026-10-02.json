@@ -3,9 +3,9 @@
   "checkedAt": "2026-10-02",
   "sourcePage": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
   "uniqueListedChecklists": 5,
-  "accountedChecklists": 4,
-  "remainingChecklists": 1,
-  "baselineStatus": "in_progress_for_preserved_page",
+  "accountedChecklists": 5,
+  "remainingChecklists": 0,
+  "baselineStatus": "complete_for_preserved_page",
   "checklists": [
     {
       "sourceFile": "ChangeNonConformingandAppeals_checklist.pdf",
@@ -38,12 +38,14 @@
     {
       "sourceFile": "ZoningMapAmendment_checklist.pdf",
       "listedLabel": "Zoning Map Amendment",
-      "status": "live_verified_archive_pending",
-      "repositoryPath": null,
-      "evidencePath": null
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/zoning-map-amendment-checklist-2026-10-02.pdf",
+      "evidencePath": "docs/permitting-boone-ky-zoning-map-amendment-checklist-evidence-2026-10-02.json"
     }
   ],
-  "scope": "This reconciliation inventories every unique PDF linked under Documents/Applications Forms/Checklists/ on the preserved Boone County Planning Commission Applications and Forms page. Archived status means bounded source-identity evidence exists for that checklist. Live verified archive pending means a bounded live retrieval confirmed the exact official source is currently a PDF, but no byte-for-byte repository archive is claimed because the execution-layer download path was blocked; that execution failure is not evidence that the government source is unavailable. This inventory does not assert that any checklist applies to a particular sign project or that every instruction, requirement, fee, procedure, or approval path inside a listed checklist is current.",
-  "nextChecklist": "ZoningMapAmendment_checklist.pdf",
-  "nextChecklistLabel": "Zoning Map Amendment — complete byte-for-byte archive and hash when the sandbox download path is available"
+  "scope": "This reconciliation accounts for every unique PDF linked under Documents/Applications Forms/Checklists/ on the preserved Boone County Planning Commission Applications and Forms page as either an archived verified PDF or a verified source-availability gap. Archived status means bounded source-identity evidence exists for that checklist. Source unavailable means bounded official-source retrieval attempts did not return the listed PDF and no PDF contents are claimed. This inventory does not assert that any checklist applies to a particular sign project or that every instruction, requirement, fee, procedure, or approval path inside a listed checklist is current.",
+  "nextChecklist": null,
+  "nextChecklistLabel": null,
+  "nextBaselineCategory": "Applications",
+  "nextCategoryReason": "The preserved official page contains a separate Applications PDF category that should be reconciled independently after Forms and Checklists."
 }
