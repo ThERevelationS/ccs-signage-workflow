@@ -161,6 +161,22 @@ assert.equal(opportunityStageFromWorkOrder({ in_pipeline:false, current_task_des
 {
   const workOrders = [{
     id:'wo1', in_pipeline:true, completed:false, sales_status:'lead',
+    title:'Name-only match must stay unresolved', client_name:'Exact Company Name',
+    contact_email:'same@example.com', contact_phone:'555-0101',
+  }];
+  const customers = [{
+    id:'cust-name-only', company_name:'Exact Company Name',
+    contact_email:'same@example.com', contact_office_phone:'555-0101',
+    legacy_client_names:[],
+  }];
+  const audit = buildOpportunityBridgeAudit({ workOrders, customers });
+  assert.equal(audit.rows[0].anchors.customer_resolution_source, 'unresolved_allowed');
+  assert.equal(audit.rows[0].proposed_opportunity.customer_id, undefined, 'Name/email/phone alone must not create an authoritative Customer link.');
+}
+
+{
+  const workOrders = [{
+    id:'wo1', in_pipeline:true, completed:false, sales_status:'lead',
     title:'Broken customer', client_name:'Client', customer_id:'missing',
   }];
   const audit = buildOpportunityBridgeAudit({ workOrders, customers:[] });
