@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
+import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
 
 Deno.serve(async (req) => {
   try {
