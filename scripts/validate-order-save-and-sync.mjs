@@ -51,7 +51,8 @@ assert.match(backend, /const pushResult = await pushDataset\(base44, token, data
 assert.match(backend, /onlyPendingOrderRecords: action === 'run_sync'/);
 assert.match(backend, /existing\?\.smartsheet_pending_local_sync === true[\s\S]*?orderLocalPendingConflicts\.push\(existing\.id\)[\s\S]*?continue/);
 assert.match(backend, /conflicts: orderLocalPendingConflicts\.length/);
-assert.match(backend, /smartsheet_pending_local_sync: false/);
+assert.match(backend, /smartsheet_pending_local_sync: unresolvedOrderFields/);
+assert.match(backend, /const unresolvedOrderFields = Array\.isArray\(fieldPlan\?\.unresolved\)/);
 console.log('PASS explicit Save & Sync can create only durable pending new Orders while background creation still follows the OFF/ON profile setting');
 
 assert.match(client, /action: "push_saved_orders"/);
