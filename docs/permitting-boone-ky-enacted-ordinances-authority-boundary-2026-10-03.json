@@ -1,0 +1,90 @@
+{
+  "title": "Boone County Fiscal Court \u2014 2026 enacted ordinances authority boundary",
+  "checkedAt": "2026-10-03",
+  "sourceUrl": "https://boonecountyky.org/government/county_ordinances/enacted_ordinances.php",
+  "repositoryPath": "public/permitting/sources/boone-ky/enacted-ordinances-index-2026-10-03.html",
+  "httpStatus": 200,
+  "bytes": 156630,
+  "sha256": "ca14216a7fd5d10af28849a3d0fbc4b4a19bc59dad0771bd9bdb936a2e9e8286",
+  "highestListed2026Ordinance": "2026-15",
+  "highestListed2026PostedDate": "2026-09-23",
+  "listed2026OrdinanceLinks": [
+    {
+      "ordinance": "2026-15",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-15 Arlinghaus-Baptist Convalescent Center.pdf?t=202609231024110"
+    },
+    {
+      "ordinance": "2026-14",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-14 Drees-Goodridge.pdf?t=202608271041580"
+    },
+    {
+      "ordinance": "2026-13",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-13 KOI Superior Walls-KBI.pdf?t=202608271040480"
+    },
+    {
+      "ordinance": "2026-12",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-12 Golf Carts Amendment.pdf?t=202608121016470"
+    },
+    {
+      "ordinance": "2026-11",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-11 Kirby Mynhier.pdf?t=202607291156470"
+    },
+    {
+      "ordinance": "2026-10",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-10 30.33 Agenda Ordinance Amendment.pdf?t=202606241123160"
+    },
+    {
+      "ordinance": "2026-09",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-09 Kyle Joseph Ryan.pdf?t=202606241122110"
+    },
+    {
+      "ordinance": "2026-07",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-07 Budget Ordinance FY27.pdf?t=202606101239000"
+    },
+    {
+      "ordinance": "2026-06",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-06 Flash Properties.pdf?t=202606101237390"
+    },
+    {
+      "ordinance": "2026-05",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-05 Arlinghaus Builders.pdf?t=202605051345320"
+    },
+    {
+      "ordinance": "2026-04",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-04 DENIAL Whitewater Car Wash.pdf?t=202605271532200"
+    },
+    {
+      "ordinance": "2026-03",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-03 Crane WW Zone Change.pdf?t=202605051500340"
+    },
+    {
+      "ordinance": "2026-02",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-02 Mfg Home Text Admendment.pdf?t=202605051501000"
+    },
+    {
+      "ordinance": "2026-01",
+      "href": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-01 Truck Parking Text Amendment.pdf?t=202605051344050"
+    }
+  ],
+  "relevantPriorTextAmendments": [
+    {
+      "ordinance": "2026-01",
+      "topic": "commercial parking / freight container / freight terminal / semitrailer / trailer / truck / truck tractor zoning text amendments",
+      "affectedArticles": "Articles 40, 5, 10, 11, and 13",
+      "comprehensiveRewrite": false,
+      "article34Replacement": false
+    },
+    {
+      "ordinance": "2026-02",
+      "topic": "manufactured home / qualified manufactured home / mobile home zoning text amendments",
+      "affectedArticles": "Articles 40, 5, and 20",
+      "comprehensiveRewrite": false,
+      "article34Replacement": false
+    }
+  ],
+  "comprehensive2026ZoningRewriteEnactmentFound": false,
+  "article34ReplacementEnactmentFound": false,
+  "authorityBoundary": "The official Recent Fiscal Court Ordinances page reviewed on 2026-10-03 lists enacted 2026 ordinances through Ordinance 2026-15, posted 2026-09-23. It shows targeted zoning text amendments in Ordinances 2026-01 and 2026-02, but no listed enactment identified as the comprehensive 2026 Zoning Ordinance Update/rewrite and no listed enactment identifying Article 34 sign-rule replacement. This is bounded to the official enacted-ordinances notice page as reviewed; it does not prove that no later action can occur or that every codified ordinance is represented by this temporary notice page.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless reviewed official adoption/effective-date evidence establishes replacement text.",
+  "nextLogicalAuthorityTarget": "Inspect the official American Legal Boone County Code update/codification metadata and current adopted zoning-regulation source for any post-2026-15 enactment or codified Article 34 replacement; otherwise recheck Fiscal Court after the October 6 meeting."
+}
