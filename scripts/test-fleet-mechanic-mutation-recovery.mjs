@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildMechanicRecoveryPatch,
+  mechanicGrantAllowsMutation,
   selectReusableMechanicUploads,
 } from "../base44/shared/fleetMechanicMutationRecovery.ts";
 
@@ -149,4 +150,17 @@ test("malformed stored URLs are never reused", () => {
     result_summary:{action:"save",uploaded_photo_urls:["javascript:alert(1)"]},
   })];
   assert.deepEqual(selectReusableMechanicUploads(rows,"same",1),{urls:[],receipt_id:"",operation_key:""});
+});
+
+test("live mechanic authorization rejects revoked and expired grants", () => {
+  const base = {enabled:true,allowed_actions:["bootstrap","start","save"],scope_mode:"all_active",allowed_equipment_ids:[]};
+  assert.deepEqual(mechanicGrantAllowsMutation({...base,enabled:false},"save","eq-1",1000),{allowed:false,reason:"revoked"});
+  assert.deepEqual(mechanicGrantAllowsMutation({...base,expires_at:"1970-01-01T00:00:00.500Z"},"save","eq-1",1000),{allowed:false,reason:"expired"});
+});
+
+test("live mechanic authorization enforces current action and equipment scope", () => {
+  const grant = {enabled:true,allowed_actions:["bootstrap","start"],scope_mode:"selected_equipment",allowed_equipment_ids:["eq-1"]};
+  assert.deepEqual(mechanicGrantAllowsMutation(grant,"save","eq-1",1000),{allowed:false,reason:"action_not_allowed"});
+  assert.deepEqual(mechanicGrantAllowsMutation(grant,"start","eq-2",1000),{allowed:false,reason:"outside_scope"});
+  assert.deepEqual(mechanicGrantAllowsMutation(grant,"start","eq-1",1000),{allowed:true,reason:""});
 });
