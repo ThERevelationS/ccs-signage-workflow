@@ -1,5 +1,18 @@
 const text = (value: unknown) => String(value ?? '').trim();
 
+export function mechanicGrantAllowsMutation(grant: any, action: string, equipmentId = '', nowMs = Date.now()) {
+  if (!grant || grant.enabled === false) return {allowed:false,reason:'revoked'};
+  const expiry = Date.parse(String(grant?.expires_at || ''));
+  if (Number.isFinite(expiry) && expiry <= nowMs) return {allowed:false,reason:'expired'};
+  const allowedActions = new Set(Array.isArray(grant?.allowed_actions) && grant.allowed_actions.length ? grant.allowed_actions : ['bootstrap','start','save']);
+  if (!allowedActions.has(action)) return {allowed:false,reason:'action_not_allowed'};
+  if (grant?.scope_mode === 'selected_equipment') {
+    const allowedEquipment = new Set((Array.isArray(grant?.allowed_equipment_ids) ? grant.allowed_equipment_ids : []).map((value:any)=>String(value || '')).filter(Boolean));
+    if (!allowedEquipment.has(String(equipmentId || ''))) return {allowed:false,reason:'outside_scope'};
+  }
+  return {allowed:true,reason:''};
+}
+
 export function selectReusableMechanicUploads(receipts: any[] = [], payloadFingerprint: string, photoCount: number) {
   const count = Math.max(0, Math.floor(Number(photoCount) || 0));
   const candidates = (receipts || [])
