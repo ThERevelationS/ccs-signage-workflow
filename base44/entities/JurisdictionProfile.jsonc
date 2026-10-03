@@ -235,6 +235,72 @@
       "type": "boolean",
       "description": "Flag: documents were manually edited"
     },
+    "rewrite_authority": {
+      "type": "object",
+      "description": "Jurisdiction-specific authority evidence for a comprehensive zoning/sign-regulation rewrite. Permitting Intelligence must retain currently adopted authority unless adoption and effective-date/applicability are both independently verified for this same jurisdiction.",
+      "properties": {
+        "jurisdiction_id": {
+          "type": "string",
+          "description": "Canonical JurisdictionProfile record ID this authority evidence applies to. When present it must match this record before rewrite promotion."
+        },
+        "jurisdiction_name": {
+          "type": "string",
+          "description": "Jurisdiction name recorded with the authority evidence for review and name-based matching when no canonical ID is available."
+        },
+        "adoptionStatus": {
+          "type": "string",
+          "enum": [
+            "not_verified",
+            "verified"
+          ],
+          "default": "not_verified",
+          "description": "Verified only after reviewed official legislative adoption evidence for this jurisdiction."
+        },
+        "adoption_evidence_url": {
+          "type": "string",
+          "description": "Official legislative adoption record URL, such as an enacted ordinance or approved action record."
+        },
+        "adoption_evidence_reference": {
+          "type": "string",
+          "description": "Ordinance number, resolution number, meeting action, or other stable adoption reference."
+        },
+        "adoption_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the adoption evidence was reviewed and verified."
+        },
+        "effectiveDateStatus": {
+          "type": "string",
+          "enum": [
+            "not_verified",
+            "verified"
+          ],
+          "default": "not_verified",
+          "description": "Verified only after reviewed official evidence establishes the rewrite's effective date or present applicability for this jurisdiction."
+        },
+        "effective_date": {
+          "type": "string",
+          "description": "Officially established effective date when known. The status must remain not_verified if applicability/effectiveness is unresolved."
+        },
+        "effective_date_evidence_url": {
+          "type": "string",
+          "description": "Official source establishing the effective date or current applicability."
+        },
+        "effective_date_verified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When effective-date/applicability evidence was reviewed and verified."
+        },
+        "verification_notes": {
+          "type": "string",
+          "description": "Authority-review notes and jurisdiction-specific caveats. Drafts, agendas, recommendations, placeholders, and narrow amendments must not be treated as comprehensive rewrite adoption."
+        }
+      },
+      "required": [
+        "adoptionStatus",
+        "effectiveDateStatus"
+      ]
+    },
     "verification_status": {
       "type": "string",
       "enum": [
