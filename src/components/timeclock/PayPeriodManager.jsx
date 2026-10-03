@@ -22,6 +22,27 @@ function formatEvidenceTime(value) {
   }).format(date);
 }
 
+function reconcileGenerationEvidence(generation) {
+  if (!generation?.shift_evidence_verified || !Array.isArray(generation.shifts)) return null;
+  const groups = new Map();
+  let totalHours = 0;
+  for (const shift of generation.shifts) {
+    const email = String(shift?.user_email || "Unknown employee").trim().toLowerCase() || "Unknown employee";
+    const hours = Number(shift?.total_hours || 0);
+    totalHours += Number.isFinite(hours) ? hours : 0;
+    const group = groups.get(email) || { email, totalHours: 0, shifts: [] };
+    group.totalHours += Number.isFinite(hours) ? hours : 0;
+    group.shifts.push(shift);
+    groups.set(email, group);
+  }
+  const employees = [...groups.values()].sort((a, b) => a.email.localeCompare(b.email));
+  const expectedHours = Number(generation.total_hours || 0);
+  const reconciled = generation.shifts.length === Number(generation.entry_count || 0)
+    && employees.length === Number(generation.employee_count || 0)
+    && Math.abs(totalHours - expectedHours) < 0.005;
+  return { employees, totalHours, reconciled };
+}
+
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `tc-period-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
@@ -488,17 +509,36 @@ export default function PayPeriodManager({
                           {expandedGenerations[generation.generation] ? <ChevronDown className="w-4 h-4 mr-1" /> : <ChevronRight className="w-4 h-4 mr-1" />}
                           {expandedGenerations[generation.generation] ? "Hide" : "Inspect"} {generation.shifts.length} verified shift{generation.shifts.length === 1 ? "" : "s"}
                         </Button>
-                        {expandedGenerations[generation.generation] && (
-                          <div className="mt-2 space-y-2">
-                            {generation.shifts.map((shift) => (
-                              <div key={shift.id} className="rounded-lg border bg-gray-50 p-3 text-xs">
-                                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-gray-900">{shift.user_email || "Unknown employee"}</span><span className="font-semibold text-gray-700">{Number(shift.total_hours || 0).toFixed(2)} hours</span></div>
-                                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-gray-600"><span>Clock in: {formatEvidenceTime(shift.clock_in)}</span><span>Clock out: {formatEvidenceTime(shift.clock_out)}</span><span>Approval: {shift.approval_status || "Unknown"}</span><span>Approval evidence: {shift.approval_evidence?.outcome || (shift.approval_request_id ? "Missing" : "Legacy/no request")}</span></div>
-                                {shift.approval_request_id && <div className="mt-1 font-mono text-[10px] text-gray-400 break-all">Approval request {shift.approval_request_id}</div>}
+                        {expandedGenerations[generation.generation] && (() => {
+                          const reconciliation = reconcileGenerationEvidence(generation);
+                          if (!reconciliation) return null;
+                          return (
+                            <div className="mt-2 space-y-3">
+                              <div className={`rounded-lg border p-2 text-xs ${reconciliation.reconciled ? "border-green-200 bg-green-50 text-green-800" : "border-red-300 bg-red-50 text-red-800"}`}>
+                                {reconciliation.reconciled
+                                  ? `Evidence reconciled: ${reconciliation.employees.length} employees · ${generation.shifts.length} shifts · ${reconciliation.totalHours.toFixed(2)} hours.`
+                                  : `RECONCILIATION FAILED: displayed shift evidence does not match the verified generation totals. Expected ${generation.employee_count} employees, ${generation.entry_count} shifts, ${Number(generation.total_hours || 0).toFixed(2)} hours; evidence contains ${reconciliation.employees.length} employees, ${generation.shifts.length} shifts, ${reconciliation.totalHours.toFixed(2)} hours.`}
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              {reconciliation.employees.map((employee) => (
+                                <div key={employee.email} className="rounded-lg border bg-gray-50 p-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 text-xs">
+                                    <span className="font-semibold text-gray-900">{employee.email}</span>
+                                    <span className="font-semibold text-gray-700">{employee.shifts.length} shift{employee.shifts.length === 1 ? "" : "s"} · {employee.totalHours.toFixed(2)} hours</span>
+                                  </div>
+                                  <div className="mt-2 space-y-2">
+                                    {employee.shifts.map((shift) => (
+                                      <div key={shift.id} className="rounded border bg-white p-2 text-xs">
+                                        <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-gray-500">Shift {shift.id}</span><span className="font-semibold text-gray-700">{Number(shift.total_hours || 0).toFixed(2)} hours</span></div>
+                                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-gray-600"><span>Clock in: {formatEvidenceTime(shift.clock_in)}</span><span>Clock out: {formatEvidenceTime(shift.clock_out)}</span><span>Approval: {shift.approval_status || "Unknown"}</span><span>Approval evidence: {shift.approval_evidence?.outcome || (shift.approval_request_id ? "Missing" : "Legacy/no request")}</span></div>
+                                        {shift.approval_request_id && <div className="mt-1 font-mono text-[10px] text-gray-400 break-all">Approval request {shift.approval_request_id}</div>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <div className="mt-2 rounded bg-gray-50 p-2 text-xs text-gray-500">Exact shift-level evidence is not available for this older generation; its aggregate snapshot/provenance remains verified.</div>
