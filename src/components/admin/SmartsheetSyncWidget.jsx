@@ -7,6 +7,7 @@ import SmartsheetSyncResultDetails from "@/components/admin/SmartsheetSyncResult
 import { orderSyncToastState } from "@/components/orders/orderSyncToastModel";
 import { orderSyncLiveProgress } from "@/components/orders/orderSyncLiveProgress.mjs";
 import { recoverStalledOrderSync } from "@/components/orders/orderSyncRecovery";
+import { orderFormSyncStatusRelevant } from "@/components/orders/orderSyncWidgetRelevance.mjs";
 
 const STATUS_KEY = 'smartsheetSyncStatus';
 const CONFIG_KEY = 'smartsheetSyncConfig';
@@ -69,6 +70,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
 
   if (loading) return null;
   if (!config?.global_enabled) return null;
+  // Order Form owns only Order sync feedback. A shared coordinator may be busy
+  // with Sales, but that unrelated stage must not look like an Order sync.
+  if (compactOrderForm && !orderFormSyncStatusRelevant(status)) return null;
 
   const interpretedStatus = interpretSmartsheetSyncStatus(status);
   const orderProgress = orderSyncLiveProgress(status?.progress_dataset === 'sales' ? {...status,progress_dataset:'orders'} : status, { enabled: compactOrderForm || status?.progress_dataset === 'sales' });
