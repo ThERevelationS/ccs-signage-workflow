@@ -2500,9 +2500,15 @@ Deno.serve(async (req) => {
           invalidated_by_reopen_request_id: requestId,
           invalidation_reason: note,
         };
+        const existingHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
+        const historyAlreadyRecorded = existingHistory.some((item: any) =>
+          String(item?.request_id || '') === String(summary.request_id || '') &&
+          String(item?.invalidated_by_reopen_request_id || '') === requestId
+        );
+        const finalizedSummaryHistory = historyAlreadyRecorded ? existingHistory : [...existingHistory, invalidatedSummary];
         const invalidated = await payPeriodEntity.updateMany(
           { id: period.id, status: 'review', last_request_id: requestId },
-          { $set: { finalized_summary: invalidatedSummary } },
+          { $set: { finalized_summary: invalidatedSummary, finalized_summary_history: finalizedSummaryHistory } },
         );
         if (!invalidated || invalidated.updated !== 1) {
           const latest = await payPeriodEntity.get(period.id).catch(() => null);
