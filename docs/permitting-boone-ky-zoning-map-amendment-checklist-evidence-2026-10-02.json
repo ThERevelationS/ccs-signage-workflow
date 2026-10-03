@@ -1,0 +1,17 @@
+{
+  "title": "Boone County Planning Commission — Zoning Map Amendment checklist current source verification",
+  "sourceUrl": "https://bcpcky.org/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf",
+  "resolvedUrl": "https://cms3.revize.com/revize/boonectyplanning/Documents/Applications%20Forms/Checklists/ZoningMapAmendment_checklist.pdf",
+  "linkedFrom": "https://bcpcky.org/applications_forms/index.php",
+  "listedLabel": "Zoning Map Amendment",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 224612,
+  "sha256": "178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c",
+  "lastModified": "Fri, 06 Sep 2024 15:18:46 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/zoning-map-amendment-checklist-2026-10-02.pdf",
+  "purpose": "current_zoning_map_amendment_checklist_source_identity",
+  "archiveStatus": "archived",
+  "evidenceScope": "The preserved Boone County Planning Commission Applications and Forms page directly links this exact PDF in its Checklists section under the label Zoning Map Amendment. On 2026-10-02 the official bcpcky.org URL redirected to the Boone County Planning Commission Revize-hosted PDF and returned HTTP 200 with application/pdf content. The 224612-byte live file was archived with SHA-256 178a3866f8c92a5cd65796c2209bb9a9937b3d7ba3e96e5a6bcf3dd29879803c. This establishes current checklist source identity and current listing only. It does not by itself establish when a zoning map amendment is required, which parcels or jurisdictions it applies to, every checklist instruction, requirement, fee, submission workflow, approval path, or applicability to a particular sign project."
+}
