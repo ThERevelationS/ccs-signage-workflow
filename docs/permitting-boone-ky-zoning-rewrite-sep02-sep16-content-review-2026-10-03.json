@@ -1,0 +1,76 @@
+{
+  "title": "Boone County 2026 zoning rewrite \u2014 September 2 minutes and September 16 annotated agenda content review",
+  "checkedAt": "2026-10-03",
+  "extractionMethod": "pypdf text extraction from repository-archived official PDFs; temporary extraction tooling installed under /tmp only and not added to app dependencies",
+  "records": [
+    {
+      "id": "sep02_business_minutes",
+      "date": "2026-09-02",
+      "meeting": "Business Meeting",
+      "recordType": "minutes",
+      "sourcePath": "public/permitting/sources/boone-ky/planning-commission-2026-09-02-business-minutes.pdf",
+      "bytes": 174452,
+      "sha256": "f5bac32b8ae0c8f511bbabe393fb39fabb46959dabe49feb63b6d51598c2f9db",
+      "pages": 11,
+      "extractedCharacters": 30368,
+      "extractedTextPath": "docs/planning-commission-2026-09-02-business-minutes-extracted-text-2026-10-03.txt",
+      "reviewTerms": {
+        "zoning ordinance": 0,
+        "zoning regulations": 0,
+        "zoning regulation": 0,
+        "ordinance update": 0,
+        "zoning update": 0,
+        "2026 zoning": 0,
+        "rewrite": 0,
+        "article 34": 0,
+        "text amendment": 0,
+        "text amendments": 0,
+        "regulation update": 0,
+        "regulations update": 0
+      },
+      "boundedFindings": [
+        "No reviewed zoning-rewrite/adoption target term appears in the reliably extracted text.",
+        "The Long-Range Planning/Comprehensive Plan committee report states No Report.",
+        "Occurrences of adopted in this record refer to the 2045 Comprehensive Plan in project-specific discussion, not adoption of the 2026 zoning rewrite.",
+        "New Business scheduled October 7 public hearings for Items #5 through #8; this review does not treat that scheduling line as zoning-rewrite adoption evidence."
+      ],
+      "rewriteAdoptionActionFound": false
+    },
+    {
+      "id": "sep16_business_annotated_agenda",
+      "date": "2026-09-16",
+      "meeting": "Business Meeting",
+      "recordType": "annotated_agenda",
+      "sourcePath": "public/permitting/sources/boone-ky/planning-commission-2026-09-16-business-agenda-annotated.pdf",
+      "bytes": 305704,
+      "sha256": "28671e063a470fa00ff20dab1fd0c07af3563b866913be186e8bcd9b368e4319",
+      "pages": 2,
+      "extractedCharacters": 1453,
+      "extractedTextPath": "docs/planning-commission-2026-09-16-business-agenda-annotated-extracted-text-2026-10-03.txt",
+      "reviewTerms": {
+        "zoning ordinance": 0,
+        "zoning regulations": 0,
+        "zoning regulation": 0,
+        "ordinance update": 0,
+        "zoning update": 0,
+        "2026 zoning": 0,
+        "rewrite": 0,
+        "article 34": 0,
+        "text amendment": 0,
+        "text amendments": 0,
+        "regulation update": 0,
+        "regulations update": 0
+      },
+      "boundedFindings": [
+        "No reviewed zoning-rewrite/adoption target term appears in the reliably extracted full two-page annotated agenda.",
+        "The agenda records approval of the September 2 Business Meeting and Public Hearings minutes and unanimous approval of one Cooper Steel Technical/Design Review item.",
+        "The agenda lists October 7 Business Meeting and Public Hearings as upcoming meetings but does not identify a zoning-rewrite or ordinance-adoption item."
+      ],
+      "rewriteAdoptionActionFound": false
+    }
+  ],
+  "reviewStatus": "two_records_reviewed_no_rewrite_adoption_action_found",
+  "remainingAuthorityReview": "October 7, 2026 Business Meeting and Public Hearing agendas remain the next targeted records; September 16 minutes were not linked on the official index snapshot.",
+  "authorityBoundary": "These two reviewed records do not establish adoption or effectiveness of the 2026 zoning rewrite. This is a bounded finding about these two records only, not proof that no later adoption action occurred.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless newer reviewed official action records establish final adoption and effectiveness of replacement text."
+}

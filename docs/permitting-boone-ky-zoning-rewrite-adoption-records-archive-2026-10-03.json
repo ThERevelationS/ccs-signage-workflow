@@ -79,8 +79,14 @@
     "september2BusinessMinutesLinked": true,
     "september2PublicHearingMinutesLinked": true
   },
-  "contentReviewStatus": "pending_reliable_pdf_text_or_visual_review",
+  "contentReviewStatus": "partial_review_complete_sep02_minutes_sep16_annotated_agenda",
   "authorityBoundary": "records_archived_but_no_adoption_conclusion_from_unreviewed_pdf_contents",
   "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless reviewed official action records establish final adoption and effectiveness of replacement text.",
-  "evidenceScope": "The official Planning Commission Agendas and Minutes index was retrieved successfully on 2026-10-03 and lists October 7, September 16, and September 2, 2026 records. The linked late-2026 agendas and the available September 2 minutes were archived byte-for-byte with hashes. As of this index snapshot, minutes are not linked for the October 7 Business Meeting, October 7 Public Hearing, or September 16 Business Meeting, while September 2 Business Meeting and Public Hearing minutes are linked and archived. The PDF files use text encoding that the current sandbox cannot reliably extract with its available built-in tools, so this archive baseline does not claim that the records do or do not contain zoning-rewrite adoption action. No rewrite text may supersede adopted Article 34 until the official record contents are reliably reviewed and establish adoption and effectiveness."
+  "evidenceScope": "The official Planning Commission Agendas and Minutes index was retrieved successfully on 2026-10-03 and lists October 7, September 16, and September 2, 2026 records. The linked late-2026 agendas and the available September 2 minutes were archived byte-for-byte with hashes. As of this index snapshot, minutes are not linked for the October 7 Business Meeting, October 7 Public Hearing, or September 16 Business Meeting, while September 2 Business Meeting and Public Hearing minutes are linked and archived. The PDF files use text encoding that the current sandbox cannot reliably extract with its available built-in tools, so this archive baseline does not claim that the records do or do not contain zoning-rewrite adoption action. No rewrite text may supersede adopted Article 34 until the official record contents are reliably reviewed and establish adoption and effectiveness.",
+  "reviewEvidencePath": "docs/permitting-boone-ky-zoning-rewrite-sep02-sep16-content-review-2026-10-03.json",
+  "reviewedRecordIds": [
+    "sep02_business_minutes",
+    "sep16_business_annotated_agenda"
+  ],
+  "nextContentReview": "2026-10-07 Business Meeting agenda and 2026-10-07 Public Hearing agenda"
 }
