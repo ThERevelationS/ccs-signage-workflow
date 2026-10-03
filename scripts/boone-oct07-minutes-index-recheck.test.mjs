@@ -13,16 +13,26 @@ test('Oct 7 minutes recheck preserves unchanged index status and a bounded legis
   assert.equal(createHash('sha256').update(snapshot).digest('hex'), evidence.liveSha256);
   assert.equal(evidence.matchesPriorSnapshot, true);
 
-  const businessRow = html.match(/<tr>[sS]*?October 7, 2026 Business Meeting[sS]*?</tr>/i)?.[0] ?? '';
-  const hearingRow = html.match(/<tr>[sS]*?October 7, 2026 Public Hearing[sS]*?</tr>/i)?.[0] ?? '';
+  const rowFor = (label) => {
+    const marker = html.indexOf(label);
+    assert.notEqual(marker, -1);
+    const start = html.lastIndexOf('<tr>', marker);
+    const end = html.indexOf('</tr>', marker);
+    assert.notEqual(start, -1);
+    assert.notEqual(end, -1);
+    return html.slice(start, end + 5);
+  };
 
-  assert.match(businessRow, />Agenda</a>/i);
-  assert.match(businessRow, /<td[^>]*>s*Minutess*</td>/i);
-  assert.doesNotMatch(businessRow, />Minutes</a>/i);
+  const businessRow = rowFor('October 7, 2026 Business Meeting');
+  const hearingRow = rowFor('October 7, 2026 Public Hearing');
 
-  assert.match(hearingRow, />Agenda</a>/i);
-  assert.match(hearingRow, /<td[^>]*>s*Minutess*</td>/i);
-  assert.doesNotMatch(hearingRow, />Minutes</a>/i);
+  assert.ok(businessRow.includes('>Agenda</a>'));
+  assert.ok(businessRow.includes('>Minutes</td>'));
+  assert.ok(!businessRow.includes('>Minutes</a>'));
+
+  assert.ok(hearingRow.includes('>Agenda</a>'));
+  assert.ok(hearingRow.includes('>Minutes</td>'));
+  assert.ok(!hearingRow.includes('>Minutes</a>'));
 
   assert.equal(evidence.october7BusinessMeeting.minutesLinked, false);
   assert.equal(evidence.october7PublicHearing.minutesLinked, false);
