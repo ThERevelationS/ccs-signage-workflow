@@ -51,6 +51,8 @@ function shouldRetainCorrectionRequest(err) {
 export default function CorrectionRequestDialog({ open, onOpenChange, entry, sessionToken, onSubmitted }) {
   const [clockIn, setClockIn] = useState("");
   const [clockOut, setClockOut] = useState("");
+  const [clockInSourceIso, setClockInSourceIso] = useState("");
+  const [clockOutSourceIso, setClockOutSourceIso] = useState("");
   const [lunchMinutes, setLunchMinutes] = useState("0");
   const [notes, setNotes] = useState("");
   const [reason, setReason] = useState("");
@@ -63,8 +65,12 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
     const stored = storedCorrectionSubmission(entry.id);
     const payload = stored?.payload || null;
     const requested = payload?.requested_changes || null;
-    setClockIn(companyDateTimeInputFromIso(requested?.clock_in || entry.clock_in));
-    setClockOut(companyDateTimeInputFromIso(requested?.clock_out || entry.clock_out));
+    const sourceClockIn = requested?.clock_in || entry.clock_in || "";
+    const sourceClockOut = requested?.clock_out || entry.clock_out || "";
+    setClockInSourceIso(sourceClockIn);
+    setClockOutSourceIso(sourceClockOut);
+    setClockIn(companyDateTimeInputFromIso(sourceClockIn));
+    setClockOut(companyDateTimeInputFromIso(sourceClockOut));
     setLunchMinutes(String(requested?.lunch_minutes ?? entry.lunch_minutes ?? 0));
     setNotes(requested?.notes ?? entry.notes ?? "");
     setReason(payload?.reason || "");
@@ -132,14 +138,14 @@ export default function CorrectionRequestDialog({ open, onOpenChange, entry, ses
 
   const correctionPreview = useMemo(() => {
     if (!clockIn || !clockOut) return { valid: false, error: `Enter both punch times in ${TIME_CLOCK_COMPANY_TIME_LABEL}.` };
-    const parsedIn = parseCompanyDateTimeInput(clockIn);
+    const parsedIn = parseCompanyDateTimeInput(clockIn, clockInSourceIso);
     if (!parsedIn.ok) return { valid: false, error: `Clock In: ${parsedIn.error}` };
-    const parsedOut = parseCompanyDateTimeInput(clockOut);
+    const parsedOut = parseCompanyDateTimeInput(clockOut, clockOutSourceIso);
     if (!parsedOut.ok) return { valid: false, error: `Clock Out: ${parsedOut.error}` };
     const duration = shiftDurationSummary(parsedIn.iso, parsedOut.iso, lunchMinutes);
     if (!duration.valid) return duration;
     return { ...duration, clockInIso: parsedIn.iso, clockOutIso: parsedOut.iso };
-  }, [clockIn, clockOut, lunchMinutes]);
+  }, [clockIn, clockOut, clockInSourceIso, clockOutSourceIso, lunchMinutes]);
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next); }}>
