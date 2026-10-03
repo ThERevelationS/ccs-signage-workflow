@@ -1,0 +1,253 @@
+{
+  "name": "Opportunity",
+  "type": "object",
+  "description": "Canonical pre-job commercial pursuit. Opportunity owns sales/intake lifecycle and verified pursuit facts before an operational WorkOrder/Job begins. During compatibility migration it may link to the existing WorkOrder-based Sales Pipeline without replacing that workflow.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1,
+      "description": "Opportunity schema contract version."
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable internal receipt used to make one Opportunity create action retry-safe. Never derive this from customer/company name alone."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "Verified canonical Customer id when resolved. May remain blank while intake identity requires review."
+    },
+    "customer_display_name": {
+      "type": "string",
+      "description": "Captured/display customer name for this pursuit. This is not sufficient identity evidence by itself."
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Future canonical CustomerContact id when resolved. Blank is valid until first-class contact resolution exists."
+    },
+    "location_id": {
+      "type": "string",
+      "description": "Future canonical CustomerLocation/site id when resolved. Blank is valid until first-class location resolution exists."
+    },
+    "compatibility_work_order_id": {
+      "type": "string",
+      "description": "Transitional link to the existing WorkOrder-backed Sales Pipeline. Does not make WorkOrder the long-term Opportunity source of truth."
+    },
+    "primary_estimating_request_id": {
+      "type": "string",
+      "description": "Optional convenience link to the primary EstimatingRequest. Additional requests are queried by opportunity_id."
+    },
+    "source_primary_intake_id": {
+      "type": "string",
+      "description": "Primary OpportunityIntake source event for this pursuit."
+    },
+    "title": {
+      "type": "string"
+    },
+    "job_description": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "new",
+        "qualified",
+        "estimating",
+        "quoted",
+        "follow_up",
+        "on_hold",
+        "won",
+        "lost"
+      ],
+      "default": "new"
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stage_changed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_activity_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lost_reason": {
+      "type": "string"
+    },
+    "salesperson": {
+      "type": "string"
+    },
+    "lead_source": {
+      "type": "string"
+    },
+    "origination": {
+      "type": "string",
+      "description": "Legacy/current origination vocabulary preserved separately from lead_source until an approved translation exists."
+    },
+    "budget_amount": {
+      "type": "number"
+    },
+    "budget_note": {
+      "type": "string"
+    },
+    "desired_completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "desired_install_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "rush"
+      ],
+      "default": "normal"
+    },
+    "survey_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "permit_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "installation_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "removal_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "electrical_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "electrical_details": {
+      "type": "string"
+    },
+    "property_relationship": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "tenant",
+        "agent",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "next_action_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_action_assignee": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "attachment_refs": {
+      "type": "array",
+      "description": "References to files/photos already stored elsewhere. Do not create duplicate binary copies merely because work moved from Intake to Opportunity.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Compact current source/provenance summary. Raw source evidence remains on OpportunityIntake."
+    }
+  },
+  "required": [
+    "creation_request_key",
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__opportunity_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__opportunity_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__opportunity_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__opportunity_backend_only__"
+      }
+    }
+  }
+}
