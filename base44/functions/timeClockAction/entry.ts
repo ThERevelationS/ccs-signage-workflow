@@ -4561,6 +4561,27 @@ Deno.serve(async (req) => {
         String(auditRow.details?.correction_request_id || '') === correctionRequest.id &&
         constantTimeEqual(String(auditRow.details?.review_payload_hash || ''), expectedReviewHash)
       );
+      const verifyCorrectionReviewConvergence = async (requestRecord: any, expectedAuditId: string) => {
+        const terminalStatus = String(requestRecord?.status || '');
+        if (!['approved', 'approved_modified', 'rejected'].includes(terminalStatus)) return { ok: false, retry: true };
+        const finalEntry = await entryEntity.get(requestRecord.time_entry_id).catch(() => null);
+        if (!finalEntry?.id || asEmail(finalEntry.user_email) !== target.email || finalEntry.archived_test_data || finalEntry.archived_admin) return { ok: false, investigation: true };
+        if (terminalStatus === 'rejected') {
+          if (missedClockOutRecovery) {
+            return finalEntry.status === 'needs_resolution' && finalEntry.approval_status === 'needs_review'
+              ? { ok: true, entry: finalEntry }
+              : { ok: false, investigation: true };
+          }
+          return { ok: true, entry: finalEntry };
+        }
+        const converged = Boolean(
+          finalEntry.status === 'clocked_out' && finalEntry.clock_out &&
+          finalEntry.approval_status === 'needs_review' &&
+          String(finalEntry.last_correction_request_id || '') === String(requestRecord.id || '') &&
+          String(requestRecord.applied_audit_id || '') === String(expectedAuditId || '')
+        );
+        return converged ? { ok: true, entry: finalEntry } : { ok: false, investigation: true };
+      };
       const reconcileMissedClockOutTerminal = async (requestRecord: any, resolutionAuditId: string) => {
         if (!missedClockOutRecovery) return { ok: true };
         const expectedCaseStatus = requestRecord?.status === 'rejected'
