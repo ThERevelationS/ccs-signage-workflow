@@ -6,6 +6,7 @@ import vm from 'node:vm';
 // conditional persistence with deferred synthetic reads. No app API calls.
 const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8');
 const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8');
+const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8');
 function block(source, begin, end) {
   const start = source.indexOf(begin);
   const stop = source.indexOf(end, start);
@@ -20,7 +21,7 @@ const source = [
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
-  block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch'),
+  trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
   block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
   'this.actions = { loadWorkOrders, updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
 ].join('\n');
@@ -53,37 +54,47 @@ function fixture(date = yesterday, { completed = false } = {}) {
   let holdNextGet = null;
   let holdNextSavedRead = null;
   let writes = 0;
-  const entity = {
-    get: async (id) => {
-      if (holdNextSavedRead && writes > 0) {
-        const held = holdNextSavedRead;
-        holdNextSavedRead = null;
-        const snapshot = id === record.id ? structuredClone(record) : null;
-        held.captured.resolve(snapshot);
-        await held.release.promise;
-        return snapshot;
-      }
+  const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const functions = {
+    invoke: async (name, args) => {
+      assert.equal(name, 'fieldHistoryAction');
+      assert.equal(args.action, 'save');
       if (holdNextGet) {
         const held = holdNextGet;
         holdNextGet = null;
         await held.promise;
       }
-      return id === record.id ? structuredClone(record) : null;
-    },
-    updateMany: async (query, patch) => {
-      if (query.id !== record.id || query.updated_date !== record.updated_date || record.deleted) {
-        return { updated: 0 };
+      const loaded = structuredClone(record);
+      if (loaded.deleted === true) {
+        return { data: { success: false, error: 'This record is in Trash. Restore it first.' } };
       }
-      Object.assign(record, structuredClone(patch.$set));
-      record.updated_date = String(Number(record.updated_date) + 1);
-      writes++;
-      return { updated: 1 };
+      for (const [field, nextValue] of Object.entries(args.next_fields || {})) {
+        const expected = args.expected_fields?.[field] ?? null;
+        if (!same(loaded[field], expected) && !same(loaded[field], nextValue)) {
+          return { data: { success: false, error: `This field changed in another session: ${field}. Reload before saving.` } };
+        }
+      }
+      if (!Object.entries(args.next_fields || {}).every(([field, value]) => same(loaded[field], value))) {
+        Object.assign(record, structuredClone(args.next_fields || {}));
+        record.updated_date = String(Number(record.updated_date) + 1);
+        writes++;
+      }
+      let saved = structuredClone(record);
+      if (holdNextSavedRead && writes > 0) {
+        const held = holdNextSavedRead;
+        holdNextSavedRead = null;
+        held.captured.resolve(saved);
+        await held.release.promise;
+      }
+      return { data: { success: true, record: saved } };
     },
   };
+  const entity = {};
   const globalSettings = {};
   const authorizedEmail = {};
   const ctx = {
-    base44: { entities: { WorkOrder: entity, GlobalSettings: globalSettings } },
+    base44: { functions, entities: { WorkOrder: entity, GlobalSettings: globalSettings } },
+    localStorage: { getItem: () => '' },
     WorkOrder: entity,
     AuthorizedEmail: authorizedEmail,
     boardLoadSequenceRef: { current: 0 },
