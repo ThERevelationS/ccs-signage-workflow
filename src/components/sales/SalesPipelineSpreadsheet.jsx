@@ -315,6 +315,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     onColumnHeaderFilterChange?.(activeColumnHeaderFilter);
   }, [activeColumnHeaderFilter, onColumnHeaderFilterChange]);
 
+  useEffect(() => () => {
+    onColumnHeaderFilterChange?.(null);
+  }, [onColumnHeaderFilterChange]);
+
   const activeCustomFilterForSession = filterStatus.startsWith("custom_")
     ? customFilters.find((filter) => filter.id === filterStatus.replace("custom_", "")) || null
     : null;
