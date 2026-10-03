@@ -1,0 +1,36 @@
+{
+  "title": "Boone County Planning Commission — Applications and Forms page category reconciliation",
+  "checkedAt": "2026-10-02",
+  "sourcePage": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "baselineStatus": "complete_for_preserved_page",
+  "categories": [
+    {
+      "name": "Checklists",
+      "baselinePath": "docs/permitting-boone-ky-checklists-baseline-2026-10-02.json",
+      "uniqueListed": 5,
+      "accounted": 5,
+      "remaining": 0
+    },
+    {
+      "name": "Applications",
+      "baselinePath": "docs/permitting-boone-ky-applications-baseline-2026-10-02.json",
+      "uniqueListed": 26,
+      "accounted": 26,
+      "remaining": 0
+    },
+    {
+      "name": "Forms",
+      "baselinePath": "docs/permitting-boone-ky-forms-baseline-2026-10-02.json",
+      "uniqueListed": 4,
+      "accounted": 4,
+      "remaining": 0
+    }
+  ],
+  "totalUniqueCategoryEntries": 35,
+  "totalAccountedCategoryEntries": 35,
+  "remainingCategoryEntries": 0,
+  "navigationScopeNote": "The preserved page's global site navigation also links PDFs outside Applications/Forms, including Community Development and Historic Preservation materials. Those are not a fourth Applications/Forms permitting category and are excluded from this reconciliation rather than being treated as unaccounted permitting resources.",
+  "scope": "This page-level reconciliation establishes that the three permitting document categories presented by the preserved Boone County Planning Commission Applications and Forms page—Checklists, Applications, and Forms—have each been independently reconciled. Accounted means an entry is represented by its category baseline as either a verified archive or a bounded source-availability gap. It does not assert that every listed document applies to a particular sign project or that every instruction, requirement, fee, standard, procedure, or workflow inside an archived document is current.",
+  "nextResearchSurface": "Boone County Planning Commission official pages outside Applications/Forms",
+  "nextResearchRule": "Inventory a specific official permitting-relevant page or category before downloading new sources; exclude unrelated global-navigation documents and do not redo already verified sign, fee, application, form, or checklist evidence."
+}
