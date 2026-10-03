@@ -5384,6 +5384,9 @@ Deno.serve(async (req) => {
         if (!await syncLateClockInPunchCase(entry, intent.id)) {
           return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved, but its Missed Clock In report still needs finalization. Retry this same approval.' }, { status: 409 });
         }
+        if (decision === 'approve' && !await verifyResolvedCorrectionForApproval(entry)) {
+          return Response.json({ success: false, error: 'The final shift approval no longer matches its terminal correction request and applied correction audit. Admin investigation is required.' }, { status: 409 });
+        }
         if (decision === 'approve') {
           const completedGateReleased = await releaseCompletedCorrectionCreateLock(
             stateEntity, state.id, requestId, entry.id, approvalPayloadHash,
@@ -5428,6 +5431,9 @@ Deno.serve(async (req) => {
         if (!Array.isArray(unresolvedCorrections)) throw new Error('Shift approval correction lookup did not return a record list.');
         if (unresolvedCorrections.length) {
           return Response.json({ success: false, error: 'This shift has an unresolved employee correction. Review the correction before approving the shift.' }, { status: 409 });
+        }
+        if (!await verifyResolvedCorrectionForApproval(entry)) {
+          return Response.json({ success: false, error: 'This corrected shift does not match its terminal correction request and applied correction audit. Review the correction evidence before approving the shift.' }, { status: 409 });
         }
       }
 
@@ -5493,6 +5499,9 @@ Deno.serve(async (req) => {
       }
       if (!await syncLateClockInPunchCase(savedEntry, finalAudit.id)) {
         return Response.json({ success: false, retry_same_request: true, error: 'The approval is saved, but its Missed Clock In report still needs finalization. Retry this same approval.' }, { status: 409 });
+      }
+      if (decision === 'approve' && !await verifyResolvedCorrectionForApproval(savedEntry)) {
+        return Response.json({ success: false, error: 'The saved final approval no longer matches its terminal correction request and applied correction audit. Admin investigation is required.' }, { status: 409 });
       }
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
       } finally {
