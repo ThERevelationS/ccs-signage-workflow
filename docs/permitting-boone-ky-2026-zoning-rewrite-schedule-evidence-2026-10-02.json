@@ -1,0 +1,23 @@
+{
+  "title": "Boone County 2026 Zoning Ordinance Update — rewrite schedule and authority boundary",
+  "sourceUrl": "https://online.encodeplus.com/regs/boonecounty-ky-rewrite/page.aspx?name=Introduction-Schedule",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "bytes": 11646,
+  "sha256": "72e6fdf0f06c5ea15ec7173fd72b5db8215c327a933f951ff1fd6b375495f4ff",
+  "repositoryPath": "public/permitting/sources/boone-ky/2026-zoning-rewrite-introduction-schedule-2026-10-02.html",
+  "rewriteNavigationTitle": "Click to view the 2026 ZO draft text",
+  "currentRegulationsStatusText": "The current version of the zoning regulations was adopted in late 2022/early 2023.",
+  "projectStatusText": "The overall project is anticipated to be adopted in late 2026. Proposed text will be shared on this website allowing for public comment.",
+  "schedule": [
+    "February 2026 - July 2026: Staff research and text preparation.",
+    "March 2026 - August 2026: Planning Commission's Long Range/Comp Plan Committee evaluates proposed changes.",
+    "July 2026 - September 2026: Public review and comment.",
+    "July 2026: Stakeholder Meetings and Public Workshop.",
+    "September 2026 - October 2026: Adoption process including public hearing and action before the Planning Commission.",
+    "October 2026 - December 2026: Adoption by the legislative bodies."
+  ],
+  "authorityBoundary": "proposed_rewrite_adoption_process_not_replacement_authority",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless newer official evidence establishes final adoption and an effective replacement.",
+  "evidenceScope": "The official EncodePlus rewrite project schedule labels the 2026 zoning text as draft/proposed, states that adoption was anticipated in late 2026, and schedules Planning Commission and legislative-body adoption steps through December 2026. This is project-status and schedule evidence, not proof that final adoption has occurred. No rewrite provision may replace, override, or silently modify the separately archived adopted Article 34 sign regulations unless separate official evidence establishes final adoption and effectiveness."
+}
