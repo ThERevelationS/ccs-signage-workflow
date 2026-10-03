@@ -1282,6 +1282,115 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(rejectHarness.rows.TimeClockPunchException[0].status, 'rejected');
 });
 
+test('missed Clock Out review fails closed before mutation when correction and Punch Exception linkage disagree', async () => {
+  const h = setupStaleMissedPunch();
+  await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'link-integrity-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const request = h.rows.TimeClockCorrectionRequest[0];
+  const punchCase = h.rows.TimeClockPunchException[0];
+  punchCase.correction_request_id = 'wrong-correction-link';
+  const beforeEntry = structuredClone(h.rows.TimeEntry[0]);
+
+  const blocked = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'link-integrity-review-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date,
+    decision: 'approve', reason: 'Would otherwise approve',
+  });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
+  assert.match(blocked.body.error, /Punch Exception|investigation/i);
+  assert.equal(request.status, 'pending');
+  assert.deepEqual(h.rows.TimeEntry[0], beforeEntry);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'correction_review').length, 0);
+});
+
+test('exact approval retry repairs Punch Exception finalization interrupted after the TimeEntry and review were saved', async () => {
+  const h = setupStaleMissedPunch();
+  await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'approve-reconcile-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const request = h.rows.TimeClockCorrectionRequest[0];
+  const reviewPayload = {
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'approve-reconcile-review-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date,
+    decision: 'approve', reason: 'Verified reported Clock Out',
+  };
+  let failOnce = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (failOnce && entity === 'TimeClockPunchException' && update.$set?.status === 'resolved') {
+      failOnce = false;
+      throw new Error('synthetic interruption after review save');
+    }
+  });
+
+  const interrupted = await h.invoke(reviewPayload);
+  assert.equal(interrupted.status, 500, JSON.stringify(interrupted.body));
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].status, 'approved');
+  assert.equal(h.rows.TimeEntry[0].status, 'clocked_out');
+  assert.equal(h.rows.TimeEntry[0].clock_out, '2026-09-28T22:00:00.000Z');
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'pending_manager_review');
+
+  h.setBeforeUpdate(null);
+  const recovered = await h.invoke(reviewPayload);
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.reused, true);
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].status, 'approved');
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'resolved');
+  assert.equal(
+    h.rows.TimeClockPunchException[0].resolution_audit_id,
+    h.rows.TimeClockCorrectionRequest[0].applied_audit_id,
+  );
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 1);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'correction_review').length, 1);
+});
+
+test('exact rejection retry repairs Punch Exception finalization interrupted after the review was saved', async () => {
+  const h = setupStaleMissedPunch();
+  await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'reject-reconcile-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const request = h.rows.TimeClockCorrectionRequest[0];
+  const reviewPayload = {
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'reject-reconcile-review-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date,
+    decision: 'reject', reason: 'Employee needs to clarify the reported time',
+  };
+  let failOnce = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (failOnce && entity === 'TimeClockPunchException' && update.$set?.status === 'rejected') {
+      failOnce = false;
+      throw new Error('synthetic interruption after rejection save');
+    }
+  });
+
+  const interrupted = await h.invoke(reviewPayload);
+  assert.equal(interrupted.status, 500, JSON.stringify(interrupted.body));
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].status, 'rejected');
+  assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'pending_manager_review');
+
+  h.setBeforeUpdate(null);
+  const recovered = await h.invoke(reviewPayload);
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.reused, true);
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'rejected');
+  const reviewAudit = h.rows.TimeClockAudit.find((row) => row.action === 'correction_review' && row.request_id === reviewPayload.request_id);
+  assert.ok(reviewAudit?.id);
+  assert.equal(h.rows.TimeClockPunchException[0].resolution_audit_id, reviewAudit.id);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'correction_review').length, 1);
+});
+
 test('late-day clock action intent prompts for a possible missed Clock In without inventing a shift', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [];
