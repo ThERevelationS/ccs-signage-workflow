@@ -6,6 +6,7 @@ import vm from 'node:vm';
 // isolated in-memory Work Orders. No live Base44 records are accessed.
 const board = readFileSync(new URL('../src/pages/SIPs.jsx', import.meta.url), 'utf8');
 const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8');
+const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8');
 
 function block(source, start, end) {
   const first = source.indexOf(start);
@@ -21,7 +22,7 @@ const source = [
   block(board, '  const isRevisitFuture = (wo) => {', '\n  // Completion must'),
   block(board, '  const toggleSipCompleted = async (wo) => {', '\n  const requestClearRevisit'),
   block(board, '  const requestClearRevisit = (wo) => {', '\n  // All non-completed active items'),
-  block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch'),
+  trackedPersistence.slice(trackedPersistence.indexOf('export async function saveTrackedFields(')).replace(/^export /, ''),
   block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, ''),
   'this.handlers = { updateWorkOrder, isRevisitFuture, toggleSipCompleted, requestClearRevisit, confirmClearRevisit };',
 ].join('\n');
@@ -52,29 +53,43 @@ function harness(initialDate = tomorrow) {
   let reads = 0;
   let attemptedWrites = 0;
   let beforeCommit = null;
-  const entity = {
-    get: async (id) => {
+  const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const functions = {
+    invoke: async (name, args) => {
+      assert.equal(name, 'fieldHistoryAction');
+      assert.equal(args.action, 'save');
       reads++;
-      return id === record.id ? structuredClone(record) : null;
-    },
-    updateMany: async (query, patch) => {
-      attemptedWrites++;
+      const loaded = structuredClone(record);
+      if (loaded.deleted === true) {
+        return { data: { success: false, error: 'This record is in Trash. Restore it first.' } };
+      }
+      for (const [field, nextValue] of Object.entries(args.next_fields || {})) {
+        const expected = args.expected_fields?.[field] ?? null;
+        if (!same(loaded[field], expected) && !same(loaded[field], nextValue)) {
+          return { data: { success: false, error: `This field changed in another session: ${field}. Reload before saving.` } };
+        }
+      }
+      if (Object.entries(args.next_fields || {}).every(([field, value]) => same(loaded[field], value))) {
+        return { data: { success: true, record: loaded } };
+      }
       if (beforeCommit) {
         const mutate = beforeCommit;
         beforeCommit = null;
         mutate(record);
       }
-      if (query.id !== record.id || query.updated_date !== record.updated_date) {
-        return { updated: 0 };
+      attemptedWrites++;
+      if (record.updated_date !== loaded.updated_date) {
+        return { data: { success: false, error: 'This record changed during saving. Reload before retrying; no newer fields were overwritten.' } };
       }
-      Object.assign(record, structuredClone(patch.$set));
+      Object.assign(record, structuredClone(args.next_fields || {}));
       record.updated_date = String(Number(record.updated_date) + 1);
       writes++;
-      return { updated: 1 };
+      return { data: { success: true, record: structuredClone(record) } };
     },
   };
   const ctx = {
-    base44: { entities: { WorkOrder: entity } },
+    base44: { functions },
+    localStorage: { getItem: () => '' },
     today,
     boardSaveEpochRef: { current: 0 },
     boardSavesPendingRef: { current: 0 },
@@ -373,21 +388,34 @@ function twoSessionHarness({ date = todayDate, completed = false } = {}) {
     notes: 'original',
   };
   let writes = 0;
-  const entity = {
-    get: async (id) => id === live.id ? structuredClone(live) : null,
-    updateMany: async (query, patch) => {
-      if (query.id !== live.id || query.updated_date !== live.updated_date || live.deleted) {
-        return { updated: 0 };
+  const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const functions = {
+    invoke: async (name, args) => {
+      assert.equal(name, 'fieldHistoryAction');
+      assert.equal(args.action, 'save');
+      const loaded = structuredClone(live);
+      if (loaded.deleted === true) {
+        return { data: { success: false, error: 'This record is in Trash. Restore it first.' } };
       }
-      Object.assign(live, structuredClone(patch.$set));
+      for (const [field, nextValue] of Object.entries(args.next_fields || {})) {
+        const expected = args.expected_fields?.[field] ?? null;
+        if (!same(loaded[field], expected) && !same(loaded[field], nextValue)) {
+          return { data: { success: false, error: `This field changed in another session: ${field}. Reload before saving.` } };
+        }
+      }
+      if (Object.entries(args.next_fields || {}).every(([field, value]) => same(loaded[field], value))) {
+        return { data: { success: true, record: loaded } };
+      }
+      Object.assign(live, structuredClone(args.next_fields || {}));
       live.updated_date = String(Number(live.updated_date) + 1);
       writes++;
-      return { updated: 1 };
+      return { data: { success: true, record: structuredClone(live) } };
     },
   };
   function createSession() {
     const ctx = {
-      base44: { entities: { WorkOrder: entity } },
+      base44: { functions },
+      localStorage: { getItem: () => '' },
       today,
       boardSaveEpochRef: { current: 0 },
       boardSavesPendingRef: { current: 0 },
