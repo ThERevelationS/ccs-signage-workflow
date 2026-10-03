@@ -65,6 +65,7 @@ export default function FleetSettings() {
   const [generatedMechanicLink, setGeneratedMechanicLink] = useState("");
   const [mechanicBusy, setMechanicBusy] = useState("");
   const [mechanicError, setMechanicError] = useState("");
+  const [mechanicNotice, setMechanicNotice] = useState("");
   const [mechanicCopied, setMechanicCopied] = useState(false);
   const [mechanicRevoke, setMechanicRevoke] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -327,14 +328,38 @@ export default function FleetSettings() {
   const revokeMechanicLink = async (id) => {
     setMechanicBusy(id);
     setMechanicError("");
+    setMechanicNotice("");
     try {
       const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_revoke_link", id });
       if (data?.error) throw new Error(data.error);
       setMechanicLinks(data?.links || []);
       setGeneratedMechanicLink("");
       setMechanicRevoke(null);
+      if (Number(data?.reconciled_applied || 0) || Number(data?.reconciled_failed || 0)) setMechanicNotice(`Link revoked. ${Number(data?.reconciled_applied || 0)} in-flight mechanic operation(s) were confirmed applied and ${Number(data?.reconciled_failed || 0)} were closed without replay.`);
+      await runServerCheck();
+      await runIntegrityAudit();
     } catch (error) {
       setMechanicError(error?.message || "Mechanic access link could not be revoked.");
+    } finally {
+      setMechanicBusy("");
+    }
+  };
+
+  const reconcileMechanicReceipt = async (receipt) => {
+    if (!receipt?.id) return;
+    setMechanicBusy(`receipt-${receipt.id}`);
+    setMechanicError("");
+    setMechanicNotice("");
+    try {
+      const { data } = await base44.functions.invoke("fleetMechanicPortal", { action: "admin_reconcile_mechanic_mutation", receipt_id: receipt.id });
+      if (data?.error) throw new Error(data.error);
+      setMechanicNotice(data?.status === "applied"
+        ? "Mechanic operation confirmed and reconciled as applied. The bearer link was not re-enabled."
+        : `Mechanic operation closed without replay${data?.error_message ? `: ${data.error_message}` : "."}`);
+      await runServerCheck();
+      await runIntegrityAudit();
+    } catch (error) {
+      setMechanicError(error?.message || "Mechanic operation receipt could not be reconciled.");
     } finally {
       setMechanicBusy("");
     }
@@ -409,6 +434,7 @@ export default function FleetSettings() {
   const latestAutomation = Object.fromEntries(AUTOMATION_SOURCES.map(source => [source, automationLogs.find(row => row.source === source) || null]));
   const queueUnresolved = queueRows.filter(row => ["pending","sending","failed"].includes(row.status));
   const receiptUnresolved = receiptRows.filter(row => ["started","failed"].includes(row.status));
+  const mechanicReceiptUnresolved = receiptUnresolved.filter(row => ["mechanic_start","mechanic_progress_save"].includes(row.operation_type));
   const blocked = readiness.some((item) => !item.ok);
   const setupNeedsCount = featureSetup.filter(item => item.state === "needs_setup").length;
   const setupUsableCount = featureSetup.length - setupNeedsCount;
@@ -490,6 +516,8 @@ export default function FleetSettings() {
         <UserCog className="w-5 h-5 text-gray-400 shrink-0"/>
       </div>
       {mechanicError && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{mechanicError}</div>}
+      {mechanicNotice && <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">{mechanicNotice}</div>}
+      {mechanicReceiptUnresolved.length>0&&<div className="mt-4 rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-900 dark:bg-amber-950/20"><div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700"/><div><div className="text-sm font-semibold text-amber-900 dark:text-amber-100">Mechanic operations need reconciliation</div><p className="mt-1 text-xs text-amber-800 dark:text-amber-200">These Start Work / Save Progress receipts are unresolved. Reconcile checks the authoritative work order and current bearer-link status. A revoked or expired credential is never re-enabled.</p></div></div><div className="mt-3 space-y-2">{mechanicReceiptUnresolved.map(receipt=><div key={receipt.id} className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-900 dark:bg-slate-950"><div className="flex flex-col sm:flex-row sm:items-center gap-3"><div className="min-w-0 flex-1"><div className="text-xs font-semibold text-gray-900 dark:text-slate-100">{receipt.operation_type==="mechanic_start"?"Start Work":"Save Progress"} · {receipt.status}</div><div className="mt-1 text-[11px] text-gray-500 dark:text-slate-400 break-all">Work order {receipt.target_id || "—"} · {receipt.operation_key || receipt.id}</div>{Array.isArray(receipt?.result_summary?.uploaded_photo_urls)&&receipt.result_summary.uploaded_photo_urls.length>0&&<div className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">{receipt.result_summary.uploaded_photo_urls.length} uploaded photo file{receipt.result_summary.uploaded_photo_urls.length===1?"":"s"} retained as recovery evidence.</div>}{receipt.error_message&&<div className="mt-1 text-[11px] text-red-600 dark:text-red-300">{receipt.error_message}</div>}</div><button type="button" onClick={()=>reconcileMechanicReceipt(receipt)} disabled={!!mechanicBusy} className="min-h-11 shrink-0 rounded-lg border border-amber-400 bg-white px-3 text-xs font-semibold text-amber-900 disabled:opacity-50 dark:bg-slate-900 dark:border-amber-800 dark:text-amber-200">{mechanicBusy===`receipt-${receipt.id}`?<Loader2 className="mr-1 inline h-4 w-4 animate-spin"/>:<RefreshCw className="mr-1 inline h-4 w-4"/>}Reconcile</button></div></div>)}</div></div>}
       <div className="mt-4 grid sm:grid-cols-[minmax(0,1fr)_170px_auto] gap-2">
         <input value={mechanicName} onChange={e=>setMechanicName(e.target.value)} maxLength={80} placeholder="Mechanic name" className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-slate-950 dark:border-slate-700"/>
         <select value={mechanicExpiryDays} onChange={e=>setMechanicExpiryDays(e.target.value)} className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-slate-950 dark:border-slate-700"><option value="0">Never expires</option><option value="7">Expires in 7 days</option><option value="30">Expires in 30 days</option><option value="90">Expires in 90 days</option></select>
