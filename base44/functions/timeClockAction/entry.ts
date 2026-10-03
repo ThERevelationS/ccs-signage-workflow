@@ -2418,12 +2418,14 @@ Deno.serve(async (req) => {
       const verifySummary = async (summary: any, prefix: any[], label: string) => {
         if (!summary || typeof summary !== 'object' || Number(summary.snapshot_version || 0) < 2) return { verified: false, legacy: true, error: `${label} predates tamper-evident payroll history verification.` };
         const prefixHash = await payloadHash(prefix);
-        const chainHash = await payloadHash({
+        const chainCore: any = {
           entry_count: summary.entry_count, employee_count: summary.employee_count, total_hours: summary.total_hours,
           lock_timestamp: summary.lock_timestamp, locked_by: summary.locked_by, request_id: summary.request_id,
           snapshot_version: summary.snapshot_version, entry_snapshot_hash: summary.entry_snapshot_hash,
           previous_history_hash: summary.previous_history_hash,
-        });
+        };
+        if (Number(summary.snapshot_version || 0) >= 3) chainCore.shift_manifest_hash = summary.shift_manifest_hash;
+        const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
       };
@@ -2432,12 +2434,22 @@ Deno.serve(async (req) => {
         const summary = history[index];
         const check = await verifySummary(summary, history.slice(0, index), `Historical generation ${index + 1}`);
         if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        let retiredShifts = undefined;
+        let retiredEvidenceVerified = false;
+        if (Number(summary.snapshot_version || 0) >= 3) {
+          if (!Array.isArray(summary.shift_manifest)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} is missing its immutable shift manifest.`, pay_period_id: period.id, generations: [] });
+          const manifestHash = await payloadHash(summary.shift_manifest);
+          if (!String(summary.shift_manifest_hash || '') || !constantTimeEqual(String(summary.shift_manifest_hash), manifestHash) || !constantTimeEqual(String(summary.entry_snapshot_hash || ''), manifestHash)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} shift manifest failed verification.`, pay_period_id: period.id, generations: [] });
+          retiredShifts = summary.shift_manifest;
+          retiredEvidenceVerified = true;
+        }
         generations.push({
           generation: index + 1, state: 'retired', finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
           request_id: summary.request_id || '', entry_snapshot_hash: summary.entry_snapshot_hash || '', invalidated_at: summary.invalidated_at || '',
           invalidated_by: summary.invalidated_by || '', invalidation_reason: summary.invalidation_reason || '',
           invalidated_by_reopen_request_id: summary.invalidated_by_reopen_request_id || '',
+          shift_evidence_verified: retiredEvidenceVerified, shift_evidence_hash: summary.shift_manifest_hash || '', shifts: retiredShifts,
         });
       }
       const current = period.finalized_summary;
@@ -3014,12 +3026,13 @@ Deno.serve(async (req) => {
           lock_timestamp: lockTimestamp,
           locked_by: actorEmail,
           request_id: requestId,
-          snapshot_version: 2,
+          snapshot_version: 3,
           entry_snapshot_hash: entrySnapshotHash,
           previous_history_hash: previousHistoryHash,
+          shift_manifest_hash: entrySnapshotHash,
         };
         const snapshotChainHash = await payloadHash(summaryCore);
-        const summary = { ...summaryCore, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
+        const summary = { ...summaryCore, shift_manifest: snapshotRows, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
