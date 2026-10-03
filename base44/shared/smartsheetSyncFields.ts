@@ -277,7 +277,10 @@ export function buildSalesPullSnapshot(
       const number = Number(raw);
       snapshot[columnId] = Number.isFinite(number) ? number : String(raw).trim();
     } else if (field.type === 'date') {
-      snapshot[columnId] = dateStamp(raw) || String(raw).trim();
+      // Unparseable Smartsheet date text ("no", "?", "n/a", stray notes) cannot be
+      // stored in a Base44 date field, so it compares as null/empty — never as a
+      // real difference and never creates a conflict.
+      snapshot[columnId] = dateStamp(raw) || null;
     } else {
       snapshot[columnId] = String(raw).trim();
     }
