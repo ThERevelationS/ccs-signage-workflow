@@ -55,7 +55,8 @@ import {
   Activity,
   Bot,
   UserCheck,
-  CalendarDays
+  CalendarDays,
+  ClipboardCheck
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -77,6 +78,7 @@ import SyncConflictReview from '@/components/admin/SyncConflictReview';
 import TaskAssignmentRules from "@/components/admin/TaskAssignmentRules";
 import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
+import PermittingCompletenessDashboard from "@/components/permitting/PermittingCompletenessDashboard.jsx";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import {
@@ -965,6 +967,10 @@ export default function AdminSettings() {
                     <Users className="w-4 h-4 mr-2" />
                     Resources
                   </TabsTrigger>
+                  <TabsTrigger value="permitting_completeness" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <ClipboardCheck className="w-4 h-4 mr-2" />
+                    Permitting Completeness
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
@@ -1052,6 +1058,10 @@ export default function AdminSettings() {
 
               <TabsContent value="corebridge">
                 <CorebridgeApiSettings sessionToken={sessionToken} />
+              </TabsContent>
+
+              <TabsContent value="permitting_completeness">
+                <PermittingCompletenessDashboard />
               </TabsContent>
 
               <TabsContent value="smartsheet">

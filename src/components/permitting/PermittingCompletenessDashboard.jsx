@@ -1,0 +1,459 @@
+import { useState, useEffect, useCallback } from "react";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Database, FileCheck2, ShieldCheck, AlertTriangle, Clock,
+  ChevronDown, Search, Loader2, CircleSlash, Layers, MapPin, FileText,
+} from "lucide-react";
+
+const STATUS_OPTIONS = [
+  "not_started", "source_discovery", "sources_found", "archive_incomplete",
+  "extraction_pending", "verification_pending", "verified_current",
+  "partial_gaps", "blocked", "monitoring_enabled", "re_review_required",
+];
+const STALE_DAYS_OPTIONS = [30, 60, 90, 180, 365];
+
+function StatCard({ icon: Icon, label, value, sub, accent }) {
+  return (
+    <div className="clay-card p-4 flex items-start gap-3">
+      <div className="rounded-xl p-2" style={{ background: accent || "#E0D4F7" }}>
+        <Icon className="w-5 h-5 text-gray-700" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-2xl font-bold text-gray-800 leading-tight">{value}</div>
+        <div className="text-xs text-gray-500">{label}</div>
+        {sub && <div className="text-[11px] text-gray-400 mt-0.5">{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, icon: Icon, children, defaultOpen = false, badge }) {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className="clay-card border border-gray-100">
+      <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-gray-600" />
+          <span className="font-semibold text-gray-800 text-sm">{title}</span>
+          {badge != null && <Badge variant="secondary" className="text-xs">{badge}</Badge>}
+        </div>
+        <ChevronDown className="w-4 h-4 text-gray-400 data-[state=open]:rotate-180 transition-transform" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-4 pb-4 border-t border-gray-100">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function Row({ label, value, bar }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 text-sm">
+      <span className="text-gray-600 truncate pr-2">{label}</span>
+      <span className="font-semibold text-gray-800 tabular-nums whitespace-nowrap">{value}</span>
+    </div>
+  );
+}
+
+export default function PermittingCompletenessDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filters, setFilters] = useState({
+    state: "all",
+    jurisdiction_type: "all",
+    status: "all",
+    parent_county_name: "all",
+    staleDays: 90,
+  });
+  const [metrics, setMetrics] = useState(null);
+  const [queuePage, setQueuePage] = useState({ items: [], has_more: false, next_cursor: null });
+  const [queueSearch, setQueueSearch] = useState("");
+  const [loadingQueue, setLoadingQueue] = useState(false);
+
+  const loadMetrics = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const staleThreshold = new Date(Date.now() - filters.staleDays * 86400000).toISOString();
+
+      const [
+        queueByState, queueByStatus, queueByType,
+        profilesByState,
+        rewriteVerified, rewriteAdoptionOnly, rewriteEffectiveOnly,
+        sourcesByClass, sourcesTotal, sourcesStale,
+        gapsCount, blockedCount,
+      ] = await Promise.all([
+        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "state", count: true }),
+        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "status", count: true }),
+        base44.entities.SourceCollectionQueue.aggregate({ groupBy: "jurisdiction_type", count: true }),
+        base44.entities.JurisdictionProfile.aggregate({ groupBy: "state", count: true }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified", "rewrite_authority.effectiveDateStatus": "verified" }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.adoptionStatus": "verified" }),
+        base44.entities.JurisdictionProfile.count({ "rewrite_authority.effectiveDateStatus": "verified" }),
+        base44.entities.PermittingSourceDocument.aggregate({ groupBy: "authority_classification", count: true }),
+        base44.entities.PermittingSourceDocument.count({}),
+        base44.entities.PermittingSourceDocument.count({ last_checked: { $lt: staleThreshold } }),
+        base44.entities.SourceCollectionQueue.count({ missing_next: { $exists: true } }),
+        base44.entities.SourceCollectionQueue.count({ status: "blocked" }),
+      ]);
+
+      const queueByStateMap = {};
+      for (const r of queueByState.rows || []) queueByStateMap[r.state] = r.count;
+      const profilesByStateMap = {};
+      for (const r of profilesByState.rows || []) profilesByStateMap[r.state] = r.count;
+      const statusMap = {};
+      for (const r of queueByStatus.rows || []) statusMap[r.status] = r.count;
+      const typeMap = {};
+      for (const r of queueByType.rows || []) typeMap[r.jurisdiction_type] = r.count;
+      const classMap = {};
+      for (const r of sourcesByClass.rows || []) classMap[r.authority_classification] = r.count;
+
+      const totalQueue = Object.values(queueByStateMap).reduce((a, b) => a + b, 0);
+      const totalProfiles = Object.values(profilesByStateMap).reduce((a, b) => a + b, 0);
+
+      setMetrics({
+        queueByState: queueByStateMap,
+        profilesByState: profilesByStateMap,
+        statusMap,
+        typeMap,
+        classMap,
+        totalQueue,
+        totalProfiles,
+        sourcesTotal,
+        sourcesStale,
+        rewriteVerified,
+        rewriteAdoptionOnly,
+        rewriteEffectiveOnly,
+        gapsCount,
+        blockedCount,
+        staleThreshold,
+      });
+    } catch (e) {
+      console.error("Completeness dashboard load error:", e);
+      setError(e?.message || "Failed to load completeness metrics.");
+    } finally {
+      setLoading(false);
+    }
+  }, [filters.staleDays]);
+
+  const loadQueue = useCallback(async (reset = true) => {
+    setLoadingQueue(true);
+    try {
+      const query = {};
+      if (filters.state !== "all") query.state = filters.state;
+      if (filters.jurisdiction_type !== "all") query.jurisdiction_type = filters.jurisdiction_type;
+      if (filters.status !== "all") query.status = filters.status;
+      if (filters.parent_county_name !== "all") query.parent_county_name = filters.parent_county_name;
+      if (queueSearch.trim()) {
+        query.jurisdiction_name = { $regex: queueSearch.trim(), $options: "i" };
+      }
+      const page = await base44.entities.SourceCollectionQueue.filter(query, {
+        sort: "jurisdiction_name",
+        limit: 50,
+        cursor: reset ? undefined : queuePage.next_cursor,
+      });
+      setQueuePage((prev) => ({
+        items: reset ? page.items : [...prev.items, ...page.items],
+        has_more: page.has_more,
+        next_cursor: page.next_cursor,
+      }));
+    } catch (e) {
+      console.error("Queue browse load error:", e);
+    } finally {
+      setLoadingQueue(false);
+    }
+  }, [filters, queueSearch, queuePage.next_cursor]);
+
+  useEffect(() => { loadMetrics(); }, [loadMetrics]);
+  useEffect(() => { loadQueue(true); }, [filters, queueSearch]);
+
+  // Distinct parent counties for the county filter (derived from loaded queue type aggregate is not enough;
+  // we use a distinct call lazily — but to keep it simple and within rate limits, derive from a one-time load).
+  const [counties, setCounties] = useState([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const page = await base44.entities.SourceCollectionQueue.filter(
+          { parent_county_name: { $exists: true } },
+          { distinct: "parent_county_name", limit: 500 }
+        );
+        setCounties((page.items || []).sort());
+      } catch { /* non-fatal */ }
+    })();
+  }, []);
+
+  if (loading && !metrics) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <span className="ml-2 text-gray-500 text-sm">Loading completeness metrics…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="clay-card p-4 border border-red-200 bg-red-50">
+        <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
+          <AlertTriangle className="w-4 h-4" /> {error}
+        </div>
+        <Button variant="outline" size="sm" className="mt-3" onClick={loadMetrics}>Retry</Button>
+      </div>
+    );
+  }
+
+  const m = metrics;
+  const states = Object.keys(m.queueByState).sort();
+
+  return (
+    <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="clay-card p-4">
+        <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+          <Layers className="w-4 h-4" /> Filters
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div>
+            <Label className="text-xs text-gray-500">State</Label>
+            <Select value={filters.state} onValueChange={(v) => setFilters(f => ({ ...f, state: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All states</SelectItem>
+                {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Jurisdiction type</Label>
+            <Select value={filters.jurisdiction_type} onValueChange={(v) => setFilters(f => ({ ...f, jurisdiction_type: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="county">County</SelectItem>
+                <SelectItem value="city">City</SelectItem>
+                <SelectItem value="village">Village</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Collection status</Label>
+            <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Parent county</Label>
+            <Select value={filters.parent_county_name} onValueChange={(v) => setFilters(f => ({ ...f, parent_county_name: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All counties</SelectItem>
+                {counties.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Stale threshold</Label>
+            <Select value={String(filters.staleDays)} onValueChange={(v) => setFilters(f => ({ ...f, staleDays: Number(v) }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STALE_DAYS_OPTIONS.map(d => <SelectItem key={d} value={String(d)}>{d} days</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard icon={Database} label="Queue rows (expected)" value={m.totalQueue} accent="#D4E9F7" />
+        <StatCard icon={MapPin} label="Jurisdiction profiles created" value={m.totalProfiles} sub={`${Math.round((m.totalProfiles / m.totalQueue) * 100)}% of queue`} accent="#C8F4E9" />
+        <StatCard icon={FileText} label="Sources archived" value={m.sourcesTotal} sub={`${m.sourcesStale} stale (> ${filters.staleDays}d)`} accent="#FFE4D6" />
+        <StatCard icon={ShieldCheck} label="Rewrite authority verified" value={m.rewriteVerified} sub={`${m.rewriteAdoptionOnly} adoption · ${m.rewriteEffectiveOnly} effective`} accent="#FFD6E8" />
+      </div>
+
+      {/* Queue vs Profiles by State */}
+      <Section title="Queue vs. profiles by state" icon={MapPin} defaultOpen badge={`${states.length} states`}>
+        <div className="space-y-3 pt-3">
+          {states.map(s => {
+            const q = m.queueByState[s] || 0;
+            const p = m.profilesByState[s] || 0;
+            const pct = q > 0 ? Math.round((p / q) * 100) : 0;
+            return (
+              <div key={s}>
+                <Row label={s} value={`${p} / ${q} profiles`} />
+                <Progress value={pct} className="h-1.5 mt-1" />
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Collection status distribution */}
+      <Section title="Collection status distribution" icon={Database} badge={`${m.totalQueue} rows`}>
+        <div className="space-y-1 pt-3">
+          {STATUS_OPTIONS.map(s => {
+            const count = m.statusMap[s] || 0;
+            if (count === 0) return null;
+            return <Row key={s} label={s.replace(/_/g, " ")} value={count} />;
+          })}
+          {Object.values(m.statusMap).every(v => v === 0) && (
+            <p className="text-sm text-gray-400 py-2">No status data.</p>
+          )}
+        </div>
+      </Section>
+
+      {/* Authority mapping */}
+      <Section title="Authority mapping (rewrite verification)" icon={ShieldCheck}>
+        <div className="space-y-1 pt-3">
+          <Row label="Adoption + effective both verified" value={m.rewriteVerified} />
+          <Row label="Adoption verified (any effective)" value={m.rewriteAdoptionOnly} />
+          <Row label="Effective verified (any adoption)" value={m.rewriteEffectiveOnly} />
+          <Row label="Profiles without verified rewrite authority" value={Math.max(0, m.totalProfiles - m.rewriteVerified)} />
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Drafts never become authoritative. Verified means staff reviewed official adoption and effective-date evidence for that jurisdiction.
+        </p>
+      </Section>
+
+      {/* Sources archived + classification */}
+      <Section title="Sources archived & classification" icon={FileCheck2} badge={m.sourcesTotal}>
+        <div className="space-y-1 pt-3">
+          {Object.entries(m.classMap).sort((a, b) => b[1] - a[1]).map(([cls, count]) => (
+            <Row key={cls} label={cls.replace(/_/g, " ")} value={count} />
+          ))}
+          {Object.keys(m.classMap).length === 0 && <p className="text-sm text-gray-400 py-2">No sources archived yet.</p>}
+        </div>
+      </Section>
+
+      {/* Gaps & blocked */}
+      <Section title="Explicit gaps & blocked sources" icon={AlertTriangle} badge={`${m.gapsCount} gaps · ${m.blockedCount} blocked`}>
+        <div className="space-y-1 pt-3">
+          <Row label="Queue rows with missing_next recorded" value={m.gapsCount} />
+          <Row label="Queue rows blocked" value={m.blockedCount} />
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          See the queue browse view below for per-locality missing_next detail.
+        </p>
+      </Section>
+
+      {/* Stale sources */}
+      <Section title="Stale sources" icon={Clock} badge={`${m.sourcesStale} > ${filters.staleDays}d`}>
+        <div className="space-y-1 pt-3">
+          <Row label={`Sources not checked in ${filters.staleDays}+ days`} value={m.sourcesStale} />
+          <Row label="Total sources archived" value={m.sourcesTotal} />
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Adjust the stale threshold in the filter bar. Re-checking is a later-phase action.
+        </p>
+      </Section>
+
+      {/* Not yet implemented */}
+      <Section title="Later-phase metrics (not yet implemented)" icon={CircleSlash}>
+        <div className="space-y-2 pt-3">
+          {[
+            "Rules extracted & approved (Phase 6+)",
+            "Monitoring alerts active (Phase 7+)",
+            "Re-review queue depth (Phase 8+)",
+          ].map(label => (
+            <div key={label} className="flex items-center justify-between py-1.5 text-sm border border-dashed border-gray-200 rounded-lg px-3 bg-gray-50/50">
+              <span className="text-gray-400">{label}</span>
+              <Badge variant="outline" className="text-gray-400 border-gray-300">not yet implemented</Badge>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          These placeholders activate when their phases land. No data is faked.
+        </p>
+      </Section>
+
+      {/* Queue admin browse */}
+      <Section title="Queue admin browse" icon={Search} defaultOpen>
+        <div className="pt-3 space-y-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search jurisdiction name…"
+                value={queueSearch}
+                onChange={(e) => setQueueSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={() => loadMetrics()} disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
+            </Button>
+          </div>
+          {loadingQueue && queuePage.items.length === 0 ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            </div>
+          ) : queuePage.items.length === 0 ? (
+            <p className="text-sm text-gray-400 py-4 text-center">No queue rows match the current filters.</p>
+          ) : (
+            <div className="space-y-2">
+              {queuePage.items.map((row) => (
+                <div key={row.id} className="border border-gray-100 rounded-lg p-3 bg-white">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Badge variant="secondary" className="text-[10px] capitalize whitespace-nowrap">
+                        {row.jurisdiction_type || "—"}
+                      </Badge>
+                      <span className="font-medium text-gray-800 text-sm truncate">{row.jurisdiction_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap">
+                      <span>{row.state}</span>
+                      {row.parent_county_name && <span>· {row.parent_county_name}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge
+                      className="text-[10px]"
+                      style={{
+                        background: row.status === "verified_current" ? "#C8F4E9"
+                          : row.status === "blocked" ? "#FFE4D6"
+                          : row.status === "not_started" ? "#F1F5F9" : "#FEF3C7",
+                        color: "#374151",
+                      }}
+                    >
+                      {(row.status || "not_started").replace(/_/g, " ")}
+                    </Badge>
+                    {row.missing_next && (
+                      <span className="text-xs text-gray-500 truncate">
+                        Next: {row.missing_next}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {queuePage.has_more && (
+                <Button variant="outline" size="sm" className="w-full" onClick={() => loadQueue(false)} disabled={loadingQueue}>
+                  {loadingQueue ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load more"}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </Section>
+    </div>
+  );
+}

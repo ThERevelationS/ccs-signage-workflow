@@ -1,11 +1,11 @@
 {
   "name": "SourceCollectionQueue",
   "type": "object",
-  "description": "Collection-queue row tracking source-gathering progress for one jurisdiction. Seeded with all KY and OH counties; Boone County KY is marked verified_current with its completed archive summary.",
+  "description": "Collection-queue row tracking source-gathering progress for one jurisdiction. Seeded with all KY and OH counties plus incorporated KY cities and OH cities/villaries. Boone County KY is marked verified_current with its completed archive summary.",
   "properties": {
     "jurisdiction_name": {
       "type": "string",
-      "description": "Name of the jurisdiction (e.g. 'Boone County')."
+      "description": "Name of the jurisdiction (e.g. 'Boone County', 'Florence')."
     },
     "state": {
       "type": "string",
@@ -22,6 +22,10 @@
       ],
       "default": "county",
       "description": "Type of jurisdiction."
+    },
+    "parent_county_name": {
+      "type": "string",
+      "description": "Name of the parent county for non-county jurisdictions (city/village/township), when known from the static seed list. Blank for county rows."
     },
     "authority_note": {
       "type": "string",
