@@ -365,7 +365,76 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       ? setInterval(() => loadWorkOrders(false, recordScope), 60000)
       : null;
     return () => interval && clearInterval(interval);
-  }, [recordScope, sessionToken]);
+  }, [recordScope, sessionToken, releaseLiveEditPins]);
+
+  useEffect(() => {
+    if (!sessionToken) return undefined;
+
+    let unsubscribe = null;
+    try {
+      unsubscribe = WorkOrder.subscribe((event) => {
+        const id = String(event?.id || event?.data?.id || "").trim();
+        if (!id) return;
+
+        if (event?.type === "delete" || event?.data?.deleted === true) {
+          if (liveEditPinsRef.current[id]) {
+            const nextPins = { ...liveEditPinsRef.current };
+            delete nextPins[id];
+            liveEditPinsRef.current = nextPins;
+            setLiveEditPinVersion((version) => version + 1);
+          }
+          setWorkOrders((current) => current.filter((row) => row.id !== id));
+          setSelectedWorkOrder((selected) => selected?.id === id ? null : selected);
+          return;
+        }
+
+        const remotePatch = event?.data && typeof event.data === "object" ? event.data : {};
+        const pendingForRow = pendingChangesRef.current[id] || {};
+        const currentPin = liveEditPinsRef.current[id] || null;
+        if (currentPin) {
+          const reconciledPin = reconcileSalesLiveEditPinWithRemote(currentPin, remotePatch, pendingForRow);
+          if (salesLiveEditPinChanged(currentPin, reconciledPin)) {
+            const nextPins = { ...liveEditPinsRef.current };
+            if (reconciledPin) nextPins[id] = reconciledPin;
+            else delete nextPins[id];
+            liveEditPinsRef.current = nextPins;
+            setLiveEditPinVersion((version) => version + 1);
+          }
+        }
+
+        setWorkOrders((current) => {
+          const existing = current.find((row) => row.id === id) || null;
+          const remoteRow = { ...(existing || {}), ...remotePatch, id };
+          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current
+            ? pendingForRow
+            : {};
+          const displayRow = { ...remoteRow, ...scopedPending };
+          const projectedRow = projectSalesRowForLiveView(displayRow, liveEditPinsRef.current[id] || null);
+          const belongsToWorkspace = salesRecordBelongsToLoadedScope(projectedRow, activeRecordScopeRef.current);
+
+          if (!belongsToWorkspace) {
+            return existing ? current.filter((row) => row.id !== id) : current;
+          }
+          if (!existing) return [displayRow, ...current];
+          return current.map((row) => row.id === id ? displayRow : row);
+        });
+
+        setSelectedWorkOrder((selected) => {
+          if (selected?.id !== id) return selected;
+          const scopedPending = pendingRecordScopesRef.current[id] === activeRecordScopeRef.current
+            ? pendingForRow
+            : {};
+          return { ...selected, ...remotePatch, id, ...scopedPending };
+        });
+      });
+    } catch (error) {
+      console.error("Sales Pipeline realtime WorkOrder subscription failed:", error);
+    }
+
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [sessionToken]);
 
   useEffect(() => {
     if (!["insights", "daily"].includes(viewMode)) return;
