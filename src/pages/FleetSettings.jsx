@@ -335,7 +335,7 @@ export default function FleetSettings() {
       setMechanicLinks(data?.links || []);
       setGeneratedMechanicLink("");
       setMechanicRevoke(null);
-      if (Number(data?.reconciled_applied || 0) || Number(data?.reconciled_failed || 0)) setMechanicNotice(`Link revoked. ${Number(data?.reconciled_applied || 0)} in-flight mechanic operation(s) were confirmed applied and ${Number(data?.reconciled_failed || 0)} were closed without replay.`);
+      if (Number(data?.reconciled_applied || 0) || Number(data?.reconciled_cancelled || 0)) setMechanicNotice(`Link revoked. ${Number(data?.reconciled_applied || 0)} in-flight mechanic operation(s) were confirmed applied and ${Number(data?.reconciled_cancelled || 0)} were closed without replay.`);
       await runServerCheck();
       await runIntegrityAudit();
     } catch (error) {
