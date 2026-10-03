@@ -4724,7 +4724,7 @@ Deno.serve(async (req) => {
             authentication_method: authenticationMethodFor(actor, target), server_timestamp: new Date().toISOString(),
             request_id: previousRequestId, time_entry_id: correctionRequest.time_entry_id,
             reason: correctionRequest.reviewer_reason || 'Recovered abandoned manager review',
-            details: { correction_request_id: correctionRequest.id, decision: recoveredStatus, applied_audit_id: staleAudit.id },
+            details: { correction_request_id: correctionRequest.id, decision: recoveredStatus, applied_audit_id: staleAudit.id, review_payload_hash: previousReviewHash, recovered_after_review_save: true },
           });
           const recoveredRequest = await correctionRequestEntity.get(correctionRequest.id);
           const punchReconciled = await reconcileMissedClockOutTerminal(recoveredRequest, staleAudit.id);
