@@ -2620,6 +2620,25 @@ Deno.serve(async (req) => {
         }
       }
       if (decision === 'reopen' && period.status === 'finalized') {
+        if (Number(period.finalized_summary?.snapshot_version || 0) >= 2) {
+          const currentHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
+          const currentHistoryHash = await payloadHash(currentHistory);
+          const expectedChainHash = await payloadHash({
+            entry_count: period.finalized_summary.entry_count,
+            employee_count: period.finalized_summary.employee_count,
+            total_hours: period.finalized_summary.total_hours,
+            lock_timestamp: period.finalized_summary.lock_timestamp,
+            locked_by: period.finalized_summary.locked_by,
+            request_id: period.finalized_summary.request_id,
+            snapshot_version: period.finalized_summary.snapshot_version,
+            entry_snapshot_hash: period.finalized_summary.entry_snapshot_hash,
+            previous_history_hash: period.finalized_summary.previous_history_hash,
+          });
+          if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
+              !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
+            return Response.json({ success: false, error: 'Payroll snapshot history integrity failed. Admin investigation is required before reopening.' }, { status: 409 });
+          }
+        }
         const finalizationAudit = await uniqueRow(auditEntity, {
           action: 'pay_period_status', request_id: String(period.last_request_id || ''),
         }, 'Pay-period finalization audit');
