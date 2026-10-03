@@ -485,6 +485,19 @@ export default function TimeClock() {
           )}
         </div>
 
+        {sessionNotice && (
+          <div className={`mb-4 rounded-xl border p-3 text-sm ${
+            sessionNotice.tone === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : sessionNotice.tone === "info"
+                ? "border-blue-200 bg-blue-50 text-blue-800"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+          }`}>
+            <div className="font-semibold">{sessionNotice.title}</div>
+            <div className="mt-1 text-xs leading-relaxed">{sessionNotice.message}</div>
+          </div>
+        )}
+
         {timeEntryError && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 flex items-start justify-between gap-3">
             <div>
@@ -503,6 +516,7 @@ export default function TimeClock() {
 
         {/* Quick Clock In/Out Section - Always Visible */}
         <QuickClockSection
+          key={`${loggedInUser?.email || "guest"}:${timeClockSessionToken ? "employee-session" : "shared-session"}`}
           allUsers={allUsers}
           employeeSessionToken={timeClockSessionToken}
           employeeSessionUser={loggedInUser}
@@ -523,8 +537,11 @@ export default function TimeClock() {
           <div className="clay-card p-8 text-center">
             <Lock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold mb-2">Login Required</h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-gray-500 mb-2">
               Login to view your time history, time off requests, and PTO balance
+            </p>
+            <p className="text-xs text-gray-400 mb-4">
+              Full Access automatically locks after {Math.round(TIME_CLOCK_IDLE_LOGOUT_MS / 60000)} minutes without activity. Auto-lock never clocks you out or changes your recorded time.
             </p>
             <Button onClick={() => setShowLoginDialog(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
               <LogIn className="w-4 h-4" />
@@ -543,6 +560,9 @@ export default function TimeClock() {
                     {isSalaryEmployee && <Badge className="bg-purple-100 text-purple-700">Salary</Badge>}
                   </div>
                   <p className="text-sm text-gray-500">@{loggedInUser.username}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    Full Access auto-locks after {Math.round(TIME_CLOCK_IDLE_LOGOUT_MS / 60000)} idle minutes without changing punch state.
+                  </p>
                 </div>
               </div>
             </div>
