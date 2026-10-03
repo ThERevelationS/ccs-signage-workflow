@@ -1,0 +1,19 @@
+{
+  "title": "Boone County 2026 Zoning Ordinance Update — Meetings / Workshops status evidence",
+  "sourceUrl": "https://online.encodeplus.com/regs/boonecounty-ky-rewrite/page.aspx?name=Meetings-Workshops",
+  "checkedAt": "2026-10-03",
+  "httpStatus": 200,
+  "contentType": "text/html; charset=utf-8",
+  "bytes": 10690,
+  "sha256": "70ae2f8cc301ebfc0294f625c6e4677eab5164e4a6fe2692516ea579740fd9ba",
+  "repositoryPath": "public/permitting/sources/boone-ky/2026-zoning-rewrite-meetings-workshops-2026-10-03.html",
+  "pageStatusText": "Public engagement activities, meetings, and hearings on the draft Zoning Regulations have been or will be held on the dates below. Check back as these dates and locations may change.",
+  "listedEvents": [
+    {"description": "Boone County Planning Commission Long Range/Comprehensive Plan Committee", "dateTime": "April 29, 2026 at 6:00 pm"},
+    {"description": "Public Workshop (Open House Format)", "dateTime": "July 16, 2026, 4:30 pm - 6:30 pm"}
+  ],
+  "laterAdoptionEntryPresent": false,
+  "authorityBoundary": "meetings_page_still_labels_rewrite_draft_and_does_not_establish_adoption",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless newer official evidence establishes final adoption and an effective replacement.",
+  "evidenceScope": "As checked on 2026-10-03, the official rewrite Meetings / Workshops page still describes the Zoning Regulations as draft and lists only the April 29 committee meeting and July 16 public workshop. It contains no September or October adoption hearing/action entry and no final-adoption or effective-date statement. That absence is evidence about this page only; it is not proof that no adoption action occurred elsewhere. The page therefore does not establish replacement authority for the separately archived adopted Article 34 sign regulations."
+}
