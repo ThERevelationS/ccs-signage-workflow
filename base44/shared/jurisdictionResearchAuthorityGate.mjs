@@ -11,6 +11,8 @@ const REGULATORY_FIELDS = Object.freeze([
 ]);
 
 const REWRITE_SOURCE_PATTERNS = Object.freeze([
+  /\b(?:zo|zoning)\b.{0,40}\bdraft\b/i,
+  /\bdraft\b.{0,40}\b(?:zo|zoning)\b/i,
   /\b(?:draft|proposed)\b.{0,80}\b(?:zoning|sign|code|ordinance|regulation)/i,
   /\b(?:zoning|sign|code|ordinance|regulation)\b.{0,80}\b(?:draft|proposed)\b/i,
   /\bcomprehensive\b.{0,60}\b(?:rewrite|replacement|update|revision)\b/i,
