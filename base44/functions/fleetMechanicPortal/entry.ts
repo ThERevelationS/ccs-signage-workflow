@@ -3,7 +3,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
-import { buildMechanicRecoveryPatch, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
+import { buildMechanicRecoveryPatch, mechanicGrantAllowsMutation, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
@@ -210,6 +210,24 @@ async function validateGrant(Access: any, token: unknown) {
     const expiry = Date.parse(String(row?.expires_at || ''));
     return !Number.isFinite(expiry) || expiry > now;
   }) || null;
+}
+
+function mechanicAccessChangedError(reason = '') {
+  const detail = reason === 'outside_scope'
+    ? 'This mechanic link no longer includes this Fleet equipment.'
+    : reason === 'action_not_allowed'
+      ? 'This mechanic link is no longer allowed to perform this action.'
+      : 'This mechanic portal link was revoked or expired before the operation finished.';
+  const error:any = new Error(`${detail} Nothing further was applied.`);
+  error.code = 'FLEET_MECHANIC_ACCESS_REVOKED';
+  return error;
+}
+
+async function requireCurrentMechanicGrant(Access: any, grantId: string, action: string, equipmentId: string) {
+  const latest = await Access.get(grantId).catch(()=>null);
+  const check = mechanicGrantAllowsMutation(latest,action,equipmentId,Date.now());
+  if (!check.allowed) throw mechanicAccessChangedError(check.reason);
+  return latest;
 }
 
 function sanitizeEquipment(row: any) {
