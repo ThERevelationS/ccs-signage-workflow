@@ -4432,6 +4432,38 @@ Deno.serve(async (req) => {
       if (!correctionRequest?.id || asEmail(correctionRequest.user_email) !== target.email) return Response.json({ success: false, error: 'Correction request was not found.' }, { status: 404 });
       const missedClockOutRecovery = String(correctionRequest.request_kind || 'standard') === 'missed_clock_out';
 
+      const validateMissedClockOutLink = async (requestRecord: any, requirePending = false) => {
+        if (!missedClockOutRecovery) return { punchCase: null };
+        const punchExceptionId = String(requestRecord?.punch_exception_id || '').trim();
+        if (!punchExceptionId) return { punchCase: null, investigation: true };
+        const punchCase = await punchExceptionEntity.get(punchExceptionId).catch(() => null);
+        const requestedClockOut = String(requestRecord?.requested_changes?.clock_out || '');
+        const structurallyValid = Boolean(
+          punchCase?.id &&
+          String(punchCase.id) === punchExceptionId &&
+          asEmail(punchCase.user_email) === target.email &&
+          String(punchCase.time_entry_id || '') === String(requestRecord.time_entry_id || '') &&
+          punchCase.exception_type === 'missed_clock_out' &&
+          String(punchCase.case_key || '') === `missed_clock_out:${requestRecord.time_entry_id}` &&
+          String(punchCase.correction_request_id || '') === String(requestRecord.id || '') &&
+          String(punchCase.request_id || '') === String(requestRecord.request_id || '') &&
+          punchCase.employee_response === 'missed_clock_out' &&
+          String(punchCase.claimed_clock_out || '') === requestedClockOut
+        );
+        if (!structurallyValid) return { punchCase, investigation: true };
+        if (requirePending && punchCase.status !== 'pending_manager_review') return { punchCase, investigation: true };
+        return { punchCase };
+      };
+      if (missedClockOutRecovery) {
+        const linkedCase = await validateMissedClockOutLink(
+          correctionRequest,
+          ['pending', 'reviewing'].includes(String(correctionRequest.status || '')),
+        );
+        if (linkedCase.investigation) {
+          return Response.json({ success: false, error: 'The missed-clock-out correction is not consistently linked to its Punch Exception. Admin investigation is required before review.' }, { status: 409 });
+        }
+      }
+
       const sameReviewPayload = () => {
         const storedHash = String(correctionRequest.review_payload_hash || '');
         const storedDecision = String(correctionRequest.review_decision || '');
@@ -4529,6 +4561,48 @@ Deno.serve(async (req) => {
         String(auditRow.details?.correction_request_id || '') === correctionRequest.id &&
         constantTimeEqual(String(auditRow.details?.review_payload_hash || ''), expectedReviewHash)
       );
+      const reconcileMissedClockOutTerminal = async (requestRecord: any, resolutionAuditId: string) => {
+        if (!missedClockOutRecovery) return { ok: true };
+        const expectedCaseStatus = requestRecord?.status === 'rejected'
+          ? 'rejected'
+          : ['approved', 'approved_modified'].includes(String(requestRecord?.status || ''))
+            ? 'resolved'
+            : '';
+        if (!expectedCaseStatus || !resolutionAuditId) return { ok: false, investigation: true };
+        const linked = await validateMissedClockOutLink(requestRecord, false);
+        if (linked.investigation || !linked.punchCase?.id) return { ok: false, investigation: true };
+        const punchCase = linked.punchCase;
+        if (punchCase.status === expectedCaseStatus) {
+          return String(punchCase.resolution_audit_id || '') === resolutionAuditId
+            ? { ok: true, punchCase }
+            : { ok: false, investigation: true };
+        }
+        if (punchCase.status !== 'pending_manager_review') return { ok: false, investigation: true };
+        const resolutionNote = expectedCaseStatus === 'rejected'
+          ? (String(requestRecord.reviewer_reason || '').trim() || 'Manager rejected the employee-reported missed clock-out; the shift remains unresolved.')
+          : requestRecord.status === 'approved_modified'
+            ? 'Manager approved the missed clock-out with modified punch details.'
+            : 'Manager approved the employee-reported missed clock-out.';
+        const updated = await punchExceptionEntity.updateMany(
+          {
+            id: punchCase.id,
+            time_entry_id: requestRecord.time_entry_id,
+            correction_request_id: requestRecord.id,
+            request_id: requestRecord.request_id,
+            exception_type: 'missed_clock_out',
+            status: 'pending_manager_review',
+          },
+          { $set: { status: expectedCaseStatus, resolution_audit_id: resolutionAuditId, resolution_note: resolutionNote } },
+        );
+        if (!updated || typeof updated.updated !== 'number') return { ok: false, retry: true };
+        const freshCase = await punchExceptionEntity.get(punchCase.id).catch(() => null);
+        if (
+          freshCase?.status === expectedCaseStatus &&
+          String(freshCase.resolution_audit_id || '') === resolutionAuditId &&
+          String(freshCase.correction_request_id || '') === String(requestRecord.id || '')
+        ) return { ok: true, punchCase: freshCase };
+        return updated.updated === 0 ? { ok: false, investigation: true } : { ok: false, retry: true };
+      };
 
       if (['approved', 'approved_modified', 'rejected'].includes(correctionRequest.status)) {
         if (String(correctionRequest.review_request_id || '') === requestId) {
@@ -4536,6 +4610,12 @@ Deno.serve(async (req) => {
           const reviewAuditResult = await ensureReviewAuditConfirmed(correctionRequest, true);
           if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'This completed correction review has ambiguous or mismatched audit evidence. Admin investigation is required.' }, { status: 409 });
           if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The correction review is saved but its audit is still being finalized. Retry the same review.' }, { status: 409 });
+          const punchResolutionAuditId = correctionRequest.status === 'rejected'
+            ? reviewAuditResult.audit.id
+            : String(correctionRequest.applied_audit_id || '');
+          const punchReconciled = await reconcileMissedClockOutTerminal(correctionRequest, punchResolutionAuditId);
+          if (punchReconciled.investigation) return Response.json({ success: false, error: 'The correction review is complete but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
+          if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The correction review is complete but its Punch Exception is still being finalized. Retry the same review.' }, { status: 409 });
           return Response.json({ success: true, request: correctionRequest, review_audit_id: reviewAuditResult.audit.id, reused: true });
         }
         return Response.json({ success: false, error: 'This correction request has already been reviewed.' }, { status: 409 });
@@ -4646,14 +4726,13 @@ Deno.serve(async (req) => {
             reason: correctionRequest.reviewer_reason || 'Recovered abandoned manager review',
             details: { correction_request_id: correctionRequest.id, decision: recoveredStatus, applied_audit_id: staleAudit.id },
           });
-          if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
-            await punchExceptionEntity.updateMany(
-              { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
-              { $set: {
-                status: 'resolved', resolution_audit_id: staleAudit.id,
-                resolution_note: 'Recovered an interrupted manager approval for the employee-reported missed clock-out.',
-              } },
-            );
+          const recoveredRequest = await correctionRequestEntity.get(correctionRequest.id);
+          const punchReconciled = await reconcileMissedClockOutTerminal(recoveredRequest, staleAudit.id);
+          if (punchReconciled.investigation) {
+            return Response.json({ success: false, recovered: true, error: 'The interrupted manager approval was recovered, but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
+          }
+          if (!punchReconciled.ok) {
+            return Response.json({ success: false, recovered: true, error: 'The interrupted manager approval was recovered, but Punch Exception finalization is incomplete. Retry the original review request.' }, { status: 409 });
           }
           return Response.json({ success: false, recovered: true, error: 'A previous interrupted manager approval was recovered. Reload the correction queue before taking another action.' }, { status: 409 });
         }
@@ -4696,15 +4775,9 @@ Deno.serve(async (req) => {
         const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
         if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The rejection was saved but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
         if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The rejection was saved but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
-        if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
-          await punchExceptionEntity.updateMany(
-            { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
-            { $set: {
-              status: 'rejected', resolution_audit_id: reviewAuditResult.audit.id,
-              resolution_note: reviewerReason || 'Manager rejected the employee-reported missed clock-out; the shift remains unresolved.',
-            } },
-          );
-        }
+        const punchReconciled = await reconcileMissedClockOutTerminal(savedRequest, reviewAuditResult.audit.id);
+        if (punchReconciled.investigation) return Response.json({ success: false, error: 'The rejection was saved but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
+        if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The rejection was saved but its Punch Exception could not be finalized. Retry the same review.' }, { status: 409 });
         return Response.json({ success: true, request: savedRequest, review_audit_id: reviewAuditResult.audit.id });
       }
 
@@ -4865,17 +4938,9 @@ Deno.serve(async (req) => {
       const reviewAuditResult = await ensureReviewAuditConfirmed(savedRequest);
       if (reviewAuditResult.investigation) return Response.json({ success: false, error: 'The correction was applied but its review audit is ambiguous or mismatched. Admin investigation is required.' }, { status: 409 });
       if (!reviewAuditResult.audit) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied and review saved, but its review audit could not be confirmed. Retry the same review.' }, { status: 409 });
-      if (missedClockOutRecovery && correctionRequest.punch_exception_id) {
-        await punchExceptionEntity.updateMany(
-          { id: correctionRequest.punch_exception_id, time_entry_id: correctionRequest.time_entry_id },
-          { $set: {
-            status: 'resolved', resolution_audit_id: correctionAuditId,
-            resolution_note: decision === 'approve_modified'
-              ? 'Manager approved the missed clock-out with modified punch details.'
-              : 'Manager approved the employee-reported missed clock-out.',
-          } },
-        );
-      }
+      const punchReconciled = await reconcileMissedClockOutTerminal(savedRequest, correctionAuditId);
+      if (punchReconciled.investigation) return Response.json({ success: false, error: 'The correction was applied but the linked Punch Exception is inconsistent. Admin investigation is required.' }, { status: 409 });
+      if (!punchReconciled.ok) return Response.json({ success: false, retry_same_request: true, error: 'The correction was applied but its Punch Exception could not be finalized. Retry the same review.' }, { status: 409 });
       return Response.json({ success: true, request: savedRequest, entry, audit_id: correctionAuditId, review_audit_id: reviewAuditResult.audit.id });
     }
 
