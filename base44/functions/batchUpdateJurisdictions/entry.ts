@@ -88,7 +88,12 @@ Deno.serve(async (req) => {
         }
         updateData.parent_county = data.parent_county || jurisdiction.parent_county;
         updateData.last_updated = new Date().toISOString();
-        const authorityGatedUpdate = gateResearchRegulatoryPromotion({ jurisdiction, researchData: data, updateData }).updateData;
+        const authorityGatedUpdate = gateResearchRegulatoryPromotion({
+          jurisdiction,
+          researchData: data,
+          updateData,
+          documentEvidence: updateData.documents || [],
+        }).updateData;
         const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, authorityGatedUpdate);
 
         await replaceJurisdictionFieldsIfUnchanged({
