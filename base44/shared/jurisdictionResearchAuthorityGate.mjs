@@ -37,7 +37,7 @@ function sourceStrings(data = {}) {
   };
   const addSource = (source) => {
     if (!source || typeof source !== "object") return;
-    for (const key of ["title", "name", "label", "url", "source_url", "description", "notes"]) add(source[key]);
+    for (const key of ["title", "name", "label", "url", "source_url", "description", "notes", "ai_summary", "summary", "extracted_text", "content"]) add(source[key]);
   };
 
   for (const key of ["source_url", "sourceUrl", "official_source_url", "notes", "summary"]) add(data?.[key]);
@@ -78,9 +78,11 @@ export function assessStoredRewriteAuthority(jurisdiction = {}) {
   return { promotable: reasons.length === 0, reasons };
 }
 
-export function gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData } = {}) {
+export function gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData, documentEvidence } = {}) {
   const next = { ...(updateData || {}) };
-  if (!isComprehensiveRewriteResearch(researchData)) {
+  const documentRewriteDetected = Array.isArray(documentEvidence) &&
+    classifyRewriteSourceAuthority({ documents: documentEvidence }).isComprehensiveRewrite;
+  if (!isComprehensiveRewriteResearch(researchData) && !documentRewriteDetected) {
     return { updateData: next, blocked: false, reasons: [] };
   }
 
