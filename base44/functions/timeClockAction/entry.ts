@@ -2901,6 +2901,7 @@ Deno.serve(async (req) => {
           locked_by: actorEmail,
           request_id: requestId,
           snapshot_version: 1,
+          snapshot_active: true,
           entry_snapshot_hash: entrySnapshotHash,
         };
         const finalized = await payPeriodEntity.updateMany(
