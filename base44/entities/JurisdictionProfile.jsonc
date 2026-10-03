@@ -269,6 +269,10 @@
           "format": "date-time",
           "description": "When the adoption evidence was reviewed and verified."
         },
+        "adoption_verified_by": {
+          "type": "string",
+          "description": "Admin reviewer who verified the legislative adoption evidence."
+        },
         "effectiveDateStatus": {
           "type": "string",
           "enum": [
@@ -290,6 +294,10 @@
           "type": "string",
           "format": "date-time",
           "description": "When effective-date/applicability evidence was reviewed and verified."
+        },
+        "effective_date_verified_by": {
+          "type": "string",
+          "description": "Admin reviewer who verified the effective-date/applicability evidence."
         },
         "verification_notes": {
           "type": "string",
