@@ -1654,6 +1654,8 @@ test('pay-period finalization requires audit evidence for request-marked approva
   assert.equal(result.status, 409, JSON.stringify(result.body));
   assert.equal(h.period().status, 'review');
   assert.equal(h.entryLocks().length, 0);
+  const blockedAudit = h.audit('evidence-check-001')[0];
+  assert.equal(blockedAudit.details.approval_evidence_missing_count, 1);
 });
 
 test('final corrected-shift approval is bound to terminal correction evidence', async () => {
