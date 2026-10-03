@@ -91,6 +91,7 @@ export default function SalesPipeline() {
   const [showColumnFilterDialog, setShowColumnFilterDialog] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
+  const [columnHeaderFilter, setColumnHeaderFilter] = useState(null);
   const canImportExport = currentUser?.role === "admin" || currentUser?.can_import_export === true;
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
@@ -217,6 +218,13 @@ export default function SalesPipeline() {
     persistFilterPreferences({ informationFilter: "all", attention: value });
   };
 
+  const clearActiveFilters = () => {
+    setAttentionFilter("all");
+    setFilterStatus("all");
+    spreadsheetRef.current?.clearColumnHeaderFilter?.();
+    persistFilterPreferences({ informationFilter: "all", attention: "all" });
+  };
+
   const chooseView = (nextView) => {
     // Search is a row-navigation aid. Insights has no visible result list, so
     // do not let a hidden search silently narrow its reporting or reappear
@@ -239,7 +247,7 @@ export default function SalesPipeline() {
     (recordScope === "current" || recordScope === "all");
   const moreAttentionSelected = salesMoreAttentionSelected(attentionFilter);
   const selectedMoreAttention = moreAttentionSelected ? salesAttentionOption(attentionFilter) : null;
-  const hasActiveFilters = attentionFilter !== "all" || filterStatus !== "all";
+  const hasActiveFilters = attentionFilter !== "all" || filterStatus !== "all" || Boolean(columnHeaderFilter);
   const secondaryMetricLabel = ["quote_no_followup", "no_next_action", "near_close", "stale"].includes(attentionFilter)
     ? salesAttentionOption(attentionFilter)?.label : null;
 
@@ -446,9 +454,9 @@ export default function SalesPipeline() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {hasActiveFilters && (
-                  <button type="button" onClick={() => applyAttentionFilter("all")}
+                  <button type="button" onClick={clearActiveFilters}
                     className="inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:justify-start"
-                    aria-label="Clear active Sales information and attention filters">
+                    aria-label="Clear active Sales information, attention, and table column filters">
                     <X className="h-3.5 w-3.5" aria-hidden="true" /> Clear filters
                   </button>
                 )}
@@ -534,6 +542,20 @@ export default function SalesPipeline() {
               </SelectContent>
             </Select>
             </div>
+
+            {columnHeaderFilter && (
+              <button
+                type="button"
+                onClick={() => spreadsheetRef.current?.clearColumnHeaderFilter?.()}
+                title={`Active table column filter: ${columnHeaderFilter.label} · ${columnHeaderFilter.detail}. Click to clear this filter without changing the sort.`}
+                aria-label={`Clear table column filter on ${columnHeaderFilter.label}: ${columnHeaderFilter.detail}`}
+                className="col-span-2 inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-md border border-blue-300 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-900 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:col-span-1 sm:min-h-9 sm:max-w-[260px] sm:justify-start"
+              >
+                <Filter className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">Table: {columnHeaderFilter.label} · {columnHeaderFilter.detail}</span>
+                <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              </button>
+            )}
             
           </div>
           {saveSyncState.message && !showDuplicateCleanup && (
@@ -732,6 +754,7 @@ export default function SalesPipeline() {
             outcomePeriod={outcomePeriod}
             viewMode={viewMode}
             onSummaryChange={setPipelineSummary}
+            onColumnHeaderFilterChange={setColumnHeaderFilter}
             showButtonsInline={false}
             activeColumnPreset={activeColumnPreset}
             customFilters={activeFilters.filter(f => f.type === "filter")}
