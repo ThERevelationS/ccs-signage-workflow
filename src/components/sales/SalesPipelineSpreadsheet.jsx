@@ -502,12 +502,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return page;
   };
 
-  const mergeLoadedRows = (rows, scope = activeRecordScopeRef.current) => [...new Map(rows.map((order) => [order.id, order])).values()]
-    .map((order) => ({
-      ...order,
-      ...(pendingRecordScopesRef.current[order.id] === scope ? (pendingChangesRef.current[order.id] || {}) : {}),
-    }))
-    .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+  const mergeLoadedRows = (rows, scope = activeRecordScopeRef.current, currentRows = []) => {
+    const mergedById = new Map(rows.map((order) => [order.id, order]));
+
+    // A background reload must not make one of this user's actively edited rows
+    // disappear merely because the autosaved value moved it outside the server
+    // query. Preserve it until the live-edit pin is intentionally released.
+    for (const currentRow of currentRows || []) {
+      const pin = liveEditPinsRef.current[currentRow?.id];
+      if (!pin || mergedById.has(currentRow.id)) continue;
+      const projected = projectSalesRowForLiveView(currentRow, pin);
+      if (salesRecordBelongsToLoadedScope(projected, scope)) {
+        mergedById.set(currentRow.id, currentRow);
+      }
+    }
+
+    return [...mergedById.values()]
+      .map((order) => ({
+        ...order,
+        ...(pendingRecordScopesRef.current[order.id] === scope ? (pendingChangesRef.current[order.id] || {}) : {}),
+      }))
+      .sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+  };
 
   const loadWorkOrders = async (showLoading = true, scope = recordScope) => {
     const requestId = ++loadRequestRef.current;
@@ -563,7 +579,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       if (requestId !== loadRequestRef.current || scopeAtStart !== activeRecordScopeRef.current) return;
       archiveSkipRef.current = pagedCount;
       setArchiveHasMore(hasMore);
-      setWorkOrders(mergeLoadedRows(rows, scopeAtStart));
+      setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));
       setUsers(usersData);
     } catch (error) {
       if (requestId === loadRequestRef.current) console.error("Error loading work orders:", error);
