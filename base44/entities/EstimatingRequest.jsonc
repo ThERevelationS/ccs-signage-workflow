@@ -1,0 +1,207 @@
+{
+  "name": "EstimatingRequest",
+  "type": "object",
+  "description": "Controlled, auditable handoff from Opportunity/Intake into Estimating. The verified handoff_snapshot freezes what Sales knew when the request was submitted while current Customer/Contact/Location records remain live.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one Estimating Request."
+    },
+    "opportunity_id": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "contact_id": {
+      "type": "string",
+      "description": "Future canonical CustomerContact id when resolved."
+    },
+    "location_id": {
+      "type": "string",
+      "description": "Future canonical CustomerLocation/site id when resolved."
+    },
+    "estimate_id": {
+      "type": "string",
+      "description": "Linked AllInOneEstimate once the request creates or is attached to an Estimate."
+    },
+    "compatibility_work_order_id": {
+      "type": "string",
+      "description": "Transitional WorkOrder-backed Sales Pipeline link during compatibility migration."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "assigned_estimator": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "normal",
+        "high",
+        "rush"
+      ],
+      "default": "normal"
+    },
+    "desired_completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "desired_install_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "request_notes": {
+      "type": "string"
+    },
+    "survey_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "permit_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "installation_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "removal_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "electrical_requirement": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "yes",
+        "no",
+        "maybe",
+        "na"
+      ],
+      "default": "unknown"
+    },
+    "handoff_snapshot_version": {
+      "type": "number",
+      "default": 1
+    },
+    "handoff_snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Point-in-time verified packet delivered to Estimating. Persistence guards freeze this once the request leaves draft."
+    },
+    "attachment_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancel_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "creation_request_key",
+    "opportunity_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__estimating_request_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__estimating_request_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__estimating_request_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__estimating_request_backend_only__"
+      }
+    }
+  }
+}
