@@ -2511,6 +2511,30 @@ Deno.serve(async (req) => {
             entry.status !== 'clocked_out' || entry.approval_status !== 'approved')) {
             return Response.json({ success: false, error: 'The finalized period and stored entry locks do not match. Admin investigation is required.' }, { status: 409 });
           }
+          if (Number(period.finalized_summary?.snapshot_version || 0) >= 1) {
+            const recoverySnapshotRows = [];
+            for (const entry of [...committedLocks].sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))) {
+              let approvalEvidence = null;
+              if (entry.approval_request_id) {
+                const evidence = await auditEntity.filter({ action: 'time_approval', request_id: entry.approval_request_id });
+                if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) ||
+                    String(evidence[0]?.time_entry_id || '') !== String(entry.id || '')) {
+                  return Response.json({ success: false, error: 'A finalized shift no longer has its exact approval evidence. Admin investigation is required.' }, { status: 409 });
+                }
+                approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+              }
+              recoverySnapshotRows.push({
+                id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
+                total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status,
+                approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence,
+              });
+            }
+            const recoverySnapshotHash = await payloadHash(recoverySnapshotRows);
+            if (!String(period.finalized_summary?.entry_snapshot_hash || '') ||
+                !constantTimeEqual(String(period.finalized_summary.entry_snapshot_hash), recoverySnapshotHash)) {
+              return Response.json({ success: false, error: 'The finalized payroll snapshot no longer matches its locked entries or approval evidence. Admin investigation is required.' }, { status: 409 });
+            }
+          }
           // Interrupted responses can leave a completed finalization's gates held.
           const staleGates = await stateEntity.filter({
             correction_create_status: 'creating',
@@ -2707,13 +2731,19 @@ Deno.serve(async (req) => {
           completedEntries = periodEntries.filter((entry: any) => entry.status === 'clocked_out' && entry.clock_out);
           completedIds = new Set(completedEntries.map((entry: any) => entry.id));
           unapproved = completedEntries.filter((entry: any) => (entry.approval_status || 'unreviewed') !== 'approved');
+          approvalEvidenceMissing = [];
+          for (const approvedEntry of completedEntries.filter((row: any) => row.approval_status === 'approved' && row.approval_request_id)) {
+            const evidence = await auditEntity.filter({ action: 'time_approval', request_id: approvedEntry.approval_request_id });
+            if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) ||
+                String(evidence[0]?.time_entry_id || '') !== String(approvedEntry.id || '')) approvalEvidenceMissing.push(approvedEntry);
+          }
           lockedElsewhere = completedEntries.filter((entry: any) => entryIsPayPeriodLocked(entry) && entry.pay_period_id !== period.id);
           activeCorrections = await correctionRequestEntity.filter({ status: { $in: ['pending', 'reviewing'] } });
           if (!Array.isArray(activeCorrections)) throw new Error('Post-gate correction readiness lookup did not return a record list.');
           periodEntryIds = new Set(periodEntries.map((entry: any) => entry.id));
           pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
 
-          if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
+          if (activeOverlap.length || unapproved.length || approvalEvidenceMissing.length || pendingCorrections.length || lockedElsewhere.length) {
             if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'Finalization readiness changed and staged entry locks could not be safely cleared. Retry the same request or request admin investigation.' }, { status: 409 });
             await auditEntity.updateMany(
               { id: intent.id, outcome: 'pending', request_id: requestId },
@@ -2726,6 +2756,7 @@ Deno.serve(async (req) => {
                   active_shift_count: activeOverlap.length,
                   invalid_active_clock_in_count: invalidActiveClockInCount,
                   unapproved_count: unapproved.length,
+                  approval_evidence_missing_count: approvalEvidenceMissing.length,
                   pending_correction_count: pendingCorrections.length,
                   locked_elsewhere_count: lockedElsewhere.length,
                 },
@@ -2733,7 +2764,7 @@ Deno.serve(async (req) => {
             );
             return Response.json({
               success: false,
-              error: `Pay-period readiness changed during finalization: ${activeOverlap.length} active shift(s)${invalidActiveClockInCount ? ` (${invalidActiveClockInCount} missing or invalid clock-in timestamp)` : ''}, ${unapproved.length} unapproved shift(s), ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s). Reload and review before finalizing again.`,
+              error: `Pay-period readiness changed during finalization: ${activeOverlap.length} active shift(s)${invalidActiveClockInCount ? ` (${invalidActiveClockInCount} missing or invalid clock-in timestamp)` : ''}, ${unapproved.length} unapproved shift(s), ${approvalEvidenceMissing.length} shift(s) missing approval evidence, ${pendingCorrections.length} pending correction(s), ${lockedElsewhere.length} conflicting lock(s). Reload and review before finalizing again.`,
             }, { status: 409 });
           }
 
@@ -2815,6 +2846,24 @@ Deno.serve(async (req) => {
           asEmail(entry.pay_period_locked_by) !== actorEmail || entry.status !== 'clocked_out' || entry.approval_status !== 'approved')) {
           return Response.json({ success: false, retry_same_request: true, error: 'Final pay-period lock ownership or approvals changed. Retry this finalization for investigation before committing.' }, { status: 409 });
         }
+        const snapshotRows = [];
+        for (const entry of [...confirmedLocks].sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))) {
+          let approvalEvidence = null;
+          if (entry.approval_request_id) {
+            const evidence = await auditEntity.filter({ action: 'time_approval', request_id: entry.approval_request_id });
+            if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) ||
+                String(evidence[0]?.time_entry_id || '') !== String(entry.id || '')) {
+              return Response.json({ success: false, retry_same_request: true, error: 'Shift approval evidence changed before the payroll snapshot could be committed. Retry this finalization after review.' }, { status: 409 });
+            }
+            approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+          }
+          snapshotRows.push({
+            id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
+            total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status,
+            approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence,
+          });
+        }
+        const entrySnapshotHash = await payloadHash(snapshotRows);
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const summary = {
           entry_count: completedEntries.length,
@@ -2823,6 +2872,8 @@ Deno.serve(async (req) => {
           lock_timestamp: lockTimestamp,
           locked_by: actorEmail,
           request_id: requestId,
+          snapshot_version: 1,
+          entry_snapshot_hash: entrySnapshotHash,
         };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
