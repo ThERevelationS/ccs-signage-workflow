@@ -599,6 +599,7 @@ Deno.serve(async (req) => {
           return json({success:true,status:'failed',request_id:requestId,error_message:reason,work_order:sanitizeWorkOrder(current)});
         }
         try {
+          await requireCurrentMechanicGrant(Access,String(grant.id || ''),statusMutationAction,String(current.equipment_id || ''));
           const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
             action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
           });
@@ -673,6 +674,8 @@ Deno.serve(async (req) => {
           continue;
         }
         try {
+          const receiptAction = mechanicActionForReceipt(receipt);
+          await requireCurrentMechanicGrant(Access,String(grant.id || ''),receiptAction,String(current.equipment_id || ''));
           const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
             action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
           });
@@ -782,6 +785,7 @@ Deno.serve(async (req) => {
       try {
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
         if (!recovery.recoverable) throw new Error('Mechanic start recovery plan could not be constructed safely.');
+        await requireCurrentMechanicGrant(Access,String(grant.id || ''),'start',String(current.equipment_id || ''));
         const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
           action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
@@ -842,10 +846,12 @@ Deno.serve(async (req) => {
       }
       let receipt = claim.receipt;
       try {
-        const upload = await uploadPhotos(base44,Receipt,receipt,decoded.photos,reusable.urls);
+        const assertAuthorized = () => requireCurrentMechanicGrant(Access,String(grant.id || ''),'save',String(current.equipment_id || ''));
+        const upload = await uploadPhotos(base44,Receipt,receipt,decoded.photos,reusable.urls,assertAuthorized);
         receipt = upload.receipt;
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
         if (!recovery.recoverable) throw new Error('Mechanic progress recovery plan could not be constructed safely.');
+        await assertAuthorized();
         const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
           action:'update', id, expected_updated_date:expected, work_order:recovery.patch,
         });
@@ -872,7 +878,7 @@ Deno.serve(async (req) => {
     return json({error:'Unsupported mechanic portal action.'},{status:400});
   } catch (error:any) {
     console.error('fleetMechanicPortal error:',error);
-    const status = error?.code === 'FLEET_RECORD_CONFLICT' ? 409 : 500;
+    const status = error?.code === 'FLEET_RECORD_CONFLICT' ? 409 : error?.code === 'FLEET_MECHANIC_ACCESS_REVOKED' ? 403 : Number(error?.status || 500);
     return json({error:error?.message || 'Fleet mechanic portal request failed.'},{status});
   }
 });
