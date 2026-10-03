@@ -142,6 +142,57 @@ async function resolveReusedUploadReceipt(Receipt: any, receipt: any) {
   }).catch(()=>null);
 }
 
+function mechanicActionForReceipt(receipt:any) {
+  return receipt?.operation_type === 'mechanic_start' ? 'start' : receipt?.operation_type === 'mechanic_progress_save' ? 'save' : '';
+}
+
+async function reconcileMechanicReceiptForAdmin(base44:any, Access:any, Receipt:any, receipt:any, adminEmail = '') {
+  const action = mechanicActionForReceipt(receipt);
+  if (!action || receipt?.target_entity !== 'FleetMaintenanceWorkOrder') throw Object.assign(new Error('Only Fleet mechanic Start/Save receipts can be reconciled here.'),{status:400});
+  const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
+  const current = await WorkOrder.get(String(receipt?.target_id || '')).catch(()=>null);
+  if (!current) throw Object.assign(new Error('The Fleet work order for this receipt no longer exists.'),{status:404});
+  if (workOrderHasMechanicReceipt(current,receipt)) {
+    await markMechanicReceiptApplied(Receipt,receipt,current,receipt.status !== 'applied');
+    await resolveReusedUploadReceipt(Receipt,receipt);
+    return {status:'applied',recovered:true,work_order:current};
+  }
+  if (receipt.status === 'applied') return {status:'applied',recovered:false,work_order:current};
+  if (receipt.status === 'failed') return {status:'failed',recovered:false,work_order:current,error_message:receipt.error_message || ''};
+  if (receipt.status !== 'started') throw Object.assign(new Error('This Fleet operation receipt is not in a reconcilable state.'),{status:409});
+
+  const grantId = String(receipt?.result_summary?.grant_id || '').trim();
+  const grant = grantId ? await Access.get(grantId).catch(()=>null) : null;
+  const authorization = mechanicGrantAllowsMutation(grant,action,String(current.equipment_id || ''),Date.now());
+  if (!authorization.allowed) {
+    const message = `Mechanic access is ${authorization.reason || 'no longer authorized'}. Admin reconciliation did not replay the interrupted operation.`;
+    await failMechanicReceipt(Receipt,receipt,message);
+    return {status:'failed',recovered:false,work_order:current,error_message:message};
+  }
+  if (!ACTIVE.has(current.status)) {
+    const message = 'The Fleet work order is no longer active. Admin reconciliation did not replay the interrupted mechanic operation.';
+    await failMechanicReceipt(Receipt,receipt,message);
+    return {status:'failed',recovered:false,work_order:current,error_message:message};
+  }
+  const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
+  if (!recovery.recoverable) {
+    const message = `The interrupted mechanic operation cannot be safely replayed (${recovery.reason || 'unknown recovery state'}).`;
+    await failMechanicReceipt(Receipt,receipt,message);
+    return {status:'failed',recovered:false,work_order:current,error_message:message};
+  }
+  const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
+    action:'update',id:current.id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
+  });
+  if (result?.data?.error) {
+    await failMechanicReceipt(Receipt,receipt,result.data.error);
+    return {status:'failed',recovered:false,work_order:current,error_message:result.data.error};
+  }
+  const updated = result?.data?.work_order || await WorkOrder.get(current.id);
+  await markMechanicReceiptApplied(Receipt,receipt,updated,true);
+  await resolveReusedUploadReceipt(Receipt,receipt);
+  return {status:'applied',recovered:true,work_order:updated,admin_email:adminEmail};
+}
+
 async function readJson(req: Request) {
   const declared = Number(req.headers.get('content-length') || 0);
   if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return { payload:null, error:'Mechanic portal request is too large.', status:413 };
