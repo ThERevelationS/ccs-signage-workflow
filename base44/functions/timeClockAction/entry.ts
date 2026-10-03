@@ -2648,7 +2648,7 @@ Deno.serve(async (req) => {
         let periodEntryIds = new Set(periodEntries.map((entry: any) => entry.id));
         let pendingCorrections = activeCorrections.filter((request: any) => periodEntryIds.has(request.time_entry_id));
 
-        if (activeOverlap.length || unapproved.length || pendingCorrections.length || lockedElsewhere.length) {
+        if (activeOverlap.length || unapproved.length || approvalEvidenceMissing.length || pendingCorrections.length || lockedElsewhere.length) {
           if (!await releaseStagedPeriodLocks()) return Response.json({ success: false, retry_same_request: true, error: 'Finalization is blocked and its staged entry locks could not be safely cleared. Retry the same request or request admin investigation.' }, { status: 409 });
           await auditEntity.updateMany({ id: intent.id, outcome: 'pending' }, { $set: {
             outcome: 'blocked', details: {
