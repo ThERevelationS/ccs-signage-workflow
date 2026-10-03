@@ -2484,7 +2484,8 @@ Deno.serve(async (req) => {
         }
         const stillLocked = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(stillLocked)) throw new Error('Pay-period unlock verification did not return a record list.');
-        return stillLocked.length === 0;
+        if (stillLocked.length !== 0) return false;
+        return invalidateReopenedFinalizationSnapshot();
       };
 
       const invalidateReopenedFinalizationSnapshot = async () => {
