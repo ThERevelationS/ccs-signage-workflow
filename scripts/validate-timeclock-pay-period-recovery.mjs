@@ -1262,6 +1262,8 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(approveHarness.rows.TimeEntry[0].clock_out, '2026-09-28T22:00:00.000Z');
   assert.equal(approveHarness.rows.TimeEntry[0].approval_status, 'needs_review');
   assert.equal(approveHarness.rows.TimeClockPunchException[0].status, 'resolved');
+  assert.equal(approved.body.entry.id, approveHarness.rows.TimeEntry[0].id);
+  assert.equal(approved.body.entry.approval_status, 'needs_review');
 
   const rejectHarness = setupStaleMissedPunch();
   await rejectHarness.invoke({
@@ -1280,6 +1282,8 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(rejectHarness.rows.TimeEntry[0].status, 'needs_resolution');
   assert.equal(rejectHarness.rows.TimeEntry[0].clock_out, undefined);
   assert.equal(rejectHarness.rows.TimeClockPunchException[0].status, 'rejected');
+  assert.equal(rejected.body.entry.id, rejectHarness.rows.TimeEntry[0].id);
+  assert.equal(rejected.body.entry.status, 'needs_resolution');
 });
 
 test('missed Clock Out review fails closed before mutation when correction and Punch Exception linkage disagree', async () => {
@@ -1389,6 +1393,34 @@ test('exact rejection retry repairs Punch Exception finalization interrupted aft
   assert.equal(h.rows.TimeClockPunchException[0].resolution_audit_id, reviewAudit.id);
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'correction_review').length, 1);
+});
+
+test('terminal correction review fails closed if final TimeEntry convergence is lost before success', async () => {
+  const h = setupStaleMissedPunch();
+  await h.invoke({
+    action: 'resolve_punch_exception', target_email: employee.email,
+    request_id: 'convergence-source-001', response: 'missed_clock_out',
+    claimed_clock_out: '2026-09-28T22:00:00.000Z',
+  });
+  const request = h.rows.TimeClockCorrectionRequest[0];
+  let corruptOnce = true;
+  h.setBeforeUpdate((entity, _query, update) => {
+    if (corruptOnce && entity === 'TimeClockPunchException' && update.$set?.status === 'resolved') {
+      corruptOnce = false;
+      h.rows.TimeEntry[0].approval_status = 'approved';
+    }
+  });
+  const result = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'convergence-review-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date,
+    decision: 'approve', reason: 'Verified reported Clock Out',
+  });
+  assert.equal(result.status, 409, JSON.stringify(result.body));
+  assert.match(result.body.error, /converg|investigation/i);
+  assert.equal(h.rows.TimeClockCorrectionRequest[0].status, 'approved');
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'resolved');
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
 });
 
 test('stale applied review recovery preserves exact retry audit binding', async () => {
