@@ -1,3 +1,5 @@
+import { classifyOrderLocalOnlyDate } from './smartsheetOrderDateEvidence.mjs';
+
 // Order Form only. Smartsheet DATE cells usually contain ISO calendar dates,
 // while legacy TEXT_NUMBER cells may contain US dates or receipt choices.
 // Never let JavaScript Date.parse silently normalize an impossible date.
@@ -57,7 +59,7 @@ export function translateOrderDateCell(cell, field) {
 
 // Full-sheet read-only parity report; row matching uses permanent IDs only.
 // No missing remote cell is treated as permission to clear a live Base44 date.
-export function auditOrderDateParity(orders, rows, bindings, sheetId) {
+export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudits = []) {
   if (!Array.isArray(orders) || !Array.isArray(rows) || !numericId(sheetId)) {
     throw new Error('Complete Order and Smartsheet evidence with a permanent sheet ID is required.');
   }
@@ -73,11 +75,17 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId) {
   const counts = { matched: 0, unlinked_smartsheet_rows: 0, duplicate_base44_links: 0,
     smartsheet_date_missing_in_base44: 0, different_dates: 0, invalid_date_values: 0,
     text_option_differences: 0, text_receipt_differences: 0, stale_text_options: 0,
-    base44_date_missing_in_smartsheet: 0 };
+    base44_date_missing_in_smartsheet: 0,
+    verified_newer_local_dates: 0, preserved_historical_dates: 0,
+    remote_blank_changed_since_sync: 0, unverified_local_only_dates: 0 };
   const byField = Object.fromEntries(DATE_FIELDS.map(field => [field,
-    { smartsheet_dates: 0, missing_base44: 0, different: 0, invalid: 0, text_choices: 0, stale_text_options: 0 }]));
+    { smartsheet_dates: 0, missing_base44: 0, different: 0, invalid: 0, text_choices: 0, stale_text_options: 0,
+      verified_newer_local: 0, preserved_historical: 0, remote_blank_changed_since_sync: 0,
+      unverified_local_only: 0 }]));
   const samples = { missing_dates: [], different_dates: [], invalid_values: [], text_choices: [],
-    stale_text_options: [], ambiguous_links: [], unlinked_rows: [] };
+    stale_text_options: [], ambiguous_links: [], unlinked_rows: [],
+    verified_newer_local_dates: [], preserved_historical_dates: [],
+    remote_blank_changed_since_sync: [], unverified_local_only_dates: [] };
   const sample = (key, item) => { if (samples[key].length < 20) samples[key].push(item); };
   for (const row of rows) {
     const rowId = numericId(row?.id);
@@ -111,7 +119,32 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId) {
         }
       }
       if (parsed.kind === 'blank') {
-        if (matches.length === 1 && matches[0][field]) counts.base44_date_missing_in_smartsheet++;
+        if (matches.length === 1 && matches[0][field]) {
+          counts.base44_date_missing_in_smartsheet++;
+          const evidence = classifyOrderLocalOnlyDate(matches[0], field, columnId, fieldAudits);
+          const item = { row_id: rowId, base44_order_id: matches[0].id, field,
+            base44_date: String(matches[0][field]).trim(),
+            last_synced_at: evidence.last_synced_at || '',
+            ...(evidence.local_modified_at ? { local_modified_at: evidence.local_modified_at } : {}),
+            ...(evidence.prior_remote_value ? { prior_remote_value: evidence.prior_remote_value } : {}) };
+          if (evidence.state === 'verified_newer_local') {
+            counts.verified_newer_local_dates++;
+            byField[field].verified_newer_local++;
+            sample('verified_newer_local_dates', item);
+          } else if (evidence.state === 'preserved_historical') {
+            counts.preserved_historical_dates++;
+            byField[field].preserved_historical++;
+            sample('preserved_historical_dates', item);
+          } else if (evidence.state === 'remote_blank_changed_since_sync') {
+            counts.remote_blank_changed_since_sync++;
+            byField[field].remote_blank_changed_since_sync++;
+            sample('remote_blank_changed_since_sync', item);
+          } else {
+            counts.unverified_local_only_dates++;
+            byField[field].unverified_local_only++;
+            sample('unverified_local_only_dates', item);
+          }
+        }
         continue;
       }
       if (parsed.kind === 'invalid') {
