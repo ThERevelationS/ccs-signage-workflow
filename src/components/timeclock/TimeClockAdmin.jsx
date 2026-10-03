@@ -49,6 +49,12 @@ import TimeClockPunchExceptionReport from "@/components/timeclock/TimeClockPunch
 import PayPeriodManager from "@/components/timeclock/PayPeriodManager";
 import TimeClockAuditTrail from "@/components/timeclock/TimeClockAuditTrail";
 import TimeClockShiftDetail from "@/components/timeclock/TimeClockShiftDetail";
+import {
+  TIME_CLOCK_COMPANY_TIME_LABEL,
+  companyDateTimeInputFromIso,
+  parseCompanyDateTimeInput,
+  shiftDurationSummary,
+} from "@/components/timeclock/timeClockCompanyTime";
 
 const TimeEntry = base44.entities.TimeEntry;
 const TimeClockEmployeeState = base44.entities.TimeClockEmployeeState;
@@ -124,6 +130,8 @@ export default function TimeClockAdmin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingEntry, setEditingEntry] = useState(null);
   const [editingEntryBaseline, setEditingEntryBaseline] = useState(null);
+  const [editingClockInInput, setEditingClockInInput] = useState("");
+  const [editingClockOutInput, setEditingClockOutInput] = useState("");
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -329,6 +337,8 @@ export default function TimeClockAdmin() {
     setCorrectionRequestId(requestId);
     setEditingEntryBaseline(entry);
     setEditingEntry({ ...entry });
+    setEditingClockInInput(companyDateTimeInputFromIso(entry?.clock_in));
+    setEditingClockOutInput(companyDateTimeInputFromIso(entry?.clock_out));
     setShowEditDialog(true);
   };
 
@@ -342,6 +352,34 @@ export default function TimeClockAdmin() {
     if (correctionReason.trim().length < 3) {
       setTimeEntryError("Enter a correction reason before saving.");
       return;
+    }
+    const parsedClockIn = parseCompanyDateTimeInput(editingClockInInput);
+    if (!parsedClockIn.ok) {
+      setTimeEntryError(`Clock In: ${parsedClockIn.error}`);
+      return;
+    }
+    let parsedClockOut = null;
+    if (editingClockOutInput) {
+      parsedClockOut = parseCompanyDateTimeInput(editingClockOutInput);
+      if (!parsedClockOut.ok) {
+        setTimeEntryError(`Clock Out: ${parsedClockOut.error}`);
+        return;
+      }
+    } else if (editingEntryBaseline.status === "clocked_out") {
+      setTimeEntryError("A completed shift must keep a Clock Out. Use a reviewed correction instead of reopening it.");
+      return;
+    }
+    const submittedLunchMinutes = Math.round(Number(editingEntry.lunch_minutes || 0));
+    if (!Number.isFinite(submittedLunchMinutes) || submittedLunchMinutes < 0 || submittedLunchMinutes > 240) {
+      setTimeEntryError("Lunch minutes must be between 0 and 240.");
+      return;
+    }
+    if (parsedClockOut?.ok) {
+      const preview = shiftDurationSummary(parsedClockIn.iso, parsedClockOut.iso, submittedLunchMinutes);
+      if (!preview.valid) {
+        setTimeEntryError(preview.error || "Corrected punch times are invalid.");
+        return;
+      }
     }
     setSaveBusy(true);
     try {
@@ -359,9 +397,9 @@ export default function TimeClockAdmin() {
         expected_updated_date: editingEntryBaseline.updated_date,
         reason: correctionReason.trim(),
         correction: {
-          clock_in: editingEntry.clock_in,
-          clock_out: editingEntry.clock_out,
-          lunch_minutes: editingEntry.lunch_minutes || 0,
+          clock_in: parsedClockIn.iso,
+          clock_out: parsedClockOut?.ok ? parsedClockOut.iso : null,
+          lunch_minutes: submittedLunchMinutes,
           notes: editingEntry.notes || "",
           job_allocations: editingEntry.job_allocations || [],
         },
@@ -374,6 +412,8 @@ export default function TimeClockAdmin() {
       setShowEditDialog(false);
       setEditingEntry(null);
       setEditingEntryBaseline(null);
+      setEditingClockInInput("");
+      setEditingClockOutInput("");
       setCorrectionReason("");
       await loadData();
     } catch (err) {
@@ -1107,7 +1147,7 @@ export default function TimeClockAdmin() {
       />
 
       {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={(open) => { if (saveBusy) return; setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); setCorrectionReason(""); } }}>
+      <Dialog open={showEditDialog} onOpenChange={(open) => { if (saveBusy) return; setShowEditDialog(open); if (!open) { setEditingEntry(null); setEditingEntryBaseline(null); setEditingClockInInput(""); setEditingClockOutInput(""); setCorrectionReason(""); } }}>
         <DialogContent className="clay-card border-none max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1125,25 +1165,19 @@ export default function TimeClockAdmin() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Clock In</Label>
+                  <Label className="text-sm font-medium">Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
                   <Input
                     type="datetime-local"
-                    value={editingEntry.clock_in ? format(parseISO(editingEntry.clock_in), "yyyy-MM-dd'T'HH:mm") : ""}
-                    onChange={(e) => setEditingEntry({
-                      ...editingEntry,
-                      clock_in: new Date(e.target.value).toISOString()
-                    })}
+                    value={editingClockInInput}
+                    onChange={(e) => { setEditingClockInInput(e.target.value); setTimeEntryError(""); }}
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Clock Out</Label>
+                  <Label className="text-sm font-medium">Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label>
                   <Input
                     type="datetime-local"
-                    value={editingEntry.clock_out ? format(parseISO(editingEntry.clock_out), "yyyy-MM-dd'T'HH:mm") : ""}
-                    onChange={(e) => setEditingEntry({
-                      ...editingEntry,
-                      clock_out: e.target.value ? new Date(e.target.value).toISOString() : null
-                    })}
+                    value={editingClockOutInput}
+                    onChange={(e) => { setEditingClockOutInput(e.target.value); setTimeEntryError(""); }}
                   />
                 </div>
               </div>
@@ -1228,7 +1262,7 @@ export default function TimeClockAdmin() {
                 <Button
                   variant="outline"
                   disabled={saveBusy}
-                  onClick={() => { setShowEditDialog(false); setEditingEntry(null); setEditingEntryBaseline(null); setCorrectionReason(""); }}
+                  onClick={() => { setShowEditDialog(false); setEditingEntry(null); setEditingEntryBaseline(null); setEditingClockInInput(""); setEditingClockOutInput(""); setCorrectionReason(""); }}
                   className="flex-1"
                 >
                   Cancel
