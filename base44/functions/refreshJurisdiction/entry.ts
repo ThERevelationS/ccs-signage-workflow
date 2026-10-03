@@ -154,6 +154,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       updateData.parent_county = researchData.parent_county;
     }
 
+    let documentAuthorityEvidence: any[] = [];
+
     // Retain every previously sourced document, especially downloaded forms and
     // searchable text. AI omissions are not evidence that official files vanished.
     if (batchSettings.updateDocuments && (!batchSettings.skipManualData || !jurisdiction._manual_documents)) {
@@ -228,11 +230,12 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         }
       }
 
+      documentAuthorityEvidence = processedDocs;
       updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, processedDocs);
     }
 
     updateData.last_updated = new Date().toISOString();
-    const authorityGate = gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData });
+    const authorityGate = gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData, documentEvidence: documentAuthorityEvidence });
     if (authorityGate.blocked) {
       console.warn(`Blocked comprehensive rewrite promotion for ${jurisdiction.name || id}: ${authorityGate.reasons.join(', ')}`);
     }
