@@ -6,6 +6,7 @@ import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { findExistingJurisdictionDocument, mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
+import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -231,7 +232,11 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
 
     updateData.last_updated = new Date().toISOString();
-    const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, updateData);
+    const authorityGate = gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData });
+    if (authorityGate.blocked) {
+      console.warn(`Blocked comprehensive rewrite promotion for ${jurisdiction.name || id}: ${authorityGate.reasons.join(', ')}`);
+    }
+    const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, authorityGate.updateData);
 
     const updated = await replaceJurisdictionFieldsIfUnchanged({
       entity: base44.asServiceRole.entities.JurisdictionProfile,
