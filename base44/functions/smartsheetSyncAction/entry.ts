@@ -1495,9 +1495,16 @@ async function pushDataset(
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       const snapshot = fieldPlan?.verifiedSnapshot || buildSnapshot(record, bindings, dataset);
       if (dataset === 'orders') {
+        const unresolvedOrderFields = Array.isArray(fieldPlan?.unresolved) && fieldPlan.unresolved.length > 0;
         const finalized = await base44.asServiceRole.entities.Order.updateMany(
           { id: record.id, updated_date: record.updated_date, smartsheet_pending_local_sync: true },
-          { $set: { smartsheet_sync_snapshot: snapshot, smartsheet_last_synced_at: new Date().toISOString(), smartsheet_pending_local_sync: false } },
+          { $set: {
+            smartsheet_sync_snapshot: snapshot,
+            smartsheet_last_synced_at: new Date().toISOString(),
+            // A partial field reconciliation is not a completed Save & Sync.
+            // Keep the durable queue marker until every held field is resolved.
+            smartsheet_pending_local_sync: unresolvedOrderFields,
+          } },
         );
         if (!finalized || finalized.updated !== 1) {
           throw new Error('Order changed while Smartsheet sync was running. The newer revision remains queued for Save & Sync.');
