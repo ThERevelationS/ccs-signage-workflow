@@ -25,8 +25,8 @@ check(updater.includes("delete pendingRecordScopesRef.current[orderId];"),
   "Successful completion clears quick-edit workspace metadata.");
 
 const loader = source.split("const loadWorkOrders = async")[1]?.split("\n  const loadMoreArchive")[0] || "";
-check(loader.includes("setWorkOrders(mergeLoadedRows(rows, scopeAtStart));"),
-  "Each workspace load applies only optimistic values belonging to that scope.");
+check(loader.includes("setWorkOrders((current) => mergeLoadedRows(rows, scopeAtStart, current));"),
+  "Each workspace load applies only optimistic values belonging to that scope while preserving locally pinned rows.");
 check(loader.includes("scopeAtStart !== activeRecordScopeRef.current"),
   "Existing stale-request workspace guard remains intact.");
 
