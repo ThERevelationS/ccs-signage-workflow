@@ -117,6 +117,26 @@ The last verified Phase 0M fixture was:
 
 Any live drift is reported rather than forced back to these fixtures.
 
+## Live production verification — 2026-10-03
+
+Read-only verification after the planner implementation confirmed the Phase 0M fixture has not drifted:
+
+- non-rider, non-deleted WorkOrders examined: **3,059**
+- true Sales candidates: **3,045**
+- Phase 0K safe candidates: **156**
+- current open-status / terminal-task conflicts: **2,889**
+- deterministic historical Won additions: **272**
+- proposed safe bridge cohort: **428**
+- historical conflicts still held: **2,617**
+- terminal conflict families: Completed Sale **1,036**, Lost **1,132**, Closed **721**
+- Unknown Smartsheet shells excluded: **14**
+- Customers loaded: **898**
+- AllInOneEstimates loaded: **21**
+- Opportunity records: **0**
+- existing WorkOrders with opportunity_id: **0**
+
+No production record was changed by this verification.
+
 ## Explicitly unchanged
 
 - no Opportunity creation;
