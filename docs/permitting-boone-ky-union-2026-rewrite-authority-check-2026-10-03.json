@@ -1,0 +1,76 @@
+{
+  "title": "City of Union \u2014 September/October 2026 Commission agenda zoning-rewrite authority check",
+  "checkedAt": "2026-10-03",
+  "jurisdiction": "City of Union, Kentucky",
+  "legislativeBody": "Union City Commission",
+  "reviewedOfficialAgendas": [
+    {
+      "meetingDate": "2026-10-05",
+      "kind": "regular",
+      "sourceUrl": "https://cityofunionky.org/10-5-2026-meeting-agenda/",
+      "repositoryPath": "public/permitting/sources/boone-ky/union-commission-agenda-2026-10-05.html",
+      "bytes": 282344,
+      "sha256": "cb270648b70e30d279d9d3a199ff16bae3eeaec7c0ad273c0d3ee2ca3dd2690f",
+      "targetTermCounts": {
+        "article 34": 0,
+        "sign regulation": 0,
+        "zoning regulations": 0,
+        "zoning ordinance rewrite": 0,
+        "comprehensive zoning": 0,
+        "2026 zoning ordinance": 0
+      }
+    },
+    {
+      "meetingDate": "2026-09-21",
+      "kind": "caucus",
+      "sourceUrl": "https://cityofunionky.org/caucus-agenda-2/",
+      "repositoryPath": "public/permitting/sources/boone-ky/union-commission-caucus-agenda-2026-09-21.html",
+      "bytes": 247563,
+      "sha256": "7593c1c088b152a905c88544ba0324d3adf10fa85b5526a16be92f640485defd",
+      "targetTermCounts": {
+        "article 34": 0,
+        "sign regulation": 0,
+        "zoning regulations": 0,
+        "zoning ordinance rewrite": 0,
+        "comprehensive zoning": 0,
+        "2026 zoning ordinance": 0
+      }
+    },
+    {
+      "meetingDate": "2026-09-09",
+      "kind": "regular",
+      "sourceUrl": "https://cityofunionky.org/meeting-agenda/",
+      "repositoryPath": "public/permitting/sources/boone-ky/union-commission-agenda-2026-09-09.html",
+      "bytes": 258253,
+      "sha256": "5fd369de7376e6fa0094ba67c657192b197dc4122ba2ac8af5dfb1bc1f26a63f",
+      "targetTermCounts": {
+        "article 34": 0,
+        "sign regulation": 0,
+        "zoning regulations": 0,
+        "zoning ordinance rewrite": 0,
+        "comprehensive zoning": 0,
+        "2026 zoning ordinance": 0
+      }
+    }
+  ],
+  "latestPostedAgenda": {
+    "meetingDate": "2026-10-05",
+    "postedDate": "2026-10-02",
+    "statusAsOfCheck": "upcoming"
+  },
+  "rewriteAdoptionAgendaItemFound": false,
+  "observedLegislation": {
+    "ordinance": "2026-12",
+    "scope": "2026 calendar-year city property tax rates",
+    "seenOn": [
+      "2026-09-09 regular agenda",
+      "2026-09-21 caucus agenda"
+    ],
+    "rewriteReplacement": false
+  },
+  "relatedButDistinctPlanningWork": "The August 3 and August 17 approved minutes discuss a revised Union Town Plan and Boone County Planning Commission coordination. That plan work is distinct from evidence of adoption of the comprehensive Boone County Zoning Regulations rewrite and is not classified as rewrite adoption.",
+  "authorityFinding": "The official Union Commission agendas reviewed for September 9, September 21, and the upcoming October 5, 2026 meeting contain no identified Article 34, sign-regulation, comprehensive-zoning, or zoning-regulations-rewrite adoption item. September agendas identify Ordinance 2026-12 as a tax-rate ordinance, not a zoning rewrite.",
+  "authorityBoundary": "This is a bounded agenda check through the latest posted October 5 agenda as retrieved on 2026-10-03. It does not prove that no unposted ordinance or later amended agenda exists, and the October 5 agenda is prospective evidence only until that meeting occurs and minutes/action records are posted.",
+  "adoptedSignAuthority": "Do not treat Union as having adopted the 2026 comprehensive zoning rewrite from these records. Continue using the separately verified currently adopted Article 34 authority unless newer official Union enactment/effective-date evidence establishes replacement text.",
+  "nextLogicalAuthorityTarget": "Inspect City of Walton 2026 Council agendas, minutes, and ordinance archive for comprehensive Boone zoning-rewrite adoption or effective-date evidence."
+}
