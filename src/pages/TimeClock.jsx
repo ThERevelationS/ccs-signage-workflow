@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/components/auth/EmailGate";
 import PullToRefresh from "@/components/mobile/PullToRefresh";
@@ -39,6 +39,11 @@ import UserSettingsTab from "@/components/timeclock/UserSettingsTab";
 import CorrectionRequestDialog from "@/components/timeclock/CorrectionRequestDialog";
 import WorkPauseOverlay from "@/components/timeclock/WorkPauseOverlay";
 import EmployeeTodayCard from "@/components/timeclock/EmployeeTodayCard";
+import {
+  TIME_CLOCK_IDLE_LOGOUT_MS,
+  remainingTimeClockSessionMs,
+  classifyTimeClockLoginStatus,
+} from "@/components/timeclock/timeClockSessionSecurity";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -83,6 +88,54 @@ function shouldRetainNotesRequest(err) {
   return !err?.response || status >= 500;
 }
 
+function officialPunchLabel(value) {
+  if (!value) return "an unknown time";
+  try {
+    const parsed = parseISO(value);
+    if (!Number.isFinite(parsed.getTime())) return "an unknown time";
+    return format(parsed, "MMM d 'at' h:mm a");
+  } catch {
+    return "an unknown time";
+  }
+}
+
+function loginStatusNotice(status) {
+  const report = classifyTimeClockLoginStatus(status);
+  if (report.kind === "punch_resolution") {
+    return {
+      tone: "warning",
+      title: "Previous shift needs punch confirmation",
+      message: `The server still has you clocked in from ${officialPunchLabel(report.clockIn)}. Use the missed-punch window below before starting another shift. Logging in did not change your recorded time.`,
+    };
+  }
+  if (report.kind === "clocked_in") {
+    return {
+      tone: "info",
+      title: "You are still clocked in",
+      message: `The server restored your active shift from ${officialPunchLabel(report.clockIn)}. Signing back in did not create a new Clock In or change the existing shift.`,
+    };
+  }
+  if (report.kind === "transition") {
+    return {
+      tone: "warning",
+      title: "A Time Clock action is still finishing",
+      message: "The server reports an in-progress Time Clock transition. Conflicting actions stay blocked until authoritative state recovery finishes.",
+    };
+  }
+  if (report.kind === "clocked_out") {
+    return {
+      tone: "success",
+      title: "Server status: clocked out",
+      message: "Your authoritative Time Clock state is currently Clocked Out. Signing in only restored personal access; it did not create a punch.",
+    };
+  }
+  return {
+    tone: "warning",
+    title: "Time Clock status needs a refresh",
+    message: "Personal access was restored, but authoritative punch status could not be confirmed. Refresh Time Clock status before making a punch decision.",
+  };
+}
+
 export default function TimeClock() {
   const { currentUser: shellUser, sessionToken: shellSessionToken } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
@@ -104,6 +157,10 @@ export default function TimeClock() {
   const [savingNotesId, setSavingNotesId] = useState(null);
   const [editingTimeOff, setEditingTimeOff] = useState(null);
   const [timeEntryError, setTimeEntryError] = useState("");
+  const [sessionNotice, setSessionNotice] = useState(null);
+  const idleTimerRef = useRef(null);
+  const lastActivityAtRef = useRef(0);
+  const loginReportRunRef = useRef(0);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -189,20 +246,114 @@ export default function TimeClock() {
     setIsLoading(false);
   };
 
-  const handleLogin = (user, token = "") => {
-    setLoggedInUser(user);
-    setTimeClockSessionToken(token);
-    setShowLoginDialog(false);
-  };
-
-  const handleLogout = () => {
+  const clearEmployeeSession = useCallback(({ reason = "manual" } = {}) => {
+    loginReportRunRef.current += 1;
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    lastActivityAtRef.current = 0;
     setLoggedInUser(null);
     setTimeClockSessionToken("");
     setTimeEntries([]);
     setTimeOffRequests([]);
     setCorrectionRequests([]);
     setCorrectionEntry(null);
+    setShowTimeOffRequest(false);
+    setEditingTimeOff(null);
+    setEditingNotes(null);
+    setEditNotesText("");
+    setSavingNotesId(null);
+    setActiveTab("clock");
+    setTimeEntryError("");
+    if (reason === "idle") {
+      setSessionNotice({
+        tone: "warning",
+        title: "Full Access locked for inactivity",
+        message: `Your personal Time Clock view automatically locked after ${Math.round(TIME_CLOCK_IDLE_LOGOUT_MS / 60000)} minutes without activity. This did not Clock Out, end a break, resume Work Pause, or change any recorded time. Sign in again to restore your authoritative status.`,
+      });
+    } else {
+      setSessionNotice(null);
+    }
+  }, []);
+
+  const handleLogin = async (user, token = "") => {
+    const email = String(user?.email || "").trim().toLowerCase();
+    const runId = ++loginReportRunRef.current;
+    setLoggedInUser(user);
+    setTimeClockSessionToken(token);
+    setShowLoginDialog(false);
+    setTimeEntryError("");
+    setSessionNotice({
+      tone: "info",
+      title: "Checking official Time Clock status",
+      message: "Your personal access is restored. The server is confirming whether you are Clocked In, Clocked Out, or need punch review.",
+    });
+
+    if (!email || !token) {
+      if (runId === loginReportRunRef.current) setSessionNotice(loginStatusNotice(null));
+      return;
+    }
+
+    try {
+      const response = await base44.functions.invoke("timeClockAction", {
+        action: "status",
+        session_token: token,
+        target_email: email,
+      });
+      const status = response?.data || response;
+      if (runId !== loginReportRunRef.current) return;
+      setSessionNotice(loginStatusNotice(status));
+    } catch (err) {
+      if (runId !== loginReportRunRef.current) return;
+      setSessionNotice({
+        tone: "warning",
+        title: "Time Clock status could not be confirmed",
+        message: err?.response?.data?.error || err?.message || "Personal access is restored, but the server status check failed. Refresh before making a punch decision.",
+      });
+    }
   };
+
+  const handleLogout = () => clearEmployeeSession({ reason: "manual" });
+
+  useEffect(() => {
+    if (!loggedInUser?.email || !timeClockSessionToken) return undefined;
+
+    const clearTimer = () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    };
+    const checkIdle = () => {
+      clearTimer();
+      const remaining = remainingTimeClockSessionMs(lastActivityAtRef.current, Date.now());
+      if (remaining <= 0) {
+        clearEmployeeSession({ reason: "idle" });
+        return;
+      }
+      idleTimerRef.current = setTimeout(checkIdle, remaining);
+    };
+    const markActivity = () => {
+      lastActivityAtRef.current = Date.now();
+      checkIdle();
+    };
+    const checkOnReturn = () => {
+      if (document.visibilityState === "visible") checkIdle();
+    };
+
+    lastActivityAtRef.current = Date.now();
+    checkIdle();
+    const activityEvents = ["pointerdown", "keydown", "touchstart", "scroll"];
+    activityEvents.forEach((eventName) => window.addEventListener(eventName, markActivity, { passive: true }));
+    window.addEventListener("focus", checkIdle);
+    document.addEventListener("visibilitychange", checkOnReturn);
+
+    return () => {
+      clearTimer();
+      activityEvents.forEach((eventName) => window.removeEventListener(eventName, markActivity));
+      window.removeEventListener("focus", checkIdle);
+      document.removeEventListener("visibilitychange", checkOnReturn);
+    };
+  }, [clearEmployeeSession, loggedInUser?.email, timeClockSessionToken]);
 
   // Calculate weekly hours
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 0 });
