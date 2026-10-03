@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
 import { AlertTriangle, Clock3, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  TIME_CLOCK_COMPANY_TIME_LABEL,
+  formatCompanyDateTime,
+  parseCompanyDateTimeInput,
+} from "@/components/timeclock/timeClockCompanyTime";
 
 export default function MissedPunchResolutionDialog({
   open,
@@ -34,20 +38,19 @@ export default function MissedPunchResolutionDialog({
 
   const submitMissedClockOut = async () => {
     setLocalError("");
-    const parsed = new Date(claimedClockOut);
-    if (!claimedClockOut || !Number.isFinite(parsed.getTime())) {
-      setLocalError("Enter the date and time you actually stopped working.");
+    const parsed = parseCompanyDateTimeInput(claimedClockOut);
+    if (!parsed.ok) {
+      setLocalError(parsed.error || `Enter the date and time you actually stopped working in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`);
       return;
     }
     try {
-      await onMissedClockOut(parsed.toISOString());
+      await onMissedClockOut(parsed.iso);
     } catch (err) {
       setLocalError(err?.message || "The missed clock-out was not confirmed.");
     }
   };
 
-  const clockIn = entry?.clock_in ? new Date(entry.clock_in) : null;
-  const validClockIn = clockIn && Number.isFinite(clockIn.getTime());
+  const validClockIn = entry?.clock_in && formatCompanyDateTime(entry.clock_in) !== "Invalid time";
 
   return (
     <Dialog open={open}>
@@ -78,7 +81,7 @@ export default function MissedPunchResolutionDialog({
               {userName || "Employee"}
             </div>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Clocked in {validClockIn ? format(clockIn, "EEEE, MMM d 'at' h:mm a") : "at an unavailable time"}.
+              Clocked in {validClockIn ? `${formatCompanyDateTime(entry.clock_in)} (${TIME_CLOCK_COMPANY_TIME_LABEL})` : "at an unavailable time"}.
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               This window does not invent a clock-out time. Your response is recorded with a server timestamp and audit history.
@@ -95,7 +98,7 @@ export default function MissedPunchResolutionDialog({
 
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-800 dark:bg-amber-950/20">
             <Label htmlFor="missed-clock-out-time" className="font-semibold text-slate-900 dark:text-slate-100">
-              I forgot to Clock Out — when did you actually stop working?
+              I forgot to Clock Out — when did you actually stop working? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
             <Input
               id="missed-clock-out-time"
@@ -109,7 +112,7 @@ export default function MissedPunchResolutionDialog({
               className="mt-3 bg-white dark:bg-slate-900"
             />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              This closes the old shift operationally, creates a manager-review correction for the time you enter, and then lets you Clock In now using server time.
+              Enter the actual shop/company time in {TIME_CLOCK_COMPANY_TIME_LABEL}. This closes the old shift operationally, creates a manager-review correction for the time you enter, and then lets you Clock In now using server time.
             </p>
             <Button
               type="button"
