@@ -54,73 +54,12 @@ import {
   salesRunRequiresReview,
   shouldCreateSmartsheetSalesRecordInPipeline,
 } from '../../shared/smartsheetSalesSafety.mjs';
+import { cleanText, normalizeSheets, normalizeColumns, normalizeCellPayload, normalizeSheetRows, numericIdList, normalizePullValue } from '../../shared/smartsheetSyncUtils.ts';
 
 const TOKEN_SECRET_NAME = 'SMARTSHEET_API_TOKEN';
 const API_BASE = 'https://api.smartsheet.com/2.0';
 const MAX_RESPONSE_BYTES = 2_000_000;
 const SETTING_KEY = 'smartsheetSyncConfig';
-
-function cleanText(value: unknown, maxLength = 500) {
-  return String(value ?? '').trim().slice(0, maxLength);
-}
-
-function normalizeSheets(body: any) {
-  const rows = Array.isArray(body?.data) ? body.data : [];
-  return rows.map((sheet: any) => ({
-    id: String(sheet?.id ?? ''),
-    name: cleanText(sheet?.name, 300),
-    access_level: cleanText(sheet?.accessLevel, 80),
-    owner: cleanText(sheet?.owner, 320),
-    modified_at: cleanText(sheet?.modifiedAt, 80),
-  })).filter((sheet: any) => sheet.id && sheet.name);
-}
-
-function normalizeColumns(body: any) {
-  const rows = Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [];
-  return rows.map((column: any) => ({
-    id: String(column?.id ?? ''),
-    title: cleanText(column?.title, 300),
-    type: cleanText(column?.type, 80),
-    primary: column?.primary === true,
-    system_column_type: cleanText(column?.systemColumnType, 80),
-    validation: column?.validation === true,
-    options: Array.isArray(column?.options)
-      ? column.options.map((option: unknown) => cleanText(option, 300)).filter(Boolean).slice(0, 500)
-      : [],
-  })).filter((column: any) => column.id && column.title);
-}
-
-function normalizeCellPayload(value: unknown) {
-  if (value === null || value === undefined) return null;
-  if (typeof value === 'string') return cleanText(value, 4000);
-  if (typeof value === 'number' || typeof value === 'boolean') return value;
-  try {
-    return cleanText(JSON.stringify(value), 4000);
-  } catch {
-    return cleanText(value, 4000);
-  }
-}
-
-function normalizeSheetRows(body: any) {
-  const rows = Array.isArray(body?.rows) ? body.rows : [];
-  return rows.map((row: any) => ({
-    id: String(row?.id ?? ''),
-    row_number: Number(row?.rowNumber || 0) || null,
-    parent_id: row?.parentId ? String(row.parentId) : '',
-    modified_at: cleanText(row?.modifiedAt, 80),
-    cells: (Array.isArray(row?.cells) ? row.cells : []).map((cell: any) => ({
-      column_id: String(cell?.columnId ?? ''),
-      value: normalizeCellPayload(cell?.value),
-      display_value: cleanText(cell?.displayValue, 4000),
-    })).filter((cell: any) => cell.column_id),
-  })).filter((row: any) => row.id);
-}
-
-function numericIdList(value: unknown, maxItems = 100) {
-  const source = Array.isArray(value) ? value : [];
-  const ids = [...new Set(source.map((item) => cleanText(item, 40)).filter((item) => /^\d+$/.test(item)))];
-  return ids.slice(0, maxItems);
-}
 
 // Compare current Smartsheet cell values against the last-sync snapshot stored
 // on the Base44 record. Returns true if Smartsheet was edited since the last
@@ -186,44 +125,6 @@ function detectConflict(
   }
   if (dataset === 'orders' && orderMissingBoundCellConflicts(snapshot, bindingColumnIds, seenBoundColumnIds)) return true;
   return false;
-}
-
-// Normalize Smartsheet text values to Base44 enum values for known enum fields.
-function normalizePullValue(fieldKey: string, value: any): any {
-  if (value === null || value === undefined || value === "") return undefined;
-  if (fieldKey === 'work_notes' && Array.isArray(value)) return value;
-  const str = String(value).trim();
-  if (!str) return undefined;
-  const lower = str.toLowerCase();
-  if (fieldKey === "sales_status") {
-    if (["lead", "new", "open"].includes(lower)) return "lead";
-    if (["quoted", "quote sent", "proposal sent", "estimate sent"].includes(lower)) return "quoted";
-    if (["follow_up", "follow up", "following up", "follow-up", "followup"].includes(lower)) return "follow_up";
-    if (["won", "closed won", "deal won", "yes", "win"].includes(lower)) return "won";
-    if (["lost", "closed lost", "deal lost", "no"].includes(lower)) return "lost";
-    if (["on_hold", "on hold", "hold", "paused", "pending"].includes(lower)) return "on_hold";
-    return undefined;
-  }
-  if (fieldKey === "status") {
-    if (["pending", "not started", "new", "requested", "todo"].includes(lower)) return "pending";
-    if (["ordered", "submitted", "placed", "in progress"].includes(lower)) return "ordered";
-    if (["received", "complete", "done", "fulfilled", "delivered"].includes(lower)) return "received";
-    if (["cancelled", "canceled", "void", "closed"].includes(lower)) return "cancelled";
-    return undefined;
-  }
-  if (fieldKey === "request_type") {
-    if (lower.includes("substrate")) return "Substrate";
-    if (lower.includes("vinyl")) return "Vinyl";
-    if (lower.includes("suppl")) return "Supplies";
-    return "Other";
-  }
-  if (fieldKey === "permitting") {
-    if (["yes", "y", "required", "true"].includes(lower)) return "yes";
-    if (["no", "n", "not required", "false"].includes(lower)) return "no";
-    if (["maybe", "perhaps", "uncertain", "tbd", "unsure"].includes(lower)) return "maybe";
-    return "na";
-  }
-  return str;
 }
 
 async function pullDataset(
@@ -953,7 +854,10 @@ async function claimSyncRun(base44: any, status: any) {
   const current = record?.setting_value || {};
   // A run that has saved no progress for 5 minutes was killed by the platform time limit.
   const lastActivity = Date.parse(String(current?.updated_at || current?.started_at || ''));
-  const abandoned = Number.isFinite(lastActivity) && Date.now() - lastActivity > 5 * 60_000;
+  const abandoned = Number.isFinite(lastActivity) && Date.now() - lastActivity > 2 * 60_000;
+  if (current?.status === 'running' && abandoned) {
+    await checkAndSendSyncAlert(base44, current, []).catch(() => {});
+  }
   if (current?.status === 'running' && !abandoned) {
     const classification = classifyRecoverableStaleOrderSync(current, Date.now());
     const detail = classification?.recoverable
@@ -976,6 +880,46 @@ async function claimSyncRun(base44: any, status: any) {
     throw Object.assign(new Error('Smartsheet sync coordinator claim could not be verified. No sync work was started.'), { status: 409 });
   }
   return verified;
+}
+
+const ALERT_SETTING_KEY = 'smartsheetSyncAlertConfig';
+
+async function loadSyncAlertConfig(base44: any) {
+  try {
+    const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });
+    const rows = Array.isArray(results) ? results : (results ? [results] : []);
+    return rows[0]?.setting_value || { enabled: false, recipient_email: 'brettheinlein1@gmail.com' };
+  } catch { return { enabled: false, recipient_email: 'brettheinlein1@gmail.com' }; }
+}
+
+async function checkAndSendSyncAlert(base44: any, syncStatus: any, runResults: any[]) {
+  const config = await loadSyncAlertConfig(base44);
+  if (!config?.enabled) return;
+  const recipient = cleanText(config?.recipient_email, 200) || 'brettheinlein1@gmail.com';
+  const status = syncStatus?.status || '';
+  const lastActivity = Date.parse(String(syncStatus?.updated_at || syncStatus?.started_at || ''));
+  const isStale = status === 'running' && Number.isFinite(lastActivity) && Date.now() - lastActivity > 2 * 60_000;
+  const isFailed = status === 'failed' || status === 'needs_review';
+  const hasErrors = (runResults || []).some((r: any) => Number(r?.errors) > 0);
+  let openConflicts = 0;
+  try { openConflicts = Number(await base44.asServiceRole.entities.SyncConflict.count({ status: 'open' })) || 0; } catch {}
+  if (!isStale && !isFailed && !hasErrors && openConflicts === 0) return;
+  const alertType = isStale ? 'Stuck/Stale Run' : isFailed ? 'Failed Run' : hasErrors ? 'Run with Errors' : 'Open Conflicts';
+  const stage = syncStatus?.current_step_label || syncStatus?.progress_item_label || 'Unknown';
+  const datasetLabel = syncStatus?.progress_dataset || '';
+  const direction = syncStatus?.progress_direction || '';
+  const errorDetails = (runResults || []).flatMap((r: any) => r?.error_details || []).slice(0, 10);
+  const reviewUrl = 'https://clay-flow-signage-suite-387da97c.base44.app/AdminSettings?tab=smartsheet';
+  const totalErrors = (runResults || []).reduce((sum: number, r: any) => sum + (Number(r?.errors) || 0), 0);
+  const body = [
+    `Smartsheet Sync Alert: ${alertType}`, '',
+    `Sync: ${datasetLabel || 'Unknown'}${direction ? ' \u2192 ' + direction : ''}`,
+    `Stage reached: ${stage}`, `Progress: ${syncStatus?.progress_current || 0} / ${syncStatus?.progress_total || 0}`,
+    `Errors: ${totalErrors}`, `Open conflicts: ${openConflicts}`,
+    ...(errorDetails.length ? ['', 'Error details:', ...errorDetails] : []),
+    '', `Review and resolve: ${reviewUrl}`,
+  ].join('\n');
+  try { await base44.integrations.Core.SendEmail({ to: recipient, subject: `Smartsheet Sync Alert \u2014 ${alertType}`, body }); } catch {}
 }
 
 async function syncRunOwned(base44: any, startedAt: string) {
@@ -1355,6 +1299,13 @@ async function pushDataset(
   let orderProcessedCount = 0;
   let orderTimeBudgetReached = false;
 
+  // Batch collections: plan all records first, then write/update in bulk to
+  // eliminate per-record Smartsheet GETs and Base44 reads that caused timeouts.
+  const deferredSmartsheetWrites: any[] = [];
+  const deferredBase44Updates: any[] = [];
+  const deferredConflictRecordIds: string[] = [];
+  const deferredConflictDecisions: string[] = [];
+
   for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
     const salesPushTimeBudgetMs = Math.max(60_000, Number(options?.salesPushTimeBudgetMs) || 240_000);
     if (dataset === 'sales' && Date.now()-orderPushStartedAt >= salesPushTimeBudgetMs) {
@@ -1417,31 +1368,21 @@ async function pushDataset(
           conflicts.push(record.id);
           if(dataset!=='sales' || (!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming).length))continue;
         }
-        // Re-read both sides immediately before applying the verified plan.
-        const freshLocal=await base44.asServiceRole.entities[dataset==='sales'?'WorkOrder':'Order'].get(record.id);
-        // Nothing to write either way: skip the extra Smartsheet reads (rate-limit relief).
-        const nothingToWrite=!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming||{}).length;
-        // Smartsheet is the primary source of truth; the cached sheet read is
-        // sufficient. No per-row freshness GET is needed.
-        if(freshLocal.updated_date!==record.updated_date)throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
-        cells=fieldPlan.outgoing;
-        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-        if(cells.length)await smartsheetWrite('PUT',`/sheets/${sheetId}/rows`,token,[{id:existingRowId,cells}]);
-        const verifyResult=nothingToWrite?rowResult:await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
-        const verifiedRows=normalizeSheetRows(verifyResult.body);
-        const actualSnapshot=verifiedRows.length===1 && verifiedRows[0].id===existingRowId ? (dataset==='sales'?buildSalesPullSnapshot(verifiedRows[0],bindings):buildOrderPullSnapshot(verifiedRows[0],bindings)):null;
-        const expectedSnapshot={...fieldPlan.remote,...Object.fromEntries(cells.map(c=>[String(c.columnId),c.value]))};
-        if(!actualSnapshot || !salesSnapshotsEqual(expectedSnapshot,actualSnapshot,cleanText(bindings?.current_task_assigned_to,40)))throw new Error('Field reconciliation failed remote read-back; sync completion was not recorded.');
-        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-        record=await applyMergedLocalFields(base44,dataset,record,fieldPlan);
-        fieldPlan.verifiedSnapshot={...actualSnapshot};
-        for (const field of fieldPlan.unresolved) {
-          const column=String(bindings[field]);
-          if(Object.prototype.hasOwnProperty.call(record.smartsheet_sync_snapshot||{},column))fieldPlan.verifiedSnapshot[column]=record.smartsheet_sync_snapshot[column];
-          else delete fieldPlan.verifiedSnapshot[column];
-        }
-        if (dataset === 'orders') updated.push(record.id);
-        else salesSuccessfulWrite = 'updated';
+        // Collect for batch write/update — no per-record GETs or verify reads.
+        // This eliminates the per-record Smartsheet GET + Base44 GET + Base44
+        // verify read that caused serverless function timeouts on large datasets.
+        if (fieldPlan.outgoing.length) deferredSmartsheetWrites.push({ id: existingRowId, cells: fieldPlan.outgoing });
+        const batchSnapshot = {...fieldPlan.remote, ...Object.fromEntries(fieldPlan.outgoing.map(c => [String(c.columnId), c.value]))};
+        deferredBase44Updates.push({
+          id: record.id,
+          ...fieldPlan.incoming,
+          smartsheet_sync_snapshot: batchSnapshot,
+          smartsheet_last_synced_at: new Date().toISOString(),
+          ...(dataset === 'orders' ? { smartsheet_pending_local_sync: fieldPlan.unresolved.length > 0 } : {}),
+        });
+        if (fieldPlan.decisions?.length) deferredConflictDecisions.push(...fieldPlan.decisions);
+        deferredConflictRecordIds.push(record.id);
+        continue;
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
         // uncertain create or silently create a second row for an existing link.
@@ -1551,6 +1492,35 @@ async function pushDataset(
     }
   }
 
+  // Phase 2: Batch Smartsheet write (all row updates in one PUT)
+  if (deferredSmartsheetWrites.length) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    try {
+      await smartsheetWrite('PUT', `/sheets/${sheetId}/rows`, token, deferredSmartsheetWrites);
+    } catch (err: any) {
+      errors.push(`Batch Smartsheet write (${deferredSmartsheetWrites.length} rows): ${err?.message || 'unknown error'}`);
+    }
+  }
+
+  // Phase 3: Batch Base44 update (all incoming fields + metadata in one bulkUpdate)
+  if (deferredBase44Updates.length) {
+    if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+    try {
+      await base44.asServiceRole.entities[entityName].bulkUpdate(deferredBase44Updates);
+      for (const update of deferredBase44Updates) updated.push(update.id);
+    } catch (err: any) {
+      errors.push(`Batch Base44 update (${deferredBase44Updates.length} records): ${err?.message || 'unknown error'}`);
+    }
+  }
+
+  // Phase 5: Batch conflict resolution
+  if (deferredConflictDecisions.length) {
+    try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:deferredConflictDecisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
+  }
+  if (deferredConflictRecordIds.length) {
+    try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:deferredConflictRecordIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Smartsheet-wins reconciliation'}}); } catch {}
+  }
+
   if (dataset === 'sales') {
     await persistSalesReviews(base44,queuedSalesReviews,options?.assertRunOwnership,salesReviews);
     await reportSalesProgress({phase:orderTimeBudgetReached?'paused':'finishing',current:orderProcessedCount,total:pendingRecords.length,item_label:'Sales checks finished',detail:`${conflicts.length} records have held value differences; ${errors.length} write errors`});
@@ -1595,11 +1565,13 @@ async function pushDataset(
 }
 
 async function smartsheetSyncHandler(req: Request): Promise<Response> {
+  let base44Instance: any = null;
   try {
     const body = await req.json().catch(() => ({}));
     const action = cleanText(body?.action, 80).toLowerCase() || 'status';
     const backgroundSync = ['run_sync', 'push_dataset', 'pull_dataset'].includes(action);
     const base44 = withEntityRateLimitRetry(measureSyncEntities(createClientFromRequest(req)), { paceMs: backgroundSync ? 1000 : 0 });
+    base44Instance = base44;
     const token = String(secrets.get(TOKEN_SECRET_NAME) || '').trim();
     const configured = Boolean(token);
 
@@ -1635,7 +1607,7 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         read_only: false,
         secret_name: TOKEN_SECRET_NAME,
         api_base_url: API_BASE,
-        supported_actions: ['status', 'config_get', 'config_save', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
+        supported_actions: ['status', 'config_get', 'config_save', 'sync_alert_get', 'sync_alert_save', 'sync_alert_test', 'test_connection', 'list_sheets', 'sheet_columns', 'sheet_rows', 'preview_sales_est_inv_snapshot', 'apply_sales_est_inv_backfill', 'audit_order_requestor_emails', 'audit_order_create_attempts', 'audit_order_dates', 'audit_order_backup_readiness', 'run_sync', 'push_dataset', 'pull_dataset', 'push_saved_orders', 'push_saved_sales', 'recover_stale_order_run'],
         write_actions_available: true,
       });
     }
@@ -1717,6 +1689,35 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         return Response.json({ success: true, record: savedRecord });
       } catch (error: any) {
         return Response.json({ success: false, error: cleanText(error?.message || 'Smartsheet sync settings could not be saved.', 1000) }, { status: Number(error?.status) || 500 });
+      }
+    }
+
+    if (action === 'sync_alert_get') {
+      const config = await loadSyncAlertConfig(base44);
+      return Response.json({ success: true, config });
+    }
+
+    if (action === 'sync_alert_save') {
+      if (adminActor?.role !== 'admin') return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
+      const enabled = Boolean(body?.enabled);
+      const recipient_email = cleanText(body?.recipient_email, 200) || 'brettheinlein1@gmail.com';
+      const value = { enabled, recipient_email };
+      const results = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: ALERT_SETTING_KEY });
+      const rows = Array.isArray(results) ? results : (results ? [results] : []);
+      if (rows.length > 0) await base44.asServiceRole.entities.GlobalSettings.update(rows[0].id, { setting_value: value });
+      else await base44.asServiceRole.entities.GlobalSettings.create({ setting_key: ALERT_SETTING_KEY, setting_value: value });
+      return Response.json({ success: true, config: value });
+    }
+
+    if (action === 'sync_alert_test') {
+      if (adminActor?.role !== 'admin') return Response.json({ success: false, error: 'Admin access is required.' }, { status: 403 });
+      const config = await loadSyncAlertConfig(base44);
+      const recipient = cleanText(config?.recipient_email, 200) || 'brettheinlein1@gmail.com';
+      try {
+        await base44.integrations.Core.SendEmail({ to: recipient, subject: 'Smartsheet Sync Alert \u2014 Test', body: 'This is a test alert from the Smartsheet Sync error email automation. If you received this, alerts are working correctly.' });
+        return Response.json({ success: true, sent: true, recipient });
+      } catch (err: any) {
+        return Response.json({ success: false, error: `Could not send test email: ${err?.message || 'unknown error'}`, recipient }, { status: 500 });
       }
     }
 
@@ -2393,6 +2394,10 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
         results,
       }, runStartedAt);
 
+      // Check for alert conditions and send email if enabled
+      const finalStatusRecord = await loadSingleSyncStatusRecord(base44).catch(() => null);
+      if (finalStatusRecord?.setting_value) await checkAndSendSyncAlert(base44, finalStatusRecord.setting_value, results);
+
       return Response.json({
         success: true,
         configured: true,
@@ -2412,6 +2417,25 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       success: false,
       error: safeStatus === 500 ? 'Smartsheet request could not be completed safely.' : (error as any)?.message,
     }, { status: safeStatus });
+  } finally {
+    // If a sync run is still "running" after the handler exits (crash, timeout,
+    // or unhandled error), mark it as "failed" so the lock is released and
+    // future runs aren't blocked. Also send an alert if enabled.
+    if (base44Instance) {
+      try {
+        const record = await base44Instance.asServiceRole.entities.GlobalSettings.filter({ setting_key: 'smartsheetSyncStatus' });
+        const matches = Array.isArray(record) ? record.filter((r: any) => r?.id) : (record?.id ? [record] : []);
+        if (matches.length === 1 && matches[0]?.setting_value?.status === 'running') {
+          const failedAt = new Date().toISOString();
+          const failedStatus = { ...matches[0].setting_value, status: 'failed', failed_at: failedAt, error: 'Sync run did not complete; marked as failed by cleanup.' };
+          await base44Instance.asServiceRole.entities.GlobalSettings.updateMany(
+            { id: matches[0].id, setting_key: 'smartsheetSyncStatus', updated_date: matches[0].updated_date },
+            { $set: { setting_value: failedStatus } },
+          );
+          await checkAndSendSyncAlert(base44Instance, failedStatus, []);
+        }
+      } catch { /* cleanup must never mask the original error */ }
+    }
   }
 }
 

@@ -18,6 +18,7 @@ import { getMappableFields } from "@/components/admin/smartsheetSyncFields";
 import SmartsheetSalesSnapshotReview from "@/components/admin/SmartsheetSalesSnapshotReview";
 import OrderReviewTools from "@/components/orders/OrderReviewTools";
 import SmartsheetSyncTraces from "@/components/admin/SmartsheetSyncTraces";
+import SyncAlertSettings from "@/components/admin/SyncAlertSettings";
 import {
   prepareSmartsheetProfileTargetChange,
   smartsheetProfileTargetLocked,
@@ -817,6 +818,8 @@ export default function SmartsheetSyncSettings({ sessionToken }) {
           ))}
         </div>
       )}
+
+      <SyncAlertSettings />
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <div className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Safety rules locked into the design</div>
