@@ -122,6 +122,42 @@ const salesFilterUsersForField = (field, users = []) => {
 
 const isSalesUserFilterField = (field) => Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field);
 
+const describeSalesColumnHeaderFilter = (sortConfig) => {
+  const key = String(sortConfig?.key || "").trim();
+  const filter = sortConfig?.customFilter;
+  if (!key || !filter || filter.filterType === "all") return null;
+
+  const label = getSalesColumnLayout(key)?.headerLabel || key;
+  if (filter.filterType === "selected") {
+    const selected = (filter.selectedValues || []).filter((value) => value != null && String(value).trim() !== "");
+    if (!selected.length) return null;
+    const preview = selected.slice(0, 2).join(", ");
+    return {
+      key,
+      label,
+      detail: selected.length > 2 ? `${preview} +${selected.length - 2}` : preview,
+    };
+  }
+
+  if (filter.filterType === "range" && filter.dateRange) {
+    const from = String(filter.dateRange.from || "").slice(0, 10);
+    const to = String(filter.dateRange.to || "").slice(0, 10);
+    if (!from && !to) return null;
+    return { key, label, detail: from && to ? `${from} – ${to}` : from ? `from ${from}` : `through ${to}` };
+  }
+
+  if (filter.filterType === "range" && filter.numberRange) {
+    const from = filter.numberRange.from;
+    const to = filter.numberRange.to;
+    const hasFrom = from !== null && from !== undefined && from !== "";
+    const hasTo = to !== null && to !== undefined && to !== "";
+    if (!hasFrom && !hasTo) return null;
+    return { key, label, detail: hasFrom && hasTo ? `${from} – ${to}` : hasFrom ? `from ${from}` : `through ${to}` };
+  }
+
+  return null;
+};
+
 const salesRecordBelongsToLoadedScope = (workOrder, scope) => {
   if (!workOrder || workOrder.deleted === true || workOrder.is_rider === true) return false;
   if (scope === "current") return workOrder.completed !== true && isCurrentPipelineOpportunity(workOrder);
@@ -188,7 +224,7 @@ const matchesAttentionFilter = (workOrder, attentionFilter, todayStamp, upcoming
   return true;
 };
 
-const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [], canImportExport = false }, ref) => {
+const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStatus = "all", recordScope = "current", attentionFilter = "all", outcomePeriod = "all", viewMode = "table", onSummaryChange, onColumnHeaderFilterChange, showButtonsInline = true, activeColumnPreset = null, customFilters = [], canImportExport = false }, ref) => {
   const { currentUser, sessionToken, isRegistered } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -266,8 +302,18 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     sortConfig, 
     handleSort: handleColumnSort, 
     handleCustomSort, 
-    clearSort 
+    clearSort,
+    clearCustomFilter,
   } = useColumnSorting('salesPipeline', currentUser?.email);
+
+  const activeColumnHeaderFilter = useMemo(
+    () => describeSalesColumnHeaderFilter(sortConfig),
+    [sortConfig],
+  );
+
+  useEffect(() => {
+    onColumnHeaderFilterChange?.(activeColumnHeaderFilter);
+  }, [activeColumnHeaderFilter, onColumnHeaderFilterChange]);
 
   const activeCustomFilterForSession = filterStatus.startsWith("custom_")
     ? customFilters.find((filter) => filter.id === filterStatus.replace("custom_", "")) || null
@@ -1649,6 +1695,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     importFromExcel: () => fileInputRef.current?.click(),
     openImportHistory: () => setShowImportHistory(true),
     saveAndSync,
+    clearColumnHeaderFilter: clearCustomFilter,
     handleCreateFromForm
   }));
 

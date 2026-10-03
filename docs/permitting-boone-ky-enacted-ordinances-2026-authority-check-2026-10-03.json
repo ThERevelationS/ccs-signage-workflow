@@ -14,18 +14,27 @@
   },
   "narrowZoningTextAmendments": [
     {
-      "number": "2026-02",
-      "date": "2026-03-24",
+      "number": "2026-01",
+      "displayedDate": "2026-05-05",
+      "pdfHref": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-01 Truck Parking Text Amendment.pdf?t=202605051344050",
       "scope": "Commercial parking; freight container; freight terminal; semitrailer; trailer; truck; truck tractor, with identified zoning-district changes.",
       "rewriteReplacement": false
     },
     {
-      "number": "2026-03",
-      "date": "2026-03-24",
+      "number": "2026-02",
+      "displayedDate": "2026-03-24",
+      "pdfHref": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-02 Mfg Home Text Admendment.pdf?t=202605051501000",
       "scope": "Manufactured home; qualified manufactured home; mobile home definitions and identified zoning-district changes.",
       "rewriteReplacement": false
     }
   ],
+  "otherRelevant2026Entry": {
+    "number": "2026-03",
+    "displayedDate": "2026-03-24",
+    "pdfHref": "Documents/Government/County Ordinances/Proposed and Enacted Ordinances/2026-03 Crane WW Zone Change.pdf?t=202605051500340",
+    "scope": "Crane Worldwide Logistics project-specific zoning map amendment from Airport (A) to Industrial One (I-1).",
+    "rewriteReplacement": false
+  },
   "ordinanceDatabase": {
     "sourceUrl": "https://codelibrary.amlegal.com/codes/boonecounty/latest/overview",
     "officialCountyLink": true,
@@ -36,8 +45,8 @@
     "bodyArchived": false,
     "sourceGap": "The county-linked American Legal ordinance database returned HTTP 403 with a Cloudflare challenge on both direct and browser-style/referrer retrieval attempts. The denial page was not archived as ordinance content."
   },
-  "authorityFinding": "The county Enacted Ordinances page, retrieved on 2026-10-03, lists 2026 enacted ordinances through Ordinance 2026-15 dated September 23, 2026. Among the parsed 2026 entries, no description identifies adoption of the 2026 comprehensive zoning ordinance rewrite, Article 34 replacement, or sign-regulation rewrite. Ordinances 2026-02 and 2026-03 are real zoning text amendments but are narrowly scoped and must not be mistaken for the comprehensive rewrite.",
+  "authorityFinding": "The county Enacted Ordinances page, retrieved on 2026-10-03, lists 2026 enacted ordinances through Ordinance 2026-15 dated September 23, 2026. Among the parsed 2026 rows, no description identifies adoption of the 2026 comprehensive zoning ordinance rewrite, Article 34 replacement, or sign-regulation rewrite. Ordinances 2026-01 and 2026-02 are real zoning text amendments but are narrowly scoped and must not be mistaken for the comprehensive rewrite.",
   "authorityBoundary": "This establishes what appears on the official Boone County Enacted Ordinances page as retrieved on 2026-10-03. It does not prove that no unposted enactment exists, does not establish action by other legislative bodies in the Boone County Planning Unit, and does not substitute for a later effective-date or adoption record if one is posted.",
   "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority for the Boone County jurisdiction unless newer reviewed official enactment/effective-date evidence establishes replacement text.",
-  "nextLogicalAuthorityTarget": "After October 6, recheck Fiscal Court action/minutes and the Enacted Ordinances page for any newly posted rewrite ordinance; separately identify the other Boone County Planning Unit legislative bodies that would need adoption evidence before treating the rewrite as universally effective."
+  "nextLogicalAuthorityTarget": "Identify the other legislative bodies in the Boone County Planning Unit and the official records each would use to adopt the rewrite, so rewrite authority is not incorrectly generalized from Fiscal Court action alone."
 }
