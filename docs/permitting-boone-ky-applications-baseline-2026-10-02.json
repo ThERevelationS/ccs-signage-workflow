@@ -1,0 +1,196 @@
+{
+  "title": "Boone County Planning Commission \u2014 Applications baseline reconciliation",
+  "checkedAt": "2026-10-02",
+  "sourcePage": "public/permitting/sources/boone-ky/planning-applications-forms-page-2026-09-28.html",
+  "uniqueListedApplications": 26,
+  "accountedApplications": 26,
+  "remainingApplications": 0,
+  "baselineStatus": "complete_for_preserved_page",
+  "applications": [
+    {
+      "sourceFile": "BOA.pdf",
+      "listedLabel": "Board of Adjustment (BOA)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/board-of-adjustment-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-board-of-adjustment-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "CertAppropriateness.pdf",
+      "listedLabel": "Certificate of Appropriateness",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/certificate-of-appropriateness-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-certificate-of-appropriateness-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "CDP.pdf",
+      "listedLabel": "Concept Development Plan",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/concept-development-plan-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-concept-development-plan-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ConveyancePlat.pdf",
+      "listedLabel": "Conveyance Plat",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/conveyance-plat-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-conveyance-plat-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "DesignReview.pdf",
+      "listedLabel": "Design Review",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/design-review-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-design-review-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "FinalPlat.pdf",
+      "listedLabel": "Final Plat",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/final-plat-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-final-plat-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "GradingPlan.pdf",
+      "listedLabel": "Grading Plan",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/grading-plan-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-grading-plan-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "HomeOccupation.pdf",
+      "listedLabel": "Home Occupation Permit",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/home-occupation-permit-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-home-occupation-permit-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ImprovementPlan.pdf",
+      "listedLabel": "Improvement Plan",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/improvement-plan-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-improvement-plan-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "PreliminaryPlat.pdf",
+      "listedLabel": "Preliminary Plat",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/preliminary-plat-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-preliminary-plat-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "SignPermit.pdf",
+      "listedLabel": "Sign Permit",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/sign-permit-application-current-2026-09-28.pdf",
+      "evidencePath": "docs/permitting-boone-ky-sign-permit-application-current-evidence-2026-09-28.json"
+    },
+    {
+      "sourceFile": "SitePlan.pdf",
+      "listedLabel": "Site Plan",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/site-plan-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-site-plan-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "SurfaceMining.pdf",
+      "listedLabel": "Surface Mining Special Use Permit",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/surface-mining-special-use-permit-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-surface-mining-special-use-permit-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "TAD.pdf",
+      "listedLabel": "Temporary Advertising Display",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/temporary-advertising-display-application-2026-09-28.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-advertising-display-evidence-2026-09-28.json"
+    },
+    {
+      "sourceFile": "TCDFlorenceUnionWalton.pdf",
+      "listedLabel": "Temporary Commercial Display (Incorporated)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/tcd-incorporated-2026-09-28.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-commercial-display-incorporated-evidence-2026-09-28.json"
+    },
+    {
+      "sourceFile": "TCDSeasonal.pdf",
+      "listedLabel": "Temporary Commercial Display (Seasonal)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/temporary-commercial-display-seasonal-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-commercial-display-seasonal-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "TCDBooneCounty.pdf",
+      "listedLabel": "Temporary Commercial Display (Unincorporated)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/temporary-commercial-display-unincorporated-2026-09-28.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-commercial-display-unincorporated-evidence-2026-09-28.json"
+    },
+    {
+      "sourceFile": "TST.pdf",
+      "listedLabel": "Temporary Storage Trailer",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/temporary-storage-trailer-2026-09-29.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-storage-trailer-evidence-2026-09-29.json"
+    },
+    {
+      "sourceFile": "TempUsePermit.pdf",
+      "listedLabel": "Temporary Use Permit",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/temporary-use-permit-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-temporary-use-permit-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "TenantFinish.pdf",
+      "listedLabel": "Tenant Finish",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/tenant-finish-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-tenant-finish-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "UniformWireless.pdf",
+      "listedLabel": "Uniform Wireless",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/uniform-wireless-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-uniform-wireless-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ZMA.pdf",
+      "listedLabel": "Zoning Map Amendment",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/zoning-map-amendment-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-zoning-map-amendment-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ZoningPermitAcc.pdf",
+      "listedLabel": "Zoning Permit (Accessory Structures)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/zoning-permit-accessory-structures-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-zoning-permit-accessory-structures-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ZoningPermitRes.pdf",
+      "listedLabel": "Zoning Permit (Residential Dwelling Unit)",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/zoning-permit-residential-dwelling-unit-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-zoning-permit-residential-dwelling-unit-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "WaiverofRequirements.pdf",
+      "listedLabel": "Waiver of Requirements",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/waiver-of-requirements-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-waiver-of-requirements-evidence-2026-10-01.json"
+    },
+    {
+      "sourceFile": "ZoningCertRequest.pdf",
+      "listedLabel": "Zoning Certification Request",
+      "status": "archived",
+      "repositoryPath": "public/permitting/sources/boone-ky/zoning-certification-request-2026-10-01.pdf",
+      "evidencePath": "docs/permitting-boone-ky-zoning-certification-request-evidence-2026-10-01.json"
+    }
+  ],
+  "scope": "This reconciliation inventories every unique PDF linked under Documents/Applications Forms/Applications/ on the preserved Boone County Planning Commission Applications and Forms page and confirms that each listed application has an existing repository archive and bounded evidence record. Archived status establishes source-file accounting only. It does not assert that every application applies to a particular sign project or that every instruction, requirement, fee, procedure, approval standard, or workflow inside an application is current.",
+  "nextBaselineCategory": "none_on_preserved_applications_forms_page",
+  "nextCategoryReason": "Applications, Forms, and Checklists are now independently reconciled for the preserved Boone County Planning Commission Applications and Forms page."
+}
