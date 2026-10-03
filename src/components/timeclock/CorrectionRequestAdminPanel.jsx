@@ -162,7 +162,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
     const duration = shiftDurationSummary(parsedIn.iso, parsedOut.iso, lunchMinutes);
     if (!duration.valid) return duration;
     return { ...duration, clockInIso: parsedIn.iso, clockOutIso: parsedOut.iso };
-  }, [clockIn, clockOut, lunchMinutes]);
+  }, [clockIn, clockOut, lunchMinutes, selected]);
 
   if (!sessionToken) return null;
 
