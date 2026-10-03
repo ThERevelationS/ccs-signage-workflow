@@ -514,14 +514,34 @@ Deno.serve(async (req) => {
         return json({success:true,link:publicGrant(updated)});
       }
 
+      if (action === 'admin_reconcile_mechanic_mutation') {
+        const receiptId = String(body?.receipt_id || '').trim();
+        if (!receiptId) return json({error:'Fleet operation receipt id is required.'},{status:400});
+        const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
+        const receipt = await Receipt.get(receiptId).catch(()=>null);
+        if (!receipt) return json({error:'Fleet operation receipt was not found.'},{status:404});
+        const result = await reconcileMechanicReceiptForAdmin(base44,Access,Receipt,receipt,auth.user.email || '');
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Fleet mechanic operation receipt reconciled by CCS admin.',details:{receipt_id:receipt.id,operation_key:receipt.operation_key || '',operation_type:receipt.operation_type || '',status:result.status,recovered:result.recovered === true,reconciled_by:auth.user.email || ''}}).catch(()=>null);
+        return json({success:true,status:result.status,recovered:result.recovered === true,error_message:result.error_message || '',work_order:sanitizeWorkOrder(result.work_order)});
+      }
+
       if (action === 'admin_revoke_link') {
         const id = String(body?.id || '').trim();
         const found = await Access.get(id).catch(()=>null);
         if (!found) return json({error:'Mechanic access link was not found.'},{status:404});
         await Access.update(id,{enabled:false});
-        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || ''}}).catch(()=>null);
+        const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
+        const started = await Receipt.filter({status:'started',operation_type:{$in:Object.values(MECHANIC_MUTATION_TYPES)}}).catch(()=>[]);
+        let reconciledApplied = 0;
+        let reconciledFailed = 0;
+        for (const receipt of (started || []).filter((row:any)=>String(row?.result_summary?.grant_id || '') === id)) {
+          const result = await reconcileMechanicReceiptForAdmin(base44,Access,Receipt,receipt,auth.user.email || '').catch(()=>null);
+          if (result?.status === 'applied') reconciledApplied += 1;
+          else if (result?.status === 'failed') reconciledFailed += 1;
+        }
+        await Log.create({source:'fleetMechanicPortal',level:'info',message:'Standalone Fleet mechanic access link revoked.',details:{grant_id:id,name:found.name || '',revoked_by:auth.user.email || '',reconciled_applied:reconciledApplied,reconciled_failed:reconciledFailed}}).catch(()=>null);
         const grants = await loadAllEntityRows({entity:Access,sort:'-created_date',label:'Fleet mechanic access links'});
-        return json({success:true,links:(grants || []).map(publicGrant)});
+        return json({success:true,links:(grants || []).map(publicGrant),reconciled_applied:reconciledApplied,reconciled_failed:reconciledFailed});
       }
       return json({error:'Unsupported Fleet mechanic admin action.'},{status:400});
     }
