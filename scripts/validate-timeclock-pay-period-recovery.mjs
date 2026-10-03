@@ -1391,6 +1391,13 @@ test('exact rejection retry repairs Punch Exception finalization interrupted aft
   assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'correction_review').length, 1);
 });
 
+test('stale applied review recovery preserves exact retry audit binding', async () => {
+  const sourceSlice = source.slice(source.indexOf("if (staleApplied)"), source.indexOf("if (staleAudit?.id && ['confirmed'"));
+  assert.match(sourceSlice, /review_payload_hash: previousReviewHash/);
+  assert.match(sourceSlice, /recovered_after_review_save: true/);
+  assert.match(sourceSlice, /reconcileMissedClockOutTerminal\(recoveredRequest, staleAudit\.id\)/);
+});
+
 test('late-day clock action intent prompts for a possible missed Clock In without inventing a shift', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [];
