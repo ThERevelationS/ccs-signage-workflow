@@ -50,3 +50,35 @@ test('model rewrite flag still fails closed when documents are absent', () => {
   assert.equal(classifyRewriteSourceAuthority(data).isComprehensiveRewrite, false);
   assert.equal(isComprehensiveRewriteResearch(data), true);
 });
+
+test('downloaded document extraction can independently trigger rewrite protection', () => {
+  const researchData = {
+    authority_candidate: { is_comprehensive_rewrite: false, kind: 'current_adopted' },
+    documents: [{ title: 'Zoning Regulations', url: 'https://official.example/zoning.pdf' }],
+  };
+  const documentEvidence = [{
+    title: 'Zoning Regulations',
+    url: 'https://official.example/zoning.pdf',
+    file_url: 'https://files.example/zoning.pdf',
+    extracted_text: 'Public review copy — proposed comprehensive zoning code replacement. Not yet effective.',
+  }];
+  assert.equal(isComprehensiveRewriteResearch(researchData), false);
+  const gated = gateResearchRegulatoryPromotion({
+    jurisdiction: { id: 'boone' }, researchData, updateData: regulatoryUpdate, documentEvidence,
+  });
+  assert.equal(gated.blocked, true);
+  assert.equal(Object.hasOwn(gated.updateData, 'permit_requirements'), false);
+  assert.deepEqual(gated.updateData.documents, regulatoryUpdate.documents);
+});
+
+test('ordinary extracted adopted-code text does not trigger rewrite protection', () => {
+  const documentEvidence = [{
+    title: 'Zoning Regulations',
+    extracted_text: 'Article 34 Signs. These adopted regulations are currently in force.',
+  }];
+  const gated = gateResearchRegulatoryPromotion({
+    jurisdiction: { id: 'boone' }, researchData: {}, updateData: regulatoryUpdate, documentEvidence,
+  });
+  assert.equal(gated.blocked, false);
+  assert.deepEqual(gated.updateData, regulatoryUpdate);
+});
