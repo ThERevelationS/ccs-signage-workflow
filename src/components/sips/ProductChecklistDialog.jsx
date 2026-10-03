@@ -164,6 +164,23 @@ export default function ProductChecklistDialog({
     });
     return labels;
   }, [checklist, dropdownConditionByName, childrenCompleteByItemId]);
+  const checklistRenderMetaById = useMemo(() => {
+    const metaById = new Map();
+    checklist.forEach(rawItem => {
+      const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
+      const tasks = checklistChildrenByParentType.get(item.id)?.task || [];
+      const details = (checklistChildrenByParentType.get(item.id)?.detail || []).map(detail => ({
+        ...detail,
+        tasks: checklistChildrenByParentType.get(detail.id)?.task || [],
+      }));
+      metaById.set(item.id, {
+        displayItem: { ...item, tasks, details },
+        isCompleted: Boolean(dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed),
+        attentionLabel: itemAttentionLabelById.get(item.id) || null,
+      });
+    });
+    return metaById;
+  }, [checklist, checklistChildrenByParentType, dropdownConditionByName, itemAttentionLabelById]);
 
   useEffect(() => {
     if (isOpen && workOrder) {
@@ -500,8 +517,6 @@ export default function ProductChecklistDialog({
     updateChecklistItem(itemId, { custom_dropdown_value: value });
     return true;
   };
-
-  const getItemAttentionLabel = (item) => itemAttentionLabelById.get(item?.id) || null;
 
   const checkIfComplete = () => {
     if (!checklist || checklist.length === 0) {
@@ -1580,17 +1595,9 @@ export default function ProductChecklistDialog({
                         // Skip child items - they'll be rendered under their parent
                         if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
                         
-                        // Treat items without type as checklist items
-                        const item = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
-                        // Find associated tasks/details from the SAME group
-                        const itemTasks = checklistChildrenByParentType.get(item.id)?.task || [];
-                        const itemDetails = (checklistChildrenByParentType.get(item.id)?.detail || []).map(detail => ({
-                          ...detail,
-                          tasks: checklistChildrenByParentType.get(detail.id)?.task || []
-                        }));
-                        
-                        const displayItem = { ...item, tasks: itemTasks, details: itemDetails };
-                        const isItemCompleted = dropdownConditionByName.get(displayItem.custom_dropdown_value)?.is_completed;
+                        const renderMeta = checklistRenderMetaById.get(rawItem.id);
+                        if (!renderMeta) return null;
+                        const { displayItem, isCompleted: isItemCompleted, attentionLabel } = renderMeta;
                         return (
                         <div data-sips-checklist-item-id={String(displayItem.id)} key={displayItem.id} className={`clay-card p-3 ${isItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === displayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === displayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                           {/* Main checklist item */}
@@ -1626,9 +1633,9 @@ export default function ProductChecklistDialog({
                               </div>
                             )}
                             
-                            {getItemAttentionLabel(displayItem) && (
+                            {attentionLabel && (
                               <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
-                                {getItemAttentionLabel(displayItem)}
+                                {attentionLabel}
                               </span>
                             )}
 
@@ -1876,7 +1883,9 @@ export default function ProductChecklistDialog({
 
                               {/* Detail items */}
                               {displayItem.details?.map(detail => {
-                                const isDetailCompleted = dropdownConditionByName.get(detail.custom_dropdown_value)?.is_completed;
+                                const detailRenderMeta = checklistRenderMetaById.get(detail.id);
+                                const isDetailCompleted = detailRenderMeta?.isCompleted || false;
+                                const detailAttentionLabel = detailRenderMeta?.attentionLabel || null;
                                 return (
                                 <div data-sips-checklist-item-id={String(detail.id)} key={detail.id} className={`p-2 rounded border group/detail ${isDetailCompleted ? 'bg-green-100/70' : 'bg-gray-50'} ${focusedNeedsInputId === detail.id ? 'ring-2 ring-red-400 ring-offset-1' : focusedSearchId === detail.id ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                                   <div className="flex flex-wrap items-center gap-2">
@@ -1897,9 +1906,9 @@ export default function ProductChecklistDialog({
                                         )}
                                       </div>
                                     )}
-                                    {getItemAttentionLabel(detail) && (
+                                    {detailAttentionLabel && (
                                       <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
-                                        {getItemAttentionLabel(detail)}
+                                        {detailAttentionLabel}
                                       </span>
                                     )}
 
@@ -2118,16 +2127,10 @@ export default function ProductChecklistDialog({
                       <h4 className="text-sm font-semibold text-blue-700 mb-2">🔗 {stName}</h4>
                       <div className="space-y-2">
                         {stItems.map(rawItem => {
-                          const stItem = rawItem.type ? rawItem : { ...rawItem, type: 'checklist' };
-                          const stItemTasks = checklistChildrenByParentType.get(stItem.id)?.task || [];
-                          const stItemDetails = (checklistChildrenByParentType.get(stItem.id)?.detail || []).map(detail => ({
-                            ...detail,
-                            tasks: checklistChildrenByParentType.get(detail.id)?.task || []
-                          }));
                           if (rawItem.parent_id && (rawItem.type === 'task' || rawItem.type === 'detail' || rawItem.type === 'subtask')) return null;
-                          
-                          const stDisplayItem = { ...stItem, tasks: stItemTasks, details: stItemDetails };
-                          const isStItemCompleted = dropdownConditionByName.get(stDisplayItem.custom_dropdown_value)?.is_completed;
+                          const renderMeta = checklistRenderMetaById.get(rawItem.id);
+                          if (!renderMeta) return null;
+                          const { displayItem: stDisplayItem, isCompleted: isStItemCompleted, attentionLabel } = renderMeta;
                           return (
                           <div data-sips-checklist-item-id={String(stDisplayItem.id)} key={stDisplayItem.id} className={`clay-card p-2 ${isStItemCompleted ? 'bg-green-100/70' : 'bg-white'} ${focusedNeedsInputId === stDisplayItem.id ? 'ring-2 ring-red-400 ring-offset-2' : focusedSearchId === stDisplayItem.id ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                             <div 
@@ -2161,9 +2164,9 @@ export default function ProductChecklistDialog({
                                   )}
                                 </div>
                               )}
-                              {getItemAttentionLabel(stDisplayItem) && (
+                              {attentionLabel && (
                                 <span className="text-[10px] font-medium rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 whitespace-nowrap">
-                                  {getItemAttentionLabel(stDisplayItem)}
+                                  {attentionLabel}
                                 </span>
                               )}
 
