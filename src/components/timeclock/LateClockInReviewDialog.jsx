@@ -10,6 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  TIME_CLOCK_COMPANY_TIME_LABEL,
+  parseCompanyDateTimeInput,
+} from "@/components/timeclock/timeClockCompanyTime";
 
 export default function LateClockInReviewDialog({
   open,
@@ -32,13 +36,13 @@ export default function LateClockInReviewDialog({
 
   const submitRecovery = async () => {
     setLocalError("");
-    const parsed = new Date(claimedClockIn);
-    if (!claimedClockIn || !Number.isFinite(parsed.getTime())) {
-      setLocalError("Enter the date and time you actually arrived.");
+    const parsed = parseCompanyDateTimeInput(claimedClockIn);
+    if (!parsed.ok) {
+      setLocalError(parsed.error || `Enter the date and time you actually arrived in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`);
       return;
     }
     try {
-      await onRecoverMissedClockIn(parsed.toISOString());
+      await onRecoverMissedClockIn(parsed.iso);
     } catch (err) {
       setLocalError(err?.message || "The missed Clock In was not confirmed.");
     }
@@ -74,7 +78,7 @@ export default function LateClockInReviewDialog({
               Yes — I forgot to Clock In
             </div>
             <Label htmlFor="missed-clock-in-time" className="mt-3 block text-sm text-slate-800 dark:text-slate-100">
-              What time did you actually arrive today?
+              What time did you actually arrive today? ({TIME_CLOCK_COMPANY_TIME_LABEL})
             </Label>
             <Input
               id="missed-clock-in-time"
@@ -88,7 +92,7 @@ export default function LateClockInReviewDialog({
               className="mt-2 bg-white dark:bg-slate-900"
             />
             <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-              We will reconstruct the missing start from your answer, mark the shift Needs Review, keep a full audit record,
+              Enter the actual shop/company arrival time in {TIME_CLOCK_COMPANY_TIME_LABEL}. We will reconstruct the missing start from your answer, mark the shift Needs Review, keep a full audit record,
               and take you directly to the normal Clock Out screen so you can reconcile lunch and job time.
             </p>
             <Button
