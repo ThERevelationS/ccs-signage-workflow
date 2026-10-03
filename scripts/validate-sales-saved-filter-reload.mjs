@@ -7,15 +7,15 @@ const check = (value, message) => { assert.ok(value, message); checks += 1; };
 
 check(page.includes("const activeFiltersLoadRef = useRef(0);"),
   "Saved-filter loads have a monotonic request guard.");
-const identityEffect = page.split("// Saved-filter selections are user-specific.")[1]?.split("useEffect(() => {")[0] || "";
+const identityEffect = page.split("// Saved-filter selections and active filter preferences are user-specific.")[1]?.split("\n\n  const runSaveAndSync")[0] || "";
 check(identityEffect.includes("activeFiltersLoadRef.current += 1;"),
   "Identity changes invalidate any older saved-filter request.");
 check(identityEffect.includes("setActiveFilters([]);") && identityEffect.includes("setActiveColumnPreset(null);"),
   "Identity changes immediately clear prior-user saved filters and column presets.");
-check(identityEffect.includes('current.startsWith("custom_") ? "all" : current'),
-  "Identity changes clear only user-specific custom information-filter state.");
-check(page.includes("}, [currentUser?.email]);"),
-  "Saved-filter identity handling is keyed to the user email rather than unrelated user-object changes.");
+check(identityEffect.includes('setFilterStatus("all");') && identityEffect.includes('setAttentionFilter("all");'),
+  "Identity/session changes fail closed by clearing active information and attention filters.");
+check(page.includes("}, [currentUser?.email, sessionToken]);"),
+  "Saved-filter identity handling is keyed to the authenticated email and session rather than unrelated user-object changes.");
 
 const loader = page.split("const loadActiveFilters = async () => {")[1]?.split("\n  };")[0] || "";
 check(loader.includes("const requestId = ++activeFiltersLoadRef.current;"),
