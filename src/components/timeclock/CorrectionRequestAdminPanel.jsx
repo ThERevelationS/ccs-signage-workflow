@@ -26,7 +26,7 @@ function displayTime(iso) {
   return formatCompanyDateTime(iso);
 }
 
-export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged }) {
+export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged, reviewRequestId = "", onReviewRequestOpened }) {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +62,8 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
 
-  const openReview = (request) => {
+  const openReview = useCallback((request) => {
+    if (!request?.id) return;
     const requested = request.requested_changes || {};
     setSelected(request);
     setClockIn(companyDateTimeInputFromIso(requested.clock_in));
@@ -72,6 +73,19 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
     setReviewReason("");
     setRetryReview(null);
     setError("");
+  }, []);
+
+  useEffect(() => {
+    if (!reviewRequestId || loading || selected?.id === reviewRequestId) return;
+    const requestedReview = requests.find((request) => request.id === reviewRequestId);
+    if (!requestedReview) return;
+    openReview(requestedReview);
+    onReviewRequestOpened?.(reviewRequestId);
+  }, [loading, onReviewRequestOpened, openReview, requests, reviewRequestId, selected?.id]);
+
+  /* Kept as a named callback so list review and Needs Attention routing share one path. */
+  const openReviewFromList = (request) => {
+    openReview(request);
   };
 
   const review = async (decision) => {
@@ -196,7 +210,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                   <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => openReview(request)}>Review</Button>
+                <Button size="sm" variant="outline" onClick={() => openReviewFromList(request)}>Review</Button>
               </div>
             ))}
           </div>
