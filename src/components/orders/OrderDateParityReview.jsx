@@ -10,6 +10,10 @@ const GROUPS = [
   { key: "invalid_values", label: "Unrecognized values", note: "The source value could not be safely translated; resolve these before any pull." },
   { key: "text_choices", label: "Text choices and notes", note: "Date Needed and Date Ordered may contain scheduling notes such as ASAP or N/A. Date Received may contain choices such as Stock or In Stock. These are preserved separately from calendar dates." },
   { key: "stale_text_options", label: "Stale Base44 text options", note: "Smartsheet has a real date or a blank cell, but the linked Base44 Order retains an old text option. Blank source cells never authorize erasing local data." },
+  { key: "preserved_historical_dates", label: "Preserved historical Base44 dates", note: "Smartsheet is blank and the last verified remote snapshot was also blank. No newer tracked local edit proves this date should be pushed back." },
+  { key: "verified_newer_local_dates", label: "Verified newer local dates", note: "Smartsheet is blank, but a committed Order Form/admin edit of this exact date occurred after the last verified sync." },
+  { key: "remote_blank_changed_since_sync", label: "Smartsheet became blank after sync", note: "The last verified snapshot had a remote value, but Smartsheet is blank now. This requires review; no side is chosen automatically." },
+  { key: "unverified_local_only_dates", label: "Unverified local-only dates", note: "Smartsheet is blank, but the available snapshot/timestamp evidence is incomplete. Preserve and review." },
   { key: "ambiguous_links", label: "Duplicate permanent links", note: "Multiple Base44 Orders refer to one Smartsheet row; never choose one by row position or name." },
   { key: "unlinked_rows", label: "Unlinked Smartsheet rows", note: "These permanent Smartsheet row IDs have no matching active Base44 Order. Review them before enabling record creation; no automatic match or deletion is performed." },
 ];
@@ -75,6 +79,10 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
     (Number(totals.duplicate_base44_links) || 0) > 0;
   const unlinkedCount = Number(totals.unlinked_smartsheet_rows) || 0;
   const staleTextCount = Number(totals.stale_text_options) || 0;
+  const preservedHistoricalCount = Number(totals.preserved_historical_dates) || 0;
+  const verifiedNewerLocalCount = Number(totals.verified_newer_local_dates) || 0;
+  const remoteBlankChangedCount = Number(totals.remote_blank_changed_since_sync) || 0;
+  const unverifiedLocalOnlyCount = Number(totals.unverified_local_only_dates) || 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="clay-card border-none w-[calc(100vw-1rem)] max-w-5xl max-h-[90vh] flex flex-col p-4 sm:p-6">
@@ -124,12 +132,33 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
               {report.sync_global_enabled ? " Global sync is enabled." : " Global sync is OFF."}
               {report.sync_observation_mode ? " Observation mode is ON." : " Observation mode is OFF."}
             </p>
+            <div className="rounded-xl border bg-slate-50 p-3">
+              <p className="text-sm font-semibold text-slate-800">Local-only date evidence</p>
+              <p className="mt-1 text-xs text-slate-600">
+                These categories apply only where Base44 has a calendar date and the current verified Smartsheet cell is blank.
+                {" "}{count(report.date_field_audit_events)} committed tracked Order date edit events were available as evidence.
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4">
+                {[
+                  ["Preserved historical", preservedHistoricalCount],
+                  ["Verified newer local", verifiedNewerLocalCount],
+                  ["Remote became blank", remoteBlankChangedCount],
+                  ["Evidence incomplete", unverifiedLocalOnlyCount],
+                ].map(([label, value]) => <div key={label} className="rounded-lg border bg-white p-2">
+                  <p className="text-[11px] text-slate-600">{label}</p>
+                  <p className="text-lg font-bold tabular-nums text-slate-900">{count(value)}</p>
+                </div>)}
+              </div>
+            </div>
             <div className={`rounded-xl border p-3 text-sm ${blockedByTranslation || unlinkedCount || staleTextCount ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
               {blockedByTranslation
                 ? `${count(totals.invalid_date_values)} untranslatable date cells and ${count(totals.duplicate_base44_links)} duplicate permanent row links block a full-sheet Order pull. Review the examples below; no data was changed.`
                 : "Date translation and duplicate-link checks passed this read-only comparison. A verified recoverable backup and deployed-code check are still required before a full-sheet pull."}
               {unlinkedCount > 0 && <p className="mt-2 font-medium">{count(unlinkedCount)} Smartsheet rows have no matching active Base44 Order. Linked Orders may still sync, but these row IDs need review; no new records are created by this audit.</p>}
               {staleTextCount > 0 && <p className="mt-2 font-medium">{count(staleTextCount)} old Base44 text options remain beside dated or blank Smartsheet cells. They may override displayed dates. Blank source cells require review and are not cleared automatically.</p>}
+              {preservedHistoricalCount > 0 && <p className="mt-2 font-medium">{count(preservedHistoricalCount)} local-only dates are preserved historical values: Smartsheet was already blank at the last verified sync and no newer tracked local edit proves they should be written back.</p>}
+              {verifiedNewerLocalCount > 0 && <p className="mt-2 font-medium">{count(verifiedNewerLocalCount)} local-only dates have verified newer local edit evidence. They are candidates for explicit review/Save & Sync, not automatic mass push.</p>}
+              {(remoteBlankChangedCount > 0 || unverifiedLocalOnlyCount > 0) && <p className="mt-2 font-medium">{count(remoteBlankChangedCount + unverifiedLocalOnlyCount)} local-only dates have changed or incomplete evidence and require review before either side is changed.</p>}
             </div>
             <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[745px] text-left text-xs">
@@ -176,6 +205,9 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
                       {item.smartsheet_date && <p>Smartsheet date: {item.smartsheet_date}</p>}
                       {item.smartsheet_blank && <p>Smartsheet cell: blank (preserve and review)</p>}
                       {item.base44_date && <p>Base44 date: {item.base44_date}</p>}
+                      {item.last_synced_at && <p>Last verified sync: {item.last_synced_at}</p>}
+                      {item.local_modified_at && <p>Verified local edit: {item.local_modified_at}</p>}
+                      {item.prior_remote_value && <p>Previous verified Smartsheet value: {item.prior_remote_value}</p>}
                       {item.smartsheet_value && <p>Smartsheet text: {item.smartsheet_value}</p>}
                       {item.base44_value && <p>Base44 date / text: {item.base44_value}</p>}
                       {item.raw && <p className="break-words">Unrecognized value: {item.raw}</p>}
