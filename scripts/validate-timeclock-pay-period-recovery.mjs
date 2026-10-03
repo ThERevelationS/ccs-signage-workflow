@@ -528,6 +528,9 @@ test('reopen retires the prior payroll snapshot and re-finalize replaces it auth
   assert.equal(h.period().finalized_summary_history.length, 1);
   assert.equal(h.period().finalized_summary_history[0].request_id, firstRequest);
   assert.equal(h.period().finalized_summary_history[0].invalidated_by_reopen_request_id, reopenRequest);
+  assert.equal(h.period().finalized_summary_history[0].snapshot_version, 3);
+  assert.deepEqual(h.period().finalized_summary_history[0].shift_manifest, firstSummary.shift_manifest);
+  assert.equal(h.period().finalized_summary_history[0].shift_manifest_hash, firstSummary.entry_snapshot_hash);
 
   assert.equal((await h.action('finalize', secondRequest)).status, 200);
   assert.equal(h.period().status, 'finalized');
