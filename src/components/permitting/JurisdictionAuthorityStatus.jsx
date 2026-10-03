@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, ExternalLink, ShieldCheck, ShieldAlert, AlertTriangle, FileText } from "lucide-react";
 import { assessRewriteAuthorityPromotion } from "./jurisdictionAuthorityGate";
