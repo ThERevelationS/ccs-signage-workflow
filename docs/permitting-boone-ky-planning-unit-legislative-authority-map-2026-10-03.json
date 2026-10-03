@@ -1,0 +1,28 @@
+{
+  "title": "Boone County Planning Unit — legislative-body adoption authority map",
+  "checkedAt": "2026-10-03",
+  "planningUnitJurisdictions": [
+    {"jurisdiction":"Unincorporated Boone County","legislativeBody":"Boone County Fiscal Court","officialActionRecords":["Fiscal Court agendas/minutes","Boone County Enacted Ordinances"],"status":"already tracked separately"},
+    {"jurisdiction":"City of Florence","legislativeBody":"Florence City Council","officialActionRecords":["City Council business-meeting agendas/minutes","City ordinances"],"source":"florence"},
+    {"jurisdiction":"City of Union","legislativeBody":"Union City Commission","officialActionRecords":["Regular Commission agendas","approved meeting minutes","ordinances"],"source":"union"},
+    {"jurisdiction":"City of Walton","legislativeBody":"Walton City Council","officialActionRecords":["City Council agendas/minutes","Current Ordinances"],"source":"walton"}
+  ],
+  "jurisdictionBasis": {
+    "article34RepositoryPath": "docs/permitting-boone-ky-article34-text-2026-09-26.json",
+    "finding": "The adopted Article 34 text expressly distinguishes Unincorporated Boone County, City of Union, City of Walton, and City of Florence in sign provisions. Jurisdiction-specific legislative adoption evidence is therefore required before a future rewrite is treated as effective across the whole Planning Unit."
+  },
+  "officialSources": {
+    "florence": {"sourceUrl":"https://florence-ky.gov/our-government/","repositoryPath":"public/permitting/sources/boone-ky/florence-government-records-index-2026-10-03.html","bytes":86983,"sha256":"f44102590ba8e4788010c6b58490a814d7cb7e75c38ed29775e22c45a61f2e02"},
+    "union": {"sourceUrl":"https://cityofunionky.org/commission-meetings/","repositoryPath":"public/permitting/sources/boone-ky/union-commission-meetings-index-2026-10-03.html","bytes":345687,"sha256":"2a232b1a8c89042c190c1ce9a4d2d71f06b540304c60aadf83a56f218174cd74"},
+    "waltonMinutes": {"sourceUrl":"https://cityofwalton.org/government/city-council-minutes/","repositoryPath":"public/permitting/sources/boone-ky/walton-city-council-minutes-index-2026-10-03.html","bytes":469190,"sha256":"b7d8e90eb444124886912bb6c4f2ea132ada5770194892eac5f892332c3b145e"},
+    "waltonOrdinances": {"sourceUrl":"https://cityofwalton.org/current-ordinances/","repositoryPath":"public/permitting/sources/boone-ky/walton-current-ordinances-index-2026-10-03.html","bytes":569230,"sha256":"d29c30bee7ab51fa1536933a769980be0c659fd8f93c5330b7119bae5a1730c2"}
+  },
+  "verifiedRecordPaths": {
+    "florence": "Official city government page exposes Council Meeting Agendas & Minutes and City Ordinances; business/special minutes are posted after City Council approval.",
+    "union": "Official Commission Meetings page exposes 2026 meeting agendas and approved meeting minutes; official records are retained at City Building.",
+    "walton": "Official city pages expose 2026 City Council agendas/minutes and a Current Ordinances archive. The ordinance archive demonstrates that Boone County Planning Commission zoning recommendations are adopted by Walton ordinance."
+  },
+  "authorityBoundary": "Boone Fiscal Court action alone must not be generalized to Florence, Union, or Walton. A comprehensive rewrite should remain jurisdiction-pending unless official legislative action/effective-date evidence is verified for the applicable jurisdiction. This map identifies authoritative record channels; it does not claim that any of the four legislative bodies has adopted the 2026 comprehensive rewrite.",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Article 34 jurisdiction-specific provisions until newer reviewed official legislative action and effectiveness evidence establishes replacement text for the applicable jurisdiction.",
+  "nextLogicalAuthorityTarget": "Inspect Florence City Council 2026 agendas/minutes and ordinance records for any comprehensive zoning-rewrite adoption item, then repeat the same bounded adoption check for Union and Walton."
+}
