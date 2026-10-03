@@ -50,6 +50,12 @@ import { createWorkOrderWithRecovery, replaceWorkOrderFieldsIfUnchanged, softDel
 import { loadSingleGlobalSetting, saveGlobalSettingValueIfUnchanged } from "@/components/shared/globalSettingsPersistence";
 import { loadSalesPersonRosterSafely } from "@/components/sales/salesFilterPersistence";
 import { pushSavedSalesToSmartsheet, summarizeSavedSalesSync } from "@/components/sales/salesSaveSync";
+import {
+  createOrExtendSalesLiveEditPin,
+  projectSalesRowForLiveView,
+  reconcileSalesLiveEditPinWithRemote,
+  salesLiveEditPinChanged,
+} from "@/components/sales/salesLiveEditView.mjs";
 
 const WorkOrder = base44.entities.WorkOrder;
 const GlobalSettings = base44.entities.GlobalSettings;
@@ -115,6 +121,15 @@ const salesFilterUsersForField = (field, users = []) => {
 };
 
 const isSalesUserFilterField = (field) => Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field);
+
+const salesRecordBelongsToLoadedScope = (workOrder, scope) => {
+  if (!workOrder || workOrder.deleted === true || workOrder.is_rider === true) return false;
+  if (scope === "current") return workOrder.completed !== true && isCurrentPipelineOpportunity(workOrder);
+  if (scope === "outcomes") return isTrustedSalesOutcome(workOrder);
+  if (scope === "history") return isLegacyClosedSalesRecord(workOrder);
+  return workOrder.completed === false || isTrustedSalesOutcome(workOrder) ||
+    (workOrder.completed === true && isLegacyClosedSalesRecord(workOrder));
+};
 
 const getSalesActivityTime = (workOrder) => {
   const parsed = Date.parse(workOrder?.sales_last_activity_at || "");
@@ -204,6 +219,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const pendingHistoryFieldsRef = useRef({});
   const pendingRecordScopesRef = useRef({});
   const debounceTimers = useRef({});
+  const liveEditPinsRef = useRef({});
+  const [liveEditPinVersion, setLiveEditPinVersion] = useState(0);
   const pendingSyncIdsRef = useRef(new Set());
   const pendingSyncVersionRef = useRef(new Map());
   const syncInFlightRef = useRef(false);
@@ -237,6 +254,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   const globalSettingsBaselinesRef = useRef({});
   const globalSettingsSaveQueuesRef = useRef({});
   const globalSettingsSaveBlockedRef = useRef({});
+
+  const releaseLiveEditPins = useCallback(() => {
+    if (Object.keys(liveEditPinsRef.current).length === 0) return;
+    liveEditPinsRef.current = {};
+    setLiveEditPinVersion((version) => version + 1);
+  }, []);
 
   // Use the column sorting hook with user-specific storage
   const { 
