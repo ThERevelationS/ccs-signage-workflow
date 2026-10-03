@@ -1,0 +1,128 @@
+{
+  "title": "Boone County Planning Unit — 2026 zoning rewrite jurisdiction adoption-status matrix",
+  "checkedAt": "2026-10-03",
+  "purpose": "Fail-closed authority matrix for Permitting Intelligence so draft/rewrite material cannot silently replace adopted sign regulations.",
+  "statusSemantics": {
+    "not_verified": "No reviewed official evidence in the referenced bounded record set establishes the required fact. This must not be interpreted as proof that the fact is false.",
+    "not_promotable": "The rewrite must not be treated as governing authority for this jurisdiction.",
+    "verified": "Reserved for a future state supported by reviewed official evidence."
+  },
+  "promotionRule": {
+    "scope": "per_jurisdiction",
+    "requireAll": [
+      "jurisdiction-specific legislative adoption evidence is verified",
+      "jurisdiction-specific effective-date/applicability evidence is verified"
+    ],
+    "crossJurisdictionInferenceAllowed": false,
+    "planningCommissionRecommendationCountsAsAdoption": false,
+    "agendaSchedulingCountsAsAdoption": false,
+    "draftOrProjectSiteCountsAsAdoption": false,
+    "blankOrdinancePlaceholderCountsAsAdoption": false,
+    "narrowTextAmendmentCountsAsComprehensiveRewrite": false,
+    "defaultOnMissingOrConflictingEvidence": "retain_current_adopted_article34"
+  },
+  "planningUnitAggregateStatus": "not_promotable_across_planning_unit",
+  "jurisdictions": [
+    {
+      "id": "boone_unincorporated",
+      "jurisdiction": "Unincorporated Boone County",
+      "legislativeBody": "Boone County Fiscal Court",
+      "adoptionStatus": "not_verified",
+      "effectiveDateStatus": "not_verified",
+      "rewriteAuthorityStatus": "not_promotable",
+      "scannerEligibleForPromotion": false,
+      "fallbackAuthority": "currently adopted jurisdiction-specific Boone County Zoning Regulations Article 34 provisions",
+      "evidenceFile": "docs/permitting-boone-ky-enacted-ordinances-2026-authority-check-2026-10-03.json",
+      "evidenceSha256": "30ec908bd03667d51de8da6513e0f6298cc43b43592d285efe386e9eea8ef8f7",
+      "verifiedFinding": "The county Enacted Ordinances page, retrieved on 2026-10-03, lists 2026 enacted ordinances through Ordinance 2026-15 dated September 23, 2026. Among the parsed 2026 rows, no description identifies adoption of the 2026 comprehensive zoning ordinance rewrite, Article 34 replacement, or sign-regulation rewrite. Ordinances 2026-01 and 2026-02 are real zoning text amendments but are narrowly scoped and must not be mistaken for the comprehensive rewrite.",
+      "checkedThrough": {
+        "enactedOrdinancesThrough": "2026-09-23",
+        "highestPostedOrdinance": "2026-15"
+      },
+      "nextEvidenceTrigger": "Recheck Fiscal Court action/minutes and the Enacted Ordinances page after the October 6 meeting, then inspect the October 20 agenda when posted."
+    },
+    {
+      "id": "florence",
+      "jurisdiction": "City of Florence",
+      "legislativeBody": "Florence City Council",
+      "adoptionStatus": "not_verified",
+      "effectiveDateStatus": "not_verified",
+      "rewriteAuthorityStatus": "not_promotable",
+      "scannerEligibleForPromotion": false,
+      "fallbackAuthority": "currently adopted jurisdiction-specific Boone County Zoning Regulations Article 34 provisions",
+      "evidenceFile": "docs/permitting-boone-ky-florence-2026-enacted-ordinances-authority-check-2026-10-03.json",
+      "evidenceSha256": "74afe575d6f64530ecc289c8451df8e1ee6032c12d941a0bc536a818c9cc60cb",
+      "verifiedFinding": "The official City of Florence enacted-ordinances publication, reviewed on 2026-10-03, lists 2026 enactments through O-21-2026 dated September 1, 2026. The reviewed publication contains no Article 34 or sign-regulation enactment and no ordinance description adopting the 2026 comprehensive Boone County zoning-regulations rewrite. O-3-2026 and O-6-2026 are real Boone County Planning Unit zoning text amendments but are narrow subject amendments and must not be classified as the comprehensive rewrite.",
+      "checkedThrough": {
+        "enactedOrdinancesThrough": "2026-09-01",
+        "highestReviewedOrdinance": "O-21-2026",
+        "directArchiveStatus": "official page reviewed; sandbox archive attempt HTTP 403"
+      },
+      "nextEvidenceTrigger": "Recheck Florence enacted ordinances and Council action records for a comprehensive rewrite ordinance plus explicit applicability/effective-date evidence."
+    },
+    {
+      "id": "union",
+      "jurisdiction": "City of Union",
+      "legislativeBody": "Union City Commission",
+      "adoptionStatus": "not_verified",
+      "effectiveDateStatus": "not_verified",
+      "rewriteAuthorityStatus": "not_promotable",
+      "scannerEligibleForPromotion": false,
+      "fallbackAuthority": "currently adopted jurisdiction-specific Boone County Zoning Regulations Article 34 provisions",
+      "evidenceFile": "docs/permitting-boone-ky-union-2026-rewrite-authority-check-2026-10-03.json",
+      "evidenceSha256": "5708f323c74a587ef3e453b09c8caaf8ddb7a44845d7d6ee8ac108448b333087",
+      "verifiedFinding": "The official Union Commission agendas reviewed for September 9, September 21, and the upcoming October 5, 2026 meeting contain no identified Article 34, sign-regulation, comprehensive-zoning, or zoning-regulations-rewrite adoption item. September agendas identify Ordinance 2026-12 as a tax-rate ordinance, not a zoning rewrite.",
+      "checkedThrough": {
+        "latestPostedAgenda": "2026-10-05",
+        "latestPostedAgendaStatus": "upcoming"
+      },
+      "nextEvidenceTrigger": "After the October 5 meeting, inspect approved minutes and enacted ordinance records for comprehensive rewrite adoption and effectiveness evidence."
+    },
+    {
+      "id": "walton",
+      "jurisdiction": "City of Walton",
+      "legislativeBody": "Walton City Council",
+      "adoptionStatus": "not_verified",
+      "effectiveDateStatus": "not_verified",
+      "rewriteAuthorityStatus": "not_promotable",
+      "scannerEligibleForPromotion": false,
+      "fallbackAuthority": "currently adopted jurisdiction-specific Boone County Zoning Regulations Article 34 provisions",
+      "evidenceFile": "docs/permitting-boone-ky-walton-2026-rewrite-authority-check-2026-10-03.json",
+      "evidenceSha256": "14361467e0a84d31aa6989819a1f07630e7f12d0106918d8262386a8d67c28ae",
+      "verifiedFinding": "Through the reviewed September 8, 2026 Walton City Council agenda and the City current-ordinances publication available on 2026-10-03, no reviewed legislative item establishes adoption of the 2026 comprehensive Boone County zoning-regulations rewrite or replacement of Article 34 sign regulations for Walton.",
+      "checkedThrough": {
+        "reviewedCouncilAgendaThrough": "2026-09-08",
+        "futureMeetingsKnown": [
+          "2026-10-06 caucus",
+          "2026-10-08 council"
+        ]
+      },
+      "nextEvidenceTrigger": "Inspect October 6/8 records when action records are available and require an identified ordinance plus effectiveness evidence before promotion."
+    }
+  ],
+  "sourceEvidence": {
+    "authorityMap": {
+      "path": "docs/permitting-boone-ky-planning-unit-legislative-authority-map-2026-10-03.json",
+      "sha256": "f5c1da7449225253b0e3ad82655de9b82fe8e01c6d62fb18436138ef26785f92"
+    },
+    "boone": {
+      "path": "docs/permitting-boone-ky-enacted-ordinances-2026-authority-check-2026-10-03.json",
+      "sha256": "30ec908bd03667d51de8da6513e0f6298cc43b43592d285efe386e9eea8ef8f7"
+    },
+    "florence": {
+      "path": "docs/permitting-boone-ky-florence-2026-enacted-ordinances-authority-check-2026-10-03.json",
+      "sha256": "74afe575d6f64530ecc289c8451df8e1ee6032c12d941a0bc536a818c9cc60cb"
+    },
+    "union": {
+      "path": "docs/permitting-boone-ky-union-2026-rewrite-authority-check-2026-10-03.json",
+      "sha256": "5708f323c74a587ef3e453b09c8caaf8ddb7a44845d7d6ee8ac108448b333087"
+    },
+    "walton": {
+      "path": "docs/permitting-boone-ky-walton-2026-rewrite-authority-check-2026-10-03.json",
+      "sha256": "14361467e0a84d31aa6989819a1f07630e7f12d0106918d8262386a8d67c28ae"
+    }
+  },
+  "authorityBoundary": "Boone Fiscal Court action alone must not be generalized to Florence, Union, or Walton. A comprehensive rewrite should remain jurisdiction-pending unless official legislative action/effective-date evidence is verified for the applicable jurisdiction. This map identifies authoritative record channels; it does not claim that any of the four legislative bodies has adopted the 2026 comprehensive rewrite.",
+  "currentSignAuthority": "Continue using the separately archived adopted Article 34 jurisdiction-specific provisions until newer reviewed official legislative action and effectiveness evidence establishes replacement text for the applicable jurisdiction.",
+  "nextLogicalChunk": "Turn this matrix into the scanner authority-gating contract used by Permitting Intelligence ingestion so future source updates can transition one jurisdiction at a time without changing the others."
+}
