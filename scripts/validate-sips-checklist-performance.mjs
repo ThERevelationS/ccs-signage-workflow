@@ -30,15 +30,16 @@ check("typed child hierarchy is memoized with the checklist", () => {
   assert.match(source, /\}, \[checklist\]\);/);
 });
 
-check("main checklist rendering reuses typed task and detail arrays", () => {
-  assert.match(source, /const itemTasks = checklistChildrenByParentType\.get\(item\.id\)\?\.task \|\| \[\];/);
-  assert.match(source, /const itemDetails = \(checklistChildrenByParentType\.get\(item\.id\)\?\.detail \|\| \[\]\)\.map/);
+check("main checklist rendering reuses memoized typed task and detail arrays", () => {
+  assert.match(source, /const tasks = checklistChildrenByParentType\.get\(item\.id\)\?\.task \|\| \[\];/);
+  assert.match(source, /const details = \(checklistChildrenByParentType\.get\(item\.id\)\?\.detail \|\| \[\]\)\.map/);
   assert.match(source, /tasks: checklistChildrenByParentType\.get\(detail\.id\)\?\.task \|\| \[\]/);
+  assert.match(source, /const \{ displayItem, isCompleted: isItemCompleted, attentionLabel \} = renderMeta;/);
 });
 
-check("checklist-option rendering reuses the same typed hierarchy", () => {
-  assert.match(source, /const stItemTasks = checklistChildrenByParentType\.get\(stItem\.id\)\?\.task \|\| \[\];/);
-  assert.match(source, /const stItemDetails = \(checklistChildrenByParentType\.get\(stItem\.id\)\?\.detail \|\| \[\]\)\.map/);
+check("checklist-option rendering reuses the same memoized row metadata", () => {
+  assert.match(source, /const renderMeta = checklistRenderMetaById\.get\(rawItem\.id\);/);
+  assert.match(source, /const \{ displayItem: stDisplayItem, isCompleted: isStItemCompleted, attentionLabel \} = renderMeta;/);
 });
 
 check("subtask render paths no longer filter parent children on every render", () => {
