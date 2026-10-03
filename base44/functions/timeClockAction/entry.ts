@@ -2638,6 +2638,7 @@ Deno.serve(async (req) => {
               snapshot_version: period.finalized_summary.snapshot_version,
               entry_snapshot_hash: period.finalized_summary.entry_snapshot_hash,
               previous_history_hash: period.finalized_summary.previous_history_hash,
+              ...(Number(period.finalized_summary.snapshot_version || 0) >= 3 ? { shift_manifest_hash: period.finalized_summary.shift_manifest_hash } : {}),
             });
             if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
                 !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
