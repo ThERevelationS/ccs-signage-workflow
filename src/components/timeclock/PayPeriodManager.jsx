@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarRange, CheckCircle2, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
+import { AlertTriangle, CalendarRange, CheckCircle2, Download, FileLock2, History, Loader2, LockKeyhole, RotateCcw, ShieldCheck, ShieldX } from "lucide-react";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 const TimeClockPayPeriod = base44.entities.TimeClockPayPeriod;
@@ -283,6 +283,27 @@ export default function PayPeriodManager({
     } finally { setHistoryLoading(false); }
   };
 
+  const exportVerifiedHistory = () => {
+    if (!historyResult?.verified || !historyResult?.period || !Array.isArray(historyResult.generations)) return;
+    const safeLabel = String(historyResult.period.label || "pay-period").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "pay-period";
+    const record = {
+      record_type: "CCS Time Clock Verified Payroll History",
+      verification: { verified: true, verified_at: historyResult.verified_at, pay_period_id: historyResult.pay_period_id },
+      pay_period: historyResult.period,
+      generations: historyResult.generations,
+    };
+    const blob = new Blob([JSON.stringify(record, null, 2) + "\n"], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${safeLabel}-verified-payroll-history.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } finally { URL.revokeObjectURL(url); }
+  };
+
   const openAction = (period, decision) => {
     const key = `${decision}:${period?.id || ""}`;
     const stored = storedPeriodRequest(key);
@@ -439,7 +460,11 @@ export default function PayPeriodManager({
             <div className="py-10 flex items-center justify-center gap-2 text-sm text-gray-600"><Loader2 className="w-5 h-5 animate-spin" />Verifying payroll snapshot chain…</div>
           ) : historyResult?.verified ? (
             <div className="space-y-3">
-              <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"><ShieldCheck className="w-5 h-5 shrink-0" /><span>Server verification passed. Every displayed payroll generation is bound to the tamper-evident snapshot chain.</span></div>
+              <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                <div className="flex items-start gap-2"><ShieldCheck className="w-5 h-5 shrink-0" /><span>Server verification passed. Every displayed payroll generation is bound to the tamper-evident snapshot chain.</span></div>
+                <Button size="sm" variant="outline" onClick={exportVerifiedHistory} className="bg-white text-green-800 border-green-300"><Download className="w-4 h-4 mr-1" />Export Verified Record</Button>
+              </div>
+              <div className="text-xs text-gray-500">{historyResult.period?.label || historyPeriod?.label} · {historyResult.period?.start_date || historyPeriod?.start_date} through {historyResult.period?.end_date || historyPeriod?.end_date} · Verified {historyResult.verified_at || "now"}</div>
               <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
                 {(historyResult.generations || []).map((generation) => (
                   <div key={`${generation.generation}:${generation.request_id}`} className="rounded-lg border bg-white p-3 text-sm">
