@@ -2450,7 +2450,11 @@ Deno.serve(async (req) => {
           request_id: current.request_id || '', entry_snapshot_hash: current.entry_snapshot_hash || '',
         });
       }
-      return Response.json({ success: true, verified: true, legacy: false, pay_period_id: period.id, period_status: period.status, generations });
+      return Response.json({
+        success: true, verified: true, legacy: false, pay_period_id: period.id, period_status: period.status,
+        period: { id: period.id, label: period.label || '', start_date: period.start_date || '', end_date: period.end_date || '' },
+        verified_at: new Date().toISOString(), generations,
+      });
     }
 
     if (action === 'pay_period_status') {
