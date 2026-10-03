@@ -5297,6 +5297,31 @@ Deno.serve(async (req) => {
         return Boolean(verified?.id && String(verified.status || '') === expectedCaseStatus &&
           (decision !== 'approve' || String(verified.resolution_audit_id || '') === String(approvalAuditId || '')));
       };
+      const verifyResolvedCorrectionForApproval = async (record: any) => {
+        const linkedRequestId = String(record?.correction_needs_review_request_id || '');
+        if (!linkedRequestId) return true;
+        const rows = await correctionRequestEntity.filter({ request_id: linkedRequestId, time_entry_id: record.id });
+        if (!Array.isArray(rows) || rows.length !== 1) return false;
+        const linked = rows[0];
+        if (asEmail(linked.user_email) !== target.email ||
+            !['approved', 'approved_modified'].includes(String(linked.status || '')) ||
+            String(record.last_correction_request_id || '') !== String(linked.id || '') ||
+            !linked.applied_audit_id) return false;
+        const appliedAudit = await auditEntity.get(linked.applied_audit_id).catch(() => null);
+        const corrected = appliedAudit?.details?.corrected || {};
+        return Boolean(
+          appliedAudit?.id &&
+          ['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) &&
+          String(appliedAudit.action || '') === 'admin_correction' &&
+          String(appliedAudit.time_entry_id || '') === record.id &&
+          asEmail(appliedAudit.user_email) === target.email &&
+          String(appliedAudit.details?.correction_request_id || '') === String(linked.id || '') &&
+          String(corrected.clock_in || '') === String(record.clock_in || '') &&
+          String(corrected.clock_out || '') === String(record.clock_out || '') &&
+          Number(corrected.lunch_minutes || 0) === Number(record.lunch_minutes || 0) &&
+          String(corrected.notes || '') === String(record.notes || '')
+        );
+      };
       const approvalPayloadHash = await payloadHash({
         entry_id: entry.id,
         expected_updated_date: expectedUpdatedDate,
