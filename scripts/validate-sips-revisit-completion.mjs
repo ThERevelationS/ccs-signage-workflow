@@ -6,6 +6,7 @@ import vm from 'node:vm';
 // helper with a simulated Work Order. Never connect to production or mutate data.
 const dialog = readFileSync(new URL('../src/components/sips/ProductChecklistDialog.jsx', import.meta.url), 'utf8');
 const persistence = readFileSync(new URL('../src/components/workflow/workOrderPersistence.js', import.meta.url), 'utf8');
+const trackedPersistence = readFileSync(new URL('../src/components/shared/trackedFieldPersistence.js', import.meta.url), 'utf8');
 function block(source, startText, endText) {
   const start = source.indexOf(startText);
   const end = source.indexOf(endText, start);
@@ -16,7 +17,9 @@ const parseDateFn = block(dialog, 'const parseDateOnly = ', '\n};') + '\n};';
 const futureFn = block(dialog, 'const isFutureRevisitDate = ', '\n};') + '\n};';
 const saveBody = block(dialog, '      const expectedFields = {', '\n      setSaveError("");');
 const fieldBuilder = parseDateFn + '\n' + futureFn + '\n' + saveBody + '\nthis.fields={expectedFields,nextFields}';
-const helpers = block(persistence, 'function normalize(', '\nexport function sanitizeWorkOrderFormPatch');
+const saveTrackedFieldsFn = trackedPersistence
+  .slice(trackedPersistence.indexOf('export async function saveTrackedFields('))
+  .replace(/^export /, '');
 const replaceFn = block(persistence, 'export async function replaceWorkOrderFieldsIfUnchanged(', '\nexport async function transitionWorkOrderFromLoadedSnapshot').replace(/^export /, '');
 const today = (() => {
   const d = new Date();
@@ -39,19 +42,30 @@ function makeFields({ loadedDate, revisitDate, markComplete = true } = {}) {
 function simulatedStore(record) {
   const current = structuredClone(record);
   let updates = 0;
-  const entity = {
-    get: async id => id === current.id ? structuredClone(current) : null,
-    updateMany: async (query, patch) => {
-      if (query.id !== current.id || query.updated_date !== current.updated_date) return {updated:0};
-      Object.assign(current, structuredClone(patch.$set));
+  const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const functions = {
+    invoke: async (name, args) => {
+      assert.equal(name, 'fieldHistoryAction');
+      assert.equal(args.action, 'save');
+      assert.equal(args.entity_type, 'WorkOrder');
+      assert.equal(args.entity_id, current.id);
+      const unchanged = Object.entries(args.expected_fields || {}).every(([field, expected]) => same(current[field], expected));
+      if (!unchanged) {
+        return { data: { success: false, error: 'Work Order changed in another session. Reload before saving.' } };
+      }
+      Object.assign(current, structuredClone(args.next_fields || {}));
       current.updated_date = String(Number(current.updated_date) + 1);
       updates++;
-      return {updated:1};
+      return { data: { success: true, record: structuredClone(current) } };
     },
   };
-  const ctx = { base44: { entities: { WorkOrder: entity } }, Number, JSON, Math, String, Error, Object, Array };
+  const ctx = {
+    base44: { functions },
+    localStorage: { getItem: () => '' },
+    Number, JSON, Math, String, Error, Object, Array,
+  };
   vm.createContext(ctx);
-  vm.runInContext(helpers + '\n' + replaceFn + '\nthis.replace=replaceWorkOrderFieldsIfUnchanged', ctx);
+  vm.runInContext(saveTrackedFieldsFn + '\n' + replaceFn + '\nthis.replace=replaceWorkOrderFieldsIfUnchanged', ctx);
   return { current, get updates() { return updates; }, replace: ctx.replace };
 }
 function buildRecord(revisit) {
