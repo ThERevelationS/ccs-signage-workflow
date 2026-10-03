@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,21 +6,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, CheckCircle2, Loader2, Pencil, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Loader2, Pencil, XCircle } from "lucide-react";
+import {
+  TIME_CLOCK_COMPANY_TIME_LABEL,
+  companyDateTimeInputFromIso,
+  formatCompanyDateTime,
+  formatMinutes,
+  parseCompanyDateTimeInput,
+  shiftDurationSummary,
+} from "@/components/timeclock/timeClockCompanyTime";
 
 function newRequestId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
   return `tc-review-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
 }
 
-function localDateTime(iso) {
-  if (!iso) return "";
-  try { return format(parseISO(iso), "yyyy-MM-dd'T'HH:mm"); } catch { return ""; }
-}
-
 function displayTime(iso) {
   if (!iso) return "—";
-  try { return format(parseISO(iso), "MMM d, yyyy h:mm a"); } catch { return "Invalid time"; }
+  return formatCompanyDateTime(iso);
 }
 
 export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesChanged }) {
@@ -63,8 +65,8 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   const openReview = (request) => {
     const requested = request.requested_changes || {};
     setSelected(request);
-    setClockIn(localDateTime(requested.clock_in));
-    setClockOut(localDateTime(requested.clock_out));
+    setClockIn(companyDateTimeInputFromIso(requested.clock_in));
+    setClockOut(companyDateTimeInputFromIso(requested.clock_out));
     setLunchMinutes(String(requested.lunch_minutes || 0));
     setNotes(requested.notes || "");
     setReviewReason("");
@@ -96,16 +98,14 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
         reason: reviewReason.trim(),
       };
       if (decision === "approve_modified") {
-        const parsedIn = new Date(clockIn);
-        const parsedOut = new Date(clockOut);
-        if (!Number.isFinite(parsedIn.getTime()) || !Number.isFinite(parsedOut.getTime()) || parsedOut < parsedIn) {
-          setError("Enter valid corrected clock-in and clock-out times.");
+        if (!editedPreview.valid) {
+          setError(editedPreview.error || `Enter valid corrected punch times in ${TIME_CLOCK_COMPANY_TIME_LABEL}.`);
           return;
         }
         payload.correction = {
-          clock_in: parsedIn.toISOString(),
-          clock_out: parsedOut.toISOString(),
-          lunch_minutes: Math.max(0, Number(lunchMinutes) || 0),
+          clock_in: editedPreview.clockInIso,
+          clock_out: editedPreview.clockOutIso,
+          lunch_minutes: editedPreview.lunchMinutes,
           notes,
         };
       }
@@ -148,6 +148,21 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   };
 
   const retryingSelected = retryReview?.correctionRequestId === selected?.id;
+  const requestedDuration = useMemo(() => shiftDurationSummary(
+    selected?.requested_changes?.clock_in,
+    selected?.requested_changes?.clock_out,
+    selected?.requested_changes?.lunch_minutes || 0,
+  ), [selected]);
+  const editedPreview = useMemo(() => {
+    if (!clockIn || !clockOut) return { valid: false, error: `Enter Clock In and Clock Out in ${TIME_CLOCK_COMPANY_TIME_LABEL}.` };
+    const parsedIn = parseCompanyDateTimeInput(clockIn);
+    if (!parsedIn.ok) return { valid: false, error: `Clock In: ${parsedIn.error}` };
+    const parsedOut = parseCompanyDateTimeInput(clockOut);
+    if (!parsedOut.ok) return { valid: false, error: `Clock Out: ${parsedOut.error}` };
+    const duration = shiftDurationSummary(parsedIn.iso, parsedOut.iso, lunchMinutes);
+    if (!duration.valid) return duration;
+    return { ...duration, clockInIso: parsedIn.iso, clockOutIso: parsedOut.iso };
+  }, [clockIn, clockOut, lunchMinutes]);
 
   if (!sessionToken) return null;
 
@@ -178,7 +193,7 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                       <Badge className="bg-amber-100 text-amber-800">Missed Clock Out</Badge>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)}</div>
+                  <div className="text-xs text-gray-500">Submitted {displayTime(request.requested_at)} · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div className="text-sm text-gray-700 mt-1 line-clamp-2">{request.employee_reason}</div>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => openReview(request)}>Review</Button>
@@ -203,18 +218,31 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                 <div className="font-semibold">{selected.user_name || selected.user_email}</div>
                 <p className="text-sm text-gray-600 mt-1"><strong>Employee reason:</strong> {selected.employee_reason}</p>
               </div>
+              {selected.request_kind === "missed_clock_out" && (
+                <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
+                  <div className="text-xs font-bold uppercase tracking-wide text-amber-700">Employee-reported Clock Out</div>
+                  <div className="mt-1 text-2xl font-bold text-amber-950">{displayTime(selected.requested_changes?.clock_out)}</div>
+                  <div className="mt-1 text-xs text-amber-800">Employee-attested time. It is not official until this correction is applied through the audited backend.</div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg bg-gray-50 p-3">
-                  <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL</div>
+                  <div className="text-xs font-semibold text-gray-500 mb-2">ORIGINAL · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div>In: {displayTime(selected.original_snapshot?.clock_in)}</div>
                   <div>Out: {displayTime(selected.original_snapshot?.clock_out)}</div>
                   <div>Lunch: {selected.original_snapshot?.lunch_minutes || 0} min</div>
                 </div>
                 <div className="rounded-lg bg-purple-50 p-3">
-                  <div className="text-xs font-semibold text-purple-700 mb-2">EMPLOYEE REQUEST</div>
+                  <div className="text-xs font-semibold text-purple-700 mb-2">EMPLOYEE REQUEST · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
                   <div>In: {displayTime(selected.requested_changes?.clock_in)}</div>
                   <div>Out: {displayTime(selected.requested_changes?.clock_out)}</div>
                   <div>Lunch: {selected.requested_changes?.lunch_minutes || 0} min</div>
+                  {requestedDuration.valid && (
+                    <div className="mt-2 border-t border-purple-200 pt-2 text-xs text-purple-900">
+                      <div>Gross shift: <strong>{formatMinutes(requestedDuration.grossMinutes)}</strong></div>
+                      <div>After lunch: <strong>{formatMinutes(requestedDuration.netMinutesBeforeWorkPause)}</strong></div>
+                    </div>
+                  )}
                 </div>
               </div>
               {retryingSelected && (
@@ -223,20 +251,39 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
                 </div>
               )}
               <div className="rounded-lg border p-3 space-y-3">
-                <div className="text-sm font-semibold">Manager-adjusted values</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Clock In</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} /></div>
-                  <div><Label>Clock Out</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} /></div>
+                <div>
+                  <div className="text-sm font-semibold">Manager-adjusted values · {TIME_CLOCK_COMPANY_TIME_LABEL}</div>
+                  <div className="text-xs text-gray-500 mt-1">These fields are used only by <strong>Apply Edited Time</strong>. <strong>Approve Reported Time</strong> uses the employee request above exactly.</div>
                 </div>
-                <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><Label>Clock In — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockIn} onChange={(e) => setClockIn(e.target.value)} disabled={busy || retryingSelected} /></div>
+                  <div><Label>Clock Out — {TIME_CLOCK_COMPANY_TIME_LABEL}</Label><Input type="datetime-local" value={clockOut} onChange={(e) => setClockOut(e.target.value)} disabled={busy || retryingSelected} /></div>
+                </div>
+                <div><Label>Lunch (minutes)</Label><Input type="number" min="0" max="240" step="1" value={lunchMinutes} onChange={(e) => setLunchMinutes(e.target.value)} disabled={busy || retryingSelected} /></div>
                 <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={4000} disabled={busy || retryingSelected} /></div>
+                <div className={`rounded-lg border p-3 text-sm ${editedPreview.valid ? "border-blue-200 bg-blue-50 text-blue-900" : "border-red-200 bg-red-50 text-red-800"}`}>
+                  <div className="flex items-start gap-2">
+                    <Clock3 className="w-4 h-4 mt-0.5 shrink-0" />
+                    {editedPreview.valid ? (
+                      <div>
+                        <div><strong>Edited duration preview:</strong> {formatMinutes(editedPreview.grossMinutes)} gross − {editedPreview.lunchMinutes}m lunch = <strong>{formatMinutes(editedPreview.netMinutesBeforeWorkPause)}</strong>.</div>
+                        <div className="text-xs mt-1">Tracked Work Pause time, if any, remains preserved and is also excluded by the authoritative backend calculation.</div>
+                      </div>
+                    ) : (
+                      <div><strong>Edited time is not ready:</strong> {editedPreview.error}</div>
+                    )}
+                  </div>
+                </div>
               </div>
               <div><Label>Manager Review Reason <span className="text-red-600">*</span></Label><Textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} rows={3} maxLength={500} placeholder="Record what was verified and why this request is approved, modified, or rejected." disabled={busy || retryingSelected} /></div>
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                <strong>Correction approval is not shift approval.</strong> Approving the reported or edited punch applies the audited correction and leaves the completed shift at <strong>Needs Review</strong>. A manager must separately approve the completed shift before pay-period finalization.
+              </div>
               {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => review("reject")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "reject")}><XCircle className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "reject" ? "Retry Reject" : "Reject"}</Button>
-                <Button variant="outline" onClick={() => review("approve_modified")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "approve_modified")}><Pencil className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "approve_modified" ? "Retry Edited Approval" : "Approve Edited"}</Button>
-                <Button onClick={() => review("approve")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "approve")}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}{retryingSelected && retryReview.decision === "approve" ? "Retry Approval" : "Approve Requested"}</Button>
+                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" onClick={() => review("reject")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "reject")}><XCircle className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "reject" ? "Retry Reject" : "Reject & Keep Unresolved"}</Button>
+                <Button variant="outline" onClick={() => review("approve_modified")} disabled={busy || (!retryingSelected && (reviewReason.trim().length < 3 || !editedPreview.valid)) || (retryingSelected && retryReview.decision !== "approve_modified")}><Pencil className="w-4 h-4 mr-2" />{retryingSelected && retryReview.decision === "approve_modified" ? "Retry Edited Approval" : "Apply Edited Time"}</Button>
+                <Button onClick={() => review("approve")} disabled={busy || (!retryingSelected && reviewReason.trim().length < 3) || (retryingSelected && retryReview.decision !== "approve")}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}{retryingSelected && retryReview.decision === "approve" ? "Retry Approval" : "Approve Reported Time"}</Button>
               </div>
             </div>
           )}
