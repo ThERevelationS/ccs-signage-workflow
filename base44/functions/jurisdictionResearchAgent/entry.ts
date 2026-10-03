@@ -158,6 +158,7 @@ Before returning:
           height_allowances: { type: ["string", "null"] },
           setback_rules: { type: ["string", "null"] },
           lighting_allowances: { type: ["string", "null"] },
+          authority_candidate: { type: "object" },
           data_quality: { type: "object" }
         }
       }
