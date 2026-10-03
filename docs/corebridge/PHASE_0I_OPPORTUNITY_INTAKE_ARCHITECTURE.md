@@ -108,9 +108,11 @@ CustomerInfo is legacy/disabled. Its RLS intentionally uses the disabled legacy 
 
 Sales Smartsheet synchronization links records by stable smartsheet_sheet_id and smartsheet_row_id and keeps sync snapshots for conflict detection.
 
-When create_base44_from_smartsheet is enabled, an eligible unlinked Sales row can create a WorkOrder directly. Missing meaningful customer rows are skipped. Existing linked records are updated with conflict/hold behavior. Base44-to-Smartsheet also continues to operate on WorkOrder.
+Read-only production verification on 2026-10-03 confirmed the Sales Smartsheet profile is live with global sync enabled, observation mode off, mirror enabled, pull enabled, push enabled, create_base44_from_smartsheet enabled, and create_smartsheet_from_base44 enabled. The separate spreadsheet importer flag is off. This means the compatibility path is not theoretical: Smartsheet can currently create eligible WorkOrders and Base44 can create Sales rows in Smartsheet.
 
-This stable-ID/snapshot behavior must be preserved. Row position and customer-name guessing must never become Opportunity identity.
+For inbound creation, missing meaningful customer rows are skipped. Existing linked records are updated with conflict/hold behavior. Base44-to-Smartsheet also continues to operate on WorkOrder.
+
+This stable-ID/snapshot behavior must be preserved. Row position and customer-name guessing must never become Opportunity identity. Phase 0J must not redirect or dual-write this live mirror.
 
 ### 8. Sales spreadsheet import is operational WorkOrder import, not the historical migration architecture
 
