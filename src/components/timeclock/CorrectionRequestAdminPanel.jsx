@@ -155,9 +155,9 @@ export default function CorrectionRequestAdminPanel({ sessionToken, onEntriesCha
   ), [selected]);
   const editedPreview = useMemo(() => {
     if (!clockIn || !clockOut) return { valid: false, error: `Enter Clock In and Clock Out in ${TIME_CLOCK_COMPANY_TIME_LABEL}.` };
-    const parsedIn = parseCompanyDateTimeInput(clockIn);
+    const parsedIn = parseCompanyDateTimeInput(clockIn, selected?.requested_changes?.clock_in);
     if (!parsedIn.ok) return { valid: false, error: `Clock In: ${parsedIn.error}` };
-    const parsedOut = parseCompanyDateTimeInput(clockOut);
+    const parsedOut = parseCompanyDateTimeInput(clockOut, selected?.requested_changes?.clock_out);
     if (!parsedOut.ok) return { valid: false, error: `Clock Out: ${parsedOut.error}` };
     const duration = shiftDurationSummary(parsedIn.iso, parsedOut.iso, lunchMinutes);
     if (!duration.valid) return duration;
