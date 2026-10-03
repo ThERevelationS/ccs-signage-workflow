@@ -1,0 +1,20 @@
+{
+  "title": "Boone County Planning Commission — homepage Fee Schedule source verification",
+  "sourcePage": "public/permitting/sources/boone-ky/planning-commission-home-page-2026-09-28.html",
+  "sourcePageUrl": "https://bcpcky.org/",
+  "listedLabel": "Fee Schedule",
+  "listedHref": "Documents/About%20us/FeeSchedule.pdf",
+  "sourceUrl": "https://bcpcky.org/Documents/About%20us/FeeSchedule.pdf",
+  "resolvedUrl": "https://cms3.revize.com/revize/boonectyplanning/Documents/About us/FeeSchedule.pdf",
+  "checkedAt": "2026-10-02",
+  "httpStatus": 200,
+  "contentType": "application/pdf",
+  "bytes": 281297,
+  "sha256": "9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a",
+  "lastModified": "Fri, 06 Sep 2024 15:17:49 GMT",
+  "repositoryPath": "public/permitting/sources/boone-ky/planning-fee-schedule-2021.pdf",
+  "matchesExistingArchive": true,
+  "archiveAction": "reused_existing_identical_archive",
+  "documentRevisionEvidence": "The archived PDF text identifies the fee schedule as revised and adopted May 19, 2021.",
+  "evidenceScope": "The preserved Boone County Planning Commission homepage directly lists a Fee Schedule link outside the Applications, Forms, and Checklists categories. On 2026-10-02 that exact homepage URL returned HTTP 200 with application/pdf content, and the live 281297-byte file was byte-for-byte identical to the existing archived planning-fee-schedule-2021.pdf with SHA-256 9ed3230d1997a8086a6d9c598aaa0ea34c955b524707ffd58070aea68eb9e49a. This establishes current homepage listing and current source-file identity only. Because the document itself is a 2021 fee schedule, this evidence does not establish that any individual fee amount, threshold, review charge, sign fee, procedure, or applicability rule printed inside it remains current in 2026."
+}
