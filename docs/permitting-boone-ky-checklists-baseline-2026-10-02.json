@@ -38,12 +38,12 @@
     {
       "sourceFile": "ZoningMapAmendment_checklist.pdf",
       "listedLabel": "Zoning Map Amendment",
-      "status": "pending_verification",
+      "status": "live_verified_archive_pending",
       "repositoryPath": null,
       "evidencePath": null
     }
   ],
-  "scope": "This reconciliation inventories every unique PDF linked under Documents/Applications Forms/Checklists/ on the preserved Boone County Planning Commission Applications and Forms page. Archived status means bounded source-identity evidence exists for that checklist. Pending verification means the preserved page lists the source but live source identity has not yet been verified in this baseline. This inventory does not assert that any checklist applies to a particular sign project or that every instruction, requirement, fee, procedure, or approval path inside a listed checklist is current.",
+  "scope": "This reconciliation inventories every unique PDF linked under Documents/Applications Forms/Checklists/ on the preserved Boone County Planning Commission Applications and Forms page. Archived status means bounded source-identity evidence exists for that checklist. Live verified archive pending means a bounded live retrieval confirmed the exact official source is currently a PDF, but no byte-for-byte repository archive is claimed because the execution-layer download path was blocked; that execution failure is not evidence that the government source is unavailable. This inventory does not assert that any checklist applies to a particular sign project or that every instruction, requirement, fee, procedure, or approval path inside a listed checklist is current.",
   "nextChecklist": "ZoningMapAmendment_checklist.pdf",
-  "nextChecklistLabel": "Zoning Map Amendment"
+  "nextChecklistLabel": "Zoning Map Amendment — complete byte-for-byte archive and hash when the sandbox download path is available"
 }
