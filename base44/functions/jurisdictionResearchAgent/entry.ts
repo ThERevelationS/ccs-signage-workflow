@@ -29,6 +29,7 @@ JURISDICTION TARGET: ${jurisdictionName} ${jurisdictionType}, ${jurisdictionStat
 4. Cross-reference information when possible
 5. Prioritize official ordinances and zoning codes over secondary sources
 6. For each URL you provide, verify it exists and is from an official government domain
+7. If regulatory requirements come from a proposed, draft, newly rewritten, or comprehensive replacement zoning/sign code, flag authority_candidate.is_comprehensive_rewrite=true. A posted rewrite is not current law merely because it is publicly available.
 
 === RESEARCH OBJECTIVES ===
 
