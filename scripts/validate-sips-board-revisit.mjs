@@ -230,10 +230,10 @@ await check('confirmed clear refuses concurrent Revisit change during CAS', asyn
   assert.equal(h.record.sip_revisit_date, later);
   assert.equal(h.writes, 0);
   assert.equal(h.ctx.reloads, 1);
-  assert.match(h.ctx.quickEditError, /changed in another session/);
+  assert.match(h.ctx.quickEditError, /changed during saving/);
 });
 
-await check('confirmed clear retries unrelated concurrent write without losing it', async () => {
+await check('confirmed clear fails safely on unrelated concurrent write without losing it', async () => {
   const h = harness(tomorrow);
   h.openClear();
   h.beforeCommit((record) => {
@@ -241,10 +241,12 @@ await check('confirmed clear retries unrelated concurrent write without losing i
     record.updated_date = String(Number(record.updated_date) + 1);
   });
   await h.handlers.confirmClearRevisit();
-  assert.equal(h.record.sip_revisit_date, '');
+  assert.equal(h.record.sip_revisit_date, tomorrow);
   assert.equal(h.record.notes, 'parallel note');
-  assert.equal(h.writes, 1);
-  assert.equal(h.attemptedWrites, 2);
+  assert.equal(h.writes, 0);
+  assert.equal(h.attemptedWrites, 1);
+  assert.equal(h.ctx.reloads, 1);
+  assert.match(h.ctx.quickEditError, /changed during saving/);
 });
 
 await check('already-cleared date is idempotent and not written twice', async () => {
@@ -349,21 +351,23 @@ await check('reopen rejects future Revisit added mid-save at CAS boundary', asyn
   assert.equal(h.record.sip_revisit_date, tomorrow);
   assert.equal(h.writes, 0);
   assert.equal(h.ctx.reloads, 1);
-  assert.match(h.ctx.quickEditError, /changed in another session/);
+  assert.match(h.ctx.quickEditError, /changed during saving/);
 });
 
-await check('reopen retries unrelated concurrent edit without losing it', async () => {
+await check('reopen fails safely on unrelated concurrent edit without losing it', async () => {
   const h = completedHarness(todayDate);
   h.beforeCommit((record) => {
     record.notes = 'concurrent team note';
     record.updated_date = String(Number(record.updated_date) + 1);
   });
   await h.handlers.toggleSipCompleted(h.ctx.workOrders[0]);
-  assert.equal(h.record.sip_completed, false);
+  assert.equal(h.record.sip_completed, true);
   assert.equal(h.record.sip_revisit_date, todayDate);
   assert.equal(h.record.notes, 'concurrent team note');
-  assert.equal(h.writes, 1);
-  assert.equal(h.attemptedWrites, 2);
+  assert.equal(h.writes, 0);
+  assert.equal(h.attemptedWrites, 1);
+  assert.equal(h.ctx.reloads, 1);
+  assert.match(h.ctx.quickEditError, /changed during saving/);
 });
 
 await check('incomplete WIP still opens checklist, not direct completion', async () => {
