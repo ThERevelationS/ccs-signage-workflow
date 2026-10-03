@@ -2654,8 +2654,8 @@ Deno.serve(async (req) => {
             outcome: 'blocked', details: {
               ...(intent.details || {}), payload_hash: statusPayloadHash, pay_period_id: period.id, decision, note,
               active_shift_count: activeOverlap.length, invalid_active_clock_in_count: invalidActiveClockInCount,
-              unapproved_count: unapproved.length, pending_correction_count: pendingCorrections.length,
-              locked_elsewhere_count: lockedElsewhere.length,
+              unapproved_count: unapproved.length, approval_evidence_missing_count: approvalEvidenceMissing.length,
+              pending_correction_count: pendingCorrections.length, locked_elsewhere_count: lockedElsewhere.length,
             },
           } });
           return Response.json({
