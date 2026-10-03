@@ -148,6 +148,7 @@ export default function TimeClockAdmin() {
   const [approvalRequestId, setApprovalRequestId] = useState("");
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
+  const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
 
   useEffect(() => {
     loadData();
@@ -794,6 +795,7 @@ export default function TimeClockAdmin() {
         correctionRequests={correctionRequests}
         punchExceptions={punchExceptions}
         onReviewEntry={handleEditEntry}
+        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
         onRefresh={loadData}
       />
 
@@ -829,7 +831,12 @@ export default function TimeClockAdmin() {
         </div>
       </div>
 
-      <CorrectionRequestAdminPanel sessionToken={sessionToken} onEntriesChanged={loadData} />
+      <CorrectionRequestAdminPanel
+        sessionToken={sessionToken}
+        onEntriesChanged={loadData}
+        reviewRequestId={correctionReviewRequestId}
+        onReviewRequestOpened={() => setCorrectionReviewRequestId("")}
+      />
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-4">
