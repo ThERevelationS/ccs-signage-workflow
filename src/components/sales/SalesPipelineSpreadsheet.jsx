@@ -122,6 +122,13 @@ const salesFilterUsersForField = (field, users = []) => {
 
 const isSalesUserFilterField = (field) => Object.prototype.hasOwnProperty.call(SALES_USER_FILTER_ROLES, field);
 
+const formatSalesColumnFilterDate = (value) => {
+  if (!value) return "";
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  if (value instanceof Date && !isNaN(value.getTime())) return format(value, "yyyy-MM-dd");
+  return String(value).slice(0, 10);
+};
+
 const describeSalesColumnHeaderFilter = (sortConfig) => {
   const key = String(sortConfig?.key || "").trim();
   const filter = sortConfig?.customFilter;
@@ -140,8 +147,8 @@ const describeSalesColumnHeaderFilter = (sortConfig) => {
   }
 
   if (filter.filterType === "range" && filter.dateRange) {
-    const from = String(filter.dateRange.from || "").slice(0, 10);
-    const to = String(filter.dateRange.to || "").slice(0, 10);
+    const from = formatSalesColumnFilterDate(filter.dateRange.from);
+    const to = formatSalesColumnFilterDate(filter.dateRange.to);
     if (!from && !to) return null;
     return { key, label, detail: from && to ? `${from} – ${to}` : from ? `from ${from}` : `through ${to}` };
   }
