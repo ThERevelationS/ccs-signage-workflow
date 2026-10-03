@@ -1,0 +1,134 @@
+{
+  "name": "OpportunityIntake",
+  "type": "object",
+  "description": "Immutable/provenance-oriented inbound source event for an Opportunity. Multiple intake events may resolve to one Opportunity. Captured source values are evidence, not a parallel Customer database.",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "default": 1
+    },
+    "creation_request_key": {
+      "type": "string",
+      "description": "Stable retry-safe receipt for one captured intake event."
+    },
+    "opportunity_id": {
+      "type": "string",
+      "description": "Resolved Opportunity id when this intake has been linked. May be blank while identity/resolution is pending."
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "existing_customer",
+        "phone",
+        "email",
+        "website",
+        "smartsheet",
+        "repeat_customer",
+        "walk_in",
+        "historical",
+        "integration"
+      ]
+    },
+    "source_system": {
+      "type": "string"
+    },
+    "source_external_id": {
+      "type": "string",
+      "description": "Stable source-system identity when available. Never substitute row position or customer name for a real external id."
+    },
+    "source_parent_id": {
+      "type": "string"
+    },
+    "source_received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "captured_by": {
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "type": "string",
+      "description": "Deterministic normalized source fingerprint when the source supports one."
+    },
+    "raw_source_reference": {
+      "type": "string",
+      "description": "Reference to preserved raw source evidence rather than an unnecessary duplicate copy."
+    },
+    "source_metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "captured_fields": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Captured/unverified business fields such as customer/contact/site/job requirements. Never store full card numbers, CVV/CVC, banking credentials, or payment authentication secrets here."
+    },
+    "attachment_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "resolution_status": {
+      "type": "string",
+      "enum": [
+        "captured",
+        "needs_review",
+        "linked",
+        "rejected"
+      ],
+      "default": "captured"
+    },
+    "resolution_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "creation_request_key",
+    "source_type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "__opportunity_intake_backend_only__"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "__opportunity_intake_backend_only__"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "__opportunity_intake_backend_only__"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "__opportunity_intake_backend_only__"
+      }
+    }
+  }
+}
