@@ -775,6 +775,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     }));
     const workOrderIds = syncTargets.map((target) => target.id);
     if (workOrderIds.length === 0) {
+      releaseLiveEditPins();
       return { ok: true, message: "No new Sales changes need Smartsheet sync." };
     }
 
@@ -784,6 +785,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       const summary = summarizeSavedSalesSync(result);
       if (!summary.ok) return summary;
       clearSyncedWorkOrderIds(syncTargets);
+      releaseLiveEditPins();
       return summary;
     } catch (error) {
       return { ok: false, message: error?.message || "Saved in Base44, but Smartsheet sync could not be verified." };
@@ -877,6 +879,13 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])
     );
     if (changedFields.length === 0) return;
+
+    const pinChanges = Object.fromEntries(changedFields.map((field) => [field, mergedUpdates[field]]));
+    liveEditPinsRef.current = {
+      ...liveEditPinsRef.current,
+      [orderId]: createOrExtendSalesLiveEditPin(liveEditPinsRef.current[orderId], currentWo, pinChanges),
+    };
+    setLiveEditPinVersion((version) => version + 1);
 
     setWorkOrders(prev => prev.map(wo => wo.id === orderId ? { ...wo, ...mergedUpdates } : wo));
     setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, ...mergedUpdates } : selected);
