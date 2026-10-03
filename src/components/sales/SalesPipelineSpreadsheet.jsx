@@ -269,6 +269,28 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     clearSort 
   } = useColumnSorting('salesPipeline', currentUser?.email);
 
+  const activeCustomFilterForSession = filterStatus.startsWith("custom_")
+    ? customFilters.find((filter) => filter.id === filterStatus.replace("custom_", "")) || null
+    : null;
+  const liveViewSessionKey = JSON.stringify({
+    recordScope,
+    viewMode,
+    filterStatus,
+    attentionFilter,
+    outcomePeriod,
+    searchTerm,
+    customConditions: activeCustomFilterForSession?.conditions || null,
+    columnFilter: sortConfig.customFilter?.filterType && sortConfig.customFilter.filterType !== "all"
+      ? { key: sortConfig.key || "", filter: sortConfig.customFilter }
+      : null,
+  });
+  const liveViewSessionKeyRef = useRef(liveViewSessionKey);
+  useEffect(() => {
+    if (liveViewSessionKeyRef.current === liveViewSessionKey) return;
+    liveViewSessionKeyRef.current = liveViewSessionKey;
+    releaseLiveEditPins();
+  }, [liveViewSessionKey, releaseLiveEditPins]);
+
   const { trackChange } = useCellHistoryTracker("WorkOrder", currentUser);
 
   const [leadSources, setLeadSources] = useState(["Walk-in", "Phone", "Email", "Referral", "Website"]);
@@ -318,6 +340,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   useEffect(() => {
     // Invalidate the previous workspace immediately. Without this, a slow
     // request from the old scope can briefly repopulate the new workspace.
+    const scopeChanged = activeRecordScopeRef.current !== recordScope;
+    if (scopeChanged) releaseLiveEditPins();
     activeRecordScopeRef.current = recordScope;
     loadRequestRef.current += 1;
     // A pending quick edit belongs to the row/workspace where it was made.
