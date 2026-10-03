@@ -1,0 +1,86 @@
+{
+  "title": "Boone County Planning Commission \u2014 September/October 2026 adoption-record archive baseline",
+  "checkedAt": "2026-10-03",
+  "indexSourceUrl": "https://bcpcky.org/commission_boards/planning_commission_agendas_and_minutes.php",
+  "indexRepositoryPath": "public/permitting/sources/boone-ky/planning-commission-agendas-minutes-index-2026-10-03.html",
+  "indexHttpStatus": 200,
+  "indexContentType": "text/html; charset=UTF-8",
+  "indexBytes": 126035,
+  "indexSha256": "3071ded416e58f648e842f7eba567be9fc9b5a4255974ef4b0d2a87c578a2560",
+  "records": [
+    {
+      "date": "2026-10-07",
+      "meeting": "Business Meeting",
+      "recordType": "agenda",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Business%20Meeting/2026-10-07%20BM.pdf?t=202610020945290",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-10-07-business-agenda.pdf",
+      "bytes": 342409,
+      "sha256": "324f1f500ab9f11a2c1bb2c5266473d9526bd56c5b62a99aadb85c20a715b76f"
+    },
+    {
+      "date": "2026-10-07",
+      "meeting": "Public Hearing",
+      "recordType": "agenda",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Public%20Hearing/2026-10-07%20PH.pdf?t=202610020944520",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-10-07-public-hearing-agenda.pdf",
+      "bytes": 581611,
+      "sha256": "1e14c2b92bad57b91e6427872c6c781a937b04ad6b7b1102ec6a860910e2984a"
+    },
+    {
+      "date": "2026-09-16",
+      "meeting": "Business Meeting",
+      "recordType": "annotated_agenda",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Business%20Meeting/2026-09-16%20BM%20AGENDA%20ANNOTATED.pdf?t=202609171112400",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-09-16-business-agenda-annotated.pdf",
+      "bytes": 305704,
+      "sha256": "28671e063a470fa00ff20dab1fd0c07af3563b866913be186e8bcd9b368e4319"
+    },
+    {
+      "date": "2026-09-02",
+      "meeting": "Business Meeting",
+      "recordType": "annotated_agenda",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Business%20Meeting/2026-09-02%20BM%20ANNOTATED.pdf?t=202609031511330",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-09-02-business-agenda-annotated.pdf",
+      "bytes": 356571,
+      "sha256": "19f4efa01d127403227aadb231bc3ddce21ac9e2ad15d18449ad70619ce20f96"
+    },
+    {
+      "date": "2026-09-02",
+      "meeting": "Business Meeting",
+      "recordType": "minutes",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Minutes/Business%20Meeting/2026-09-02.pdf?t=202609171110060",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-09-02-business-minutes.pdf",
+      "bytes": 174452,
+      "sha256": "f5bac32b8ae0c8f511bbabe393fb39fabb46959dabe49feb63b6d51598c2f9db"
+    },
+    {
+      "date": "2026-09-02",
+      "meeting": "Public Hearing",
+      "recordType": "annotated_agenda",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Public%20Hearing/2026-09-02%20PH%20ANNOTATED.pdf?t=202609031506570",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-09-02-public-hearing-agenda-annotated.pdf",
+      "bytes": 580471,
+      "sha256": "0002bd0c84bd8b8720f5b74cdbbea55f6cc88759e0c291c6030c58cf1ce802f9"
+    },
+    {
+      "date": "2026-09-02",
+      "meeting": "Public Hearing",
+      "recordType": "minutes",
+      "sourceUrl": "https://bcpcky.org/Documents/Commission%20Boards/Planning%20Commission%20and%20Board%20Members/Agendas/Public%20Hearing/2026-09-02.pdf?t=202609171109080",
+      "repositoryPath": "public/permitting/sources/boone-ky/planning-commission-2026-09-02-public-hearing-minutes.pdf",
+      "bytes": 130027,
+      "sha256": "946efc6b56c2cbdf2890f6184ed17f657e33d66a180eaffa3a448ccf40f2f6e5"
+    }
+  ],
+  "indexAvailability": {
+    "october7BusinessMinutesLinked": false,
+    "october7PublicHearingMinutesLinked": false,
+    "september16BusinessMinutesLinked": false,
+    "september2BusinessMinutesLinked": true,
+    "september2PublicHearingMinutesLinked": true
+  },
+  "contentReviewStatus": "pending_reliable_pdf_text_or_visual_review",
+  "authorityBoundary": "records_archived_but_no_adoption_conclusion_from_unreviewed_pdf_contents",
+  "adoptedSignAuthority": "Continue using the separately archived adopted Boone County Zoning Regulations Article 34 as sign-regulation authority unless reviewed official action records establish final adoption and effectiveness of replacement text.",
+  "evidenceScope": "The official Planning Commission Agendas and Minutes index was retrieved successfully on 2026-10-03 and lists October 7, September 16, and September 2, 2026 records. The linked late-2026 agendas and the available September 2 minutes were archived byte-for-byte with hashes. As of this index snapshot, minutes are not linked for the October 7 Business Meeting, October 7 Public Hearing, or September 16 Business Meeting, while September 2 Business Meeting and Public Hearing minutes are linked and archived. The PDF files use text encoding that the current sandbox cannot reliably extract with its available built-in tools, so this archive baseline does not claim that the records do or do not contain zoning-rewrite adoption action. No rewrite text may supersede adopted Article 34 until the official record contents are reliably reviewed and establish adoption and effectiveness."
+}
