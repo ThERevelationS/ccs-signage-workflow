@@ -13,7 +13,7 @@ test('Oct 6 Fiscal Court agenda preserves a bounded pre-meeting no-rewrite-item 
   const indexBytes = readFileSync(e.minutesIndex.repositoryPath);
   const agendaBytes = readFileSync(e.agenda.repositoryPath);
   const agendaText = readFileSync(e.agenda.extractedTextPath, 'utf8');
-  const visibleIndex = indexBytes.toString('utf8').replace(/<[^>]+>/g, ' ').replace(/ +/g, ' ');
+  const indexText = indexBytes.toString('utf8');
 
   assert.equal(indexBytes.length, e.minutesIndex.bytes);
   assert.equal(createHash('sha256').update(indexBytes).digest('hex'), e.minutesIndex.sha256);
@@ -22,8 +22,9 @@ test('Oct 6 Fiscal Court agenda preserves a bounded pre-meeting no-rewrite-item 
   assert.equal(agendaBytes.subarray(0, 5).toString('ascii'), '%PDF-');
 
   assert.equal(e.minutesIndex.latestLinked2026RegularMeetingMinutes, '2026-09-08');
-  assert.ok(visibleIndex.includes('09/08/2026 Regular Meeting'));
-  assert.ok(indexBytes.toString('utf8').includes('September 8, 2026 Minutes.pdf'));
+  assert.ok(indexText.includes('>09/08/2026</span>'));
+  assert.ok(indexText.includes('>Regular Meeting</span>'));
+  assert.ok(indexText.includes('September 8, 2026 Minutes.pdf'));
 
   assert.equal(e.agenda.meetingDate, '2026-10-06');
   assert.ok(agendaText.includes('ITEM IV.            ORDINANCES'));
