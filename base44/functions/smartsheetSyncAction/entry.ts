@@ -1330,15 +1330,23 @@ async function pushDataset(
   const sharedContactId = dataset === 'orders' ? sharedOrderRequestorColumnId(bindings) : '';
   const salesReviews = dataset === 'sales' ? await loadAllEntityRows({entity:base44.asServiceRole.entities.SyncConflict,query:{dataset:'sales',sheet_id:sheetId,status:{$in:['open','approved']}},sort:'id',label:'Sales review evidence'}) : [];
   const queuedSalesReviews: any[] = [];
-  const salesRows = new Map();
-  if (dataset === 'sales') {
-    const linked = pendingRecords.filter(r => r.smartsheet_sheet_id === sheetId && /^\d+$/.test(String(r.smartsheet_row_id)));
-    for (let i=0;i<linked.length;i+=100) {
+  // Pre-fetch the entire sheet in a single paginated GET to eliminate per-row
+  // requests during field reconciliation. Both Sales and Orders share this cache.
+  const sheetRowsMap = new Map();
+  {
+    const preFetchColumnIds = [...new Set(Object.values(bindings).map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
+    const preFetchPageSize = 500;
+    for (let preFetchPage = 1; ; preFetchPage++) {
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-      await reportSalesProgress({phase:'reading',total:pendingRecords.length,item_label:`Reading Sales row batch ${Math.floor(i/100)+1}`});
-      const page = (await smartsheetGet(`/sheets/${sheetId}?rowIds=${linked.slice(i,i+100).map(r=>r.smartsheet_row_id).join(',')}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token)).body;
-      if (String(page?.id)!==sheetId || !Object.values(bindings).every(id=>page.columns?.some(c=>String(c.id)===String(id)))) throw new Error('Sales sheet or column identity could not be verified. No rows were written.');
-      for (const row of normalizeSheetRows(page)) salesRows.set(row.id,{row,raw:{columns:page.columns,rows:page.rows.filter(r=>String(r.id)===row.id)}});
+      await reportSalesProgress({phase:'reading',total:pendingRecords.length,item_label:'Reading Smartsheet sheet'});
+      await reportOrderProgress({phase:'reading',current:0,total:pendingRecords.length,item_label:'Reading Smartsheet sheet',detail:'Single sheet download'});
+      const preFetchParams = new URLSearchParams({ page: String(preFetchPage), pageSize: String(preFetchPageSize), columnIds: preFetchColumnIds.join(','), exclude: 'nonexistentCells' });
+      const sheetResponse = await smartsheetGet(`/sheets/${sheetId}?${preFetchParams.toString()}`, token);
+      if (preFetchPage === 1 && (String(sheetResponse.body?.id) !== sheetId || !Object.values(bindings).every(id => sheetResponse.body?.columns?.some(c => String(c.id) === String(id)))))
+        throw new Error('Smartsheet sheet or column identity could not be verified. No rows were written.');
+      for (const row of normalizeSheetRows(sheetResponse.body)) sheetRowsMap.set(row.id, { row, raw: { columns: sheetResponse.body.columns, rows: sheetResponse.body.rows.filter((r: any) => String(r.id) === row.id) } });
+      const totalPages = Number(sheetResponse.body?.totalPages || 1);
+      if (preFetchPage >= totalPages) break;
     }
   }
   const orderPushStartedAt = Date.now();
@@ -1400,7 +1408,7 @@ async function pushDataset(
       let salesSuccessfulWrite: 'created' | 'updated' | null = null;
       if (existingRowId && /^\d+$/.test(existingRowId) && existingSheetId === sheetId) {
         // Reconcile each field, not an entire row by its last-sync timestamp.
-        const cached = dataset === 'sales' ? salesRows.get(existingRowId) : null;
+        const cached = sheetRowsMap.get(existingRowId);
         const rowResult = cached ? {body:cached.raw} : await smartsheetGet(`/sheets/${sheetId}?rowIds=${existingRowId}&columnIds=${[...new Set(Object.values(bindings))].join(',')}`,token);
         const currentRows = cached ? [cached.row] : normalizeSheetRows(rowResult.body);
         if(currentRows.length !== 1 || currentRows[0].id !== existingRowId)throw new Error('The permanent Smartsheet row is missing. Local data was preserved.');
@@ -1413,8 +1421,9 @@ async function pushDataset(
         const freshLocal=await base44.asServiceRole.entities[dataset==='sales'?'WorkOrder':'Order'].get(record.id);
         // Nothing to write either way: skip the extra Smartsheet reads (rate-limit relief).
         const nothingToWrite=!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming||{}).length;
-        const freshRemote=nothingToWrite?null:await smartsheetGet(`/sheets/${sheetId}/rows/${existingRowId}`,token);
-        if(freshLocal.updated_date!==record.updated_date || (freshRemote && String(freshRemote.body?.modifiedAt||'')!==String(currentRows[0].modified_at||'')))throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
+        // Smartsheet is the primary source of truth; the cached sheet read is
+        // sufficient. No per-row freshness GET is needed.
+        if(freshLocal.updated_date!==record.updated_date)throw new Error('A field changed during reconciliation. Both versions were preserved for a fresh review.');
         cells=fieldPlan.outgoing;
         if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
         if(cells.length)await smartsheetWrite('PUT',`/sheets/${sheetId}/rows`,token,[{id:existingRowId,cells}]);

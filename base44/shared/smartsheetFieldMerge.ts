@@ -48,20 +48,13 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
       // Deliberately leave winner empty so the normal conflict/review path below
       // preserves both values. An approved review can still choose either side.
     } else if(known && !remoteChanged)winner='app';
-    else if(known && !localChanged)winner='smartsheet';
     else {
-      // Unknown baselines cannot be decided by timestamps, so never spend
-      // hundreds of history requests looking for evidence we cannot use.
-      if(known) localAt=await verifiedLocalFieldTime(base44,type,record,field);
-      try {
-        if(known && localAt && field!=='notes_serialized' && !rawCell?.formula) {
-        const history=await readRemoteFieldHistory(base44,get,record.smartsheet_sheet_id,record.smartsheet_row_id,column);
-        const latest=[...history.data].sort((x,y)=>Date.parse(y.modifiedAt)-Date.parse(x.modifiedAt))[0];
-        if(latest && same(historyValue(latest,field),b) && Number.isFinite(Date.parse(latest.modifiedAt)))remoteAt=new Date(latest.modifiedAt).toISOString();
-        }
-      }catch(error){reason=error.message;}
-      if(known && field!=='notes_serialized' && !rawCell?.formula && localAt && remoteAt && Math.abs(Date.parse(localAt)-Date.parse(remoteAt))>1000)winner=Date.parse(localAt)>Date.parse(remoteAt)?'app':'smartsheet';
-      else reason=reason || (!known?'No verified field baseline exists.':field==='notes_serialized'?'Structured notes require an explicit admin choice.':rawCell?.formula?'Formula-driven values require review.':'A verified timestamp is missing or the edit times are tied/too close.');
+      // Smartsheet is the primary source of truth and wins all conflicts.
+      // When the baseline is missing/unknown (fresh import), adopt the
+      // Smartsheet value and update the baseline. When both local and remote
+      // changed from a known baseline, Smartsheet still wins. No SyncConflict
+      // record is created in either case.
+      winner='smartsheet';
     }
     const identity=dataset==='sales'?[dataset,record.id,column,a,b]:[dataset,record.id,column,record.updated_date,remoteRow.modified_at,a,b];
     const key=await valueHash(identity);
@@ -90,7 +83,7 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
       if(dataset==='sales' && field==='current_task_assigned_to' && text(b)) {
         const users=(await base44.asServiceRole.entities.AuthorizedEmail.filter({sales_roles:{$in:['Task Assigned']}},{limit:100,fields:['full_name','email','sales_roles']})).items;
         const resolved=canonicalBase44SalesAssignee(b,users);
-        if(!resolved.name)throw new Error('The Smartsheet assignee cannot be matched uniquely. Correct the name before resolving this review.');
+        if(!resolved.name){delete incoming.current_task_assigned_to;continue;}
         incoming.current_task_assigned_to=resolved.name;
       }
       if(dataset==='orders') {
@@ -103,18 +96,11 @@ export async function planFieldPush({base44, record, dataset, bindings, remoteRo
   return {outgoing,incoming,timestamps,decisions,unresolved,remote};
 }
 export async function recordFieldPullHolds({base44,record,dataset,bindings,remoteRow}) {
-  const local=buildSnapshot(record,bindings,dataset), remote=dataset==='sales'?buildSalesPullSnapshot(remoteRow,bindings):buildOrderPullSnapshot(remoteRow,bindings), prior=record.smartsheet_sync_snapshot;
-  for(const [field,columnId] of Object.entries(bindings)) {
-    const col=String(columnId);
-    if(field==='notes_serialized' && !record.work_notes?.length || same(local[col],remote[col]))continue;
-    const known=prior && Object.prototype.hasOwnProperty.call(prior,col);
-    if(known && (same(local[col],prior[col]) || same(remote[col],prior[col])))continue;
-    const key=await valueHash([dataset,record.id,col,record.updated_date,remoteRow.modified_at,local[col],remote[col]]);
-    const existing=(await base44.asServiceRole.entities.SyncConflict.filter({conflict_key:key},{limit:1})).items[0];
-    if(existing)continue;
-    await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,column_id:col,status:{$in:['open','approved']},conflict_key:{$ne:key}},{$set:{status:'superseded'}});
-    await base44.asServiceRole.entities.SyncConflict.upsert([{conflict_key:key,dataset,entity_id:record.id,record_label:record.client_name||record.customer_name||record.id,field_name:field,field_label:field.replace(/_/g,' '),sheet_id:record.smartsheet_sheet_id,row_id:record.smartsheet_row_id,column_id:col,local_value:preview(local[col]??''),remote_value:preview(remote[col]??''),baseline_value:known?preview(prior[col]??''):'Unknown',local_modified_at:await verifiedLocalFieldTime(base44,dataset==='sales'?'WorkOrder':'Order',record,field),remote_modified_at:'',local_version:record.updated_date,remote_version:remoteRow.modified_at||'',reason:'Both versions differ. Sync will use verified field edit times; otherwise an admin must choose.',status:'open'}],{key:'conflict_key'});
-  }
+  // Smartsheet is the primary source of truth and wins all conflicts.
+  // Pending local edits are preserved during pull (the caller skips the
+  // update), and the push step reconciles them with the Smartsheet-wins
+  // policy. No SyncConflict records are created for baseline-unknown or
+  // both-changed fields.
 }
 export async function applyMergedLocalFields(base44,dataset,record,plan) {
   if(!Object.keys(plan.incoming).length)return record;

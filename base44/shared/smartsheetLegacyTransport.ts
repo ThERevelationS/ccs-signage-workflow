@@ -29,20 +29,39 @@ async function once(method, path, token, jsonBody) {
         'smartsheet-integration-source': 'APPLICATION,CincinnatiCustomSigns,Base44-Smartsheet-Sync',
         ...(method === 'GET' ? {} : { 'Content-Type': 'application/json' }) },
       ...(method === 'GET' ? {} : { body: JSON.stringify(jsonBody) }), signal: controller.signal }, 0);
-    if (!response.ok) throw Object.assign(new Error(safeUpstreamError(response.status)), { status: response.status === 429 ? 429 : 502, upstreamStatus: response.status });
+    if (!response.ok) {
+      const retryAfter = response.headers.get('retry-after') || response.headers.get('Retry-After');
+      throw Object.assign(new Error(safeUpstreamError(response.status)), { status: response.status === 429 ? 429 : 502, upstreamStatus: response.status, retryAfter: retryAfter ? Number(retryAfter) || 0 : 0 });
+    }
     return { status: response.status, body: await readJson(response) };
   } catch (error) {
-    if (error?.name === 'AbortError') throw Object.assign(new Error(method === 'GET' ? 'Smartsheet request timed out.' : 'Smartsheet write timed out.'), { status: 502 });
+    if (error?.name === 'AbortError') throw Object.assign(new Error(method === 'GET' ? 'Smartsheet request timed out.' : 'Smartsheet write timed out.'), { status: 502, timedOut: true });
     throw error;
   } finally { clearTimeout(timeout); }
 }
 async function legacyRetry(call) {
-  for (let attempt = 0; ; attempt++) {
+  let timedOutRetried = false;
+  let rateLimitRetries = 0;
+  for (;;) {
     try { return await call(); }
     catch (error) {
-      if (error?.upstreamStatus !== 429 || attempt >= 3) throw error;
-      const started = performance.now(); await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
-      traceDelay('smartsheet_retry_wait', performance.now() - started, true);
+      // On timeout, retry once before failing.
+      if (error?.timedOut && !timedOutRetried) {
+        timedOutRetried = true;
+        continue;
+      }
+      // On 429, read the Retry-After header and retry with exponential
+      // backoff (max 3 retries). Falls back to 2/4/8s when no Retry-After.
+      if (error?.upstreamStatus === 429 && rateLimitRetries < 3) {
+        rateLimitRetries++;
+        const retryAfterSeconds = Number(error?.retryAfter) || 0;
+        const backoffSeconds = retryAfterSeconds > 0 ? retryAfterSeconds : 2 * Math.pow(2, rateLimitRetries - 1);
+        const started = performance.now();
+        await new Promise(resolve => setTimeout(resolve, backoffSeconds * 1000));
+        traceDelay('smartsheet_retry_wait', performance.now() - started, true);
+        continue;
+      }
+      throw error;
     }
   }
 }
