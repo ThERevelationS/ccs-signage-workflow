@@ -1,0 +1,112 @@
+{
+  "phase": "4.3",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "verified_at": "2026-10-04T21:40:01.647Z",
+  "phase42_recovery": {
+    "checkpoint_id": "6ac2b4e6d62b041df5ed7736",
+    "historical_source_head": "79643540b87fa8f9a3eed5ef6eb2f7be42fcb23a",
+    "historical_validation_tests": 291,
+    "rerun_tests": 21
+  },
+  "initial_head": "4a3ec4a6725c2a33f30d6c1abf6110314dd46de6",
+  "implementation_head": "0de25b0f4fa340f8dd9b33cca436c9db4faae363",
+  "validation": {
+    "focused_tests": 106,
+    "added_candidate_tests": 17,
+    "targeted_lint": "passed",
+    "diff_check": "passed",
+    "full_npm_build": "passed",
+    "backend_bundle_bytes": 20419
+  },
+  "live": {
+    "mode": "Base44 editor Test Function preview backend against production entities",
+    "actions": [
+      "preview",
+      "register",
+      "get_request"
+    ],
+    "registered_office": {
+      "id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+      "government_office_id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+      "name": "Campbell County Planning, Zoning and Building Inspection",
+      "office_type": "",
+      "office_types": [],
+      "workflow_steps": [],
+      "contact_phone": "",
+      "contact_email": "",
+      "contact_website": "",
+      "contact_address": "",
+      "contact_notes": "",
+      "government_office": {
+        "name": "Campbell County Planning, Zoning and Building Inspection",
+        "phone": "",
+        "email": "",
+        "website": "",
+        "address": "",
+        "notes": "",
+        "state": "KY",
+        "verification_status": "needs_verification",
+        "verified_at": "",
+        "verified_by": "",
+        "source_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+        "verification_notes": "Candidate from a retained publisher quote. Current office identity, contacts, roles and coverage require separate review."
+      },
+      "office_candidate_registration": {
+        "method": "retained-office-candidate-v1",
+        "registration_key": "e5bd258834fa7ae6d9e32ebc8120c30c18c8be1c36b9a669f7e9c574e5e26b99",
+        "snapshot": {
+          "source": {
+            "id": "6ac25be4207035a2e5be3827",
+            "jurisdiction_id": "6ac19dcc184935c1391ee468",
+            "jurisdiction_name": "Campbell County",
+            "issuing_office": null,
+            "jurisdiction_scope": null,
+            "title": "Campbell County Sign Permit Application",
+            "official_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+            "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1dae12daf_1648823956_93665.pdf",
+            "file_hash_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+            "file_bytes": 47262,
+            "authority_classification": "application_form",
+            "content_status": "unknown",
+            "verification_status": "needs_verification",
+            "authority_confidence": "unverified",
+            "reviewer": null,
+            "effective_or_adopted_date": null,
+            "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.",
+            "authority_review": null
+          },
+          "profile": {
+            "id": "6ac19dcc184935c1391ee468",
+            "name": "Campbell County",
+            "state": "KY",
+            "type": "county"
+          },
+          "proof": {
+            "physical_page": 1,
+            "text_sha256": "23511f8c83722f13bcbd550bd2282f3a0a140e8d3453762954235c9c3dde4e6b",
+            "excerpt": "Campbell County Planning, Zoning and Building Inspection"
+          },
+          "archive_document_id": "ai_2026-10-04T00:29:00Z_1"
+        },
+        "registered_by": "brettheinlein1@gmail.com",
+        "registered_at": "2026-10-04T21:36:53.647Z"
+      }
+    },
+    "catalog_before": 7,
+    "catalog_after": 8,
+    "seven_existing_offices_exact_preserved": true,
+    "two_tracker_localities_exact_preserved": true,
+    "dispatch_config_and_state_exact_preserved": true,
+    "campbell_and_morrow_source_records_exact_preserved": true,
+    "office_authority_reviews_count": 0,
+    "llm_calls": 0
+  },
+  "frontend_published": false,
+  "deployment": {
+    "cli_whoami": "timed out after 30 seconds; local CLI executable absent; no retry or explicit CLI deploy",
+    "preview_backend_invocation": "passed",
+    "production_backend_deploy_claimed": false
+  },
+  "next": "Review current official office identity evidence before staff verification, then explicit source ownership and role/coverage relationships."
+}
