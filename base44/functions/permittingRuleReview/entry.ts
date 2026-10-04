@@ -1,3 +1,4 @@
+import {ruleKind} from '../../shared/permittingSourceAuthorityPolicy.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
 import { verifyRuleForApproval, assertApprovalSourcesCurrent, evidenceEqual, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
@@ -54,14 +55,16 @@ Deno.serve(async req => {
     const reviewer={reviewer:user.full_name || user.email,reviewer_email:user.email,reviewed_at:new Date().toISOString()};
     let fields:any={...reviewer};
     if (action==='approve') {
-      const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment});
+      const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
+        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
       await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument);
-      fields={...fields,status:'staff_approved',is_operational:true,conflict_state:'none',
+      const administrative=ruleKind(rule)==='administrative_instruction';
+      fields={...fields,status:'staff_approved',rule_kind:ruleKind(rule),is_operational:!administrative,is_workflow_instruction:administrative,conflict_state:'none',
         evidence_context:{...(rule.evidence_context || {}),approved_sources:snapshots.map(s=>({id:s.id,snapshot:s.snapshot}))},
         citations:rule.citations.map(c=>({...c,verification_status:'verified'}))};
     } else if (action==='reject') {
       if (rule.status==='superseded') throw evidenceError('Superseded history is preserved.');
-      fields={...fields,status:'staff_rejected',is_operational:false,
+      fields={...fields,status:'staff_rejected',is_operational:false,is_workflow_instruction:false,
         notes:String(rule.notes || '')+(body.reason?'\n\nRejection reason: '+String(body.reason).slice(0,2000):'')};
     } else {
       if (rule.status==='superseded') throw evidenceError('Superseded history is preserved.');
@@ -69,7 +72,7 @@ Deno.serve(async req => {
         'unit','sign_type','sign_type_normalized','rule_category','notes','citations'];
       for (const key of allowed) if (Object.hasOwn(edits,key)) fields[key]=edits[key];
       const material=allowed.some(key=>key!=='notes' && Object.hasOwn(edits,key) && !evidenceEqual(edits[key],rule[key]));
-      if (material) fields={...fields,status:'needs_review',is_operational:false,conflict_state:'under_review'};
+      if (material) fields={...fields,status:'needs_review',is_operational:false,is_workflow_instruction:false,conflict_state:'under_review'};
     }
     return Response.json({success:true,rule:await commitRule(Rules,rule,fields)});
   } catch(error) {
