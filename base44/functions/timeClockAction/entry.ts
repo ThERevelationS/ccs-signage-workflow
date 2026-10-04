@@ -3050,6 +3050,10 @@ Deno.serve(async (req) => {
                 generation_causal_window_start: String(period.finalized_summary.generation_causal_window_start || ''),
                 generation_causal_window_end: String(period.finalized_summary.generation_causal_window_end || ''),
               } : {}),
+              ...(Number(period.finalized_summary.snapshot_version || 0) >= 17 ? {
+                generation_audit_reconciliation_hash: String(period.finalized_summary.generation_audit_reconciliation_hash || ''),
+                generation_audit_reconciliation_count: Number(period.finalized_summary.generation_audit_reconciliation_count || 0),
+              } : {}),
             });
             if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
                 !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
