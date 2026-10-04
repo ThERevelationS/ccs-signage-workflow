@@ -3064,6 +3064,7 @@ Deno.serve(async (req) => {
               id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome,
               approved_by: asEmail(evidence[0].actor_email), approved_at: evidence[0].server_timestamp || '',
               approver_role: String(evidence[0].actor_role || ''), authentication_method: String(evidence[0].authentication_method || ''),
+              independent_review: asEmail(evidence[0].actor_email) !== asEmail(entry.user_email),
             };
             if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) {
               return Response.json({ success: false, retry_same_request: true, error: 'Shift approval provenance is incomplete. Approval manager and server timestamp are required before payroll finalization.' }, { status: 409 });
