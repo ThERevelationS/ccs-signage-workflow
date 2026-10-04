@@ -293,6 +293,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
             ...doc, file_url: uploadResult.file_url,
             source_sha256: Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''),
             source_bytes: fileBytes.byteLength,
+            stored_sha256: Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''),
+            stored_bytes: fileBytes.byteLength,
             downloaded_at: new Date().toISOString(),
           };
           if (discoveryOnly) {
