@@ -150,6 +150,8 @@ export default function TimeClockExceptionCenter({
           ? "The scheduled monitor detected a long-running active shift. No Clock Out was created or changed; confirm with the employee before any correction."
           : `Employee reported a Clock Out of ${formatPunchTime(punchCase.claimed_clock_out)}. Review the linked shift and correction history before approval.`;
 
+    const canApproveLateClockIn = isLateClockIn && punchCase.status === "pending_manager_review" &&
+      entry?.status === "clocked_out" && entry?.approval_status === "needs_review" && !entry?.pay_period_id;
     exceptions.push({
       key: `punch-case:${punchCase.id || punchCase.case_key}`,
       severity: isMissingEntry || punchCase.status === "open" ? "critical" : "warning",
@@ -157,7 +159,8 @@ export default function TimeClockExceptionCenter({
       title,
       employee: punchCase.user_name || punchCase.user_email,
       detail,
-      entry,
+      entry: canApproveLateClockIn ? null : entry,
+      approvalEntry: canApproveLateClockIn ? entry : null,
     });
   }
 
