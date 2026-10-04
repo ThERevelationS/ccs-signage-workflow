@@ -12,7 +12,9 @@
           "call": "invoke_backend_function",
           "with": {
             "function_name": "permittingResearchBacklogDispatch",
-            "args": {}
+            "args": {
+              "_refresh_capability": "0P8y3hS6ivce3rtN4Pi28XzUdeS1WLaUkVgMsrl4F7s"
+            }
           },
           "then": "end",
           "x-base44": {
