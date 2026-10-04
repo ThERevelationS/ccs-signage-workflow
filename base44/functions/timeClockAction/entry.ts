@@ -2485,6 +2485,7 @@ Deno.serve(async (req) => {
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
           request_id: summary.request_id || '', entry_snapshot_hash: summary.entry_snapshot_hash || '', invalidated_at: summary.invalidated_at || '',
           invalidated_by: summary.invalidated_by || '', invalidation_reason: summary.invalidation_reason || '',
+          invalidated_by_role: summary.invalidated_by_role || '', invalidation_authentication_method: summary.invalidation_authentication_method || '',
           invalidated_by_reopen_request_id: summary.invalidated_by_reopen_request_id || '',
           shift_evidence_verified: retiredEvidenceVerified, shift_evidence_hash: summary.shift_manifest_hash || '', shifts: retiredShifts,
           employee_reconciliation: retiredReconciliation,
@@ -2639,6 +2640,8 @@ Deno.serve(async (req) => {
           snapshot_active: false,
           invalidated_at: new Date().toISOString(),
           invalidated_by: actorEmail,
+          invalidated_by_role: String(actor.role || ''),
+          invalidation_authentication_method: 'session',
           invalidated_by_reopen_request_id: requestId,
           invalidation_reason: note,
         };
