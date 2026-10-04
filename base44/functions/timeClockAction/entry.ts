@@ -2782,6 +2782,7 @@ Deno.serve(async (req) => {
             if (periodEntryIdSet.has(candidateId)) continue;
             const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
             let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
+            let discoveryEvidence = null;
             if (!companyDate && Number(summary.snapshot_version || 0) >= 19) {
               const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
               if (!Array.isArray(membershipAudits)) return false;
