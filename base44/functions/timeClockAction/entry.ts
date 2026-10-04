@@ -3432,6 +3432,8 @@ Deno.serve(async (req) => {
                   reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
                   applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
                   applied_at: correctionAppliedAt,
+                  corrected_clock_in: String(corrected.clock_in || ''), corrected_clock_out: String(corrected.clock_out || ''),
+                  corrected_total_hours: Number(corrected.total_hours || 0),
                 };
               }
               if (!change.correction_provenance) {
