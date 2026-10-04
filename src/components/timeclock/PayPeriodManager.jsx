@@ -30,8 +30,10 @@ function reconcileGenerationEvidence(generation) {
     const email = String(shift?.user_email || "Unknown employee").trim().toLowerCase() || "Unknown employee";
     const hours = Number(shift?.total_hours || 0);
     totalHours += Number.isFinite(hours) ? hours : 0;
-    const group = groups.get(email) || { email, totalHours: 0, shifts: [] };
+    const group = groups.get(email) || { email, totalHours: 0, approvedShiftCount: 0, approvalEvidenceCount: 0, shifts: [] };
     group.totalHours += Number.isFinite(hours) ? hours : 0;
+    if (shift?.approval_status === "approved") group.approvedShiftCount += 1;
+    if (shift?.approval_request_id && shift?.approval_evidence?.request_id === shift.approval_request_id && ["confirmed", "recovered"].includes(shift?.approval_evidence?.outcome)) group.approvalEvidenceCount += 1;
     group.shifts.push(shift);
     groups.set(email, group);
   }
@@ -49,6 +51,10 @@ function reconcileGenerationEvidence(generation) {
       const authoritative = serverByEmail.get(employee.email);
       return authoritative
         && Number(authoritative.shift_count || 0) === employee.shifts.length
+        && Number(authoritative.approved_shift_count || 0) === employee.approvedShiftCount
+        && Number(authoritative.approval_evidence_count || 0) === employee.approvalEvidenceCount
+        && employee.approvedShiftCount === employee.shifts.length
+        && employee.approvalEvidenceCount === employee.shifts.length
         && Math.abs(Number(authoritative.total_hours || 0) - employee.totalHours) < 0.005;
     });
   const reconciled = generation.shifts.length === Number(generation.entry_count || 0)
