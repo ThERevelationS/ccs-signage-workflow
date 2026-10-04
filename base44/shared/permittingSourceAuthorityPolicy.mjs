@@ -45,6 +45,9 @@ export async function assertSourceScopeReviewEvidence(source,{segmentEntity,prof
  const profile=await profileEntity.get(source.jurisdiction_id);
  if(['id','name','state','type'].some(k=>profile[k]!==review.profile[k]))fail('Canonical jurisdiction identity changed after source review.');
  if(profile.type==='county' && review.scope_kind==='named_jurisdiction')fail('County scope must explicitly name its covered areas.');
+ if(review.scope_kind==='named_jurisdiction' && (review.named_areas.length!==1 || review.named_areas[0]!==profile.name))fail('Named scope must identify exactly the canonical jurisdiction.');
+ if(review.scope_kind==='unincorporated' && (profile.type!=='county' || review.named_areas.length!==1 ||
+    !/unincorporated/i.test(review.named_areas[0]) || !review.named_areas[0].includes(profile.name)))fail('Unincorporated scope must name that county\'s unincorporated area.');
  for(const role of ['publisher','scope']){
   const proof=review.proofs.find(p=>p.role===role);
   if(!proof || !Number.isInteger(proof.physical_page) || !proof.excerpt || proof.excerpt.length>1000)fail('Office/scope evidence is incomplete.');
