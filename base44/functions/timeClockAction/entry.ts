@@ -2447,7 +2447,8 @@ Deno.serve(async (req) => {
           const evidence = shift?.approval_evidence;
           const provenanceComplete = Number(summary?.snapshot_version || 0) < 4 || (asEmail(evidence?.approved_by) && String(evidence?.approved_at || ''));
           const authorityComplete = Number(summary?.snapshot_version || 0) < 5 || (String(evidence?.approver_role || '') === 'admin' && ['session', 'admin_kiosk'].includes(String(evidence?.authentication_method || '')));
-          if (requestId && evidence && String(evidence.request_id || '') === requestId && ['confirmed', 'recovered'].includes(String(evidence.outcome || '')) && provenanceComplete && authorityComplete) groups[userEmail].approval_evidence_count += 1;
+          const independentComplete = Number(summary?.snapshot_version || 0) < 6 || (evidence?.independent_review === true && asEmail(evidence?.approved_by) !== userEmail);
+          if (requestId && evidence && String(evidence.request_id || '') === requestId && ['confirmed', 'recovered'].includes(String(evidence.outcome || '')) && provenanceComplete && authorityComplete && independentComplete) groups[userEmail].approval_evidence_count += 1;
         }
         const employees = Object.values(groups).sort((a: any, b: any) => a.user_email.localeCompare(b.user_email));
         const approvalComplete = employees.every((employee: any) => employee.approved_shift_count === employee.shift_count && employee.approval_evidence_count === employee.shift_count);
