@@ -55,7 +55,7 @@ async function buildReview({source,profile,segmentEntity,settingsEntity,input,re
   reviewed_by:actor,reviewed_at:new Date(now()).toISOString(),destination_authority_resolved:false};
  const proposal={...source,authority_review:review,issuing_office:publisher,jurisdiction_scope:label,
   content_status:'current',verification_status:'verified',authority_confidence:'high',reviewer:actor};
- await assertSourceScopeReviewEvidence(proposal,{segmentEntity,profileEntity:{get:async()=>profile}});
+ await assertSourceScopeReviewEvidence(proposal,{segmentEntity,settingsEntity,profileEntity:{get:async()=>profile}});
  return {authority_review:review,issuing_office:publisher,jurisdiction_scope:label,content_status:'current',
   verification_status:'verified',authority_confidence:'high',reviewer:actor};
 }
@@ -63,7 +63,13 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
  sourceDocumentId,input={},action='verify',requestId,expectedUpdatedDate,dryRun=false,actor,now=()=>Date.now()}){
  if(!actor || !sourceDocumentId || !['verify','revoke'].includes(action))throw evidenceError('A selected source and authenticated reviewer are required.',400);
  if(!dryRun && !/^[a-zA-Z0-9_-]{16,100}$/.test(requestId || ''))throw evidenceError('A stable manual review request id is required.',400);
- let source=await sourceEntity.get(sourceDocumentId),profile=await profileEntity.get(source.jurisdiction_id);
+ let source=await sourceEntity.get(sourceDocumentId);
+ if(!source.jurisdiction_id)throw evidenceError('The source requires a canonical jurisdiction profile.',400);
+ const pending=source.rule_import_state || {};
+ if(['creating','uncertain'].includes(pending.status) || Date.parse(pending.lease_expires_at || '')>now() ||
+    ['run_creating','run_uncertain','running','llm_uncertain'].includes(source.rule_extraction_state?.status))
+  throw evidenceError('Reconcile active/uncertain analysis or import before changing source authority scope.');
+ let profile=await profileEntity.get(source.jurisdiction_id);
  const payloadDigest=await evidenceDigest({source_document_id:sourceDocumentId,action,input});
  const key='source-authority-review:'+requestId,oldRaw=source.authority_review_state,oldState=oldRaw || {};
  let audit;
@@ -117,7 +123,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
     !evidenceEqual(metadata(source),audit.before_fields))throw evidenceError('Saved review intent conflicts with current source evidence.');
  profile=await profileEntity.get(source.jurisdiction_id);
  if(!evidenceEqual(profileIdentity(profile),audit.profile))throw evidenceError('Canonical jurisdiction changed during review.');
- if(action==='verify')await assertSourceScopeReviewEvidence({...source,...audit.next_fields},{segmentEntity,profileEntity});
+ if(action==='verify')await assertSourceScopeReviewEvidence({...source,...audit.next_fields},{segmentEntity,profileEntity,settingsEntity});
  const fields={...audit.next_fields,authority_review_state:{...creating,status:'complete',audit_id:audit.id}};
  source=await write(sourceEntity,source,fields,{...audit.source_identity,
   ...Object.fromEntries(reviewFields.map(k=>[k,source[k]])),authority_review_state:creating});
