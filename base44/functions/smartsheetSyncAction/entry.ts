@@ -1521,13 +1521,66 @@ async function pushDataset(
     }
   }
 
-  // Phase 2: Batch Smartsheet write (all row updates in one PUT)
+  // Phase 2: Batch Smartsheet write. Order rows are not considered complete
+  // from the write acknowledgement alone; each affected permanent row is
+  // freshly read back and compared with its exact expected snapshot.
+  let orderBatchWriteError = '';
   if (deferredSmartsheetWrites.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     try {
-      await smartsheetWrite('PUT', `/sheets/${sheetId}/rows`, token, deferredSmartsheetWrites);
+      await smartsheetWrite('PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites);
     } catch (err: any) {
-      errors.push(`Batch Smartsheet write (${deferredSmartsheetWrites.length} rows): ${err?.message || 'unknown error'}`);
+      if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
+      else errors.push('Batch Smartsheet write (' + deferredSmartsheetWrites.length + ' rows): ' + (err?.message || 'unknown error'));
+    }
+  }
+
+  const orderRemoteVerifiedIds = new Set<string>();
+  if (dataset === 'orders' && deferredOrderVerification.size) {
+    for (const [recordId, verification] of deferredOrderVerification) {
+      if (!verification.requiresRemoteWrite) orderRemoteVerifiedIds.add(recordId);
+    }
+    const remoteChecks = [...deferredOrderVerification.entries()]
+      .filter(([, verification]) => verification.requiresRemoteWrite);
+    if (remoteChecks.length) {
+      try {
+        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+        const rowIds = remoteChecks.map(([, verification]) => verification.rowId);
+        const columnIds = [...new Set(Object.values(bindings)
+          .map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
+        const params = new URLSearchParams({
+          rowIds: rowIds.join(','),
+          columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        });
+        const verificationResult = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+        if (String(verificationResult.body?.id ?? '') !== sheetId) {
+          throw new Error('Smartsheet returned a different sheet during Order write verification.');
+        }
+        const freshRows = new Map(normalizeSheetRows(verificationResult.body)
+          .map((row: any) => [String(row.id), row]));
+        for (const [recordId, verification] of remoteChecks) {
+          const freshRow: any = freshRows.get(verification.rowId);
+          if (freshRow && !detectConflict(freshRow.cells, verification.expectedSnapshot, bindings, 'orders')) {
+            orderRemoteVerifiedIds.add(recordId);
+          } else {
+            orderFailedRecordIds.add(recordId);
+            errors.push(recordId + ': Smartsheet row ' + verification.rowId +
+              ' did not read back with the expected values. The Order remains queued.');
+          }
+        }
+      } catch (err: any) {
+        const detail = err?.message || 'remote verification failed';
+        for (const [recordId] of remoteChecks) {
+          orderFailedRecordIds.add(recordId);
+          errors.push(recordId + ': Smartsheet write outcome could not be verified (' +
+            detail + '). The Order remains queued.');
+        }
+      }
+      if (orderBatchWriteError && remoteChecks.some(([recordId]) => !orderRemoteVerifiedIds.has(recordId))) {
+        errors.push('Batch Smartsheet write reported: ' + orderBatchWriteError +
+          '. Only rows independently read back as correct can complete.');
+      }
     }
   }
 
