@@ -1,0 +1,128 @@
+{
+  "name": "PermittingOfficeAuthorityReview",
+  "type": "object",
+  "description": "Immutable staff-reviewed office role and explicit jurisdiction coverage. Event creation plus a matching committed profile receipt records the decision; fresh evidence checks determine current verification. Never establishes address authority or changes job workflows.",
+  "properties": {
+    "request_key": {
+      "type": "string"
+    },
+    "payload_sha256": {
+      "type": "string"
+    },
+    "jurisdiction_id": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string"
+    },
+    "relation_key": {
+      "type": "string"
+    },
+    "source_document_id": {
+      "type": "string"
+    },
+    "source_review_id": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "role_label": {
+      "type": "string"
+    },
+    "coverage_area": {
+      "type": "string"
+    },
+    "coverage_kind": {
+      "type": "string"
+    },
+    "coverage_basis": {
+      "type": "string"
+    },
+    "source_profile_id": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
+    },
+    "replaces_review_id": {
+      "type": "string"
+    },
+    "profile_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "office_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "role_proof": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "review_input": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "sequence": {
+      "type": "integer"
+    },
+    "responsibility_confirmed": {
+      "type": "boolean"
+    },
+    "address_authority_resolved": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "request_key",
+    "payload_sha256",
+    "jurisdiction_id",
+    "method",
+    "action",
+    "sequence",
+    "requested_by",
+    "requested_at",
+    "relation_key",
+    "profile_snapshot",
+    "office_snapshot",
+    "source_snapshot",
+    "review_input"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": false,
+    "delete": false
+  }
+}
