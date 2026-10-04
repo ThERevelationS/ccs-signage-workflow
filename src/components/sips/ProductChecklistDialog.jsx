@@ -1002,9 +1002,22 @@ export default function ProductChecklistDialog({
 
   // Active/completed grouping is checklist-derived. Expansion, search position,
   // inline editing, and dialog warnings should not rebuild the whole hierarchy.
-  const { active: activeChecklist, completed: completedChecklist } = useMemo(() => {
+  const { active: activeChecklist, completed: completedChecklist, searchIndex: checklistSearchIndexData } = useMemo(() => {
     const active = {};
     const completed = {};
+    const searchIndex = [];
+    const addSearchEntry = (item, productName, subTemplateName = "") => {
+      const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
+      const searchableText = [
+        productName,
+        subTemplateName,
+        item.text,
+        item.approved_by,
+        item.custom_dropdown_value,
+        assignedTo
+      ].filter(Boolean).join(" ").toLowerCase();
+      searchIndex.push({ item, productName, searchableText });
+    };
 
     Object.entries(groupedChecklist).forEach(([productName, group]) => {
       active[productName] = { ...group, mainItems: [], subTemplates: {} };
@@ -1014,14 +1027,17 @@ export default function ProductChecklistDialog({
         if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
           const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
           (isCompleted ? completed : active)[productName].mainItems.push(item);
+          if (!isCompleted) addSearchEntry(item, productName);
           return;
         }
         const parent = checklistItemById.get(item.parent_id);
         if (parent) {
           const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
           (parentCompleted ? completed : active)[productName].mainItems.push(item);
+          if (!parentCompleted) addSearchEntry(item, productName);
         } else {
           active[productName].mainItems.push(item);
+          addSearchEntry(item, productName);
         }
       });
 
@@ -1033,14 +1049,17 @@ export default function ProductChecklistDialog({
           if (!item.parent_id && (item.type === 'checklist' || !item.type)) {
             const isCompleted = dropdownConditionByName.get(item.custom_dropdown_value)?.is_completed;
             (isCompleted ? completed : active)[productName].subTemplates[stName].push(item);
+            if (!isCompleted) addSearchEntry(item, productName, stName);
             return;
           }
           const parent = checklistItemById.get(item.parent_id);
           if (parent) {
             const parentCompleted = dropdownConditionByName.get(parent.custom_dropdown_value)?.is_completed;
             (parentCompleted ? completed : active)[productName].subTemplates[stName].push(item);
+            if (!parentCompleted) addSearchEntry(item, productName, stName);
           } else {
             active[productName].subTemplates[stName].push(item);
+            addSearchEntry(item, productName, stName);
           }
         });
 
@@ -1052,7 +1071,7 @@ export default function ProductChecklistDialog({
       if (completed[productName].mainItems.length === 0 && Object.keys(completed[productName].subTemplates).length === 0) delete completed[productName];
     });
 
-    return { active, completed };
+    return { active, completed, searchIndex };
   }, [groupedChecklist, dropdownConditionByName, checklistItemById]);
 
   // Build summary data in one pass only when checklist/status data changes.
@@ -1144,35 +1163,8 @@ export default function ProductChecklistDialog({
     return renderGroups;
   }, [activeChecklist]);
 
-  // Build normalized searchable text only when the active checklist changes.
-  // Query navigation and unrelated dialog state can then reuse this index.
-  const checklistSearchIndexData = useMemo(() => {
-    const searchIndex = [];
-
-    Object.entries(activeChecklist).forEach(([productName, group]) => {
-      const collections = [
-        { items: group.mainItems, subTemplateName: "" },
-        ...Object.entries(group.subTemplates).map(([subTemplateName, items]) => ({ items, subTemplateName }))
-      ];
-
-      collections.forEach(({ items, subTemplateName }) => {
-        items.forEach(item => {
-          const assignedTo = Array.isArray(item.assigned_to) ? item.assigned_to.join(" ") : item.assigned_to;
-          const searchableText = [
-            productName,
-            subTemplateName,
-            item.text,
-            item.approved_by,
-            item.custom_dropdown_value,
-            assignedTo
-          ].filter(Boolean).join(" ").toLowerCase();
-          searchIndex.push({ item, productName, searchableText });
-        });
-      });
-    });
-
-    return searchIndex;
-  }, [activeChecklist]);
+  // Active search entries are built during the active/completed classification
+  // pass above, avoiding a second traversal of every active checklist row.
   const normalizedChecklistSearch = checklistSearchQuery.trim().toLowerCase();
   const checklistSearchResults = useMemo(() => {
     if (!normalizedChecklistSearch) return [];
