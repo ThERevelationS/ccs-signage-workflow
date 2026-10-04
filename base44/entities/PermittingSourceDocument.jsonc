@@ -202,6 +202,11 @@
       },
       "description": "Preserved initial physical PDF pages with extracted text, archive hash, parser method, and gaps. Later pages may live in immutable PermittingSourceTextSegment records; the committed cursor is in text_extraction_state. Original archive and review decisions remain intact."
     },
+    "rule_extraction_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Manual selected-page rule extraction reservation and durable run identity. Independent of text/archive workers; unknown creates and LLM attempts are reconciled, never blindly repeated."
+    },
     "derived_facts": {
       "type": "object",
       "additionalProperties": true,
