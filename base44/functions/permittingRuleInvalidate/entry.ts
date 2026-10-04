@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
-import { reviewedAdoptedSource, evidenceEqual, sourceAuthoritySnapshot, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
+import {sourceSupportsRule} from '../../shared/permittingSourceAuthorityPolicy.mjs';
+import { evidenceEqual, sourceAuthoritySnapshot, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
 
 // Explicit, bounded re-review linkage. Known citations remain intact.
 Deno.serve(async req => {
@@ -25,14 +26,14 @@ Deno.serve(async req => {
       const scopeChanged=rule.evidence_validation==='literal-page-v1' && (
         rule.jurisdiction_id!==source.jurisdiction_id || rule.jurisdiction_name!==source.jurisdiction_name ||
         !evidenceEqual(rule.evidence_context?.jurisdiction_scope,source.jurisdiction_scope || null));
-      const needsReview=changed || scopeChanged || !reviewedAdoptedSource(source) ||
+      const needsReview=changed || scopeChanged || !sourceSupportsRule(source,rule) ||
         (approvedSnapshot && !evidenceEqual(approvedSnapshot,sourceAuthoritySnapshot(source)));
-      if (!needsReview || (rule.conflict_state==='under_review' && !rule.is_operational && rule.status!=='staff_approved')) continue;
+      if (!needsReview || (rule.conflict_state==='under_review' && !rule.is_operational && !rule.is_workflow_instruction && rule.status!=='staff_approved')) continue;
       const current=await entities.PermittingSourceDocument.get(id);
       if (!evidenceEqual(sourceAuthoritySnapshot(current),sourceAuthoritySnapshot(source)))
         throw evidenceError('Source review changed during invalidation; resume against current evidence.');
       if (!rule.updated_date || !Number.isInteger(rule.version)) { conflicts++;continue; }
-      const patch={status:rule.status==='staff_approved'?'needs_review':rule.status,is_operational:false,
+      const patch={status:rule.status==='staff_approved'?'needs_review':rule.status,is_operational:false,is_workflow_instruction:false,
         conflict_state:'under_review',version:rule.version+1,review_operation_id:crypto.randomUUID()};
       let committed=false;
       try {
