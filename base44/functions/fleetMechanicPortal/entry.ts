@@ -624,17 +624,17 @@ Deno.serve(async (req) => {
       const rows = await Receipt.filter({operation_key:operationKey});
       if ((rows || []).length > 1) return json({error:'Duplicate mechanic operation receipts exist. CCS must review Fleet integrity before this request can continue.'},{status:409});
       const receipt = canonicalReceipt(rows || []);
-      if (!receipt) return json({success:true,status:'not_found',request_id:requestId,work_order:sanitizeWorkOrder(current)});
+      if (!receipt) return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'not_found',request_id:requestId});
       if (workOrderHasMechanicReceipt(current,receipt)) {
         await markMechanicReceiptApplied(Receipt,receipt,current,receipt.status !== 'applied');
         await resolveReusedUploadReceipt(Receipt,receipt);
-        return json({success:true,status:'applied',request_id:requestId,recovered:receipt.status !== 'applied',work_order:sanitizeWorkOrder(current)});
+        return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'applied',request_id:requestId,recovered:receipt.status !== 'applied'});
       }
       if (receipt.status === 'started') {
         if (!ACTIVE.has(current.status)) {
           const message = 'The Fleet work order is no longer active, so this interrupted mechanic request was not resumed.';
           await failMechanicReceipt(Receipt,receipt,message);
-          return json({success:true,status:'failed',request_id:requestId,error_message:message,work_order:sanitizeWorkOrder(current)});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:message});
         }
         const recovery = buildMechanicRecoveryPatch(current,receipt,nowIso());
         if (!recovery.recoverable) {
@@ -644,7 +644,7 @@ Deno.serve(async (req) => {
               ? 'The mechanic photo upload was interrupted before all photo evidence was recorded. Recorded uploads will be reused by an identical retry.'
               : 'The interrupted mechanic request does not contain enough durable evidence to resume automatically.';
           await failMechanicReceipt(Receipt,receipt,reason);
-          return json({success:true,status:'failed',request_id:requestId,error_message:reason,work_order:sanitizeWorkOrder(current)});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:reason});
         }
         try {
           await requireCurrentMechanicGrant(Access,String(grant.id || ''),statusMutationAction,String(current.equipment_id || ''));
@@ -653,25 +653,26 @@ Deno.serve(async (req) => {
           });
           if (result?.data?.error) {
             await failMechanicReceipt(Receipt,receipt,result.data.error);
-            return json({success:true,status:'failed',request_id:requestId,error_message:result.data.error,work_order:sanitizeWorkOrder(current)});
+            return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:'failed',request_id:requestId,error_message:result.data.error});
           }
           const updated = result?.data?.work_order || await WorkOrder.get(id);
           await markMechanicReceiptApplied(Receipt,receipt,updated,true);
           await resolveReusedUploadReceipt(Receipt,receipt);
-          return json({success:true,status:'applied',request_id:requestId,recovered:true,work_order:sanitizeWorkOrder(updated)});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,updated,{success:true,status:'applied',request_id:requestId,recovered:true});
         } catch (error) {
+          if (isMechanicAccessChangedError(error)) throw error;
           const fresh = await WorkOrder.get(id).catch(()=>null);
           if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
             await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
             await resolveReusedUploadReceipt(Receipt,receipt);
-            return json({success:true,status:'applied',request_id:requestId,recovered:true,work_order:sanitizeWorkOrder(fresh)});
+            return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh,{success:true,status:'applied',request_id:requestId,recovered:true});
           }
           const message = clean(error instanceof Error ? error.message : error,1200) || 'Interrupted mechanic request recovery failed.';
           await failMechanicReceipt(Receipt,receipt,message);
-          return json({success:true,status:'failed',request_id:requestId,error_message:message,work_order:sanitizeWorkOrder(fresh || current)});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,fresh || current,{success:true,status:'failed',request_id:requestId,error_message:message});
         }
       }
-      return json({success:true,status:receipt.status || 'failed',request_id:requestId,error_message:receipt.error_message || '',work_order:sanitizeWorkOrder(current)});
+      return mechanicWorkOrderResponse(Access,String(grant.id || ''),statusMutationAction,current,{success:true,status:receipt.status || 'failed',request_id:requestId,error_message:receipt.error_message || ''});
     }
 
     let mechanicMutation: any = null;
