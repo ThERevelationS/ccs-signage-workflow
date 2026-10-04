@@ -83,7 +83,8 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
    if(!evidenceEqual(sourceIdentity(source),audit.source_identity))throw evidenceError('Applied review archive identity changed.');
    return {success:true,status:'applied',replayed:true,review:source.authority_review,llm_calls:0};
   }
-  if(!audit && (!expectedUpdatedDate || source.updated_date!==expectedUpdatedDate))throw evidenceError('Source changed; preview current evidence before reviewing.');
+  if(oldState.request_key===key && oldState.payload_sha256!==payloadDigest)throw evidenceError('Saved source review belongs to a different decision.');
+  if(!audit && oldState.request_key!==key && (!expectedUpdatedDate || source.updated_date!==expectedUpdatedDate))throw evidenceError('Source changed; preview current evidence before reviewing.');
   if(['creating','uncertain'].includes(oldState.status) && oldState.request_key!==key)throw evidenceError('Reconcile the prior uncertain source review before another decision.');
  }
  if(audit){
@@ -119,6 +120,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
    return{success:false,status:'review_uncertain',llm_calls:0,error:'Review audit create could not be confirmed; no authority fields were changed.'};
   }
  }
+ source=await sourceEntity.get(sourceDocumentId);
  if(audit.payload_sha256!==payloadDigest || !evidenceEqual(sourceIdentity(source),audit.source_identity) ||
     !evidenceEqual(metadata(source),audit.before_fields))throw evidenceError('Saved review intent conflicts with current source evidence.');
  profile=await profileEntity.get(source.jurisdiction_id);
@@ -126,6 +128,6 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
  if(action==='verify')await assertSourceScopeReviewEvidence({...source,...audit.next_fields},{segmentEntity,profileEntity,settingsEntity});
  const fields={...audit.next_fields,authority_review_state:{...creating,status:'complete',audit_id:audit.id}};
  source=await write(sourceEntity,source,fields,{...audit.source_identity,
-  ...Object.fromEntries(reviewFields.map(k=>[k,source[k]])),authority_review_state:creating});
+  ...Object.fromEntries([...reviewFields,'extracted_pages','extracted_text','text_extraction_state'].map(k=>[k,source[k]])),authority_review_state:creating});
  return{success:true,status:'applied',review:source.authority_review,audit_id:audit.id,llm_calls:0};
 }
