@@ -79,6 +79,8 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
     (Number(totals.duplicate_base44_links) || 0) > 0;
   const unlinkedCount = Number(totals.unlinked_smartsheet_rows) || 0;
   const staleTextCount = Number(totals.stale_text_options) || 0;
+  const actionRequiredDateCount = Number(report?.date_health?.action_required_date_fields ?? totals.action_required_date_fields) || 0;
+  const historicalOnlyDateCount = Number(report?.date_health?.historical_only_date_fields ?? totals.historical_only_date_fields) || 0;
   const preservedHistoricalCount = Number(totals.preserved_historical_dates) || 0;
   const verifiedNewerLocalCount = Number(totals.verified_newer_local_dates) || 0;
   const remoteBlankChangedCount = Number(totals.remote_blank_changed_since_sync) || 0;
@@ -134,6 +136,15 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
               {report.sync_global_enabled ? " Global sync is enabled." : " Global sync is OFF."}
               {report.sync_observation_mode ? " Observation mode is ON." : " Observation mode is OFF."}
             </p>
+            <div className={`rounded-xl border p-3 ${actionRequiredDateCount > 0 ? "border-amber-300 bg-amber-50 text-amber-950" : "border-green-200 bg-green-50 text-green-950"}`}>
+              <p className="text-sm font-semibold">Date health</p>
+              <p className="mt-1 text-xs">
+                {actionRequiredDateCount > 0
+                  ? `${count(actionRequiredDateCount)} unique linked Order date field${actionRequiredDateCount === 1 ? "" : "s"} require review before either side is changed.`
+                  : "No linked Order date fields require corrective action in this verified comparison."}
+                {historicalOnlyDateCount > 0 && ` ${count(historicalOnlyDateCount)} local date field${historicalOnlyDateCount === 1 ? " is" : "s are"} historical-only evidence and are not counted as sync errors.`}
+              </p>
+            </div>
             <div className="rounded-xl border bg-slate-50 p-3">
               <p className="text-sm font-semibold text-slate-800">Local-only date evidence</p>
               <p className="mt-1 text-xs text-slate-600">
