@@ -88,6 +88,11 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
     stale_text_options: [], ambiguous_links: [], unlinked_rows: [],
     verified_newer_local_dates: [], preserved_historical_dates: [],
     remote_blank_changed_since_sync: [], unverified_local_only_dates: [] };
+  const actionRequiredDateFields = new Set();
+  const preservedHistoricalDateFields = new Set();
+  const fieldKey = (rowId, field) => `${rowId}:${field}`;
+  const markAction = (rowId, field) => actionRequiredDateFields.add(fieldKey(rowId, field));
+  const markHistorical = (rowId, field) => preservedHistoricalDateFields.add(fieldKey(rowId, field));
   const sample = (key, item) => { if (samples[key].length < 20) samples[key].push(item); };
   for (const row of rows) {
     const rowId = numericId(row?.id);
@@ -115,6 +120,7 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
         if (staleText) {
           counts.stale_text_options++;
           byField[field].stale_text_options++;
+          markAction(rowId, field);
           sample('stale_text_options', { row_id: rowId, base44_order_id: matches[0].id,
             field, smartsheet_date: parsed.kind === 'date' ? parsed.value : '',
             smartsheet_blank: parsed.kind === 'blank', base44_value: staleText });
@@ -144,14 +150,17 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
           if (evidence.state === 'verified_newer_local') {
             counts.verified_newer_local_dates++;
             byField[field].verified_newer_local++;
+            markAction(rowId, field);
             sample('verified_newer_local_dates', item);
           } else if (evidence.state === 'preserved_historical') {
             counts.preserved_historical_dates++;
             byField[field].preserved_historical++;
+            markHistorical(rowId, field);
             sample('preserved_historical_dates', item);
           } else if (evidence.state === 'remote_blank_changed_since_sync') {
             counts.remote_blank_changed_since_sync++;
             byField[field].remote_blank_changed_since_sync++;
+            markAction(rowId, field);
             if (priorRemoteMatchesBase44) {
               counts.remote_blank_after_same_date++;
               byField[field].remote_blank_after_same_date++;
@@ -163,6 +172,7 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
           } else {
             counts.unverified_local_only_dates++;
             byField[field].unverified_local_only++;
+            markAction(rowId, field);
             sample('unverified_local_only_dates', item);
           }
         }
@@ -171,6 +181,7 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
       if (parsed.kind === 'invalid') {
         counts.invalid_date_values++;
         byField[field].invalid++;
+        if (matches.length === 1) markAction(rowId, field);
         sample('invalid_values', { row_id: rowId, field, column_id: columnId,
           raw: String(cell?.value ?? cell?.display_value ?? '').slice(0, 120), reason: parsed.reason });
         continue;
@@ -182,6 +193,7 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
             (String(matches[0]?.[optionField] ?? '').trim() !== parsed.value || !!matches[0]?.[field])) {
           counts.text_option_differences++;
           if (field === 'date_received') counts.text_receipt_differences++;
+          markAction(rowId, field);
           sample('text_choices', { row_id: rowId, base44_order_id: matches[0].id, field,
             smartsheet_value: parsed.value, base44_value: matches[0]?.[optionField] || matches[0]?.[field] || '' });
         }
@@ -193,17 +205,28 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
       if (!local) {
         counts.smartsheet_date_missing_in_base44++;
         byField[field].missing_base44++;
+        markAction(rowId, field);
         sample('missing_dates', { row_id: rowId, base44_order_id: matches[0].id,
           field, smartsheet_date: parsed.value });
       } else if (local !== parsed.value) {
         counts.different_dates++;
         byField[field].different++;
+        markAction(rowId, field);
         sample('different_dates', { row_id: rowId, base44_order_id: matches[0].id,
           field, smartsheet_date: parsed.value, base44_date: local });
       }
     }
   }
+  const historicalOnlyDateFields = [...preservedHistoricalDateFields]
+    .filter(key => !actionRequiredDateFields.has(key));
+  counts.action_required_date_fields = actionRequiredDateFields.size;
+  counts.historical_only_date_fields = historicalOnlyDateFields.length;
   return { read_only: true, total_orders_examined: orders.length, total_smartsheet_rows: rows.length,
     counts, by_field: byField, samples,
+    date_health: {
+      action_required_date_fields: actionRequiredDateFields.size,
+      historical_only_date_fields: historicalOnlyDateFields.length,
+      no_action_required: actionRequiredDateFields.size === 0,
+    },
     sample_limit: 20, destructive_actions: false };
 }
