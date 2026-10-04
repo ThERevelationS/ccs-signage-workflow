@@ -8,3 +8,4 @@ coverage/ export-ignore
 .nyc_output/ export-ignore
 # Retained official response bytes; preserve source whitespace and line endings.
 docs/official-evidence/campbell-forms-2026-10-04.html -diff -text
+docs/official-evidence/alexandria-zoning-2026-10-04.html -diff -text
