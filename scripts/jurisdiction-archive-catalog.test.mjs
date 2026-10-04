@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerJurisdictionArchive, continueJurisdictionCatalogBacklog, catalogSourcePayload, catalogSourceEligible, catalogBacklogQuery } from '../base44/shared/jurisdictionArchiveCatalog.mjs';
-import { archiveKnownJurisdictionSource } from '../base44/shared/jurisdictionArchiveContinuation.mjs';
+import { archiveKnownJurisdictionSource, continueJurisdictionArchiveBacklog } from '../base44/shared/jurisdictionArchiveContinuation.mjs';
 
 const hash = 'a'.repeat(64);
 const doc = { id:'d', title:'Zoning Variance Application', doc_type:'permit_application', source:'ai_discovered',
