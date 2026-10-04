@@ -1,0 +1,107 @@
+{
+  "verified_at": "2026-10-04T17:31:02.537Z",
+  "mode": "read_only_production_snapshot_validation",
+  "direct_backend_http_invocation": false,
+  "llm_calls": 0,
+  "entity_writes": 0,
+  "file_fetches": 0,
+  "results": [
+    {
+      "source_id": "6ac2593367c75c73d83cf39b",
+      "jurisdiction": "Morrow County",
+      "archive_sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+      "page": 2,
+      "page_sha256": "1a0767417ffbaeb7bcf65e9255c28b402b2501ef321d0cbf570c86dd8c685de2",
+      "retained_page_count": 2,
+      "candidate_requirement": "1 - 5 surrounding property owners $125.00",
+      "numeric_value": 125,
+      "unit": "dollars",
+      "status": "needs_review",
+      "authority": "application_form",
+      "approval_blocked": true,
+      "valid_literal_candidates": 1,
+      "invented_requirements_rejected": 1
+    },
+    {
+      "source_id": "6ac25be4207035a2e5be3827",
+      "jurisdiction": "Campbell County",
+      "archive_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+      "page": 2,
+      "page_sha256": "6c9b38f369d3620af78cb862961dfcdcd54b532feea3696d8f1cdabdf61f038c",
+      "retained_page_count": 2,
+      "candidate_requirement": "Two sets of Sign Plans",
+      "numeric_value": null,
+      "unit": "",
+      "status": "needs_review",
+      "authority": "application_form",
+      "approval_blocked": true,
+      "valid_literal_candidates": 1,
+      "invented_requirements_rejected": 1
+    }
+  ],
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "phase": "3.3 — selected-page cited requirement extraction",
+  "production_baselines": {
+    "boone_rules": {
+      "before_count": 101,
+      "after_count": 101,
+      "changed_original_fields": []
+    },
+    "boone_sources": {
+      "before_count": 48,
+      "after_count": 48,
+      "changed_original_fields": []
+    },
+    "dispatcher_exactly_unchanged": true,
+    "settings": [
+      {
+        "id": "6ac1b28c47233270cfeeb0f9",
+        "key": "permitting_research_dispatch_config",
+        "value": {
+          "enabled": true,
+          "interval_minutes": 15,
+          "max_dispatch_per_cycle": 5,
+          "max_in_flight": 20,
+          "daily_dispatch_limit": 40,
+          "retry_limit": 3
+        }
+      },
+      {
+        "id": "6ac1d0ffb44495caa0c3cf76",
+        "key": "permitting_research_dispatch_state",
+        "value": {
+          "last_cycle_at": "2026-10-04T07:00:01.564Z",
+          "daily_day_key": "2026-10-04",
+          "dispatched_today": 40,
+          "last_result": {
+            "at": "2026-10-04T07:00:01.564Z",
+            "manual": false,
+            "in_flight_before": 0,
+            "backlog_before": 1427,
+            "reconciled_existing_profiles": 0,
+            "reconciled_completed": 0,
+            "reconciled_failed": 0,
+            "attempted": 5,
+            "dispatched": 5,
+            "failed": 0
+          }
+        }
+      }
+    ]
+  },
+  "release_validation": {
+    "targeted_tests": 197,
+    "passed": 197,
+    "backend_bundles": [
+      "permittingRuleExtraction",
+      "permittingRuleReview",
+      "permittingRuleInvalidate"
+    ],
+    "targeted_lint": "passed",
+    "full_build": "passed",
+    "git_diff_check": "passed",
+    "frontend_published": false,
+    "backend_sync": "resource files auto-synced through Base44 sandbox; no direct HTTP integration invocation",
+    "manual_exempt_from_automated_queue_credit_caps": true
+  }
+}
