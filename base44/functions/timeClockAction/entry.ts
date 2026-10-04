@@ -350,6 +350,49 @@ async function unresolvedPunchReviewSummary({ entryEntity, correctionRequestEnti
   };
 }
 
+async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntity, userEmail }: any) {
+  const reviewEntries = (await loadAllFilteredRows(
+    entryEntity,
+    { user_email: userEmail, status: 'clocked_out', approval_status: 'needs_review' },
+    '-clock_out',
+    'Corrected shifts awaiting approval',
+  )).filter((entry: any) => !entry.archived_test_data && !entry.archived_admin && String(entry.last_correction_request_id || '').trim());
+  if (reviewEntries.length === 0) return null;
+
+  const items: any[] = [];
+  for (const entry of reviewEntries) {
+    const correctionRequestId = String(entry.last_correction_request_id || '').trim();
+    const correctionRequest = correctionRequestId ? await correctionRequestEntity.get(correctionRequestId).catch(() => null) : null;
+    const correctionStatus = String(correctionRequest?.status || '');
+    const linkageOk = Boolean(
+      correctionRequest?.id &&
+      asEmail(correctionRequest.user_email) === userEmail &&
+      String(correctionRequest.time_entry_id || '') === String(entry.id) &&
+      String(correctionRequest.id || '') === correctionRequestId &&
+      ['approved', 'approved_modified'].includes(correctionStatus) &&
+      Boolean(correctionRequest.applied_audit_id) &&
+      (!entry.correction_needs_review_request_id ||
+        String(entry.correction_needs_review_request_id || '') === String(correctionRequest.request_id || ''))
+    );
+    items.push({
+      time_entry_id: entry.id,
+      clock_in: entry.clock_in || null,
+      clock_out: entry.clock_out || null,
+      approval_status: entry.approval_status || 'needs_review',
+      correction_request_id: correctionRequest?.id || correctionRequestId || null,
+      correction_status: correctionStatus || null,
+      review_state: linkageOk ? 'awaiting_shift_approval' : 'needs_manager_investigation',
+      linkage_verified: linkageOk,
+    });
+  }
+
+  return {
+    count: items.length,
+    has_integrity_issue: items.some((item: any) => item.review_state === 'needs_manager_investigation'),
+    items,
+  };
+}
+
 async function audit(auditEntity: any, data: any) {
   try {
     await auditEntity.create(data);
@@ -2134,7 +2177,13 @@ Deno.serve(async (req) => {
       const unresolvedPunchReview = await unresolvedPunchReviewSummary({
         entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
       });
-      const unresolvedPunchReviewFields = unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {};
+      const correctedShiftReview = await correctedShiftReviewSummary({
+        entryEntity, correctionRequestEntity, userEmail: target.email,
+      });
+      const reviewNoticeFields = {
+        ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
+        ...(correctedShiftReview ? { pending_shift_review: correctedShiftReview } : {}),
+      };
       if (state.status === 'clocked_in' && state.active_entry_id) {
         const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
@@ -2171,7 +2220,7 @@ Deno.serve(async (req) => {
         if (shiftSubtransition) {
           return Response.json({
             success: true, status: 'clocked_in', entry, user: publicEmployee(target),
-            ...unresolvedPunchReviewFields,
+            ...reviewNoticeFields,
             ...shiftSubtransition,
             break_status: currentBreakStatus, active_break: safeActiveBreak, break_summary: breakSummary,
             work_pause_allowed: target.can_work_pause === true,
@@ -2217,7 +2266,7 @@ Deno.serve(async (req) => {
                 : '';
           return Response.json({
             success: true, status: 'clocked_in', entry, user: publicEmployee(target),
-            ...unresolvedPunchReviewFields,
+            ...reviewNoticeFields,
             requires_punch_resolution: true,
             punch_resolution: {
               type: 'missed_clock_out',
@@ -2239,7 +2288,7 @@ Deno.serve(async (req) => {
         }
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
-          ...unresolvedPunchReviewFields,
+          ...reviewNoticeFields,
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
           work_pause_allowed: target.can_work_pause === true,
           employment_type: target.employment_type || 'hourly',
@@ -2256,7 +2305,7 @@ Deno.serve(async (req) => {
         const lateClockAction = body?.clock_action_intent === true && Number.isInteger(companyMinutes) && companyMinutes >= 15 * 60;
         return Response.json({
           success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
-          ...unresolvedPunchReviewFields,
+          ...reviewNoticeFields,
           ...(lateClockAction ? {
             requires_late_clock_in_review: true,
             late_clock_in_review: {
@@ -2277,7 +2326,7 @@ Deno.serve(async (req) => {
         return Response.json({
           success: true,
           status: state.status,
-          ...unresolvedPunchReviewFields,
+          ...reviewNoticeFields,
           transition: state.status === 'clocking_out' ? 'clock_out' : 'clock_in',
           transition_started_at: state.pending_started_at || null,
           user: publicEmployee(target),
