@@ -31,6 +31,20 @@ const active = classifyTimeClockLoginStatus({
 });
 assert.equal(active.kind, 'clocked_in');
 
+const pendingReview = classifyTimeClockLoginStatus({
+  success: true,
+  status: 'clocked_out',
+  unresolved_punch_review: {
+    count: 1,
+    has_integrity_issue: false,
+    has_rejected_item: false,
+    items: [{ time_entry_id: 'old-entry', review_state: 'awaiting_manager_review' }],
+  },
+});
+assert.equal(pendingReview.kind, 'pending_punch_review');
+assert.equal(pendingReview.count, 1);
+assert.equal(pendingReview.item.time_entry_id, 'old-entry');
+
 const transition = classifyTimeClockLoginStatus({
   success: true,
   status: 'clocked_in',
@@ -41,7 +55,7 @@ assert.equal(transition.kind, 'transition');
 
 assert.equal(classifyTimeClockLoginStatus({ success: true, status: 'clocked_out' }).kind, 'clocked_out');
 assert.equal(classifyTimeClockLoginStatus({ success: false, status: 'clocked_in' }).kind, 'unverified');
-console.log('PASS return-login reporting preserves authoritative state categories');
+console.log('PASS return-login reporting preserves authoritative state categories including unresolved prior punch review');
 
 const source = readFileSync(new URL('../src/pages/TimeClock.jsx', import.meta.url), 'utf8');
 const clearStart = source.indexOf('const clearEmployeeSession');
@@ -75,6 +89,11 @@ assert.match(source, /document\.addEventListener\("visibilitychange", checkOnRet
 assert.match(source, /clearEmployeeSession\(\{ reason: "idle" \}\)/);
 assert.match(source, /employee-session/);
 assert.match(source, /shared-session/);
-console.log('PASS activity, background-return, and Quick Clock credential-reset wiring is present');
+assert.match(source, /Previous punch report is awaiting manager review/);
+assert.match(source, /can still start a new shift normally/);
+const quickClockSource = readFileSync(new URL('../src/components/timeclock/QuickClockSection.jsx', import.meta.url), 'utf8');
+assert.match(quickClockSource, /unresolved_punch_review/);
+assert.match(quickClockSource, /still awaiting manager follow-up/);
+console.log('PASS activity, background-return, credential-reset, and unresolved-punch return warnings are present');
 
-console.log('PASS 4/4 Time Clock personal-session security scenarios');
+console.log('PASS 5/5 Time Clock personal-session security scenarios');
