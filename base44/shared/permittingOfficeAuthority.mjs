@@ -155,8 +155,7 @@ export async function assessOfficeAuthorityReview(deps,event,profile){
   return{verified:true,state:'staff_verified',reason:'Current office, role and explicit covered-area evidence.'};
  }catch(error){
   const status=error.status || error.response?.status;
-  if(![400,404,409].includes(status))throw error;
-  return{verified:false,state:'needs_review',reason:error.message};
+  return{verified:false,state:[400,404,409].includes(status)?'needs_review':'verification_unavailable',reason:error.message};
  }
 }
 export async function listOfficeAuthorityReviews(deps,{jurisdictionId,cursor}){
