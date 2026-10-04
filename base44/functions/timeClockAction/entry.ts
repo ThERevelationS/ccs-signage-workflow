@@ -2429,6 +2429,24 @@ Deno.serve(async (req) => {
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
       };
+      const reconcileShiftEvidence = (shifts: any[], summary: any) => {
+        const groups: any = {};
+        let shiftCount = 0;
+        let totalHours = 0;
+        for (const shift of shifts) {
+          const userEmail = asEmail(shift?.user_email) || 'unassigned';
+          const hours = Number(shift?.total_hours || 0);
+          if (!Number.isFinite(hours)) return { verified: false };
+          shiftCount += 1;
+          totalHours += hours;
+          if (!groups[userEmail]) groups[userEmail] = { user_email: userEmail, shift_count: 0, total_hours: 0 };
+          groups[userEmail].shift_count += 1;
+          groups[userEmail].total_hours += hours;
+        }
+        const employees = Object.values(groups).sort((a: any, b: any) => a.user_email.localeCompare(b.user_email));
+        const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005;
+        return { verified, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
