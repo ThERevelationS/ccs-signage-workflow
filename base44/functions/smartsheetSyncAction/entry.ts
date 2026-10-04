@@ -1382,13 +1382,22 @@ async function pushDataset(
         // verify read that caused serverless function timeouts on large datasets.
         if (fieldPlan.outgoing.length) deferredSmartsheetWrites.push({ id: existingRowId, cells: fieldPlan.outgoing });
         const batchSnapshot = {...fieldPlan.remote, ...Object.fromEntries(fieldPlan.outgoing.map(c => [String(c.columnId), c.value]))};
-        deferredBase44Updates.push({
+        const deferredUpdate = {
           id: record.id,
           ...fieldPlan.incoming,
           smartsheet_sync_snapshot: batchSnapshot,
           smartsheet_last_synced_at: new Date().toISOString(),
           ...(dataset === 'orders' ? { smartsheet_pending_local_sync: fieldPlan.unresolved.length > 0 } : {}),
-        });
+        };
+        deferredBase44Updates.push(deferredUpdate);
+        if (dataset === 'orders') {
+          deferredOrderVerification.set(String(record.id), {
+            rowId: existingRowId,
+            expectedSnapshot: batchSnapshot,
+            originalUpdatedDate: String(record.updated_date || ''),
+            requiresRemoteWrite: fieldPlan.outgoing.length > 0,
+          });
+        }
         if (fieldPlan.decisions?.length) deferredConflictDecisions.push(...fieldPlan.decisions);
         deferredConflictRecordIds.push(record.id);
         continue;
