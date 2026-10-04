@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import PermittingRuleEvidenceExtraction from "./PermittingRuleEvidenceExtraction";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -96,8 +96,12 @@ export default function PermittingRulesReview() {
   const [editDialog, setEditDialog] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState(null);
+  const ruleRequest = useRef(0), countRequest = useRef(0), scopeRef = useRef("");
+  scopeRef.current = JSON.stringify(filters);
 
   const loadRules = useCallback(async (reset = true) => {
+    const scope = JSON.stringify(filters), request = ++ruleRequest.current;
+    const current = () => request === ruleRequest.current && scope === scopeRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -108,6 +112,7 @@ export default function PermittingRulesReview() {
       if (!reset && cursor) filterPayload.cursor = cursor;
       const res = await base44.functions.invoke("permittingRuleReview", filterPayload);
       const data = res?.data || res;
+      if (!current()) return;
       if (!data?.success) throw new Error(data?.error || "Failed to load rules");
       if (reset) {
         setRules(data.rules || []);
@@ -117,27 +122,28 @@ export default function PermittingRulesReview() {
       setHasMore(data.has_more || false);
       setCursor(data.next_cursor || null);
     } catch (e) {
-      setError(e?.response?.data?.error || e.message || String(e));
+      if (current()) setError(e?.response?.data?.error || e.message || String(e));
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   }, [filters, cursor]);
 
   const loadCounts = useCallback(async () => {
+    const jurisdiction = filters.jurisdiction_name, request = ++countRequest.current;
     try {
       const res = await base44.functions.invoke("permittingRuleReview", {
         action: "counts",
         jurisdiction_name: filters.jurisdiction_name || undefined,
       });
       const data = res?.data || res;
-      if (data?.success) setCounts(data);
+      if (data?.success && request === countRequest.current && JSON.parse(scopeRef.current).jurisdiction_name === jurisdiction) setCounts(data);
     } catch {
       // Counts can be retried independently of the rule list.
     }
   }, [filters.jurisdiction_name]);
 
-  useEffect(() => { loadRules(true); loadCounts(); }, [filters.jurisdiction_name]);
-  useEffect(() => { loadRules(true); }, [filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
+  useEffect(() => { setCounts(null); loadCounts(); }, [filters.jurisdiction_name]);
+  useEffect(() => { loadRules(true); }, [filters.jurisdiction_name, filters.rule_category, filters.status, filters.confidence, filters.conflict_state]);
 
   const handleApprove = async (rule) => {
     setActionLoading(rule.id);
