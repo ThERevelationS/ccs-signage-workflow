@@ -150,6 +150,8 @@ export async function readSourceEvidencePages({source,segmentEntity,startPage=1,
       source.extracted_text!==assembledSourceText(source,inline) ||
       (state.storage_mode && !segmentedProgressOwned(source))) throw Error('Source text identity or cursor requires review.');
   const committed=state.pages_extracted || 0;
+  if (!Number.isInteger(committed) || committed<1 || !Number.isInteger(state.total_pages) || state.total_pages<committed ||
+      state.next_page!==committed+1 || (!state.storage_mode && committed!==inline.length)) throw Error('Source text cursor requires review.');
   if (startPage>committed) return {pages:[],next_page:startPage,available_through:committed,total_pages:state.total_pages,complete_document_text:false};
   const end=Math.min(committed,startPage+pageCount-1),pages=inline.filter(p=>p.page>=startPage && p.page<=end);
   if (end>inline.length) {
@@ -168,5 +170,6 @@ export async function readSourceEvidencePages({source,segmentEntity,startPage=1,
   await validateSourcePages(source,pages,startPage);
   return {pages,next_page:end+1,available_through:committed,total_pages:state.total_pages,
     complete_document_text:state.complete_document_text===true,preview_only:state.preview_only===true,
-    has_text_gaps:pages.some(p=>p.truncated || p.needs_ocr_review)};
+    needs_ocr_page_count:state.needs_ocr_page_count ?? (state.needs_ocr_pages || []).length,
+    truncated_page_count:state.truncated_page_count || 0,has_text_gaps:pages.some(p=>p.truncated || p.needs_ocr_review)};
 }
