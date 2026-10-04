@@ -33,7 +33,7 @@ A genuinely missing uncertain create or crashed/unresolved AI attempt still requ
 
 permittingRuleReview fixes the actual SDK array filter signatures and aggregate.rows handling. List pagination has no total coverage cap. Approve/reject/edit use id + updated_date + version conditional updates and a unique operation receipt; lost acknowledgements converge without blindly issuing another mutation.
 
-Approval rechecks every bounded citation against a current, verified, adopted source in the same canonical jurisdiction, exact current hash/URL and physical page text. New page-evidence rules require complete retained document text with no global OCR/truncation gaps, literal requirement/structured terms, numeric consistency, archive/page hashes and unchanged authority scope. Available text is not a full-code review. Reviewed legacy HTML/manual evidence stays intact; its retained quote/hash is checked before a new approval, with no forced PDF reconstruction.
+Approval rechecks every bounded citation against a current, verified, adopted source in the same canonical jurisdiction, exact current hash/URL and physical page text. New page-evidence rules require complete retained document text with no global OCR/truncation gaps, literal requirement/structured terms, numeric consistency, archive/page hashes and unchanged authority scope. Available text is not a full-code review. Reviewed legacy HTML/manual evidence stays intact; its retained quote/hash is checked before a new approval, with no forced PDF reconstruction. New approval of a legacy numeric rule also requires an explicit literal numeric/unit match; existing records are not rewritten.
 
 Approval persists the reviewed source snapshots. A material staff edit demotes an approved rule to non-operational needs_review / under_review; a notes-only edit preserves approval. Source checks occur again immediately before the conditional rule write. Cross-entity changes are not a database transaction; saved source snapshots and invalidation remain necessary for subsequent changes.
 
@@ -57,7 +57,7 @@ Boone's 101 PermittingRule records and 48 source catalog records compare equal i
 
 A post-Phase-3.2 scheduled Batavia segment was observed at 2026-10-04T16:30:33.600Z: segment 6ac27f290c2121f715476345 retained pages 11–15 and advanced the committed cursor to page 16, with two segments and all five original inline pages preserved. This closes the preceding phase's unobserved scheduled-segment caveat without another research call.
 
-197 targeted tests, three production backend bundles, targeted helper/admin lint, one full npm run build and git diff --check pass. Existing browser-data warnings remain non-blocking. Concurrent unrelated Git changes were preserved.
+198 targeted tests, three production backend bundles, targeted helper/admin lint, one full npm run build and git diff --check pass. Existing browser-data warnings remain non-blocking. Concurrent unrelated Git changes were preserved.
 
 ## Next dependencies
 
