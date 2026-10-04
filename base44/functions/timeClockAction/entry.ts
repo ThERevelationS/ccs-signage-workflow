@@ -3364,7 +3364,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 13 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 14 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3456,13 +3456,26 @@ Deno.serve(async (req) => {
                     ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
                     (!supersededGeneration || (Number.isFinite(occurredAt) && occurredAt >= Date.parse(generationCausalWindowStart) && occurredAt <= Date.parse(generationCausalWindowEnd)));
                 }).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
-                const cause = candidates[0];
-                if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative correction or Time Clock audit cause. Admin investigation is required before finalization.` }, { status: 409 });
+                const semanticAfter = change.after || {};
+                const semanticallyMatches = (row: any) => {
+                  const action = String(row.action || '');
+                  if (change.change_type === 'removed') return action === 'admin_archive';
+                  if (action === 'clock_out') return String(row.details?.result_clock_out || '') === String(semanticAfter.clock_out || '') &&
+                    Number(row.details?.total_hours || 0) === Number(semanticAfter.total_hours || 0);
+                  if (action === 'clock_in') return change.change_type === 'added' &&
+                    String(row.server_timestamp || '') === String(semanticAfter.clock_in || '');
+                  return false;
+                };
+                const cause = candidates.find(semanticallyMatches);
+                if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative Time Clock audit whose result matches the payroll delta. Admin investigation is required before finalization.` }, { status: 409 });
                 change.action_provenance = {
                   audit_id: String(cause.id || ''), action: String(cause.action || ''), request_id: String(cause.request_id || ''),
                   outcome: String(cause.outcome || ''), actor_email: asEmail(cause.actor_email), actor_role: String(cause.actor_role || ''),
                   authentication_method: String(cause.authentication_method || ''), server_timestamp: String(cause.server_timestamp || ''),
                   reason: String(cause.reason || ''),
+                  semantic_clock_in: String(change.after?.clock_in || ''),
+                  semantic_clock_out: String(change.after?.clock_out || ''),
+                  semantic_total_hours: Number(change.after?.total_hours || 0),
                 };
               }
               generationChanges.push(change);
@@ -7407,7 +7420,7 @@ Deno.serve(async (req) => {
         details: {
           payload_hash: clockOutPayloadHash,
           submitted_lunch_minutes: submittedClockOut.lunch_minutes,
-          lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours,
+          lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours, result_clock_out: savedEntry.clock_out,
           break_summary: breakSummary, work_pause_summary: workPauseSummary,
         },
       });
