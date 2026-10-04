@@ -35,7 +35,7 @@ async function writeReceipt(entity, snapshot, expected, next, fields = {}) {
     if (!current?.id || current.text_extraction_pinned || identity(current)!==identity(snapshot)) throw Error('Source archive changed or became protected.');
     const converged = equal(current.text_extraction_state,next) && Object.entries(fields).every(([key,value])=>equal(current[key],value));
     if (converged) return current;
-    if (!equal(current.text_extraction_state,expected) || !equal(current.extracted_text,snapshot.extracted_text) ||
+    if (!equal(current.text_extraction_state || {},expected || {}) || !equal(current.extracted_text,snapshot.extracted_text) ||
         !equal(current.extracted_pages,snapshot.extracted_pages)) throw Error('Source text was changed by another worker or reviewer.');
     if (!current.updated_date) throw Error('Source has no persistence version.');
     try {
