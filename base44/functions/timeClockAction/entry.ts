@@ -2508,6 +2508,16 @@ Deno.serve(async (req) => {
       if (current && current.snapshot_active !== false) {
         const check = await verifySummary(current, history, 'Current payroll generation');
         if (!check.verified) return Response.json({ success: true, verified: false, legacy: check.legacy, error: check.error, pay_period_id: period.id, generations: [] });
+        if (Number(current.snapshot_version || 0) >= 8) {
+          const priorGeneration = history.length ? history[history.length - 1] : null;
+          const expectedSupersedes = String(priorGeneration?.request_id || '');
+          const expectedReopen = String(priorGeneration?.invalidated_by_reopen_request_id || '');
+          if (String(current.supersedes_generation_request_id || '') !== expectedSupersedes ||
+              String(current.authorized_by_reopen_request_id || '') !== expectedReopen ||
+              (priorGeneration && (!expectedSupersedes || !expectedReopen))) {
+            return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll replacement lineage does not match the retired generation and authorized reopen.', pay_period_id: period.id, generations: [] });
+          }
+        }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(lockedEntries) || lockedEntries.length !== Number(current.entry_count || 0)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll generation no longer matches its locked shift count.', pay_period_id: period.id, generations: [] });
         const shiftEvidence = [];
@@ -2554,6 +2564,7 @@ Deno.serve(async (req) => {
           shift_evidence_verified: true, shift_evidence_hash: evidenceHash, shifts: shiftEvidence,
           employee_reconciliation: currentReconciliation,
           ...(Number(current.snapshot_version || 0) >= 7 ? { approving_managers: current.approving_managers || [], finalizer_approval_overlap: current.finalizer_approval_overlap === true } : {}),
+          ...(Number(current.snapshot_version || 0) >= 8 ? { supersedes_generation_request_id: current.supersedes_generation_request_id || '', authorized_by_reopen_request_id: current.authorized_by_reopen_request_id || '' } : {}),
         });
       }
       return Response.json({
