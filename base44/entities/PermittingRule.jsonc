@@ -105,6 +105,10 @@
       "default": "extracted",
       "description": "Review lifecycle status. 'extracted' = just extracted, 'needs_review' = uncertain or draft-source, 'staff_approved' = admin approved (operational), 'staff_rejected' = admin rejected, 'superseded' = replaced by a newer rule, 'historical' = from a historical source."
     },
+    "review_operation_id": {
+      "type": "string",
+      "description": "Unique server review operation identity used to reconcile conditional write acknowledgements."
+    },
     "reviewer": {
       "type": "string",
       "description": "Display name of the admin who reviewed this rule."
