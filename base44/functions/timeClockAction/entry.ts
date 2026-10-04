@@ -2493,6 +2493,11 @@ Deno.serve(async (req) => {
             const evidence = await auditEntity.filter({ action: 'time_approval', request_id: entry.approval_request_id });
             if (!Array.isArray(evidence) || evidence.length !== 1 || !['confirmed', 'recovered'].includes(String(evidence[0]?.outcome || '')) || String(evidence[0]?.time_entry_id || '') !== String(entry.id || '')) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval evidence no longer matches the finalized generation.', pay_period_id: period.id, generations: [] });
             approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+            if (Number(current.snapshot_version || 0) >= 4) {
+              approvalEvidence.approved_by = asEmail(evidence[0].actor_email);
+              approvalEvidence.approved_at = evidence[0].server_timestamp || '';
+              if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval provenance is incomplete.', pay_period_id: period.id, generations: [] });
+            }
           }
           const snapshotRow = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
           snapshotRows.push(snapshotRow);
@@ -2685,6 +2690,11 @@ Deno.serve(async (req) => {
                   return Response.json({ success: false, error: 'A finalized shift no longer has its exact approval evidence. Admin investigation is required.' }, { status: 409 });
                 }
                 approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+                if (Number(period.finalized_summary?.snapshot_version || 0) >= 4) {
+                  approvalEvidence.approved_by = asEmail(evidence[0].actor_email);
+                  approvalEvidence.approved_at = evidence[0].server_timestamp || '';
+                  if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) return Response.json({ success: false, error: 'A finalized shift no longer has complete approval provenance. Admin investigation is required.' }, { status: 409 });
+                }
               }
               recoverySnapshotRows.push({
                 id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
