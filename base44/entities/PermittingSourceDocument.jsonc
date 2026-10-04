@@ -156,6 +156,52 @@
       "type": "string",
       "description": "Searchable extracted text from the archived file, when practical."
     },
+    "text_extraction_pinned": {
+      "type": "boolean",
+      "description": "Preserves staff-maintained text; both manual and automatic extraction must skip it."
+    },
+    "text_extraction_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Bounded deterministic text-extraction lease, retry state, page cursor, archive identity, and completeness. Text availability does not establish adopted authority."
+    },
+    "extracted_pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "source_document_id": {
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "text_sha256": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "extracted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "needs_ocr_review": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Original PDF page numbers with extracted text, exact archive hash, parser method, text hash, and extraction gaps. Original archive and review decisions remain intact."
+    },
     "derived_facts": {
       "type": "object",
       "additionalProperties": true,
