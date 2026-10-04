@@ -2,7 +2,7 @@
   "phase": "4.1",
   "name": "Administrative source publisher and scope review",
   "app_id": "68dfcc5e57bbbc35387da97c",
-  "source_head_at_validation": "91b7d762fe8733cd229a022c8e2076201d3a0c7e",
+  "source_head_at_validation": "c199ad26a6635593d9984ed84ed4cab653625815",
   "checked_at": "2026-10-04T19:07:20.431Z",
   "mode": "production-retained-evidence-read-only",
   "llm_calls": 0,
@@ -85,8 +85,8 @@
   },
   "production_audit_records_created": 0,
   "validation": {
-    "tests": 223,
-    "passed": 223,
+    "tests": 224,
+    "passed": 224,
     "failed": 0,
     "backend_bundles": [
       "permittingSourceAuthorityReview",
