@@ -129,6 +129,11 @@
               "ai_discovered"
             ]
           },
+          "catalog_state": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Durable evidence-catalog registration receipt. creating/create_uncertain may only reconcile an existing catalog row; never repeat creation blindly."
+          },
           "archive_state": {
             "type": "object",
             "additionalProperties": true,
