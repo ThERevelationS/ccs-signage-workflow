@@ -2439,13 +2439,18 @@ Deno.serve(async (req) => {
           if (!Number.isFinite(hours)) return { verified: false };
           shiftCount += 1;
           totalHours += hours;
-          if (!groups[userEmail]) groups[userEmail] = { user_email: userEmail, shift_count: 0, total_hours: 0 };
+          if (!groups[userEmail]) groups[userEmail] = { user_email: userEmail, shift_count: 0, total_hours: 0, approved_shift_count: 0, approval_evidence_count: 0 };
           groups[userEmail].shift_count += 1;
           groups[userEmail].total_hours += hours;
+          if (shift?.approval_status === 'approved') groups[userEmail].approved_shift_count += 1;
+          const requestId = String(shift?.approval_request_id || '');
+          const evidence = shift?.approval_evidence;
+          if (requestId && evidence && String(evidence.request_id || '') === requestId && ['confirmed', 'recovered'].includes(String(evidence.outcome || ''))) groups[userEmail].approval_evidence_count += 1;
         }
         const employees = Object.values(groups).sort((a: any, b: any) => a.user_email.localeCompare(b.user_email));
-        const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005;
-        return { verified, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
+        const approvalComplete = employees.every((employee: any) => employee.approved_shift_count === employee.shift_count && employee.approval_evidence_count === employee.shift_count);
+        const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005 && approvalComplete;
+        return { verified, approval_complete: approvalComplete, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
       };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
