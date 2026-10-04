@@ -3748,6 +3748,7 @@ Deno.serve(async (req) => {
         }
         const generationChangesHash = await payloadHash(generationChanges);
         const generationAuditReconciliation = [];
+        const generationMembershipDiscovery = [];
         if (supersededGeneration) {
           const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
           const changedIds = new Set(generationChanges.map((change: any) => String(change.time_entry_id || '')));
