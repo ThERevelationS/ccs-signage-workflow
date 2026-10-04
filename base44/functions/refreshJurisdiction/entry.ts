@@ -7,6 +7,14 @@ import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchS
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { findExistingJurisdictionDocument, mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
+import {
+  DEFAULT_RESEARCH_ARCHIVE_LIMIT,
+  RESEARCH_EXTRACT_TIMEOUT_MS,
+  RESEARCH_FETCH_TIMEOUT_MS,
+  RESEARCH_UPLOAD_TIMEOUT_MS,
+  canArchiveResearchDocument,
+  withResearchArchiveTimeout,
+} from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -176,19 +184,29 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         last_fetched: new Date().toISOString()
       }));
 
-      // Download and extract text from all new docs
+      // Persist every discovered source URL immediately, but bound expensive
+      // archival work so one refresh cannot spend its whole execution window
+      // downloading/extracting a long document list. Later refreshes can archive
+      // additional sources that still lack file_url/source_sha256.
       const processedDocs = [];
+      let archivesStarted = 0;
       for (const doc of newAiDocs) {
         const existing = findExistingJurisdictionDocument(jurisdiction.documents, doc);
-        // Do not download a new copy over a pinned archive or a manual source.
-        // Staff can separately verify whether the original official file changed.
-        if (!doc.url || existing?.source === 'manual' || existing?.file_url || existing?.source_sha256) {
+        const shouldArchive = canArchiveResearchDocument({
+          document: doc,
+          existingDocument: existing,
+          archivesStarted,
+          archiveLimit: DEFAULT_RESEARCH_ARCHIVE_LIMIT,
+        });
+        if (!shouldArchive) {
           processedDocs.push(doc);
           continue;
         }
+        archivesStarted += 1;
         try {
           const downloadResult = await safeExternalFetch(doc.url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
           });
           if (!downloadResult.ok) {
             processedDocs.push(doc);
@@ -207,23 +225,31 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           const mimeType = mimeMap[ext] || contentType.split(';')[0].trim() || 'application/octet-stream';
 
           const fileBlob = new Blob([fileBytes], { type: mimeType });
-          const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob });
+          const uploadResult = await withResearchArchiveTimeout(
+            base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob }),
+            RESEARCH_UPLOAD_TIMEOUT_MS,
+            'Research document upload',
+          );
 
           if (!uploadResult?.file_url) {
             processedDocs.push(doc);
             continue;
           }
 
-          const extractResult = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
-            file_url: uploadResult.file_url,
-            json_schema: {
-              type: "object",
-              properties: {
-                content: { type: "string", description: "Full text content of the document" },
-                summary: { type: "string", description: "Summary of key sign permit requirements in this document" }
+          const extractResult = await withResearchArchiveTimeout(
+            base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
+              file_url: uploadResult.file_url,
+              json_schema: {
+                type: "object",
+                properties: {
+                  content: { type: "string", description: "Full text content of the document" },
+                  summary: { type: "string", description: "Summary of key sign permit requirements in this document" }
+                }
               }
-            }
-          });
+            }),
+            RESEARCH_EXTRACT_TIMEOUT_MS,
+            'Research document extraction',
+          );
 
           processedDocs.push({
             ...doc,
