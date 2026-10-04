@@ -3145,8 +3145,7 @@ Deno.serve(async (req) => {
           entry_snapshot_hash: entrySnapshotHash,
           previous_history_hash: previousHistoryHash,
           shift_manifest_hash: entrySnapshotHash,
-          approving_managers: approvingManagers,
-          finalizer_approval_overlap: finalizerApprovalOverlap,
+          ...(snapshotVersion >= 7 ? { approving_managers: approvingManagers, finalizer_approval_overlap: finalizerApprovalOverlap } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
         const summary = { ...summaryCore, shift_manifest: snapshotRows, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
