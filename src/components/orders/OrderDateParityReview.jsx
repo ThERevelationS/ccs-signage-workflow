@@ -82,6 +82,8 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
   const preservedHistoricalCount = Number(totals.preserved_historical_dates) || 0;
   const verifiedNewerLocalCount = Number(totals.verified_newer_local_dates) || 0;
   const remoteBlankChangedCount = Number(totals.remote_blank_changed_since_sync) || 0;
+  const remoteBlankSameDateCount = Number(totals.remote_blank_after_same_date) || 0;
+  const remoteBlankOtherValueCount = Number(totals.remote_blank_after_other_value) || 0;
   const unverifiedLocalOnlyCount = Number(totals.unverified_local_only_dates) || 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,7 +160,8 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
               {staleTextCount > 0 && <p className="mt-2 font-medium">{count(staleTextCount)} old Base44 text options remain beside dated or blank Smartsheet cells. They may override displayed dates. Blank source cells require review and are not cleared automatically.</p>}
               {preservedHistoricalCount > 0 && <p className="mt-2 font-medium">{count(preservedHistoricalCount)} local-only dates are preserved historical values: Smartsheet was already blank at the last verified sync and no newer tracked local edit proves they should be written back.</p>}
               {verifiedNewerLocalCount > 0 && <p className="mt-2 font-medium">{count(verifiedNewerLocalCount)} local-only dates have verified newer local edit evidence. They are candidates for explicit review/Save & Sync, not automatic mass push.</p>}
-              {(remoteBlankChangedCount > 0 || unverifiedLocalOnlyCount > 0) && <p className="mt-2 font-medium">{count(remoteBlankChangedCount + unverifiedLocalOnlyCount)} local-only dates have changed or incomplete evidence and require review before either side is changed.</p>}
+              {remoteBlankChangedCount > 0 && <p className="mt-2 font-medium">{count(remoteBlankChangedCount)} local-only dates have a prior nonblank Smartsheet value but are blank now. {count(remoteBlankSameDateCount)} previously represented the same calendar date as Base44 after legacy-date normalization; {count(remoteBlankOtherValueCount)} had a different or non-date prior value. All remain review-only.</p>}
+              {unverifiedLocalOnlyCount > 0 && <p className="mt-2 font-medium">{count(unverifiedLocalOnlyCount)} local-only dates have incomplete evidence and require review before either side is changed.</p>}
             </div>
             <div className="overflow-x-auto rounded-xl border">
               <table className="w-full min-w-[745px] text-left text-xs">
@@ -208,6 +211,7 @@ export default function OrderDateParityReview({ open, onOpenChange, sessionToken
                       {item.last_synced_at && <p>Last verified sync: {item.last_synced_at}</p>}
                       {item.local_modified_at && <p>Verified local edit: {item.local_modified_at}</p>}
                       {item.prior_remote_value && <p>Previous verified Smartsheet value: {item.prior_remote_value}</p>}
+                      {item.prior_remote_normalized_date && <p>Previous value as calendar date: {item.prior_remote_normalized_date}{item.prior_remote_matches_base44 ? " (same as Base44)" : " (different from Base44)"}</p>}
                       {item.smartsheet_value && <p>Smartsheet text: {item.smartsheet_value}</p>}
                       {item.base44_value && <p>Base44 date / text: {item.base44_value}</p>}
                       {item.raw && <p className="break-words">Unrecognized value: {item.raw}</p>}
