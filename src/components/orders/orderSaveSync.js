@@ -21,6 +21,12 @@ export async function pushSavedOrdersToSmartsheet({ sessionToken, orderIds } = {
       action: "push_saved_orders",
       session_token: token,
       order_ids: ids,
+    }, {
+      // The backend already retries safe, definitive 429 write rejections and
+      // preserves per-Order partial results. Never replay the entire Order action
+      // from the browser after a rate limit; that can include already-completed rows.
+      retryRateLimit: false,
+      retryCoordinatorBusy: true,
     });
     const data = response?.data || response;
     if (!data?.success) throw new Error(data?.error || "Saved Orders could not be synced.");
