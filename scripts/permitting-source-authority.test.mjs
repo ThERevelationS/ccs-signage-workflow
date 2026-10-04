@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
+const handlers={};
+for(const name of ['permittingSourceAuthorityReview','permittingRuleReview','permittingRuleInvalidate']){
+ const built=await build({entryPoints:['base44/functions/'+name+'/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
+  plugins:[{name:'mock-sdk',setup(b){b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
+   b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const createClientFromRequest=()=>globalThis.sourceAuthorityFixture;',loader:'js'}));}}]});
+ globalThis.Deno={serve:fn=>{handlers[name]=fn;}};
+ await import('data:text/javascript;base64,'+Buffer.from(built.outputFiles[0].text).toString('base64'));
+}
 import {ruleFixture} from './permitting-rule-evidence-fixture.mjs';
 import {textSha256,assembledSourceText} from '../base44/shared/jurisdictionSourcePdfText.mjs';
 import {reviewSourceAuthority} from '../base44/shared/permittingSourceAuthorityReview.mjs';
@@ -27,8 +35,85 @@ async function setup(options={}){
  const candidate=async(raw={})=>prepareRuleCandidate(await loadRuleEvidence({...api,startPage:1,pageCount:1}),
   {physical_page:1,rule_category:'submittal_requirement',excerpt:'Submit two drawings with the application.',
    requirement:'Submit two drawings with the application.',confidence:'high',...raw},{extractionDate:'2026-10-04T20:00:00Z'});
- return{f,api,input,profile,page,settings,candidate};
+ const matches=(row,q)=>Object.entries(q).every(([k,v])=>{
+  if(k==='citations')return (row.citations || []).some(c=>c.source_document_id===v.$elemMatch.source_document_id);
+  if(v && typeof v==='object')return v.$in?v.$in.includes(row[k]):v.$gt?row[k]>v.$gt:false;
+  return row[k]===v;
+ });
+ const ruleEntity=f.api.ruleEntity;
+ ruleEntity.filter=async(q,sort,limit,skip=0)=>{
+  assert.equal(typeof sort,'string');assert.equal(Number.isInteger(limit),true);assert.equal(Number.isInteger(skip),true);
+  return structuredClone(f.rules.filter(r=>matches(r,q)).sort((a,b)=>a.id.localeCompare(b.id)).slice(skip,skip+limit));
+ };
+ ruleEntity.count=async q=>f.rules.filter(r=>matches(r,q)).length;
+ ruleEntity.aggregate=async()=>({rows:[],truncated:false});
+ const counters={service:0};
+ globalThis.sourceAuthorityFixture={auth:{me:async()=>options.role===null?null:{role:options.role || 'admin',email:'admin@example.test'}},
+  get asServiceRole(){counters.service++;return{entities:{PermittingSourceDocument:api.sourceEntity,
+   PermittingSourceTextSegment:api.segmentEntity,JurisdictionProfile:api.profileEntity,GlobalSettings:api.settingsEntity,
+   PermittingSourceAuthorityReview:api.auditEntity,PermittingRule:ruleEntity}};}};
+ const call=async(name,body)=>{const r=await handlers[name](new Request('https://test',{method:'POST',body:JSON.stringify(body)}));
+  return {status:r.status,data:await r.json()};};
+ const route=extra=>call('permittingSourceAuthorityReview',{action:'verify',source_document_id:'source',
+  request_id:api.requestId,expected_updated_date:api.expectedUpdatedDate,review:api.input,...extra});
+ return{f,api,input,profile,page,settings,candidate,ruleEntity,counters,call,route};
 }
+test('source handlers authorize before service access',async()=>{
+ for(const role of [null,'user'])for(const name of Object.keys(handlers)){
+  const t=await setup({role});assert.equal((await t.call(name,{})).status,403);assert.equal(t.counters.service,0);assert.equal(t.f.calls.llm,0);
+ }
+});
+test('preview and saved-request handlers perform zero writes; scoped review replays without credit use',async()=>{
+ const t=await setup();
+ const preview=await t.route({action:'preview'});assert.equal(preview.status,200);assert.equal(preview.data.llm_calls,0);
+ assert.equal(t.f.calls.sourceWrites,0);assert.equal(t.f.calls.runCreates,0);
+ const r=await t.route();assert.equal(r.status,200);assert.equal(r.data.status,'applied');assert.equal(r.data.revalidation.success,true);
+ assert.equal((await t.route()).data.replayed,true);assert.equal(t.f.calls.runCreates,1);
+ const saved=await t.route({action:'get_request'});assert.equal(saved.data.applied,true);assert.equal(saved.data.llm_calls,0);
+ assert.equal((await t.route({action:'preview_revoke'})).data.dry_run,true);
+ assert.equal(t.f.calls.runCreates,1);assert.equal(t.f.calls.llm,0);
+});
+test('review handler reports an applied source even when rule revalidation fails',async()=>{
+ const t=await setup();t.ruleEntity.filter=async()=>{throw Error('Rule listing unavailable');};
+ const r=await t.route();assert.equal(r.status,200);assert.equal(r.data.status,'applied');assert.equal(r.data.revalidation.success,false);
+ assert.equal(r.data.revalidation.resume_after,'');assert.equal(t.f.source().verification_status,'verified');assert.equal(t.f.calls.runCreates,1);
+});
+test('approval handler separates instructions from operational law and material edits revoke both flags',async()=>{
+ const t=await setup();await t.route();const rule=await t.ruleEntity.create(await t.candidate());
+ const r=await t.call('permittingRuleReview',{action:'approve',rule_id:rule.id,expected_version:1});
+ assert.equal(r.status,200);assert.equal(r.data.rule.status,'staff_approved');assert.equal(r.data.rule.is_operational,false);
+ assert.equal(r.data.rule.is_workflow_instruction,true);assert.equal(r.data.rule.rule_kind,'administrative_instruction');
+ const counts=await t.call('permittingRuleReview',{action:'counts',jurisdiction_id:'profile'});
+ assert.equal(counts.data.reviewed_instructions,1);assert.equal(counts.data.operational,0);
+ const edit=await t.call('permittingRuleReview',{action:'edit',rule_id:rule.id,expected_version:2,edits:{requirement:'Submit altered instructions.'}});
+ assert.equal(edit.data.rule.status,'needs_review');assert.equal(edit.data.rule.is_workflow_instruction,false);assert.equal(edit.data.rule.is_operational,false);
+ assert.equal(t.f.calls.llm,0);
+});
+test('source revocation handler flags reviewed instructions without modifying citations or archive',async()=>{
+ const t=await setup();await t.route();const rule=await t.ruleEntity.create(await t.candidate());
+ await t.call('permittingRuleReview',{action:'approve',rule_id:rule.id,expected_version:1});
+ const before=structuredClone(t.f.rules[0].citations),archive=t.f.source().archived_file_url;
+ const r=await t.route({action:'revoke',request_id:'source-revoke-request-00002',expected_updated_date:t.f.source().updated_date,review:{}});
+ assert.equal(r.data.status,'applied');assert.equal(r.data.revalidation.rules_flagged,1);assert.equal(t.f.rules[0].status,'needs_review');
+ assert.equal(t.f.rules[0].is_workflow_instruction,false);assert.deepEqual(t.f.rules[0].citations,before);
+ assert.equal(t.f.source().archived_file_url,archive);assert.equal(t.f.calls.llm,0);
+});
+test('bounded revalidation resumes before a failed row and never skips its write',async()=>{
+ const t=await setup();await reviewSourceAuthority(t.api);
+ for(let i=0;i<52;i++)t.f.rules.push({...await t.candidate(),id:'rule'+String(i).padStart(3,'0'),updated_date:'v'+i,version:1});
+ t.f.patchSource({verification_status:'needs_verification'});
+ const update=t.ruleEntity.updateMany;t.ruleEntity.updateMany=async(q,p)=>{
+  if(q.id==='rule001')throw Error('write unavailable');return update(q,p);
+ };
+ const args={...t.api,ruleEntity:t.ruleEntity};
+ await assert.rejects(invalidateSourceRules(args),e=>e.progress.resume_after==='rule000' && e.progress.rules_flagged===1);
+ t.ruleEntity.updateMany=update;
+ const r=await invalidateSourceRules({...args,cursor:'rule000'});
+ assert.equal(r.rules_checked,50);assert.equal(r.has_more,true);assert.equal(r.next_cursor,'rule050');
+ assert.equal(t.f.rules[1].conflict_state,'under_review');
+ const end=await invalidateSourceRules({...args,cursor:r.next_cursor});assert.equal(end.rules_checked,1);assert.equal(end.has_more,false);
+ assert.equal(t.f.calls.llm,0);
+});
 test('administrative preview validates office/scope with zero writes or credits',async()=>{
  const t=await setup(),before=structuredClone(t.f.source()),result=await reviewSourceAuthority({...t.api,dryRun:true});
  assert.equal(result.dry_run,true);assert.equal(result.proposal.authority_review.destination_authority_resolved,false);
