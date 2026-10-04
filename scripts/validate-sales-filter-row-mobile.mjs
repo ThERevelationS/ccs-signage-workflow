@@ -10,7 +10,7 @@ check(row.includes('className="col-span-2 grid min-w-0 grid-cols-2 items-stretch
 check(row.includes('min-h-11 min-w-0 items-center justify-center') && row.includes('sm:min-h-9 sm:justify-start'), "Primary attention shortcuts have 44px phone targets while retaining compact desktop density.");
 check(row.includes('h-11 min-w-0 max-w-full justify-center') && row.includes('More Filters'), "More Filters is phone-friendly and remains visibly labeled.");
 check(row.includes('selectedMoreAttention ?') && row.includes('selectedMoreAttention.label'), "Selected secondary attention filter remains visible in More Filters.");
-check(row.includes('aria-label="Clear active Sales information and attention filters"'), "Clear Filters remains available whenever filters are active.");
+check(row.includes('aria-label="Clear active Sales search, information, attention, and table column filters"'), "Clear Filters remains available whenever any Sales criterion is active.");
 check(row.includes('aria-label="Information Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40"'), "Information Filters fills one mobile column and retains its compact desktop width.");
 check(row.includes('aria-label="Column Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40"'), "Column Filters fills the second mobile column and retains its compact desktop width.");
 check(row.includes('setShowCustomFilterDialog(true)') && row.includes('setShowColumnFilterDialog(true)'), "Both existing filter-management dialogs remain reachable.");
