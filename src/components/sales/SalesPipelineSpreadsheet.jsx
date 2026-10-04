@@ -2213,10 +2213,6 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     return summary;
   }, [scopedWorkOrders, workOrders, recordScope, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, outcomeCutoffStamp, users]);
 
-  useEffect(() => {
-    onSummaryChange?.(pipelineSummary);
-  }, [pipelineSummary, onSummaryChange]);
-
   // Pre-compute sort values for faster sorting
   const sortedWorkOrders = useMemo(() => {
     const viewRowFor = (row) => projectSalesRowForLiveView(row, liveEditPinsRef.current[row.id] || null);
@@ -2374,6 +2370,15 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
   }, [scopedWorkOrders, filterStatus, attentionFilter, todayStamp, upcomingStamp, nearCloseStamp, staleCutoffTime, currentOwnerIdentities, searchTerm, sortConfig, customFilters, users, liveEditPinVersion]);
 
   const filteredWorkOrders = sortedWorkOrders;
+
+  useEffect(() => {
+    onSummaryChange?.({
+      ...pipelineSummary,
+      visibleRowCount: filteredWorkOrders.length,
+      loadedWorkspaceRowCount: scopedWorkOrders.length,
+    });
+  }, [pipelineSummary, filteredWorkOrders.length, scopedWorkOrders.length, onSummaryChange]);
+
   const filteredWorkOrdersRef = useRef(filteredWorkOrders);
 
   useEffect(() => {
@@ -2892,7 +2897,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
             )}
 
           </div>
-          <span className="text-xs text-gray-500">{filteredWorkOrders.length} opportunities</span>
+          <span className="text-xs text-gray-500">{filteredWorkOrders.length} shown · {scopedWorkOrders.length} loaded</span>
         </div>
       )}
 
