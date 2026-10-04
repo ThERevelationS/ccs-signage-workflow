@@ -2601,6 +2601,7 @@ Deno.serve(async (req) => {
         if (Number(current.snapshot_version || 0) >= 10) {
           for (const change of current.generation_changes || []) {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
+            if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
           }
         }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
