@@ -1,239 +1,78 @@
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
-import { canBeOperational, isCurrentAdoptedSource } from "../../shared/permittingRuleExtraction.ts";
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { importEvidenceCandidate } from '../../shared/permittingRuleEvidenceRun.mjs';
+import { verifyRuleForApproval, assertApprovalSourcesCurrent, evidenceEqual, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
 
-// ── PermittingRule staff review function ──
-// Admin-only: list, approve, reject, edit, supersede.
-// Approving requires at least one citation from a current_adopted source.
-// Optimistic concurrency via version field prevents silent overwrites.
-// Superseding archives the old rule (status superseded, superseded_by set) rather than deleting.
-
-export default async function(req: Request): Promise<Response> {
+async function commitRule(entity:any,rule:any,fields:any) {
+  if (!rule.updated_date) throw evidenceError('Rule has no persistence version.');
+  const patch={...fields,version:rule.version+1,review_operation_id:crypto.randomUUID()};
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-    if (user.role !== "admin") return Response.json({ error: "Forbidden — admin only" }, { status: 403 });
-
-    const body = await req.json().catch(() => ({}));
-    const action = String(body.action || "").toLowerCase();
-
-    // ── LIST ──
-    if (action === "list") {
-      const filter: Record<string, unknown> = {};
-      if (body.jurisdiction_name) filter.jurisdiction_name = body.jurisdiction_name;
-      if (body.rule_category) filter.rule_category = body.rule_category;
-      if (body.status) filter.status = body.status;
-      if (body.confidence) filter.confidence = body.confidence;
-      if (body.conflict_state) filter.conflict_state = body.conflict_state;
-      if (body.sign_type_normalized) filter.sign_type_normalized = body.sign_type_normalized;
-
-      const limit = Math.min(Number(body.limit) || 100, 500);
-      const sort = body.sort || "-created_date";
-
-      const page = await base44.asServiceRole.entities.PermittingRule.filter(
-        Object.keys(filter).length > 0 ? filter : {},
-        { sort, limit, fields: [
-          "id", "jurisdiction_name", "rule_category", "sign_type", "sign_type_normalized",
-          "zoning_district_applicability", "trigger", "requirement", "numeric_value", "unit",
-          "exceptions", "status", "confidence", "conflict_state", "citations",
-          "is_operational", "draft_context", "reviewer", "reviewed_at", "version",
-          "supersedes", "superseded_by", "effective_date", "notes", "created_date",
-        ], ...(body.cursor ? { cursor: body.cursor } : {}) },
-      );
-
-      return Response.json({
-        success: true,
-        rules: page.items,
-        has_more: page.has_more,
-        next_cursor: page.next_cursor,
-      });
-    }
-
-    // ── COUNTS ──
-    if (action === "counts") {
-      const filter = body.jurisdiction_name ? { jurisdiction_name: body.jurisdiction_name } : {};
-      const [total, byStatus, byCategory, operational, needsReview, draftContext] = await Promise.all([
-        base44.asServiceRole.entities.PermittingRule.count(filter),
-        base44.asServiceRole.entities.PermittingRule.aggregate({ query: filter, groupBy: "status", count: true }),
-        base44.asServiceRole.entities.PermittingRule.aggregate({ query: filter, groupBy: "rule_category", count: true }),
-        base44.asServiceRole.entities.PermittingRule.count({ ...filter, is_operational: true }),
-        base44.asServiceRole.entities.PermittingRule.count({ ...filter, status: "needs_review" }),
-        base44.asServiceRole.entities.PermittingRule.count({ ...filter, draft_context: true }),
-      ]);
-      return Response.json({
-        success: true,
-        total,
-        operational,
-        needs_review: needsReview,
-        draft_context: draftContext,
-        by_status: (byStatus as any).rows || [],
-        by_category: (byCategory as any).rows || [],
-      });
-    }
-
-    // ── GET (single rule with full citations) ──
-    if (action === "get") {
-      const ruleId = String(body.rule_id || "");
-      if (!ruleId) return Response.json({ error: "rule_id required" }, { status: 400 });
-      const rule = await base44.asServiceRole.entities.PermittingRule.get(ruleId);
-      return Response.json({ success: true, rule });
-    }
-
-    // ── APPROVE ──
-    if (action === "approve") {
-      const ruleId = String(body.rule_id || "");
-      const expectedVersion = Number(body.expected_version) || 0;
-      if (!ruleId) return Response.json({ error: "rule_id required" }, { status: 400 });
-
-      const rule = await base44.asServiceRole.entities.PermittingRule.get(ruleId);
-      if (rule.draft_context) {
-        return Response.json({ error: "Cannot approve a rule extracted from a draft/proposed source — authority gate prohibits this." }, { status: 409 });
-      }
-      if (rule.status === "historical") {
-        return Response.json({ error: "Cannot approve a historical rule — reconfirm from a current source first." }, { status: 409 });
-      }
-
-      // Validate: at least one citation from a current_adopted source
-      const citations = (rule as any).citations || [];
-      const sourceIds = citations.map((c: any) => c.source_document_id).filter(Boolean);
-      let hasCurrentAdoptedCitation = false;
-      if (sourceIds.length > 0) {
-        const sources = await base44.asServiceRole.entities.PermittingSourceDocument.filter(
-          { id: { $in: sourceIds } },
-          { limit: 50, fields: ["id", "authority_classification", "content_status"] },
-        );
-        hasCurrentAdoptedCitation = sources.items.some((s: any) => isCurrentAdoptedSource(s));
-      }
-      if (!hasCurrentAdoptedCitation) {
-        return Response.json({ error: "Approval requires at least one citation from a current_adopted source." }, { status: 409 });
-      }
-
-      // Optimistic concurrency check
-      if ((rule as any).version !== expectedVersion) {
-        return Response.json({ error: "Version mismatch — another reviewer edited this rule. Please refresh.", current_version: (rule as any).version }, { status: 409 });
-      }
-
-      const updated = await base44.asServiceRole.entities.PermittingRule.update(ruleId, {
-        status: "staff_approved",
-        is_operational: canBeOperational("staff_approved", citations),
-        reviewer: user.full_name || user.email,
-        reviewer_email: user.email,
-        reviewed_at: new Date().toISOString(),
-        version: expectedVersion + 1,
-      });
-      return Response.json({ success: true, rule: updated });
-    }
-
-    // ── REJECT ──
-    if (action === "reject") {
-      const ruleId = String(body.rule_id || "");
-      const expectedVersion = Number(body.expected_version) || 0;
-      const reason = String(body.reason || "");
-      if (!ruleId) return Response.json({ error: "rule_id required" }, { status: 400 });
-
-      const rule = await base44.asServiceRole.entities.PermittingRule.get(ruleId);
-      if ((rule as any).version !== expectedVersion) {
-        return Response.json({ error: "Version mismatch — another reviewer edited this rule. Please refresh.", current_version: (rule as any).version }, { status: 409 });
-      }
-
-      const updated = await base44.asServiceRole.entities.PermittingRule.update(ruleId, {
-        status: "staff_rejected",
-        is_operational: false,
-        reviewer: user.full_name || user.email,
-        reviewer_email: user.email,
-        reviewed_at: new Date().toISOString(),
-        notes: String((rule as any).notes || "") + (reason ? `\n\nRejection reason: ${reason}` : ""),
-        version: expectedVersion + 1,
-      });
-      return Response.json({ success: true, rule: updated });
-    }
-
-    // ── EDIT ──
-    if (action === "edit") {
-      const ruleId = String(body.rule_id || "");
-      const expectedVersion = Number(body.expected_version) || 0;
-      const edits = body.edits || {};
-      if (!ruleId) return Response.json({ error: "rule_id required" }, { status: 400 });
-
-      const rule = await base44.asServiceRole.entities.PermittingRule.get(ruleId);
-      if ((rule as any).version !== expectedVersion) {
-        return Response.json({ error: "Version mismatch — another reviewer edited this rule. Please refresh.", current_version: (rule as any).version }, { status: 409 });
-      }
-
-      // Only allow editable fields
-      const allowed: Record<string, unknown> = {};
-      for (const key of ["requirement", "trigger", "exceptions", "zoning_district_applicability", "numeric_value", "unit", "sign_type", "sign_type_normalized", "rule_category", "notes", "citations"]) {
-        if (key in edits) allowed[key] = edits[key];
-      }
-      allowed.version = expectedVersion + 1;
-      allowed.reviewer = user.full_name || user.email;
-      allowed.reviewer_email = user.email;
-      allowed.reviewed_at = new Date().toISOString();
-
-      // If editing citations, re-check operational eligibility
-      if ("citations" in allowed) {
-        const citations = allowed.citations as any[];
-        const sourceIds = citations.map((c: any) => c.source_document_id).filter(Boolean);
-        let hasCurrentAdopted = false;
-        if (sourceIds.length > 0) {
-          const sources = await base44.asServiceRole.entities.PermittingSourceDocument.filter(
-            { id: { $in: sourceIds } },
-            { limit: 50, fields: ["id", "authority_classification", "content_status"] },
-          );
-          hasCurrentAdopted = sources.items.some((s: any) => isCurrentAdoptedSource(s));
-        }
-        // Only update is_operational if currently staff_approved
-        if ((rule as any).status === "staff_approved") {
-          allowed.is_operational = canBeOperational("staff_approved", citations) && hasCurrentAdopted;
-        }
-      }
-
-      const updated = await base44.asServiceRole.entities.PermittingRule.update(ruleId, allowed);
-      return Response.json({ success: true, rule: updated });
-    }
-
-    // ── SUPERSEDE ──
-    // Archives the old rule (status superseded, superseded_by set) and creates a new rule.
-    if (action === "supersede") {
-      const oldRuleId = String(body.old_rule_id || "");
-      const expectedVersion = Number(body.expected_version) || 0;
-      const newRuleData = body.new_rule || {};
-      if (!oldRuleId) return Response.json({ error: "old_rule_id required" }, { status: 400 });
-
-      const oldRule = await base44.asServiceRole.entities.PermittingRule.get(oldRuleId);
-      if ((oldRule as any).version !== expectedVersion) {
-        return Response.json({ error: "Version mismatch — another reviewer edited this rule. Please refresh.", current_version: (oldRule as any).version }, { status: 409 });
-      }
-
-      // Create the new rule
-      const newRule = {
-        ...newRuleData,
-        jurisdiction_name: (oldRule as any).jurisdiction_name,
-        jurisdiction_id: (oldRule as any).jurisdiction_id,
-        issuing_office: (oldRule as any).issuing_office,
-        status: "staff_approved",
-        is_operational: canBeOperational("staff_approved", newRuleData.citations || []),
-        reviewer: user.full_name || user.email,
-        reviewer_email: user.email,
-        reviewed_at: new Date().toISOString(),
-        supersedes: oldRuleId,
-        version: 1,
-      };
-      const created = await base44.asServiceRole.entities.PermittingRule.create(newRule);
-
-      // Archive the old rule
-      await base44.asServiceRole.entities.PermittingRule.update(oldRuleId, {
-        status: "superseded",
-        superseded_by: created.id,
-        is_operational: false,
-        version: expectedVersion + 1,
-      });
-
-      return Response.json({ success: true, old_rule_id: oldRuleId, new_rule: created });
-    }
-
-    return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const result=await entity.updateMany({id:rule.id,updated_date:rule.updated_date,version:rule.version},{$set:patch});
+    if (result?.updated!==1) throw evidenceError('Another reviewer changed this rule; refresh before saving.');
+    return await entity.get(rule.id);
+  } catch(error) {
+    const after=await entity.get(rule.id).catch(()=>null);
+    if (after && Object.entries(patch).every(([key,value])=>evidenceEqual(after[key],value))) return after;
+    throw error;
   }
 }
+Deno.serve(async req => {
+  try {
+    const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+    if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
+    const body=await req.json().catch(()=>({})),entities=base44.asServiceRole.entities,Rules=entities.PermittingRule;
+    const action=String(body.action || '');
+    if (action==='list') {
+      const query:any={};
+      for (const key of ['jurisdiction_id','jurisdiction_name','rule_category','status','confidence','conflict_state','sign_type_normalized'])
+        if (body[key]) query[key]=String(body[key]);
+      const limit=Math.min(200,Math.max(1,Number(body.limit) || 50)),skip=Number(body.cursor || 0);
+      if (!Number.isInteger(limit) || !Number.isSafeInteger(skip) || skip<0) throw evidenceError('Invalid review page range.',400);
+      const sort=['id','-id','created_date','-created_date','updated_date','-updated_date'].includes(body.sort)?body.sort:'-created_date';
+      const rows=await Rules.filter(query,sort,limit+1,skip);
+      if (!Array.isArray(rows)) throw Error('Rule list did not return an array.');
+      return Response.json({success:true,rules:rows.slice(0,limit),has_more:rows.length>limit,next_cursor:rows.length>limit?String(skip+limit):null});
+    }
+    if (action==='counts') {
+      const query=body.jurisdiction_id?{jurisdiction_id:String(body.jurisdiction_id)}:body.jurisdiction_name?{jurisdiction_name:String(body.jurisdiction_name)}:{};
+      const [total,status,category,operational,needsReview,draft]=await Promise.all([
+        Rules.count(query),Rules.aggregate({query,groupBy:'status',count:true}),Rules.aggregate({query,groupBy:'rule_category',count:true}),
+        Rules.count({...query,is_operational:true}),Rules.count({...query,status:'needs_review'}),Rules.count({...query,draft_context:true})]);
+      return Response.json({success:true,total,operational,needs_review:needsReview,draft_context:draft,by_status:status.rows,by_category:category.rows});
+    }
+    if (action==='import_candidate') {
+      return Response.json(await importEvidenceCandidate({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
+        runEntity:entities.PermittingRuleExtractionRun,ruleEntity:Rules,runId:String(body.run_id || ''),candidateIndex:body.candidate_index}));
+    }
+    if (action==='supersede') return Response.json({error:'Supersession requires a reviewed replacement and durable reconciliation. No rule was changed.'},{status:409});
+    const id=String(body.rule_id || '');
+    if (!id) throw evidenceError('Select a rule.',400);
+    const rule=await Rules.get(id);
+    if (action==='get') return Response.json({success:true,rule});
+    if (!['approve','reject','edit'].includes(action)) throw evidenceError('Unknown review action.',400);
+    const expected=Number(body.expected_version);
+    if (!Number.isInteger(expected) || expected<1 || rule.version!==expected) throw evidenceError('Another reviewer changed this rule; refresh before saving.');
+    const reviewer={reviewer:user.full_name || user.email,reviewer_email:user.email,reviewed_at:new Date().toISOString()};
+    let fields:any={...reviewer};
+    if (action==='approve') {
+      const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment});
+      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument);
+      fields={...fields,status:'staff_approved',is_operational:true,conflict_state:'none',
+        citations:rule.citations.map(c=>({...c,verification_status:'verified'}))};
+    } else if (action==='reject') {
+      if (rule.status==='superseded') throw evidenceError('Superseded history is preserved.');
+      fields={...fields,status:'staff_rejected',is_operational:false,
+        notes:String(rule.notes || '')+(body.reason?'\n\nRejection reason: '+String(body.reason).slice(0,2000):'')};
+    } else {
+      if (rule.status==='superseded') throw evidenceError('Superseded history is preserved.');
+      const edits=body.edits || {},allowed=['requirement','trigger','exceptions','zoning_district_applicability','numeric_value','numeric_literal',
+        'unit','sign_type','sign_type_normalized','rule_category','notes','citations'];
+      for (const key of allowed) if (Object.hasOwn(edits,key)) fields[key]=edits[key];
+      const material=allowed.some(key=>key!=='notes' && Object.hasOwn(edits,key) && !evidenceEqual(edits[key],rule[key]));
+      if (material) fields={...fields,status:'needs_review',is_operational:false,conflict_state:'under_review'};
+    }
+    return Response.json({success:true,rule:await commitRule(Rules,rule,fields)});
+  } catch(error) {
+    console.error('permittingRuleReview:',error?.message || error);
+    return Response.json({error:error?.message || 'Rule review could not complete safely.'},{status:error?.status || 500});
+  }
+});
