@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { auditOrderDateParity } from '../base44/shared/smartsheetOrderDateTranslation.mjs';
-import { classifyOrderLocalOnlyDate } from '../base44/shared/smartsheetOrderDateEvidence.mjs';
+import { classifyOrderLocalOnlyDate, summarizeOrderLocalOnlyDateEvidence } from '../base44/shared/smartsheetOrderDateEvidence.mjs';
 
 const sheetId = '4963691473987460';
 const bindings = { date_needed: '1', date_ordered: '2', date_received: '3' };
@@ -44,6 +44,15 @@ assert.equal(classifyOrderLocalOnlyDate(remoteChanged, 'date_received', '3', aud
 assert.equal(classifyOrderLocalOnlyDate(remoteChangedOther, 'date_needed', '1', audits).state, 'remote_blank_changed_since_sync');
 assert.equal(classifyOrderLocalOnlyDate(unverified, 'date_needed', '1', audits).state, 'unverified_local_only');
 console.log('PASS local-only date evidence distinguishes preserved history, newer local edit, later remote blank and incomplete evidence');
+
+const storedSummary = summarizeOrderLocalOnlyDateEvidence(
+  [preserved, newer, remoteChanged, remoteChangedOther, unverified], bindings, audits,
+);
+assert.equal(storedSummary.counts.preserved_historical_dates, 1);
+assert.equal(storedSummary.counts.verified_newer_local_dates, 1);
+assert.equal(storedSummary.counts.remote_blank_changed_since_sync, 2);
+assert.equal(storedSummary.counts.unverified_local_only_dates, 1);
+console.log('PASS stored-snapshot evidence summary accepts permanent numeric column IDs and classifies all local dates');
 
 const rows = [
   { id: '101', cells: [] },
