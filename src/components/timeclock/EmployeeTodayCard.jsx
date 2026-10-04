@@ -98,10 +98,12 @@ export default function EmployeeTodayCard({
   const todayBreakMinutes = completedBreakMinutes + completedActiveBreak + activeBreakElapsed;
 
   const pendingCorrections = correctionRequests.filter(request => ["pending", "reviewing"].includes(request.status));
+  const pendingShiftReviewCount = Math.max(0, Number(statusData?.pending_shift_review?.count || 0));
+  const pendingShiftReviewIntegrity = statusData?.pending_shift_review?.has_integrity_issue === true;
   const multipleActiveEntries = timeEntries.filter(entry => entry.status === "clocked_in").length > 1;
   const activeShiftAgeMs = activeClockIn ? now.getTime() - activeClockIn.getTime() : 0;
   const activeShiftOver24h = activeShiftAgeMs >= 24 * 60 * 60 * 1000;
-  const hasProblem = multipleActiveEntries || activeShiftOver24h || pendingCorrections.length > 0 || Boolean(statusError);
+  const hasProblem = multipleActiveEntries || activeShiftOver24h || pendingCorrections.length > 0 || pendingShiftReviewCount > 0 || Boolean(statusError);
 
   let statusLabel = "Clocked Out";
   let statusClass = "bg-gray-100 text-gray-700 border-gray-200";
@@ -173,7 +175,7 @@ export default function EmployeeTodayCard({
         </div>
         <div className={`rounded-xl border p-3 ${hasProblem ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"}`}>
           <p className={hasProblem ? "text-xs text-red-700" : "text-xs text-blue-700"}>Open Issues</p>
-          <p className={hasProblem ? "text-xl font-bold text-red-800" : "text-xl font-bold text-blue-800"}>{(multipleActiveEntries ? 1 : 0) + (activeShiftOver24h ? 1 : 0) + pendingCorrections.length + (statusError ? 1 : 0)}</p>
+          <p className={hasProblem ? "text-xl font-bold text-red-800" : "text-xl font-bold text-blue-800"}>{(multipleActiveEntries ? 1 : 0) + (activeShiftOver24h ? 1 : 0) + pendingCorrections.length + pendingShiftReviewCount + (statusError ? 1 : 0)}</p>
         </div>
       </div>
 
@@ -188,6 +190,11 @@ export default function EmployeeTodayCard({
             {multipleActiveEntries && <p>Multiple active TimeEntries were found. An admin should review the duplicate state.</p>}
             {activeShiftOver24h && <p>Your active shift has been open for more than 24 hours. Verify that a clock-out was not missed.</p>}
             {pendingCorrections.length > 0 && <p>{pendingCorrections.length} correction request{pendingCorrections.length === 1 ? " is" : "s are"} awaiting manager review.</p>}
+            {pendingShiftReviewCount > 0 && (
+              <p>{pendingShiftReviewIntegrity
+                ? `${pendingShiftReviewCount} corrected shift${pendingShiftReviewCount === 1 ? " needs" : "s need"} manager investigation before approval.`
+                : `${pendingShiftReviewCount} corrected shift${pendingShiftReviewCount === 1 ? " still needs" : "s still need"} final manager shift approval. The correction itself is already applied.`}</p>
+            )}
             {statusError && <p>{statusError}</p>}
           </div>
         </div>
