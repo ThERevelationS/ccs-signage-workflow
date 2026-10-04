@@ -115,7 +115,7 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
     return {...summarize(run),llm_calls:1};
   } catch(error) {
     // Never replay an already-started attempt, even if the final receipt fails.
-    const status=run?.status==='complete'?'complete':run?.llm_attempts?'failed':'run_uncertain';
+    const status=run?.status==='complete'?'complete':run?'failed':'run_uncertain';
     if (run && run.status!=='complete') {
       try {run=await writeExtractionRun(runEntity,run,{status:'failed',error:String(error.message || error).slice(0,500),lease_expires_at:''});}
       catch { /* Preserve the prior run for explicit reconciliation. */ }
@@ -161,6 +161,7 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
     lease_expires_at:new Date(now()+90_000).toISOString()};
   run=await writeExtractionRun(runEntity,run,{import_state:creating});
   if (!existing && !['creating','uncertain'].includes(old.status) && !receipt) {
+    await assertEvidenceCurrent({sourceEntity,segmentEntity,sourceDocumentId:unit.source.id},unit);
     try {await ruleEntity.create({...candidate,extraction_run_id:run.id,status:candidate.status==='historical'?'historical':'needs_review',is_operational:false});}
     catch { /* Reconcile once; no duplicate create after an unknown result. */ }
     const after=await ruleEntity.filter({extraction_key:candidate.extraction_key},'created_date',2,0);
