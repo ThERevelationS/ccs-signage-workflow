@@ -3063,8 +3063,13 @@ Deno.serve(async (req) => {
             approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence,
           });
         }
-        const entrySnapshotHash = await payloadHash(snapshotRows);
         const snapshotVersion = snapshotRows.every((row: any) => row.approval_evidence?.approved_by && row.approval_evidence?.approved_at) ? 4 : 3;
+        if (snapshotVersion < 4) {
+          for (const row of snapshotRows) {
+            if (row.approval_evidence) row.approval_evidence = { id: row.approval_evidence.id, request_id: row.approval_evidence.request_id, outcome: row.approval_evidence.outcome };
+          }
+        }
+        const entrySnapshotHash = await payloadHash(snapshotRows);
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const priorHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
         const previousHistoryHash = await payloadHash(priorHistory);
