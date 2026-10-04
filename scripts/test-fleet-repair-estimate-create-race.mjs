@@ -205,6 +205,30 @@ test("lost create acknowledgment is idempotently recovered by the same owner and
   assert.equal(estimate.rows.length,1);
 });
 
+test("pre-create authorization guard can block a mechanic after gate acquisition without creating an estimate", async () => {
+  const gate = new FakeGate();
+  const estimate = new FakeEstimate();
+  let checks = 0;
+  await assert.rejects(
+    ()=>createFleetRepairEstimateSafely(args(estimate,gate,{
+      ownerSource:"mechanic_portal",
+      ownerKey:"grant-1",
+      desired:patch({mechanic_name:"Mechanic A"}),
+      beforeCreate:()=>{
+        checks += 1;
+        const error = new Error("Mechanic access revoked before estimate creation");
+        error.code = "FLEET_MECHANIC_ACCESS_REVOKED";
+        throw error;
+      },
+    })),
+    /Mechanic access revoked before estimate creation/,
+  );
+  assert.equal(checks,1);
+  assert.equal(estimate.createCount,0);
+  assert.equal(estimate.rows.length,0);
+  assert.equal(gate.rows[0].status,"idle");
+});
+
 test("a bypassing foreign writer causes only this helper's unchanged losing row to be removed", async () => {
   const gate = new FakeGate();
   const estimate = new FakeEstimate([], {
