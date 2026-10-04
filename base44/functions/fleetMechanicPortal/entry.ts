@@ -754,6 +754,7 @@ Deno.serve(async (req) => {
         const patch = repairEstimatePatch(body?.estimate || {});
         const policy = await evaluateRepairApprovalPolicy(Policy,patch.estimated_total);
         if (!estimate) {
+          await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
           const created = await createFleetRepairEstimateSafely({
             estimateEntity:Estimate,
             gateEntity:EstimateCreateGate,
@@ -761,12 +762,14 @@ Deno.serve(async (req) => {
             creationKey:`repair-estimate:${id}`,
             ownerSource:'mechanic_portal',
             ownerKey:String(grant.id||''),
+            beforeCreate:()=>requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || '')),
             desired:{...patch,equipment_id:current.equipment_id||'',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},
           });
           estimate=created.estimate;
         } else {
           const estimateExpected=String(body?.estimate_expected_updated_date||'').trim();
           if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before saving.'},{status:409});
+          await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
           estimate=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{...patch,status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},label:'Mechanic Fleet repair estimate'});
         }
         return json({success:true,estimate:sanitizeEstimate(estimate),policy});
@@ -778,6 +781,7 @@ Deno.serve(async (req) => {
       if(!estimateExpected)return json({error:'Estimate version is missing. Refresh before submitting.'},{status:409});
       const policy=await evaluateRepairApprovalPolicy(Policy,Number(estimate.estimated_total||0));
       const autoApproved=policy.approval_required===false;
+      await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''));
       const updated=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{approval_required:policy.approval_required,approval_tier:policy.approval_tier,status:autoApproved?'approved':'submitted',submitted_by_email:'',submitted_at:nowIso(),mechanic_name:clean(grant.name,80),decision_by_email:autoApproved?'policy:auto':'',decision_at:autoApproved?nowIso():null,decision_notes:autoApproved?'Automatically approved by Fleet repair approval policy.':estimate.decision_notes||''},label:'Mechanic Fleet repair estimate submission'});
       await Log.create({source:'fleetMechanicPortal',level:'info',message:'External mechanic submitted Fleet repair estimate.',details:{grant_id:grant.id,mechanic_name:grant.name||'',work_order_id:id,estimate_id:updated.id,estimated_total:updated.estimated_total,status:updated.status}}).catch(()=>null);
       return json({success:true,estimate:sanitizeEstimate(updated),policy,auto_approved:autoApproved});
