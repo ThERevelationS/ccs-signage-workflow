@@ -2049,6 +2049,8 @@ async function recoverTransition({ stateEntity, entryEntity, auditEntity, laborE
           reason: 'Recovered missing Clock Out audit from the saved authoritative TimeEntry during status recovery',
           details: {
             payload_hash: reconstructedHash,
+            payroll_membership: payrollMembershipEnvelope(entry.clock_in),
+            result_clock_in: entry.clock_in,
             submitted_lunch_minutes: reconstructedSubmission.lunch_minutes,
             lunch_minutes: Number(entry.lunch_minutes || 0),
             total_hours: Number(entry.total_hours || 0),
@@ -2721,16 +2723,28 @@ Deno.serve(async (req) => {
           Number(chain[index]?.sequence || 0) === index + 1
         );
       };
+      const payrollMembershipSemanticClockIn = (row: any) => {
+        const details = row?.details || {};
+        const action = String(row?.action || '');
+        if (action === 'clock_in') return String(details.employee_attested_clock_in || row?.server_timestamp || '');
+        if (action === 'clock_out') return String(details.result_clock_in || '');
+        if (action === 'admin_correction') return String(details.corrected?.clock_in || '');
+        if (action === 'admin_archive') return String(details.archived_entry?.clock_in || details.original?.clock_in || '');
+        return '';
+      };
+      const normalizedPayrollMembershipFromAudit = (row: any) => {
+        const envelope = row?.details?.payroll_membership;
+        if (!envelope || Number(envelope.version || 0) !== 1 || String(envelope.time_zone || '') !== COMPANY_TIME_ZONE) return null;
+        const clockIn = String(envelope.clock_in || '');
+        const companyDate = dateKeyInCompanyTime(clockIn);
+        const semanticClockIn = payrollMembershipSemanticClockIn(row);
+        if (!clockIn || !companyDate || companyDate !== String(envelope.company_date || '') || !semanticClockIn || semanticClockIn !== clockIn) return null;
+        return { company_date: companyDate, clock_in: clockIn, source: 'verified_normalized_audit_envelope' };
+      };
       const payrollMembershipFromAudit = (row: any) => {
         const details = row?.details || {};
         const envelope = details.payroll_membership;
-        if (envelope && Number(envelope.version || 0) === 1 && String(envelope.time_zone || '') === COMPANY_TIME_ZONE) {
-          const clockIn = String(envelope.clock_in || '');
-          const companyDate = dateKeyInCompanyTime(clockIn);
-          if (clockIn && companyDate && companyDate === String(envelope.company_date || '')) {
-            return { company_date: companyDate, clock_in: clockIn, source: 'normalized_audit_envelope' };
-          }
-        }
+        if (envelope) return normalizedPayrollMembershipFromAudit(row);
         const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, String(row?.action || '') === 'clock_in' ? row?.server_timestamp : ''].filter(Boolean);
         for (const value of candidates) {
           const companyDate = dateKeyInCompanyTime(value);
@@ -2784,6 +2798,8 @@ Deno.serve(async (req) => {
             ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
             inCausalWindow(audit.server_timestamp, windowStart, windowEnd)
           )) {
+            if (row.details?.payroll_membership && ['clock_in', 'clock_out', 'admin_correction', 'admin_archive'].includes(String(row.action || '')) &&
+                !normalizedPayrollMembershipFromAudit(row)) return false;
             expected.push({
               audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
               request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
@@ -3767,6 +3783,10 @@ Deno.serve(async (req) => {
               ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
               inCausalWindow(audit.server_timestamp, generationCausalWindowStart, generationCausalWindowEnd)
             )) {
+              if (row.details?.payroll_membership && ['clock_in', 'clock_out', 'admin_correction', 'admin_archive'].includes(String(row.action || '')) &&
+                  !normalizedPayrollMembershipFromAudit(row)) {
+                return Response.json({ success: false, error: 'A normalized payroll-membership audit envelope does not match its authoritative Time Clock action. Admin investigation is required before finalization.' }, { status: 409 });
+              }
               generationAuditReconciliation.push({
                 audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
                 request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
@@ -7592,6 +7612,7 @@ Deno.serve(async (req) => {
               details: {
                 payload_hash: clockOutPayloadHash,
                 payroll_membership: payrollMembershipEnvelope(entry.clock_in),
+                result_clock_in: entry.clock_in,
                 submitted_lunch_minutes: submittedClockOut.lunch_minutes,
                 lunch_minutes: Number(entry.lunch_minutes || 0), total_hours: Number(entry.total_hours || 0),
                 break_summary: recoveryBreakSummary, work_pause_summary: recoveryWorkPauseSummary,
@@ -7724,6 +7745,7 @@ Deno.serve(async (req) => {
         details: {
           payload_hash: clockOutPayloadHash,
           payroll_membership: payrollMembershipEnvelope(savedEntry.clock_in),
+          result_clock_in: savedEntry.clock_in,
           submitted_lunch_minutes: submittedClockOut.lunch_minutes,
           lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours, result_clock_out: savedEntry.clock_out,
           break_summary: breakSummary, work_pause_summary: workPauseSummary,
