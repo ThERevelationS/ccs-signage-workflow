@@ -1307,6 +1307,7 @@ async function pushDataset(
   const deferredBase44Updates: any[] = [];
   const deferredConflictRecordIds: string[] = [];
   const deferredConflictDecisions: string[] = [];
+  const deferredOrderConflictDecisions = new Map<string, string[]>();
   const deferredOrderVerification = new Map<string, {
     rowId: string;
     expectedSnapshot: Record<string, any>;
