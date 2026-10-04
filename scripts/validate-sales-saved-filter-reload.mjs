@@ -32,8 +32,9 @@ check(loader.includes('const savedColumnId = String(preferences?.column_preset_i
   "Reloading restores only a selected column preset and otherwise clears it.");
 check(loader.includes('const savedInformation = String(preferences?.information_filter || "all");') &&
   loader.includes('selected.some((filter) => filter.type === "filter" && filter.id === savedInformation.slice("custom_".length))') &&
-  loader.includes("setFilterStatus(restoredInformation);"),
-  "Reloading restores a saved custom information filter only when that filter is still selected.");
+  loader.includes("resolveRestoredSalesFilterModes(restoredInformation, restoredAttention)") &&
+  loader.includes("setFilterStatus(restoredModes.informationFilter);"),
+  "Reloading restores a selected custom information filter through the mutually-exclusive restore normalizer.");
 check(page.match(/loadActiveFilters\(\);/g)?.length >= 3,
   "Identity initialization and both management-dialog close paths still reload saved selections.");
 check(page.includes('activeColumnPreset={activeColumnPreset}') &&
