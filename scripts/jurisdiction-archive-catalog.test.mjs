@@ -108,3 +108,23 @@ test('catalog failure after successful archive preserves complete bytes and prev
   assert.equal(r.archived,1);assert.equal(r.catalog.status,'create_uncertain');assert.equal(f.record().documents[0].archive_state.status,'complete');
   assert.equal((await archiveKnownJurisdictionSource({...f.api,fetchSource:()=>{throw Error('Unexpected network');}})).skipped,true);assert.equal(uploads,1);
 });
+
+test('scheduled step archives one new file and registers the older verified source first',async()=>{
+  const records = new Map([
+    ['old',{id:'old',name:'Older County',state:'OH',updated_date:'v1',documents:[structuredClone(doc)]}],
+    ['new',{id:'new',name:'New County',state:'OH',updated_date:'v1',documents:[{id:'new-doc',title:'Application',source:'ai_discovered',doc_type:'permit_application',url:'https://gov.test/new.pdf'}]}],
+  ]);
+  let version=1, uploads=0; const rows=[];
+  const entity={
+    get:async id=>structuredClone(records.get(id)),
+    filter:async(q,s,l)=>{assert.equal(l,20);assert.equal(s,'updated_date');return [structuredClone(records.get(q.documents.$elemMatch['archive_state.status']==='complete'?'old':'new'))];},
+    updateMany:async(q,p)=>{const r=records.get(q.id);if(r.updated_date!==q.updated_date)return{updated:0};records.set(q.id,{...r,...p.$set,updated_date:'v'+(++version)});return{updated:1};},
+  };
+  const catalogEntity={filter:async()=>rows,create:async data=>{const row={...data,id:'s'};rows.push(row);return row;}};
+  const result=await continueJurisdictionArchiveBacklog({entity,catalogEntity,
+    fetchSource:async()=>new Response('%PDF-1.7 sample'),
+    uploadFile:async()=>{uploads++;return{file_url:'https://storage.test/new.pdf'};}});
+  assert.equal(uploads,1);assert.equal(result.archived,1);assert.equal(result.catalog.created,1);
+  assert.equal(rows[0].jurisdiction_id,'old');assert.equal(rows.length,1);
+  assert.equal(records.get('new').documents[0].catalog_state,undefined);
+});

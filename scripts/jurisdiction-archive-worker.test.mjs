@@ -53,3 +53,22 @@ test('dispatcher at its daily LLM limit still runs archival and makes no researc
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
   assert.equal(calls.scans,2);assert.equal(calls.research,0);assert.equal(calls.writes,0);
 });
+
+test('catalog route requires a stable manual target and denies automated caller-selected targets',async()=>{
+  setup({enabled:false});
+  assert.equal((await invoke(worker,{jurisdiction_id:'j',catalog_only:true})).status,400);
+  assert.equal((await invoke(worker,{automatic:true,jurisdiction_id:'j',document_id:'d',catalog_only:true})).status,400);
+});
+test('compiled manual catalog route registers during automatic pause, with no network or research and safe redelivery',async()=>{
+  const calls=setup({enabled:false});
+  const hash='a'.repeat(64);let profile={id:'j',name:'County',state:'OH',updated_date:'v1',documents:[{id:'d',title:'Sign application',doc_type:'permit_application',source:'ai_discovered',url:'https://gov.test/a.pdf',file_url:'https://storage.test/a.pdf',source_sha256:hash,stored_sha256:hash,source_bytes:20,stored_bytes:20,archive_state:{status:'complete'},downloaded_at:'2026-10-04T08:00:00Z'}]};
+  let version=1;const rows=[];
+  globalThis.workerFixture.asServiceRole.entities.JurisdictionProfile={
+    get:async()=>structuredClone(profile),updateMany:async(q,p)=>{if(q.updated_date!==profile.updated_date)return{updated:0};profile={...profile,...p.$set,updated_date:'v'+(++version)};return{updated:1};}};
+  globalThis.workerFixture.asServiceRole.entities.PermittingSourceDocument={
+    filter:async()=>structuredClone(rows),create:async data=>{const r={...data,id:'source'};rows.push(r);return r;}};
+  const body={jurisdiction_id:'j',document_id:'d',catalog_only:true};
+  const result=await invoke(worker,body);assert.equal(result.status,200);assert.equal(result.data.created,1);
+  assert.equal(rows[0].content_status,'unknown');assert.equal(rows[0].authority_confidence,'unverified');
+  assert.equal((await invoke(worker,body)).data.skipped,true);assert.equal(rows.length,1);assert.equal(calls.research,0);
+});
