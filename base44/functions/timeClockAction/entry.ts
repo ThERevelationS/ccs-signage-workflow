@@ -3038,7 +3038,13 @@ Deno.serve(async (req) => {
                 String(evidence[0]?.time_entry_id || '') !== String(entry.id || '')) {
               return Response.json({ success: false, retry_same_request: true, error: 'Shift approval evidence changed before the payroll snapshot could be committed. Retry this finalization after review.' }, { status: 409 });
             }
-            approvalEvidence = { id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome };
+            approvalEvidence = {
+              id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome,
+              approved_by: asEmail(evidence[0].actor_email), approved_at: evidence[0].server_timestamp || '',
+            };
+            if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) {
+              return Response.json({ success: false, retry_same_request: true, error: 'Shift approval provenance is incomplete. Approval manager and server timestamp are required before payroll finalization.' }, { status: 409 });
+            }
           }
           snapshotRows.push({
             id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
@@ -3057,7 +3063,7 @@ Deno.serve(async (req) => {
           lock_timestamp: lockTimestamp,
           locked_by: actorEmail,
           request_id: requestId,
-          snapshot_version: 3,
+          snapshot_version: 4,
           entry_snapshot_hash: entrySnapshotHash,
           previous_history_hash: previousHistoryHash,
           shift_manifest_hash: entrySnapshotHash,
