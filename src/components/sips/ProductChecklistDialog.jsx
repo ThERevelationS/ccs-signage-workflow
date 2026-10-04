@@ -1104,6 +1104,29 @@ export default function ProductChecklistDialog({
   }, [checklist, dropdownConditionByName]);
   const needsInputPrimaryCount = needsInputPrimaryItems.length;
   const activeProductNames = useMemo(() => Object.keys(activeChecklist), [activeChecklist]);
+  const needsInputNavigationIndex = useMemo(() => {
+    const activeIds = new Set();
+    const completedIds = new Set();
+    const activeProductByItemId = new Map();
+
+    Object.entries(activeChecklist).forEach(([productName, group]) => {
+      group.mainItems.forEach(item => {
+        activeIds.add(item.id);
+        activeProductByItemId.set(item.id, productName);
+      });
+      Object.values(group.subTemplates).forEach(items => items.forEach(item => {
+        activeIds.add(item.id);
+        activeProductByItemId.set(item.id, productName);
+      }));
+    });
+
+    Object.values(completedChecklist).forEach(group => {
+      group.mainItems.forEach(item => completedIds.add(item.id));
+      Object.values(group.subTemplates).forEach(items => items.forEach(item => completedIds.add(item.id)));
+    });
+
+    return { activeIds, completedIds, activeProductByItemId };
+  }, [activeChecklist, completedChecklist]);
   const activeProductRenderGroups = useMemo(() => {
     const renderGroups = [];
     Object.entries(activeChecklist).forEach(([productName, group]) => {
@@ -1201,13 +1224,6 @@ export default function ProductChecklistDialog({
       return nextCollapsed;
     });
   };
-  const findItemProductName = (groups, itemId) => {
-    for (const [productName, group] of Object.entries(groups)) {
-      if (group.mainItems.some(item => item.id === itemId)) return productName;
-      if (Object.values(group.subTemplates).some(items => items.some(item => item.id === itemId))) return productName;
-    }
-    return null;
-  };
   const findRenderedChecklistItemElement = (candidateIds) => {
     const ids = candidateIds.filter(Boolean).map(String);
     for (const id of ids) {
@@ -1236,25 +1252,14 @@ export default function ProductChecklistDialog({
     if (needsInputPrimaryItems.length === 0) return;
     setFocusedSearchId(null);
 
-    const activeIds = new Set();
-    Object.values(activeChecklist).forEach(group => {
-      group.mainItems.forEach(item => activeIds.add(item.id));
-      Object.values(group.subTemplates).forEach(items => items.forEach(item => activeIds.add(item.id)));
-    });
-
-    const completedIds = new Set();
-    Object.values(completedChecklist).forEach(group => {
-      group.mainItems.forEach(item => completedIds.add(item.id));
-      Object.values(group.subTemplates).forEach(items => items.forEach(item => completedIds.add(item.id)));
-    });
-
+    const { activeIds, completedIds, activeProductByItemId } = needsInputNavigationIndex;
     const target = needsInputPrimaryItems.find(item => activeIds.has(item.id)) || needsInputPrimaryItems[0];
     const topLevelId = getTopLevelChecklistId(target);
     const isActiveTarget = activeIds.has(target.id);
     const scrollTargetId = isActiveTarget ? target.id : topLevelId;
 
     if (isActiveTarget) {
-      const productName = findItemProductName(activeChecklist, target.id);
+      const productName = activeProductByItemId.get(target.id);
       if (productName) {
         setCollapsedProducts(prev => ({ ...prev, [productName]: false }));
       }
