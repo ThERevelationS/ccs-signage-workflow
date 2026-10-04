@@ -1353,6 +1353,7 @@ async function pushDataset(
       (record.receipt_option && !record.date_received)
     )) {
       errors.push(`${record.id}: Text date option requires verified Smartsheet column type before push. No row was written.`);
+      orderFailedRecordIds.add(String(record.id));
       continue;
     }
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
