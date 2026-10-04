@@ -2747,7 +2747,15 @@ Deno.serve(async (req) => {
             if (periodEntryIdSet.has(candidateId)) continue;
             const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
             let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
-            if (candidateEntry?.id && companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
+            if (!companyDate && Number(summary.snapshot_version || 0) >= 19) {
+              const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
+              if (!Array.isArray(membershipAudits)) return false;
+              for (const membershipAudit of membershipAudits) {
+                const membership = payrollMembershipFromAudit(membershipAudit);
+                if (membership?.company_date) { companyDate = membership.company_date; break; }
+              }
+            }
+            if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
           }
         }
         const periodEntryIds = [...periodEntryIdSet].sort();
