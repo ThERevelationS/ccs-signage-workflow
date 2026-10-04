@@ -2753,6 +2753,9 @@ Deno.serve(async (req) => {
               String(summary.generation_causal_window_end || '') !== expectedEnd ||
               (predecessor && (!expectedStart || !inCausalWindow(expectedStart, expectedStart, expectedEnd)))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal window failed verification.`, pay_period_id: period.id, generations: [] });
         }
+        if (Number(summary.snapshot_version || 0) >= 17 && !await verifyGenerationAuditReconciliation(summary, index > 0 ? history[index - 1] : null)) {
+          return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} whole-period audit reconciliation failed verification.`, pay_period_id: period.id, generations: [] });
+        }
         if (Number(summary.snapshot_version || 0) >= 10) {
           const windowStart = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_start || '') : '';
           const windowEnd = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_end || '') : '';
