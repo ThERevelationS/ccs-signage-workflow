@@ -3080,7 +3080,8 @@ Deno.serve(async (req) => {
           row.approval_evidence?.approver_role === 'admin' &&
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
-        const snapshotVersion = hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
+        const snapshotVersion = hasIndependentApproval ? 6 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
