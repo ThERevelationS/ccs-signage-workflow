@@ -6,7 +6,7 @@ let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks += 1; };
 
 const effectStart = source.indexOf("useEffect(() => {\n    // Invalidate the previous workspace immediately.");
-const effectEnd = source.indexOf("\n  }, [recordScope]);", effectStart);
+const effectEnd = source.indexOf("\n  }, [recordScope, sessionToken, releaseLiveEditPins]);", effectStart);
 check(effectStart >= 0 && effectEnd > effectStart, "Record-scope transition effect exists.");
 const effect = source.slice(effectStart, effectEnd);
 
