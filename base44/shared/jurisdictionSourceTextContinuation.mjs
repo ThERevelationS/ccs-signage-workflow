@@ -1,5 +1,5 @@
 import { assembledSourceText, PDF_TEXT_METHOD, PDF_TEXT_PAGE_BATCH, PDF_TEXT_MAX_TOTAL_CHARS } from './jurisdictionSourcePdfText.mjs';
-import { extractSegmentedSourceText, segmentedProgressOwned } from './jurisdictionSourceTextSegments.mjs';
+import { extractSegmentedSourceText, segmentedProgressOwned, validateSourcePages } from './jurisdictionSourceTextSegments.mjs';
 const terminal = ['complete', 'needs_ocr', 'partial_limit', 'blocked', 'segment_uncertain'];
 const equal = (a,b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 const identity = row => JSON.stringify([row.archived_file_url,row.file_hash_sha256,row.file_bytes]);
@@ -73,6 +73,7 @@ export async function extractKnownSourceText({entity,segmentEntity,sourceDocumen
   await writeReceipt(entity,source,old,claimed);
   try {
     const chunk=await readAndExtract({source,startPage});
+    if (segmentEntity) await validateSourcePages(source,chunk.pages,startPage);
     if (!Array.isArray(chunk.pages) || !chunk.pages.length || chunk.pages.length>PDF_TEXT_PAGE_BATCH ||
         !Number.isInteger(chunk.total_pages) || chunk.total_pages<startPage || chunk.next_page!==startPage+chunk.pages.length ||
         chunk.next_page>chunk.total_pages+1 || chunk.pages.some((p,i)=>p.page!==startPage+i || p.source_document_id!==source.id ||
@@ -83,14 +84,16 @@ export async function extractKnownSourceText({entity,segmentEntity,sourceDocumen
     for (const page of chunk.pages) {
       if (assembledSourceText(source,[...pages,page]).length>PDF_TEXT_MAX_TOTAL_CHARS) {limit=true;break;}
       pages.push(page);
-      if (page.truncated) {limit=true;break;}
+      if (page.truncated && !segmentEntity) {limit=true;break;}
     }
     const nextPage=pages.length+1;
     const ocrPages=pages.filter(p=>p.needs_ocr_review).map(p=>p.page);
-    const status=limit?'partial_limit':nextPage<=chunk.total_pages?'partial':ocrPages.length?'needs_ocr':'complete';
+    const truncatedPages=pages.filter(p=>p.truncated).map(p=>p.page);
+    const status=limit?'partial_limit':nextPage<=chunk.total_pages?'partial':truncatedPages.length?'partial_limit':ocrPages.length?'needs_ocr':'complete';
     if (automatic && canAutomaticallyExtract && !await canAutomaticallyExtract(source)) throw Error('Profile protection or retained archive changed during extraction.');
     const receipt={...claimed,status,lease_expires_at:'',retry_after:'',failures:0,total_pages:chunk.total_pages,next_page:nextPage,
-      pages_extracted:pages.length,needs_ocr_pages:ocrPages,last_chunk_completed_at:new Date(now()).toISOString(),
+      pages_extracted:pages.length,needs_ocr_pages:ocrPages,needs_ocr_page_count:ocrPages.length,
+      truncated_pages:truncatedPages,truncated_page_count:truncatedPages.length,last_chunk_completed_at:new Date(now()).toISOString(),
       completed_at:status==='complete'?new Date(now()).toISOString():'',error:'',
       complete_document_text:status==='complete'};
     await writeReceipt(entity,source,claimed,receipt,{extracted_pages:pages,extracted_text:assembledSourceText(source,pages)});
