@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildMechanicRecoveryPatch,
+  mechanicGrantAllowsAction,
   mechanicGrantAllowsMutation,
   selectReusableMechanicUploads,
 } from "../base44/shared/fleetMechanicMutationRecovery.ts";
@@ -150,6 +151,14 @@ test("malformed stored URLs are never reused", () => {
     result_summary:{action:"save",uploaded_photo_urls:["javascript:alert(1)"]},
   })];
   assert.deepEqual(selectReusableMechanicUploads(rows,"same",1),{urls:[],receipt_id:"",operation_key:""});
+});
+
+test("live mechanic bootstrap authorization can be checked without requiring an equipment id", () => {
+  const base = {enabled:true,allowed_actions:["bootstrap","start","save"],scope_mode:"selected_equipment",allowed_equipment_ids:["eq-1"]};
+  assert.deepEqual(mechanicGrantAllowsAction(base,"bootstrap",1000),{allowed:true,reason:""});
+  assert.deepEqual(mechanicGrantAllowsAction({...base,enabled:false},"bootstrap",1000),{allowed:false,reason:"revoked"});
+  assert.deepEqual(mechanicGrantAllowsAction({...base,expires_at:"1970-01-01T00:00:00.500Z"},"bootstrap",1000),{allowed:false,reason:"expired"});
+  assert.deepEqual(mechanicGrantAllowsAction({...base,allowed_actions:["start","save"]},"bootstrap",1000),{allowed:false,reason:"action_not_allowed"});
 });
 
 test("live mechanic authorization rejects revoked and expired grants", () => {
