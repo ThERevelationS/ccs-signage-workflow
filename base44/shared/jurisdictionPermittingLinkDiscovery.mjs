@@ -83,7 +83,7 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
     // schools, calendar, language selectors, or other navigation relevant.
     const relevance = linkWords(title + ' ' + rawHref.split('#')[0]);
     if (!RELEVANT_LINK_RE.test(relevance) || /^(home|skip to|login|read more)\b/i.test(title)) continue;
-    if (/\b(house number|house numbering|address assignment|nondiscrimination)\b/i.test(title)) continue;
+    if (/\b(house number|house numbering|address assignment|nondiscrimination|employment|careers?|jobs?|newsletters?|e alerts?|subscribe|sign up)\b/i.test(relevance)) continue;
     if (seen.has(target.href)) continue;
     seen.add(target.href);
     candidates.push({
