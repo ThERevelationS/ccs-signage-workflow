@@ -33,7 +33,8 @@ function reconcileGenerationEvidence(generation) {
     const group = groups.get(email) || { email, totalHours: 0, approvedShiftCount: 0, approvalEvidenceCount: 0, shifts: [] };
     group.totalHours += Number.isFinite(hours) ? hours : 0;
     if (shift?.approval_status === "approved") group.approvedShiftCount += 1;
-    if (shift?.approval_request_id && shift?.approval_evidence?.request_id === shift.approval_request_id && ["confirmed", "recovered"].includes(shift?.approval_evidence?.outcome)) group.approvalEvidenceCount += 1;
+    const provenanceComplete = Number(generation.snapshot_version || 0) < 4 || (shift?.approval_evidence?.approved_by && shift?.approval_evidence?.approved_at);
+    if (shift?.approval_request_id && shift?.approval_evidence?.request_id === shift.approval_request_id && ["confirmed", "recovered"].includes(shift?.approval_evidence?.outcome) && provenanceComplete) group.approvalEvidenceCount += 1;
     group.shifts.push(shift);
     groups.set(email, group);
   }
