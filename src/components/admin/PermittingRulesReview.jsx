@@ -221,9 +221,10 @@ export default function PermittingRulesReview() {
 
       {/* Summary cards */}
       {counts && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Total Rules</div><div className="text-2xl font-bold">{counts.total}</div></CardContent></Card>
-          <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Operational</div><div className="text-2xl font-bold text-green-600">{counts.operational}</div></CardContent></Card>
+          <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Reviewed regulatory rules</div><div className="text-2xl font-bold text-green-600">{counts.operational}</div></CardContent></Card>
+          <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Reviewed instructions</div><div className="text-2xl font-bold text-blue-600">{counts.reviewed_instructions || 0}</div></CardContent></Card>
           <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Needs Review</div><div className="text-2xl font-bold text-amber-600">{counts.needs_review}</div></CardContent></Card>
           <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">Draft Context</div><div className="text-2xl font-bold text-purple-600">{counts.draft_context}</div></CardContent></Card>
           <Card><CardContent className="pt-3 pb-3"><div className="text-xs text-gray-500">By Status</div><div className="text-xs mt-1 space-y-0.5">{(counts.by_status||[]).map(r => <div key={r._id||r.status}>{r._id||r.status}: {r.count}</div>)}</div></CardContent></Card>
@@ -336,6 +337,7 @@ function RuleCard({ rule, expanded, onToggle, onApprove, onReject, onEdit, actio
               <Badge className={CONFIDENCE_COLORS[rule.confidence] || ""} variant="secondary">{rule.confidence}</Badge>
               {rule.conflict_state !== "none" && <Badge className={CONFLICT_COLORS[rule.conflict_state]} variant="secondary"><AlertTriangle className="w-3 h-3 mr-1" />{rule.conflict_state.replace(/_/g, " ")}</Badge>}
               {rule.is_operational && <Badge className="bg-green-600 text-white" variant="secondary"><ShieldCheck className="w-3 h-3 mr-1" />Operational</Badge>}
+              {rule.rule_kind === "administrative_instruction" && <Badge className="bg-blue-100 text-blue-800" variant="secondary">{rule.is_workflow_instruction ? "Reviewed submission instruction" : "Submission instruction"}</Badge>}
               {rule.draft_context && <Badge className="bg-purple-200 text-purple-800" variant="secondary">Draft</Badge>}
             </div>
             <div className="text-sm font-medium text-gray-900 line-clamp-2">{rule.requirement}</div>
