@@ -77,3 +77,9 @@ test('script/comment pseudo-anchors never become evidence', () => {
   const docs = discoverOfficialPermittingResources('<script>const html = "<a href=\'/fake-permit.pdf\'>Permit</a>";</script><!-- <a href="/old-sign.pdf">Sign</a> -->', 'https://county.gov/forms');
   assert.equal(docs.length, 1);
 });
+
+test('employment and sign-up navigation are not permitting resources', () => {
+  const docs = discoverOfficialPermittingResources('<a href="/how_do_i_/apply_for___obtain/employment_opportunities.php">Employment Opportunities</a><a href="/enotify/index.php">E-Alert Sign-up</a><a href="/signs_application.pdf">Signs Application</a>', 'https://county.gov/forms');
+  assert.equal(docs.length, 2);
+  assert.equal(docs[1].title, 'Signs Application');
+});
