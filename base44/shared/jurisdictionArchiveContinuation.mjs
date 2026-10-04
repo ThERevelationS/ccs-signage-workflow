@@ -21,7 +21,7 @@ export function archiveDocumentEligible(doc, { manual = false, now = Date.now() 
 export function archiveBacklogQuery(now = Date.now()) {
   return {
     state: { $in: ['OH', 'KY'] },
-    _manual_documents: { $ne: true },
+    _manual_documents: { $ne: true }, auto_refresh: { $ne: false },
     documents: { $elemMatch: {
       url: { $regex: '\\.(pdf|docx?|xlsx?|csv|txt)(\\?|#|$)', $options: 'i' },
       file_url: { $in: [null, ''] }, source_sha256: { $in: [null, ''] },
@@ -105,6 +105,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
 export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
   const initial = await entity.get(jurisdictionId);
   if (!initial?.id) throw new Error('Jurisdiction not found.');
+  if (!manual && initial.auto_refresh === false) return { success: true, skipped: true, reason: 'auto_refresh_disabled', jurisdiction: initial };
   if (initial._manual_documents) return { success: true, skipped: true, reason: 'manual_collection', jurisdiction: initial };
   const docs = initial.documents || [];
   const doc = docs.find(d => (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, now: now() }) &&
