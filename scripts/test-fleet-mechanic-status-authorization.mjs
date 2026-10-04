@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../base44/functions/fleetMechanicPortal/entry.ts", import.meta.url), "utf8");
+const handlerStart = source.indexOf("Deno.serve(async (req) => {");
+assert.ok(handlerStart >= 0, "fleetMechanicPortal request handler must be present");
 
-const between = (startText, endText, from = 0) => {
+const between = (startText, endText, from = handlerStart) => {
   const start = source.indexOf(startText, from);
   assert.ok(start >= 0, `missing source boundary: ${startText}`);
   const end = source.indexOf(endText, start + startText.length);
@@ -13,7 +15,7 @@ const between = (startText, endText, from = 0) => {
 };
 
 test("mutation status revalidates the live Start/Save grant before receipt reads", () => {
-  const currentLoad = source.indexOf("const current = await WorkOrder.get(id)");
+  const currentLoad = source.indexOf("const current = await WorkOrder.get(id)", handlerStart);
   const receiptBoundary = source.indexOf("const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;", currentLoad);
   assert.ok(currentLoad >= 0 && receiptBoundary > currentLoad);
   const preReceipt = source.slice(currentLoad, receiptBoundary);
