@@ -10,7 +10,7 @@ import { persistSalesReviews } from '../../shared/smartsheetSalesReviewPersisten
 import { classifyRecoverableStaleSalesSync, recoveredStaleSalesSyncValue } from '../../shared/smartsheetSalesStaleRunSafety.mjs';
 import { authenticateSignShopSession } from '../../shared/signShopSession.ts';
 import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocationCapability.ts';
-import { smartsheetGet, smartsheetWrite } from '../../shared/smartsheetLegacyTransport.ts';
+import { smartsheetGet, smartsheetWrite, smartsheetWriteNoTimeoutRetry } from '../../shared/smartsheetLegacyTransport.ts';
 import { measureSyncEntities, measuredDriveFetch } from '../../shared/smartsheetTraceIO.ts';
 import { tracedSyncRequest, beginSyncTraceStorage, checkpointSyncTrace, traceSyncStatus } from '../../shared/smartsheetTraceLifecycle.ts';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -1421,7 +1421,7 @@ async function pushDataset(
           postRow: async (freshOrder: any) => {
             const freshCells = buildCells(freshOrder, bindings, 'orders');
             if (freshCells.length === 0) throw new Error('Order has no mapped Smartsheet cells.');
-            const result = await smartsheetWrite('POST', `/sheets/${sheetId}/rows`, token, [{
+            const result = await smartsheetWriteNoTimeoutRetry('POST', `/sheets/${sheetId}/rows`, token, [{
               toTop: true,
               cells: freshCells.map((c) => ({ columnId: c.columnId, value: c.value,
                 ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
@@ -1528,7 +1528,8 @@ async function pushDataset(
   if (deferredSmartsheetWrites.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
     try {
-      await smartsheetWrite('PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites);
+      await (dataset === 'orders' ? smartsheetWriteNoTimeoutRetry : smartsheetWrite)(
+        'PUT', '/sheets/' + sheetId + '/rows', token, deferredSmartsheetWrites);
     } catch (err: any) {
       if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
       else errors.push('Batch Smartsheet write (' + deferredSmartsheetWrites.length + ' rows): ' + (err?.message || 'unknown error'));
