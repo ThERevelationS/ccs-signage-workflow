@@ -220,6 +220,12 @@ export default function SalesPipeline() {
     persistFilterPreferences({ informationFilter: "all", attention: value });
   };
 
+  const applyInformationFilter = (value) => {
+    setFilterStatus(value);
+    setAttentionFilter("all");
+    persistFilterPreferences({ informationFilter: value, attention: "all" });
+  };
+
   const resetMetricDrilldownCriteria = () => {
     setSearchTerm("");
     setColumnHeaderFilter(null);
@@ -492,8 +498,7 @@ export default function SalesPipeline() {
                 if (value === "manage_filters") {
                   setShowCustomFilterDialog(true);
                 } else {
-                  setFilterStatus(value);
-                  persistFilterPreferences({ informationFilter: value });
+                  applyInformationFilter(value);
                 }
               }}>
                 <SelectTrigger aria-label="Information Filters" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-40">
