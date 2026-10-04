@@ -2537,6 +2537,11 @@ Deno.serve(async (req) => {
               !constantTimeEqual(String(summary.generation_changes_hash || ''), await payloadHash(changes)) ||
               String(summary.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} change provenance failed verification.`, pay_period_id: period.id, generations: [] });
         }
+        if (Number(summary.snapshot_version || 0) >= 10) {
+          for (const change of summary.generation_changes || []) {
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
+          }
+        }
         generations.push({
           generation: index + 1, state: 'retired', snapshot_version: Number(summary.snapshot_version || 0), finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
@@ -2571,6 +2576,11 @@ Deno.serve(async (req) => {
           if (!changes || Number(current.generation_change_count || 0) !== changes.length ||
               !constantTimeEqual(String(current.generation_changes_hash || ''), await payloadHash(changes)) ||
               String(current.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll change provenance failed verification.', pay_period_id: period.id, generations: [] });
+        }
+        if (Number(current.snapshot_version || 0) >= 10) {
+          for (const change of current.generation_changes || []) {
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
+          }
         }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(lockedEntries) || lockedEntries.length !== Number(current.entry_count || 0)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll generation no longer matches its locked shift count.', pay_period_id: period.id, generations: [] });
