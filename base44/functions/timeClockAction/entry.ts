@@ -3781,7 +3781,17 @@ Deno.serve(async (req) => {
                   }
                 }
               }
-              if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
+              if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
+                periodEntryIdSet.add(candidateId);
+                if (snapshotVersion >= 21 && discoveryEvidence) generationMembershipDiscovery.push({
+                  time_entry_id: candidateId,
+                  audit_id: String(discoveryEvidence.membershipAudit.id || ''),
+                  action: String(discoveryEvidence.membershipAudit.action || ''),
+                  request_id: String(discoveryEvidence.membershipAudit.request_id || ''),
+                  server_timestamp: String(discoveryEvidence.membershipAudit.server_timestamp || ''),
+                  payroll_membership: { company_date: discoveryEvidence.membership.company_date, clock_in: discoveryEvidence.membership.clock_in, source: discoveryEvidence.membership.source },
+                });
+              }
             }
           }
           const periodEntryIds = [...periodEntryIdSet].sort();
