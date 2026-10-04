@@ -30,8 +30,8 @@ check(page.includes('value={searchTerm}') && page.includes('onChange={(e) => set
   "Search remains directly editable in row-based workspaces.");
 check(page.includes('searchTerm={searchTerm}'),
   "Current search still flows to the spreadsheet.");
-check(sheet.includes('if (searchTerm) {') && sheet.includes("const search = searchTerm.toLowerCase();"),
-  "Spreadsheet search behavior itself remains unchanged.");
+check(sheet.includes("const search = searchTerm.trim().toLowerCase();") && sheet.includes("if (search) {"),
+  "Spreadsheet search ignores whitespace-only input while preserving normal row search.");
 check(sheet.includes('if (viewMode === "insights" && recordScope === "current")') &&
   sheet.includes("<SalesPipelineInsights summary={pipelineSummary} />"),
   "Insights continues to render the shared pipeline summary.");
