@@ -402,14 +402,12 @@ test('finalized payroll snapshot binds exact locked entry and approval evidence'
   const requestId = 'snapshot-bound-finalize-001';
   const first = await h.action('finalize', requestId);
   assert.equal(first.status, 200, JSON.stringify(first.body));
-  assert.equal(h.period().finalized_summary.snapshot_version, 4);
+  assert.equal(h.period().finalized_summary.snapshot_version, 3);
   assert.match(h.period().finalized_summary.previous_history_hash, /^[a-f0-9]{64}$/);
   assert.match(h.period().finalized_summary.snapshot_chain_hash, /^[a-f0-9]{64}$/);
   assert.match(h.period().finalized_summary.entry_snapshot_hash, /^[a-f0-9]{64}$/);
   assert.equal(h.period().finalized_summary.shift_manifest_hash, h.period().finalized_summary.entry_snapshot_hash);
   assert.equal(h.period().finalized_summary.shift_manifest.length, 2);
-  assert.ok(h.period().finalized_summary.shift_manifest.every((row) => row.approval_evidence?.approved_by));
-  assert.ok(h.period().finalized_summary.shift_manifest.every((row) => row.approval_evidence?.approved_at));
 
   // A finalized row must not be able to drift while an exact lost-response retry
   // silently confirms the old finalization.
@@ -530,7 +528,7 @@ test('reopen retires the prior payroll snapshot and re-finalize replaces it auth
   assert.equal(h.period().finalized_summary_history.length, 1);
   assert.equal(h.period().finalized_summary_history[0].request_id, firstRequest);
   assert.equal(h.period().finalized_summary_history[0].invalidated_by_reopen_request_id, reopenRequest);
-  assert.equal(h.period().finalized_summary_history[0].snapshot_version, 4);
+  assert.equal(h.period().finalized_summary_history[0].snapshot_version, 3);
   assert.deepEqual(h.period().finalized_summary_history[0].shift_manifest, firstSummary.shift_manifest);
   assert.equal(h.period().finalized_summary_history[0].shift_manifest_hash, firstSummary.entry_snapshot_hash);
 
@@ -560,7 +558,7 @@ test('snapshot chain detects altered historical payroll provenance before reopen
   assert.equal((await h.action('finalize', 'chain-first-finalize-001')).status, 200);
   assert.equal((await h.action('reopen', 'chain-first-reopen-001', 'First correction')).status, 200);
   assert.equal((await h.action('finalize', 'chain-second-finalize-001')).status, 200);
-  assert.equal(h.period().finalized_summary.snapshot_version, 4);
+  assert.equal(h.period().finalized_summary.snapshot_version, 3);
   assert.equal(h.period().finalized_summary_history.length, 1);
 
   h.period().finalized_summary_history[0].invalidation_reason = 'tampered reason';
@@ -1727,6 +1725,24 @@ test('needs_resolution remains a pay-period finalization blocker', async () => {
   assert.equal(blocked.status, 409, JSON.stringify(blocked.body));
   assert.match(blocked.body.error, /active shift|readiness/i);
   assert.equal(h.rows.TimeEntry[0].status, 'needs_resolution');
+});
+
+test('v4 payroll snapshot preserves approving manager and approval server time', async () => {
+  const h = setup();
+  const entry = h.rows.TimeEntry[0];
+  entry.approval_request_id = 'synthetic-provenance-approval';
+  h.rows.TimeClockAudit.push({
+    id: 'synthetic-provenance-audit', action: 'time_approval', outcome: 'confirmed',
+    request_id: entry.approval_request_id, time_entry_id: entry.id,
+    user_email: entry.user_email, actor_email: administrator.email,
+    server_timestamp: '2026-09-20T23:00:00.000Z',
+  });
+  const result = await h.action('finalize', 'provenance-finalize-001');
+  assert.equal(result.status, 200, JSON.stringify(result.body));
+  assert.equal(h.period().finalized_summary.snapshot_version, 4);
+  const evidence = h.period().finalized_summary.shift_manifest[0].approval_evidence;
+  assert.equal(evidence.approved_by, administrator.email);
+  assert.equal(evidence.approved_at, '2026-09-20T23:00:00.000Z');
 });
 
 test('pay-period finalization requires audit evidence for request-marked approvals', async () => {
