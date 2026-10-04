@@ -1,0 +1,255 @@
+{
+  "name": "PermittingRule",
+  "type": "object",
+  "description": "Staff-reviewable regulatory rule extracted from a PermittingSourceDocument with structured citations. Only rules from current_adopted sources that an admin has approved are operational (is_operational=true). Draft/proposed sources can never reach staff_approved while the authority gate says current adopted code is authoritative.",
+  "properties": {
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Name of the jurisdiction this rule belongs to (e.g. 'Boone County')."
+    },
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "Canonical JurisdictionProfile record id this rule belongs to, when linked."
+    },
+    "issuing_office": {
+      "type": "string",
+      "description": "Official office that publishes the rule (e.g. 'Boone County Planning Commission')."
+    },
+    "rule_category": {
+      "type": "string",
+      "enum": [
+        "permit_applicability",
+        "sign_type_rule",
+        "dimensional",
+        "illumination_electronic",
+        "submittal_requirement",
+        "fee_timing",
+        "exemption",
+        "procedure",
+        "other"
+      ],
+      "description": "Category of the regulatory rule."
+    },
+    "sign_type": {
+      "type": "string",
+      "description": "Sign type in source terminology, preserved verbatim (e.g. 'ground sign', 'monument', 'building mounted')."
+    },
+    "sign_type_normalized": {
+      "type": "string",
+      "enum": [
+        "wall",
+        "channel_letters",
+        "cabinet",
+        "monument",
+        "pole_pylon",
+        "ground",
+        "projecting",
+        "blade",
+        "awning_canopy",
+        "window",
+        "temporary",
+        "banner",
+        "feather_flag",
+        "real_estate",
+        "construction",
+        "directional",
+        "incidental",
+        "menu_board",
+        "emc",
+        "digital",
+        "changeable_copy",
+        "roof",
+        "subdivision",
+        "special_district"
+      ],
+      "description": "Normalized sign type from the supported taxonomy."
+    },
+    "zoning_district_applicability": {
+      "type": "string",
+      "description": "Zoning districts where this rule applies (e.g. 'C-1, C-2, C-3', 'all districts', 'A-1 only')."
+    },
+    "trigger": {
+      "type": "string",
+      "description": "What condition or action triggers this rule (e.g. 'Erecting a ground sign in a commercial district')."
+    },
+    "requirement": {
+      "type": "string",
+      "description": "The actual regulatory requirement stated in the source."
+    },
+    "numeric_value": {
+      "type": "number",
+      "description": "Numeric value of the requirement (e.g. 50 for 50%, 10 for 10 working days)."
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit for numeric_value (e.g. 'percent', 'working days', 'square feet', 'feet', 'seconds')."
+    },
+    "exceptions": {
+      "type": "string",
+      "description": "Exceptions or conditions that modify the requirement."
+    },
+    "effective_date": {
+      "type": "string",
+      "description": "Effective or adopted date of the source content this rule was extracted from."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "extracted",
+        "needs_review",
+        "staff_approved",
+        "staff_rejected",
+        "superseded",
+        "historical"
+      ],
+      "default": "extracted",
+      "description": "Review lifecycle status. 'extracted' = just extracted, 'needs_review' = uncertain or draft-source, 'staff_approved' = admin approved (operational), 'staff_rejected' = admin rejected, 'superseded' = replaced by a newer rule, 'historical' = from a historical source."
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "Display name of the admin who reviewed this rule."
+    },
+    "reviewer_email": {
+      "type": "string",
+      "description": "Email of the admin who reviewed this rule."
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the rule was last reviewed."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "PermittingRule id this rule supersedes, when applicable."
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "PermittingRule id that supersedes this rule. Set when this rule is archived."
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "default": "medium",
+      "description": "Extraction confidence. Low = uncertain extraction or draft/historical source."
+    },
+    "conflict_state": {
+      "type": "string",
+      "enum": [
+        "none",
+        "conflicting_sources",
+        "under_review"
+      ],
+      "default": "none",
+      "description": "Whether sources disagree for this rule, or the rule is under review due to source changes."
+    },
+    "citations": {
+      "type": "array",
+      "description": "Citations backing this rule. Every material fact carries at least one citation.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_document_id": {
+            "type": "string"
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
+          "section_or_page": {
+            "type": "string",
+            "description": "Section number, page, or location reference in the source document."
+          },
+          "official_url": {
+            "type": "string"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Exact excerpt from the source supporting this rule."
+          },
+          "extraction_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "needs_verification",
+              "historical",
+              "draft_context"
+            ],
+            "description": "Verification status of the citation. 'draft_context' = from a draft/proposed source."
+          }
+        },
+        "required": [
+          "source_document_id",
+          "section_or_page",
+          "excerpt"
+        ]
+      },
+      "default": []
+    },
+    "source_snapshot_sha256": {
+      "type": "string",
+      "description": "SHA-256 hash of the source document at extraction time. Later source changes can invalidate the rule by comparing this hash."
+    },
+    "is_operational": {
+      "type": "boolean",
+      "default": false,
+      "description": "Derived/stored: only true for staff_approved rules from current-authority sources. Draft/historical rules are never operational."
+    },
+    "draft_context": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this rule was extracted from a draft/proposed/comprehensive_rewrite source. Such rules can never reach staff_approved while the authority gate says current adopted code is authoritative."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes, including draft_context flags or extraction caveats."
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Optimistic concurrency version. Incremented on each edit to prevent silent overwrites."
+    }
+  },
+  "required": [
+    "jurisdiction_name",
+    "rule_category",
+    "requirement"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
