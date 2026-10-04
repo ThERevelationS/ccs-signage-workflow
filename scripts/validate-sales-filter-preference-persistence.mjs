@@ -20,8 +20,8 @@ check(backend.includes("if (action === 'preferences_get')") &&
       backend.includes("actor?.sales_pipeline_preferences"),
   "Authenticated Sales backend must expose only the signed-in user's saved preferences");
 check(backend.includes("if (action === 'preferences_set')") &&
-      backend.includes("saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences)"),
-  "Authenticated Sales backend must save preferences against the signed-in AuthorizedEmail record");
+      backend.includes("saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences, body?.expected_preferences)"),
+  "Authenticated Sales backend must save preferences against the signed-in AuthorizedEmail record and accept an optional expected preference snapshot");
 check(backend.includes("AuthorizedEmail.get(actor?.id)") &&
       backend.includes("{ id: current.id, updated_date: current.updated_date }"),
   "Preference writes must use the authenticated user ID and optimistic concurrency");
@@ -35,8 +35,10 @@ check(!backend.includes("selected_by: next") || backend.includes("sales_pipeline
 
 check(persistence.includes('action: "preferences_get"') &&
       persistence.includes('action: "preferences_set"') &&
+      persistence.includes("expectedPreferences !== undefined") &&
+      persistence.includes("payload.expected_preferences = expectedPreferences") &&
       count(persistence, "requireSessionToken(sessionToken, label)") >= 2,
-  "Frontend preference helpers must use the authenticated Sales backend");
+  "Frontend preference helpers must use the authenticated Sales backend and support guarded repair writes");
 
 check(page.includes('const { isRegistered, currentUser, sessionToken } = useAuth();'),
   "Sales page must restore preferences from the custom Sign Shop session");
