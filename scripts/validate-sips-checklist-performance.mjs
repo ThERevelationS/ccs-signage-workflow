@@ -118,4 +118,14 @@ check("attention badges use one memoized row lookup", () => {
   assert.match(source, /const \{ displayItem: stDisplayItem, isCompleted: isStItemCompleted, attentionLabel \} = renderMeta;/);
 });
 
+check("Needs Input navigation reuses memoized active/completed membership", () => {
+  assert.match(source, /const needsInputNavigationIndex = useMemo\(\(\) => \{/);
+  assert.match(source, /const activeProductByItemId = new Map\(\);/);
+  assert.match(source, /return \{ activeIds, completedIds, activeProductByItemId \};/);
+  assert.match(source, /\}, \[activeChecklist, completedChecklist\]\);/);
+  assert.match(source, /const \{ activeIds, completedIds, activeProductByItemId \} = needsInputNavigationIndex;/);
+  assert.match(source, /activeProductByItemId\.get\(target\.id\)/);
+  assert.equal(/const findItemProductName =/.test(source), false);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
