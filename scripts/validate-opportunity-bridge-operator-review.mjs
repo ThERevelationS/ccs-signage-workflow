@@ -16,6 +16,9 @@ assert(review.includes('hold_reason_counts'), 'Review UI must surface hold reaso
 assert(review.includes('source_snapshot'), 'Review UI must expose the source snapshot.');
 assert(review.includes('proposed_opportunity'), 'Review UI must expose the proposed Opportunity.');
 assert(review.includes('receipt_key'), 'Review UI must expose the immutable receipt identity.');
+assert(review.includes('Production Apply Readiness'), 'Review UI must expose the read-only production readiness gate.');
+assert(review.includes('readiness.checks'), 'Review UI must display each readiness check.');
+assert(review.includes('Proposed first batch — planning only'), 'Review UI must label the first batch as planning-only.');
 assert(review.includes('localStorage'), 'Review UI must support client-local drift comparison without production writes.');
 
 for (const forbidden of [
