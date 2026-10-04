@@ -43,7 +43,7 @@ function setup({ role = 'admin', documents = [], manual = false, extractionFails
         permitting_url: pageUrl, documents: [{ title: 'Application', url: 'https://county.gov/permit.pdf', doc_type: 'permit_application' }],
       } } }; } },
       integrations: { Core: {
-        UploadFile: async () => { calls.uploads++; return { file_url: 'https://archive.gov/file.pdf' }; },
+        UploadFile: async ({ file }) => { assert.ok(file instanceof File); assert.equal(file.type, 'application/pdf'); assert.ok(file.name.endsWith('.pdf')); calls.uploads++; return { file_url: 'https://archive.gov/file.pdf' }; },
         ExtractDataFromUploadedFile: async () => { calls.extraction++; if (extractionFails) throw new Error('Extraction failed'); return { output: { content: 'text' } }; },
       } },
     } },
