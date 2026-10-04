@@ -136,6 +136,13 @@ test('source invalidation compares citation hashes and demotes without losing ev
  assert.equal(t.f.rules[0].status,'needs_review');assert.equal(t.f.rules[0].is_operational,false);assert.deepEqual(t.f.rules[0].citations,before);
  assert.equal((await t.call('permittingRuleInvalidate',{source_document_id:'source'})).data.rules_flagged,0);
 });
+test('source review scope changes invalidate prior approval even when file bytes stay the same',async()=>{
+ const t=await setup(),rule=await t.importRule();await t.review({action:'approve',rule_id:rule.id,expected_version:1});
+ assert.equal(t.f.rules[0].evidence_context.approved_sources.length,1);
+ t.f.patchSource({jurisdiction_scope:'Separate township authority'});
+ const result=await t.call('permittingRuleInvalidate',{source_document_id:'source'});
+ assert.equal(result.data.rules_flagged,1);assert.equal(t.f.rules[0].is_operational,false);assert.equal(t.f.calls.llm,1);
+});
 test('invalidation is bounded, cursor based, and preserves concurrent staff changes',async()=>{
  const t=await setup(),rule=await t.importRule();await t.review({action:'approve',rule_id:rule.id,expected_version:1});
  t.f.patchSource({verification_status:'needs_verification'});
