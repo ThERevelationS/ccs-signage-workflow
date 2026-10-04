@@ -796,6 +796,7 @@ export default function TimeClockAdmin() {
         punchExceptions={punchExceptions}
         onReviewEntry={handleEditEntry}
         onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
         onRefresh={loadData}
       />
 
