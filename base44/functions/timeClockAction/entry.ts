@@ -2461,6 +2461,8 @@ Deno.serve(async (req) => {
           retiredShifts = summary.shift_manifest;
           retiredEvidenceVerified = true;
         }
+        const retiredReconciliation = retiredEvidenceVerified ? reconcileShiftEvidence(retiredShifts, summary) : undefined;
+        if (retiredReconciliation && !retiredReconciliation.verified) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} employee reconciliation failed.`, pay_period_id: period.id, generations: [] });
         generations.push({
           generation: index + 1, state: 'retired', finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
@@ -2468,6 +2470,7 @@ Deno.serve(async (req) => {
           invalidated_by: summary.invalidated_by || '', invalidation_reason: summary.invalidation_reason || '',
           invalidated_by_reopen_request_id: summary.invalidated_by_reopen_request_id || '',
           shift_evidence_verified: retiredEvidenceVerified, shift_evidence_hash: summary.shift_manifest_hash || '', shifts: retiredShifts,
+          employee_reconciliation: retiredReconciliation,
         });
       }
       const current = period.finalized_summary;
@@ -2492,11 +2495,14 @@ Deno.serve(async (req) => {
         }
         const evidenceHash = await payloadHash(snapshotRows);
         if (!String(current.entry_snapshot_hash || '') || !constantTimeEqual(String(current.entry_snapshot_hash), evidenceHash)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift evidence does not reproduce the finalized snapshot hash.', pay_period_id: period.id, generations: [] });
+        const currentReconciliation = reconcileShiftEvidence(snapshotRows, current);
+        if (!currentReconciliation.verified) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll employee reconciliation failed.', pay_period_id: period.id, generations: [] });
         generations.push({
           generation: history.length + 1, state: 'active', finalized_at: current.lock_timestamp || '', finalized_by: current.locked_by || '',
           entry_count: Number(current.entry_count || 0), employee_count: Number(current.employee_count || 0), total_hours: Number(current.total_hours || 0),
           request_id: current.request_id || '', entry_snapshot_hash: current.entry_snapshot_hash || '',
           shift_evidence_verified: true, shift_evidence_hash: evidenceHash, shifts: shiftEvidence,
+          employee_reconciliation: currentReconciliation,
         });
       }
       return Response.json({
