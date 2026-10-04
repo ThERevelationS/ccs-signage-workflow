@@ -20,6 +20,11 @@
       ],
       "default": "county"
     },
+    "office_authority_review_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Durable reservation and committed sequence for immutable PermittingOfficeAuthorityReview events. Creating/uncertain reservations reconcile only by the same saved request; no blind repeated create. Office identity/role/scope never resolves an address automatically."
+    },
     "website_url": {
       "type": "string",
       "description": "Official government website"
