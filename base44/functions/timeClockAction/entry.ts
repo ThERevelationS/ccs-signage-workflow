@@ -2468,6 +2468,29 @@ Deno.serve(async (req) => {
         const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005 && approvalComplete;
         return { verified, approval_complete: approvalComplete, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
       };
+      const verifyCorrectionProvenance = async (change: any) => {
+        const provenance = change?.correction_provenance;
+        if (!provenance) return true;
+        const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
+        const appliedAudit = provenance.applied_audit_id ? await auditEntity.get(provenance.applied_audit_id).catch(() => null) : null;
+        return Boolean(correction && appliedAudit &&
+          String(correction.time_entry_id || '') === String(change.time_entry_id || '') &&
+          ['approved', 'approved_modified'].includes(String(correction.status || '')) &&
+          String(correction.request_id || '') === String(provenance.submission_request_id || '') &&
+          asEmail(correction.user_email) === asEmail(provenance.requested_by) &&
+          String(correction.requested_at || '') === String(provenance.requested_at || '') &&
+          String(correction.employee_reason || '') === String(provenance.employee_reason || '') &&
+          String(correction.review_request_id || '') === String(provenance.review_request_id || '') &&
+          String(correction.review_decision || '') === String(provenance.review_decision || '') &&
+          asEmail(correction.reviewer_email) === asEmail(provenance.reviewed_by) &&
+          String(correction.reviewed_at || '') === String(provenance.reviewed_at || '') &&
+          String(correction.reviewer_reason || '') === String(provenance.reviewer_reason || '') &&
+          String(correction.applied_audit_id || '') === String(provenance.applied_audit_id || '') &&
+          ['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) &&
+          String(appliedAudit.time_entry_id || '') === String(change.time_entry_id || '') &&
+          String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
+          String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || ''));
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
