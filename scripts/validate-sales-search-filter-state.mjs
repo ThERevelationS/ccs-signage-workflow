@@ -30,9 +30,11 @@ check(!sheet.includes("const search = searchTerm.toLowerCase();"),
   "Untrimmed search logic cannot silently narrow rows from accidental spaces.");
 
 const informationChange = page.split('<Select value={filterStatus} onValueChange={(value) => {')[1]?.split("}}>")[0] || "";
-check(informationChange.includes("setFilterStatus(value);") &&
-  !informationChange.includes('setSearchTerm("");'),
-  "Choosing a saved/status filter intentionally preserves a visible search so users can combine criteria.");
+const informationTransition = page.split("const applyInformationFilter = (value) => {")[1]?.split("\n  };")[0] || "";
+check(informationChange.includes("applyInformationFilter(value);") &&
+  informationTransition.includes("setFilterStatus(value);") &&
+  !informationTransition.includes('setSearchTerm("");'),
+  "Choosing a saved/status filter intentionally preserves a visible search while replacing the alternate attention mode.");
 
 const attentionChange = page.split("const applyAttentionFilter = (value) => {")[1]?.split("\n  };")[0] || "";
 check(attentionChange.includes("setAttentionFilter(value);") &&
