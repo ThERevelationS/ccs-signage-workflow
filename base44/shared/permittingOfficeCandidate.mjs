@@ -58,6 +58,7 @@ function matchCandidate(row,proposal){
 }
 const result=(office,status)=>({success:true,status,office,authority_verified:false,address_authority_resolved:false,llm_calls:0});
 export async function getOfficeCandidate(deps,{officeId,registrationKey}){
+ if(typeof officeId!=='string' || !officeId || !/^[a-f0-9]{64}$/.test(registrationKey || ''))throw evidenceError('Saved candidate identity is required.',400);
  const row=await catalog(deps.settingsEntity),matches=row.setting_value.items.filter(o=>o.id===officeId);
  const found=matches.length===1?matches[0]:null;
  return result(found?.office_candidate_registration?.registration_key===registrationKey?found:null,
