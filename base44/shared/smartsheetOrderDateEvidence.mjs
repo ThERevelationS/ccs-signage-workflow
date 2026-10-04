@@ -83,7 +83,7 @@ export function summarizeOrderLocalOnlyDateEvidence(orders, bindings, fieldAudit
   for (const order of Array.isArray(orders) ? orders : []) {
     for (const field of fields) {
       const columnId = clean(bindings?.[field]);
-      if (!/^d+$/.test(columnId) || !clean(order?.[field])) continue;
+      if (!/^\d+$/.test(columnId) || !clean(order?.[field])) continue;
       const evidence = classifyOrderLocalOnlyDate(order, field, columnId, fieldAudits);
       if (evidence.state === 'verified_newer_local') {
         counts.verified_newer_local_dates++;
