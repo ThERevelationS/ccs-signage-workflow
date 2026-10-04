@@ -106,11 +106,16 @@ function cleanSalesPipelinePreferences(value: any) {
   };
 }
 
-async function saveSalesPipelinePreferences(AuthorizedEmail: any, actor: any, value: any) {
+async function saveSalesPipelinePreferences(AuthorizedEmail: any, actor: any, value: any, expectedValue?: any) {
   const next = cleanSalesPipelinePreferences(value);
+  const expected = expectedValue === undefined ? null : cleanSalesPipelinePreferences(expectedValue);
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     const current = await AuthorizedEmail.get(actor?.id).catch(() => null);
     if (!current?.id) throw Object.assign(new Error('User preferences could not identify the signed-in user.'), { status: 404 });
+    const currentPreferences = cleanSalesPipelinePreferences(current.sales_pipeline_preferences);
+    if (expected && JSON.stringify(currentPreferences) !== JSON.stringify(expected)) {
+      throw Object.assign(new Error('Sales Pipeline preferences changed in another session. Reload before retrying.'), { status: 409 });
+    }
     const result = await AuthorizedEmail.updateMany(
       { id: current.id, updated_date: current.updated_date },
       { $set: { sales_pipeline_preferences: next } },
@@ -344,7 +349,7 @@ Deno.serve(async (req) => {
     }
     if (action === 'preferences_set') {
       const AuthorizedEmail = base44.asServiceRole.entities.AuthorizedEmail;
-      return Response.json({ preferences: await saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences) });
+      return Response.json({ preferences: await saveSalesPipelinePreferences(AuthorizedEmail, actor, body?.preferences, body?.expected_preferences) });
     }
     if (action === 'create') return Response.json(await createIfAbsent(SalesFilter, actor, body?.data));
     if (action === 'copy') return Response.json(await copyUnique(SalesFilter, actor, body?.source));
