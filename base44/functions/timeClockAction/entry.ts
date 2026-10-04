@@ -2713,6 +2713,15 @@ Deno.serve(async (req) => {
           Number(chain[index]?.sequence || 0) === index + 1
         );
       };
+      const payrollMembershipFromAudit = (row: any) => {
+        const details = row?.details || {};
+        const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, String(row?.action || '') === 'clock_in' ? row?.server_timestamp : ''].filter(Boolean);
+        for (const value of candidates) {
+          const companyDate = dateKeyInCompanyTime(value);
+          if (companyDate) return { company_date: companyDate, clock_in: String(value), source: 'immutable_audit' };
+        }
+        return null;
+      };
       const verifyGenerationAuditReconciliation = async (summary: any, predecessor: any) => {
         const stored = summary?.generation_audit_reconciliation;
         if (!Array.isArray(stored) || Number(summary.generation_audit_reconciliation_count || 0) !== stored.length ||
