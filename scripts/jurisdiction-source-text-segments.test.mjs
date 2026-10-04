@@ -180,6 +180,21 @@ test('pending uncommitted segment is unavailable to source/page readers',async()
   assert.deepEqual(r.pages,[]);assert.equal(r.available_through,5);
 });
 
+test('initial truncated preview continues through subsequent pages and retains the gap',async()=>{
+  const f=await fixture({total:7});f.patch({extracted_pages:undefined,extracted_text:undefined,text_extraction_state:undefined});
+  const parse=f.api.readAndExtract;
+  f.api.readAndExtract=async args=>{const r=await parse(args);if(args.startPage===1)r.pages[0].truncated=true;return r;};
+  assert.equal((await extractKnownSourceText(f.api)).status,'partial');assert.equal(f.row().extracted_pages.length,5);
+  assert.equal((await extractKnownSourceText(f.api)).status,'partial_limit');assert.equal(f.row().text_extraction_state.pages_extracted,7);
+  assert.equal(f.row().text_extraction_state.truncated_page_count,1);assert.equal(f.rows.length,1);
+});
+
+test('expired pending lease reconciles a saved batch without parsing or creating it again',async()=>{
+  const f=await fixture({createMode:'missing'});await extractKnownSourceText(f.api);f.lateCreate();
+  f.patch({text_extraction_state:{...f.row().text_extraction_state,status:'segment_pending',lease_expires_at:'2020-01-01T00:00:00Z',retry_after:''}});
+  assert.equal((await extractKnownSourceText(f.api)).reconciled,true);assert.equal(f.calls.parses,1);assert.equal(f.calls.creates,1);
+});
+
 test('profile opt-out after parsing or before attachment preserves cursor and any saved orphan',async()=>{
   const f=await fixture();let checks=0;
   const r=await extractKnownSourceText({...f.api,canAutomaticallyExtract:async()=>++checks!==2});
