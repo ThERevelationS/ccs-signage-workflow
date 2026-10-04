@@ -35,10 +35,10 @@ Deno.serve(async req => {
     }
     if (action==='counts') {
       const query=body.jurisdiction_id?{jurisdiction_id:String(body.jurisdiction_id)}:body.jurisdiction_name?{jurisdiction_name:String(body.jurisdiction_name)}:{};
-      const [total,status,category,operational,needsReview,draft]=await Promise.all([
+      const [total,status,category,operational,needsReview,draft,instructions]=await Promise.all([
         Rules.count(query),Rules.aggregate({query,groupBy:'status',count:true}),Rules.aggregate({query,groupBy:'rule_category',count:true}),
-        Rules.count({...query,is_operational:true}),Rules.count({...query,status:'needs_review'}),Rules.count({...query,draft_context:true})]);
-      return Response.json({success:true,total,operational,needs_review:needsReview,draft_context:draft,by_status:status.rows,by_category:category.rows});
+        Rules.count({...query,is_operational:true}),Rules.count({...query,status:'needs_review'}),Rules.count({...query,draft_context:true}),Rules.count({...query,is_workflow_instruction:true,status:'staff_approved'})]);
+      return Response.json({success:true,total,operational,needs_review:needsReview,draft_context:draft,reviewed_instructions:instructions,by_status:status.rows,by_category:category.rows});
     }
     if (action==='import_candidate') {
       return Response.json(await importEvidenceCandidate({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
