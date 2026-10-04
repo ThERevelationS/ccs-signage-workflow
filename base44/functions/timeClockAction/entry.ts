@@ -2610,6 +2610,36 @@ Deno.serve(async (req) => {
           )) &&
           (String(evidence.action || '') !== 'admin_archive' || change.change_type === 'removed'));
       };
+      const verifyCausalChain = async (change: any, windowStart = '', windowEnd = '') => {
+        const chain = change?.causal_chain;
+        const terminalAuditId = String(change?.causal_terminal_audit_id || '');
+        if (!Array.isArray(chain) || !chain.length || !terminalAuditId || !chain.some((link: any) => String(link.audit_id || '') === terminalAuditId)) return false;
+        let previousTime = -Infinity;
+        let previousId = '';
+        for (let index = 0; index < chain.length; index += 1) {
+          const link = chain[index];
+          if (Number(link.sequence || 0) !== index + 1) return false;
+          const evidence = await auditEntity.get(String(link.audit_id || '')).catch(() => null);
+          if (!evidence || String(evidence.time_entry_id || '') !== String(change.time_entry_id || '') ||
+              !['confirmed', 'recovered'].includes(String(evidence.outcome || '')) ||
+              String(evidence.action || '') !== String(link.action || '') ||
+              String(evidence.request_id || '') !== String(link.request_id || '') ||
+              String(evidence.outcome || '') !== String(link.outcome || '') ||
+              asEmail(evidence.actor_email) !== asEmail(link.actor_email) ||
+              String(evidence.actor_role || '') !== String(link.actor_role || '') ||
+              String(evidence.authentication_method || '') !== String(link.authentication_method || '') ||
+              String(evidence.server_timestamp || '') !== String(link.server_timestamp || '') ||
+              String(evidence.reason || '') !== String(link.reason || '') ||
+              !inCausalWindow(evidence.server_timestamp, windowStart, windowEnd)) return false;
+          const currentTime = Date.parse(String(evidence.server_timestamp || ''));
+          const currentId = String(evidence.id || '');
+          if (currentTime < previousTime || (currentTime === previousTime && currentId.localeCompare(previousId) < 0)) return false;
+          previousTime = currentTime;
+          previousId = currentId;
+        }
+        const semanticTerminalId = String(change.correction_provenance?.applied_audit_id || change.action_provenance?.audit_id || '');
+        return semanticTerminalId === terminalAuditId;
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
