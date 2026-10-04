@@ -41,6 +41,8 @@ export function classifyTimeClockLoginStatus(status) {
       kind: "pending_shift_review",
       status: String(status?.status || ""),
       count: pendingShiftCount,
+      missedClockInCount: Math.max(0, Number(pendingShiftReview?.missed_clock_in_count || 0)),
+      correctedShiftCount: Math.max(0, Number(pendingShiftReview?.corrected_shift_count || 0)),
       hasIntegrityIssue: pendingShiftReview?.has_integrity_issue === true,
       item: Array.isArray(pendingShiftReview?.items) ? pendingShiftReview.items[0] || null : null,
       clockIn: status?.entry?.clock_in || null,
