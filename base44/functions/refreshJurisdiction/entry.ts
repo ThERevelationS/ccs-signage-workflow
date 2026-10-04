@@ -7,6 +7,7 @@ import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchS
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { findExistingJurisdictionDocument, mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
+import { discoverOfficialPermittingResources } from '../../shared/jurisdictionPermittingLinkDiscovery.mjs';
 import {
   DEFAULT_RESEARCH_ARCHIVE_LIMIT,
   RESEARCH_EXTRACT_TIMEOUT_MS,
@@ -134,6 +135,25 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
 
     const researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
     if (!researchData) return Response.json({ error: 'No research data returned' }, { status: 400 });
+
+    // When the LLM identifies an official permitting/forms page but returns no
+    // document records, harvest relevant same-host links from that one verified
+    // page. This is a deterministic fallback, not an additional LLM call.
+    if ((!researchData.documents || researchData.documents.length === 0) && researchData.permitting_url) {
+      try {
+        const pageResponse = await safeExternalFetch(researchData.permitting_url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
+        });
+        const contentType = String(pageResponse.headers.get('content-type') || '').toLowerCase();
+        if (pageResponse.ok && (contentType.includes('text/html') || contentType.includes('application/xhtml+xml'))) {
+          const pageHtml = await pageResponse.text();
+          researchData.documents = discoverOfficialPermittingResources(pageHtml, researchData.permitting_url);
+        }
+      } catch (error) {
+        console.warn(`Permitting page link harvest failed for ${jurisdiction.name || id}: ${error?.message || error}`);
+      }
+    }
 
     // Build update object — replace with new data, keep manual overrides
     const updateData = {};
