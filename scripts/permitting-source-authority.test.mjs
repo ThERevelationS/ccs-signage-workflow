@@ -100,7 +100,7 @@ test('source revocation handler flags reviewed instructions without modifying ci
 });
 test('bounded revalidation resumes before a failed row and never skips its write',async()=>{
  const t=await setup();await reviewSourceAuthority(t.api);
- for(let i=0;i<52;i++)t.f.rules.push({...await t.candidate(),id:'rule'+String(i).padStart(3,'0'),updated_date:'v'+i,version:1});
+ for(let i=0;i<52;i++)t.f.rules.push({...await t.candidate(),id:'rule'+String(i).padStart(3,'0'),updated_date:'v'+i,version:1,status:'staff_approved',is_workflow_instruction:true,conflict_state:'none'});
  t.f.patchSource({verification_status:'needs_verification'});
  const update=t.ruleEntity.updateMany;t.ruleEntity.updateMany=async(q,p)=>{
   if(q.id==='rule001')throw Error('write unavailable');return update(q,p);
