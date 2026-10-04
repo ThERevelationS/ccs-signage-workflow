@@ -41,7 +41,7 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
 
   const results = [];
   const seen = new Set();
-  const pageTitle = /\b(form|permit|apply|application)\b/i.test(base.pathname + base.search)
+  const pageTitle = /\b(forms?|permit|apply|application)\b/i.test(base.pathname + base.search)
     ? 'Official permitting/forms page'
     : null;
 
