@@ -192,8 +192,8 @@ export default function EmployeeTodayCard({
             {pendingCorrections.length > 0 && <p>{pendingCorrections.length} correction request{pendingCorrections.length === 1 ? " is" : "s are"} awaiting manager review.</p>}
             {pendingShiftReviewCount > 0 && (
               <p>{pendingShiftReviewIntegrity
-                ? `${pendingShiftReviewCount} corrected shift${pendingShiftReviewCount === 1 ? " needs" : "s need"} manager investigation before approval.`
-                : `${pendingShiftReviewCount} corrected shift${pendingShiftReviewCount === 1 ? " still needs" : "s still need"} final manager shift approval. The correction itself is already applied.`}</p>
+                ? `${pendingShiftReviewCount} reviewed shift${pendingShiftReviewCount === 1 ? " needs" : "s need"} manager investigation before approval.`
+                : `${pendingShiftReviewCount} reviewed shift${pendingShiftReviewCount === 1 ? " still needs" : "s still need"} final manager shift approval before pay-period finalization.`}</p>
             )}
             {statusError && <p>{statusError}</p>}
           </div>
