@@ -3768,6 +3768,7 @@ Deno.serve(async (req) => {
               if (periodEntryIdSet.has(candidateId)) continue;
               const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
               let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
+              let discoveryEvidence = null;
               if (!companyDate && snapshotVersion >= 19) {
                 const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
                 if (!Array.isArray(membershipAudits)) return Response.json({ success: false, error: 'Payroll audit membership evidence could not be loaded before finalization.' }, { status: 409 });
