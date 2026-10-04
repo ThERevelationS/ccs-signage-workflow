@@ -3422,6 +3422,9 @@ Deno.serve(async (req) => {
                 if (supersededGeneration && (!Number.isFinite(Date.parse(correctionAppliedAt)) || Date.parse(correctionAppliedAt) < Date.parse(generationCausalWindowStart) || Date.parse(correctionAppliedAt) > Date.parse(generationCausalWindowEnd))) {
                   return Response.json({ success: false, error: `Payroll correction for shift ${id} falls outside the authorized reopen-to-finalization window.` }, { status: 409 });
                 }
+                const corrected = appliedAudit.details?.corrected || {};
+                const semanticAfter = change.after || {};
+                if (change.change_type === 'removed' || String(corrected.clock_in || '') !== String(semanticAfter.clock_in || '') || String(corrected.clock_out || '') !== String(semanticAfter.clock_out || '') || Number(corrected.total_hours || 0) !== Number(semanticAfter.total_hours || 0)) return Response.json({ success: false, error: 'Correction evidence does not match resulting payroll values.' }, { status: 409 });
                 change.correction_provenance = {
                   correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
                   requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
