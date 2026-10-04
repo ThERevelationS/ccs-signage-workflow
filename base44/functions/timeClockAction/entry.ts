@@ -2596,7 +2596,19 @@ Deno.serve(async (req) => {
           String(evidence.authentication_method || '') === String(provenance.authentication_method || '') &&
           String(evidence.server_timestamp || '') === String(provenance.server_timestamp || '') &&
           String(evidence.reason || '') === String(provenance.reason || '') &&
-          (!windowStart || inCausalWindow(evidence.server_timestamp, windowStart, windowEnd)));
+          (!windowStart || inCausalWindow(evidence.server_timestamp, windowStart, windowEnd)) &&
+          (String(evidence.action || '') !== 'clock_out' || (
+            String(evidence.details?.result_clock_out || '') === String(provenance.semantic_clock_out || '') &&
+            Number(evidence.details?.total_hours || 0) === Number(provenance.semantic_total_hours || 0) &&
+            String(change.after?.clock_out || '') === String(provenance.semantic_clock_out || '') &&
+            Number(change.after?.total_hours || 0) === Number(provenance.semantic_total_hours || 0)
+          )) &&
+          (String(evidence.action || '') !== 'clock_in' || (
+            change.change_type === 'added' &&
+            String(evidence.server_timestamp || '') === String(provenance.semantic_clock_in || '') &&
+            String(change.after?.clock_in || '') === String(provenance.semantic_clock_in || '')
+          )) &&
+          (String(evidence.action || '') !== 'admin_archive' || change.change_type === 'removed'));
       };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
