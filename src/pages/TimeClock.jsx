@@ -143,23 +143,39 @@ function loginStatusNotice(status) {
     };
   }
   if (report.kind === "pending_shift_review") {
-    const countText = report.count === 1 ? "one corrected shift" : `${report.count} corrected shifts`;
     const currentState = report.status === "clocked_in"
       ? "Your current shift is still Clocked In and is separate from that review."
       : report.status === "clocked_out"
         ? "You are currently Clocked Out."
         : "Your current Time Clock state is being restored separately.";
+    const missedClockInOnly = report.missedClockInCount > 0 && report.correctedShiftCount === 0;
+    const correctedOnly = report.correctedShiftCount > 0 && report.missedClockInCount === 0;
+    const subject = report.count === 1 ? "one shift" : `${report.count} shifts`;
     if (report.hasIntegrityIssue) {
       return {
         tone: "warning",
-        title: "Corrected shift needs manager investigation",
-        message: `The punch correction itself is no longer pending, but ${countText} cannot be tied cleanly to its final approval evidence. ${currentState} A manager must investigate before payroll finalization.`,
+        title: "Shift review needs manager investigation",
+        message: `${subject} awaiting final approval cannot be tied cleanly to its supporting correction or missed-punch evidence. ${currentState} A manager must investigate before payroll finalization.`,
+      };
+    }
+    if (missedClockInOnly) {
+      return {
+        tone: "warning",
+        title: "Missed Clock In recorded — shift still needs approval",
+        message: `Your employee-reported Clock In is recorded on the completed shift, but ${subject} still needs the separate manager shift-approval step before pay-period finalization. ${currentState}`,
+      };
+    }
+    if (correctedOnly) {
+      return {
+        tone: "warning",
+        title: "Punch correction applied — shift still needs approval",
+        message: `The missed-punch correction is complete, but ${subject} still needs the separate manager shift-approval step before pay-period finalization. ${currentState}`,
       };
     }
     return {
       tone: "warning",
-      title: "Punch correction applied — shift still needs approval",
-      message: `The missed-punch correction is complete, but ${countText} still needs the separate manager shift-approval step before pay-period finalization. ${currentState}`,
+      title: "Time review complete — shift approval still pending",
+      message: `${subject} still needs final manager shift approval before pay-period finalization. ${currentState}`,
     };
   }
   if (report.kind === "transition") {
