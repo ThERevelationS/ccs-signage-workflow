@@ -26,7 +26,7 @@ const imports = {
   'lucide-react': Object.fromEntries(
     ['AlertTriangle', 'Clock3', 'FileWarning', 'ShieldCheck'].map((name) => [name, 'span']),
   ),
-  'date-fns': { format: () => 'Sep 28, 2026 4:00 PM' },
+  '@/components/timeclock/timeClockCompanyTime': { formatCompanyDateTime: () => 'Sep 28, 2026 4:00 PM EDT' },
 };
 const module = { exports: {} };
 vm.runInNewContext(compiled, {
@@ -84,7 +84,12 @@ const rows = [
 const markup = renderToStaticMarkup(React.createElement(PunchReport, {
   punchExceptions: rows,
   timeEntries: entries,
+  correctionRequests: [{
+    id: 'correction-out', time_entry_id: 'missed-out-entry', punch_exception_id: 'out-case',
+    status: 'pending', request_kind: 'missed_clock_out',
+  }],
   onReviewEntry: () => {},
+  onReviewCorrection: () => {},
 }));
 assert.match(markup, /Punch Exception Reports/);
 assert.match(markup, /3 need review/);
@@ -98,9 +103,10 @@ assert.match(markup, /scheduled monitor detected a long-running active shift/);
 assert.match(markup, /No Clock Out was created or changed/);
 assert.match(markup, /confirm with the employee before any correction/);
 assert.match(markup, /Shift Needs Review/);
+assert.match(markup, /Review Correction/);
 assert.match(markup, /View Shift/);
 assert.match(markup, /audit history, not automatic payroll approval/);
-console.log('PASS punch report distinguishes scheduled detection from employee-attested punch reports');
+console.log('PASS punch report distinguishes scheduled detection and routes pending missed-punch cases directly to correction review');
 
 const emptyMarkup = renderToStaticMarkup(React.createElement(PunchReport, {
   punchExceptions: [],
