@@ -57,7 +57,9 @@ import {
   UserCheck,
   CalendarDays,
   ClipboardCheck,
-  Scale
+  Scale,
+  FlaskConical,
+  BookOpen
 } from "lucide-react";
 import FaceRecognition from "@/components/timeclock/FaceRecognition";
 import EmailGroupsManager from "../components/admin/EmailGroupsManager";
@@ -81,6 +83,7 @@ import WipImporter from "@/components/admin/WipImporter";
 import PermittingRepositoryAdmin from "@/components/permitting/PermittingRepositoryAdmin.jsx";
 import PermittingCompletenessDashboard from "@/components/permitting/PermittingCompletenessDashboard.jsx";
 import PermittingRulesReview from "@/components/admin/PermittingRulesReview";
+import PermittingTestSuite from "@/components/permitting/PermittingTestSuite";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import AdminCalendarSettings from "@/components/admin/AdminCalendarSettings";
 import {
@@ -977,6 +980,10 @@ export default function AdminSettings() {
                     <Scale className="w-4 h-4 mr-2" />
                     Permitting Rules
                   </TabsTrigger>
+                  <TabsTrigger value="permitting_tests" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
+                    <FlaskConical className="w-4 h-4 mr-2" />
+                    Permitting Tests
+                  </TabsTrigger>
                 </>
               )}
               <TabsTrigger value="task_assignments" className="data-[state=active]:bg-white/80 px-4 py-2 text-sm">
@@ -1071,6 +1078,15 @@ export default function AdminSettings() {
               </TabsContent>
               <TabsContent value="permitting_rules">
                 <PermittingRulesReview sessionToken={sessionToken} />
+              </TabsContent>
+              <TabsContent value="permitting_tests">
+                <div className="mb-3 flex justify-end">
+                  <a href="/PermittingDocs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100">
+                    <BookOpen className="h-4 w-4" />
+                    Staff Guide (opens new tab)
+                  </a>
+                </div>
+                <PermittingTestSuite />
               </TabsContent>
 
               <TabsContent value="smartsheet">

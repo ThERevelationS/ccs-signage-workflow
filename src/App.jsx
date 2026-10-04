@@ -63,6 +63,7 @@ import FleetSettings from './pages/FleetSettings';
 import FleetPublicReport from './pages/FleetPublicReport';
 import FleetMechanic from './pages/FleetMechanic';
 import NewUserSetup from './pages/NewUserSetup';
+import PermittingDocs from './pages/PermittingDocs';
 
 const ESTIMATOR_PAGES = {
   NewAllInOneEstimate,
@@ -161,6 +162,11 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/ResetPassword" element={<NewUserSetup />} />
       <Route path="/PermittingRepository" element={<Navigate to="/Permitting?view=jurisdictions" replace />} />
+      <Route path="/PermittingDocs" element={
+        <LayoutWrapper currentPageName="PermittingDocs">
+          <PermittingDocs />
+        </LayoutWrapper>
+      } />
       {Object.entries(ESTIMATOR_PAGES).map(([name, Page]) => (
         <Route
           key={name}
