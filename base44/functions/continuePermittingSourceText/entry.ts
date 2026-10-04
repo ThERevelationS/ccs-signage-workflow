@@ -13,7 +13,8 @@ Deno.serve(async req => {
     const sourceDocumentId = String(body.source_document_id || '').trim();
     if (automatic && sourceDocumentId) return Response.json({error:'Automatic extraction selects its bounded backlog.'},{status:400});
     if (!automatic && !sourceDocumentId) return Response.json({error:'Manual extraction requires a source document id.'},{status:400});
-    const options = {entity:base44.asServiceRole.entities.PermittingSourceDocument,readAndExtract:readAndExtractSourcePdf,
+    const options = {entity:base44.asServiceRole.entities.PermittingSourceDocument,
+      segmentEntity:base44.asServiceRole.entities.PermittingSourceTextSegment,readAndExtract:readAndExtractSourcePdf,
       canAutomaticallyExtract:automaticSourceTextGuard(base44.asServiceRole.entities.JurisdictionProfile)};
     if (!automatic) return Response.json(await extractKnownSourceText({...options,sourceDocumentId,automatic:false}));
     const rows = await base44.asServiceRole.entities.GlobalSettings.filter({setting_key:PERMITTING_RESEARCH_CONFIG_KEY},'created_date',2);
