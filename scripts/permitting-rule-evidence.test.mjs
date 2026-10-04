@@ -142,6 +142,12 @@ test('different completed runs sharing a literal candidate cannot create duplica
   importEvidenceCandidate({...f.api,runId:second.run_id,candidateIndex:0,token:'two'})]);
  assert.equal(f.calls.ruleCreates,1);assert.equal(f.rules.length,1);
 });
+test('legacy approval also requires explicit support for stored numeric values',async()=>{
+ const f=await ruleFixture(),run=await extractEvidenceUnit(f.api),legacy={...run.candidates[0],evidence_validation:undefined};
+ assert.equal((await verifyRuleForApproval(legacy,f.api)).length,1);
+ await assert.rejects(verifyRuleForApproval({...legacy,numeric_value:999},f.api),/numeric fields/);
+ await assert.rejects(verifyRuleForApproval({...legacy,numeric_literal:''},f.api),/numeric fields/);
+});
 test('timed-out manual LLM is counted once and never retried implicitly',async()=>{
  const f=await ruleFixture(),realTimeout=globalThis.setTimeout;
  f.api.invokeLlm=()=>{f.calls.llm++;return new Promise(()=>{});};
