@@ -1294,6 +1294,15 @@ test('missed Clock Out detaches old shift without fabricating time and permits a
   assert.equal(h.rows.TimeClockCorrectionRequest[0].request_kind, 'missed_clock_out');
   assert.equal(h.rows.TimeClockCorrectionRequest[0].requested_changes.clock_out, '2026-09-28T22:00:00.000Z');
 
+  const returnStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(returnStatus.status, 200, JSON.stringify(returnStatus.body));
+  assert.equal(returnStatus.body.status, 'clocked_out');
+  assert.equal(returnStatus.body.unresolved_punch_review.count, 1);
+  assert.equal(returnStatus.body.unresolved_punch_review.has_integrity_issue, false);
+  assert.equal(returnStatus.body.unresolved_punch_review.items[0].review_state, 'awaiting_manager_review');
+  assert.equal(returnStatus.body.unresolved_punch_review.items[0].time_entry_id, oldEntry.id);
+  assert.equal(returnStatus.body.unresolved_punch_review.items[0].reported_clock_out, '2026-09-28T22:00:00.000Z');
+
   const retried = await h.invoke(payload);
   assert.equal(retried.status, 200, JSON.stringify(retried.body));
   assert.equal(retried.body.reused, true);
@@ -1305,6 +1314,10 @@ test('missed Clock Out detaches old shift without fabricating time and permits a
   assert.equal(freshClockIn.body.status, 'clocked_in');
   assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'needs_resolution').length, 1);
   assert.equal(h.rows.TimeEntry.filter((row) => row.status === 'clocked_in').length, 1);
+  const activeReturnStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(activeReturnStatus.body.status, 'clocked_in');
+  assert.equal(activeReturnStatus.body.unresolved_punch_review.count, 1);
+  assert.equal(activeReturnStatus.body.unresolved_punch_review.items[0].review_state, 'awaiting_manager_review');
 });
 
 test('missed Clock Out rejects impossible times before creating recovery records', async () => {
@@ -1379,6 +1392,11 @@ test('missed Clock Out review fails closed before mutation when correction and P
   const punchCase = h.rows.TimeClockPunchException[0];
   punchCase.correction_request_id = 'wrong-correction-link';
   const beforeEntry = structuredClone(h.rows.TimeEntry[0]);
+  const returnStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(returnStatus.status, 200, JSON.stringify(returnStatus.body));
+  assert.equal(returnStatus.body.unresolved_punch_review.count, 1);
+  assert.equal(returnStatus.body.unresolved_punch_review.has_integrity_issue, true);
+  assert.equal(returnStatus.body.unresolved_punch_review.items[0].review_state, 'needs_manager_investigation');
 
   const blocked = await h.invoke({
     action: 'review_correction_request', target_email: employee.email,
