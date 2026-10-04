@@ -50,13 +50,23 @@ B. SIGN PERMIT REQUIREMENTS
    - Processing timeline (days to approve)
    - Any material restrictions or design standards
 
-C. REGULATORY DOCUMENTS
-   Find and document:
-   - Sign Ordinance(s) - the local regulation about signs
-   - Zoning Code sections mentioning signs
-   - Permit application forms (official government versions)
-   - Fee schedules or permit fee information
-   - Design guidelines if they exist
+C. REGULATORY DOCUMENTS, FORMS, AND ONLINE PORTALS
+   Search the official jurisdiction site deeply enough to identify every sign-permitting resource you can verify, including:
+   - Sign ordinance(s) or adopted code pages/PDFs governing signs
+   - Zoning code chapters/sections mentioning signs
+   - Sign permit application forms, building/zoning permit forms, and supporting checklists
+   - Fee schedules or official permit-fee pages/PDFs
+   - Design guidelines and submission requirement documents
+   - Official online permit/application portals or web forms used to submit sign/zoning/building permits
+
+   DOCUMENT CAPTURE RULES:
+   - Do not stop after finding the department landing page. Follow official links to the actual ordinance, form, PDF, portal, or code page.
+   - Return each verified resource as a separate documents[] item with a useful title, direct official URL, and doc_type.
+   - Use doc_type "permit_application" for downloadable application forms and official online application/permit portals.
+   - Use doc_type "zoning_code" for official HTML code sections when no PDF exists.
+   - Prefer direct PDF/form/code URLs over generic department homepages when both are available.
+   - If an official portal is the only application method, include that portal in documents[] even though it is not a downloadable file.
+   - Never invent a form or document URL. If a resource cannot be verified, omit it.
 
 D. CONTACT INFORMATION
    Gather from official sources:
@@ -139,6 +149,8 @@ Before returning:
 ☐ Contact info is from official sources
 ☐ Data comes from current ordinances (not outdated)
 ☐ Specific numbers/rules can be traced to actual documents
+☐ Every verified application form, online submission portal, fee schedule, sign ordinance, and zoning-code resource found is represented in documents[]
+☐ documents[] entries use direct official resource URLs, not merely generic department homepages when a deeper verified link exists
 ☐ null is used when data cannot be verified
 ☐ Parent county information is accurate if included`;
 
@@ -154,7 +166,23 @@ Before returning:
           ai_summary: { type: ["string", "null"] },
           contact_info: { type: "object" },
           permit_requirements: { type: "object" },
-          documents: { type: "array", items: { type: "object" } },
+          documents: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                url: { type: "string" },
+                doc_type: {
+                  type: "string",
+                  enum: ["sign_ordinance", "permit_application", "zoning_code", "fee_schedule", "checklist", "other"]
+                },
+                source: { type: "string" },
+                verification_notes: { type: "string" }
+              },
+              required: ["title", "url", "doc_type"]
+            }
+          },
           parent_county: { type: ["object", "null"] },
           sqft_width_height_rules: { type: ["string", "null"] },
           height_allowances: { type: ["string", "null"] },
