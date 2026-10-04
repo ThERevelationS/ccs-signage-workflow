@@ -1711,6 +1711,17 @@ test('reconstructed missed Clock In remains Needs Review through Clock Out until
   const stillPending = h.rows.TimeClockPunchException.find((row) => row.id === punchCaseId);
   assert.equal(stillPending.status, 'pending_manager_review');
 
+  const pendingStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(pendingStatus.status, 200, JSON.stringify(pendingStatus.body));
+  assert.equal(pendingStatus.body.unresolved_punch_review, undefined);
+  assert.equal(pendingStatus.body.pending_shift_review.count, 1);
+  assert.equal(pendingStatus.body.pending_shift_review.missed_clock_in_count, 1);
+  assert.equal(pendingStatus.body.pending_shift_review.corrected_shift_count, 0);
+  assert.equal(pendingStatus.body.pending_shift_review.has_integrity_issue, false);
+  assert.equal(pendingStatus.body.pending_shift_review.items[0].review_kind, 'missed_clock_in');
+  assert.equal(pendingStatus.body.pending_shift_review.items[0].review_state, 'awaiting_shift_approval');
+  assert.equal(pendingStatus.body.pending_shift_review.items[0].punch_exception_id, punchCaseId);
+
   const approved = await h.invoke({
     action: 'admin_set_entry_approval', target_email: employee.email,
     request_id: 'late-clock-in-manager-approval-001',
@@ -1725,6 +1736,28 @@ test('reconstructed missed Clock In remains Needs Review through Clock Out until
   assert.equal(approvedEntry.approval_status, 'approved');
   assert.equal(resolvedCase.status, 'resolved');
   assert.equal(resolvedCase.resolution_audit_id, approved.body.audit_id);
+  const settledStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(settledStatus.status, 200, JSON.stringify(settledStatus.body));
+  assert.equal(settledStatus.body.pending_shift_review, undefined);
+  assert.equal(settledStatus.body.unresolved_punch_review, undefined);
+
+  const reopened = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'late-clock-in-manager-reopen-001',
+    entry_id: approvedEntry.id,
+    expected_updated_date: approvedEntry.updated_date,
+    decision: 'reopen',
+    note: 'Recheck reconstructed arrival before payroll',
+  });
+  assert.equal(reopened.status, 200, JSON.stringify(reopened.body));
+  const reopenedEntry = h.rows.TimeEntry.find((row) => row.id === entryId);
+  const reopenedCase = h.rows.TimeClockPunchException.find((row) => row.id === punchCaseId);
+  assert.equal(reopenedEntry.approval_status, 'needs_review');
+  assert.equal(reopenedCase.status, 'pending_manager_review');
+  const reopenedStatus = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(reopenedStatus.body.pending_shift_review.count, 1);
+  assert.equal(reopenedStatus.body.pending_shift_review.missed_clock_in_count, 1);
+  assert.equal(reopenedStatus.body.pending_shift_review.items[0].review_state, 'awaiting_shift_approval');
 });
 
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
