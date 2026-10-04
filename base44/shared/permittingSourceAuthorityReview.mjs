@@ -2,20 +2,28 @@ import {readSourceEvidencePages} from './jurisdictionSourceTextSegments.mjs';
 import {evidenceDigest,evidenceEqual,evidenceError} from './permittingRuleEvidence.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 import {sourceIdentity,sourceRuleKind,SOURCE_SCOPE_REVIEW_METHOD,safeAuthorityUrl,assertSourceScopeReviewEvidence} from './permittingSourceAuthorityPolicy.mjs';
-const clean=(v,max=1000)=>typeof v==='string'?v.trim().slice(0,max):'';
+const clean=(v,max=1000)=>{if(typeof v!=='string')return '';const value=v.trim();if(value.length>max)throw evidenceError('A review field exceeds its processing bound.',400);return value;};
 const profileIdentity=p=>Object.fromEntries(['id','name','state','type'].map(k=>[k,p[k]]));
 const reviewFields=['authority_review','issuing_office','jurisdiction_scope','content_status','verification_status','authority_confidence','reviewer'];
 const metadata=s=>Object.fromEntries(reviewFields.map(k=>[k,s[k] ?? null]));
 async function write(sourceEntity,source,nextFields,guards){
  try{return await replaceJurisdictionFieldsIfUnchanged({entity:sourceEntity,jurisdiction:source,nextFields,guardFields:guards,label:'Source authority review'});}
- catch(error){throw evidenceError(error.message);}
+ catch(error){
+  const after=await sourceEntity.get(source.id).catch(()=>null);
+  if(after && Object.entries(nextFields).every(([k,v])=>evidenceEqual(after[k],v)) &&
+     evidenceEqual(sourceIdentity(after),sourceIdentity(source)))return after;
+  throw evidenceError(error.message);
+ }
 }
 async function buildReview({source,profile,segmentEntity,settingsEntity,input,requestId,actor,now}){
  if(sourceRuleKind(source)!=='administrative_instruction')throw evidenceError('This review route covers forms, checklists, fee schedules and administrative guidance. Adopted-code review remains separate.',400);
  if(source.jurisdiction_name!==profile.name || !['OH','KY'].includes(profile.state))throw evidenceError('Source and canonical Ohio/Kentucky jurisdiction must match.');
- const publisher=clean(input.publisher_name,200),label=clean(input.scope_label,500),kind=String(input.scope_kind || '');
+ if(['draft','proposed','historical','superseded'].includes(source.content_status) || source.superseded_by)
+  throw evidenceError('Retain draft/historical evidence; current administrative review requires a current or unverified version.');
+ const publisher=clean(input.publisher_name,200),kind=String(input.scope_kind || '');
  const areas=Array.isArray(input.named_areas)?[...new Set(input.named_areas.map(a=>clean(a,120)))]:[];
- if(!publisher || !label || !['unincorporated','named_jurisdiction','listed_areas'].includes(kind) || !areas.length || areas.length>20 || areas.some(a=>!a))
+ const label=kind==='listed_areas'?'Listed areas: '+areas.join('; '):areas[0];
+ if(!publisher || !['unincorporated','named_jurisdiction','listed_areas'].includes(kind) || !areas.length || areas.length>20 || areas.some(a=>!a))
   throw evidenceError('Select a publisher and explicit bounded scope/covered areas.',400);
  if(profile.type==='county' && kind==='named_jurisdiction')throw evidenceError('County coverage must explicitly identify unincorporated or listed areas; the county name alone does not establish authority over cities.',400);
  const evidenceUrl=safeAuthorityUrl(input.current_evidence_url),reference=clean(input.current_evidence_reference,500),notes=clean(input.review_notes,2000);
@@ -57,7 +65,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
  if(!dryRun && !/^[a-zA-Z0-9_-]{16,100}$/.test(requestId || ''))throw evidenceError('A stable manual review request id is required.',400);
  let source=await sourceEntity.get(sourceDocumentId),profile=await profileEntity.get(source.jurisdiction_id);
  const payloadDigest=await evidenceDigest({source_document_id:sourceDocumentId,action,input});
- const key='source-authority-review:'+requestId,oldState=source.authority_review_state || {};
+ const key='source-authority-review:'+requestId,oldRaw=source.authority_review_state,oldState=oldRaw || {};
  let audit;
  if(!dryRun){
   const rows=await auditEntity.filter({request_key:key},'created_date',2,0);
@@ -90,7 +98,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
    payload_sha256:payloadDigest,before_fields:metadata(source),next_fields:nextFields,action,requested_by:actor,requested_at:new Date(now()).toISOString()};
  }
  const creating={request_key:key,payload_sha256:payloadDigest,status:'creating'};
- source=await write(sourceEntity,source,{authority_review_state:creating},{...audit.source_identity,authority_review_state:oldState});
+ source=await write(sourceEntity,source,{authority_review_state:creating},{...audit.source_identity,authority_review_state:oldRaw});
  if(!audit.id){
   if(oldState.request_key===key && ['creating','uncertain'].includes(oldState.status)){
    await write(sourceEntity,source,{authority_review_state:{...creating,status:'uncertain'}},{...audit.source_identity,authority_review_state:creating});
@@ -111,6 +119,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
  if(!evidenceEqual(profileIdentity(profile),audit.profile))throw evidenceError('Canonical jurisdiction changed during review.');
  if(action==='verify')await assertSourceScopeReviewEvidence({...source,...audit.next_fields},{segmentEntity,profileEntity});
  const fields={...audit.next_fields,authority_review_state:{...creating,status:'complete',audit_id:audit.id}};
- source=await write(sourceEntity,{...source,...audit.before_fields},fields,{...audit.source_identity,authority_review_state:creating});
+ source=await write(sourceEntity,source,fields,{...audit.source_identity,
+  ...Object.fromEntries(reviewFields.map(k=>[k,source[k]])),authority_review_state:creating});
  return{success:true,status:'applied',review:source.authority_review,audit_id:audit.id,llm_calls:0};
 }
