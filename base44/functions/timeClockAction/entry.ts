@@ -2475,6 +2475,14 @@ Deno.serve(async (req) => {
         }
         const retiredReconciliation = retiredEvidenceVerified ? reconcileShiftEvidence(retiredShifts, summary) : undefined;
         if (retiredReconciliation && !retiredReconciliation.verified) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} employee reconciliation failed.`, pay_period_id: period.id, generations: [] });
+        if (summary.invalidated_by_role || summary.invalidation_authentication_method) {
+          if (summary.invalidated_by_role !== 'admin' || summary.invalidation_authentication_method !== 'session' || !summary.invalidated_by_reopen_request_id) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} reopen authority provenance is invalid.`, pay_period_id: period.id, generations: [] });
+          const reopenEvidence = await auditEntity.filter({ action: 'pay_period_status', request_id: summary.invalidated_by_reopen_request_id });
+          if (!Array.isArray(reopenEvidence) || reopenEvidence.length !== 1 || !['confirmed', 'recovered'].includes(String(reopenEvidence[0]?.outcome || '')) ||
+              asEmail(reopenEvidence[0]?.actor_email) !== asEmail(summary.invalidated_by) || String(reopenEvidence[0]?.actor_role || '') !== summary.invalidated_by_role ||
+              String(reopenEvidence[0]?.authentication_method || '') !== summary.invalidation_authentication_method ||
+              String(reopenEvidence[0]?.details?.decision || '') !== 'reopen' || String(reopenEvidence[0]?.details?.pay_period_id || '') !== period.id) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} reopen audit provenance failed verification.`, pay_period_id: period.id, generations: [] });
+        }
         if (Number(summary.snapshot_version || 0) >= 7) {
           const manifestApprovers = [...new Set(retiredShifts.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
           const expectedOverlap = manifestApprovers.includes(asEmail(summary.locked_by));
