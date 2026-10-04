@@ -68,7 +68,7 @@ test('compiled discovery refresh retains sources, archives one file, and makes n
   assert.equal(r.data.research_attempts, 0);
   assert.equal(f.calls.research, 0);
   assert.equal(f.calls.extraction, 0);
-  assert.equal(f.calls.downloads, 1);
+  assert.equal(f.calls.downloads, 2);
   assert.equal(f.calls.uploads, 1);
   assert.equal(f.record().documents.length, 4);
   const archive = f.record().documents.find(d => d.file_url);
@@ -85,7 +85,7 @@ test('repeat discovery preserves archive and existing manual/omitted evidence', 
   await invoke();
   assert.deepEqual(f.record().documents[0], old);
   assert.equal(f.record().documents[1].file_url, 'original');
-  assert.equal(f.calls.downloads, 1);
+  assert.equal(f.calls.downloads, 2);
   assert.equal(f.record().documents.filter(d => d.file_url).length, 3);
 });
 test('manual document collection protection cannot be bypassed by settings', async () => {
@@ -105,12 +105,12 @@ test('PDF URL returning HTML never creates a fake archive', async () => {
   assert.equal(f.record().documents.length, 4);
   assert.equal(f.record().documents.some(d => d.file_url), false);
 });
-test('normal manual research remains allowed and preserves successful upload if extraction fails', async () => {
+test('normal manual research remains allowed while archival defers AI extraction', async () => {
   const f = setup({ extractionFails: true });
   const r = await invoke({ discovery_only: false });
   assert.equal(r.data.success, true);
   assert.equal(f.calls.research, 1);
-  assert.equal(f.calls.extraction, 1);
+  assert.equal(f.calls.extraction, 0);
   assert.equal(f.record().documents[0].file_url, 'https://archive.gov/file.pdf');
   assert.match(f.record().documents[0].source_sha256, /^[a-f0-9]{64}$/);
 });
