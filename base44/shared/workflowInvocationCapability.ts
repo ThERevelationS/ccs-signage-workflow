@@ -5,6 +5,7 @@ const WORKFLOW_CAPABILITY_HASHES: Record<string, string> = {
   backupToGoogleDrive: '3953829bffb28c3a58e5a3491c7c52f9987867fbbba426e64826c8243ad75463',
   auditJurisdictionAccuracy: 'bc0b14e3cc1212382f2aaf87bceef3a3c593a59c83f9bf68e0088384b806cac3',
   refreshJurisdiction: '3df7cc591cb73abbacc2bff993f53dfaa1e6eea116989ad7a6ed44e9b9125887',
+  refreshJurisdictionTargeted: '1ff5bab9cc29af44a548b7f0355d630b30112fa980e2ac063cc998e373f34cc0',
   detectSalesDuplicates: '35a68624dd682c8fffccf75d44f04ab35333ac8005868410caca045faa911ac1',
   smartsheetSyncAction: '75e3ff6d0862cc68a2694148436e3849e7b9c700a67380676f809de47b6da509',
   sendGmail: 'bfd7c0e515c830b3ea600fe62d32039f98e7fa92de0928787ecdbc69d15d4e45',
