@@ -2491,6 +2491,26 @@ Deno.serve(async (req) => {
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || ''));
       };
+      const verifyActionProvenance = async (change: any) => {
+        const provenance = change?.action_provenance;
+        if (!provenance) return false;
+        const evidence = await auditEntity.get(String(provenance.audit_id || '')).catch(() => null);
+        const allowedActions = change.change_type === 'removed'
+          ? ['admin_archive']
+          : ['admin_correction', 'clock_in', 'clock_out', 'punch_exception'];
+        return Boolean(evidence &&
+          allowedActions.includes(String(evidence.action || '')) &&
+          ['confirmed', 'recovered'].includes(String(evidence.outcome || '')) &&
+          String(evidence.time_entry_id || '') === String(change.time_entry_id || '') &&
+          String(evidence.request_id || '') === String(provenance.request_id || '') &&
+          String(evidence.action || '') === String(provenance.action || '') &&
+          String(evidence.outcome || '') === String(provenance.outcome || '') &&
+          asEmail(evidence.actor_email) === asEmail(provenance.actor_email) &&
+          String(evidence.actor_role || '') === String(provenance.actor_role || '') &&
+          String(evidence.authentication_method || '') === String(provenance.authentication_method || '') &&
+          String(evidence.server_timestamp || '') === String(provenance.server_timestamp || '') &&
+          String(evidence.reason || '') === String(provenance.reason || ''));
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
@@ -2540,6 +2560,7 @@ Deno.serve(async (req) => {
         if (Number(summary.snapshot_version || 0) >= 10) {
           for (const change of summary.generation_changes || []) {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
+            if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
           }
         }
         generations.push({
