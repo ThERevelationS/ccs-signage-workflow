@@ -21,10 +21,12 @@ const boundedInteger = (value: unknown, fallback: number, max: number) => {
 
 async function loadAllProfiles(entity: any) {
   const rows: any[] = [];
-  for (let skip = 0; skip < 10000; skip += 500) {
+  let skip = 0;
+  while (true) {
     const page = await entity.filter({ state: { $in: ["OH", "KY"] } }, "created_date", 500, skip);
     rows.push(...page);
     if (page.length < 500) break;
+    skip += 500;
   }
   return rows;
 }
