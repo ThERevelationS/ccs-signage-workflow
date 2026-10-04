@@ -4,7 +4,7 @@ import {build} from 'esbuild';
 import {readFile} from 'node:fs/promises';
 import {PDF_TEXT_METHOD,assembledSourceText,textSha256} from '../base44/shared/jurisdictionSourcePdfText.mjs';
 const built=await build({entryPoints:['base44/functions/getPermittingSourceTextPages/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
- plugins:[{name:'auth-boundary',setup(b){b.onResolve({filter:/^npm:@base44\\/sdk/},()=>({path:'sdk',namespace:'mock'}));
+ plugins:[{name:'auth-boundary',setup(b){b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
  b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const createClientFromRequest=()=>globalThis.pageFixture;',loader:'js'}));}}]});
 let handler;globalThis.Deno={serve:fn=>{handler=fn;}};
 await import('data:text/javascript;base64,'+Buffer.from(built.outputFiles[0].text).toString('base64'));
