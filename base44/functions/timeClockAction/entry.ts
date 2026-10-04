@@ -292,6 +292,64 @@ async function loadAllFilteredRows(entity: any, query: any, sort: string, label:
   throw new Error(`${label} exceeds the 50,000-record safety limit.`);
 }
 
+async function unresolvedPunchReviewSummary({ entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail }: any) {
+  const unresolvedEntries = (await loadAllFilteredRows(
+    entryEntity,
+    { user_email: userEmail, status: 'needs_resolution' },
+    '-clock_in',
+    'Unresolved punch-review shifts',
+  )).filter((entry: any) => !entry.archived_test_data && !entry.archived_admin);
+  if (unresolvedEntries.length === 0) return null;
+
+  const items: any[] = [];
+  for (const entry of unresolvedEntries) {
+    const punchExceptionId = String(entry?.punch_exception_id || '').trim();
+    const punchCase = punchExceptionId ? await punchExceptionEntity.get(punchExceptionId).catch(() => null) : null;
+    const correctionRequestId = String(punchCase?.correction_request_id || '').trim();
+    const correctionRequest = correctionRequestId ? await correctionRequestEntity.get(correctionRequestId).catch(() => null) : null;
+    const correctionStatus = String(correctionRequest?.status || '');
+    const punchStatus = String(punchCase?.status || '');
+    const linkageOk = Boolean(
+      punchCase?.id && correctionRequest?.id &&
+      asEmail(punchCase.user_email) === userEmail &&
+      asEmail(correctionRequest.user_email) === userEmail &&
+      String(punchCase.time_entry_id || '') === String(entry.id) &&
+      String(correctionRequest.time_entry_id || '') === String(entry.id) &&
+      String(correctionRequest.punch_exception_id || '') === String(punchCase.id) &&
+      String(punchCase.correction_request_id || '') === String(correctionRequest.id) &&
+      String(correctionRequest.request_id || '') === String(punchCase.request_id || '') &&
+      correctionRequest.request_kind === 'missed_clock_out' &&
+      punchCase.exception_type === 'missed_clock_out'
+    );
+    const reviewState = !linkageOk
+      ? 'needs_manager_investigation'
+      : correctionStatus === 'rejected' || punchStatus === 'rejected'
+        ? 'rejected_needs_followup'
+        : ['pending', 'reviewing'].includes(correctionStatus) && punchStatus === 'pending_manager_review'
+          ? 'awaiting_manager_review'
+          : 'needs_manager_investigation';
+    items.push({
+      time_entry_id: entry.id,
+      clock_in: entry.clock_in || null,
+      approval_status: entry.approval_status || 'needs_review',
+      punch_exception_id: punchCase?.id || punchExceptionId || null,
+      punch_exception_status: punchStatus || null,
+      correction_request_id: correctionRequest?.id || correctionRequestId || null,
+      correction_status: correctionStatus || null,
+      reported_clock_out: punchCase?.claimed_clock_out || correctionRequest?.requested_changes?.clock_out || null,
+      review_state: reviewState,
+      linkage_verified: linkageOk,
+    });
+  }
+
+  return {
+    count: items.length,
+    has_integrity_issue: items.some((item: any) => item.review_state === 'needs_manager_investigation'),
+    has_rejected_item: items.some((item: any) => item.review_state === 'rejected_needs_followup'),
+    items,
+  };
+}
+
 async function audit(auditEntity: any, data: any) {
   try {
     await auditEntity.create(data);
@@ -2073,6 +2131,10 @@ Deno.serve(async (req) => {
     state = await recoverCompletedClockInMutationGate(stateEntity, entryEntity, auditEntity, state, target);
 
     if (action === 'status') {
+      const unresolvedPunchReview = await unresolvedPunchReviewSummary({
+        entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
+      });
+      const unresolvedPunchReviewFields = unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {};
       if (state.status === 'clocked_in' && state.active_entry_id) {
         const entry = await entryEntity.get(state.active_entry_id).catch(() => null);
         if (!entry?.id || entry.status !== 'clocked_in' || asEmail(entry.user_email) !== target.email || entry.archived_test_data || entry.archived_admin) {
@@ -2109,6 +2171,7 @@ Deno.serve(async (req) => {
         if (shiftSubtransition) {
           return Response.json({
             success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+            ...unresolvedPunchReviewFields,
             ...shiftSubtransition,
             break_status: currentBreakStatus, active_break: safeActiveBreak, break_summary: breakSummary,
             work_pause_allowed: target.can_work_pause === true,
@@ -2154,6 +2217,7 @@ Deno.serve(async (req) => {
                 : '';
           return Response.json({
             success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+            ...unresolvedPunchReviewFields,
             requires_punch_resolution: true,
             punch_resolution: {
               type: 'missed_clock_out',
@@ -2175,6 +2239,7 @@ Deno.serve(async (req) => {
         }
         return Response.json({
           success: true, status: 'clocked_in', entry, user: publicEmployee(target),
+          ...unresolvedPunchReviewFields,
           break_status: currentBreakStatus, active_break: activeBreak || null, break_summary: breakSummary,
           work_pause_allowed: target.can_work_pause === true,
           employment_type: target.employment_type || 'hourly',
@@ -2191,6 +2256,7 @@ Deno.serve(async (req) => {
         const lateClockAction = body?.clock_action_intent === true && Number.isInteger(companyMinutes) && companyMinutes >= 15 * 60;
         return Response.json({
           success: true, status: 'clocked_out', entry: null, user: publicEmployee(target),
+          ...unresolvedPunchReviewFields,
           ...(lateClockAction ? {
             requires_late_clock_in_review: true,
             late_clock_in_review: {
@@ -2211,6 +2277,7 @@ Deno.serve(async (req) => {
         return Response.json({
           success: true,
           status: state.status,
+          ...unresolvedPunchReviewFields,
           transition: state.status === 'clocking_out' ? 'clock_out' : 'clock_in',
           transition_started_at: state.pending_started_at || null,
           user: publicEmployee(target),
