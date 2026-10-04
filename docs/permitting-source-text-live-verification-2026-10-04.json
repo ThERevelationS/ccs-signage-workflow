@@ -1,0 +1,136 @@
+{
+  "phase": "Phase 3.1 — bounded deterministic PDF text extraction",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "date": "2026-10-04",
+  "previous_checkpoint": "6ac25af64ae3f78eae8a5232",
+  "starting_git_head": "933bf41507627d75ba85314b9823e6c267c429f4",
+  "validation_git_head": "f774b164a7ed9189a2d0ead92605e7cfd7615e17",
+  "method": "pdfjs-4.8.69-text-v1",
+  "new_dependencies": [],
+  "frontend_published": false,
+  "bounds": {
+    "sources_per_cycle": 1,
+    "pages_per_cycle": 5,
+    "source_scan": 20,
+    "max_bytes": 10485760,
+    "fetch_ms": 12000,
+    "parse_ms": 12000,
+    "lease_ms": 90000,
+    "max_page_chars": 50000,
+    "max_source_text_chars": 500000,
+    "automatic_failures": 3
+  },
+  "morrow_acceptance": {
+    "success": true,
+    "source_document_id": "6ac2593367c75c73d83cf39b",
+    "status": "complete",
+    "pages_processed": 2,
+    "pages_extracted": 2,
+    "total_pages": 2,
+    "next_page": 3,
+    "llm_calls": 0,
+    "runtime_ms": 7383,
+    "storage_reads": 1,
+    "uploads": 0,
+    "transport": "Exact source helper through connected Base44 tools with real Deno PDF runtime"
+  },
+  "morrow_result": {
+    "catalog_source_id": "6ac2593367c75c73d83cf39b",
+    "pages": 2,
+    "text_characters": 2138,
+    "status": "complete",
+    "page_text_sha256": [
+      "ec19c6de704ed0c32c98443aa1af86c063cf0ac297f402cd954bd735611902b7",
+      "1a0767417ffbaeb7bcf65e9255c28b402b2501ef321d0cbf570c86dd8c685de2"
+    ],
+    "archive_hash": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+    "archive_bytes": 95880,
+    "source_authority_fields_unchanged": true
+  },
+  "harness_initial_failure": {
+    "status": "failed",
+    "error": "Deno extraction returned no page receipt",
+    "text_persisted": false,
+    "notes": "Deno eval requires a CODE_ARG; initial stdin harness returned no parser receipt. Inspected before one corrected manual attempt. Callback count was not an actual confirmed storage read."
+  },
+  "scheduled_initial_failure": {
+    "source_document_id": "6ac25879c6eeff85438f9ba6",
+    "at": "2026-10-04T14:30:06.292Z",
+    "error": "Setting up fake worker failed: \"No such module \"pdf.worker.mjs\".\".",
+    "archive_retained": true,
+    "text_persisted": false,
+    "backoff_recorded": true
+  },
+  "worker_packaging_fix": {
+    "explicit_import": "npm:pdfjs-dist@4.8.69/legacy/build/pdf.worker.mjs",
+    "preloaded_handler": true,
+    "deno_missing_worker_path_regression": true,
+    "fresh_bundled_runtime_regression": true
+  },
+  "batavia_recovery": {
+    "success": true,
+    "source_document_id": "6ac25879c6eeff85438f9ba6",
+    "status": "partial",
+    "pages_processed": 5,
+    "pages_extracted": 5,
+    "total_pages": 179,
+    "next_page": 6,
+    "llm_calls": 0,
+    "runtime_ms": 6700,
+    "uploads": 0,
+    "transport": "Connected Base44 exact source helper + actual Deno runtime"
+  },
+  "batavia_result": {
+    "source_document_id": "6ac25879c6eeff85438f9ba6",
+    "status": "partial",
+    "total_pages": 179,
+    "pages_extracted": 5,
+    "next_page": 6,
+    "complete_document_text": false,
+    "text_characters": 20217,
+    "authority_classification": "unknown_review_required",
+    "content_status": "unknown"
+  },
+  "preservation": {
+    "morrow_profile_documents": 16,
+    "boone_profile_documents": 36,
+    "boone_catalog_records": 48,
+    "profiles_exact_documents_equality": true,
+    "boone_catalog_equality": true,
+    "no_rules_created": true,
+    "no_jobs_modified": true
+  },
+  "dispatcher": {
+    "restored_enabled": true,
+    "config": {
+      "enabled": true,
+      "interval_minutes": 15,
+      "max_dispatch_per_cycle": 5,
+      "max_in_flight": 20,
+      "daily_dispatch_limit": 40,
+      "retry_limit": 3
+    },
+    "state_unchanged": true,
+    "daily_research_attempts_before": 40,
+    "daily_research_attempts_after": 40
+  },
+  "validation": {
+    "tests_passed": 122,
+    "tests_failed": 0,
+    "bundles": [
+      "continuePermittingSourceText",
+      "permittingResearchBacklogDispatch"
+    ],
+    "targeted_eslint": true,
+    "git_diff_check": true,
+    "full_build": true,
+    "full_build_before_runtime_packaging_only_fix": true,
+    "nonblocking_warnings": [
+      "Existing baseline-browser-mapping and Browserslist warnings",
+      "PDF.js rendering-only DOMMatrix/Path2D warnings during text-only checks"
+    ]
+  },
+  "live_transport": "Exact core helper through authenticated Base44 entity tools, actual Deno runtime for bytes/text. No Base44 CLI reauthentication, no cross-app architecture, no claim of direct manual HTTP endpoint invocation.",
+  "scheduled_after_fix": "Awaiting next observed 15-minute cycle.",
+  "next": "Verify scheduled continuation; then segmented large-document pages and evidence-bound structured extraction with authority review."
+}
