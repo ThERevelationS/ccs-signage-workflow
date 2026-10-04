@@ -802,7 +802,9 @@ export default function TimeClockAdmin() {
       <TimeClockPunchExceptionReport
         punchExceptions={punchExceptions}
         timeEntries={timeEntries}
+        correctionRequests={correctionRequests}
         onReviewEntry={setDetailEntry}
+        onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
       />
 
       <div className="clay-card p-4">
