@@ -249,6 +249,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       try {
         const result = await archiveKnownJurisdictionSource({
           entity: base44.asServiceRole.entities.JurisdictionProfile, jurisdictionId: id,
+          catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument,
           fetchSource: safeExternalFetch,
           uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
           manual: false,
