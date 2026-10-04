@@ -2567,7 +2567,15 @@ Deno.serve(async (req) => {
           String(appliedAudit.time_entry_id || '') === String(change.time_entry_id || '') &&
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
           String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
-          (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))));
+          (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))) &&
+          (!provenance.corrected_clock_in || (
+            String(appliedAudit.details?.corrected?.clock_in || '') === String(provenance.corrected_clock_in || '') &&
+            String(appliedAudit.details?.corrected?.clock_out || '') === String(provenance.corrected_clock_out || '') &&
+            Number(appliedAudit.details?.corrected?.total_hours || 0) === Number(provenance.corrected_total_hours || 0) &&
+            String(change.after?.clock_in || '') === String(provenance.corrected_clock_in || '') &&
+            String(change.after?.clock_out || '') === String(provenance.corrected_clock_out || '') &&
+            Number(change.after?.total_hours || 0) === Number(provenance.corrected_total_hours || 0)
+          )));
       };
       const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
