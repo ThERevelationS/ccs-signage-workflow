@@ -13,7 +13,7 @@ import {
 } from "../../shared/permittingResearchDispatchConfig.mjs";
 
 const PERMITTING_APP_ID = "69b1840cf75aba55e115d020";
-const PERMITTING_API_KEY = Deno.env.get("PERMITTING_API_KEY") || "";
+const PERMITTING_ACCESS_TOKEN = Deno.env.get("PERMITTING_ACCESS_TOKEN") || "";
 const DISPATCH_VERSION = "continuous_v2_cost_controlled";
 const PAGE_SIZE = 500;
 
@@ -64,23 +64,33 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
   );
 }
 
-async function researchRequestById(id: string) {
+function researchAuthorization(req: Request) {
+  const configured = String(PERMITTING_ACCESS_TOKEN || "").trim();
+  if (configured) return "Bearer " + configured;
+
+  const incoming = String(req.headers.get("authorization") || "").trim();
+  if (/^Bearer\s+\S+/i.test(incoming)) return incoming;
+
+  return "";
+}
+
+async function researchRequestById(id: string, authorization: string) {
   const response = await fetch(
     "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest/" + encodeURIComponent(id),
-    { headers: { "api_key": PERMITTING_API_KEY } },
+    { headers: { "Authorization": authorization } },
   );
   if (!response.ok) throw new Error("ResearchRequest poll returned HTTP " + response.status + ".");
   return await response.json();
 }
 
-async function createResearchRequest(row: any) {
+async function createResearchRequest(row: any, authorization: string) {
   const response = await fetch(
     "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api_key": PERMITTING_API_KEY,
+        "Authorization": authorization,
       },
       body: JSON.stringify(researchRequestPayload(row)),
     },
@@ -108,8 +118,9 @@ Deno.serve(async (req) => {
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
-    if (!PERMITTING_API_KEY) {
-      return Response.json({ error: "Permitting research service is not configured" }, { status: 503 });
+    const researchAuth = researchAuthorization(req);
+    if (!researchAuth) {
+      return Response.json({ error: "Permitting research authorization is unavailable" }, { status: 503 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -179,7 +190,7 @@ Deno.serve(async (req) => {
 
       let request;
       try {
-        request = await researchRequestById(requestId);
+        request = await researchRequestById(requestId, researchAuth);
       } catch {
         activeRows.push(row);
         continue;
@@ -292,7 +303,7 @@ Deno.serve(async (req) => {
 
     for (const row of reserved) {
       try {
-        const requestId = await createResearchRequest(row);
+        const requestId = await createResearchRequest(row, researchAuth);
         const completedAt = new Date().toISOString();
         const result = await Queue.updateMany(
           { id: row.id, status: "source_discovery", research_dispatch_token: runToken },
