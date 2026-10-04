@@ -1307,6 +1307,12 @@ async function pushDataset(
   const deferredBase44Updates: any[] = [];
   const deferredConflictRecordIds: string[] = [];
   const deferredConflictDecisions: string[] = [];
+  const deferredOrderVerification = new Map<string, {
+    rowId: string;
+    expectedSnapshot: Record<string, any>;
+    originalUpdatedDate: string;
+    requiresRemoteWrite: boolean;
+  }>();
 
   for (let recordIndex = 0; recordIndex < pendingRecords.length; recordIndex++) {
     const salesPushTimeBudgetMs = Math.max(60_000, Number(options?.salesPushTimeBudgetMs) || 240_000);
