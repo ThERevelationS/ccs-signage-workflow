@@ -3,7 +3,7 @@ import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
 import { updateFleetRecordIfCurrent } from '../../shared/fleetRecordPersistence.ts';
 import { createFleetRepairEstimateSafely } from '../../shared/fleetRepairEstimateCreate.ts';
 import { evaluateRepairApprovalPolicy, repairEstimatePatch } from '../../shared/fleetRepairEstimateCore.ts';
-import { buildMechanicRecoveryPatch, mechanicGrantAllowsMutation, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
+import { buildMechanicRecoveryPatch, mechanicGrantAllowsAction, mechanicGrantAllowsMutation, selectReusableMechanicUploads } from '../../shared/fleetMechanicMutationRecovery.ts';
 
 const ACTIVE = new Set(['open','assigned','in_progress']);
 const MAX_BODY_BYTES = 5_500_000;
@@ -301,6 +301,13 @@ function mechanicAccessChangedError(reason = '') {
   return error;
 }
 
+async function requireCurrentMechanicActionGrant(Access: any, grantId: string, action: string) {
+  const latest = await Access.get(grantId).catch(()=>null);
+  const check = mechanicGrantAllowsAction(latest,action,Date.now());
+  if (!check.allowed) throw mechanicAccessChangedError(check.reason);
+  return latest;
+}
+
 async function requireCurrentMechanicGrant(Access: any, grantId: string, action: string, equipmentId: string) {
   const latest = await Access.get(grantId).catch(()=>null);
   const check = mechanicGrantAllowsMutation(latest,action,equipmentId,Date.now());
@@ -363,7 +370,7 @@ function sanitizeTask(row: any) {
   };
 }
 
-async function portalPayload(base44: any, grant: any) {
+async function portalPayload(base44: any, grant: any, Access: any) {
   const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
   const Equipment = base44.asServiceRole.entities.FleetEquipment;
   const Task = base44.asServiceRole.entities.FleetMaintenanceTask;
@@ -374,7 +381,8 @@ async function portalPayload(base44: any, grant: any) {
     loadAllEntityRows({entity:Task,sort:'start_date',label:'Mechanic portal Fleet maintenance schedules'}),
     loadAllEntityRows({entity:Estimate,sort:'-updated_date',label:'Mechanic portal repair-estimate state'}),
   ]);
-  const grantScope = scopeForGrant(grant);
+  const currentGrant = await requireCurrentMechanicActionGrant(Access,String(grant?.id || ''),'bootstrap');
+  const grantScope = scopeForGrant(currentGrant);
   const allowedEquipmentIds = new Set(grantScope.allowed_equipment_ids);
   const scopedWorkOrders = grantScope.scope_mode === 'selected_equipment'
     ? workOrders.filter((row:any)=>allowedEquipmentIds.has(String(row.equipment_id || '')))
@@ -384,7 +392,7 @@ async function portalPayload(base44: any, grant: any) {
   const visible = [...active,...completed];
   const equipmentIds = new Set(visible.map((row:any)=>String(row.equipment_id || '')).filter(Boolean));
   const taskIds = new Set(visible.map((row:any)=>String(row.maintenance_task_id || '')).filter(Boolean));
-  const canEstimate = Array.isArray(grant?.allowed_actions) && grant.allowed_actions.includes('estimate_submit');
+  const canEstimate = Array.isArray(currentGrant?.allowed_actions) && currentGrant.allowed_actions.includes('estimate_submit');
   const repairEstimates:any[] = [];
   const approvalBlocks = new Map<string,{blocked:boolean;reason:string}>();
   for (const wo of visible) {
@@ -396,7 +404,7 @@ async function portalPayload(base44: any, grant: any) {
       continue;
     }
     const estimate=matches[0];
-    const ownedByGrant = estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(grant.id||'');
+    const ownedByGrant = estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(currentGrant.id||'');
     if (ownedByGrant) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
     else repairEstimates.push({work_order_id:wo.id,visibility:estimate.estimate_source === 'mechanic_portal' ? 'other_mechanic' : 'ccs_managed',status:'managed'});
     if (ACTIVE.has(wo.status) && estimate.approval_required === true && estimate.status !== 'approved') {
@@ -413,7 +421,7 @@ async function portalPayload(base44: any, grant: any) {
   const publicWorkOrder = (row:any) => ({...sanitizeWorkOrder(row),approval_block:approvalBlocks.get(String(row.id)) || {blocked:false,reason:''}});
   return {
     success:true,
-    portal:{name:grant?.name || 'External Mechanic',capabilities:{estimates:canEstimate}},
+    portal:{name:currentGrant?.name || 'External Mechanic',capabilities:{estimates:canEstimate}},
     active_work_orders:active.map(publicWorkOrder),
     recent_completed:completed.map(publicWorkOrder),
     equipment:equipment.filter((row:any)=>equipmentIds.has(String(row.id))).map(sanitizeEquipment),
@@ -583,7 +591,7 @@ Deno.serve(async (req) => {
     } else if (!allowed.has(action)) return json({error:'This mechanic link is not allowed to perform that action.'},{status:403});
     await Access.update(grant.id,{last_used_at:nowIso()}).catch(()=>null);
 
-    if (action === 'bootstrap') return json(await portalPayload(base44,grant));
+    if (action === 'bootstrap') return json(await portalPayload(base44,grant,Access));
 
     const WorkOrder = base44.asServiceRole.entities.FleetMaintenanceWorkOrder;
     const id = String(body?.work_order_id || '').trim();
