@@ -73,6 +73,7 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
     text_sha256:page.text_sha256,excerpt:raw.excerpt,extraction_date:extractionDate,
     evidence_scope:'selected_pdf_page',verification_status:draft?'draft_context':historical?'historical':reviewedAdoptedSource(source)?'verified':'needs_verification'};
   const key=await evidenceDigest({source:source.id,hash:source.file_hash_sha256,page:page.page,text_sha256:page.text_sha256,
+    kind:sourceRuleKind(source),authority_review_id:source.authority_review?.review_id || null,jurisdiction_scope:source.jurisdiction_scope || null,
     category:raw.rule_category,requirement:raw.requirement,excerpt:raw.excerpt,numeric,sign,district,trigger,exceptions});
   return {jurisdiction_name:source.jurisdiction_name,jurisdiction_id:source.jurisdiction_id,issuing_office:source.issuing_office || '',
     rule_kind:sourceRuleKind(source),is_workflow_instruction:false,
