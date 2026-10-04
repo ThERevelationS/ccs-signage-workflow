@@ -105,8 +105,15 @@ const lateClockInCase = {
 const lateClockInMarkup = render([lateClockInEntry], { punchExceptions: [lateClockInCase] });
 assert.match(lateClockInMarkup, /Missed Clock In awaiting manager review/);
 assert.match(lateClockInMarkup, /reconstructed shift must remain Needs Review/);
-assert.match(lateClockInMarkup, /Review/);
-console.log('PASS employee-attested missed Clock In appears directly in Needs Attention');
+assert.match(lateClockInMarkup, /Approve Shift/);
+console.log('PASS completed employee-attested missed Clock In routes directly to final shift approval');
+
+const activeLateClockInMarkup = render([{ ...lateClockInEntry, id: 'late-clock-in-active', status: 'clocked_in', clock_out: null }], {
+  punchExceptions: [{ ...lateClockInCase, id: 'late-clock-in-active-case', time_entry_id: 'late-clock-in-active' }],
+});
+assert.doesNotMatch(activeLateClockInMarkup, /Approve Shift/);
+assert.match(activeLateClockInMarkup, /Review Shift/);
+console.log('PASS active reconstructed missed Clock In cannot be offered final shift approval before Clock Out');
 
 const resolvedLateClockInMarkup = render([lateClockInEntry], {
   punchExceptions: [{ ...lateClockInCase, status: 'resolved' }],
@@ -210,4 +217,4 @@ const expiredAcknowledgementMarkup = render([acknowledgedOldEntry], {
 assert.match(expiredAcknowledgementMarkup, /Possible missed clock-out/);
 console.log('PASS expired Worked Through acknowledgement allows stale-shift warning to return');
 
-console.log('PASS 12/12 Time Clock management exception renderer scenarios');
+console.log('PASS 13/13 Time Clock management exception renderer scenarios');
