@@ -128,4 +128,13 @@ check("Needs Input navigation reuses memoized active/completed membership", () =
   assert.equal(/const findItemProductName =/.test(source), false);
 });
 
+check("active search index is built during active/completed classification", () => {
+  assert.match(source, /searchIndex: checklistSearchIndexData/);
+  assert.match(source, /const addSearchEntry = \(item, productName, subTemplateName = ""\) => \{/);
+  assert.match(source, /searchIndex\.push\(\{ item, productName, searchableText \}\);/);
+  assert.match(source, /if \(!isCompleted\) addSearchEntry\(item, productName\);/);
+  assert.match(source, /if \(!parentCompleted\) addSearchEntry\(item, productName, stName\);/);
+  assert.equal(/const checklistSearchIndexData = useMemo\(/.test(source), false);
+});
+
 console.log(passed + "/" + passed + " SIPS checklist hierarchy performance checks passed");
