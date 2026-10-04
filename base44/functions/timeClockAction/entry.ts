@@ -2756,6 +2756,20 @@ Deno.serve(async (req) => {
         }
         return null;
       };
+      const canonicalPayrollMembershipEvidence = (audits: any[]) => {
+        const candidates = (Array.isArray(audits) ? audits : []).map((membershipAudit: any) => ({
+          membershipAudit,
+          membership: payrollMembershipFromAudit(membershipAudit),
+        })).filter((candidate: any) => candidate.membership?.company_date);
+        candidates.sort((a: any, b: any) => {
+          const aNormalized = a.membership.source === 'verified_normalized_audit_envelope' ? 0 : 1;
+          const bNormalized = b.membership.source === 'verified_normalized_audit_envelope' ? 0 : 1;
+          if (aNormalized !== bNormalized) return aNormalized - bNormalized;
+          const timeOrder = Date.parse(String(a.membershipAudit.server_timestamp || '')) - Date.parse(String(b.membershipAudit.server_timestamp || ''));
+          return timeOrder || String(a.membershipAudit.id || '').localeCompare(String(b.membershipAudit.id || ''));
+        });
+        return candidates[0] || null;
+      };
       const verifyGenerationAuditReconciliation = async (summary: any, predecessor: any) => {
         const stored = summary?.generation_audit_reconciliation;
         if (!Array.isArray(stored) || Number(summary.generation_audit_reconciliation_count || 0) !== stored.length ||
@@ -2786,14 +2800,10 @@ Deno.serve(async (req) => {
             if (!companyDate && Number(summary.snapshot_version || 0) >= 19) {
               const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
               if (!Array.isArray(membershipAudits)) return false;
-              for (const membershipAudit of membershipAudits) {
-                const membership = payrollMembershipFromAudit(membershipAudit);
-                if (membership?.company_date) {
-                  companyDate = membership.company_date;
-                  discoveryEvidence = { membershipAudit, membership };
-                  break;
-                }
-              }
+              discoveryEvidence = Number(summary.snapshot_version || 0) >= 22
+                ? canonicalPayrollMembershipEvidence(membershipAudits)
+                : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
+              if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
             }
             if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
               periodEntryIdSet.add(candidateId);
@@ -3631,7 +3641,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 21 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 22 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3799,14 +3809,10 @@ Deno.serve(async (req) => {
               if (!companyDate && snapshotVersion >= 19) {
                 const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
                 if (!Array.isArray(membershipAudits)) return Response.json({ success: false, error: 'Payroll audit membership evidence could not be loaded before finalization.' }, { status: 409 });
-                for (const membershipAudit of membershipAudits) {
-                  const membership = payrollMembershipFromAudit(membershipAudit);
-                  if (membership?.company_date) {
-                    companyDate = membership.company_date;
-                    discoveryEvidence = { membershipAudit, membership };
-                    break;
-                  }
-                }
+                discoveryEvidence = snapshotVersion >= 22
+                  ? canonicalPayrollMembershipEvidence(membershipAudits)
+                  : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
+                if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
               }
               if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
                 periodEntryIdSet.add(candidateId);
