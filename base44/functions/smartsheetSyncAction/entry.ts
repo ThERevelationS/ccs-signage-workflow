@@ -1361,7 +1361,13 @@ async function pushDataset(
     if (sharedContactId && (record.requestor_name || record.requestor_email) &&
         !isValidContactEmail(record.requestor_email)) requestorContactsSkippedNoEmail++;
     let cells = buildCells(record, bindings, dataset);
-    if (cells.length === 0) continue;
+    if (cells.length === 0) {
+      if (dataset === 'orders') {
+        errors.push(`${record.id}: No mapped Order values were available to verify or push. The Order remains queued.`);
+        orderFailedRecordIds.add(String(record.id));
+      }
+      continue;
+    }
     const existingRowId = cleanText(record?.smartsheet_row_id, 40);
     const existingSheetId = cleanText(record?.smartsheet_sheet_id, 40);
 
