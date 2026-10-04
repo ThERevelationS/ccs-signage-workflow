@@ -43,3 +43,37 @@ test('only actual downloadable file URLs are archive candidates', () => {
   assert.equal(isDownloadableResearchDocument({ url: 'https://gov.example/zoning/forms.php' }), false);
   assert.equal(permittingDocumentType({ title: 'Sign Ordinance', url: 'https://gov.example/code/signs' }), 'sign_ordinance');
 });
+
+test('Revize base URL, spaced href attributes, and underscore/plural classification', () => {
+  const docs = discoverOfficialPermittingResources('<base href="https://county.gov/"><a href= "Zoning/Zoning Permit Application.pdf">Zoning Permit Application</a><a href="Zoning/zoning_regulations.php">Zoning Regulations</a><a href="Zoning/fee_schedule.pdf">Fees</a><a href="Zoning/submittal_requirements.pdf">Submittal Requirements</a>', 'https://county.gov/government/zoning/forms.php');
+  assert.equal(docs.length, 5);
+  assert.equal(docs[1].url, 'https://county.gov/Zoning/Zoning%20Permit%20Application.pdf');
+  assert.equal(docs.find(d => d.title === 'Zoning Regulations').doc_type, 'zoning_code');
+  assert.equal(docs.find(d => d.title === 'Fees').doc_type, 'fee_schedule');
+  assert.equal(docs.find(d => d.title === 'Submittal Requirements').doc_type, 'checklist');
+});
+
+test('parent zoning directory cannot make unrelated navigation relevant', () => {
+  const docs = discoverOfficialPermittingResources('<a href="index.php">Home</a><a href="schools.php">County Schools</a><a href="calendar.php">Calendar</a><a href="forms.php#">French</a><a href="house.pdf">House Numbering Form</a><a href="sign_application.pdf">Sign Application</a>', 'https://county.gov/zoning/forms.php');
+  assert.equal(docs.length, 2);
+  assert.equal(docs[1].title, 'Sign Application');
+});
+
+test('malicious base tags and credential/external links stay outside discovery', () => {
+  const docs = discoverOfficialPermittingResources('<base href="https://evil.test/"><a href="sign.pdf">Sign Form</a><a href="https://user:pass@county.gov/permit.pdf">Permit</a><a href="https://other.gov/code">Code</a>', 'https://county.gov/zoning/forms.php');
+  assert.equal(docs.length, 2);
+  assert.equal(docs[1].url, 'https://county.gov/zoning/sign.pdf');
+});
+
+test('files precede navigation when bounded links fill up; zero budget stays empty', () => {
+  const html = '<a href="/zoning">Zoning Department</a><a href="/permit.pdf">Permit Application</a><a href="/signs.pdf">Signs Ordinance</a>';
+  const docs = discoverOfficialPermittingResources(html, 'https://county.gov/forms', { maxLinks: 2 });
+  assert.equal(docs.length, 2);
+  assert.equal(docs[1].url, 'https://county.gov/permit.pdf');
+  assert.deepEqual(discoverOfficialPermittingResources(html, 'https://county.gov/forms', { maxLinks: 0 }), []);
+});
+
+test('script/comment pseudo-anchors never become evidence', () => {
+  const docs = discoverOfficialPermittingResources('<script>const html = "<a href=\'/fake-permit.pdf\'>Permit</a>";</script><!-- <a href="/old-sign.pdf">Sign</a> -->', 'https://county.gov/forms');
+  assert.equal(docs.length, 1);
+});
