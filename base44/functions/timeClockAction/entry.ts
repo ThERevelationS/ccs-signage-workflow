@@ -3816,6 +3816,7 @@ Deno.serve(async (req) => {
                 discoveryEvidence = snapshotVersion >= 22
                   ? canonicalPayrollMembershipEvidence(membershipAudits, snapshotVersion >= 23)
                   : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
+                if (discoveryEvidence?.conflict) return Response.json({ success: false, error: 'Conflicting payroll membership evidence requires administrator investigation before finalization.' }, { status: 409 });
                 if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
               }
               if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
