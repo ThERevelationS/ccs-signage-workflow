@@ -2664,6 +2664,41 @@ Deno.serve(async (req) => {
           Number(chain[index]?.sequence || 0) === index + 1
         );
       };
+      const verifyGenerationAuditReconciliation = async (summary: any, predecessor: any) => {
+        const stored = summary?.generation_audit_reconciliation;
+        if (!Array.isArray(stored) || Number(summary.generation_audit_reconciliation_count || 0) !== stored.length ||
+            !constantTimeEqual(String(summary.generation_audit_reconciliation_hash || ''), await payloadHash(stored))) return false;
+        const windowStart = String(summary.generation_causal_window_start || '');
+        const windowEnd = String(summary.generation_causal_window_end || '');
+        if (!windowStart || !windowEnd) return false;
+        const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
+        const changedIds = new Set((summary.generation_changes || []).map((change: any) => String(change.time_entry_id || '')));
+        const periodEntryIds = [...new Set([
+          ...(Array.isArray(predecessor?.shift_manifest) ? predecessor.shift_manifest.map((row: any) => String(row.id || '')) : []),
+          ...(Array.isArray(summary.shift_manifest) ? summary.shift_manifest.map((row: any) => String(row.id || '')) : []),
+        ])].filter(Boolean).sort();
+        const expected = [];
+        for (const entryId of periodEntryIds) {
+          const audits = await auditEntity.filter({ time_entry_id: entryId });
+          if (!Array.isArray(audits)) return false;
+          for (const row of audits.filter((audit: any) =>
+            relevantActions.includes(String(audit.action || '')) &&
+            ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
+            inCausalWindow(audit.server_timestamp, windowStart, windowEnd)
+          )) {
+            expected.push({
+              audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
+              request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
+              classification: changedIds.has(entryId) ? 'mapped_payroll_delta' : 'net_non_payroll_affecting',
+            });
+          }
+        }
+        expected.sort((a: any, b: any) => {
+          const timeOrder = Date.parse(a.server_timestamp) - Date.parse(b.server_timestamp);
+          return timeOrder || a.audit_id.localeCompare(b.audit_id);
+        });
+        return constantTimeEqual(await payloadHash(expected), await payloadHash(stored));
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
