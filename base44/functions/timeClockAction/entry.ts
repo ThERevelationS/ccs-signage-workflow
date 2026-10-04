@@ -3194,7 +3194,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 9 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 10 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3223,6 +3223,7 @@ Deno.serve(async (req) => {
           const priorRows = Array.isArray(supersededGeneration.shift_manifest) ? supersededGeneration.shift_manifest : [];
           const priorById = new Map(priorRows.map((row: any) => [String(row.id || ''), row]));
           const currentById = new Map(snapshotRows.map((row: any) => [String(row.id || ''), row]));
+          const currentEntryById = new Map(confirmedLocks.map((row: any) => [String(row.id || ''), row]));
           const comparable = (row: any) => ({
             user_email: asEmail(row?.user_email), clock_in: row?.clock_in || '', clock_out: row?.clock_out || '',
             total_hours: Number(row?.total_hours || 0), approval_status: row?.approval_status || '',
