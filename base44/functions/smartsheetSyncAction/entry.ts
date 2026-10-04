@@ -1507,6 +1507,7 @@ async function pushDataset(
       await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:record.id,status:'open',local_version:pendingRecords[recordIndex].updated_date,...(fieldPlan?.unresolved?.length?{field_name:{$nin:fieldPlan.unresolved}}:{})},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}});
     } catch (err) {
       errors.push(`${record.id}: ${(err as any)?.message || 'unknown error'}`);
+      if (dataset === 'orders') orderFailedRecordIds.add(String(record.id));
     }
   }
 
