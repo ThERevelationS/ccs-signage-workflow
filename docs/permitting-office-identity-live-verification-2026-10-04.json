@@ -1,0 +1,193 @@
+{
+  "phase": "4.4",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "verified_at": "2026-10-04T21:56:52.394Z",
+  "previous_checkpoint": "6ac2c80dbdd8b9c4ec20f5ff",
+  "initial_git": "5502dedb1e45a73ba6305155ac02d90e4b95fa1d",
+  "implementation_git": "b59769f4b7ed8ee994163196d09c4d908ace522c",
+  "change": "Preserve newer government office metadata during existing catalog edits; verify only the existing Campbell candidate office identity from a retained live official department page.",
+  "live_save_mode": "Base44 connector; conditional update of six candidate fields at stable catalog index guarded by catalog ID, key, version and office ID; no whole-catalog replacement",
+  "save_receipt": {
+    "success": true,
+    "updated": 1,
+    "has_more": false
+  },
+  "readback_checks": {
+    "candidate_matches_proposal": true,
+    "seven_originals_preserved": true,
+    "office_order_stable": true,
+    "localities_preserved": true,
+    "sources_preserved": true,
+    "dispatch_preserved": true,
+    "authority_reviews_zero": true
+  },
+  "office": {
+    "id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+    "government_office_id": "office-candidate-62c6c5659216e2e9c1bcb25582d5032beec29d4a11faa0446777c268414bd1c1",
+    "name": "Campbell County Planning, Zoning and Building Inspection",
+    "office_type": "",
+    "office_types": [],
+    "workflow_steps": [],
+    "contact_phone": "(859) 292-3880",
+    "contact_email": "pzadmin@campbellcountyky.gov",
+    "contact_website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+    "contact_address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+    "contact_notes": "",
+    "government_office": {
+      "name": "Campbell County Planning, Zoning and Building Inspection",
+      "phone": "(859) 292-3880",
+      "email": "pzadmin@campbellcountyky.gov",
+      "website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+      "address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+      "notes": "",
+      "state": "KY",
+      "verification_status": "staff_verified",
+      "verified_at": "2026-10-04T21:54:36.486Z",
+      "verified_by": "Codex — authorized office identity review for brettheinlein1@gmail.com",
+      "source_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+      "verification_notes": "Current official department page confirms the candidate department identity and contacts. Printed publisher naming variants were explicitly reviewed against the same official host, phone and Suite 343 address. Office identity only; no source-currentness, adopted law, role, city coverage or address authority approval. Retained raw page: docs/official-evidence/campbell-office-2026-10-04.html (SHA-256 dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549).",
+      "retained_identity_evidence": {
+        "method": "manual-official-office-identity-v1",
+        "official_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+        "observed_at": "2026-10-04T21:50:57.167Z",
+        "http_status": 200,
+        "raw_html_sha256": "dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+        "raw_html_bytes": 28739,
+        "archived_repo_path": "docs/official-evidence/campbell-office-2026-10-04.html",
+        "normalized_text_path": "docs/official-evidence/campbell-office-2026-10-04.txt",
+        "normalized_text_sha256": "6e2dee753e137195cfb6f07e108fb6940e37be118dd7551cefca4a02c875c422",
+        "proofs": {
+          "identity": "The Planning, Zoning and Building Inspections Department of Campbell County KY",
+          "email": "pzadmin@campbellcountyky.gov",
+          "phone": "(859) 292-3880",
+          "address": "1098 Monmouth St Suite 343 Newport, KY 41071",
+          "heading": "Planning & Zoning & Building Inspections"
+        }
+      }
+    },
+    "office_candidate_registration": {
+      "method": "retained-office-candidate-v1",
+      "registration_key": "e5bd258834fa7ae6d9e32ebc8120c30c18c8be1c36b9a669f7e9c574e5e26b99",
+      "snapshot": {
+        "source": {
+          "id": "6ac25be4207035a2e5be3827",
+          "jurisdiction_id": "6ac19dcc184935c1391ee468",
+          "jurisdiction_name": "Campbell County",
+          "issuing_office": null,
+          "jurisdiction_scope": null,
+          "title": "Campbell County Sign Permit Application",
+          "official_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+          "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1dae12daf_1648823956_93665.pdf",
+          "file_hash_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+          "file_bytes": 47262,
+          "authority_classification": "application_form",
+          "content_status": "unknown",
+          "verification_status": "needs_verification",
+          "authority_confidence": "unverified",
+          "reviewer": null,
+          "effective_or_adopted_date": null,
+          "notes_gaps": "Automatically linked from a byte-verified retained archive. Successful archival does not establish adoption, current law, effective date, issuing office, or applicability. Authority and scope require review.",
+          "authority_review": null
+        },
+        "profile": {
+          "id": "6ac19dcc184935c1391ee468",
+          "name": "Campbell County",
+          "state": "KY",
+          "type": "county"
+        },
+        "proof": {
+          "physical_page": 1,
+          "text_sha256": "23511f8c83722f13bcbd550bd2282f3a0a140e8d3453762954235c9c3dde4e6b",
+          "excerpt": "Campbell County Planning, Zoning and Building Inspection"
+        },
+        "archive_document_id": "ai_2026-10-04T00:29:00Z_1"
+      },
+      "registered_by": "brettheinlein1@gmail.com",
+      "registered_at": "2026-10-04T21:36:53.647Z"
+    },
+    "office_identity_reviews": [
+      {
+        "review_id": "office-identity-dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+        "reviewed_at": "2026-10-04T21:54:36.486Z",
+        "reviewed_by": "Codex — authorized office identity review for brettheinlein1@gmail.com",
+        "evidence": {
+          "method": "manual-official-office-identity-v1",
+          "official_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "observed_at": "2026-10-04T21:50:57.167Z",
+          "http_status": 200,
+          "raw_html_sha256": "dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549",
+          "raw_html_bytes": 28739,
+          "archived_repo_path": "docs/official-evidence/campbell-office-2026-10-04.html",
+          "normalized_text_path": "docs/official-evidence/campbell-office-2026-10-04.txt",
+          "normalized_text_sha256": "6e2dee753e137195cfb6f07e108fb6940e37be118dd7551cefca4a02c875c422",
+          "proofs": {
+            "identity": "The Planning, Zoning and Building Inspections Department of Campbell County KY",
+            "email": "pzadmin@campbellcountyky.gov",
+            "phone": "(859) 292-3880",
+            "address": "1098 Monmouth St Suite 343 Newport, KY 41071",
+            "heading": "Planning & Zoning & Building Inspections"
+          }
+        },
+        "candidate_registration_key": "e5bd258834fa7ae6d9e32ebc8120c30c18c8be1c36b9a669f7e9c574e5e26b99",
+        "identity_match_basis": "Existing retained sign form and current official department page share publisher department, official county host, phone and Suite 343 address. Keep literal retained publisher name for source ownership; current heading is a reviewed naming variant.",
+        "original_identity": {
+          "name": "Campbell County Planning, Zoning and Building Inspection",
+          "phone": "",
+          "email": "",
+          "website": "",
+          "address": "",
+          "notes": "",
+          "state": "KY",
+          "verification_status": "needs_verification",
+          "verified_at": "",
+          "verified_by": "",
+          "source_url": "https://campbellcountyky.gov/egov/documents/1648823956_93665.pdf",
+          "verification_notes": "Candidate from a retained publisher quote. Current office identity, contacts, roles and coverage require separate review."
+        },
+        "verified_identity": {
+          "name": "Campbell County Planning, Zoning and Building Inspection",
+          "phone": "(859) 292-3880",
+          "email": "pzadmin@campbellcountyky.gov",
+          "website": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "address": "1098 Monmouth St, Suite 343, Newport, KY 41071",
+          "notes": "",
+          "state": "KY",
+          "verification_status": "staff_verified",
+          "verified_at": "2026-10-04T21:54:36.486Z",
+          "verified_by": "Codex — authorized office identity review for brettheinlein1@gmail.com",
+          "source_url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "verification_notes": "Current official department page confirms the candidate department identity and contacts. Printed publisher naming variants were explicitly reviewed against the same official host, phone and Suite 343 address. Office identity only; no source-currentness, adopted law, role, city coverage or address authority approval. Retained raw page: docs/official-evidence/campbell-office-2026-10-04.html (SHA-256 dab1bf520869dba6dfc04a1490a31af0a74ee5ee1ce926c00f8ca6842d672549)."
+        },
+        "authority_verified": false,
+        "address_authority_resolved": false,
+        "source_currentness_verified": false,
+        "llm_calls": 0
+      }
+    ]
+  },
+  "validation": {
+    "focused_tests": 112,
+    "new_metadata_preservation_tests": 6,
+    "targeted_lint": "passed",
+    "git_diff_check": "passed",
+    "full_build": "passed",
+    "retained_html_and_text_hashes": "passed",
+    "office_identity_reader": "accepted",
+    "unreviewed_source_scope_reader": "rejected",
+    "gate_results": "Unreviewed sign form still blocked: A current reviewed administrative source and office scope are required.\nSaved office identity gate, retained source bytes/hashes and literal proofs passed\n"
+  },
+  "scope": {
+    "office_identity_verified": true,
+    "authority_relationships_created": 0,
+    "source_currentness_verified": false,
+    "address_authority_resolved": false,
+    "jobs_work_orders_modified": 0,
+    "llm_calls": 0,
+    "dispatch_paused": false,
+    "frontend_published": false,
+    "backend_changes": 0,
+    "backend_deploys": 0
+  },
+  "remaining": "Review current official service-provider matrix and current sign-form version before source-scope approval and explicit role/coverage relationships. Commission descriptions and the older 2022 sign form contain different city lists; these are not equivalent authority claims."
+}
