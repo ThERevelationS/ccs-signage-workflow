@@ -75,6 +75,8 @@ const EMPTY_PIPELINE_SUMMARY = {
   lostReasonBreakdown: [],
   ownerOutcomePerformance: [],
   sourceOutcomePerformance: [],
+  visibleRowCount: 0,
+  loadedWorkspaceRowCount: 0,
 };
 
 export default function SalesPipeline() {
@@ -572,10 +574,25 @@ export default function SalesPipeline() {
           )}
         </section>
 
+        {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (
+          <div
+            role="status"
+            aria-label="Sales Pipeline visible row count"
+            className="mb-1 flex min-h-7 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-slate-200 bg-slate-50/80 px-2.5 py-1 text-[11px] text-slate-600"
+          >
+            <span className="font-semibold text-slate-700">
+              Rows: {pipelineSummary.visibleRowCount} shown · {pipelineSummary.loadedWorkspaceRowCount} loaded
+            </span>
+            {(recordScope === "current" || recordScope === "all" || recordScope === "outcomes") && (
+              <span>Metrics use workspace totals; filters change the rows shown.</span>
+            )}
+          </div>
+        )}
+
         {!showDuplicateCleanup && !["insights", "daily"].includes(viewMode) && (recordScope === "current" || recordScope === "all") && (
           <section aria-label="Sales Pipeline overview" className="mb-1 space-y-1">
             <div className="flex min-h-7 items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pipeline overview</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Workspace pipeline metrics</span>
               <button type="button" id="sales-more-metrics-toggle"
                 aria-expanded={showMoreMetrics}
                 aria-controls="sales-secondary-metrics"
