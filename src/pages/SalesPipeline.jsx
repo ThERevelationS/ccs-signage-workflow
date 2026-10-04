@@ -227,10 +227,12 @@ export default function SalesPipeline() {
   };
 
   const chooseView = (nextView) => {
-    // Search is a row-navigation aid. Insights has no visible result list, so
-    // do not let a hidden search silently narrow its reporting or reappear
-    // later when returning to a row-based view.
-    if (nextView === "insights") setSearchTerm("");
+    // Board is an alternate visualization of the same working set, so it keeps
+    // the current row filters. Daily/Insights are specialized views and must
+    // not inherit stale Table search criteria. Daily also must not inherit a
+    // table-header-only filter that can hide operational follow-up work.
+    if (nextView === "daily" || nextView === "insights") setSearchTerm("");
+    if (nextView === "daily") spreadsheetRef.current?.clearColumnHeaderFilter?.();
     setViewMode(nextView);
     if (nextView === "daily" || nextView === "insights") {
       setAttentionFilter("all");
