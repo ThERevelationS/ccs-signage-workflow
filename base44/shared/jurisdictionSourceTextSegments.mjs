@@ -1,9 +1,9 @@
-import { PDF_TEXT_METHOD, PDF_TEXT_PAGE_BATCH, PDF_TEXT_MAX_PAGE_CHARS, textSha256 } from './jurisdictionSourcePdfText.mjs';
+import { PDF_TEXT_METHOD, PDF_TEXT_PAGE_BATCH, PDF_TEXT_MAX_PAGE_CHARS, textSha256, assembledSourceText } from './jurisdictionSourcePdfText.mjs';
 
 export const SOURCE_TEXT_SEGMENT_MODE = 'pdf-page-segments-v1';
-const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const permanent = message => Object.assign(Error(message),{permanent:true});
-const digest = value => textSha256(new TextEncoder().encode(JSON.stringify(value)));
+const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value==='object' ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])) : value;
+const digest = value => textSha256(new TextEncoder().encode(JSON.stringify(canonical(value))));
 const segmentKey = (source,start) => [SOURCE_TEXT_SEGMENT_MODE,source.id,source.file_hash_sha256,PDF_TEXT_METHOD,start].join(':');
 
 export function segmentedProgressOwned(source) {
@@ -41,7 +41,7 @@ export async function validateTextSegment(source,row,expected) {
       row.registration_key!==segmentKey(source,row.page_start)) throw permanent('Segment archive identity or page range differs.');
   await validateSourcePages(source,row.pages,row.page_start);
   if (row.payload_sha256!==await digest(segmentData(row))) throw permanent('Segment payload hash differs.');
-  if (expected && (row.registration_key!==expected.registration_key || row.payload_sha256!==expected.payload_sha256 ||
+  if (expected && ((expected.id && row.id!==expected.id) || row.registration_key!==expected.registration_key || row.payload_sha256!==expected.payload_sha256 ||
       row.page_start!==expected.page_start || row.page_end!==expected.page_end || row.total_pages!==expected.total_pages))
     throw permanent('Segment differs from its durable pending receipt.');
   return row;
@@ -147,6 +147,7 @@ export async function readSourceEvidencePages({source,segmentEntity,startPage=1,
     throw Error('Evidence reads require one to five physical PDF pages.');
   const state=source.text_extraction_state || {}, inline=source.extracted_pages || [];
   if (state.method!==PDF_TEXT_METHOD || state.source_sha256!==source.file_hash_sha256 || state.archived_file_url!==source.archived_file_url ||
+      source.extracted_text!==assembledSourceText(source,inline) ||
       (state.storage_mode && !segmentedProgressOwned(source))) throw Error('Source text identity or cursor requires review.');
   const committed=state.pages_extracted || 0;
   if (startPage>committed) return {pages:[],next_page:startPage,available_through:committed,total_pages:state.total_pages,complete_document_text:false};
