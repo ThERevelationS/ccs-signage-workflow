@@ -13,7 +13,7 @@ function readPending(sourceId) {
   try { const p = JSON.parse(sessionStorage.getItem(storageKey(sourceId)) || "null"); return p?.source_id === sourceId ? p : null; } catch { return null; }
 }
 export default function PermittingOfficeAuthorityReview({ source, disabled, onBusy }) {
-  const [context, setContext] = useState(null), [targetId, setTargetId] = useState(source.jurisdiction_id || "");
+  const [context, setContext] = useState(null), [targetId, setTargetId] = useState(() => readPending(source.id)?.body?.jurisdiction_id || source.jurisdiction_id || "");
   const [form, setForm] = useState({ government_office_id: source.authority_review?.office_reference?.government_office_id || "",
     role: "sign_permit", coverage_area: "", page: 1, excerpt: "", review_notes: "", role_label: "", responsibility_confirmed: false });
   const [preview, setPreview] = useState(null), [pending, setPending] = useState(() => readPending(source.id));
