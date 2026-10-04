@@ -270,6 +270,7 @@ export default function SalesPipeline() {
                 setSearchTerm("");
                 setAttentionFilter("all");
                 setFilterStatus("all");
+                setColumnHeaderFilter(null);
                 if (value === "history" || value === "outcomes" || (value !== "current" && ["insights", "daily"].includes(viewMode))) setViewMode("table");
               }}>
                 <SelectTrigger aria-label="Workspace" className="h-11 w-full min-w-0 text-xs sm:h-9 sm:w-[156px]">
