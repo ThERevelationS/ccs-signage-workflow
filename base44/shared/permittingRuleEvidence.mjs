@@ -115,6 +115,9 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity}) {
         source.jurisdiction_name!==rule.jurisdiction_name || citation.official_url!==source.official_url ||
         (citation.source_sha256 || rule.source_snapshot_sha256)!==source.file_hash_sha256) throw evidenceError('Citation source is unverified, changed, or belongs to another authority.');
     if (rule.evidence_validation===RULE_EVIDENCE_METHOD) {
+      if (!RULE_CATEGORIES.includes(rule.rule_category) || !evidenceEqual(rule.evidence_context?.jurisdiction_scope,source.jurisdiction_scope || null) ||
+          citation.archived_file_url!==source.archived_file_url) throw evidenceError('Rule category, authority scope or retained archive requires review.');
+      for (const value of [rule.sign_type,rule.zoning_district_applicability,rule.trigger,rule.exceptions]) optionalLiteral(citation.excerpt,value);
       const evidence=await readSourceEvidencePages({source,segmentEntity,startPage:citation.physical_page,pageCount:1});
       const page=evidence.pages[0];
       if (!page || !evidence.complete_document_text || evidence.needs_ocr_page_count || evidence.truncated_page_count ||
