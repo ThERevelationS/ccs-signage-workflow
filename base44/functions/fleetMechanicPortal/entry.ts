@@ -405,11 +405,11 @@ async function portalPayload(base44: any, grant: any, Access: any) {
     }
     const estimate=matches[0];
     const ownedByGrant = estimate.estimate_source === 'mechanic_portal' && String(estimate.mechanic_access_id||'') === String(currentGrant.id||'');
-    if (ownedByGrant) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
-    else repairEstimates.push({work_order_id:wo.id,visibility:estimate.estimate_source === 'mechanic_portal' ? 'other_mechanic' : 'ccs_managed',status:'managed'});
+    if (ownedByGrant && canEstimate) repairEstimates.push({...sanitizeEstimate(estimate),visibility:'mechanic'});
+    else repairEstimates.push({work_order_id:wo.id,visibility:estimate.estimate_source === 'mechanic_portal' ? (ownedByGrant ? 'permission_removed' : 'other_mechanic') : 'ccs_managed',status:'managed'});
     if (ACTIVE.has(wo.status) && estimate.approval_required === true && estimate.status !== 'approved') {
       let reason = 'This job is waiting on CCS repair-estimate approval before work can start.';
-      if (ownedByGrant) {
+      if (ownedByGrant && canEstimate) {
         if (estimate.status === 'draft') reason = 'Save and submit this repair estimate, then wait for CCS approval before starting work.';
         else if (estimate.status === 'changes_requested') reason = 'CCS requested changes to this repair estimate. Update and resubmit it before starting work.';
         else if (estimate.status === 'submitted') reason = 'This repair estimate is submitted and waiting for CCS approval before work can start.';
