@@ -16,7 +16,8 @@ export function catalogSourceEligible(profile, doc, automatic = true) {
 export function catalogBacklogQuery() {
   return { state: { $in: ['OH', 'KY'] }, _manual_documents: { $ne: true }, auto_refresh: { $ne: false },
     documents: { $elemMatch: { 'archive_state.status': 'complete', source: { $ne: 'manual' },
-      pinned: { $ne: true }, archive_pinned: { $ne: true }, 'catalog_state.status': { $nin: ['complete', 'conflict'] } } } };
+      pinned: { $ne: true }, archive_pinned: { $ne: true }, 'catalog_state.status': { $nin: ['complete', 'conflict', 'create_uncertain'] },
+      $or: [{ 'catalog_state.lease_expires_at': { $in: [null, ''] } }, { 'catalog_state.lease_expires_at': { $lte: new Date().toISOString() } }] } } };
 }
 
 // Existing classifier is useful for document kinds, but title/URL signals alone
