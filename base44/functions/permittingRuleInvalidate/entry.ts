@@ -1,83 +1,52 @@
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { reviewedAdoptedSource, evidenceEqual, sourceAuthoritySnapshot, evidenceError } from '../../shared/permittingRuleEvidence.mjs';
 
-// ── PermittingRule change-linkage helper (Phase 11 preparation) ──
-// Given a PermittingSourceDocument whose file hash changed, flags affected
-// staff_approved rules to needs_review + conflict_state under_review.
-// Never silently rewrites or deletes rules — only flags them for re-review.
-// Admin-only (or service-role for future automated calls).
-
-export default async function(req: Request): Promise<Response> {
+// Explicit, bounded re-review linkage. Known citations remain intact.
+Deno.serve(async req => {
+  let flaggedIds:string[]=[],checked=0,conflicts=0,lastId='';
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-    if (user.role !== "admin") return Response.json({ error: "Forbidden — admin only" }, { status: 403 });
-
-    const body = await req.json().catch(() => ({}));
-    const sourceDocumentId = String(body.source_document_id || "");
-    const newHash = String(body.new_hash || "");
-    if (!sourceDocumentId) return Response.json({ error: "source_document_id required" }, { status: 400 });
-
-    // Fetch the source document to get its current hash
-    const sourceDoc = await base44.asServiceRole.entities.PermittingSourceDocument.get(sourceDocumentId);
-    const currentHash = (sourceDoc as any).file_hash_sha256 || "";
-
-    // Find all PermittingRule records that cite this source document
-    // We need to scan rules where citations[].source_document_id matches.
-    // Since citations is an array of objects, we filter by jurisdiction first, then check citations in-memory.
-    const jurisdictionName = (sourceDoc as any).jurisdiction_name || "";
-
-    const affectedRules: any[] = [];
-    let cursor: string | undefined;
-    do {
-      const page = await base44.asServiceRole.entities.PermittingRule.filter(
-        { jurisdiction_name: jurisdictionName, status: { $in: ["staff_approved", "extracted", "needs_review"] } },
-        { sort: "id", limit: 200, fields: ["id", "status", "source_snapshot_sha256", "citations", "is_operational", "version"], ...(cursor ? { cursor } : {}) },
-      );
-      for (const rule of page.items) {
-        const citations = (rule as any).citations || [];
-        const citesThisSource = citations.some((c: any) => c.source_document_id === sourceDocumentId);
-        if (citesThisSource) affectedRules.push(rule);
+    const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
+    if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
+    const body=await req.json().catch(()=>({})),id=String(body.source_document_id || '');
+    if (!id) throw evidenceError('Select a source document.',400);
+    const entities=base44.asServiceRole.entities,source=await entities.PermittingSourceDocument.get(id);
+    if (body.new_hash && body.new_hash!==source.file_hash_sha256)
+      throw evidenceError('The supplied hash differs from the current source catalog; review the source first.');
+    const cursor=String(body.cursor || '');
+    const query:any={citations:{$elemMatch:{source_document_id:id}},status:{$in:['staff_approved','extracted','needs_review']}};
+    if (cursor) query.id={$gt:cursor};
+    const rows=await entities.PermittingRule.filter(query,'id',51,0);
+    if (!Array.isArray(rows)) throw Error('Rule lookup did not return an array.');
+    for (const rule of rows.slice(0,50)) {
+      lastId=rule.id;checked++;
+      const changed=(rule.citations || []).filter(c=>c.source_document_id===id)
+        .some(c=>(c.source_sha256 || rule.source_snapshot_sha256 || '')!==source.file_hash_sha256);
+      const needsReview=changed || !reviewedAdoptedSource(source);
+      if (!needsReview || (rule.conflict_state==='under_review' && !rule.is_operational && rule.status!=='staff_approved')) continue;
+      const current=await entities.PermittingSourceDocument.get(id);
+      if (!evidenceEqual(sourceAuthoritySnapshot(current),sourceAuthoritySnapshot(source)))
+        throw evidenceError('Source review changed during invalidation; resume against current evidence.');
+      if (!rule.updated_date || !Number.isInteger(rule.version)) { conflicts++;continue; }
+      const patch={status:rule.status==='staff_approved'?'needs_review':rule.status,is_operational:false,
+        conflict_state:'under_review',version:rule.version+1,review_operation_id:crypto.randomUUID()};
+      let committed=false;
+      try {
+        const result=await entities.PermittingRule.updateMany({id:rule.id,updated_date:rule.updated_date,version:rule.version},{$set:patch});
+        committed=result?.updated===1;
+        if (result?.updated!==0 && !committed) throw Error('Rule invalidation outcome is uncertain.');
+      } catch(error) {
+        const after=await entities.PermittingRule.get(rule.id).catch(()=>null);
+        if (after && Object.entries(patch).every(([key,value])=>evidenceEqual(after[key],value))) committed=true;
+        else throw error;
       }
-      cursor = page.next_cursor;
-    } while (cursor && page.has_more);
-
-    // Flag rules whose stored source_snapshot_sha256 differs from the current hash
-    const toFlag = affectedRules.filter((r) => {
-      const storedHash = r.source_snapshot_sha256 || "";
-      // If we have a new_hash to compare, use that; otherwise compare against the doc's current hash
-      const compareHash = newHash || currentHash;
-      return compareHash && storedHash && storedHash !== compareHash;
-    });
-
-    let flaggedCount = 0;
-    const flaggedIds: string[] = [];
-    for (const rule of toFlag) {
-      const update: Record<string, unknown> = {
-        conflict_state: "under_review",
-        version: (rule.version || 1) + 1,
-      };
-      // Only staff_approved rules get demoted to needs_review; others stay in their current review state
-      if (rule.status === "staff_approved") {
-        update.status = "needs_review";
-        update.is_operational = false;
-      }
-      await base44.asServiceRole.entities.PermittingRule.update(rule.id, update);
-      flaggedIds.push(rule.id);
-      flaggedCount++;
+      if (committed) flaggedIds.push(rule.id);else conflicts++;
     }
-
-    return Response.json({
-      success: true,
-      source_document_id: sourceDocumentId,
-      current_hash: currentHash,
-      new_hash: newHash,
-      rules_checked: affectedRules.length,
-      rules_flagged: flaggedCount,
-      flagged_rule_ids: flaggedIds,
-      note: "Flagged rules are set to needs_review + under_review. No rules were rewritten or deleted.",
-    });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({success:true,source_document_id:id,current_hash:source.file_hash_sha256 || '',
+      rules_checked:checked,rules_flagged:flaggedIds.length,flagged_rule_ids:flaggedIds,conflicts,
+      has_more:rows.length>50,next_cursor:rows.length>50?lastId:null,llm_calls:0});
+  } catch(error) {
+    return Response.json({success:false,error:error?.message || 'Rule invalidation could not finish safely.',
+      rules_checked:checked,rules_flagged:flaggedIds.length,flagged_rule_ids:flaggedIds,conflicts,
+      resume_after:lastId,llm_calls:0},{status:error?.status || 500});
   }
-}
+});
