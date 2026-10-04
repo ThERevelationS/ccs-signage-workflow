@@ -80,7 +80,8 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
     citations:[citation],source_snapshot_sha256:source.file_hash_sha256,is_operational:false,draft_context:draft,version:1,
     evidence_validation:RULE_EVIDENCE_METHOD,extraction_key:key,
     evidence_context:{start_page:unit.start_page,page_count:unit.page_count,total_pages:unit.evidence.total_pages,
-      complete_document_text:unit.evidence.complete_document_text,evidence_scope:'selected_pdf_pages',full_code_review:false},
+      complete_document_text:unit.evidence.complete_document_text,jurisdiction_scope:source.jurisdiction_scope || null,
+      evidence_scope:'selected_pdf_pages',full_code_review:false},
     notes:'Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required.'};
 }
 export async function validateRuleCandidates(unit,response,options) {
@@ -119,7 +120,9 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity}) {
       if (!page || !evidence.complete_document_text || evidence.needs_ocr_page_count || evidence.truncated_page_count ||
           citation.text_sha256!==page.text_sha256 || !literal(page.text,citation.excerpt) || !literal(citation.excerpt,rule.requirement) ||
           page.truncated || page.needs_ocr_review) throw evidenceError('Complete retained page evidence and its literal requirement must be verified before approval.');
-      numericEvidence(citation.excerpt,rule.requirement,rule.numeric_literal || '');
+      const numeric=numericEvidence(citation.excerpt,rule.requirement,rule.numeric_literal || '');
+      if (!evidenceEqual(numeric.numeric_value,rule.numeric_value ?? null) || numeric.unit!==(rule.unit || ''))
+        throw evidenceError('Stored numeric fields differ from their literal evidence.');
       if (citation.section_reference && !literal(page.text,citation.section_reference,150)) throw evidenceError('Citation section is not supported by its physical page.');
     } else {
       // Legacy reviewed evidence remains intact. New approvals verify its existing
