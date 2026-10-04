@@ -202,6 +202,11 @@
       },
       "description": "Preserved initial physical PDF pages with extracted text, archive hash, parser method, and gaps. Later pages may live in immutable PermittingSourceTextSegment records; the committed cursor is in text_extraction_state. Original archive and review decisions remain intact."
     },
+    "rule_import_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Source-wide candidate import reservation across all manual analysis runs. Uncertain creates retain their extraction key until reconciled; a fresh run cannot bypass the create intent."
+    },
     "rule_extraction_state": {
       "type": "object",
       "additionalProperties": true,
