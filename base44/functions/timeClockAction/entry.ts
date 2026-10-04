@@ -2542,6 +2542,13 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll replacement lineage does not match the retired generation and authorized reopen.', pay_period_id: period.id, generations: [] });
           }
         }
+        if (Number(current.snapshot_version || 0) >= 9) {
+          const changes = Array.isArray(current.generation_changes) ? current.generation_changes : null;
+          const predecessor = history.length ? history[history.length - 1] : null;
+          if (!changes || Number(current.generation_change_count || 0) !== changes.length ||
+              !constantTimeEqual(String(current.generation_changes_hash || ''), await payloadHash(changes)) ||
+              String(current.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll change provenance failed verification.', pay_period_id: period.id, generations: [] });
+        }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
         if (!Array.isArray(lockedEntries) || lockedEntries.length !== Number(current.entry_count || 0)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll generation no longer matches its locked shift count.', pay_period_id: period.id, generations: [] });
         const shiftEvidence = [];
@@ -2589,6 +2596,7 @@ Deno.serve(async (req) => {
           employee_reconciliation: currentReconciliation,
           ...(Number(current.snapshot_version || 0) >= 7 ? { approving_managers: current.approving_managers || [], finalizer_approval_overlap: current.finalizer_approval_overlap === true } : {}),
           ...(Number(current.snapshot_version || 0) >= 8 ? { supersedes_generation_request_id: current.supersedes_generation_request_id || '', authorized_by_reopen_request_id: current.authorized_by_reopen_request_id || '' } : {}),
+          ...(Number(current.snapshot_version || 0) >= 9 ? { generation_changes: current.generation_changes || [], generation_change_count: Number(current.generation_change_count || 0), generation_reopen_reason: current.generation_reopen_reason || '' } : {}),
         });
       }
       return Response.json({
