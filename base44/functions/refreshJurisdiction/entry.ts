@@ -61,6 +61,10 @@ Deno.serve(async (req) => {
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'refreshJurisdiction');
     const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');
     const { jurisdiction_id, jurisdictionId, settings } = body;
+    const discoveryOnly = body?.discovery_only === true;
+    if (discoveryOnly && (isScheduledRun || isTargetedAutomation)) {
+      return Response.json({ error: 'Discovery-only refresh requires an authenticated admin' }, { status: 403 });
+    }
     const id = jurisdiction_id || jurisdictionId;
 
     let user: any = null;
@@ -74,10 +78,10 @@ Deno.serve(async (req) => {
     // narrowly scoped targeted-refresh capability used by the credit-controlled
     // permitting dispatcher. The weekly batch capability remains unable to
     // select arbitrary jurisdiction ids.
-    if (id || settings) {
+    if (id || settings || discoveryOnly) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
-      const result = await refreshJurisdictionRecord(base44, id, settings);
+      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly);
       return Response.json(result);
     }
 
@@ -112,11 +116,15 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false) {
+    const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
 
-    const batchSettings = settings || {
+    const batchSettings = discoveryOnly ? {
+      updateWebsites: false, updatePermittingUrls: false, updateRequirements: false,
+      updateDocuments: true, skipManualData: true,
+    } : settings || {
       updateWebsites: true,
       updatePermittingUrls: true,
       updateRequirements: true,
@@ -126,15 +134,22 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
 
     // Use the full jurisdiction research agent (same prompt used for new jurisdiction creation)
     const includeParentCounty = jurisdiction.type !== 'county';
-    const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
-      jurisdictionName: jurisdiction.name,
-      jurisdictionState: jurisdiction.state,
-      jurisdictionType: jurisdiction.type,
-      includeParentCounty
-    });
-
-    const researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
-    if (!researchData) return Response.json({ error: 'No research data returned' }, { status: 400 });
+    if (discoveryOnly && (!jurisdiction.permitting_url || jurisdiction._manual_documents)) {
+      throw Object.assign(new Error('Discovery requires a saved official permitting URL and unprotected document collection.'), { status: 400 });
+    }
+    let researchData: any;
+    if (discoveryOnly) {
+      researchData = { permitting_url: jurisdiction.permitting_url, documents: [] };
+    } else {
+      const agentResult = await base44.asServiceRole.functions.invoke('jurisdictionResearchAgent', {
+        jurisdictionName: jurisdiction.name,
+        jurisdictionState: jurisdiction.state,
+        jurisdictionType: jurisdiction.type,
+        includeParentCounty
+      });
+      researchData = sanitizeJurisdictionResearch(agentResult?.data?.data || agentResult?.data || agentResult);
+    }
+    if (!researchData) throw Object.assign(new Error('No research data returned'), { status: 400 });
 
     // When the LLM identifies an official permitting/forms page but returns no
     // document records, harvest relevant same-host links from that one verified
@@ -147,10 +162,17 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         });
         const contentType = String(pageResponse.headers.get('content-type') || '').toLowerCase();
         if (pageResponse.ok && (contentType.includes('text/html') || contentType.includes('application/xhtml+xml'))) {
-          const pageHtml = await pageResponse.text();
-          researchData.documents = discoverOfficialPermittingResources(pageHtml, researchData.permitting_url);
+          const pageHtml = new TextDecoder().decode(await readResearchDocumentBytes(pageResponse));
+          const finalPageUrl = pageResponse.url || researchData.permitting_url;
+          if (new URL(finalPageUrl).hostname.replace(/^www\./, '') !== new URL(researchData.permitting_url).hostname.replace(/^www\./, '')) {
+            throw new Error('Permitting page redirected outside its official host.');
+          }
+          researchData.documents = discoverOfficialPermittingResources(pageHtml, finalPageUrl);
+        } else if (discoveryOnly) {
+          throw new Error('Official permitting page did not return an HTML resource.');
         }
       } catch (error) {
+        if (discoveryOnly) throw error;
         console.warn(`Permitting page link harvest failed for ${jurisdiction.name || id}: ${error?.message || error}`);
       }
     }
@@ -201,6 +223,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         doc_type: d.doc_type || "other",
         ai_summary: d.ai_summary || "",
         source: "ai_discovered",
+        verification_notes: d.verification_notes || "",
         last_fetched: new Date().toISOString()
       }));
 
@@ -223,6 +246,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           continue;
         }
         archivesStarted += 1;
+        let retainedDoc = doc;
         try {
           const downloadResult = await safeExternalFetch(doc.url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
@@ -233,6 +257,11 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
             continue;
           }
 
+          const responseType = String(downloadResult.headers.get('content-type') || '').toLowerCase();
+          if (responseType.includes('text/html') || responseType.includes('application/xhtml+xml')) {
+            processedDocs.push(doc);
+            continue;
+          }
           const fileBytes = await readResearchDocumentBytes(downloadResult);
           if (fileBytes.byteLength === 0) {
             processedDocs.push(doc);
@@ -256,6 +285,19 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
             continue;
           }
 
+          // Persist successful archive evidence even if extraction fails. The
+          // deterministic path never invokes an LLM or extraction integration.
+          const digest = await crypto.subtle.digest('SHA-256', fileBytes);
+          retainedDoc = {
+            ...doc, file_url: uploadResult.file_url,
+            source_sha256: Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''),
+            source_bytes: fileBytes.byteLength,
+            downloaded_at: new Date().toISOString(),
+          };
+          if (discoveryOnly) {
+            processedDocs.push(retainedDoc);
+            continue;
+          }
           const extractResult = await withResearchArchiveTimeout(
             base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
               file_url: uploadResult.file_url,
@@ -272,14 +314,13 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           );
 
           processedDocs.push({
-            ...doc,
-            file_url: uploadResult.file_url,
+            ...retainedDoc,
             extracted_text: extractResult?.output?.content || "",
             ai_summary: extractResult?.output?.summary || doc.ai_summary
           });
         } catch (e) {
           console.error(`Failed to process doc ${doc.title}:`, e.message);
-          processedDocs.push(doc);
+          processedDocs.push(retainedDoc);
         }
       }
 
@@ -287,7 +328,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, processedDocs);
     }
 
-    updateData.last_updated = new Date().toISOString();
+    if (!discoveryOnly) updateData.last_updated = new Date().toISOString();
     const authorityGate = gateResearchRegulatoryPromotion({ jurisdiction, researchData, updateData, documentEvidence: documentAuthorityEvidence });
     if (authorityGate.blocked) {
       console.warn(`Blocked comprehensive rewrite promotion for ${jurisdiction.name || id}: ${authorityGate.reasons.join(', ')}`);
@@ -304,5 +345,5 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
     });
 
-    return { success: true, jurisdiction: updated };
+    return { success: true, jurisdiction: updated, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
 }
