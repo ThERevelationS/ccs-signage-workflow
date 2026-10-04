@@ -90,6 +90,7 @@ const markup = renderToStaticMarkup(React.createElement(PunchReport, {
   }],
   onReviewEntry: () => {},
   onReviewCorrection: () => {},
+  onApproveEntry: () => {},
 }));
 assert.match(markup, /Punch Exception Reports/);
 assert.match(markup, /3 need review/);
@@ -104,6 +105,7 @@ assert.match(markup, /No Clock Out was created or changed/);
 assert.match(markup, /confirm with the employee before any correction/);
 assert.match(markup, /Shift Needs Review/);
 assert.match(markup, /Review Correction/);
+assert.match(markup, /Approve Shift/);
 assert.match(markup, /View Shift/);
 assert.match(markup, /audit history, not automatic payroll approval/);
 console.log('PASS punch report distinguishes scheduled detection and routes pending missed-punch cases directly to correction review');
@@ -117,8 +119,8 @@ assert.match(emptyMarkup, /No punch exception reports have been recorded/);
 console.log('PASS empty punch report renders a clear no-record state');
 
 const adminSource = readFileSync(new URL('../src/components/timeclock/TimeClockAdmin.jsx', import.meta.url), 'utf8');
-assert.match(adminSource, /<TimeClockPunchExceptionReport[\s\S]*correctionRequests=\{correctionRequests\}[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}/);
-assert.match(adminSource, /<TimeClockExceptionCenter[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}/);
+assert.match(adminSource, /<TimeClockPunchExceptionReport[\s\S]*correctionRequests=\{correctionRequests\}[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}[\s\S]*onApproveEntry=\{\(entry\) => openApprovalDialog\(entry, "approve"\)\}/);
+assert.match(adminSource, /<TimeClockExceptionCenter[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}[\s\S]*onApproveEntry=\{\(entry\) => openApprovalDialog\(entry, "approve"\)\}/);
 assert.match(adminSource, /<CorrectionRequestAdminPanel[\s\S]*reviewRequestId=\{correctionReviewRequestId\}/);
-console.log('PASS Needs Attention and Punch Reports converge on the same correction-review dialog route');
+console.log('PASS Needs Attention and Punch Reports converge on correction review or final shift approval as appropriate');
 console.log('PASS 3/3 Time Clock punch exception reporting scenarios');
