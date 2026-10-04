@@ -17,27 +17,27 @@ check(countCards(primary) === 4, "Only four primary metric cards may show by def
 check(countCards(secondary) === 4, "Four original secondary metrics must remain available.");
 
 const primaryMetrics = [
-  ["Open Opportunities", "pipelineSummary.openCount", 'applyAttentionFilter("all")'],
-  ["Open Pipeline Value", "formatPipelineValue(pipelineSummary.openValue)", 'applyAttentionFilter("all")'],
-  ["Follow-ups Due", "pipelineSummary.dueCount", 'applyAttentionFilter("due")'],
-  ["Needs Attention", "pipelineSummary.needsAttentionCount", 'applyAttentionFilter("needs_attention")'],
+  ["Open Opportunities", "pipelineSummary.openCount", 'applyMetricAttentionFilter("all")'],
+  ["Open Pipeline Value", "formatPipelineValue(pipelineSummary.openValue)", 'applyMetricAttentionFilter("all")'],
+  ["Follow-ups Due", "pipelineSummary.dueCount", 'applyMetricAttentionFilter("due")'],
+  ["Needs Attention", "pipelineSummary.needsAttentionCount", 'applyMetricAttentionFilter("needs_attention")'],
 ];
 for (const [label, value, action] of primaryMetrics) {
   check(primary.includes(label) && primary.includes(value) && primary.includes(action),
     `Primary ${label} still uses the real summary and existing filter.`);
 }
 const secondaryMetrics = [
-  ["Quotes Need Follow-up", "pipelineSummary.quoteNoFollowUpCount", 'applyAttentionFilter("quote_no_followup")'],
+  ["Quotes Need Follow-up", "pipelineSummary.quoteNoFollowUpCount", 'applyMetricAttentionFilter("quote_no_followup")'],
   ["Next Action Coverage", "pipelineSummary.nextActionCoverageCount", '"no_next_action"'],
-  ["Closing Next 14 Days", "pipelineSummary.nearCloseCount", 'applyAttentionFilter("near_close")'],
-  ["Stale 14+ Days", "pipelineSummary.staleCount", 'applyAttentionFilter("stale")'],
+  ["Closing Next 14 Days", "pipelineSummary.nearCloseCount", 'applyMetricAttentionFilter("near_close")'],
+  ["Stale 14+ Days", "pipelineSummary.staleCount", 'applyMetricAttentionFilter("stale")'],
 ];
 for (const [label, value, action] of secondaryMetrics) {
   check(secondary.includes(label) && secondary.includes(value) && secondary.includes(action),
     `Secondary ${label} retains its original data and filter action.`);
 }
-check(secondary.includes('pipelineSummary.noNextActionCount > 0 ? "no_next_action" : "all"'),
-  "Next Action Coverage retains its original zero-missing behavior.");
+check(secondary.includes('applyMetricAttentionFilter(pipelineSummary.noNextActionCount > 0 ? "no_next_action" : "all")'),
+  "Next Action Coverage retains its original zero-missing behavior through the fresh KPI drill-down path.");
 check(primary.includes("pipelineSummary.placeholderCount") && primary.includes("pipelineSummary.placeholderValue"),
   "Open metrics retain test-placeholder coverage in their existing descriptions.");
 check(primary.includes("pipelineSummary.overdueCount") && primary.includes("pipelineSummary.dueTodayCount"),
