@@ -219,6 +219,7 @@ export default function SalesPipeline() {
   };
 
   const clearActiveFilters = () => {
+    setSearchTerm("");
     setAttentionFilter("all");
     setFilterStatus("all");
     spreadsheetRef.current?.clearColumnHeaderFilter?.();
@@ -247,7 +248,7 @@ export default function SalesPipeline() {
     (recordScope === "current" || recordScope === "all");
   const moreAttentionSelected = salesMoreAttentionSelected(attentionFilter);
   const selectedMoreAttention = moreAttentionSelected ? salesAttentionOption(attentionFilter) : null;
-  const hasActiveFilters = attentionFilter !== "all" || filterStatus !== "all" || Boolean(columnHeaderFilter);
+  const hasActiveFilters = Boolean(searchTerm.trim()) || attentionFilter !== "all" || filterStatus !== "all" || Boolean(columnHeaderFilter);
   const secondaryMetricLabel = ["quote_no_followup", "no_next_action", "near_close", "stale"].includes(attentionFilter)
     ? salesAttentionOption(attentionFilter)?.label : null;
 
@@ -456,7 +457,7 @@ export default function SalesPipeline() {
                 {hasActiveFilters && (
                   <button type="button" onClick={clearActiveFilters}
                     className="inline-flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:min-h-9 sm:justify-start"
-                    aria-label="Clear active Sales information, attention, and table column filters">
+                    aria-label="Clear active Sales search, information, attention, and table column filters">
                     <X className="h-3.5 w-3.5" aria-hidden="true" /> Clear filters
                   </button>
                 )}
