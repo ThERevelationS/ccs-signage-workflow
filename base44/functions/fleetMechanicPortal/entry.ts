@@ -324,6 +324,29 @@ async function mechanicWorkOrderResponse(Access:any, grantId:string, action:stri
   return json({...payload,work_order:sanitizeWorkOrder(workOrder)},init);
 }
 
+function mechanicCommittedResponseAccessChangedError() {
+  const error:any = new Error('This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying.');
+  error.code = 'FLEET_MECHANIC_ACCESS_REVOKED';
+  return error;
+}
+
+async function requireCurrentMechanicGrantForCommittedResponse(Access:any, grantId:string, action:string, equipmentId:string) {
+  const latest = await Access.get(grantId).catch(()=>null);
+  const check = mechanicGrantAllowsMutation(latest,action,equipmentId,Date.now());
+  if (!check.allowed) throw mechanicCommittedResponseAccessChangedError();
+  return latest;
+}
+
+async function mechanicCommittedWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any) {
+  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,String(workOrder?.equipment_id || ''));
+  return json({...payload,work_order:sanitizeWorkOrder(workOrder)});
+}
+
+async function mechanicCommittedEstimateResponse(Access:any, grantId:string, action:string, equipmentId:string, estimate:any, payload:any) {
+  await requireCurrentMechanicGrantForCommittedResponse(Access,grantId,action,equipmentId);
+  return json({...payload,estimate:sanitizeEstimate(estimate)});
+}
+
 function sanitizeEquipment(row: any) {
   return {
     id:row.id,
