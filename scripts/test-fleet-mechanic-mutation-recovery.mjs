@@ -164,3 +164,18 @@ test("live mechanic authorization enforces current action and equipment scope", 
   assert.deepEqual(mechanicGrantAllowsMutation(grant,"start","eq-2",1000),{allowed:false,reason:"outside_scope"});
   assert.deepEqual(mechanicGrantAllowsMutation(grant,"start","eq-1",1000),{allowed:true,reason:""});
 });
+
+test("live mechanic estimate authorization fails closed after permission or equipment scope removal", () => {
+  const grant = {
+    enabled:true,
+    allowed_actions:["bootstrap","start","save","estimate_save","estimate_submit"],
+    scope_mode:"selected_equipment",
+    allowed_equipment_ids:["eq-1"],
+  };
+  assert.deepEqual(mechanicGrantAllowsMutation(grant,"estimate_save","eq-1",1000),{allowed:true,reason:""});
+  assert.deepEqual(mechanicGrantAllowsMutation(grant,"estimate_submit","eq-1",1000),{allowed:true,reason:""});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_actions:["bootstrap","start","save"]},"estimate_save","eq-1",1000),{allowed:false,reason:"action_not_allowed"});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_actions:["bootstrap","start","save"]},"estimate_submit","eq-1",1000),{allowed:false,reason:"action_not_allowed"});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_equipment_ids:["eq-2"]},"estimate_save","eq-1",1000),{allowed:false,reason:"outside_scope"});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_equipment_ids:["eq-2"]},"estimate_submit","eq-1",1000),{allowed:false,reason:"outside_scope"});
+});
