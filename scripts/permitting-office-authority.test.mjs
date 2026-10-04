@@ -6,12 +6,18 @@ import {textSha256,assembledSourceText} from '../base44/shared/jurisdictionSourc
 import {reviewSourceAuthority} from '../base44/shared/permittingSourceAuthorityReview.mjs';
 import {reviewOfficeAuthority,assessOfficeAuthorityReview,listOfficeAuthorityReviews,getOfficeAuthorityRequest,OFFICE_AUTHORITY_ROLES} from '../base44/shared/permittingOfficeAuthority.mjs';
 import {LOCALITY_AUTHORITY_ROLES} from '../src/components/permitting/localityAuthorityVerification.js';
+let authorityHandler;
+const bundle=await build({entryPoints:['base44/functions/permittingOfficeAuthorityReview/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',
+ plugins:[{name:'mock-sdk',setup(b){b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
+ b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:'export const createClientFromRequest=()=>globalThis.officeAuthorityWorkerFixture;',loader:'js'}));}}]});
+globalThis.Deno={serve:fn=>{authorityHandler=fn;}};
+await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
 const clone=v=>structuredClone(v);
 const matches=(row,q)=>Object.entries(q).every(([k,v])=>{
  if(v && typeof v==='object')return (!Object.hasOwn(v,'$lte') || row[k]<=v.$lte) && (!Object.hasOwn(v,'$lt') || row[k]<v.$lt);
  return row[k]===v;
 });
-async function setup({createMode='ok'}={}){
+async function setup({createMode='ok',role='admin'}={}){
  const f=await ruleFixture({source:{authority_classification:'application_form',content_status:'unknown',verification_status:'needs_verification'}});
  const text='Pilot Planning Department\nAreas served:\nunincorporated Pilot\nTown\nSign Permit Application\nBuilding permit applications are handled by Pilot Planning Department.\nElectrical permit applications are handled by Pilot Planning Department.\nContact our office for historic review.';
  const page={...f.page,text,text_sha256:await textSha256(new TextEncoder().encode(text))};
@@ -48,14 +54,52 @@ async function setup({createMode='ok'}={}){
    if(createMode==='lost')throw Error('Lost event acknowledgement');return clone(row);
   }};
  const deps={profileEntity,settingsEntity,reviewEntity,sourceEntity:f.api.sourceEntity,segmentEntity:f.api.segmentEntity};
+ profileEntity.filter=async(q,sort,limit,skip=0,fields)=>{
+  assert.equal(typeof sort,'string');assert.equal(Number.isInteger(limit),true);assert.equal(Number.isInteger(skip),true);
+  const rows=Object.values(profiles).filter(p=>p.state===q.state && q.name.$in.includes(p.name)).slice(skip,skip+limit);
+  return rows.map(p=>Object.fromEntries(fields.map(k=>[k,p[k]])));
+ };
+ counts.service=0;
+ globalThis.officeAuthorityWorkerFixture={auth:{me:async()=>role===null?null:{role,email:'admin@example.test'}},
+  get asServiceRole(){counts.service++;return{entities:{JurisdictionProfile:profileEntity,PermittingSourceDocument:f.api.sourceEntity,
+   GlobalSettings:settingsEntity,PermittingSourceTextSegment:f.api.segmentEntity,PermittingOfficeAuthorityReview:reviewEntity}};}};
+ const call=async body=>{const r=await authorityHandler(new Request('https://test',{method:'POST',body:JSON.stringify(body)}));
+  return {status:r.status,data:await r.json()};};
  const input={source_document_id:'source',government_office_id:'office',role:'sign_permit',coverage_area:'unincorporated Pilot',
   role_proof:{physical_page:1,excerpt:'Sign Permit Application'},responsibility_confirmed:true,review_notes:'Staff confirmed this office handles sign applications for the quoted area.'};
  const args={jurisdictionId:'profile',requestId:'office-role-review-00001',expectedUpdatedDate:profiles.profile.updated_date,input,actor:'admin@example.test'};
- return{f,profiles,setting,counts,events,deps,input,args,page,review:extra=>reviewOfficeAuthority(deps,{...args,...extra}),
+ return{f,profiles,setting,counts,events,deps,input,args,page,call,review:extra=>reviewOfficeAuthority(deps,{...args,...extra}),
   patchProfile:(id,p)=>Object.assign(profiles[id],clone(p),{updated_date:'p'+version++}),
   loseProfile:()=>{lostProfile=true;},beforeWrite:fn=>{beforeWrite=fn;},beforeCreate:fn=>{beforeCreate=fn;},
   lateEvent:()=>events.push({...clone(lateIntent),id:'lateReview'})};
 }
+test('backend authorizes writes before service role and allows authenticated read-only checks',async()=>{
+ for(const role of [null,'external','user']){
+  const t=await setup({role}),r=await t.call({action:'verify',jurisdiction_id:'profile'});
+  assert.equal(r.status,403);assert.equal(t.counts.service,0);assert.equal(t.counts.creates,0);
+ }
+ const staff=await setup({role:'user'});assert.equal((await staff.call({action:'list',jurisdiction_id:'profile'})).status,200);
+ assert.equal(staff.counts.profileWrites,0);assert.equal(staff.counts.creates,0);assert.equal(staff.f.calls.llm,0);
+});
+test('compiled handler preview, verify, saved-request check and revoke preserve durable decisions',async()=>{
+ const t=await setup(),body={action:'verify',jurisdiction_id:'profile',request_id:t.args.requestId,
+  expected_updated_date:t.args.expectedUpdatedDate,review:t.input};
+ assert.equal((await t.call({...body,action:'preview'})).data.dry_run,true);assert.equal(t.counts.creates,0);
+ const saved=await t.call(body);assert.equal(saved.status,200);assert.equal(saved.data.status,'recorded');
+ assert.equal((await t.call({...body,action:'get_request'})).data.committed,true);
+ assert.equal((await t.call(body)).data.replayed,true);assert.equal(t.counts.creates,1);
+ const rev={action:'revoke',jurisdiction_id:'profile',request_id:'office-revoke-handler-00002',
+  expected_updated_date:t.profiles.profile.updated_date,review:{revoke_review_id:saved.data.review.id,review_notes:'Review office contract coverage.'}};
+ assert.equal((await t.call({...rev,action:'preview_revoke'})).data.dry_run,true);
+ assert.equal((await t.call(rev)).data.review.action,'revoke');assert.equal(t.counts.creates,2);assert.equal(t.f.calls.llm,0);
+});
+test('context presents stable profile/office ids with metadata only and no writes',async()=>{
+ const t=await setup({role:'user'}),r=await t.call({action:'context',source_document_id:'source'});
+ assert.equal(r.status,200);assert.deepEqual(r.data.targets.map(p=>p.id),['profile','town']);
+ assert.equal(r.data.offices[0].id,'office');assert.ok(!Object.hasOwn(r.data.targets[0],'documents'));
+ assert.equal(t.counts.creates,0);assert.equal(t.counts.profileWrites,0);assert.equal(t.f.calls.llm,0);
+ assert.equal((await t.call({action:'context',source_document_id:'source',cursor:'bad'})).status,400);
+});
 test('authority role vocabulary matches legacy locality/schema roles',()=>assert.deepEqual(OFFICE_AUTHORITY_ROLES,LOCALITY_AUTHORITY_ROLES.map(([role])=>role)));
 test('preview checks explicit publisher/role/coverage with zero relationship writes or LLM',async()=>{
  const t=await setup(),before=clone(t.profiles);const r=await t.review({dryRun:true});
