@@ -2235,8 +2235,8 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
         if (customFilter && !applyCustomFilter(viewWo, customFilter.conditions)) return false;
       }
       
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase();
+      const search = searchTerm.trim().toLowerCase();
+      if (search) {
         const searchable = [
           viewWo.title,
           viewWo.client_name,
