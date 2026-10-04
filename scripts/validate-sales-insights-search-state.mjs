@@ -7,10 +7,10 @@ let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks += 1; };
 
 const chooseView = page.split("const chooseView = (nextView) => {")[1]?.split("\n  };")[0] || "";
-check(chooseView.includes('if (nextView === "insights") setSearchTerm("");'),
-  "Entering Insights clears row search so hidden search state cannot narrow reporting.");
+check(chooseView.includes('if (nextView === "daily" || nextView === "insights") setSearchTerm("");'),
+  "Entering Daily or Insights clears carried row search so specialized views start from their own criteria.");
 check(chooseView.indexOf('setSearchTerm("")') < chooseView.indexOf("setViewMode(nextView)"),
-  "Search is cleared before the Insights view is committed.");
+  "Search is cleared before the specialized view is committed.");
 check(chooseView.includes('if (nextView === "daily" || nextView === "insights")') &&
   chooseView.includes('setAttentionFilter("all");') &&
   chooseView.includes('setFilterStatus("all");'),
