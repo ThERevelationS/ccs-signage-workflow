@@ -402,12 +402,14 @@ test('finalized payroll snapshot binds exact locked entry and approval evidence'
   const requestId = 'snapshot-bound-finalize-001';
   const first = await h.action('finalize', requestId);
   assert.equal(first.status, 200, JSON.stringify(first.body));
-  assert.equal(h.period().finalized_summary.snapshot_version, 3);
+  assert.equal(h.period().finalized_summary.snapshot_version, 4);
   assert.match(h.period().finalized_summary.previous_history_hash, /^[a-f0-9]{64}$/);
   assert.match(h.period().finalized_summary.snapshot_chain_hash, /^[a-f0-9]{64}$/);
   assert.match(h.period().finalized_summary.entry_snapshot_hash, /^[a-f0-9]{64}$/);
   assert.equal(h.period().finalized_summary.shift_manifest_hash, h.period().finalized_summary.entry_snapshot_hash);
   assert.equal(h.period().finalized_summary.shift_manifest.length, 2);
+  assert.ok(h.period().finalized_summary.shift_manifest.every((row) => row.approval_evidence?.approved_by));
+  assert.ok(h.period().finalized_summary.shift_manifest.every((row) => row.approval_evidence?.approved_at));
 
   // A finalized row must not be able to drift while an exact lost-response retry
   // silently confirms the old finalization.
@@ -528,7 +530,7 @@ test('reopen retires the prior payroll snapshot and re-finalize replaces it auth
   assert.equal(h.period().finalized_summary_history.length, 1);
   assert.equal(h.period().finalized_summary_history[0].request_id, firstRequest);
   assert.equal(h.period().finalized_summary_history[0].invalidated_by_reopen_request_id, reopenRequest);
-  assert.equal(h.period().finalized_summary_history[0].snapshot_version, 3);
+  assert.equal(h.period().finalized_summary_history[0].snapshot_version, 4);
   assert.deepEqual(h.period().finalized_summary_history[0].shift_manifest, firstSummary.shift_manifest);
   assert.equal(h.period().finalized_summary_history[0].shift_manifest_hash, firstSummary.entry_snapshot_hash);
 
@@ -558,7 +560,7 @@ test('snapshot chain detects altered historical payroll provenance before reopen
   assert.equal((await h.action('finalize', 'chain-first-finalize-001')).status, 200);
   assert.equal((await h.action('reopen', 'chain-first-reopen-001', 'First correction')).status, 200);
   assert.equal((await h.action('finalize', 'chain-second-finalize-001')).status, 200);
-  assert.equal(h.period().finalized_summary.snapshot_version, 3);
+  assert.equal(h.period().finalized_summary.snapshot_version, 4);
   assert.equal(h.period().finalized_summary_history.length, 1);
 
   h.period().finalized_summary_history[0].invalidation_reason = 'tampered reason';
