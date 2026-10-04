@@ -2808,6 +2808,13 @@ Deno.serve(async (req) => {
             }
           }
         }
+        if (Number(summary.snapshot_version || 0) >= 21) {
+          expectedMembershipDiscovery.sort((a: any, b: any) => a.time_entry_id.localeCompare(b.time_entry_id) || a.audit_id.localeCompare(b.audit_id));
+          const storedDiscovery = summary?.generation_membership_discovery;
+          if (!Array.isArray(storedDiscovery) || Number(summary.generation_membership_discovery_count || 0) !== storedDiscovery.length ||
+              !constantTimeEqual(String(summary.generation_membership_discovery_hash || ''), await payloadHash(storedDiscovery)) ||
+              !constantTimeEqual(await payloadHash(expectedMembershipDiscovery), await payloadHash(storedDiscovery))) return false;
+        }
         const periodEntryIds = [...periodEntryIdSet].sort();
         const expected = [];
         for (const entryId of periodEntryIds) {
