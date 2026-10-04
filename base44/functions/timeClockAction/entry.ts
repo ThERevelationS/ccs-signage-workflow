@@ -2505,6 +2505,10 @@ Deno.serve(async (req) => {
           chainCore.generation_change_count = Number(summary.generation_change_count || 0);
           chainCore.generation_reopen_reason = String(summary.generation_reopen_reason || '');
         }
+        if (Number(summary.snapshot_version || 0) >= 12) {
+          chainCore.generation_causal_window_start = String(summary.generation_causal_window_start || '');
+          chainCore.generation_causal_window_end = String(summary.generation_causal_window_end || '');
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
@@ -2535,7 +2539,13 @@ Deno.serve(async (req) => {
         const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005 && approvalComplete;
         return { verified, approval_complete: approvalComplete, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
       };
-      const verifyCorrectionProvenance = async (change: any) => {
+      const inCausalWindow = (timestamp: any, start: any, end: any) => {
+        const value = Date.parse(String(timestamp || ''));
+        const lower = Date.parse(String(start || ''));
+        const upper = Date.parse(String(end || ''));
+        return Number.isFinite(value) && Number.isFinite(lower) && Number.isFinite(upper) && lower <= value && value <= upper;
+      };
+      const verifyCorrectionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.correction_provenance;
         if (!provenance) return true;
         const correction = await correctionRequestEntity.get(String(provenance.correction_request_id || '')).catch(() => null);
@@ -2556,9 +2566,10 @@ Deno.serve(async (req) => {
           ['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) &&
           String(appliedAudit.time_entry_id || '') === String(change.time_entry_id || '') &&
           String(appliedAudit.request_id || '') === String(provenance.applied_audit_request_id || '') &&
-          String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || ''));
+          String(appliedAudit.details?.correction_request_id || '') === String(provenance.correction_request_id || '') &&
+          (!windowStart || (String(appliedAudit.server_timestamp || '') === String(provenance.applied_at || '') && inCausalWindow(appliedAudit.server_timestamp, windowStart, windowEnd))));
       };
-      const verifyActionProvenance = async (change: any) => {
+      const verifyActionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.action_provenance;
         if (!provenance) return false;
         const evidence = await auditEntity.get(String(provenance.audit_id || '')).catch(() => null);
@@ -2576,7 +2587,8 @@ Deno.serve(async (req) => {
           String(evidence.actor_role || '') === String(provenance.actor_role || '') &&
           String(evidence.authentication_method || '') === String(provenance.authentication_method || '') &&
           String(evidence.server_timestamp || '') === String(provenance.server_timestamp || '') &&
-          String(evidence.reason || '') === String(provenance.reason || ''));
+          String(evidence.reason || '') === String(provenance.reason || '') &&
+          (!windowStart || inCausalWindow(evidence.server_timestamp, windowStart, windowEnd)));
       };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
