@@ -2756,11 +2756,14 @@ Deno.serve(async (req) => {
         }
         return null;
       };
-      const canonicalPayrollMembershipEvidence = (audits: any[]) => {
+      const canonicalPayrollMembershipEvidence = (audits: any[], rejectConflicts = false) => {
         const candidates = (Array.isArray(audits) ? audits : []).map((membershipAudit: any) => ({
           membershipAudit,
           membership: payrollMembershipFromAudit(membershipAudit),
         })).filter((candidate: any) => candidate.membership?.company_date);
+        if (rejectConflicts && new Set(candidates.map((candidate: any) => `${candidate.membership.company_date}|${candidate.membership.clock_in}`)).size > 1) {
+          return { conflict: true, candidates };
+        }
         candidates.sort((a: any, b: any) => {
           const aNormalized = a.membership.source === 'verified_normalized_audit_envelope' ? 0 : 1;
           const bNormalized = b.membership.source === 'verified_normalized_audit_envelope' ? 0 : 1;
@@ -3641,7 +3644,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 22 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 23 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
