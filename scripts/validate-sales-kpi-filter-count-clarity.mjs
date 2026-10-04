@@ -23,8 +23,8 @@ check(page.includes('aria-label="Sales Pipeline visible row count"'),
   "Row-count context is always visible for row-based Sales views.");
 check(page.includes("Rows: {pipelineSummary.visibleRowCount} shown · {pipelineSummary.loadedWorkspaceRowCount} loaded"),
   "UI clearly distinguishes rows shown from rows currently loaded.");
-check(page.includes("Metrics use workspace totals; filters change the rows shown."),
-  "UI explicitly explains that KPI metrics are workspace totals, not filtered-row totals.");
+check(page.includes("Metrics use workspace totals · metric clicks start a fresh row drill-down."),
+  "UI explains both workspace-total KPI semantics and fresh KPI drill-down behavior.");
 check(page.includes('(recordScope === "current" || recordScope === "all" || recordScope === "outcomes")'),
   "Workspace-total explanation appears only where workspace metrics are displayed.");
 check(page.includes("Workspace pipeline metrics"),
