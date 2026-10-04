@@ -343,7 +343,11 @@ export default function QuickClockSection({
       const unresolvedPunchLabel = unresolvedPunchCount === 1 ? "A previous punch report is" : `${unresolvedPunchCount} previous punch reports are`;
       const pendingShiftReviewCount = Number(status?.pending_shift_review?.count || 0);
       const hasPendingShiftReview = Number.isFinite(pendingShiftReviewCount) && pendingShiftReviewCount > 0;
-      const pendingShiftLabel = pendingShiftReviewCount === 1 ? "A corrected shift still needs" : `${pendingShiftReviewCount} corrected shifts still need`;
+      const pendingMissedClockInCount = Math.max(0, Number(status?.pending_shift_review?.missed_clock_in_count || 0));
+      const pendingCorrectedShiftCount = Math.max(0, Number(status?.pending_shift_review?.corrected_shift_count || 0));
+      const pendingShiftLabel = pendingMissedClockInCount > 0 && pendingCorrectedShiftCount === 0
+        ? (pendingShiftReviewCount === 1 ? "Your reconstructed missed-Clock-In shift still needs" : `${pendingShiftReviewCount} reconstructed missed-Clock-In shifts still need`)
+        : pendingShiftReviewCount === 1 ? "A reviewed shift still needs" : `${pendingShiftReviewCount} reviewed shifts still need`;
       if (restored === "clocked_in") {
         setPersistenceError("");
         setRecognitionStatus(hasUnresolvedPunchReview
