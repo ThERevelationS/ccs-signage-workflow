@@ -149,10 +149,11 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity,pro
   }
   return sources;
 }
-export async function assertApprovalSourcesCurrent(sources,sourceEntity) {
+export async function assertApprovalSourcesCurrent(sources,sourceEntity,reviewDependencies={}) {
   for (const snapshot of sources) {
     const current=await sourceEntity.get(snapshot.id);
     if (current.updated_date!==snapshot.updated_date || !evidenceEqual(sourceAuthoritySnapshot(current),snapshot.snapshot))
       throw evidenceError('Source review changed before rule approval; refresh evidence.');
+    if(sourceRuleKind(current)==='administrative_instruction')await assertSourceScopeReviewEvidence(current,reviewDependencies);
   }
 }
