@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   classifyBacklogRows,
+  jurisdictionProfileTypeForQueueRow,
+  profileHasResearchEvidence,
   profileMatchesQueueRow,
   researchRequestPayload,
 } from "../base44/shared/permittingResearchBacklog.mjs";
@@ -40,11 +42,22 @@ test("dispatcher pauses at capacity rather than depending on a magic batch total
 
 test("existing profile reconciles a stale not-started row instead of creating duplicate research", () => {
   const row = { id: "1", jurisdiction_name: "Lincoln Heights", state: "OH", jurisdiction_type: "village", parent_county_name: "Hamilton County" };
-  const profile = { id: "p1", name: "Lincoln Heights", state: "OH", type: "village" };
+  const profile = { id: "p1", name: "Lincoln Heights", state: "OH", type: "municipality", website_url: "https://example.gov" };
   assert.equal(profileMatchesQueueRow(row, profile, [profile]), true);
   const plan = classifyBacklogRows({ queueRows: [row], profiles: [profile], inFlightCount: 0 });
   assert.equal(plan.reconcile.length, 1);
   assert.equal(plan.dispatch.length, 0);
+});
+
+test("placeholder profiles are not treated as researched evidence", () => {
+  const row = { id: "1", jurisdiction_name: "Example Village", state: "OH", jurisdiction_type: "village", parent_county_name: "Example County" };
+  const placeholder = { id: "p1", name: "Example Village", state: "OH", type: "municipality", parent_county: { name: "Example County" } };
+  assert.equal(jurisdictionProfileTypeForQueueRow(row), "municipality");
+  assert.equal(profileHasResearchEvidence(placeholder), false);
+  const researchedProfiles = [placeholder].filter(profileHasResearchEvidence);
+  const plan = classifyBacklogRows({ queueRows: [row], profiles: researchedProfiles, inFlightCount: 0 });
+  assert.equal(plan.reconcile.length, 0);
+  assert.equal(plan.dispatch.length, 1);
 });
 
 test("same locality name in different counties remains disambiguated", () => {
