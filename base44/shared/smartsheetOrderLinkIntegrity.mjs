@@ -16,8 +16,83 @@ function cellLabel(row, columnId, max = 240) {
   return clean(value, max);
 }
 
-function remoteRowSummary(row, bindings) {
+const normalizedEvidenceText = value => clean(value, 400).toLowerCase().replace(/\s+/g, ' ');
+const placeholderEvidence = value => {
+  const text = normalizedEvidenceText(value);
+  if (!text) return true;
+  return /^(?:test|testing|placeholder|sample|n\/?a|none|-|smartsheet row(?: \d+)?)$/.test(text);
+};
+
+function normalizedOrderIdentity(order) {
   return {
+    customer_name: normalizedEvidenceText(order?.customer_name),
+    description: normalizedEvidenceText(order?.description),
+    request_type: normalizedEvidenceText(order?.request_type),
+    quantity: normalizedEvidenceText(order?.quantity),
+  };
+}
+
+export function classifyRemoteUnlinkedOrderRow(summary, activeLinkedOrders = []) {
+  const identity = {
+    customer_name: normalizedEvidenceText(summary?.customer_name),
+    description: normalizedEvidenceText(summary?.description),
+    request_type: normalizedEvidenceText(summary?.request_type),
+    quantity: normalizedEvidenceText(summary?.quantity),
+  };
+  const values = Object.values(identity).filter(Boolean);
+  if (values.length === 0 || values.every(placeholderEvidence)) {
+    return {
+      kind: 'blank_or_placeholder',
+      reason: 'The unlinked Smartsheet row has no meaningful Order identity fields, or only obvious placeholder/test values. Review only; do not auto-delete it.',
+      candidate_links: [],
+    };
+  }
+
+  // A visible-data match is only a review hint. Require both customer and
+  // description to match exactly, and never use this evidence to establish a link.
+  const duplicateCandidates = (Array.isArray(activeLinkedOrders) ? activeLinkedOrders : [])
+    .filter(order => {
+      const candidate = normalizedOrderIdentity(order);
+      if (!identity.customer_name || !identity.description ||
+          candidate.customer_name !== identity.customer_name ||
+          candidate.description !== identity.description) return false;
+      if (identity.request_type && candidate.request_type && identity.request_type !== candidate.request_type) return false;
+      if (identity.quantity && candidate.quantity && identity.quantity !== candidate.quantity) return false;
+      return Boolean(numericId(order?.smartsheet_row_id));
+    })
+    .slice(0, 3)
+    .map(order => ({
+      base44_order_id: clean(order?.id, 180),
+      linked_smartsheet_row_id: numericId(order?.smartsheet_row_id),
+      customer_name: clean(order?.customer_name, 180),
+      description: clean(order?.description, 320),
+    }));
+
+  if (duplicateCandidates.length > 0) {
+    return {
+      kind: 'duplicate_looking_historical',
+      reason: 'Visible customer and description exactly match an active Base44 Order that is already linked to a different permanent Smartsheet row. This is duplicate-looking evidence only, never proof of identity.',
+      candidate_links: duplicateCandidates,
+    };
+  }
+
+  if (!identity.customer_name || !identity.description) {
+    return {
+      kind: 'sparse_unlinked_row',
+      reason: 'The row contains some Order data but lacks either customer or description. Preserve it for review; there is not enough identity evidence to infer a relationship.',
+      candidate_links: [],
+    };
+  }
+
+  return {
+    kind: 'populated_unlinked_order',
+    reason: 'The row contains a customer and description but has no active Base44 Order linked to its permanent row ID. Treat it as a genuine unlinked Order candidate until reviewed.',
+    candidate_links: [],
+  };
+}
+
+function remoteRowSummary(row, bindings, activeLinkedOrders = []) {
+  const summary = {
     row_id: numericId(row?.id),
     row_number: Number.isFinite(Number(row?.row_number)) ? Number(row.row_number) : null,
     customer_name: cellLabel(row, bindings?.customer_name, 180),
@@ -25,6 +100,9 @@ function remoteRowSummary(row, bindings) {
     description: cellLabel(row, bindings?.description, 320),
     quantity: cellLabel(row, bindings?.quantity, 80),
   };
+  const evidence = classifyRemoteUnlinkedOrderRow(summary, activeLinkedOrders);
+  return { ...summary, evidence_kind: evidence.kind, evidence_reason: evidence.reason,
+    candidate_links: evidence.candidate_links };
 }
 
 export function classifyOrderUnlinkedReviewHint(order) {
@@ -107,6 +185,10 @@ export function auditOrderPermanentLinks(orders, sheetRows, configuredSheetId, b
     linked_row_missing_remote: 0,
     smartsheet_rows_examined: sheetRows.length,
     unlinked_smartsheet_rows: 0,
+    remote_blank_or_placeholder: 0,
+    remote_duplicate_looking_historical: 0,
+    remote_sparse_unlinked: 0,
+    remote_populated_unlinked: 0,
   };
 
   for (const order of activeOrders) {
@@ -159,11 +241,18 @@ export function auditOrderPermanentLinks(orders, sheetRows, configuredSheetId, b
     counts.matched_permanent_links++;
   }
 
+  const activeLinkedOrders = activeOrders.filter(order =>
+    clean(order?.smartsheet_sheet_id, 40) === sheetId && numericId(order?.smartsheet_row_id));
   for (const [rowId, row] of remoteById) {
     if (!configuredLinks.has(rowId)) {
       counts.unlinked_smartsheet_rows++;
+      const summary = remoteRowSummary(row, bindings, activeLinkedOrders);
+      if (summary.evidence_kind === 'blank_or_placeholder') counts.remote_blank_or_placeholder++;
+      else if (summary.evidence_kind === 'duplicate_looking_historical') counts.remote_duplicate_looking_historical++;
+      else if (summary.evidence_kind === 'sparse_unlinked_row') counts.remote_sparse_unlinked++;
+      else if (summary.evidence_kind === 'populated_unlinked_order') counts.remote_populated_unlinked++;
       if (categories.unlinked_smartsheet_row.length < 100) {
-        categories.unlinked_smartsheet_row.push(remoteRowSummary(row, bindings));
+        categories.unlinked_smartsheet_row.push(summary);
       }
     }
   }
