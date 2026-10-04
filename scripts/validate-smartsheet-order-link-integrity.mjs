@@ -32,6 +32,10 @@ const rows = [
     { column_id: '13', display_value: 'No row id' },
     { column_id: '14', value: 6 },
   ] },
+  { id: '107', row_number: 7, cells: [
+    { column_id: '11', display_value: 'Acme' },
+    { column_id: '13', display_value: 'Linked' },
+  ] },
 ];
 
 const report = auditOrderPermanentLinks(orders, rows, sheetId, bindings);
@@ -46,13 +50,13 @@ assert.equal(report.counts.wrong_sheet_link, 1);
 assert.equal(report.counts.duplicate_base44_row_ids, 1);
 assert.equal(report.counts.duplicate_base44_link_records, 2);
 assert.equal(report.counts.linked_row_missing_remote, 1);
-assert.equal(report.counts.unlinked_smartsheet_rows, 3);
+assert.equal(report.counts.unlinked_smartsheet_rows, 4);
 assert.equal(report.counts.remote_blank_or_placeholder, 0);
 assert.equal(report.counts.remote_duplicate_looking_historical, 1);
 assert.equal(report.counts.remote_sparse_unlinked, 2);
-assert.equal(report.counts.remote_populated_unlinked, 0);
+assert.equal(report.counts.remote_populated_unlinked, 1);
 assert.equal(report.link_health.clean, false);
-assert.equal(report.link_health.action_required, 8);
+assert.equal(report.link_health.action_required, 9);
 console.log('PASS permanent-link audit classifies active Base44 and remote row identity problems without mutating data');
 
 assert.equal(report.records_by_category.base44_unlinked[0].base44_order_id, 'unlinked');
@@ -62,8 +66,11 @@ assert.equal(remote106.customer_name, 'Remote Same Name');
 assert.equal(remote106.description, 'No row id');
 assert.equal(remote106.request_type, 'Supplies');
 assert.equal(remote106.quantity, '6');
-assert.equal(remote106.evidence_kind, 'duplicate_looking_historical');
-assert.equal(remote106.candidate_links[0].base44_order_id, 'unlinked' === 'never' ? 'never' : 'matched');
+assert.equal(remote106.evidence_kind, 'populated_unlinked_order');
+const remote107 = report.records_by_category.unlinked_smartsheet_row.find(item => item.row_id === '107');
+assert.equal(remote107.evidence_kind, 'duplicate_looking_historical');
+assert.equal(remote107.candidate_links[0].base44_order_id, 'matched');
+assert.equal(remote107.candidate_links[0].linked_smartsheet_row_id, '101');
 assert.equal(report.records_by_category.duplicate_base44_row_link[0].orders.length, 2);
 assert.equal(report.records_by_category.linked_row_missing_remote[0].base44_order_id, 'missing-remote');
 console.log('PASS unlinked remote rows expose identifying evidence while permanent IDs remain the only match key');
