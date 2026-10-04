@@ -2804,8 +2804,9 @@ Deno.serve(async (req) => {
               const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
               if (!Array.isArray(membershipAudits)) return false;
               discoveryEvidence = Number(summary.snapshot_version || 0) >= 22
-                ? canonicalPayrollMembershipEvidence(membershipAudits)
+                ? canonicalPayrollMembershipEvidence(membershipAudits, Number(summary.snapshot_version || 0) >= 23)
                 : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
+              if (discoveryEvidence?.conflict) return false;
               if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
             }
             if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
