@@ -202,5 +202,5 @@ assert.match(source, /const unresolved = existingRecords\.filter\(orderSmartshee
 assert.match(source, /const unresolved = records\.filter\(orderSmartsheetCreateNeedsReview\)/);
 assert.match(source, /postRow: async \(freshOrder: any\)/);
 assert.match(source, /if \(dataset === 'orders'\)/);
-assert.match(source, /Preserve the existing Sales creation flow/);
+assert.match(source, /Sales create must produce one usable permanent row ID/);
 console.log('PASS only Order creation is guarded and unresolved creates block both sync directions');
