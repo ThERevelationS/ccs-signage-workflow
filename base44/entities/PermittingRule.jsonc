@@ -173,6 +173,24 @@
             "type": "string",
             "format": "date-time"
           },
+          "physical_page": {
+            "type": "integer"
+          },
+          "section_reference": {
+            "type": "string"
+          },
+          "archived_file_url": {
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "text_sha256": {
+            "type": "string"
+          },
+          "evidence_scope": {
+            "type": "string"
+          },
           "verification_status": {
             "type": "string",
             "enum": [
@@ -191,6 +209,24 @@
         ]
       },
       "default": []
+    },
+    "extraction_key": {
+      "type": "string",
+      "description": "Deterministic literal candidate identity used to reconcile individual imports without replacing staff decisions."
+    },
+    "extraction_run_id": {
+      "type": "string"
+    },
+    "evidence_validation": {
+      "type": "string"
+    },
+    "numeric_literal": {
+      "type": "string"
+    },
+    "evidence_context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Selected physical page scope and document completeness; this never claims a whole-code review."
     },
     "source_snapshot_sha256": {
       "type": "string",
