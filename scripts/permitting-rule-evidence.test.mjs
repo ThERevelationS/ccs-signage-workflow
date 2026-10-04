@@ -127,6 +127,21 @@ test('approval does not trust one good citation mixed with unsupported source ev
  const f=await ruleFixture(),run=await extractEvidenceUnit(f.api),rule=run.candidates[0];
  await assert.rejects(verifyRuleForApproval({...rule,citations:[...rule.citations,{...rule.citations[0],official_url:'https://wrong.test'}]},f.api));
 });
+test('a fresh analysis run cannot bypass another run\'s uncertain rule create',async()=>{
+ const f=await ruleFixture({createRule:'missing'}),first=await extractEvidenceUnit(f.api);
+ assert.equal((await importEvidenceCandidate({...f.api,runId:first.run_id,candidateIndex:0})).status,'import_uncertain');
+ const second=await extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'});
+ assert.equal((await importEvidenceCandidate({...f.api,runId:second.run_id,candidateIndex:0})).status,'import_uncertain');
+ assert.equal(f.calls.ruleCreates,1);
+ f.lateRule();assert.equal((await importEvidenceCandidate({...f.api,runId:second.run_id,candidateIndex:0})).rules_created,0);
+ assert.equal(f.calls.ruleCreates,1);
+});
+test('different completed runs sharing a literal candidate cannot create duplicate rules concurrently',async()=>{
+ const f=await ruleFixture(),first=await extractEvidenceUnit(f.api),second=await extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'});
+ await Promise.allSettled([importEvidenceCandidate({...f.api,runId:first.run_id,candidateIndex:0,token:'one'}),
+  importEvidenceCandidate({...f.api,runId:second.run_id,candidateIndex:0,token:'two'})]);
+ assert.equal(f.calls.ruleCreates,1);assert.equal(f.rules.length,1);
+});
 test('timed-out manual LLM is counted once and never retried implicitly',async()=>{
  const f=await ruleFixture(),realTimeout=globalThis.setTimeout;
  f.api.invokeLlm=()=>{f.calls.llm++;return new Promise(()=>{});};
