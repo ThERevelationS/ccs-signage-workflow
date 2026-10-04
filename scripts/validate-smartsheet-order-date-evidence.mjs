@@ -69,6 +69,11 @@ assert.equal(report.counts.remote_blank_changed_since_sync, 2);
 assert.equal(report.counts.remote_blank_after_same_date, 1);
 assert.equal(report.counts.remote_blank_after_other_value, 1);
 assert.equal(report.counts.unverified_local_only_dates, 1);
+assert.equal(report.counts.action_required_date_fields, 4);
+assert.equal(report.counts.historical_only_date_fields, 1);
+assert.equal(report.date_health.action_required_date_fields, 4);
+assert.equal(report.date_health.historical_only_date_fields, 1);
+assert.equal(report.date_health.no_action_required, false);
 assert.equal(report.by_field.date_needed.preserved_historical, 1);
 assert.equal(report.by_field.date_ordered.verified_newer_local, 1);
 assert.equal(report.by_field.date_received.remote_blank_changed_since_sync, 1);
@@ -80,7 +85,20 @@ assert.equal(report.samples.remote_blank_changed_since_sync[0].prior_remote_valu
 assert.equal(report.samples.remote_blank_changed_since_sync[0].prior_remote_normalized_date, '2026-10-12');
 assert.equal(report.samples.remote_blank_changed_since_sync[0].prior_remote_matches_base44, true);
 assert.equal(report.samples.remote_blank_changed_since_sync[1].prior_remote_matches_base44, false);
-console.log('PASS full-sheet read-only date audit classifies every Base44-only calendar date and legacy-equivalent prior values without changing either side');
+console.log('PASS full-sheet read-only date audit classifies every Base44-only calendar date, separates action-required fields from historical-only evidence, and changes nothing');
+
+const overlapOrder = {
+  id: 'overlap', smartsheet_sheet_id: sheetId, smartsheet_row_id: '106',
+  date_needed: '2026-10-15', date_needed_option: 'ASAP',
+  smartsheet_last_synced_at: syncedAt,
+  smartsheet_sync_snapshot: { '1': '', '2': '', '3': '' },
+};
+const overlapReport = auditOrderDateParity([overlapOrder], [{ id: '106', cells: [] }], bindings, sheetId, []);
+assert.equal(overlapReport.counts.preserved_historical_dates, 1);
+assert.equal(overlapReport.counts.stale_text_options, 1);
+assert.equal(overlapReport.date_health.action_required_date_fields, 1);
+assert.equal(overlapReport.date_health.historical_only_date_fields, 0);
+console.log('PASS historical-only counts exclude fields that also have a real actionable anomaly');
 
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const ui = readFileSync('src/components/orders/OrderDateParityReview.jsx', 'utf8');
@@ -98,6 +116,9 @@ assert.match(action, /date_field_audit_events: dateFieldAudits\.length/);
 assert.doesNotMatch(action, /smartsheetWrite|\.bulkUpdate\(|\.create\(|\.update\(|\.delete\(/);
 console.log('PASS authenticated historical-date evidence collection remains read-only');
 
+assert.match(ui, /Date health/);
+assert.match(ui, /No linked Order date fields require corrective action in this verified comparison/);
+assert.match(ui, /historical-only evidence and are not counted as sync errors/);
 assert.match(ui, /Local-only date evidence/);
 assert.match(ui, /Preserved historical/);
 assert.match(ui, /Verified newer local/);
