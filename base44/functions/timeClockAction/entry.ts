@@ -2800,10 +2800,14 @@ Deno.serve(async (req) => {
           )) {
             if (row.details?.payroll_membership && ['clock_in', 'clock_out', 'admin_correction', 'admin_archive'].includes(String(row.action || '')) &&
                 !normalizedPayrollMembershipFromAudit(row)) return false;
+            const membership = Number(summary.snapshot_version || 0) >= 20 ? normalizedPayrollMembershipFromAudit(row) : null;
             expected.push({
               audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
               request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
               classification: changedIds.has(entryId) ? 'mapped_payroll_delta' : 'net_non_payroll_affecting',
+              ...(Number(summary.snapshot_version || 0) >= 20 && membership ? {
+                payroll_membership: { company_date: membership.company_date, clock_in: membership.clock_in, source: membership.source },
+              } : {}),
             });
           }
         }
@@ -3600,7 +3604,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 19 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 20 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3787,10 +3791,14 @@ Deno.serve(async (req) => {
                   !normalizedPayrollMembershipFromAudit(row)) {
                 return Response.json({ success: false, error: 'A normalized payroll-membership audit envelope does not match its authoritative Time Clock action. Admin investigation is required before finalization.' }, { status: 409 });
               }
+              const membership = snapshotVersion >= 20 ? normalizedPayrollMembershipFromAudit(row) : null;
               generationAuditReconciliation.push({
                 audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
                 request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
                 classification: changedIds.has(entryId) ? 'mapped_payroll_delta' : 'net_non_payroll_affecting',
+                ...(snapshotVersion >= 20 && membership ? {
+                  payroll_membership: { company_date: membership.company_date, clock_in: membership.clock_in, source: membership.source },
+                } : {}),
               });
             }
           }
