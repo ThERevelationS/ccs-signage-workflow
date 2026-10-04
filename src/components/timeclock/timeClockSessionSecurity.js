@@ -19,6 +19,21 @@ export function classifyTimeClockLoginStatus(status) {
     };
   }
 
+  const unresolvedPunchReview = status?.unresolved_punch_review;
+  const unresolvedPunchCount = Number(unresolvedPunchReview?.count || 0);
+  if (Number.isFinite(unresolvedPunchCount) && unresolvedPunchCount > 0) {
+    return {
+      kind: "pending_punch_review",
+      status: String(status?.status || ""),
+      count: unresolvedPunchCount,
+      hasIntegrityIssue: unresolvedPunchReview?.has_integrity_issue === true,
+      hasRejectedItem: unresolvedPunchReview?.has_rejected_item === true,
+      item: Array.isArray(unresolvedPunchReview?.items) ? unresolvedPunchReview.items[0] || null : null,
+      clockIn: status?.entry?.clock_in || null,
+      entryId: status?.entry?.id || null,
+    };
+  }
+
   if (status?.transition || ["clocking_in", "clocking_out"].includes(String(status?.status || ""))) {
     return {
       kind: "transition",
