@@ -37,7 +37,7 @@ export function safeAuthorityUrl(value){
  try{const u=new URL(value);return u.protocol==='https:' && !u.username && !u.password && !/[\u0000-\u001f\u007f]/.test(value)?u.href:'';}catch{return '';}
 }
 
-export async function assertSourceScopeReviewEvidence(source,{segmentEntity,profileEntity}){
+export async function assertSourceScopeReviewEvidence(source,{segmentEntity,profileEntity,settingsEntity}){
  const fail=message=>{throw Object.assign(Error(message),{status:409});};
  if(!reviewedAdministrativeSource(source))fail('A current reviewed administrative source and office scope are required.');
  const review=source.authority_review;
@@ -48,6 +48,17 @@ export async function assertSourceScopeReviewEvidence(source,{segmentEntity,prof
  if(review.scope_kind==='named_jurisdiction' && (review.named_areas.length!==1 || review.named_areas[0]!==profile.name))fail('Named scope must identify exactly the canonical jurisdiction.');
  if(review.scope_kind==='unincorporated' && (profile.type!=='county' || review.named_areas.length!==1 ||
     !/unincorporated/i.test(review.named_areas[0]) || !review.named_areas[0].includes(profile.name)))fail('Unincorporated scope must name that county\'s unincorporated area.');
+ const reference=review.office_reference;
+ if(reference){
+  if(!settingsEntity?.filter)fail('Shared office identity must be rechecked.');
+  const rows=await settingsEntity.filter({setting_key:'permitOfficeCatalog'},'id',2,0);
+  const catalog=rows.length===1?rows[0].setting_value?.items:null;
+  const matches=Array.isArray(catalog)?catalog.filter(o=>(o.government_office_id || o.id)===reference.government_office_id):[];
+  const office=matches[0],meta=office?.government_office;
+  if(matches.length!==1 || office.id!==reference.catalog_office_id || meta?.verification_status!=='staff_verified' ||
+     (meta.name || office.name)!==review.publisher_name || !safeAuthorityUrl(meta.source_url) || meta.source_url!==reference.source_url)
+   fail('Shared publisher office identity changed or is no longer verified.');
+ }
  for(const role of ['publisher','scope']){
   const proof=review.proofs.find(p=>p.role===role);
   if(!proof || !Number.isInteger(proof.physical_page) || !proof.excerpt || proof.excerpt.length>1000)fail('Office/scope evidence is incomplete.');
