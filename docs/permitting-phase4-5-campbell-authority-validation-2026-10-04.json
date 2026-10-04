@@ -1,0 +1,138 @@
+{
+  "phase": "4.5",
+  "date": "2026-10-04",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "initial_git": "5895bb9ba29101e2b87019ecdf718c28fc64e95c",
+  "scope": "Current Campbell sign application source and one unincorporated sign-permit application administration relationship",
+  "retained_files": [
+    {
+      "path": "docs/official-evidence/campbell-sign-application-2024-07.pdf",
+      "sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+      "bytes": 169996,
+      "source_id": "6ac2cd6ac48508a21056b654"
+    },
+    {
+      "path": "docs/official-evidence/campbell-service-provider-linked-2026-10-04.pdf",
+      "sha256": "7bd719d36299c543e240759d8868412a8abef1e6377a0afa161fe976164a842d",
+      "bytes": 96677,
+      "source_id": "6ac2cd8586ccf99cac0358f0"
+    },
+    {
+      "path": "docs/official-evidence/campbell-forms-2026-10-04.html",
+      "sha256": "0aa9cfe382bfe59ddb2d933ad879c597222c1eba03a2cd9a0ea772562f1899e3",
+      "bytes": 30963
+    }
+  ],
+  "source_review_id": "6ac2ce8a01cbc0a56cbcfbe3",
+  "source_review_request": "ccs_campbell_form_202407_unincorp_v1",
+  "relationship_id": "6ac2cfa47d520cab91e9bb0e",
+  "relationship_request": "ccs_campbell_sign_unincorp_202407_v1",
+  "relationship_sequence": 1,
+  "relationship_current_staff_verified": true,
+  "preservation": {
+    "settings": [
+      {
+        "key": "permitOfficeCatalog",
+        "exact": true,
+        "differentKeys": []
+      },
+      {
+        "key": "permitting_research_dispatch_config",
+        "exact": true,
+        "differentKeys": []
+      },
+      {
+        "key": "permitting_research_dispatch_state",
+        "exact": true,
+        "differentKeys": []
+      }
+    ],
+    "localities_exact": true,
+    "original_documents_exact": true,
+    "profile_other_fields_exact": true,
+    "old_source_protected_fields_exact": true,
+    "docs_before": 3,
+    "docs_after": 5,
+    "source_audits": 1,
+    "relationship_count": 1,
+    "profile_review_state": {
+      "request_key": "office-authority:6ac19dcc184935c1391ee468:ccs_campbell_sign_unincorp_202407_v1",
+      "payload_sha256": "db60871b2efd07e192e367391e888389a214d4fb66177bff582d715337a697a8",
+      "sequence": 1,
+      "committed_sequence": 1,
+      "requested_by": "brettheinlein1@gmail.com",
+      "status": "complete",
+      "operation_id": "459e82fc-73ff-40db-b1f6-ca562a27a7d7",
+      "review_id": "6ac2cfa47d520cab91e9bb0e"
+    },
+    "sources": [
+      {
+        "id": "6ac25be4207035a2e5be3827",
+        "content_status": "superseded",
+        "verification_status": "historical",
+        "sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+        "bytes": 47262,
+        "authority": "application_form",
+        "archive": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1dae12daf_1648823956_93665.pdf"
+      },
+      {
+        "id": "6ac2cd6ac48508a21056b654",
+        "content_status": "current",
+        "verification_status": "verified",
+        "sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+        "bytes": 169996,
+        "authority": "application_form",
+        "archive": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/6fb7361ff_1721136718_69637.pdf"
+      },
+      {
+        "id": "6ac2cd8586ccf99cac0358f0",
+        "content_status": "unknown",
+        "verification_status": "needs_verification",
+        "sha256": "7bd719d36299c543e240759d8868412a8abef1e6377a0afa161fe976164a842d",
+        "bytes": 96677,
+        "authority": "unknown_review_required",
+        "archive": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/641cfb897_1615818959_2142.pdf"
+      }
+    ]
+  },
+  "validation": {
+    "focused_tests": 118,
+    "tests_result": {
+      "stdout": "✔ changed profile, page proof or source review id blocks instruction approval (4.125275ms)\n✔ revocation retains source and immutable earlier review; old instruction requires re-review (1.814007ms)\n✔ new scoped reviews create distinct candidate identities and preserve prior evidence (2.343117ms)\n✔ rule recheck validates instruction profile/scope even if source bytes are unchanged (2.703759ms)\nℹ tests 118\nℹ suites 0\nℹ pass 118\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 529.768948\n",
+      "stderr": "",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 1313
+    },
+    "full_build": {
+      "stdout": "\n> base44-app@0.0.0 build\n> vite build\n\n[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`\nBrowserslist: browsers data (caniuse-lite) is 13 months old. Please run:\n  npx update-browserslist-db@latest\n  Why you should do it regularly: https://github.com/browserslist/update-db#readme\n",
+      "stderr": "",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 22562
+    },
+    "diff_check": true
+  },
+  "live_verification": {
+    "surface": "Authenticated Base44 editor Test Function, preview function version against production entities",
+    "source_review": "applied with current hash and bounded revalidation, zero cited rules",
+    "relationship": "recorded, list current staff_verified, get_request committed true",
+    "llm_calls": 0,
+    "frontend_published": false,
+    "backend_deployed": false,
+    "existing_backend_used": true,
+    "automatic_dispatch_pause": false
+  },
+  "limits": [
+    "No city role or coverage relationships created.",
+    "Current form is application/procedure evidence, not adopted regulatory law.",
+    "Service-provider PDF remains unknown/needs_verification; old 2021 metadata and flattening columns prevent reliable current city-role inference.",
+    "No address authority resolved and no jobs/work orders tested or modified."
+  ],
+  "concurrent_changes": {
+    "path": "base44/functions/timeClockAction/entry.ts",
+    "action": "Preserved live HEAD; outside permitting phase."
+  },
+  "next": "Review current city-specific service responsibilities with official evidence and explicit jurisdiction profiles, beginning with form-listed city scope; do not use the old matrix alone."
+}
