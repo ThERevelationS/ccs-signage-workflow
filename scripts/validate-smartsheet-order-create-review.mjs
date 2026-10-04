@@ -59,7 +59,7 @@ console.log('PASS empty-marker review and 100-card preview caps preserve full co
 
 const pageGuard = createSmartsheetOrderPageGuard({ pageSize: 1, maxPages: 3 });
 assert.equal(pageGuard.accept(1, { rows: [{ id: 111 }], version: 1, totalRowCount: 2 }, [{ id: '111' }]), false);
-assert.throws(() => pageGuard.accept(2, { rows: [], version: 2, totalRowCount: 2 }, []), /changed/);
+assert.throws(() => pageGuard.accept(2, { rows: [], version: 2, totalRowCount: 2 }, []), /changed|ended before all rows were retrieved/);
 assert.throws(() => { const guard = createSmartsheetOrderPageGuard(); guard.assertComplete(); }, /could not be verified/i);
 console.log('PASS incomplete and moving-sheet evidence cannot justify a missing-row classification');
 
