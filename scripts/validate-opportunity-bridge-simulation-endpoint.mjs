@@ -76,6 +76,11 @@ assert(source.includes('simulation_only:true'), 'Simulation endpoint must explic
 assert(source.includes('write_capability:false'), 'Simulation endpoint must explicitly report no write capability.');
 assert(source.includes('apply_path_enabled:false'), 'Simulation endpoint must explicitly report apply path disabled.');
 assert(source.includes('buildOpportunityBridgeDryRunPlan'), 'Backend must compute proposals from trusted live reads.');
+assert(source.includes('evaluateOpportunityBridgeProductionReadiness'), 'Backend must compute the read-only production readiness gate.');
+assert(source.includes('receiptSchemaActivated:false'), 'Simulation must report the receipt ledger as not activated.');
+assert(source.includes('secondaryConfirmationConfigured:false'), 'Simulation must report secondary confirmation as not configured.');
+assert(source.includes('readiness,'), 'Simulation response must include the readiness checklist.');
+assert(source.includes('generated_at:generatedAt'), 'Simulation response must include the server plan timestamp.');
 assert(!source.includes('opportunityBridgeApplyEngine'), 'Simulation endpoint must not import the apply engine.');
 assert(!source.includes('executeOpportunityBridgePlanRow'), 'Simulation endpoint must not expose the apply executor.');
 
