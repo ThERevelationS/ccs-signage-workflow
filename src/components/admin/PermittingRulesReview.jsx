@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import PermittingRuleEvidenceExtraction from "./PermittingRuleEvidenceExtraction";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,8 +95,6 @@ export default function PermittingRulesReview({ sessionToken }) {
   const [expandedId, setExpandedId] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [editDialog, setEditDialog] = useState(null);
-  const [extracting, setExtracting] = useState(false);
-  const [extractResult, setExtractResult] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState(null);
 
@@ -119,7 +118,7 @@ export default function PermittingRulesReview({ sessionToken }) {
       setHasMore(data.has_more || false);
       setCursor(data.next_cursor || null);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(e?.response?.data?.error || e.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -154,7 +153,7 @@ export default function PermittingRulesReview({ sessionToken }) {
       setRules((prev) => prev.map((r) => r.id === rule.id ? data.rule : r));
       loadCounts();
     } catch (e) {
-      setError(e.message || String(e));
+      setError(e?.response?.data?.error || e.message || String(e));
     } finally {
       setActionLoading(null);
     }
@@ -174,7 +173,7 @@ export default function PermittingRulesReview({ sessionToken }) {
       setRules((prev) => prev.map((r) => r.id === rule.id ? data.rule : r));
       loadCounts();
     } catch (e) {
-      setError(e.message || String(e));
+      setError(e?.response?.data?.error || e.message || String(e));
     } finally {
       setActionLoading(null);
     }
@@ -195,29 +194,9 @@ export default function PermittingRulesReview({ sessionToken }) {
       setRules((prev) => prev.map((r) => r.id === editDialog.rule.id ? data.rule : r));
       setEditDialog(null);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(e?.response?.data?.error || e.message || String(e));
     } finally {
       setActionLoading(null);
-    }
-  };
-
-  const handleExtract = async () => {
-    setExtracting(true);
-    setExtractResult(null);
-    try {
-      const res = await base44.functions.invoke("permittingRuleExtraction", {
-        jurisdiction_name: filters.jurisdiction_name || "Boone County",
-      });
-      const data = res?.data || res;
-      setExtractResult(data);
-      if (data?.success) {
-        loadRules(true);
-        loadCounts();
-      }
-    } catch (e) {
-      setExtractResult({ error: e.message || String(e) });
-    } finally {
-      setExtracting(false);
     }
   };
 
@@ -230,26 +209,9 @@ export default function PermittingRulesReview({ sessionToken }) {
           <Scale className="w-5 h-5 text-indigo-600" />
           <h2 className="text-xl font-bold">Permitting Rules Engine</h2>
         </div>
-        <Button onClick={handleExtract} disabled={extracting} size="sm">
-          {extracting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          {extracting ? "Extracting…" : "Run Extraction (Boone)"}
-        </Button>
       </div>
 
-      {extractResult && (
-        <Card className={extractResult.error ? "border-red-300" : "border-green-300"}>
-          <CardContent className="pt-4 text-sm">
-            {extractResult.error ? (
-              <span className="text-red-700">Error: {extractResult.error}</span>
-            ) : (
-              <div>
-                <span className="font-semibold">Extraction complete:</span> {extractResult.rules_created} rules created from {extractResult.docs_processed} docs ({extractResult.llm_calls} LLM calls).
-                {extractResult.errors?.length > 0 && <span className="text-amber-700"> {extractResult.errors.length} errors.</span>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <PermittingRuleEvidenceExtraction key={filters.jurisdiction_name} jurisdictionName={filters.jurisdiction_name} onImported={() => { loadRules(true); loadCounts(); }} />
 
       {/* Summary cards */}
       {counts && (
@@ -265,22 +227,22 @@ export default function PermittingRulesReview({ sessionToken }) {
       {/* Filters */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <Input placeholder="Jurisdiction" value={filters.jurisdiction_name} onChange={(e) => setFilter("jurisdiction_name", e.target.value)} />
-        <Select value={filters.rule_category} onValueChange={(v) => setFilter("rule_category", v)}>
+        <Select value={filters.rule_category || "all"} onValueChange={(v) => setFilter("rule_category", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value || "all"}>{c.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={filters.status} onValueChange={(v) => setFilter("status", v)}>
+        <Select value={filters.status || "all"} onValueChange={(v) => setFilter("status", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>{STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{STATUSES.map(s => <SelectItem key={s.value} value={s.value || "all"}>{s.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={filters.conflict_state} onValueChange={(v) => setFilter("conflict_state", v)}>
+        <Select value={filters.conflict_state || "all"} onValueChange={(v) => setFilter("conflict_state", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Conflict" /></SelectTrigger>
-          <SelectContent>{CONFLICT_STATES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{CONFLICT_STATES.map(c => <SelectItem key={c.value} value={c.value || "all"}>{c.label}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={filters.confidence} onValueChange={(v) => setFilter("confidence", v)}>
+        <Select value={filters.confidence || "all"} onValueChange={(v) => setFilter("confidence", v === "all" ? "" : v)}>
           <SelectTrigger><SelectValue placeholder="Confidence" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={null}>All Confidence</SelectItem>
+            <SelectItem value="all">All Confidence</SelectItem>
             <SelectItem value="high">High</SelectItem>
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="low">Low</SelectItem>
@@ -294,7 +256,7 @@ export default function PermittingRulesReview({ sessionToken }) {
       {loading ? (
         <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-indigo-500" /></div>
       ) : rules.length === 0 ? (
-        <Card><CardContent className="pt-6 text-center text-gray-500">No rules found. Run extraction to populate.</CardContent></Card>
+        <Card><CardContent className="pt-6 text-center text-gray-500">No rules found. Select retained document pages and import a cited candidate for review.</CardContent></Card>
       ) : (
         <div className="space-y-2">
           {rules.map((rule) => (
