@@ -34,7 +34,9 @@ function reconcileGenerationEvidence(generation) {
     group.totalHours += Number.isFinite(hours) ? hours : 0;
     if (shift?.approval_status === "approved") group.approvedShiftCount += 1;
     const provenanceComplete = Number(generation.snapshot_version || 0) < 4 || (shift?.approval_evidence?.approved_by && shift?.approval_evidence?.approved_at);
-    if (shift?.approval_request_id && shift?.approval_evidence?.request_id === shift.approval_request_id && ["confirmed", "recovered"].includes(shift?.approval_evidence?.outcome) && provenanceComplete) group.approvalEvidenceCount += 1;
+    const authorityComplete = Number(generation.snapshot_version || 0) < 5 || (shift?.approval_evidence?.approver_role === "admin" && ["session", "admin_kiosk"].includes(shift?.approval_evidence?.authentication_method));
+    const independentComplete = Number(generation.snapshot_version || 0) < 6 || (shift?.approval_evidence?.independent_review === true && String(shift?.approval_evidence?.approved_by || "").toLowerCase() !== email);
+    if (shift?.approval_request_id && shift?.approval_evidence?.request_id === shift.approval_request_id && ["confirmed", "recovered"].includes(shift?.approval_evidence?.outcome) && provenanceComplete && authorityComplete && independentComplete) group.approvalEvidenceCount += 1;
     group.shifts.push(shift);
     groups.set(email, group);
   }
