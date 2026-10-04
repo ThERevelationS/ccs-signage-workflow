@@ -2572,6 +2572,10 @@ Deno.serve(async (req) => {
           chainCore.generation_audit_reconciliation_hash = String(summary.generation_audit_reconciliation_hash || '');
           chainCore.generation_audit_reconciliation_count = Number(summary.generation_audit_reconciliation_count || 0);
         }
+        if (Number(summary.snapshot_version || 0) >= 21) {
+          chainCore.generation_membership_discovery_hash = String(summary.generation_membership_discovery_hash || '');
+          chainCore.generation_membership_discovery_count = Number(summary.generation_membership_discovery_count || 0);
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
