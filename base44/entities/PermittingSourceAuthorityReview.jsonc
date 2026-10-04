@@ -1,0 +1,66 @@
+{
+  "name": "PermittingSourceAuthorityReview",
+  "type": "object",
+  "description": "Immutable manual source/office/scope review intent. A matching source receipt proves application; retained audit intents do not alone establish authority.",
+  "properties": {
+    "request_key": {
+      "type": "string"
+    },
+    "source_document_id": {
+      "type": "string"
+    },
+    "payload_sha256": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "string"
+    },
+    "source_identity": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "before_fields": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "next_fields": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "request_key",
+    "source_document_id",
+    "payload_sha256",
+    "action",
+    "requested_by",
+    "source_identity",
+    "profile",
+    "before_fields",
+    "next_fields"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": false,
+    "delete": false
+  }
+}
