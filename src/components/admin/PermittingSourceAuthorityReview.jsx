@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   // Parent keys this panel by source and blocks source changes while a request is in progress.
   const locked = Boolean(disabled || busy);
   const unresolvedServerIntent = ["creating", "uncertain"].includes(source.authority_review_state?.status);
@@ -55,7 +56,7 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
   });
   const acknowledge = data => {
     try { sessionStorage.removeItem(storageKey(source)); } catch { /* Server retains the permanent receipt. */ }
-    setPending(null); setPreview(null); onReviewed(data.review);
+    setPending(null); setPreview(null); onReviewed(data);
   };
   async function act(action) {
     if (locked) return;
@@ -64,6 +65,7 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
       if (["preview", "preview_revoke"].includes(action)) {
         const input = action === "preview" ? reviewInput() : {};
         const data = await invoke({ action, source_document_id: source.id, review: input });
+        if (!mounted.current) return;
         if (!data.success) throw Error(data.error || "Source review preview failed.");
         setPreview({ ...data, action: action === "preview" ? "verify" : "revoke", input });
         setResult(null);
@@ -71,9 +73,11 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
       }
       if (action === "check") {
         const data = await invoke({ action: "get_request", request_id: storedRequestId });
+        if (!mounted.current) return;
         if (!data.success) throw Error(data.error || "Saved review could not be checked.");
         if (data.audit && data.audit.source_document_id !== source.id) throw Error("Saved review belongs to another source.");
-        setResult({ ...data, status: data.applied ? "applied" : data.audit ? "recorded_not_applied" : "review_uncertain" });
+        setResult({ ...data, status: data.applied ? "applied" : data.audit ? "recorded_not_applied" : "review_uncertain",
+          ...(data.applied ? { revalidation: { success: false, resume_after: "", error: "Continue a bounded recheck of dependent rules." } } : {}) });
         if (data.applied) acknowledge(data);
         return;
       }
@@ -81,6 +85,7 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
         const previous = result?.revalidation;
         const data = await invoke({ action: "revalidate", source_document_id: source.id,
           cursor: previous?.next_cursor || previous?.resume_after || "" });
+        if (!mounted.current) return;
         if (!data.success) throw Error(data.error || "Rule recheck failed.");
         setResult(p => ({ ...p, revalidation: data }));
         onReviewed(null);
@@ -95,12 +100,14 @@ export default function PermittingSourceAuthorityReview({ source, disabled, onBu
         sessionStorage.setItem(storageKey(source), JSON.stringify(body)); setPending(body);
       }
       if (!body) throw Error("The saved decision is unavailable. Check the recorded request before another review.");
-      const data = await invoke(body); setResult(data);
+      const data = await invoke(body);
+      if (!mounted.current) return;
+      setResult(data);
       if (data.success && data.status === "applied") acknowledge(data);
       else setError(data.error || "Review outcome is uncertain. Check or resume the same saved decision.");
     } catch (e) {
       if (mounted.current) setError(errorMessage(e));
-    } finally { setBusy(false); onBusy(false); }
+    } finally { if (mounted.current) { setBusy(false); onBusy(false); } }
   }
   if (!isAdministrative(source)) return null;
   return <details className="border rounded p-3 text-sm space-y-3">
