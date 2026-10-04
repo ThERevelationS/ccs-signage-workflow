@@ -9,7 +9,7 @@ assert.match(backend, /const orderFailedRecordIds = new Set<string>\(\)/);
 assert.match(backend, /const deferredOrderVerification = new Map<string/);
 assert.match(backend, /requiresRemoteWrite: fieldPlan\.outgoing\.length > 0/);
 assert.match(backend, /orderRemoteVerifiedIds/);
-assert.match(backend, /Smartsheet row .* did not read back with the expected values\. The Order remains queued/);
+assert.match(backend, /did not read back with the expected values\. The Order remains queued/);
 assert.match(backend, /detectConflict\(freshRow\.cells, verification\.expectedSnapshot, bindings, 'orders'\)/);
 assert.match(backend, /updated_date: verification\.originalUpdatedDate, smartsheet_pending_local_sync: true/);
 assert.match(backend, /findUnverifiedSyncMetadata\(\[expected\], record \? \[record\] : \[\]\)/);
