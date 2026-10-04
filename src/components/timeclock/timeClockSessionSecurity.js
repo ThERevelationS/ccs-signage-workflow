@@ -34,6 +34,20 @@ export function classifyTimeClockLoginStatus(status) {
     };
   }
 
+  const pendingShiftReview = status?.pending_shift_review;
+  const pendingShiftCount = Number(pendingShiftReview?.count || 0);
+  if (Number.isFinite(pendingShiftCount) && pendingShiftCount > 0) {
+    return {
+      kind: "pending_shift_review",
+      status: String(status?.status || ""),
+      count: pendingShiftCount,
+      hasIntegrityIssue: pendingShiftReview?.has_integrity_issue === true,
+      item: Array.isArray(pendingShiftReview?.items) ? pendingShiftReview.items[0] || null : null,
+      clockIn: status?.entry?.clock_in || null,
+      entryId: status?.entry?.id || null,
+    };
+  }
+
   if (status?.transition || ["clocking_in", "clocking_out"].includes(String(status?.status || ""))) {
     return {
       kind: "transition",
