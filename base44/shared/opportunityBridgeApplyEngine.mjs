@@ -110,9 +110,6 @@ export async function executeOpportunityBridgePlanRow({
 
   const loaded = await store.getWorkOrder(workOrderId);
   if (!loaded?.id) return held(planRow, planRow?.source_snapshot, 'source_work_order_missing');
-  if (!bridgeSourceSnapshotsEqual(planRow?.source_snapshot || {}, loaded)) {
-    return held(planRow, bridgeSourceSnapshot(loaded), 'stale_source_snapshot');
-  }
 
   let receipt;
   try {
@@ -128,6 +125,37 @@ export async function executeOpportunityBridgePlanRow({
     return held(planRow, bridgeSourceSnapshot(loaded), preflightHold, {
       receipt_matching_ids: receipt.matching_ids || [],
     });
+  }
+
+  const loadedOpportunityId = clean(loaded?.opportunity_id);
+  if (loadedOpportunityId) {
+    if (receipt.state !== 'matched_existing' || clean(receipt.opportunity?.id) !== loadedOpportunityId) {
+      return held(planRow, bridgeSourceSnapshot(loaded), 'work_order_already_links_unmatched_opportunity', {
+        conflicting_opportunity_id:loadedOpportunityId,
+        receipt_matching_ids:receipt.matching_ids || [],
+      });
+    }
+    const verifiedOpportunity = await store.getOpportunity(loadedOpportunityId).catch(() => null);
+    if (!verifiedOpportunity?.id ||
+        clean(verifiedOpportunity.creation_request_key) !== opportunityBridgeReceiptKey(workOrderId) ||
+        clean(verifiedOpportunity.compatibility_work_order_id) !== workOrderId) {
+      return held(planRow, bridgeSourceSnapshot(loaded), 'post_link_opportunity_verification_failed', {
+        opportunity_id:loadedOpportunityId,
+      });
+    }
+    return {
+      ...receiptBase({
+        planRow,
+        sourceSnapshot:bridgeSourceSnapshot(loaded),
+        resultCode:'bridge_already_linked',
+        details:{ opportunity_id:loadedOpportunityId, create_status:'reused' },
+      }),
+      status:OPPORTUNITY_BRIDGE_APPLY_STATUS.ALREADY_LINKED,
+    };
+  }
+
+  if (!bridgeSourceSnapshotsEqual(planRow?.source_snapshot || {}, loaded)) {
+    return held(planRow, bridgeSourceSnapshot(loaded), 'stale_source_snapshot');
   }
 
   let opportunity = receipt.opportunity || null;
