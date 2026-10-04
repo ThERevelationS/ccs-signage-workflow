@@ -3064,6 +3064,7 @@ Deno.serve(async (req) => {
           });
         }
         const entrySnapshotHash = await payloadHash(snapshotRows);
+        const snapshotVersion = snapshotRows.every((row: any) => row.approval_evidence?.approved_by && row.approval_evidence?.approved_at) ? 4 : 3;
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const priorHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
         const previousHistoryHash = await payloadHash(priorHistory);
@@ -3074,7 +3075,7 @@ Deno.serve(async (req) => {
           lock_timestamp: lockTimestamp,
           locked_by: actorEmail,
           request_id: requestId,
-          snapshot_version: 4,
+          snapshot_version: snapshotVersion,
           entry_snapshot_hash: entrySnapshotHash,
           previous_history_hash: previousHistoryHash,
           shift_manifest_hash: entrySnapshotHash,
