@@ -1,0 +1,149 @@
+{
+  "phase": "1 — official source discovery",
+  "verified_at": "2026-10-04T07:52:46.209Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "jurisdiction_id": "6ac1d67d439c92b783f2dd45",
+  "official_forms_url": "https://morrowcountyohio.gov/government/department/zoning/zoning_forms.php",
+  "live_refresh": {
+    "invocations": 1,
+    "mode": "discovery_only",
+    "runtime_ms": 2385,
+    "backend_runtime_ms": 1252,
+    "research_calls": 0,
+    "initial_documents": 0,
+    "initial_discovered": 18,
+    "final_retained": 16
+  },
+  "fixes": [
+    "Honor safe same-host HTML base URLs.",
+    "Handle spaced href attributes and plural/underscore resource names.",
+    "Reject inherited-path navigation, employment and newsletter sign-up false positives.",
+    "Prioritize downloadable files within bounded discovery.",
+    "Add authenticated targeted discovery-only mode without research or extraction calls.",
+    "Use named File for upload; preserve successful archive evidence across extraction failure."
+  ],
+  "checks": {
+    "focused_tests": "44/44",
+    "backend_bundle": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS",
+    "full_build": "PASS; stale browser-data warnings only",
+    "boone_documents_unchanged": true,
+    "dispatcher_restored": true,
+    "dispatcher_daily_attempts_unchanged": 40,
+    "manual_searches_exempt_from_automated_credit_limits": true
+  },
+  "archive": {
+    "complete": false,
+    "attached_files": 0,
+    "original_failure": "Base44 rejected unnamed Blob as empty file payload.",
+    "named_file_fix": "Compiled handler and File payload assertions pass; live upload not yet confirmed.",
+    "direct_verification": "Timed out at 60 seconds. One post-timeout read found no attached archive. Upload was not retried.",
+    "pending_outcome": "An unattached upload may exist; inspect before retrying. The direct script's conditional record update uses the prior updated_date, invalidated by removal of the two known test false positives."
+  },
+  "scope_notes": [
+    "Forms index yielded three directly linked applications and zoning-regulations page.",
+    "No fee/checklist links were present on this forms page; helper classification is tested but live discovery of those sources remains open.",
+    "Retention does not establish sign applicability or adopted authority.",
+    "Normal manual admin research stays unrestricted by automatic daily budget; network/file/time safety limits remain."
+  ],
+  "next": "Phase 2 — bounded archival continuation for known source links, with explicit failure/uncertain-upload status and no research LLM calls.",
+  "documents": [
+    {
+      "id": "ai_1791099930671_0",
+      "title": "Official permitting/forms page",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/zoning_forms.php",
+      "doc_type": "permit_application"
+    },
+    {
+      "id": "ai_1791099930671_1",
+      "title": "Zoning Permit Application",
+      "url": "https://morrowcountyohio.gov/Zoning/Zoning%20Permit%20Application_2024.pdf?t=202412231014320",
+      "doc_type": "permit_application"
+    },
+    {
+      "id": "ai_1791099930671_2",
+      "title": "Zoning Variance Application",
+      "url": "https://morrowcountyohio.gov/Zoning/Zoning%20Forms/BZA%20Variance%20Application.pdf?t=202512310822050",
+      "doc_type": "permit_application"
+    },
+    {
+      "id": "ai_1791099930671_3",
+      "title": "Conditional Use Application",
+      "url": "https://morrowcountyohio.gov/Conditional%20Use%20Application.pdf?t=202603240940190",
+      "doc_type": "permit_application"
+    },
+    {
+      "id": "ai_1791099930671_4",
+      "title": "Development Office",
+      "url": "https://morrowcountyohio.gov/community/development_office/index.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_5",
+      "title": "Apply For/ Request",
+      "url": "https://morrowcountyohio.gov/how_do_i_/apply_for___obtain/index.php",
+      "doc_type": "permit_application"
+    },
+    {
+      "id": "ai_1791099930671_7",
+      "title": "Zoning Basics",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/zoning_basics.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_8",
+      "title": "Zoning in Morrow County",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/zoning_in_morrow_county.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_9",
+      "title": "Zoning FAQs",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/zoning_faqs.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_10",
+      "title": "Commissions and Boards",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/commissions_and_boards.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_11",
+      "title": "2026 Hearing Dates",
+      "url": "https://morrowcountyohio.gov/government/boards___agencies___authorities/zoning/upcoming_public_hearings.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_12",
+      "title": "2026 Public Hearings",
+      "url": "https://morrowcountyohio.gov/government/boards___agencies___authorities/zoning/calendar_and_events.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_13",
+      "title": "Archived Public Hearings",
+      "url": "https://morrowcountyohio.gov/government/boards___agencies___authorities/zoning/archived_public_hearings.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_14",
+      "title": "Zoning Regulations",
+      "url": "https://morrowcountyohio.gov/government/boards___agencies___authorities/zoning/zoning_regulations_and_maps.php",
+      "doc_type": "zoning_code"
+    },
+    {
+      "id": "ai_1791099930671_15",
+      "title": "Contact Us",
+      "url": "https://morrowcountyohio.gov/government/department/zoning/contact_us.php",
+      "doc_type": "other"
+    },
+    {
+      "id": "ai_1791099930671_16",
+      "title": "Zoning",
+      "url": "https://morrowcountyohio.gov/government/boards___agencies___authorities/zoning/index.php",
+      "doc_type": "other"
+    }
+  ]
+}
