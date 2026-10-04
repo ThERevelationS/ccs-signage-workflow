@@ -311,7 +311,10 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     handleCustomSort, 
     clearSort,
     clearCustomFilter,
-  } = useColumnSorting('salesPipeline', currentUser?.email);
+  } = useColumnSorting(
+    recordScope === "current" ? "salesPipeline" : `salesPipeline_${recordScope}`,
+    currentUser?.email,
+  );
 
   const activeColumnHeaderFilter = useMemo(
     () => describeSalesColumnHeaderFilter(sortConfig),
