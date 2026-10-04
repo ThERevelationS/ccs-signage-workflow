@@ -60,6 +60,7 @@ export default function TimeClockPunchExceptionReport({
   correctionRequests = [],
   onReviewEntry,
   onReviewCorrection,
+  onApproveEntry,
 }) {
   const entryById = new Map(timeEntries.map(entry => [entry.id, entry]));
   const correctionById = new Map(correctionRequests.map(request => [request.id, request]));
@@ -121,6 +122,8 @@ export default function TimeClockPunchExceptionReport({
             const entry = entryById.get(row.time_entry_id) || null;
             const linkedCorrection = correctionById.get(row.correction_request_id) || correctionByPunchExceptionId.get(row.id) || null;
             const canReviewCorrection = ACTIONABLE_STATUSES.has(row.status) && linkedCorrection && ["pending", "reviewing"].includes(linkedCorrection.status) && typeof onReviewCorrection === "function";
+            const canApproveLateClockIn = row.exception_type === "late_clock_in" && row.status === "pending_manager_review" &&
+              entry?.status === "clocked_out" && entry?.approval_status === "needs_review" && !entry?.pay_period_id && typeof onApproveEntry === "function";
             return (
               <div key={row.id || row.case_key} className="rounded-xl border bg-white p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -143,6 +146,10 @@ export default function TimeClockPunchExceptionReport({
                   {canReviewCorrection ? (
                     <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onReviewCorrection(linkedCorrection)}>
                       Review Correction
+                    </Button>
+                  ) : canApproveLateClockIn ? (
+                    <Button type="button" size="sm" variant="outline" className="shrink-0 text-green-700" onClick={() => onApproveEntry(entry)}>
+                      Approve Shift
                     </Button>
                   ) : entry && typeof onReviewEntry === "function" ? (
                     <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onReviewEntry(entry)}>
