@@ -1,0 +1,68 @@
+{
+  "phase": "4.2",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "validated_source_head": "79643540b87fa8f9a3eed5ef6eb2f7be42fcb23a",
+  "checked_at": "2026-10-04T20:16:35.921Z",
+  "validation": {
+    "focused_and_regression_tests": 291,
+    "passed": 291,
+    "new_office_authority_tests": 21,
+    "targeted_ui_lint": "passed",
+    "backend_bundle": "permittingOfficeAuthorityReview passed",
+    "full_npm_build": "passed",
+    "git_diff_check": "passed",
+    "frontend_published": false
+  },
+  "production": {
+    "llm_calls": 0,
+    "entity_record_writes": 0,
+    "file_fetches": 0,
+    "office_authority_review_records": 0,
+    "boone_rule_records": 101,
+    "boone_source_records": 48,
+    "tracker_and_catalog_preservation": {
+      "tracker_localities": {
+        "records": 2,
+        "preserved": true,
+        "changed_ids": []
+      },
+      "office_catalog": {
+        "records": 1,
+        "preserved": true,
+        "changed_ids": []
+      }
+    },
+    "office_catalog_entries": 7,
+    "staff_verified_office_identities": 0,
+    "source_checks": [
+      {
+        "source_id": "6ac2593367c75c73d83cf39b",
+        "jurisdiction_id": "6ac1d67d439c92b783f2dd45",
+        "sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+        "verification_status": "needs_verification",
+        "unreviewed_relationship_blocked": true,
+        "committed_relationships": 0,
+        "address_authority_resolved": false
+      },
+      {
+        "source_id": "6ac25be4207035a2e5be3827",
+        "jurisdiction_id": "6ac19dcc184935c1391ee468",
+        "sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+        "verification_status": "needs_verification",
+        "unreviewed_relationship_blocked": true,
+        "committed_relationships": 0,
+        "address_authority_resolved": false
+      }
+    ]
+  },
+  "limits_and_scope": {
+    "list_page_events": 5,
+    "context_profile_page": 20,
+    "manual_research_queue_quota": false,
+    "total_relationship_history_cap": false,
+    "automatic_dispatcher_modified": false,
+    "legacy_tracker_workflows_modified": false
+  },
+  "acceptance_mode": "Compiled backend handler with isolated SDK repositories, plus read-only actual production data exercised through current helpers. No direct production HTTP save or relationship creation acceptance.",
+  "next": "Register missing canonical office identities from retained official publisher evidence, preserve needs-verification state, and add identity review before populating scoped relationships."
+}
