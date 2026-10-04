@@ -37,10 +37,25 @@ function reconcileGenerationEvidence(generation) {
   }
   const employees = [...groups.values()].sort((a, b) => a.email.localeCompare(b.email));
   const expectedHours = Number(generation.total_hours || 0);
+  const server = generation.employee_reconciliation;
+  const serverEmployees = Array.isArray(server?.employees) ? server.employees : [];
+  const serverByEmail = new Map(serverEmployees.map((employee) => [String(employee.user_email || "").toLowerCase(), employee]));
+  const serverMatchesClient = server?.verified === true
+    && Number(server.shift_count || 0) === generation.shifts.length
+    && Number(server.employee_count || 0) === employees.length
+    && Math.abs(Number(server.total_hours || 0) - totalHours) < 0.005
+    && serverEmployees.length === employees.length
+    && employees.every((employee) => {
+      const authoritative = serverByEmail.get(employee.email);
+      return authoritative
+        && Number(authoritative.shift_count || 0) === employee.shifts.length
+        && Math.abs(Number(authoritative.total_hours || 0) - employee.totalHours) < 0.005;
+    });
   const reconciled = generation.shifts.length === Number(generation.entry_count || 0)
     && employees.length === Number(generation.employee_count || 0)
-    && Math.abs(totalHours - expectedHours) < 0.005;
-  return { employees, totalHours, reconciled };
+    && Math.abs(totalHours - expectedHours) < 0.005
+    && serverMatchesClient;
+  return { employees, totalHours, reconciled, serverMatchesClient };
 }
 
 function newRequestId() {
