@@ -1697,6 +1697,14 @@ async function pushDataset(
     });
   }
 
+  const successfulOrderRecordIds = dataset === 'orders'
+    ? [...new Set([...created, ...updated].map(String))]
+    : [];
+  const successfulOrderSet = new Set(successfulOrderRecordIds);
+  const unresolvedOrderRecordIds = dataset === 'orders'
+    ? pendingRecords.map((record: any) => String(record.id || '')).filter((id: string) => id && !successfulOrderSet.has(id))
+    : [];
+
   return {
     dataset,
     direction: 'push',
@@ -1706,7 +1714,7 @@ async function pushDataset(
     updated: updated.length,
     ...((dataset === 'sales' || dataset === 'orders') ? { unchanged_skipped: unchangedSkipped } : {}),
     conflicts: conflicts.length,
-    errors: errors.length,
+    errors: dataset === 'orders' ? orderFailedRecordIds.size : errors.length,
     error_details: errors.slice(0, 10),
     conflict_record_ids: conflicts.slice(0, 10),
     ...(dataset === 'sales' ? {processed_records:orderProcessedCount,remaining_records:Math.max(0,pendingRecords.length-orderProcessedCount),...(orderTimeBudgetReached?{skipped:true,partial:true,time_budget_reached:true,reason:'Sales push paused safely at its time limit. Remaining changes stay queued.'}:{})} : {}),
@@ -1714,6 +1722,8 @@ async function pushDataset(
       requestor_contacts_skipped_no_valid_email: requestorContactsSkippedNoEmail,
       processed_records: orderProcessedCount,
       remaining_records: Math.max(0, pendingRecords.length - orderProcessedCount),
+      successful_record_ids: successfulOrderRecordIds.slice(0, 100),
+      unresolved_record_ids: unresolvedOrderRecordIds.slice(0, 100),
       ...(orderTimeBudgetReached ? {
         skipped: true,
         partial: true,
