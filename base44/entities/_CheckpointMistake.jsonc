@@ -1,28 +1,17 @@
 {
   "name": "_CheckpointMistake",
   "type": "object",
-  "properties": {},
-  "required": [],
-  "rls": {
-    "create": {
-      "user_condition": {
-        "role": "__disabled_accidental_schema__"
-      }
+  "description": "DO NOT CREATE \u2014 placeholder entity used only for checkpoint markers. Not a real data entity.",
+  "properties": {
+    "checkpoint_name": {
+      "type": "string"
     },
-    "read": {
-      "user_condition": {
-        "role": "__disabled_accidental_schema__"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "__disabled_accidental_schema__"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "__disabled_accidental_schema__"
-      }
+    "checkpoint_data": {
+      "type": "object",
+      "additionalProperties": true
     }
-  }
+  },
+  "required": [
+    "checkpoint_name"
+  ]
 }
