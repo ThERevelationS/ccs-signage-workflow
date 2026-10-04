@@ -1,8 +1,9 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
 import {
   classifyBacklogRows,
+  jurisdictionProfileTypeForQueueRow,
+  profileHasResearchEvidence,
   profileMatchesQueueRow,
-  researchRequestPayload,
 } from "../../shared/permittingResearchBacklog.mjs";
 import {
   PERMITTING_RESEARCH_CONFIG_KEY,
@@ -12,9 +13,7 @@ import {
   researchCycleDecision,
 } from "../../shared/permittingResearchDispatchConfig.mjs";
 
-const PERMITTING_APP_ID = "69b1840cf75aba55e115d020";
-const PERMITTING_ACCESS_TOKEN = Deno.env.get("PERMITTING_ACCESS_TOKEN") || "";
-const DISPATCH_VERSION = "continuous_v2_cost_controlled";
+const DISPATCH_VERSION = "continuous_v3_local_research";
 const PAGE_SIZE = 500;
 
 async function loadSingleton(entity: any, settingKey: string) {
@@ -64,51 +63,31 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
   );
 }
 
-function researchAuthorization(req: Request) {
-  const configured = String(PERMITTING_ACCESS_TOKEN || "").trim();
-  if (configured) return "Bearer " + configured;
+async function ensureProfileForQueueRow(row: any, profiles: any[], Profiles: any) {
+  const matches = matchingProfilesForRow(row, profiles);
+  const existing = matches.find((profile) => profileMatchesQueueRow(row, profile, matches));
+  if (existing) return { profile: existing, created: false };
 
-  const incoming = String(req.headers.get("authorization") || "").trim();
-  if (/^Bearer\s+\S+/i.test(incoming)) return incoming;
-
-  return "";
-}
-
-async function researchRequestById(id: string, authorization: string) {
-  const response = await fetch(
-    "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest/" + encodeURIComponent(id),
-    { headers: { "Authorization": authorization } },
-  );
-  if (!response.ok) throw new Error("ResearchRequest poll returned HTTP " + response.status + ".");
-  return await response.json();
-}
-
-async function createResearchRequest(row: any, authorization: string) {
-  const response = await fetch(
-    "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": authorization,
-      },
-      body: JSON.stringify(researchRequestPayload(row)),
-    },
-  );
-
-  const text = await response.text();
-  if (!response.ok) throw new Error("Permitting Research returned HTTP " + response.status + ".");
-
-  let data: any;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error("Permitting Research returned a non-JSON create response.");
-  }
-
-  const id = String(data?.id || data?.entity?.id || data?.record?.id || "").trim();
-  if (!id) throw new Error("Permitting Research create response did not include a ResearchRequest id.");
-  return id;
+  const now = new Date().toISOString();
+  const parentCountyName = String(row?.parent_county_name || "").trim();
+  const created = await Profiles.create({
+    name: String(row?.jurisdiction_name || "").trim(),
+    state: String(row?.state || "").trim().toUpperCase(),
+    type: jurisdictionProfileTypeForQueueRow(row),
+    auto_refresh: true,
+    verification_status: "needs_verification",
+    ...(parentCountyName ? { parent_county: { name: parentCountyName } } : {}),
+    activity_log: [{
+      id: crypto.randomUUID(),
+      action: "created",
+      description: "Created automatically from the credit-controlled permitting research backlog.",
+      user: "system:permittingResearchBacklogDispatch",
+      timestamp: now,
+      changes: { source_queue_id: String(row?.id || "") },
+    }],
+  });
+  profiles.push(created);
+  return { profile: created, created: true };
 }
 
 Deno.serve(async (req) => {
@@ -118,13 +97,9 @@ Deno.serve(async (req) => {
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
-    const researchAuth = researchAuthorization(req);
-    if (!researchAuth) {
-      return Response.json({ error: "Permitting research authorization is unavailable" }, { status: 503 });
-    }
-
     const body = await req.json().catch(() => ({}));
     const manual = body?.manual === true;
+    const refreshCapability = String(body?._refresh_capability || "").trim();
     const Queue = base44.asServiceRole.entities.SourceCollectionQueue;
     const Profiles = base44.asServiceRole.entities.JurisdictionProfile;
     const Settings = base44.asServiceRole.entities.GlobalSettings;
@@ -167,52 +142,44 @@ Deno.serve(async (req) => {
 
     for (const row of sourceDiscovery) {
       const matches = matchingProfilesForRow(row, profiles);
-      if (matches.some((profile) => profileMatchesQueueRow(row, profile, matches))) {
+      const matchingProfile = matches.find((profile) => profileMatchesQueueRow(row, profile, matches));
+      if (matchingProfile && profileHasResearchEvidence(matchingProfile)) {
         await Queue.updateMany(
           { id: row.id, status: "source_discovery" },
           {
             $set: {
               status: "sources_found",
               last_activity: now.toISOString(),
-              missing_next: "JurisdictionProfile exists; continue source archival/extraction/verification.",
+              missing_next: "Local Base44 research evidence exists; continue archival/extraction/verification.",
             },
-            $unset: { research_dispatch_token: "" },
+            $unset: {
+              research_dispatch_token: "",
+              research_request_id: "",
+              research_requested_at: "",
+            },
           },
         );
         reconciledCompleted += 1;
         continue;
       }
 
-      const requestId = String(row?.research_request_id || "").trim();
-      if (!requestId) {
-        continue;
-      }
-
-      let request;
-      try {
-        request = await researchRequestById(requestId, researchAuth);
-      } catch {
-        activeRows.push(row);
-        continue;
-      }
-
-      if (request?.status === "failed") {
+      if (matchingProfile) {
         const attempts = Math.max(0, Number(row?.research_dispatch_attempts) || 0);
         const blocked = attempts >= config.retry_limit;
         await Queue.updateMany(
-          { id: row.id, status: "source_discovery", research_request_id: requestId },
+          { id: row.id, status: "source_discovery" },
           {
             $set: {
               status: blocked ? "blocked" : "not_started",
               last_activity: now.toISOString(),
               missing_next: blocked
-                ? "Research reached the configured retry limit; admin review required before retrying."
-                : "Research failed safely; eligible for a later controlled retry.",
+                ? "Local research reached the configured retry limit; admin review required."
+                : "Placeholder profile has no research evidence yet; eligible for a controlled local retry.",
             },
             $unset: {
+              research_dispatch_token: "",
               research_request_id: "",
               research_requested_at: "",
-              research_dispatch_token: "",
             },
           },
         );
@@ -220,22 +187,8 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      if (request?.status === "completed") {
-        await Queue.updateMany(
-          { id: row.id, status: "source_discovery", research_request_id: requestId },
-          {
-            $set: {
-              status: "partial_gaps",
-              last_activity: now.toISOString(),
-              missing_next: "Research completed but no matching JurisdictionProfile was found; review write-back before retrying.",
-            },
-            $unset: { research_dispatch_token: "" },
-          },
-        );
-        reconciledCompleted += 1;
-        continue;
-      }
-
+      // Preserve unmatched legacy external requests as active so migration does
+      // not accidentally duplicate research that may still be running.
       activeRows.push(row);
     }
 
@@ -249,9 +202,10 @@ Deno.serve(async (req) => {
       "created_date",
     );
 
+    const researchedProfiles = profiles.filter(profileHasResearchEvidence);
     const plan = classifyBacklogRows({
       queueRows: backlog,
-      profiles,
+      profiles: researchedProfiles,
       inFlightCount,
       inFlightTarget: config.max_in_flight,
       maxDispatchPerRun: dispatchLimit,
@@ -298,43 +252,67 @@ Deno.serve(async (req) => {
         )
       : [];
 
+    let attempted = 0;
     let dispatched = 0;
     const failures: Array<{ id: string; jurisdiction_name: string; error: string }> = [];
 
     for (const row of reserved) {
+      attempted += 1;
       try {
-        const requestId = await createResearchRequest(row, researchAuth);
+        const { profile } = await ensureProfileForQueueRow(row, profiles, Profiles);
+        const refreshArgs: Record<string, unknown> = { jurisdiction_id: profile.id };
+        if (refreshCapability) refreshArgs._workflow_capability = refreshCapability;
+
+        const refreshResponse = await base44.functions.invoke("refreshJurisdiction", refreshArgs);
+        const refreshResult = refreshResponse?.data || refreshResponse;
+        if (!refreshResult?.success) {
+          throw new Error(String(refreshResult?.error || "Local jurisdiction research did not complete successfully."));
+        }
+
+        const researchedProfile = refreshResult?.jurisdiction?.id
+          ? refreshResult.jurisdiction
+          : await Profiles.get(profile.id);
+        const hasEvidence = profileHasResearchEvidence(researchedProfile);
         const completedAt = new Date().toISOString();
         const result = await Queue.updateMany(
           { id: row.id, status: "source_discovery", research_dispatch_token: runToken },
           {
             $set: {
-              research_request_id: requestId,
+              status: hasEvidence ? "sources_found" : "partial_gaps",
               research_requested_at: completedAt,
               last_activity: completedAt,
-              missing_next: "Queued in Base44 Permitting Research; awaiting official-source discovery and profile write-back.",
+              missing_next: hasEvidence
+                ? "Local Base44 research completed; continue source archival/extraction/verification."
+                : "Local Base44 research completed but returned no usable research evidence; admin review required.",
             },
-            $unset: { research_dispatch_token: "" },
+            $unset: {
+              research_dispatch_token: "",
+              research_request_id: "",
+            },
           },
         );
         if (result?.updated !== 1) {
-          throw new Error("Queue reservation changed before request id could be persisted.");
+          throw new Error("Queue reservation changed before local research outcome could be persisted.");
         }
         dispatched += 1;
       } catch (error) {
-        const message = String(error?.message || "Unknown dispatch error").slice(0, 500);
+        const message = String(error?.message || "Unknown local research error").slice(0, 500);
         failures.push({
           id: String(row?.id || ""),
           jurisdiction_name: String(row?.jurisdiction_name || ""),
           error: message,
         });
+        const attempts = Math.max(1, Number(row?.research_dispatch_attempts) || 1);
+        const blocked = attempts >= config.retry_limit;
         await Queue.updateMany(
           { id: row.id, status: "source_discovery", research_dispatch_token: runToken },
           {
             $set: {
-              status: "not_started",
+              status: blocked ? "blocked" : "not_started",
               last_activity: new Date().toISOString(),
-              missing_next: "Research dispatch failed safely and will retry within configured limits: " + message,
+              missing_next: blocked
+                ? "Local research reached the configured retry limit; admin review required: " + message
+                : "Local research failed safely and will retry within configured limits: " + message,
             },
             $unset: {
               research_dispatch_token: "",
@@ -350,7 +328,7 @@ Deno.serve(async (req) => {
     const nextState = {
       last_cycle_at: now.toISOString(),
       daily_day_key: previous.daily_day_key,
-      dispatched_today: previous.dispatched_today + dispatched,
+      dispatched_today: previous.dispatched_today + attempted,
       last_result: {
         at: now.toISOString(),
         manual,
@@ -359,6 +337,7 @@ Deno.serve(async (req) => {
         reconciled_existing_profiles: plan.reconcile.length,
         reconciled_completed: reconciledCompleted,
         reconciled_failed: reconciledFailed,
+        attempted,
         dispatched,
         failed: failures.length,
       },
@@ -375,6 +354,7 @@ Deno.serve(async (req) => {
       reconciled_existing_profiles: plan.reconcile.length,
       reconciled_completed: reconciledCompleted,
       reconciled_failed: reconciledFailed,
+      attempted,
       dispatched,
       failed: failures.length,
       failures,
