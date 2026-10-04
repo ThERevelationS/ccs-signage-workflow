@@ -818,7 +818,7 @@ Deno.serve(async (req) => {
           await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''));
           estimate=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{...patch,status:'draft',approval_required:policy.approval_required,approval_tier:policy.approval_tier,mechanic_name:clean(grant.name,80)},label:'Mechanic Fleet repair estimate'});
         }
-        return json({success:true,estimate:sanitizeEstimate(estimate),policy});
+        return await mechanicCommittedEstimateResponse(Access,String(grant.id || ''),'estimate_save',String(current.equipment_id || ''),estimate,{success:true,policy});
       }
 
       if (!estimate) return json({error:'Save the mechanic estimate before submitting it.'},{status:404});
@@ -830,7 +830,7 @@ Deno.serve(async (req) => {
       await requireCurrentMechanicGrant(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''));
       const updated=await updateFleetRecordIfCurrent({entity:Estimate,id:estimate.id,expectedUpdatedAt:estimateExpected,patch:{approval_required:policy.approval_required,approval_tier:policy.approval_tier,status:autoApproved?'approved':'submitted',submitted_by_email:'',submitted_at:nowIso(),mechanic_name:clean(grant.name,80),decision_by_email:autoApproved?'policy:auto':'',decision_at:autoApproved?nowIso():null,decision_notes:autoApproved?'Automatically approved by Fleet repair approval policy.':estimate.decision_notes||''},label:'Mechanic Fleet repair estimate submission'});
       await Log.create({source:'fleetMechanicPortal',level:'info',message:'External mechanic submitted Fleet repair estimate.',details:{grant_id:grant.id,mechanic_name:grant.name||'',work_order_id:id,estimate_id:updated.id,estimated_total:updated.estimated_total,status:updated.status}}).catch(()=>null);
-      return json({success:true,estimate:sanitizeEstimate(updated),policy,auto_approved:autoApproved});
+      return await mechanicCommittedEstimateResponse(Access,String(grant.id || ''),'estimate_submit',String(current.equipment_id || ''),updated,{success:true,policy,auto_approved:autoApproved});
     }
 
     if (action === 'start') {
@@ -872,8 +872,9 @@ Deno.serve(async (req) => {
         }
         const updated = result?.data?.work_order || await WorkOrder.get(id);
         await markMechanicReceiptApplied(Receipt,receipt,updated,false);
-        return json({success:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(updated)});
+        return await mechanicCommittedWorkOrderResponse(Access,String(grant.id || ''),'start',updated,{success:true,request_id:mechanicMutation.requestId});
       } catch (error) {
+        if (isMechanicAccessChangedError(error)) throw error;
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
@@ -939,8 +940,9 @@ Deno.serve(async (req) => {
         const updated = result?.data?.work_order || await WorkOrder.get(id);
         await markMechanicReceiptApplied(Receipt,receipt,updated,false);
         await resolveReusedUploadReceipt(Receipt,receipt);
-        return json({success:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(updated)});
+        return await mechanicCommittedWorkOrderResponse(Access,String(grant.id || ''),'save',updated,{success:true,request_id:mechanicMutation.requestId});
       } catch (error) {
+        if (isMechanicAccessChangedError(error)) throw error;
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
