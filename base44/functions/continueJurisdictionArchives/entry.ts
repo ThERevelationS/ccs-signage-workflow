@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
-import { archiveBacklogQuery, archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
+import { continueJurisdictionArchiveBacklog, archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 import { PERMITTING_RESEARCH_CONFIG_KEY } from '../../shared/permittingResearchDispatchConfig.mjs';
 
 Deno.serve(async req => {
@@ -24,12 +24,7 @@ Deno.serve(async req => {
     const configs = await base44.asServiceRole.entities.GlobalSettings.filter({ setting_key: PERMITTING_RESEARCH_CONFIG_KEY }, 'created_date', 2);
     if (configs.length > 1) throw new Error('Duplicate dispatcher settings; automatic archival stopped.');
     if (configs[0]?.setting_value?.enabled === false) return Response.json({ success: true, skipped: true, reason: 'disabled' });
-    const candidates = await entity.filter(archiveBacklogQuery(), 'updated_date', 20, 0);
-    for (const profile of candidates) {
-      const result = await archiveKnownJurisdictionSource({ ...options, jurisdictionId: profile.id });
-      if (!result.skipped) return Response.json(result);
-    }
-    return Response.json({ success: true, skipped: true, reason: 'no_eligible_file', profiles_checked: candidates.length });
+    return Response.json(await continueJurisdictionArchiveBacklog(options));
   } catch (error) {
     console.error('continueJurisdictionArchives:', error?.message || error);
     return Response.json({ error: 'Document archival could not complete safely.' }, { status: 500 });

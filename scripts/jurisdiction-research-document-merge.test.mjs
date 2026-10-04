@@ -267,9 +267,11 @@ test('Boone 2025 encroachment source identity is current without broadening sign
 test('both server refresh paths use safe merge and individual refresh skips pinned re-download', () => {
   const individual = readFileSync('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   const batch = readFileSync('base44/functions/batchUpdateJurisdictions/entry.ts', 'utf8');
-  assert.match(individual, /mergeJurisdictionResearchDocuments\(jurisdiction\.documents, processedDocs\)/);
-  assert.match(individual, /canArchiveResearchDocument/);
-  assert.match(individual, /existingDocument:\s*existing/);
+  assert.match(individual, /mergeJurisdictionResearchDocuments\(jurisdiction\.documents, newAiDocs\)/);
+  assert.match(individual, /archiveKnownJurisdictionSource/);
+  const archival = readFileSync('base44/shared/jurisdictionArchiveContinuation.mjs', 'utf8');
+  assert.match(archival, /doc\?\.source === 'manual'/);
+  assert.match(archival, /doc\?\.archive_pinned === true/);
   assert.match(batch, /mergeJurisdictionResearchDocuments\(jurisdiction\.documents, \[\.\.\.newDocs, \.\.\.countyDocs\]\)/);
   assert.match(batch, /documentEvidence:\s*updateData\.documents\s*\|\|\s*\[\]/);
   assert.match(individual, /replaceJurisdictionFieldsIfUnchanged/);

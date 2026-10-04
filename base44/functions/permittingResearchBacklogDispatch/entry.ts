@@ -13,6 +13,9 @@ import {
   researchCycleDecision,
 } from "../../shared/permittingResearchDispatchConfig.mjs";
 
+import { continueJurisdictionArchiveBacklog } from "../../shared/jurisdictionArchiveContinuation.mjs";
+import { safeExternalFetch } from "../../shared/safeExternalFetch.ts";
+
 const DISPATCH_VERSION = "continuous_v3_local_research";
 const PAGE_SIZE = 500;
 
@@ -118,11 +121,23 @@ Deno.serve(async (req) => {
       manual,
     });
 
+    // Known-file archival needs no research credits and continues after the
+    // daily research allowance is exhausted. One file per scheduled cycle.
+    let archiveContinuation: any = null;
+    const elapsedArchiveCycle = now.getTime() - Date.parse(stateRecord?.setting_value?.last_cycle_at || "");
+    if (!manual && config.enabled && (!Number.isFinite(elapsedArchiveCycle) || elapsedArchiveCycle >= config.interval_minutes * 60000)) {
+      archiveContinuation = await continueJurisdictionArchiveBacklog({
+        entity: Profiles, fetchSource: safeExternalFetch,
+        uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+      });
+    }
+
     if (!decision.due) {
       return Response.json({
         success: true,
         skipped: true,
         reason: decision.reason,
+        archive_continuation: archiveContinuation,
         config,
         dispatched_today: decision.state.dispatched_today,
         daily_remaining: decision.dailyRemaining,
@@ -260,7 +275,7 @@ Deno.serve(async (req) => {
       attempted += 1;
       try {
         const { profile } = await ensureProfileForQueueRow(row, profiles, Profiles);
-        const refreshArgs: Record<string, unknown> = { jurisdiction_id: profile.id };
+        const refreshArgs: Record<string, unknown> = { jurisdiction_id: profile.id, defer_archive: true };
         if (refreshCapability) refreshArgs._workflow_capability = refreshCapability;
 
         const refreshResponse = await base44.functions.invoke("refreshJurisdiction", refreshArgs);
@@ -347,6 +362,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: failures.length === 0,
+      archive_continuation: archiveContinuation,
       config,
       state: nextState,
       in_flight_before: inFlightCount,

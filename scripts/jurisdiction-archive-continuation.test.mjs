@@ -130,6 +130,6 @@ test('manual same-document redelivery does not advance to another source',async(
 });
 test('backlog query excludes uncertain uploads and protected files without shrinking total coverage',()=>{
   const q=archiveBacklogQuery();
-  assert.deepEqual(q.documents.$elemMatch['archive_state.status'].$nin,['complete','uploading','upload_uncertain','blocked']);
+  assert.deepEqual(q.documents.$elemMatch['archive_state.status'].$nin,['complete','uploading','upload_uncertain','blocked','verification_blocked']);
   assert.deepEqual(q.state.$in,['OH','KY']);
 });

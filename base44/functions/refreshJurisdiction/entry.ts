@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     if (id || settings || discoveryOnly) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
-      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly);
+      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation);
       return Response.json(result);
     }
 
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true) {
     const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
@@ -245,7 +245,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     });
 
     let archival: any = null;
-    if (batchSettings.updateDocuments && !updated._manual_documents) {
+    if (archiveAfterRefresh && batchSettings.updateDocuments && !updated._manual_documents) {
       try {
         const result = await archiveKnownJurisdictionSource({
           entity: base44.asServiceRole.entities.JurisdictionProfile, jurisdictionId: id,

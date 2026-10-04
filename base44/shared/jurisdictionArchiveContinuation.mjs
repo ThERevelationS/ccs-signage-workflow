@@ -12,13 +12,13 @@ export function archiveDocumentEligible(doc, { manual = false, now = Date.now() 
   const state = doc.archive_state || {};
   if (['complete', 'uploading', 'upload_uncertain'].includes(state.status)) return false;
   if (Date.parse(state.lease_expires_at || '') > now) return false;
-  if (state.file_url) return state.status === 'uploaded' && (manual || !(Date.parse(state.retry_after || '') > now));
+  if (state.file_url) return (state.status === 'uploaded' || (manual && state.status === 'verification_blocked')) && (manual || !(Date.parse(state.retry_after || '') > now));
   if (state.status === 'blocked' && !manual) return false;
   if (!manual && (Number(state.attempts || 0) >= AUTOMATIC_ARCHIVE_RETRY_LIMIT || Date.parse(state.retry_after || '') > now)) return false;
   return true;
 }
 
-export function archiveBacklogQuery() {
+export function archiveBacklogQuery(now = Date.now()) {
   return {
     state: { $in: ['OH', 'KY'] },
     _manual_documents: { $ne: true },
@@ -26,7 +26,11 @@ export function archiveBacklogQuery() {
       url: { $regex: '\\.(pdf|docx?|xlsx?|csv|txt)(\\?|#|$)', $options: 'i' },
       file_url: { $in: [null, ''] }, source_sha256: { $in: [null, ''] },
       source: { $ne: 'manual' }, pinned: { $ne: true }, archive_pinned: { $ne: true },
-      'archive_state.status': { $nin: ['complete', 'uploading', 'upload_uncertain', 'blocked'] },
+      'archive_state.status': { $nin: ['complete', 'uploading', 'upload_uncertain', 'blocked', 'verification_blocked'] },
+      $and: [
+        { $or: [{ 'archive_state.retry_after': { $in: [null, ''] } }, { 'archive_state.retry_after': { $lte: new Date(now).toISOString() } }] },
+        { $or: [{ 'archive_state.lease_expires_at': { $in: [null, ''] } }, { 'archive_state.lease_expires_at': { $lte: new Date(now).toISOString() } }] },
+      ],
     } },
   };
 }
@@ -107,7 +111,7 @@ export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, d
     !docs.some(other => other !== d && jurisdictionDocumentSourceKey(other) === jurisdictionDocumentSourceKey(d)));
   if (!doc) return { success: true, skipped: true, reason: 'no_eligible_file', jurisdiction: initial };
   let state = doc.archive_state || {};
-  const resumeUpload = state.status === 'uploaded' && Boolean(state.file_url);
+  const resumeUpload = ['uploaded', 'verification_blocked'].includes(state.status) && Boolean(state.file_url);
   const attempts = resumeUpload ? Math.max(1, Number(state.attempts) || 1) : (Number(state.attempts) || 0) + 1;
   const stamp = () => new Date(now()).toISOString();
   const claimed = { ...state, status: resumeUpload ? 'uploaded' : 'downloading', claim_token: token, attempts,
@@ -137,12 +141,15 @@ export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, d
       uploads++;
       const result = await withResearchArchiveTimeout(uploadFile({ file: new File([bytes], name, { type: types[ext] || 'application/octet-stream' }) }), RESEARCH_UPLOAD_TIMEOUT_MS, 'Archive upload');
       if (!result?.file_url) throw new Error('Upload returned no usable file URL; outcome is uncertain.');
-      const uploaded = { ...state, status: 'uploaded', file_url: result.file_url, uploaded_at: stamp() };
+      const uploaded = { ...state, status: 'uploaded', file_url: result.file_url, uploaded_at: stamp(), verification_attempts: 0 };
       // Durable receipt before readback. A later retry verifies this same file.
       await transition(entity, jurisdictionId, doc, state, uploaded);
       state = uploaded;
     }
     stage = 'verify';
+    const verifying = { ...state, verification_attempts: (Number(state.verification_attempts) || 0) + 1 };
+    await transition(entity, jurisdictionId, doc, state, verifying);
+    state = verifying;
     const stored = await fetchBytes(state.file_url);
     const storedSha = await digest(stored);
     if (stored.length !== state.source_bytes || storedSha !== state.source_sha256) throw new Error('Stored archive bytes do not match the official source.');
@@ -153,11 +160,26 @@ export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, d
     });
     return { success: true, archived: 1, uploads, status: 'complete', document_url: doc.url, jurisdiction };
   } catch (error) {
-    let status = stage === 'upload' ? 'upload_uncertain' : stage === 'verify' ? 'uploaded' : attempts >= AUTOMATIC_ARCHIVE_RETRY_LIMIT ? 'blocked' : 'failed';
+    const status = stage === 'upload' ? 'upload_uncertain' : stage === 'verify' ? (state.verification_attempts >= AUTOMATIC_ARCHIVE_RETRY_LIMIT ? 'verification_blocked' : 'uploaded') : attempts >= AUTOMATIC_ARCHIVE_RETRY_LIMIT ? 'blocked' : 'failed';
     const failed = { ...state, status, lease_expires_at: '', error: String(error?.message || error).slice(0, 500),
       retry_after: new Date(now() + Math.min(24 * 60 * 60_000, attempts * 60 * 60_000)).toISOString() };
     try { await transition(entity, jurisdictionId, doc, state, failed); }
     catch (persistError) { return { success: false, status: 'receipt_conflict', uploads, document_url: doc.url, error: persistError.message }; }
     return { success: false, status, uploads, document_url: doc.url, error: failed.error };
   }
+}
+
+// Selection is bounded; oldest updated profiles move behind untouched ones as
+// each attempt writes its receipt. Backoff/active leases are excluded in-query.
+export async function continueJurisdictionArchiveBacklog(options) {
+  const candidates = await options.entity.filter(archiveBacklogQuery(), 'updated_date', 20, 0);
+  for (const profile of candidates) {
+    try {
+      const result = await archiveKnownJurisdictionSource({ ...options, jurisdictionId: profile.id, manual: false });
+      if (!result.skipped) return result;
+    } catch (error) {
+      return { success: false, status: 'claim_conflict', error: String(error?.message || error) };
+    }
+  }
+  return { success: true, skipped: true, reason: 'no_eligible_file', profiles_checked: candidates.length };
 }
