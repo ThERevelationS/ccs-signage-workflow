@@ -15,6 +15,18 @@
       "type": "string",
       "description": "Official office that publishes the rule (e.g. 'Boone County Planning Commission')."
     },
+    "rule_kind": {
+      "type": "string",
+      "enum": [
+        "regulatory_rule",
+        "administrative_instruction"
+      ],
+      "description": "Evidence purpose. Missing legacy values remain regulatory rules; a form/checklist instruction never becomes adopted law."
+    },
+    "is_workflow_instruction": {
+      "type": "boolean",
+      "description": "True only for a staff-approved current administrative instruction with verified publisher/scope evidence. Separate from is_operational regulatory rules; not automatic address applicability."
+    },
     "rule_category": {
       "type": "string",
       "enum": [
