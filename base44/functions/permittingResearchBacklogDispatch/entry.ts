@@ -13,9 +13,7 @@ import {
 } from "../../shared/permittingResearchDispatchConfig.mjs";
 
 const PERMITTING_APP_ID = "69b1840cf75aba55e115d020";
-const RESEARCH_BRIDGE_SECRET = Deno.env.get("CCS_RESEARCH_BRIDGE_SECRET") || "";
-const RESEARCH_BRIDGE_URL =
-  "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/functions/ccsResearchRequestBridge";
+const PERMITTING_ACCESS_TOKEN = Deno.env.get("PERMITTING_ACCESS_TOKEN") || "";
 const DISPATCH_VERSION = "continuous_v2_cost_controlled";
 const PAGE_SIZE = 500;
 
@@ -66,39 +64,50 @@ function matchingProfilesForRow(row: any, profiles: any[]) {
   );
 }
 
-async function researchBridge(action: "ping" | "get" | "create", payload: Record<string, unknown> = {}) {
-  const response = await fetch(RESEARCH_BRIDGE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-ccs-research-secret": RESEARCH_BRIDGE_SECRET,
+function researchAuthorization(req: Request) {
+  const configured = String(PERMITTING_ACCESS_TOKEN || "").trim();
+  if (configured) return "Bearer " + configured;
+
+  const incoming = String(req.headers.get("authorization") || "").trim();
+  if (/^Bearer\s+\S+/i.test(incoming)) return incoming;
+
+  return "";
+}
+
+async function researchRequestById(id: string, authorization: string) {
+  const response = await fetch(
+    "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest/" + encodeURIComponent(id),
+    { headers: { "Authorization": authorization } },
+  );
+  if (!response.ok) throw new Error("ResearchRequest poll returned HTTP " + response.status + ".");
+  return await response.json();
+}
+
+async function createResearchRequest(row: any, authorization: string) {
+  const response = await fetch(
+    "https://app.base44.com/api/apps/" + PERMITTING_APP_ID + "/entities/ResearchRequest",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": authorization,
+      },
+      body: JSON.stringify(researchRequestPayload(row)),
     },
-    body: JSON.stringify({ action, ...payload }),
-  });
+  );
 
   const text = await response.text();
-  let data: any = null;
+  if (!response.ok) throw new Error("Permitting Research returned HTTP " + response.status + ".");
+
+  let data: any;
   try {
-    data = text ? JSON.parse(text) : null;
+    data = JSON.parse(text);
   } catch {
-    throw new Error("Permitting Research bridge returned a non-JSON response.");
+    throw new Error("Permitting Research returned a non-JSON create response.");
   }
 
-  if (!response.ok) {
-    throw new Error("Permitting Research bridge returned HTTP " + response.status + ".");
-  }
-  return data;
-}
-
-async function researchRequestById(id: string) {
-  const data = await researchBridge("get", { id });
-  return data?.record || data;
-}
-
-async function createResearchRequest(row: any) {
-  const data = await researchBridge("create", { payload: researchRequestPayload(row) });
-  const id = String(data?.record?.id || data?.id || "").trim();
-  if (!id) throw new Error("Permitting Research bridge create response did not include a ResearchRequest id.");
+  const id = String(data?.id || data?.entity?.id || data?.record?.id || "").trim();
+  if (!id) throw new Error("Permitting Research create response did not include a ResearchRequest id.");
   return id;
 }
 
@@ -109,8 +118,9 @@ Deno.serve(async (req) => {
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
-    if (!RESEARCH_BRIDGE_SECRET) {
-      return Response.json({ error: "Permitting research bridge is not configured" }, { status: 503 });
+    const researchAuth = researchAuthorization(req);
+    if (!researchAuth) {
+      return Response.json({ error: "Permitting research authorization is unavailable" }, { status: 503 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -180,7 +190,7 @@ Deno.serve(async (req) => {
 
       let request;
       try {
-        request = await researchRequestById(requestId);
+        request = await researchRequestById(requestId, researchAuth);
       } catch {
         activeRows.push(row);
         continue;
@@ -293,7 +303,7 @@ Deno.serve(async (req) => {
 
     for (const row of reserved) {
       try {
-        const requestId = await createResearchRequest(row);
+        const requestId = await createResearchRequest(row, researchAuth);
         const completedAt = new Date().toISOString();
         const result = await Queue.updateMany(
           { id: row.id, status: "source_discovery", research_dispatch_token: runToken },
