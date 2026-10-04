@@ -77,10 +77,12 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
     text_option_differences: 0, text_receipt_differences: 0, stale_text_options: 0,
     base44_date_missing_in_smartsheet: 0,
     verified_newer_local_dates: 0, preserved_historical_dates: 0,
-    remote_blank_changed_since_sync: 0, unverified_local_only_dates: 0 };
+    remote_blank_changed_since_sync: 0, remote_blank_after_same_date: 0,
+    remote_blank_after_other_value: 0, unverified_local_only_dates: 0 };
   const byField = Object.fromEntries(DATE_FIELDS.map(field => [field,
     { smartsheet_dates: 0, missing_base44: 0, different: 0, invalid: 0, text_choices: 0, stale_text_options: 0,
       verified_newer_local: 0, preserved_historical: 0, remote_blank_changed_since_sync: 0,
+      remote_blank_after_same_date: 0, remote_blank_after_other_value: 0,
       unverified_local_only: 0 }]));
   const samples = { missing_dates: [], different_dates: [], invalid_values: [], text_choices: [],
     stale_text_options: [], ambiguous_links: [], unlinked_rows: [],
@@ -122,11 +124,23 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
         if (matches.length === 1 && matches[0][field]) {
           counts.base44_date_missing_in_smartsheet++;
           const evidence = classifyOrderLocalOnlyDate(matches[0], field, columnId, fieldAudits);
+          const localDate = String(matches[0][field]).trim();
+          let priorRemoteNormalizedDate = '';
+          let priorRemoteMatchesBase44 = false;
+          if (evidence.prior_remote_value) {
+            const priorParsed = translateOrderDateValue(evidence.prior_remote_value, field);
+            if (priorParsed.kind === 'date') {
+              priorRemoteNormalizedDate = priorParsed.value;
+              priorRemoteMatchesBase44 = priorParsed.value === localDate;
+            }
+          }
           const item = { row_id: rowId, base44_order_id: matches[0].id, field,
-            base44_date: String(matches[0][field]).trim(),
+            base44_date: localDate,
             last_synced_at: evidence.last_synced_at || '',
             ...(evidence.local_modified_at ? { local_modified_at: evidence.local_modified_at } : {}),
-            ...(evidence.prior_remote_value ? { prior_remote_value: evidence.prior_remote_value } : {}) };
+            ...(evidence.prior_remote_value ? { prior_remote_value: evidence.prior_remote_value } : {}),
+            ...(priorRemoteNormalizedDate ? { prior_remote_normalized_date: priorRemoteNormalizedDate,
+              prior_remote_matches_base44: priorRemoteMatchesBase44 } : {}) };
           if (evidence.state === 'verified_newer_local') {
             counts.verified_newer_local_dates++;
             byField[field].verified_newer_local++;
@@ -138,6 +152,13 @@ export function auditOrderDateParity(orders, rows, bindings, sheetId, fieldAudit
           } else if (evidence.state === 'remote_blank_changed_since_sync') {
             counts.remote_blank_changed_since_sync++;
             byField[field].remote_blank_changed_since_sync++;
+            if (priorRemoteMatchesBase44) {
+              counts.remote_blank_after_same_date++;
+              byField[field].remote_blank_after_same_date++;
+            } else {
+              counts.remote_blank_after_other_value++;
+              byField[field].remote_blank_after_other_value++;
+            }
             sample('remote_blank_changed_since_sync', item);
           } else {
             counts.unverified_local_only_dates++;
