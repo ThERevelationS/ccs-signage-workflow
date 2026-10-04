@@ -110,3 +110,18 @@ export async function continueSourceTextBacklog(options) {
   }
   return {success:true,skipped:true,reason:'no_eligible_text_source',sources_checked:rows.length};
 }
+
+export function automaticSourceTextGuard(profileEntity) {
+  return async source => {
+    if (!source.jurisdiction_id || !source.jurisdiction_profile_doc_id) return false;
+    const profile=await profileEntity.get(source.jurisdiction_id);
+    if (!profile?.id || profile.auto_refresh===false || profile._manual_documents) return false;
+    const matches=(profile.documents || []).filter(d=>d.id===source.jurisdiction_profile_doc_id);
+    if (matches.length!==1) return false;
+    const doc=matches[0];
+    return doc.source!=='manual' && !doc.pinned && !doc.archive_pinned && doc.archive_state?.status==='complete' &&
+      doc.catalog_state?.status==='complete' && doc.catalog_state.source_document_id===source.id &&
+      doc.file_url===source.archived_file_url && doc.source_sha256===source.file_hash_sha256 &&
+      doc.stored_sha256===source.file_hash_sha256 && doc.source_bytes===source.file_bytes && doc.stored_bytes===source.file_bytes;
+  };
+}
