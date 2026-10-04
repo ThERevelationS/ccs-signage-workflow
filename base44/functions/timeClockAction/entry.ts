@@ -2499,6 +2499,11 @@ Deno.serve(async (req) => {
               approvalEvidence.approved_at = evidence[0].server_timestamp || '';
               if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval provenance is incomplete.', pay_period_id: period.id, generations: [] });
             }
+            if (Number(current.snapshot_version || 0) >= 5) {
+              approvalEvidence.approver_role = String(evidence[0].actor_role || '');
+              approvalEvidence.authentication_method = String(evidence[0].authentication_method || '');
+              if (approvalEvidence.approver_role !== 'admin' || !['session', 'admin_kiosk'].includes(approvalEvidence.authentication_method)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval authority is invalid.', pay_period_id: period.id, generations: [] });
+            }
           }
           const snapshotRow = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
           snapshotRows.push(snapshotRow);
@@ -2695,6 +2700,11 @@ Deno.serve(async (req) => {
                   approvalEvidence.approved_by = asEmail(evidence[0].actor_email);
                   approvalEvidence.approved_at = evidence[0].server_timestamp || '';
                   if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) return Response.json({ success: false, error: 'A finalized shift no longer has complete approval provenance. Admin investigation is required.' }, { status: 409 });
+                }
+                if (Number(period.finalized_summary?.snapshot_version || 0) >= 5) {
+                  approvalEvidence.approver_role = String(evidence[0].actor_role || '');
+                  approvalEvidence.authentication_method = String(evidence[0].authentication_method || '');
+                  if (approvalEvidence.approver_role !== 'admin' || !['session', 'admin_kiosk'].includes(approvalEvidence.authentication_method)) return Response.json({ success: false, error: 'A finalized shift no longer proves authorized manager approval. Admin investigation is required.' }, { status: 409 });
                 }
               }
               recoverySnapshotRows.push({
@@ -3052,6 +3062,7 @@ Deno.serve(async (req) => {
             approvalEvidence = {
               id: evidence[0].id, request_id: entry.approval_request_id, outcome: evidence[0].outcome,
               approved_by: asEmail(evidence[0].actor_email), approved_at: evidence[0].server_timestamp || '',
+              approver_role: String(evidence[0].actor_role || ''), authentication_method: String(evidence[0].authentication_method || ''),
             };
             if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) {
               return Response.json({ success: false, retry_same_request: true, error: 'Shift approval provenance is incomplete. Approval manager and server timestamp are required before payroll finalization.' }, { status: 409 });
@@ -3063,7 +3074,20 @@ Deno.serve(async (req) => {
             approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence,
           });
         }
-        const snapshotVersion = snapshotRows.every((row: any) => row.approval_evidence?.approved_by && row.approval_evidence?.approved_at) ? 4 : 3;
+        const hasApprovalProvenance = snapshotRows.every((row: any) => row.approval_evidence?.approved_by && row.approval_evidence?.approved_at);
+        const hasApprovalAuthority = hasApprovalProvenance && snapshotRows.every((row: any) =>
+          row.approval_evidence?.approver_role === 'admin' &&
+          ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
+        );
+        const snapshotVersion = hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        if (snapshotVersion < 5) {
+          for (const row of snapshotRows) {
+            if (row.approval_evidence) {
+              delete row.approval_evidence.approver_role;
+              delete row.approval_evidence.authentication_method;
+            }
+          }
+        }
         if (snapshotVersion < 4) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) row.approval_evidence = { id: row.approval_evidence.id, request_id: row.approval_evidence.request_id, outcome: row.approval_evidence.outcome };
