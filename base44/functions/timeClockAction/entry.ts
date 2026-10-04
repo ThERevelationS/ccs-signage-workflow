@@ -3774,7 +3774,11 @@ Deno.serve(async (req) => {
                 if (!Array.isArray(membershipAudits)) return Response.json({ success: false, error: 'Payroll audit membership evidence could not be loaded before finalization.' }, { status: 409 });
                 for (const membershipAudit of membershipAudits) {
                   const membership = payrollMembershipFromAudit(membershipAudit);
-                  if (membership?.company_date) { companyDate = membership.company_date; break; }
+                  if (membership?.company_date) {
+                    companyDate = membership.company_date;
+                    discoveryEvidence = { membershipAudit, membership };
+                    break;
+                  }
                 }
               }
               if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
