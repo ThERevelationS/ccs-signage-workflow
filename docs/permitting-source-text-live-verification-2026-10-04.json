@@ -131,6 +131,32 @@
     ]
   },
   "live_transport": "Exact core helper through authenticated Base44 entity tools, actual Deno runtime for bytes/text. No Base44 CLI reauthentication, no cross-app architecture, no claim of direct manual HTTP endpoint invocation.",
-  "scheduled_after_fix": "Awaiting next observed 15-minute cycle.",
-  "next": "Verify scheduled continuation; then segmented large-document pages and evidence-bound structured extraction with authority review."
+  "scheduled_after_fix": [
+    {
+      "id": "6ac25be4207035a2e5be3827",
+      "title": "Campbell County Sign Permit Application",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/1dae12daf_1648823956_93665.pdf",
+        "claim_token": "4356a197-b7b5-4acb-8cd3-145c1f7978dd",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-04T14:45:09.704Z",
+        "attempts": 1,
+        "next_page": 3,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 2,
+        "pages_extracted": 2,
+        "needs_ocr_pages": [],
+        "last_chunk_completed_at": "2026-10-04T14:45:09.982Z",
+        "completed_at": "2026-10-04T14:45:09.982Z",
+        "complete_document_text": true
+      },
+      "updated_date": "2026-10-04T14:45:10.210000"
+    }
+  ],
+  "next": "Phase 3.2 — segmented page persistence for long documents, then evidence-bound structured requirements with verified citations and authority review."
 }
