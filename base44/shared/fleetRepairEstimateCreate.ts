@@ -154,6 +154,7 @@ export async function createFleetRepairEstimateSafely({
   desired,
   ownerSource,
   ownerKey = '',
+  beforeCreate = null,
   gateAttempts = 40,
   gateWaitMs = 25,
 }: {
@@ -164,6 +165,7 @@ export async function createFleetRepairEstimateSafely({
   desired: any;
   ownerSource: 'ccs_admin' | 'mechanic_portal';
   ownerKey?: string;
+  beforeCreate?: (() => Promise<unknown> | unknown) | null;
   gateAttempts?: number;
   gateWaitMs?: number;
 }) {
@@ -211,6 +213,7 @@ export async function createFleetRepairEstimateSafely({
       throw new FleetRecordConflictError('A Fleet repair estimate already exists for this work order with different details or ownership. Reload the current estimate before making another change.');
     }
 
+    if (beforeCreate) await beforeCreate();
     const created = await estimateEntity.create(record);
     if (!created?.id || !created?.updated_date) {
       throw new Error('Fleet repair estimate was created but its persisted identity/version could not be verified.');
