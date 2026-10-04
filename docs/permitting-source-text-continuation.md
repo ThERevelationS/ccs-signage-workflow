@@ -1,6 +1,6 @@
 # Bounded permitting PDF text extraction
 
-Implemented 2026-10-04 as Phase 3.1 in CCS Signage Workflow. Live and regression evidence is recorded in permitting-source-text-live-verification-2026-10-04.json.
+Implemented 2026-10-04 as Phase 3.1 in CCS Signage Workflow. Live and regression evidence is recorded in permitting-source-text-live-verification-2026-10-04.json. Phase 3.2 now extends long-document storage with immutable page segments; see permitting-source-text-segments.md and its live verification JSON. The descriptions below retain the Phase 3.1 verification history; its 500,000-character source limit no longer limits segmented document coverage.
 
 ## Pipeline
 
@@ -48,4 +48,4 @@ The sandbox Base44 CLI session was already expired before this phase. No CLI rea
 
 ## Next dependency
 
-Phase 3.2: inspect and repair the existing structured-rule extraction callers/SDK pagination before using them with the new text. Introduce segmented page persistence for long codes that exceed the per-source text bound; the full archive remains retained and partial text must never masquerade as a full-code review. Add source/page/excerpt validation, archive snapshot identity, explicit completeness/gap context, and authority review gates. Do not interpret searchable text as adopted law or launch uncontrolled LLM batches. Source monitoring must distinguish the retained archive snapshot hash from the newly observed official-source hash.
+Phase 3.2 segmented persistence and bounded verified page reads are complete. Next is Phase 3.3: repair the existing structured-rule extraction callers/SDK pagination, then add selected source/page/literal-excerpt validation, archive snapshot identity, explicit completeness/gap context, and authority review gates. The legacy inline extraction route now skips managed partial text and segmented previews. Do not interpret searchable text as adopted law or launch uncontrolled LLM batches. Source monitoring must distinguish the retained archive snapshot hash from the newly observed official-source hash.
