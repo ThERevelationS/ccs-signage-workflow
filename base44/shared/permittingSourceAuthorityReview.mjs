@@ -81,7 +81,7 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
    throw evidenceError('This review request belongs to another source, reviewer or decision.');
   if(audit && Object.entries(audit.next_fields).every(([k,v])=>evidenceEqual(source[k],v))){
    if(!evidenceEqual(sourceIdentity(source),audit.source_identity))throw evidenceError('Applied review archive identity changed.');
-   return {success:true,status:'applied',replayed:true,review:source.authority_review,llm_calls:0};
+   return {success:true,status:'applied',replayed:true,review:source.authority_review,receipt:source.authority_review_state,llm_calls:0};
   }
   if(oldState.request_key===key && oldState.payload_sha256!==payloadDigest)throw evidenceError('Saved source review belongs to a different decision.');
   if(!audit && oldState.request_key!==key && (!expectedUpdatedDate || source.updated_date!==expectedUpdatedDate))throw evidenceError('Source changed; preview current evidence before reviewing.');
@@ -129,5 +129,5 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
  const fields={...audit.next_fields,authority_review_state:{...creating,status:'complete',audit_id:audit.id}};
  source=await write(sourceEntity,source,fields,{...audit.source_identity,
   ...Object.fromEntries([...reviewFields,'extracted_pages','extracted_text','text_extraction_state'].map(k=>[k,source[k]])),authority_review_state:creating});
- return{success:true,status:'applied',review:source.authority_review,audit_id:audit.id,llm_calls:0};
+ return{success:true,status:'applied',review:source.authority_review,audit_id:audit.id,receipt:source.authority_review_state,llm_calls:0};
 }
