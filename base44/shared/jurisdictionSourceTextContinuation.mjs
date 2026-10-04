@@ -84,7 +84,8 @@ export async function extractKnownSourceText({entity,sourceDocumentId,readAndExt
     const status=limit?'partial_limit':nextPage<=chunk.total_pages?'partial':ocrPages.length?'needs_ocr':'complete';
     if (automatic && canAutomaticallyExtract && !await canAutomaticallyExtract(source)) throw Error('Profile protection or retained archive changed during extraction.');
     const receipt={...claimed,status,lease_expires_at:'',retry_after:'',failures:0,total_pages:chunk.total_pages,next_page:nextPage,
-      pages_extracted:pages.length,needs_ocr_pages:ocrPages,completed_at:new Date(now()).toISOString(),error:'',
+      pages_extracted:pages.length,needs_ocr_pages:ocrPages,last_chunk_completed_at:new Date(now()).toISOString(),
+      completed_at:status==='complete'?new Date(now()).toISOString():'',error:'',
       complete_document_text:status==='complete'};
     await writeReceipt(entity,source,claimed,receipt,{extracted_pages:pages,extracted_text:assembledSourceText(source,pages)});
     return {success:true,source_document_id:source.id,status,pages_processed:pages.length-prior.length,pages_extracted:pages.length,total_pages:chunk.total_pages,next_page:nextPage,llm_calls:0};
