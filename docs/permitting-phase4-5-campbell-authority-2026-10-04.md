@@ -24,7 +24,7 @@ The official department page's service-provider link (document-center item 390) 
 - Campbell profile grew from three to five documents; the original three match exactly. Other profile fields match except documents, unprotected permitting_url, review receipt and updated_date.
 - Old form protected archive/text fields match exactly. Only intentional supersession/version-review metadata changed.
 - 118 focused tests actually ran this phase and passed; historical test totals were not rerun or claimed.
-- One npm run build completed successfully (exit 0), with existing stale browser-data warnings. dist/index.html was regenerated. git diff --check passed.
+- One npm run build completed successfully (exit 0), with existing stale browser-data warnings. dist/index.html was regenerated. git diff --check passed. A full phase-range check initially identified original official HTML whitespace; a file-specific .gitattributes rule retains the exact source bytes as evidence (-diff -text), without normalizing or altering the retained page. The phase-range check then passed.
 - Authenticated editor preview backend calls verified production entity persistence; this is not a claim of new backend deployment. No source code/schema changes or deployments were needed, and the frontend remains unpublished.
 - A concurrent base44/functions/timeClockAction/entry.ts change appeared in live Git HEAD. It was preserved without modification or rollback; no permitting target source changed.
 
