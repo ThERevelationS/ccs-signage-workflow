@@ -123,9 +123,6 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity}) {
       if (!page || !evidence.complete_document_text || evidence.needs_ocr_page_count || evidence.truncated_page_count ||
           citation.text_sha256!==page.text_sha256 || !literal(page.text,citation.excerpt) || !literal(citation.excerpt,rule.requirement) ||
           page.truncated || page.needs_ocr_review) throw evidenceError('Complete retained page evidence and its literal requirement must be verified before approval.');
-      const numeric=numericEvidence(citation.excerpt,rule.requirement,rule.numeric_literal || '');
-      if (!evidenceEqual(numeric.numeric_value,rule.numeric_value ?? null) || numeric.unit!==(rule.unit || ''))
-        throw evidenceError('Stored numeric fields differ from their literal evidence.');
       if (citation.section_reference && !literal(page.text,citation.section_reference,150)) throw evidenceError('Citation section is not supported by its physical page.');
     } else {
       // Legacy reviewed evidence remains intact. New approvals verify its existing
@@ -133,6 +130,9 @@ export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity}) {
       const norm=text=>String(text || '').replace(/\s+/g,' ').trim();
       if (!citation.excerpt || !norm(source.extracted_text).includes(norm(citation.excerpt))) throw evidenceError('Legacy citation excerpt requires source review.');
     }
+    const numeric=numericEvidence(citation.excerpt,rule.requirement,rule.numeric_literal || '');
+    if (!evidenceEqual(numeric.numeric_value,rule.numeric_value ?? null) || numeric.unit!==(rule.unit || ''))
+      throw evidenceError('Stored numeric fields differ from their literal evidence.');
     sources.push({id:source.id,updated_date:source.updated_date,snapshot:sourceAuthoritySnapshot(source)});
   }
   return sources;
