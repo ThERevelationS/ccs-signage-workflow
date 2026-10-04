@@ -30,12 +30,31 @@ function RecordCard({ item, category }) {
   }
 
   if (category === "unlinked_smartsheet_row") {
+    const evidenceLabel = item.evidence_kind === "blank_or_placeholder" ? "Blank / placeholder"
+      : item.evidence_kind === "duplicate_looking_historical" ? "Duplicate-looking historical"
+        : item.evidence_kind === "sparse_unlinked_row" ? "Sparse unlinked row"
+          : "Populated unlinked Order";
     return <div className="rounded-xl border bg-white p-3 text-xs">
-      <p className="font-semibold">Smartsheet row ID: <span className="break-all">{item.row_id}</span></p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="font-semibold">Smartsheet row ID: <span className="break-all">{item.row_id}</span></p>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-medium text-slate-700">{evidenceLabel}</span>
+      </div>
       {item.row_number && <p className="text-gray-500">Current visual row: {item.row_number} (display only, never used for matching)</p>}
       <p className="mt-1 font-medium">{item.customer_name || "Customer blank"}</p>
       <p className="break-words text-gray-500">{item.description || "Description blank"}</p>
       <p className="text-gray-500">{item.request_type || "Request type blank"}{item.quantity ? " · Qty " + item.quantity : ""}</p>
+      {item.evidence_reason && <p className="mt-2 rounded-lg bg-slate-50 p-2 text-slate-700">{item.evidence_reason}</p>}
+      {item.evidence_kind === "duplicate_looking_historical" && item.candidate_links?.length > 0 && (
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-950">
+          <p className="font-semibold">Visible-data duplicate hint only</p>
+          <p className="mt-0.5">These already-linked Orders look the same in the downloaded identity fields. They are not proposed links.</p>
+          <div className="mt-1 space-y-1">
+            {item.candidate_links.map(candidate => <p key={candidate.base44_order_id} className="break-all">
+              Base44 {candidate.base44_order_id} → Smartsheet row {candidate.linked_smartsheet_row_id}
+            </p>)}
+          </div>
+        </div>
+      )}
     </div>;
   }
 
@@ -170,6 +189,24 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
                 <p className="font-semibold">{number(counts.base44_unlinked_likely_test_artifacts)} unlinked Base44 Order{Number(counts.base44_unlinked_likely_test_artifacts) === 1 ? " looks" : "s look"} like historical test data.</p>
                 <p className="mt-1 text-xs">This is a review hint only. Nothing is hidden, deleted, linked, or retired automatically.</p>
+              </div>
+            )}
+
+            {Number(counts.unlinked_smartsheet_rows) > 0 && (
+              <div className="rounded-xl border bg-slate-50 p-3">
+                <p className="text-sm font-semibold text-slate-800">Remote unlinked-row evidence</p>
+                <p className="mt-1 text-xs text-slate-600">Classification uses visible row content only as a review hint. Permanent row IDs remain the only identity used by sync.</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  {[
+                    ["Blank / placeholder", counts.remote_blank_or_placeholder],
+                    ["Duplicate-looking", counts.remote_duplicate_looking_historical],
+                    ["Sparse", counts.remote_sparse_unlinked],
+                    ["Populated", counts.remote_populated_unlinked],
+                  ].map(([label, value]) => <div key={label} className="rounded-lg border bg-white p-2">
+                    <p className="text-[11px] text-slate-600">{label}</p>
+                    <p className="text-lg font-bold tabular-nums text-slate-900">{number(value)}</p>
+                  </div>)}
+                </div>
               </div>
             )}
 
