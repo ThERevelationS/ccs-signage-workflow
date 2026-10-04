@@ -154,7 +154,7 @@
     },
     "extracted_text": {
       "type": "string",
-      "description": "Searchable extracted text from the archived file, when practical."
+      "description": "Searchable extracted text from the archived file. For segmented extraction this preserves the initial inline preview; read physical pages through getPermittingSourceTextPages. Check text_extraction_state for scope and completeness."
     },
     "text_extraction_pinned": {
       "type": "boolean",
@@ -200,7 +200,7 @@
           }
         }
       },
-      "description": "Original PDF page numbers with extracted text, exact archive hash, parser method, text hash, and extraction gaps. Original archive and review decisions remain intact."
+      "description": "Preserved initial physical PDF pages with extracted text, archive hash, parser method, and gaps. Later pages may live in immutable PermittingSourceTextSegment records; the committed cursor is in text_extraction_state. Original archive and review decisions remain intact."
     },
     "derived_facts": {
       "type": "object",
