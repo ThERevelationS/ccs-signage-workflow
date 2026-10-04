@@ -1,0 +1,175 @@
+{
+  "phase": "3.2 segmented physical PDF evidence",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "recorded_at": "2026-10-04T15:34:56.960Z",
+  "initial_head": "331ae6897bfd79c79c663b8b4e457bbf18d0fd29",
+  "verification_head": "724f83fac280e5b427b22f2a19af3b6217e4debd",
+  "acceptance_method": "Exact live core helper through authenticated Base44 entity adapters; actual remote Deno runtime; test-host SHA-256 adapter; compiled handlers separately verified. No direct backend HTTP invocation.",
+  "live": {
+    "at": "2026-10-04T15:30:39.052Z",
+    "result": {
+      "success": true,
+      "source_document_id": "6ac25879c6eeff85438f9ba6",
+      "status": "partial",
+      "pages_processed": 5,
+      "pages_extracted": 10,
+      "total_pages": 179,
+      "next_page": 11,
+      "segment_id": "6ac2711a03041cfb9f5dde02",
+      "reconciled": false,
+      "llm_calls": 0
+    },
+    "runtime_ms": 16838,
+    "parses": 1,
+    "creates": 1,
+    "updates": 3,
+    "reads": 9,
+    "preview_preserved": true,
+    "source_fields_preserved": true,
+    "page_read": [
+      {
+        "page": 4,
+        "text_sha256": "18d89d2f932325b7a146c5ed912625f4d0bdcbcb0fab792f26ff540a14034adf",
+        "characters": 5012
+      },
+      {
+        "page": 5,
+        "text_sha256": "5b95ee7d910499331ab9f546aaff4d400fa787645a522bbc4840ae3e984ca783",
+        "characters": 4157
+      },
+      {
+        "page": 6,
+        "text_sha256": "ddf4dd0bd60be85837779a58e9aaa3088b28a66325d88654a15bf25beb7dd707",
+        "characters": 2925
+      },
+      {
+        "page": 7,
+        "text_sha256": "4e535ab5e4590b7d51e45eedb3fc8bb3ea33607a7601139fb52cd24612f13ce5",
+        "characters": 2909
+      },
+      {
+        "page": 8,
+        "text_sha256": "53a5024cc04e79041383663ccf865cc315878861adcccc474291a82a779aa9af",
+        "characters": 3026
+      }
+    ],
+    "page_read_next": 9,
+    "complete_document_text": false,
+    "llm_calls": 0,
+    "uploads": 0
+  },
+  "segment": [
+    {
+      "id": "6ac2711a03041cfb9f5dde02",
+      "page_start": 6,
+      "page_end": 10,
+      "total_pages": 179,
+      "source_document_id": "6ac25879c6eeff85438f9ba6",
+      "source_sha256": "645bc377fce654fd93cdd0ca15dc54df216f3a558a9bb8732821dc3ca864eb13",
+      "payload_sha256": "479f4078cfa0a8bdb7454839e91e1fe54bca25c3a935760313afbbf93107415d",
+      "pages": [
+        {
+          "page": 6,
+          "text_sha256": "ddf4dd0bd60be85837779a58e9aaa3088b28a66325d88654a15bf25beb7dd707",
+          "characters": 2925,
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 7,
+          "text_sha256": "4e535ab5e4590b7d51e45eedb3fc8bb3ea33607a7601139fb52cd24612f13ce5",
+          "characters": 2909,
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 8,
+          "text_sha256": "53a5024cc04e79041383663ccf865cc315878861adcccc474291a82a779aa9af",
+          "characters": 3026,
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 9,
+          "text_sha256": "ef9b199adb8dbc7d72b1c62eedaf87820481c9327065e0355893e0299df6973a",
+          "characters": 481,
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 10,
+          "text_sha256": "9b069abefc8415195fa508daaeaca90193fecc7b2fa92fc32f71610937900219",
+          "characters": 1971,
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    }
+  ],
+  "failed_harness": {
+    "at": "2026-10-04T15:27:48.234Z",
+    "error": "Unexpected token 'W', \"Warning: C\"... is not valid JSON",
+    "segments_created": 0,
+    "preview_preserved": true,
+    "cause": "PDF.js stdout warnings before JSON; corrected result framing after inspecting failure.",
+    "llm_calls": 0,
+    "uploads": 0
+  },
+  "preservation": {
+    "boone_and_batavia_profiles_unchanged": true,
+    "boone_48_catalog_records_unchanged": true,
+    "morrow_and_campbell_text_records_unchanged": true,
+    "dispatcher_config_restored": true,
+    "research_dispatch_state_unchanged": true
+  },
+  "dispatcher_config": {
+    "enabled": true,
+    "interval_minutes": 15,
+    "max_dispatch_per_cycle": 5,
+    "max_in_flight": 20,
+    "daily_dispatch_limit": 40,
+    "retry_limit": 3
+  },
+  "research_state": {
+    "setting_key": "permitting_research_dispatch_state",
+    "setting_value": {
+      "last_cycle_at": "2026-10-04T07:00:01.564Z",
+      "daily_day_key": "2026-10-04",
+      "dispatched_today": 40,
+      "last_result": {
+        "at": "2026-10-04T07:00:01.564Z",
+        "manual": false,
+        "in_flight_before": 0,
+        "backlog_before": 1427,
+        "reconciled_existing_profiles": 0,
+        "reconciled_completed": 0,
+        "reconciled_failed": 0,
+        "attempted": 5,
+        "dispatched": 5,
+        "failed": 0
+      }
+    },
+    "id": "6ac1d0ffb44495caa0c3cf76",
+    "created_date": "2026-10-04T04:07:27.073000",
+    "updated_date": "2026-10-04T07:00:32.809000",
+    "created_by_id": "service_5d4754aa-ccfd-4c35-992a-f7a6cf45a828",
+    "created_by": "service+5d4754aa-ccfd-4c35-992a-f7a6cf45a828@no-reply.base44.com",
+    "is_sample": false
+  },
+  "validation": {
+    "tests_passed": 147,
+    "tests_failed": 0,
+    "affected_backend_bundles": [
+      "continuePermittingSourceText",
+      "getPermittingSourceTextPages",
+      "permittingResearchBacklogDispatch",
+      "permittingRuleExtraction"
+    ],
+    "targeted_lint": "passed",
+    "git_diff_check": "passed",
+    "full_build": "passed",
+    "frontend_published": false
+  },
+  "scheduled_acceptance": "No actual post-change scheduled segment invocation observed in this window; compiled dispatcher integration and live entity persistence verified.",
+  "next_phase": "3.3 selected source/page cited requirement extraction with literal excerpt, archive snapshot, completeness and authority review gates."
+}
