@@ -315,6 +315,15 @@ async function requireCurrentMechanicGrant(Access: any, grantId: string, action:
   return latest;
 }
 
+function isMechanicAccessChangedError(error: unknown) {
+  return String((error as any)?.code || '') === 'FLEET_MECHANIC_ACCESS_REVOKED';
+}
+
+async function mechanicWorkOrderResponse(Access:any, grantId:string, action:string, workOrder:any, payload:any, init:ResponseInit = {}) {
+  await requireCurrentMechanicGrant(Access,grantId,action,String(workOrder?.equipment_id || ''));
+  return json({...payload,work_order:sanitizeWorkOrder(workOrder)},init);
+}
+
 function sanitizeEquipment(row: any) {
   return {
     id:row.id,
@@ -601,6 +610,10 @@ Deno.serve(async (req) => {
     const grantScope = scopeForGrant(grant);
     if (grantScope.scope_mode === 'selected_equipment' && !new Set(grantScope.allowed_equipment_ids).has(String(current.equipment_id || ''))) {
       return json({error:'This Fleet work order is outside this mechanic link\'s allowed equipment scope.'},{status:403});
+    }
+
+    if (action === 'mutation_status') {
+      await requireCurrentMechanicGrant(Access,String(grant.id || ''),statusMutationAction,String(current.equipment_id || ''));
     }
 
     const Receipt = base44.asServiceRole.entities.FleetOperationReceipt;
