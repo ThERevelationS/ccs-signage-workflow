@@ -1584,23 +1584,101 @@ async function pushDataset(
     }
   }
 
-  // Phase 3: Batch Base44 update (all incoming fields + metadata in one bulkUpdate)
+  // Phase 3: Persist Base44 reconciliation only after the corresponding remote
+  // outcome is verified. Orders use per-record version CAS so a newer browser
+  // edit cannot be overwritten by an older in-flight Save & Sync.
   if (deferredBase44Updates.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
-    try {
-      await base44.asServiceRole.entities[entityName].bulkUpdate(deferredBase44Updates);
-      for (const update of deferredBase44Updates) updated.push(update.id);
-    } catch (err: any) {
-      errors.push(`Batch Base44 update (${deferredBase44Updates.length} records): ${err?.message || 'unknown error'}`);
+    if (dataset === 'orders') {
+      const commitAcks: string[] = [];
+      const expectedById = new Map<string, any>();
+      for (const update of deferredBase44Updates) {
+        const recordId = String(update.id || '');
+        const verification = deferredOrderVerification.get(recordId);
+        if (!verification || !orderRemoteVerifiedIds.has(recordId) || orderFailedRecordIds.has(recordId)) continue;
+        const { id: _id, ...fields } = update;
+        try {
+          const committed = await base44.asServiceRole.entities.Order.updateMany(
+            { id: recordId, updated_date: verification.originalUpdatedDate, smartsheet_pending_local_sync: true },
+            { $set: fields },
+          );
+          if (!committed || committed.updated !== 1) {
+            throw new Error('Order changed while sync was running; its newer revision remains queued.');
+          }
+          commitAcks.push(recordId);
+          expectedById.set(recordId, update);
+        } catch (err: any) {
+          orderFailedRecordIds.add(recordId);
+          errors.push(recordId + ': ' + (err?.message || 'Base44 reconciliation commit failed'));
+        }
+      }
+
+      if (commitAcks.length) {
+        let verifiedRecords: any[] = [];
+        try {
+          verifiedRecords = await loadAllEntityRows({
+            entity: base44.asServiceRole.entities.Order,
+            query: { id: { $in: commitAcks } },
+            sort: 'id',
+            label: 'Order Save & Sync partial-result verification',
+          });
+        } catch (err: any) {
+          errors.push('Order Base44 read-back failed after sync: ' + (err?.message || 'unknown error'));
+        }
+        const recordById = new Map(verifiedRecords.map((record: any) => [String(record.id), record]));
+        for (const recordId of commitAcks) {
+          const expected = expectedById.get(recordId);
+          const record: any = recordById.get(recordId);
+          const metadataFailed = !record ||
+            findUnverifiedSyncMetadata([expected], record ? [record] : []).length > 0 ||
+            record?.smartsheet_pending_local_sync !== false;
+          if (!metadataFailed) {
+            updated.push(recordId);
+            continue;
+          }
+          orderFailedRecordIds.add(recordId);
+          errors.push(recordId + ': Base44 could not verify the completed Order sync metadata. The Order was re-queued.');
+          try {
+            await base44.asServiceRole.entities.Order.updateMany(
+              { id: recordId },
+              { $set: { smartsheet_pending_local_sync: true } },
+            );
+          } catch {
+            // The client performs an authoritative reload after partial results;
+            // never claim this row succeeded when durable re-queue is uncertain.
+          }
+        }
+      }
+    } else {
+      try {
+        await base44.asServiceRole.entities[entityName].bulkUpdate(deferredBase44Updates);
+        for (const update of deferredBase44Updates) updated.push(update.id);
+      } catch (err: any) {
+        errors.push('Batch Base44 update (' + deferredBase44Updates.length + ' records): ' + (err?.message || 'unknown error'));
+      }
     }
   }
 
-  // Phase 5: Batch conflict resolution
-  if (deferredConflictDecisions.length) {
-    try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:deferredConflictDecisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
-  }
-  if (deferredConflictRecordIds.length) {
-    try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:deferredConflictRecordIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Smartsheet-wins reconciliation'}}); } catch {}
+  // Phase 5: Resolve conflict decisions only for records whose full Order
+  // reconciliation was verified. Failed/uncertain rows keep their review state.
+  if (dataset === 'orders') {
+    const successfulOrderUpdates = new Set(updated.map(String));
+    const successfulDecisionIds = [...deferredOrderConflictDecisions.entries()]
+      .filter(([recordId]) => successfulOrderUpdates.has(recordId))
+      .flatMap(([, decisionIds]) => decisionIds);
+    if (successfulDecisionIds.length) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:successfulDecisionIds},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
+    }
+    if (successfulOrderUpdates.size) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset:'orders',entity_id:{$in:[...successfulOrderUpdates]},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Verified field reconciliation'}}); } catch {}
+    }
+  } else {
+    if (deferredConflictDecisions.length) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({id:{$in:deferredConflictDecisions},status:'approved'},{$set:{status:'resolved',resolved_at:new Date().toISOString()}}); } catch {}
+    }
+    if (deferredConflictRecordIds.length) {
+      try { await base44.asServiceRole.entities.SyncConflict.updateMany({dataset,entity_id:{$in:deferredConflictRecordIds},status:'open'},{$set:{status:'resolved',resolved_at:new Date().toISOString(),resolved_by:'Smartsheet-wins reconciliation'}}); } catch {}
+    }
   }
 
   if (dataset === 'sales') {
