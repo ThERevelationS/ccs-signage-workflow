@@ -30,6 +30,7 @@ async function evidence(deps,input){
  const doc=links[0];
  if(links.length!==1 || !safeAuthorityUrl(source.official_url) || !safeAuthorityUrl(source.archived_file_url) ||
   doc.url!==source.official_url || doc.file_url!==source.archived_file_url ||
+  !/^[a-f0-9]{64}$/.test(source.file_hash_sha256 || '') ||
   doc.source_sha256!==source.file_hash_sha256 || doc.stored_sha256!==source.file_hash_sha256 ||
   !Number.isSafeInteger(source.file_bytes) || source.file_bytes<1 || doc.stored_bytes!==source.file_bytes ||
   doc.source_bytes!==source.file_bytes)
