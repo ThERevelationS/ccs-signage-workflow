@@ -1,5 +1,6 @@
 import { readSourceEvidencePages } from './jurisdictionSourceTextSegments.mjs';
 import { textSha256 } from './jurisdictionSourcePdfText.mjs';
+import {sourceRuleKind,ruleKind,sourceSupportsRule,assertSourceScopeReviewEvidence} from './permittingSourceAuthorityPolicy.mjs';
 
 export const RULE_EVIDENCE_METHOD='literal-page-v1';
 export const RULE_CATEGORIES=['permit_applicability','sign_type_rule','dimensional','illumination_electronic','submittal_requirement','fee_timing','exemption','procedure','other'];
@@ -12,7 +13,7 @@ export const evidenceError=(message,status=409)=>Object.assign(Error(message),{s
 export function sourceAuthoritySnapshot(source) {
   return Object.fromEntries(['id','jurisdiction_id','jurisdiction_name','issuing_office','jurisdiction_scope','title','official_url',
     'archived_file_url','file_hash_sha256','file_bytes','authority_classification','content_status','verification_status',
-    'authority_confidence','reviewer','effective_or_adopted_date','notes_gaps'].map(key=>[key,source[key] ?? null]));
+    'authority_confidence','reviewer','effective_or_adopted_date','notes_gaps','authority_review'].map(key=>[key,source[key] ?? null]));
 }
 export function reviewedAdoptedSource(source) {
   return source?.authority_classification==='current_adopted' && source.content_status==='current' &&
@@ -74,6 +75,7 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
   const key=await evidenceDigest({source:source.id,hash:source.file_hash_sha256,page:page.page,text_sha256:page.text_sha256,
     category:raw.rule_category,requirement:raw.requirement,excerpt:raw.excerpt,numeric,sign,district,trigger,exceptions});
   return {jurisdiction_name:source.jurisdiction_name,jurisdiction_id:source.jurisdiction_id,issuing_office:source.issuing_office || '',
+    rule_kind:sourceRuleKind(source),is_workflow_instruction:false,
     rule_category:raw.rule_category,sign_type:sign,sign_type_normalized:normalizeSignType(sign),zoning_district_applicability:district,
     trigger,requirement:raw.requirement,...numeric,exceptions,effective_date:source.effective_or_adopted_date || '',
     status:historical?'historical':'needs_review',confidence:draft || historical?'low':confidence,conflict_state:'under_review',
@@ -81,6 +83,7 @@ export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSig
     evidence_validation:RULE_EVIDENCE_METHOD,extraction_key:key,
     evidence_context:{start_page:unit.start_page,page_count:unit.page_count,total_pages:unit.evidence.total_pages,
       complete_document_text:unit.evidence.complete_document_text,jurisdiction_scope:source.jurisdiction_scope || null,
+      authority_review_id:source.authority_review?.review_id || null,
       evidence_scope:'selected_pdf_pages',full_code_review:false},
     notes:'Literal quoted evidence from selected physical PDF pages. Staff review and current authority verification are required.'};
 }
@@ -104,16 +107,24 @@ export const EXTRACTION_RESPONSE_SCHEMA={type:'object',properties:{rules:{type:'
   exceptions:{type:'string'},numeric_literal:{type:'string'},confidence:{type:'string',enum:['high','medium','low']}
 },required:['physical_page','rule_category','excerpt','requirement','confidence']}}},required:['rules']};
 
-export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity}) {
+export async function verifyRuleForApproval(rule,{sourceEntity,segmentEntity,profileEntity,settingsEntity}) {
   if (rule.draft_context || ['historical','superseded'].includes(rule.status) || rule.superseded_by) throw evidenceError('Draft, historical or superseded rules cannot be approved.');
   const citations=rule.citations;
   if (!Array.isArray(citations) || !citations.length || citations.length>10) throw evidenceError('Approval requires bounded current-authority citations.');
+  if(!['regulatory_rule','administrative_instruction'].includes(ruleKind(rule)))throw evidenceError('Rule evidence purpose requires review.');
+  if(ruleKind(rule)==='administrative_instruction' && (citations.length!==1 || rule.evidence_validation!==RULE_EVIDENCE_METHOD))
+    throw evidenceError('An administrative instruction requires one validated retained-page source.');
   const sources=[];
   for (const citation of citations) {
     const source=await sourceEntity.get(citation.source_document_id);
-    if (!reviewedAdoptedSource(source) || !rule.jurisdiction_id || source.jurisdiction_id!==rule.jurisdiction_id ||
+    if (!sourceSupportsRule(source,rule) || !rule.jurisdiction_id || source.jurisdiction_id!==rule.jurisdiction_id ||
         source.jurisdiction_name!==rule.jurisdiction_name || citation.official_url!==source.official_url ||
         (citation.source_sha256 || rule.source_snapshot_sha256)!==source.file_hash_sha256) throw evidenceError('Citation source is unverified, changed, or belongs to another authority.');
+    if(ruleKind(rule)==='administrative_instruction'){
+      await assertSourceScopeReviewEvidence(source,{segmentEntity,profileEntity,settingsEntity});
+      if(rule.evidence_context?.authority_review_id!==source.authority_review.review_id)
+        throw evidenceError('Administrative source scope was reviewed after this candidate; review current scoped evidence.');
+    }
     if (rule.evidence_validation===RULE_EVIDENCE_METHOD) {
       if (!RULE_CATEGORIES.includes(rule.rule_category) || !evidenceEqual(rule.evidence_context?.jurisdiction_scope,source.jurisdiction_scope || null) ||
           citation.archived_file_url!==source.archived_file_url) throw evidenceError('Rule category, authority scope or retained archive requires review.');
