@@ -3568,7 +3568,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 18 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 19 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3731,7 +3731,15 @@ Deno.serve(async (req) => {
               if (periodEntryIdSet.has(candidateId)) continue;
               const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
               let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
-              if (candidateEntry?.id && companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
+              if (!companyDate && snapshotVersion >= 19) {
+                const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
+                if (!Array.isArray(membershipAudits)) return Response.json({ success: false, error: 'Payroll audit membership evidence could not be loaded before finalization.' }, { status: 409 });
+                for (const membershipAudit of membershipAudits) {
+                  const membership = payrollMembershipFromAudit(membershipAudit);
+                  if (membership?.company_date) { companyDate = membership.company_date; break; }
+                }
+              }
+              if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
             }
           }
           const periodEntryIds = [...periodEntryIdSet].sort();
