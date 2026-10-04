@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import PermittingSourceAuthorityReview from "./PermittingSourceAuthorityReview";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,6 +90,18 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
     finally { if (generation.current === current) setBusy(""); }
   }
 
+  function sourceReviewed(data) {
+    if (data?.review) {
+      const review = data.review;
+      setSources(rows => rows.map(row => row.id === sourceId ? { ...row, authority_review: review,
+        authority_review_state: data.receipt || null, issuing_office: review.publisher_name,
+        jurisdiction_scope: review.scope_label, verification_status: review.status === "active" ? "verified" : "needs_verification" } : row));
+      setPreview(null); setResult(null); setReceipts({}); setRequestId("");
+      try { sessionStorage.removeItem(key); } catch { /* Prior analyses remain retained in the backend. */ }
+    }
+    onImported();
+  }
+
   function newAnalysis() {
     const id = crypto.randomUUID(); saveRequest(key, id); setRequestId(id); setResult(null); setReceipts({});
   }
@@ -110,6 +123,9 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
         {!source.text_extraction_state?.method && " This source needs retained PDF page evidence before this extraction route can be used."}</div>
       {source.official_url && <a className="underline" href={source.official_url} target="_blank" rel="noopener noreferrer">Open official source</a>}
     </div>}
+    {source && <PermittingSourceAuthorityReview key={source.id} source={source} disabled={Boolean(busy)}
+      onBusy={value => setBusy(previous => value ? "authority_review" : previous === "authority_review" ? "" : previous)}
+      onReviewed={sourceReviewed} />}
     <div className="flex flex-wrap gap-2">
       <Button size="sm" variant="outline" disabled={Boolean(busy) || !selectedRange} onClick={() => act("preview")}>Preview selected pages</Button>
       <Button size="sm" disabled={Boolean(busy) || !preview || Boolean(result)} onClick={() => act("extract")}>Analyze selected pages</Button>
