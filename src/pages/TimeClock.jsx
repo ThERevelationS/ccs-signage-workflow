@@ -115,6 +115,33 @@ function loginStatusNotice(status) {
       message: `The server restored your active shift from ${officialPunchLabel(report.clockIn)}. Signing back in did not create a new Clock In or change the existing shift.`,
     };
   }
+  if (report.kind === "pending_punch_review") {
+    const countText = report.count === 1 ? "one previous punch report" : `${report.count} previous punch reports`;
+    const currentState = report.status === "clocked_in"
+      ? "Your current shift is still Clocked In and is separate from that prior review."
+      : report.status === "clocked_out"
+        ? "You are currently Clocked Out and can still start a new shift normally."
+        : "Your current Time Clock state is being restored separately.";
+    if (report.hasIntegrityIssue) {
+      return {
+        tone: "warning",
+        title: "Previous punch report needs manager investigation",
+        message: `The server found ${countText}, and at least one linked review record does not reconcile cleanly. ${currentState} A manager must investigate the unresolved prior shift; logging in did not change it.`,
+      };
+    }
+    if (report.hasRejectedItem) {
+      return {
+        tone: "warning",
+        title: "Previous punch report needs follow-up",
+        message: `The server found ${countText}, including a manager-rejected item that remains unresolved. ${currentState} Contact a manager before assuming that prior shift is settled.`,
+      };
+    }
+    return {
+      tone: "warning",
+      title: "Previous punch report is awaiting manager review",
+      message: `The server found ${countText} still awaiting manager review. ${currentState} Your reported prior time remains preserved and auditable until the review is completed.`,
+    };
+  }
   if (report.kind === "transition") {
     return {
       tone: "warning",
