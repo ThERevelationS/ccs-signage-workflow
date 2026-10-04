@@ -1,7 +1,7 @@
 import { AlertTriangle, Clock3, FileWarning, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { formatCompanyDateTime } from "@/components/timeclock/timeClockCompanyTime";
 
 const ACTIONABLE_STATUSES = new Set(["open", "pending_manager_review", "rejected"]);
 
@@ -12,8 +12,8 @@ function safeDate(value) {
 }
 
 function formatDateTime(value) {
-  const date = safeDate(value);
-  return date ? format(date, "MMM d, yyyy h:mm a") : "—";
+  if (!safeDate(value)) return "—";
+  return formatCompanyDateTime(value);
 }
 
 function typeLabel(type) {
@@ -57,9 +57,13 @@ function reportDetail(row) {
 export default function TimeClockPunchExceptionReport({
   punchExceptions = [],
   timeEntries = [],
+  correctionRequests = [],
   onReviewEntry,
+  onReviewCorrection,
 }) {
   const entryById = new Map(timeEntries.map(entry => [entry.id, entry]));
+  const correctionById = new Map(correctionRequests.map(request => [request.id, request]));
+  const correctionByPunchExceptionId = new Map(correctionRequests.filter(request => request.punch_exception_id).map(request => [request.punch_exception_id, request]));
   const rows = [...punchExceptions].sort((a, b) => {
     const aTime = safeDate(a.submitted_at || a.detected_at || a.created_date)?.getTime() || 0;
     const bTime = safeDate(b.submitted_at || b.detected_at || b.created_date)?.getTime() || 0;
@@ -115,6 +119,8 @@ export default function TimeClockPunchExceptionReport({
         <div className="mt-4 max-h-[32rem] overflow-y-auto space-y-2 pr-1">
           {rows.map(row => {
             const entry = entryById.get(row.time_entry_id) || null;
+            const linkedCorrection = correctionById.get(row.correction_request_id) || correctionByPunchExceptionId.get(row.id) || null;
+            const canReviewCorrection = ACTIONABLE_STATUSES.has(row.status) && linkedCorrection && ["pending", "reviewing"].includes(linkedCorrection.status) && typeof onReviewCorrection === "function";
             return (
               <div key={row.id || row.case_key} className="rounded-xl border bg-white p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -134,11 +140,15 @@ export default function TimeClockPunchExceptionReport({
                     </p>
                     {row.resolution_note && <p className="text-[11px] text-gray-500 mt-1">{row.resolution_note}</p>}
                   </div>
-                  {entry && typeof onReviewEntry === "function" && (
+                  {canReviewCorrection ? (
+                    <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onReviewCorrection(linkedCorrection)}>
+                      Review Correction
+                    </Button>
+                  ) : entry && typeof onReviewEntry === "function" ? (
                     <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onReviewEntry(entry)}>
                       View Shift
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
