@@ -15,6 +15,10 @@
       "type": "string",
       "description": "Canonical JurisdictionProfile record id this source belongs to, when linked."
     },
+    "source_registration_key": {
+      "type": "string",
+      "description": "Durable automatic registration identity: jurisdiction, retained official URL, and verified archive hash. Used to reconcile uncertain creates without duplicates."
+    },
     "jurisdiction_profile_doc_id": {
       "type": "string",
       "description": "Original JurisdictionProfile.documents[].id this record was migrated from, so both stay consistent. Blank for sources archived directly into PermittingSourceDocument."
@@ -86,14 +90,15 @@
     "content_status": {
       "type": "string",
       "enum": [
+        "unknown",
         "current",
         "historical",
         "draft",
         "proposed",
         "superseded"
       ],
-      "default": "current",
-      "description": "Whether the content is current, historical, draft, proposed, or superseded."
+      "default": "unknown",
+      "description": "Whether current adoption is unknown or content is current, historical, draft, proposed, or superseded. Successful retrieval does not establish current authority."
     },
     "authority_confidence": {
       "type": "string",
