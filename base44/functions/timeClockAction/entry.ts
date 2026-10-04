@@ -2429,6 +2429,10 @@ Deno.serve(async (req) => {
           chainCore.approving_managers = Array.isArray(summary.approving_managers) ? summary.approving_managers : [];
           chainCore.finalizer_approval_overlap = summary.finalizer_approval_overlap === true;
         }
+        if (Number(summary.snapshot_version || 0) >= 8) {
+          chainCore.supersedes_generation_request_id = String(summary.supersedes_generation_request_id || '');
+          chainCore.authorized_by_reopen_request_id = String(summary.authorized_by_reopen_request_id || '');
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
@@ -3125,7 +3129,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 7 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 8 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3143,6 +3147,12 @@ Deno.serve(async (req) => {
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const priorHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
         const previousHistoryHash = await payloadHash(priorHistory);
+        const supersededGeneration = priorHistory.length ? priorHistory[priorHistory.length - 1] : null;
+        const supersedesGenerationRequestId = String(supersededGeneration?.request_id || '');
+        const authorizedByReopenRequestId = String(supersededGeneration?.invalidated_by_reopen_request_id || '');
+        if (supersededGeneration && (!supersedesGenerationRequestId || !authorizedByReopenRequestId)) {
+          return Response.json({ success: false, error: 'The prior payroll generation is missing authoritative reopen lineage. Admin investigation is required before re-finalization.' }, { status: 409 });
+        }
         const approvingManagers = [...new Set(snapshotRows.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
         const finalizerApprovalOverlap = approvingManagers.includes(actorEmail);
         const summaryCore = {
@@ -3157,6 +3167,10 @@ Deno.serve(async (req) => {
           previous_history_hash: previousHistoryHash,
           shift_manifest_hash: entrySnapshotHash,
           ...(snapshotVersion >= 7 ? { approving_managers: approvingManagers, finalizer_approval_overlap: finalizerApprovalOverlap } : {}),
+          ...(snapshotVersion >= 8 ? {
+            supersedes_generation_request_id: supersedesGenerationRequestId,
+            authorized_by_reopen_request_id: authorizedByReopenRequestId,
+          } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
         const summary = { ...summaryCore, shift_manifest: snapshotRows, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
