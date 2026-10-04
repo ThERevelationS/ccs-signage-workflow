@@ -1,0 +1,156 @@
+{
+  "name": "SourceMonitorState",
+  "type": "object",
+  "description": "One row per monitored PermittingSourceDocument. Tracks cheap programmatic HTTP checks (ETag/Last-Modified/Content-Length/hash) so the platform AI is only invoked when a source actually changes. Monitor-enabled is Boone County only for the initial pass; statewide activation is a later phase.",
+  "properties": {
+    "source_document_id": {
+      "type": "string",
+      "description": "PermittingSourceDocument record id this monitor row tracks."
+    },
+    "jurisdiction_name": {
+      "type": "string",
+      "description": "Cached jurisdiction name for filtering without a join."
+    },
+    "jurisdiction_id": {
+      "type": "string",
+      "description": "Cached JurisdictionProfile record id."
+    },
+    "official_url": {
+      "type": "string",
+      "description": "URL checked by the scanner. Copied from PermittingSourceDocument.official_url."
+    },
+    "source_title": {
+      "type": "string",
+      "description": "Cached source document title for display."
+    },
+    "source_type": {
+      "type": "string",
+      "description": "Cached source_type from PermittingSourceDocument for cadence defaults."
+    },
+    "authority_classification": {
+      "type": "string",
+      "description": "Cached authority_classification from PermittingSourceDocument."
+    },
+    "check_method": {
+      "type": "string",
+      "enum": [
+        "etag",
+        "last_modified",
+        "content_length",
+        "hash"
+      ],
+      "default": "hash",
+      "description": "Primary cheap-check method used. Hash is the fallback when headers are absent."
+    },
+    "last_known_hash": {
+      "type": "string",
+      "description": "SHA-256 of the last observed response body. Compared on every scan."
+    },
+    "last_known_etag": {
+      "type": "string",
+      "description": "Last observed ETag header value."
+    },
+    "last_known_last_modified": {
+      "type": "string",
+      "description": "Last observed Last-Modified header value."
+    },
+    "last_known_content_length": {
+      "type": "number",
+      "description": "Last observed Content-Length header value."
+    },
+    "last_successful_check": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last cheap check completed (change or no-change)."
+    },
+    "last_changed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a change was last detected."
+    },
+    "last_change_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "JSON summary of the last change: old/new hash, old/new content length, changed-links set, AI regulatory-impact assessment, affected rules count."
+    },
+    "failure_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Consecutive fetch failures. Reset to 0 on success."
+    },
+    "last_http_status": {
+      "type": "string",
+      "description": "HTTP status of the last attempt (e.g. '200', '404', 'timeout')."
+    },
+    "last_error": {
+      "type": "string",
+      "description": "Last error message (never contains secrets)."
+    },
+    "may_affect_regulatory_data": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the last change was assessed as potentially affecting regulatory requirements."
+    },
+    "staff_review_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when staff review is needed (regulatory impact or broken source)."
+    },
+    "schedule_cadence": {
+      "type": "string",
+      "enum": [
+        "volatile",
+        "moderate",
+        "stable",
+        "immutable"
+      ],
+      "default": "moderate",
+      "description": "Check cadence. volatile=weekly, moderate=monthly, stable=quarterly, immutable=yearly."
+    },
+    "next_check_due": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the next scan should run. Computed from last_successful_check + cadence."
+    },
+    "monitor_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this source is actively monitored. Boone County only for the initial pass."
+    }
+  },
+  "required": [
+    "source_document_id",
+    "official_url"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

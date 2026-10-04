@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   Database, FileCheck2, ShieldCheck, AlertTriangle, Clock,
-  ChevronDown, Search, Loader2, CircleSlash, Layers, MapPin, FileText,
+  ChevronDown, Search, Loader2, CircleSlash, Layers, MapPin, FileText, Activity,
 } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -98,6 +98,8 @@ export default function PermittingCompletenessDashboard() {
         rewriteVerified, rewriteAdoptionOnly, rewriteEffectiveOnly,
         sourcesByClass, sourcesTotal, sourcesStale,
         gapsCount, blockedCount,
+        monitorTotal, monitorEnabled, monitorReviewRequired, monitorFailed,
+        rulesTotal, rulesApproved, rulesNeedsReview,
       ] = await Promise.all([
         base44.entities.SourceCollectionQueue.aggregate({ groupBy: "state", count: true }),
         base44.entities.SourceCollectionQueue.aggregate({ groupBy: "status", count: true }),
@@ -111,6 +113,13 @@ export default function PermittingCompletenessDashboard() {
         base44.entities.PermittingSourceDocument.count({ last_checked: { $lt: staleThreshold } }),
         base44.entities.SourceCollectionQueue.count({ missing_next: { $exists: true } }),
         base44.entities.SourceCollectionQueue.count({ status: "blocked" }),
+        base44.entities.SourceMonitorState.count({}),
+        base44.entities.SourceMonitorState.count({ monitor_enabled: true }),
+        base44.entities.SourceMonitorState.count({ staff_review_required: true }),
+        base44.entities.SourceMonitorState.count({ failure_count: { $gte: 3 } }),
+        base44.entities.PermittingRule.count({}),
+        base44.entities.PermittingRule.count({ status: "staff_approved" }),
+        base44.entities.PermittingRule.count({ status: "needs_review" }),
       ]);
 
       const queueByStateMap = {};
@@ -143,6 +152,13 @@ export default function PermittingCompletenessDashboard() {
         gapsCount,
         blockedCount,
         staleThreshold,
+        monitorTotal,
+        monitorEnabled,
+        monitorReviewRequired,
+        monitorFailed,
+        rulesTotal,
+        rulesApproved,
+        rulesNeedsReview,
       });
     } catch (e) {
       console.error("Completeness dashboard load error:", e);
@@ -367,22 +383,30 @@ export default function PermittingCompletenessDashboard() {
         </p>
       </Section>
 
-      {/* Not yet implemented */}
-      <Section title="Later-phase metrics (not yet implemented)" icon={CircleSlash}>
-        <div className="space-y-2 pt-3">
-          {[
-            "Rules extracted & approved (Phase 6+)",
-            "Monitoring alerts active (Phase 7+)",
-            "Re-review queue depth (Phase 8+)",
-          ].map(label => (
-            <div key={label} className="flex items-center justify-between py-1.5 text-sm border border-dashed border-gray-200 rounded-lg px-3 bg-gray-50/50">
-              <span className="text-gray-400">{label}</span>
-              <Badge variant="outline" className="text-gray-400 border-gray-300">not yet implemented</Badge>
-            </div>
-          ))}
+      {/* Source monitor health */}
+      <Section title="Source monitor health" icon={Activity} badge={`${m.monitorEnabled} active`}>
+        <div className="space-y-1 pt-3">
+          <Row label="Monitored sources (enabled)" value={m.monitorEnabled} />
+          <Row label="Total monitor rows" value={m.monitorTotal} />
+          <Row label="Sources needing staff review" value={m.monitorReviewRequired} />
+          <Row label="Sources unavailable (3+ failures)" value={m.monitorFailed} />
         </div>
         <p className="text-xs text-gray-400 mt-3">
-          These placeholders activate when their phases land. No data is faked.
+          Cheap programmatic checks run daily. AI is only invoked when a source hash changes.
+          Broken sources never erase previously verified data.
+        </p>
+      </Section>
+
+      {/* Rules extracted & approved */}
+      <Section title="Permitting rules extracted" icon={FileCheck2} badge={m.rulesTotal}>
+        <div className="space-y-1 pt-3">
+          <Row label="Total rules extracted" value={m.rulesTotal} />
+          <Row label="Staff approved (operational)" value={m.rulesApproved} />
+          <Row label="Needs review" value={m.rulesNeedsReview} />
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Every rule carries at least one citation. Only staff-approved rules from current-adopted
+          sources are operational. Source changes flag affected rules for re-review.
         </p>
       </Section>
 

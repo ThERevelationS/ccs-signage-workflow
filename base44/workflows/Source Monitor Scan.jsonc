@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "source_monitor_scan",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "scan_sources": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sourceMonitorScan",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Scan monitored sources",
+            "description": "Cheap HTTP checks, AI only on change"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Cheap programmatic source monitoring: fetches monitored source URLs and compares hash/headers. AI is only invoked when a change is detected. Flags affected approved rules for re-review and creates deduped alerts. Never erases archives or auto-promotes drafts.",
+  "name": "Source Monitor Scan",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

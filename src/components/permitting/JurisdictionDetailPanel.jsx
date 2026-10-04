@@ -28,6 +28,7 @@ import ExtractedContentDisplay from "./ExtractedContentDisplay";
 import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
 import JurisdictionActivityTab from "./JurisdictionActivityTab";
 import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
+import SourceMonitorPanel from "./SourceMonitorPanel";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
@@ -851,6 +852,9 @@ Answer only from the provided excerpts and cite the document title and official 
 
         {/* Read-only current sign-law authority status */}
         <JurisdictionAuthorityStatus jurisdiction={jurisdiction} />
+
+        {/* Source monitor health */}
+        <SourceMonitorPanel jurisdictionName={jurisdiction.name} />
 
         {/* Key Requirements & Rules */}
         {(Object.keys(req).some(k => req[k] !== undefined && req[k] !== null && req[k] !== "") || jurisdiction.sqft_width_height_rules || jurisdiction.height_allowances || jurisdiction.setback_rules || jurisdiction.lighting_allowances) && (
