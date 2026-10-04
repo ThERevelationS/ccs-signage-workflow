@@ -1,0 +1,56 @@
+{
+  "phase": "2 — bounded document archival continuation",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "verified_at": "2026-10-04T08:13:04.919Z",
+  "source_head_at_start": "f47ec9c28cbb842442de4edf24b29556778291c9",
+  "behavior": [
+    "Source links persist before archival begins.",
+    "Manual targeted endpoint and refresh share the same per-document archival engine.",
+    "Queued automated research defers archival; scheduled dispatcher continues one known file per cycle even when research daily limit is exhausted.",
+    "No InvokeLLM or extraction integration is used by the archive engine.",
+    "Versioned document receipts prevent concurrent re-upload; stable document_id supports manual redelivery.",
+    "Fetch/read 12 seconds, upload 15 seconds, stored readback 12 seconds; one file per invocation; max 50 MB.",
+    "Known download failures and stored-file verification failures use backoff with three automatic attempts.",
+    "Unknown upload outcomes block all blind re-upload; acknowledged storage URLs are retained for readback-only recovery.",
+    "Manual retries of known failures are not limited by automatic attempt caps or pause state.",
+    "Manual/pinned/hashed/archived sources and unrelated profile fields remain protected."
+  ],
+  "live_acceptance": {
+    "duration_ms": 3828,
+    "success": true,
+    "status": "complete",
+    "archived": 1,
+    "uploads": 1,
+    "document": {
+      "id": "ai_1791099930671_2",
+      "title": "Zoning Variance Application",
+      "url": "https://morrowcountyohio.gov/Zoning/Zoning%20Forms/BZA%20Variance%20Application.pdf?t=202512310822050",
+      "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/9aacc3336_BZAVarianceApplication.pdf",
+      "source_sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+      "source_bytes": 95880,
+      "stored_sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+      "stored_bytes": 95880
+    },
+    "llm_calls": 0,
+    "extraction_calls": 0
+  },
+  "checks": {
+    "focused_tests": "76/76",
+    "three_backend_bundles": "PASS",
+    "targeted_eslint": "PASS",
+    "git_diff_check": "PASS",
+    "full_build": "PASS; unchanged stale browser-data warnings",
+    "live_backlog_selector": "PASS: returned eligible Campbell County and Florence profiles",
+    "boone_documents_unchanged": true,
+    "morrow_retained_sources": 16,
+    "morrow_confirmed_archives": 1,
+    "dispatcher_restored": true,
+    "research_daily_attempts_unchanged": 40
+  },
+  "remaining": [
+    "Morrow Zoning Permit Application has upload_uncertain status from the previous timed-out manual attempt; reconcile prior outcome before any new upload.",
+    "Scheduled archive selection/integration is implemented and compiled-tested; its next timed production cycle has not been observed in this phase.",
+    "New archive is retained on JurisdictionProfile; registration in the standardized PermittingSourceDocument catalog and extraction scheduling are next.",
+    "Archival does not establish sign applicability, adopted authority, fee currency, or regulatory verification."
+  ]
+}
