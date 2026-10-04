@@ -1,5 +1,6 @@
 import { assembledSourceText, PDF_TEXT_METHOD, PDF_TEXT_PAGE_BATCH, PDF_TEXT_MAX_TOTAL_CHARS } from './jurisdictionSourcePdfText.mjs';
-const terminal = ['complete', 'needs_ocr', 'partial_limit', 'blocked'];
+import { extractSegmentedSourceText, segmentedProgressOwned } from './jurisdictionSourceTextSegments.mjs';
+const terminal = ['complete', 'needs_ocr', 'partial_limit', 'blocked', 'segment_uncertain'];
 const equal = (a,b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 const identity = row => JSON.stringify([row.archived_file_url,row.file_hash_sha256,row.file_bytes]);
 const owned = row => row.text_extraction_state?.method === PDF_TEXT_METHOD &&
@@ -10,7 +11,7 @@ export function sourceTextEligible(row, {automatic = true, now = Date.now()} = {
   if (!row?.id || !row.archived_file_url || !/^[a-f0-9]{64}$/.test(row.file_hash_sha256 || '') || !(row.file_bytes > 0) || row.text_extraction_pinned) return false;
   if (automatic && !row.source_registration_key) return false; // legacy/manual evidence is opt-in only
   if (hasExisting(row) && (!owned(row) || row.extracted_text !== assembledSourceText(row,row.extracted_pages || []) ||
-      row.text_extraction_state.pages_extracted !== (row.extracted_pages || []).length)) return false;
+      (row.text_extraction_state.storage_mode ? !segmentedProgressOwned(row) : row.text_extraction_state.pages_extracted !== (row.extracted_pages || []).length))) return false;
   const state = row.text_extraction_state || {};
   if (state.source_sha256 && !owned(row)) return false; // source replacement requires review, not overwrite
   if (['complete','needs_ocr','partial_limit'].includes(state.status)) return false;
@@ -33,7 +34,8 @@ async function writeReceipt(entity, snapshot, expected, next, fields = {}) {
   for (let attempt=0; attempt<3; attempt++) {
     const current = await entity.get(snapshot.id);
     if (!current?.id || current.text_extraction_pinned || identity(current)!==identity(snapshot)) throw Error('Source archive changed or became protected.');
-    const converged = equal(current.text_extraction_state,next) && Object.entries(fields).every(([key,value])=>equal(current[key],value));
+    const converged = equal(current.text_extraction_state,next) && Object.entries(fields).every(([key,value])=>equal(current[key],value)) &&
+      ['extracted_text','extracted_pages'].every(key=>equal(current[key],Object.hasOwn(fields,key)?fields[key]:snapshot[key]));
     if (converged) return current;
     if (!equal(current.text_extraction_state || {},expected || {}) || !equal(current.extracted_text,snapshot.extracted_text) ||
         !equal(current.extracted_pages,snapshot.extracted_pages)) throw Error('Source text was changed by another worker or reviewer.');
@@ -45,14 +47,15 @@ async function writeReceipt(entity, snapshot, expected, next, fields = {}) {
     } catch(error) {
       const after=await entity.get(snapshot.id).catch(()=>null);
       if (after && !after.text_extraction_pinned && identity(after)===identity(snapshot) &&
-          equal(after.text_extraction_state,next) && Object.entries(fields).every(([key,value])=>equal(after[key],value))) return after;
+          equal(after.text_extraction_state,next) && Object.entries(fields).every(([key,value])=>equal(after[key],value)) &&
+          ['extracted_text','extracted_pages'].every(key=>equal(after[key],Object.hasOwn(fields,key)?fields[key]:snapshot[key]))) return after;
       throw error;
     }
   }
   throw Error('Source text write repeatedly conflicted; newer work retained.');
 }
 
-export async function extractKnownSourceText({entity,sourceDocumentId,readAndExtract,canAutomaticallyExtract,automatic=true,token=crypto.randomUUID(),now=()=>Date.now()}) {
+export async function extractKnownSourceText({entity,segmentEntity,sourceDocumentId,readAndExtract,canAutomaticallyExtract,automatic=true,token=crypto.randomUUID(),now=()=>Date.now()}) {
   const source=await entity.get(sourceDocumentId);
   if (!sourceTextEligible(source,{automatic,now:now()})) return {success:true,skipped:true,reason:'no_eligible_text_source'};
   if (automatic && canAutomaticallyExtract && !await canAutomaticallyExtract(source)) return {success:true,skipped:true,reason:'profile_protected_or_archive_changed'};
@@ -60,6 +63,9 @@ export async function extractKnownSourceText({entity,sourceDocumentId,readAndExt
   const prior=source.extracted_pages || [];
   // Stored page sequence is the durable cursor, not a caller-supplied page number.
   if (prior.some((p,i)=>p.page!==i+1 || p.source_sha256!==source.file_hash_sha256 || p.source_document_id!==source.id || p.method!==PDF_TEXT_METHOD)) throw Error('Stored page provenance or continuation conflicts.');
+  if (segmentEntity && (old.storage_mode || prior.length>=PDF_TEXT_PAGE_BATCH)) return extractSegmentedSourceText({
+    entity,segmentEntity,source,readAndExtract,canAutomaticallyExtract,automatic,token,now,writeReceipt});
+  if (old.storage_mode) throw Error('Segment storage is required to continue this source.');
   const startPage=prior.length+1;
   const claimed={...old,status:'running',method:PDF_TEXT_METHOD,source_sha256:source.file_hash_sha256,archived_file_url:source.archived_file_url,
     claim_token:token,lease_expires_at:new Date(now()+90_000).toISOString(),last_attempt_at:new Date(now()).toISOString(),
