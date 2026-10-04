@@ -3,7 +3,7 @@ import PermittingRuleEvidenceExtraction from "./PermittingRuleEvidenceExtraction
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,6 @@ import {
   FileText,
   Clock,
   ShieldCheck,
-  RefreshCw,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -86,7 +85,7 @@ const CONFLICT_STATES = [
   { value: "under_review", label: "Under Review" },
 ];
 
-export default function PermittingRulesReview({ sessionToken }) {
+export default function PermittingRulesReview() {
   const [rules, setRules] = useState([]);
   const [counts, setCounts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -132,8 +131,8 @@ export default function PermittingRulesReview({ sessionToken }) {
       });
       const data = res?.data || res;
       if (data?.success) setCounts(data);
-    } catch (e) {
-      // silent
+    } catch {
+      // Counts can be retried independently of the rule list.
     }
   }, [filters.jurisdiction_name]);
 
@@ -193,6 +192,7 @@ export default function PermittingRulesReview({ sessionToken }) {
       if (!data?.success) throw new Error(data?.error || "Edit failed");
       setRules((prev) => prev.map((r) => r.id === editDialog.rule.id ? data.rule : r));
       setEditDialog(null);
+      loadCounts();
     } catch (e) {
       setError(e?.response?.data?.error || e.message || String(e));
     } finally {
