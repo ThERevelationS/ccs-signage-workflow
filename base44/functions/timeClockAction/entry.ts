@@ -3863,7 +3863,7 @@ Deno.serve(async (req) => {
           } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
-        const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), ...(snapshotVersion >= 17 ? { generation_audit_reconciliation: generationAuditReconciliation } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
+        const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), ...(snapshotVersion >= 17 ? { generation_audit_reconciliation: generationAuditReconciliation } : {}), ...(snapshotVersion >= 21 ? { generation_membership_discovery: generationMembershipDiscovery } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
