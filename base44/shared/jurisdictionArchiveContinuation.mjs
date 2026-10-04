@@ -181,9 +181,11 @@ export async function continueJurisdictionArchiveBacklog(options) {
   const candidates = await options.entity.filter(archiveBacklogQuery(), 'updated_date', 20, 0);
   for (const profile of candidates) {
     try {
-      const result = await archiveKnownJurisdictionSource({ ...options, jurisdictionId: profile.id, manual: false });
+      // Register the oldest verified archive separately, so new downloads cannot
+      // starve archives collected before catalog integration was enabled.
+      const result = await archiveKnownJurisdictionSource({ ...options, catalogEntity: undefined, jurisdictionId: profile.id, manual: false });
       if (!result.skipped) {
-        if (options.catalogEntity && !result.catalog) result.catalog = await continueJurisdictionCatalogBacklog(options);
+        if (options.catalogEntity) result.catalog = await continueJurisdictionCatalogBacklog(options);
         return result;
       }
     } catch (error) {
