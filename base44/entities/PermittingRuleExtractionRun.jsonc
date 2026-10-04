@@ -1,0 +1,125 @@
+{
+  "name": "PermittingRuleExtractionRun",
+  "type": "object",
+  "description": "Durable manual selected-page extraction receipt. Staged literal candidates remain non-operational until imported individually and staff reviewed. No automatic LLM retry.",
+  "properties": {
+    "request_key": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "source_document_id": {
+      "type": "string"
+    },
+    "jurisdiction_id": {
+      "type": "string"
+    },
+    "start_page": {
+      "type": "integer"
+    },
+    "page_count": {
+      "type": "integer"
+    },
+    "method": {
+      "type": "string"
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "snapshot_sha256": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "reserved",
+        "llm_started",
+        "complete",
+        "failed",
+        "llm_uncertain"
+      ]
+    },
+    "claim_token": {
+      "type": "string"
+    },
+    "lease_expires_at": {
+      "type": "string"
+    },
+    "llm_attempts": {
+      "type": "integer"
+    },
+    "llm_started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "error": {
+      "type": "string"
+    },
+    "candidates": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "candidates_sha256": {
+      "type": "string"
+    },
+    "rejected": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "import_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "import_receipts": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "requested_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_key",
+    "request_id",
+    "source_document_id",
+    "jurisdiction_id",
+    "start_page",
+    "page_count",
+    "method",
+    "snapshot",
+    "snapshot_sha256",
+    "status",
+    "claim_token",
+    "llm_attempts"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": false
+  }
+}
