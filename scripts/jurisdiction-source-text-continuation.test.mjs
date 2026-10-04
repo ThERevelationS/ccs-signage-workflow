@@ -90,3 +90,18 @@ test('reviewed edits to previously extracted text are preserved across continuat
  assert.equal((await extractKnownSourceText({...f.api,automatic:false})).skipped,true);assert.equal(f.calls.parses,1);
  assert.notEqual(f.record().extracted_text,assembledSourceText(f.record(),f.record().extracted_pages));
 });
+
+test('automatic guard skips protected profiles and checks exact retained archive/catalog identity',async()=>{
+ const {automaticSourceTextGuard}=await import('../base44/shared/jurisdictionSourceTextContinuation.mjs');
+ const row={...source,jurisdiction_profile_doc_id:'d'};
+ const doc={id:'d',source:'ai_discovered',file_url:source.archived_file_url,source_sha256:hash,stored_sha256:hash,source_bytes:500,stored_bytes:500,archive_state:{status:'complete'},catalog_state:{status:'complete',source_document_id:'s'}};
+ let profile={id:'j',documents:[doc]};
+ const guard=automaticSourceTextGuard({get:async()=>profile});assert.equal(await guard(row),true);
+ for(const patch of [{auto_refresh:false},{_manual_documents:true},{documents:[{...doc,pinned:true}]},{documents:[{...doc,stored_sha256:'wrong'}]},{documents:[{...doc,catalog_state:{status:'complete',source_document_id:'other'}}]}]){
+  profile={id:'j',documents:[doc],...patch};assert.equal(await guard(row),false);
+ }
+});
+test('profile opt-out before or during parse prevents automatic text attachment',async()=>{
+ const f=fixture();assert.equal((await extractKnownSourceText({...f.api,canAutomaticallyExtract:async()=>false})).skipped,true);assert.equal(f.calls.parses,0);
+ let checks=0;const g=fixture();const r=await extractKnownSourceText({...g.api,canAutomaticallyExtract:async()=>++checks===1});assert.equal(r.status,'failed');assert.equal(g.record().extracted_text,undefined);
+});
