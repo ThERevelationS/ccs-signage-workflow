@@ -1,17 +1,4 @@
 {
   "name": "permittingResearchBacklogDispatch",
-  "entry": "entry.ts",
-  "automations": [
-    {
-      "name": "Permitting research backlog refill",
-      "type": "scheduled",
-      "schedule_mode": "recurring",
-      "schedule_type": "simple",
-      "repeat_unit": "minutes",
-      "repeat_interval": 15,
-      "ends_type": "never",
-      "description": "Cost-controlled permitting research backlog refill. Runtime settings can slow or pause dispatch without redeploying.",
-      "is_active": true
-    }
-  ]
+  "entry": "entry.ts"
 }
