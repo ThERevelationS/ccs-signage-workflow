@@ -2433,6 +2433,11 @@ Deno.serve(async (req) => {
           chainCore.supersedes_generation_request_id = String(summary.supersedes_generation_request_id || '');
           chainCore.authorized_by_reopen_request_id = String(summary.authorized_by_reopen_request_id || '');
         }
+        if (Number(summary.snapshot_version || 0) >= 9) {
+          chainCore.generation_changes_hash = String(summary.generation_changes_hash || '');
+          chainCore.generation_change_count = Number(summary.generation_change_count || 0);
+          chainCore.generation_reopen_reason = String(summary.generation_reopen_reason || '');
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
@@ -2502,6 +2507,13 @@ Deno.serve(async (req) => {
             return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} replacement lineage does not match generation ${index} and its authorized reopen.`, pay_period_id: period.id, generations: [] });
           }
         }
+        if (Number(summary.snapshot_version || 0) >= 9) {
+          const changes = Array.isArray(summary.generation_changes) ? summary.generation_changes : null;
+          const predecessor = index > 0 ? history[index - 1] : null;
+          if (!changes || Number(summary.generation_change_count || 0) !== changes.length ||
+              !constantTimeEqual(String(summary.generation_changes_hash || ''), await payloadHash(changes)) ||
+              String(summary.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} change provenance failed verification.`, pay_period_id: period.id, generations: [] });
+        }
         generations.push({
           generation: index + 1, state: 'retired', snapshot_version: Number(summary.snapshot_version || 0), finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
@@ -2512,6 +2524,8 @@ Deno.serve(async (req) => {
           shift_evidence_verified: retiredEvidenceVerified, shift_evidence_hash: summary.shift_manifest_hash || '', shifts: retiredShifts,
           employee_reconciliation: retiredReconciliation,
           ...(Number(summary.snapshot_version || 0) >= 7 ? { approving_managers: summary.approving_managers || [], finalizer_approval_overlap: summary.finalizer_approval_overlap === true } : {}),
+          ...(Number(summary.snapshot_version || 0) >= 8 ? { supersedes_generation_request_id: summary.supersedes_generation_request_id || '', authorized_by_reopen_request_id: summary.authorized_by_reopen_request_id || '' } : {}),
+          ...(Number(summary.snapshot_version || 0) >= 9 ? { generation_changes: summary.generation_changes || [], generation_change_count: Number(summary.generation_change_count || 0), generation_reopen_reason: summary.generation_reopen_reason || '' } : {}),
         });
       }
       const current = period.finalized_summary;
