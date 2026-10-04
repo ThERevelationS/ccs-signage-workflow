@@ -174,6 +174,8 @@ test("live mechanic estimate authorization fails closed after permission or equi
   };
   assert.deepEqual(mechanicGrantAllowsMutation(grant,"estimate_save","eq-1",1000),{allowed:true,reason:""});
   assert.deepEqual(mechanicGrantAllowsMutation(grant,"estimate_submit","eq-1",1000),{allowed:true,reason:""});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,enabled:false},"estimate_save","eq-1",1000),{allowed:false,reason:"revoked"});
+  assert.deepEqual(mechanicGrantAllowsMutation({...grant,expires_at:"1970-01-01T00:00:00.500Z"},"estimate_submit","eq-1",1000),{allowed:false,reason:"expired"});
   assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_actions:["bootstrap","start","save"]},"estimate_save","eq-1",1000),{allowed:false,reason:"action_not_allowed"});
   assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_actions:["bootstrap","start","save"]},"estimate_submit","eq-1",1000),{allowed:false,reason:"action_not_allowed"});
   assert.deepEqual(mechanicGrantAllowsMutation({...grant,allowed_equipment_ids:["eq-2"]},"estimate_save","eq-1",1000),{allowed:false,reason:"outside_scope"});
