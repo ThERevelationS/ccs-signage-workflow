@@ -50,23 +50,30 @@ Deno.serve(async (req) => {
     let body: any = {};
     try { body = await req.json(); } catch {}
     const isScheduledRun = await hasWorkflowInvocationCapability(body, 'refreshJurisdiction');
+    const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const id = jurisdiction_id || jurisdictionId;
 
     let user: any = null;
-    if (!isScheduledRun) {
+    if (!isScheduledRun && !isTargetedAutomation) {
       user = await base44.auth.me().catch(() => null);
       if (!user) return Response.json({ error: 'Authentication required' }, { status: 401 });
       if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // A caller-selected jurisdiction or caller-selected refresh settings are a
-    // manual mutation request. Workflow calls never supply either field.
+    // A selected jurisdiction is permitted for an authenticated admin or the
+    // narrowly scoped targeted-refresh capability used by the credit-controlled
+    // permitting dispatcher. The weekly batch capability remains unable to
+    // select arbitrary jurisdiction ids.
     if (id || settings) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
-      if (!id) return Response.json({ error: 'Jurisdiction id is required for a manual refresh' }, { status: 400 });
+      if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
       const result = await refreshJurisdictionRecord(base44, id, settings);
       return Response.json(result);
+    }
+
+    if (isTargetedAutomation) {
+      return Response.json({ error: 'Targeted refresh requires a jurisdiction id' }, { status: 400 });
     }
 
     // Scheduled/batch mode: verified workflow capability or authenticated admin.
