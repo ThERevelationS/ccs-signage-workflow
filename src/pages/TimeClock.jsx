@@ -714,10 +714,13 @@ export default function TimeClock() {
                             ) : entry.status === "needs_resolution" ? (
                               <Badge className="bg-amber-100 text-amber-800">Missed punch · review pending</Badge>
                             ) : (
-                              <div>
+                              <div className="flex flex-col items-end gap-1">
                                 <p className="text-lg font-bold text-purple-600">{entryHours.toFixed(2)} hrs</p>
                                 {!isSalaryEmployee && entryOT > 0 && (
                                   <p className="text-xs text-amber-600 font-medium">({entryOT.toFixed(2)} OT)</p>
+                                )}
+                                {entry.approval_status === "needs_review" && (
+                                  <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">Shift Needs Review</Badge>
                                 )}
                               </div>
                             )}
@@ -843,6 +846,8 @@ export default function TimeClock() {
                             </div>
                             {entry.status === "needs_resolution" ? (
                               <span className="text-xs font-medium text-amber-700">Manager review required before this prior shift is complete</span>
+                            ) : entry.approval_status === "needs_review" && correctionRequest && ["approved", "approved_modified"].includes(correctionRequest.status) ? (
+                              <span className="text-xs font-medium text-amber-700">Correction applied · separate manager shift approval still required</span>
                             ) : entry.pay_period_id ? (
                               <span className="text-xs text-slate-600 flex items-center gap-1"><LockKeyhole className="w-3 h-3" />Finalized period — contact a manager to reopen before requesting a correction</span>
                             ) : !correctionRequest || ["approved", "approved_modified", "rejected", "cancelled"].includes(correctionRequest.status) ? (
