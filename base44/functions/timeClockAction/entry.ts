@@ -2721,6 +2721,7 @@ Deno.serve(async (req) => {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
             if (Number(summary.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} ordered causal chain failed verification.`, pay_period_id: period.id, generations: [] });
+            if (Number(summary.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal chain is incomplete against authoritative audit history.`, pay_period_id: period.id, generations: [] });
           }
         }
         generations.push({
@@ -2773,6 +2774,7 @@ Deno.serve(async (req) => {
             if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
             if (Number(current.snapshot_version || 0) >= 15 && !await verifyCausalChain(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll ordered causal chain failed verification.', pay_period_id: period.id, generations: [] });
+            if (Number(current.snapshot_version || 0) >= 16 && !await verifyCausalChainCompleteness(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll causal chain is incomplete against authoritative audit history.', pay_period_id: period.id, generations: [] });
           }
         }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });
