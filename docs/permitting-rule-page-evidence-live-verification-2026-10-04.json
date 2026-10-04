@@ -90,8 +90,8 @@
     ]
   },
   "release_validation": {
-    "targeted_tests": 197,
-    "passed": 197,
+    "targeted_tests": 198,
+    "passed": 198,
     "backend_bundles": [
       "permittingRuleExtraction",
       "permittingRuleReview",
