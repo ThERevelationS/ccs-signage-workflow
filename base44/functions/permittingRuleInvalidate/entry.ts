@@ -21,7 +21,12 @@ Deno.serve(async req => {
       lastId=rule.id;checked++;
       const changed=(rule.citations || []).filter(c=>c.source_document_id===id)
         .some(c=>(c.source_sha256 || rule.source_snapshot_sha256 || '')!==source.file_hash_sha256);
-      const needsReview=changed || !reviewedAdoptedSource(source);
+      const approvedSnapshot=rule.evidence_context?.approved_sources?.find(s=>s.id===id)?.snapshot;
+      const scopeChanged=rule.evidence_validation==='literal-page-v1' && (
+        rule.jurisdiction_id!==source.jurisdiction_id || rule.jurisdiction_name!==source.jurisdiction_name ||
+        !evidenceEqual(rule.evidence_context?.jurisdiction_scope,source.jurisdiction_scope || null));
+      const needsReview=changed || scopeChanged || !reviewedAdoptedSource(source) ||
+        (approvedSnapshot && !evidenceEqual(approvedSnapshot,sourceAuthoritySnapshot(source)));
       if (!needsReview || (rule.conflict_state==='under_review' && !rule.is_operational && rule.status!=='staff_approved')) continue;
       const current=await entities.PermittingSourceDocument.get(id);
       if (!evidenceEqual(sourceAuthoritySnapshot(current),sourceAuthoritySnapshot(source)))
