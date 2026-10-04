@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
-import {PDF_TEXT_METHOD} from '../base44/shared/jurisdictionSourcePdfText.mjs';
+import {PDF_TEXT_METHOD,assembledSourceText,textSha256} from '../base44/shared/jurisdictionSourcePdfText.mjs';
 const built=await build({entryPoints:['base44/functions/continuePermittingSourceText/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',plugins:[{name:'boundaries',setup(b){
  b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
  b.onResolve({filter:/jurisdictionSourceTextRuntime\.ts$/},()=>({path:'parser',namespace:'mock'}));
@@ -22,6 +22,26 @@ function setup({role='admin',enabled=true}={}) {
  },integrations:{Core:{InvokeLLM:async()=>{calls.research++;throw Error('Unexpected LLM');}}}}};
  return calls;
 }
+test('compiled manual worker persists subsequent pages into segment evidence while automation is paused',async()=>{
+ const c=setup({enabled:false});const makePage=async n=>{const text='Retained evidence page '+n;return{
+  page:n,text,source_document_id:'s',source_sha256:hash,text_sha256:await textSha256(new TextEncoder().encode(text)),
+  method:PDF_TEXT_METHOD,truncated:false,needs_ocr_review:false};};
+ const inline=await Promise.all([1,2,3,4,5].map(makePage));let version=1;
+ let row={id:'s',source_registration_key:'key',archived_file_url:'https://storage.test/a.pdf',file_hash_sha256:hash,file_bytes:500,
+  updated_date:'v1',extracted_pages:inline,text_extraction_state:{status:'partial',method:PDF_TEXT_METHOD,source_sha256:hash,
+  archived_file_url:'https://storage.test/a.pdf',pages_extracted:5,next_page:6,total_pages:10,complete_document_text:false}};
+ row.extracted_text=assembledSourceText(row,inline);const preview=row.extracted_text,segments=[];
+ globalThis.textFixture.asServiceRole.entities.PermittingSourceDocument={get:async()=>structuredClone(row),updateMany:async(q,p)=>{
+  if(q.updated_date!==row.updated_date)return{updated:0};row={...row,...p.$set,updated_date:'v'+(++version)};return{updated:1};}};
+ globalThis.textFixture.asServiceRole.entities.PermittingSourceTextSegment={
+  filter:async q=>structuredClone(segments.filter(s=>s.registration_key===q.registration_key)),
+  create:async data=>{const saved={...data,id:'segment'};segments.push(saved);return saved;}};
+ globalThis.textParser=async({startPage})=>{c.parses++;assert.equal(startPage,6);return{total_pages:10,next_page:11,pages:await Promise.all([6,7,8,9,10].map(makePage))};};
+ const r=await invoke({source_document_id:'s'});assert.equal(r.data.status,'complete');assert.equal(segments.length,1);
+ assert.equal(row.extracted_text,preview);assert.equal(row.extracted_pages.length,5);assert.equal(row.text_extraction_state.pages_extracted,10);
+ assert.equal(c.research,0);assert.equal((await invoke({source_document_id:'s'})).data.skipped,true);assert.equal(c.parses,1);
+});
+
 const invoke=async body=>{const r=await handler(new Request('https://test',{method:'POST',body:JSON.stringify(body)}));return{status:r.status,data:await r.json()};};
 test('text worker rejects nonadmin callers before any scan or parsing',async()=>{
  for(const role of [null,'user']){const c=setup({role});assert.equal((await invoke({source_document_id:'s'})).status,403);assert.equal(c.parses,0);assert.equal(c.scans,0);}
