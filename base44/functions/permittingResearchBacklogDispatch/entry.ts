@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
         const { readAndExtractSourcePdf } = await import('../../shared/jurisdictionSourceTextRuntime.ts');
         textContinuation = await continueSourceTextBacklog({
           entity: base44.asServiceRole.entities.PermittingSourceDocument,
+          segmentEntity: base44.asServiceRole.entities.PermittingSourceTextSegment,
           readAndExtract: readAndExtractSourcePdf, canAutomaticallyExtract: automaticSourceTextGuard(Profiles),
         });
       } catch (error) {
