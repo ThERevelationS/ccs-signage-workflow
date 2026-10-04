@@ -83,7 +83,10 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
    if(!evidenceEqual(sourceIdentity(source),audit.source_identity))throw evidenceError('Applied review archive identity changed.');
    return {success:true,status:'applied',replayed:true,review:source.authority_review,receipt:source.authority_review_state,llm_calls:0};
   }
-  if(oldState.request_key===key && oldState.payload_sha256!==payloadDigest)throw evidenceError('Saved source review belongs to a different decision.');
+  if(oldState.request_key===key && (oldState.payload_sha256!==payloadDigest ||
+     (oldState.requested_by && oldState.requested_by!==actor)))throw evidenceError('Saved source review belongs to a different decision or reviewer.');
+  if(!audit && oldState.request_key===key && ['creating','uncertain'].includes(oldState.status))
+    return{success:false,status:'review_uncertain',llm_calls:0,error:'No prior audit is visible; the uncertain create was not repeated.'};
   if(!audit && oldState.request_key!==key && (!expectedUpdatedDate || source.updated_date!==expectedUpdatedDate))throw evidenceError('Source changed; preview current evidence before reviewing.');
   if(['creating','uncertain'].includes(oldState.status) && oldState.request_key!==key)throw evidenceError('Reconcile the prior uncertain source review before another decision.');
  }
@@ -104,13 +107,9 @@ export async function reviewSourceAuthority({sourceEntity,profileEntity,segmentE
   audit={request_key:key,source_document_id:source.id,source_identity:sourceIdentity(source),profile:profileIdentity(profile),
    payload_sha256:payloadDigest,before_fields:metadata(source),next_fields:nextFields,action,requested_by:actor,requested_at:new Date(now()).toISOString()};
  }
- const creating={request_key:key,payload_sha256:payloadDigest,status:'creating'};
+ const creating={request_key:key,payload_sha256:payloadDigest,status:'creating',requested_by:actor,operation_id:crypto.randomUUID()};
  source=await write(sourceEntity,source,{authority_review_state:creating},{...audit.source_identity,authority_review_state:oldRaw});
  if(!audit.id){
-  if(oldState.request_key===key && ['creating','uncertain'].includes(oldState.status)){
-   await write(sourceEntity,source,{authority_review_state:{...creating,status:'uncertain'}},{...audit.source_identity,authority_review_state:creating});
-   return{success:false,status:'review_uncertain',llm_calls:0,error:'No prior audit is visible; the uncertain create was not repeated.'};
-  }
   try{await auditEntity.create(audit);}catch{/* Exact readback only; never repeat an uncertain audit create. */}
   const found=await auditEntity.filter({request_key:key},'created_date',2,0);
   if(found.length>1)throw evidenceError('Review audit identity became ambiguous.');
