@@ -1,3 +1,4 @@
+import { registerJurisdictionArchive, continueJurisdictionCatalogBacklog } from './jurisdictionArchiveCatalog.mjs';
 import { isDownloadableResearchDocument } from './jurisdictionPermittingLinkDiscovery.mjs';
 import { jurisdictionDocumentSourceKey } from './jurisdictionResearchDocumentMerge.mjs';
 import { RESEARCH_FETCH_TIMEOUT_MS, RESEARCH_UPLOAD_TIMEOUT_MS, withResearchArchiveTimeout } from './jurisdictionResearchArchiveBudget.mjs';
@@ -102,7 +103,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, catalogEntity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
   const initial = await entity.get(jurisdictionId);
   if (!initial?.id) throw new Error('Jurisdiction not found.');
   if (!manual && initial.auto_refresh === false) return { success: true, skipped: true, reason: 'auto_refresh_disabled', jurisdiction: initial };
@@ -159,7 +160,11 @@ export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, d
       file_url: state.file_url, source_sha256: state.source_sha256, source_bytes: state.source_bytes,
       stored_sha256: storedSha, stored_bytes: stored.length, downloaded_at: state.uploaded_at,
     });
-    return { success: true, archived: 1, uploads, status: 'complete', document_url: doc.url, jurisdiction };
+    const catalog = catalogEntity ? await registerJurisdictionArchive({ entity, catalogEntity, jurisdictionId, documentId: doc.id, automatic: !manual })
+      .catch(error => ({ success: false, status: 'registration_conflict', error: String(error.message || error) })) : null;
+    // Catalog failure cannot reverse a verified archive or trigger re-upload.
+    return { success: true, archived: 1, uploads, status: 'complete', document_url: doc.url, catalog,
+      jurisdiction: catalogEntity ? await entity.get(jurisdictionId).catch(() => jurisdiction) : jurisdiction };
   } catch (error) {
     const status = stage === 'upload' ? 'upload_uncertain' : stage === 'verify' ? (state.verification_attempts >= AUTOMATIC_ARCHIVE_RETRY_LIMIT ? 'verification_blocked' : 'uploaded') : attempts >= AUTOMATIC_ARCHIVE_RETRY_LIMIT ? 'blocked' : 'failed';
     const failed = { ...state, status, lease_expires_at: '', error: String(error?.message || error).slice(0, 500),
@@ -177,10 +182,14 @@ export async function continueJurisdictionArchiveBacklog(options) {
   for (const profile of candidates) {
     try {
       const result = await archiveKnownJurisdictionSource({ ...options, jurisdictionId: profile.id, manual: false });
-      if (!result.skipped) return result;
+      if (!result.skipped) {
+        if (options.catalogEntity && !result.catalog) result.catalog = await continueJurisdictionCatalogBacklog(options);
+        return result;
+      }
     } catch (error) {
       return { success: false, status: 'claim_conflict', error: String(error?.message || error) };
     }
   }
-  return { success: true, skipped: true, reason: 'no_eligible_file', profiles_checked: candidates.length };
+  return { success: true, skipped: true, reason: 'no_eligible_file', profiles_checked: candidates.length,
+    catalog: options.catalogEntity ? await continueJurisdictionCatalogBacklog(options) : null };
 }
