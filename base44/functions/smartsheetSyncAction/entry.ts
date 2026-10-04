@@ -1405,8 +1405,11 @@ async function pushDataset(
             requiresRemoteWrite: fieldPlan.outgoing.length > 0,
           });
         }
-        if (fieldPlan.decisions?.length) deferredConflictDecisions.push(...fieldPlan.decisions);
-        deferredConflictRecordIds.push(record.id);
+        if (fieldPlan.decisions?.length) {
+          if (dataset === 'orders') deferredOrderConflictDecisions.set(String(record.id), [...fieldPlan.decisions]);
+          else deferredConflictDecisions.push(...fieldPlan.decisions);
+        }
+        if (dataset !== 'orders') deferredConflictRecordIds.push(record.id);
         continue;
       } else if (dataset === 'orders') {
         // Reserve the permanent Order before POST; never automatically retry an
