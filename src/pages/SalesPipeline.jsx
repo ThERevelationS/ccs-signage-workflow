@@ -13,6 +13,7 @@ import BulkDuplicateCleanup from "@/components/sales/BulkDuplicateCleanup";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 import { SALES_PRIMARY_ATTENTION, salesAttentionOption, salesMoreAttentionSelected, salesAttentionCount, visibleSalesMoreAttentionGroups } from "@/components/sales/salesAttentionMenu.mjs";
 import { loadSalesPipelinePreferencesSafely, saveSalesPipelinePreferencesSafely } from "@/components/sales/salesFilterPersistence";
+import { resolveRestoredSalesFilterModes } from "@/components/sales/salesFilterPreferenceRestore.mjs";
 
 const EMPTY_PIPELINE_SUMMARY = {
   openCount: 0,
@@ -180,11 +181,11 @@ export default function SalesPipeline() {
     // previous Attention value behind. Therefore, a legacy record where both
     // validated modes are active means the Information choice is newer and the
     // Attention value is stale.
-    const hasLegacyFilterConflict = restoredInformation !== "all" && restoredAttention !== "all";
-    const normalizedAttention = hasLegacyFilterConflict ? "all" : restoredAttention;
+    const restoredModes = resolveRestoredSalesFilterModes(restoredInformation, restoredAttention);
+    const hasLegacyFilterConflict = restoredModes.hadConflict;
 
-    setFilterStatus(restoredInformation);
-    setAttentionFilter(normalizedAttention);
+    setFilterStatus(restoredModes.informationFilter);
+    setAttentionFilter(restoredModes.attentionFilter);
     setActiveColumnPreset(restoredColumn);
 
     if (hasLegacyFilterConflict) {
@@ -196,8 +197,8 @@ export default function SalesPipeline() {
         column_preset_id: savedColumnId,
       };
       const repairedPreferences = {
-        information_filter: restoredInformation,
-        attention_filter: normalizedAttention,
+        information_filter: restoredModes.informationFilter,
+        attention_filter: restoredModes.attentionFilter,
         column_preset_id: savedColumnId,
       };
       preferenceSaveChainRef.current = preferenceSaveChainRef.current
