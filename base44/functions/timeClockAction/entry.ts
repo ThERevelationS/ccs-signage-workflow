@@ -2872,6 +2872,7 @@ Deno.serve(async (req) => {
           ...(Number(current.snapshot_version || 0) >= 7 ? { approving_managers: current.approving_managers || [], finalizer_approval_overlap: current.finalizer_approval_overlap === true } : {}),
           ...(Number(current.snapshot_version || 0) >= 8 ? { supersedes_generation_request_id: current.supersedes_generation_request_id || '', authorized_by_reopen_request_id: current.authorized_by_reopen_request_id || '' } : {}),
           ...(Number(current.snapshot_version || 0) >= 9 ? { generation_changes: current.generation_changes || [], generation_change_count: Number(current.generation_change_count || 0), generation_reopen_reason: current.generation_reopen_reason || '' } : {}),
+          ...(Number(current.snapshot_version || 0) >= 17 ? { generation_audit_reconciliation: current.generation_audit_reconciliation || [], generation_audit_reconciliation_count: Number(current.generation_audit_reconciliation_count || 0) } : {}),
         });
       }
       return Response.json({
