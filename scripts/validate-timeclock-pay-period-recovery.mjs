@@ -1607,6 +1607,14 @@ test('late-day missed Clock In recovery reconstructs one auditable Needs Review 
   assert.equal(punchCase.employee_response, 'missed_clock_in');
   assert.equal(punchCase.claimed_clock_in, entry.clock_in);
 
+  const restoredActive = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(restoredActive.status, 200, JSON.stringify(restoredActive.body));
+  assert.equal(restoredActive.body.status, 'clocked_in');
+  assert.equal(restoredActive.body.entry.id, entry.id);
+  assert.equal(restoredActive.body.entry.clock_source, 'employee_attested_missed_clock_in');
+  assert.equal(restoredActive.body.entry.approval_status, 'needs_review');
+  assert.equal(h.rows.TimeClockPunchException[0].status, 'pending_manager_review');
+
   const clockInAudits = h.rows.TimeClockAudit.filter((row) =>
     row.action === 'clock_in' && row.request_id === payload.request_id
   );
