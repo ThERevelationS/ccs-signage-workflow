@@ -806,6 +806,7 @@ export default function TimeClockAdmin() {
         correctionRequests={correctionRequests}
         onReviewEntry={setDetailEntry}
         onReviewCorrection={(request) => setCorrectionReviewRequestId(request?.id || "")}
+        onApproveEntry={(entry) => openApprovalDialog(entry, "approve")}
       />
 
       <div className="clay-card p-4">
