@@ -9,7 +9,8 @@ const hasExisting = row => Boolean(row.extracted_text || row.extracted_pages?.le
 export function sourceTextEligible(row, {automatic = true, now = Date.now()} = {}) {
   if (!row?.id || !row.archived_file_url || !/^[a-f0-9]{64}$/.test(row.file_hash_sha256 || '') || !(row.file_bytes > 0) || row.text_extraction_pinned) return false;
   if (automatic && !row.source_registration_key) return false; // legacy/manual evidence is opt-in only
-  if (hasExisting(row) && !owned(row)) return false;
+  if (hasExisting(row) && (!owned(row) || row.extracted_text !== assembledSourceText(row,row.extracted_pages || []) ||
+      row.text_extraction_state.pages_extracted !== (row.extracted_pages || []).length)) return false;
   const state = row.text_extraction_state || {};
   if (state.source_sha256 && !owned(row)) return false; // source replacement requires review, not overwrite
   if (['complete','needs_ocr','partial_limit'].includes(state.status)) return false;
