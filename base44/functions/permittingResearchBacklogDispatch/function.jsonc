@@ -1,0 +1,21 @@
+{
+  "name": "permittingResearchBacklogDispatch",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "name": "Permitting research backlog refill",
+      "type": "scheduled",
+      "schedule_mode": "recurring",
+      "schedule_type": "simple",
+      "repeat_unit": "minutes",
+      "repeat_interval": 5,
+      "ends_type": "never",
+      "description": "Continuously refill the OH/KY permitting research queue without a fixed total-job limit.",
+      "is_active": true,
+      "function_args": {
+        "in_flight_target": 250,
+        "max_dispatch_per_run": 50
+      }
+    }
+  ]
+}

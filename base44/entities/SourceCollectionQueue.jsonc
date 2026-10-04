@@ -81,6 +81,28 @@
       "type": "string",
       "format": "date-time",
       "description": "When the queue row was last updated."
+    },
+    "research_request_id": {
+      "type": "string",
+      "description": "Permitting Research app ResearchRequest id currently associated with this queue row."
+    },
+    "research_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current research request was successfully created."
+    },
+    "research_dispatch_version": {
+      "type": "string",
+      "description": "Dispatcher contract version used to enqueue this row."
+    },
+    "research_dispatch_token": {
+      "type": "string",
+      "description": "Short-lived reservation token used to prevent concurrent dispatchers from enqueueing the same queue row."
+    },
+    "research_dispatch_attempts": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of automated attempts to hand this queue row to the Permitting Research app."
     }
   },
   "required": [
