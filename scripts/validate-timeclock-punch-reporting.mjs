@@ -115,4 +115,10 @@ const emptyMarkup = renderToStaticMarkup(React.createElement(PunchReport, {
 assert.match(emptyMarkup, /0 need review/);
 assert.match(emptyMarkup, /No punch exception reports have been recorded/);
 console.log('PASS empty punch report renders a clear no-record state');
-console.log('PASS 2/2 Time Clock punch exception reporting scenarios');
+
+const adminSource = readFileSync(new URL('../src/components/timeclock/TimeClockAdmin.jsx', import.meta.url), 'utf8');
+assert.match(adminSource, /<TimeClockPunchExceptionReport[\s\S]*correctionRequests=\{correctionRequests\}[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}/);
+assert.match(adminSource, /<TimeClockExceptionCenter[\s\S]*onReviewCorrection=\{\(request\) => setCorrectionReviewRequestId\(request\?\.id \|\| ""\)\}/);
+assert.match(adminSource, /<CorrectionRequestAdminPanel[\s\S]*reviewRequestId=\{correctionReviewRequestId\}/);
+console.log('PASS Needs Attention and Punch Reports converge on the same correction-review dialog route');
+console.log('PASS 3/3 Time Clock punch exception reporting scenarios');
