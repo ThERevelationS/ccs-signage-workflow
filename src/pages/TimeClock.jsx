@@ -142,6 +142,26 @@ function loginStatusNotice(status) {
       message: `The server found ${countText} still awaiting manager review. ${currentState} Your reported prior time remains preserved and auditable until the review is completed.`,
     };
   }
+  if (report.kind === "pending_shift_review") {
+    const countText = report.count === 1 ? "one corrected shift" : `${report.count} corrected shifts`;
+    const currentState = report.status === "clocked_in"
+      ? "Your current shift is still Clocked In and is separate from that review."
+      : report.status === "clocked_out"
+        ? "You are currently Clocked Out."
+        : "Your current Time Clock state is being restored separately.";
+    if (report.hasIntegrityIssue) {
+      return {
+        tone: "warning",
+        title: "Corrected shift needs manager investigation",
+        message: `The punch correction itself is no longer pending, but ${countText} cannot be tied cleanly to its final approval evidence. ${currentState} A manager must investigate before payroll finalization.`,
+      };
+    }
+    return {
+      tone: "warning",
+      title: "Punch correction applied — shift still needs approval",
+      message: `The missed-punch correction is complete, but ${countText} still needs the separate manager shift-approval step before pay-period finalization. ${currentState}`,
+    };
+  }
   if (report.kind === "transition") {
     return {
       tone: "warning",
