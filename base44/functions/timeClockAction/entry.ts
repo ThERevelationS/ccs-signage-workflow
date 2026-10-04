@@ -2769,6 +2769,7 @@ Deno.serve(async (req) => {
           ...(Array.isArray(predecessor?.shift_manifest) ? predecessor.shift_manifest.map((row: any) => String(row.id || '')) : []),
           ...(Array.isArray(summary.shift_manifest) ? summary.shift_manifest.map((row: any) => String(row.id || '')) : []),
         ].filter(Boolean));
+        const expectedMembershipDiscovery = [];
         if (Number(summary.snapshot_version || 0) >= 18) {
           const windowAudits = await auditEntity.filter({ server_timestamp: { $gte: windowStart, $lte: windowEnd } });
           if (!Array.isArray(windowAudits)) return false;
