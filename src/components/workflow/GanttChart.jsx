@@ -60,11 +60,13 @@ export default function GanttChart({ workOrders, onWorkOrderClick }) {
                   >
                     <div className="flex items-center gap-1">
                       <div className="font-medium text-xs text-gray-800 truncate leading-tight flex-1">
-                        {wo.title}
+                        {wo.client_name}
                       </div>
                       <ProjectHealthBadge workOrder={wo} size="sm" showTooltip={false} />
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.client_name}</div>
+                    {wo.description && (
+                      <div className="text-[10px] text-gray-500 truncate leading-tight">{wo.description}</div>
+                    )}
                   </div>
                 </div>
                 <div className="flex-1 relative" style={{ height: `${Math.max(1, segments.length) * 20}px` }}>

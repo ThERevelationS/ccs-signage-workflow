@@ -58,9 +58,14 @@ export default function MainWorkflow() {
         label: "Main Workflow Work Orders",
       });
       // Only active jobs belong on the Main Workflow board — exclude anything
-      // completed, closed (completed stage), lost, or soft-deleted.
+      // completed, closed (completed stage), lost, or soft-deleted. Also exclude
+      // jobs whose current task places them out of active production: prospect
+      // initiation, completed sale, lost (including "Lost - We took too long"),
+      // and closed sections ("Closed - ...").
+      const EXCLUDED_TASK_PATTERN = /^Prospect Initiation|^Completed Sale|^Lost$|^Lost -|^Closed -/i;
       const activeOrders = allWorkOrders.filter(
         wo => !wo.completed && !wo.deleted && wo.current_stage !== "completed" && wo.sales_status !== "lost"
+          && !EXCLUDED_TASK_PATTERN.test(wo.current_task_description || "")
       );
 
       // Separate parent work orders and riders. A work order is a rider if its
