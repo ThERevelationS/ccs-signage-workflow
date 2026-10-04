@@ -3,6 +3,7 @@
 // Integrates with the existing authority gate — calls it, never duplicates it.
 
 import { classifyRewriteSourceAuthority } from "./jurisdictionResearchAuthorityGate.mjs";
+import { reviewedAdoptedSource } from "./permittingRuleEvidence.mjs";
 
 // ── Sign type normalization taxonomy ──
 // Source terminology is preserved verbatim in sign_type; sign_type_normalized
@@ -118,7 +119,8 @@ export function normalizeSignType(sourceTerm: string | null | undefined): string
 const DRAFT_CLASSIFICATIONS = new Set(["draft_proposed", "comprehensive_rewrite"]);
 const HISTORICAL_CONTENT = new Set(["historical", "superseded"]);
 
-export function isDraftSource(doc: { authority_classification?: string; extracted_text?: string } = {}): boolean {
+export function isDraftSource(doc: { authority_classification?: string; content_status?: string; extracted_text?: string } = {}): boolean {
+  if (["draft", "proposed"].includes(String(doc.content_status || "").toLowerCase())) return true;
   const cls = String(doc.authority_classification || "").toLowerCase();
   // If the doc has an explicit classification, trust it — do NOT fall through to text
   // pattern matching. The gate's patterns are designed for unclassified research data;
@@ -140,9 +142,8 @@ export function isHistoricalSource(doc: { content_status?: string; authority_cla
   return HISTORICAL_CONTENT.has(content) || cls === "historical";
 }
 
-export function isCurrentAdoptedSource(doc: { authority_classification?: string; content_status?: string } = {}): boolean {
-  const cls = String(doc.authority_classification || "").toLowerCase();
-  return cls === "current_adopted" && !isDraftSource(doc) && !isHistoricalSource(doc);
+export function isCurrentAdoptedSource(doc: { authority_classification?: string; content_status?: string; verification_status?: string; file_hash_sha256?: string } = {}): boolean {
+  return reviewedAdoptedSource(doc) && !isDraftSource(doc) && !isHistoricalSource(doc);
 }
 
 // ── Citation building ──
@@ -154,6 +155,7 @@ export interface SourceDoc {
   file_hash_sha256?: string;
   authority_classification?: string;
   content_status?: string;
+  verification_status?: string;
   effective_or_adopted_date?: string;
 }
 
@@ -173,7 +175,7 @@ export function buildCitation(
 } {
   const isDraft = isDraftSource(sourceDoc);
   const isHist = isHistoricalSource(sourceDoc);
-  let verification_status = "verified";
+  let verification_status = isCurrentAdoptedSource(sourceDoc) ? "verified" : "needs_verification";
   if (isDraft) verification_status = "draft_context";
   else if (isHist) verification_status = "historical";
   else if (String(sourceDoc.authority_classification || "").toLowerCase() !== "current_adopted") {
@@ -197,7 +199,7 @@ export function canBeOperational(
   citations: Array<{ verification_status?: string }> = [],
 ): boolean {
   if (status !== "staff_approved") return false;
-  return citations.some((c) => c.verification_status === "verified");
+  return citations.length > 0 && citations.every((c) => c.verification_status === "verified");
 }
 
 // ── Conflict detection ──
