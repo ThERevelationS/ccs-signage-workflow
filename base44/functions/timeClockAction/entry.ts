@@ -2759,6 +2759,11 @@ Deno.serve(async (req) => {
                 supersedes_generation_request_id: String(period.finalized_summary.supersedes_generation_request_id || ''),
                 authorized_by_reopen_request_id: String(period.finalized_summary.authorized_by_reopen_request_id || ''),
               } : {}),
+              ...(Number(period.finalized_summary.snapshot_version || 0) >= 9 ? {
+                generation_changes_hash: String(period.finalized_summary.generation_changes_hash || ''),
+                generation_change_count: Number(period.finalized_summary.generation_change_count || 0),
+                generation_reopen_reason: String(period.finalized_summary.generation_reopen_reason || ''),
+              } : {}),
             });
             if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
                 !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
