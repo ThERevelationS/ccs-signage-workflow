@@ -27,12 +27,19 @@ export async function loadSalesPipelinePreferencesSafely({ sessionToken, label =
   return preferences;
 }
 
-export async function saveSalesPipelinePreferencesSafely({ sessionToken, preferences, label = "Sales Pipeline preferences" } = {}) {
-  const result = await invokeSalesFilter({
+export async function saveSalesPipelinePreferencesSafely({
+  sessionToken,
+  preferences,
+  expectedPreferences,
+  label = "Sales Pipeline preferences",
+} = {}) {
+  const payload = {
     action: "preferences_set",
     session_token: requireSessionToken(sessionToken, label),
     preferences,
-  });
+  };
+  if (expectedPreferences !== undefined) payload.expected_preferences = expectedPreferences;
+  const result = await invokeSalesFilter(payload);
   const saved = result?.preferences;
   if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
     throw new Error(`${label} saved but could not be verified.`);
