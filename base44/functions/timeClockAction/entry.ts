@@ -206,6 +206,13 @@ function dateKeyInCompanyTime(value: any) {
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
+function payrollMembershipEnvelope(clockIn: any) {
+  const normalizedClockIn = String(clockIn || '');
+  const companyDate = dateKeyInCompanyTime(normalizedClockIn);
+  if (!normalizedClockIn || !companyDate) return null;
+  return { clock_in: normalizedClockIn, company_date: companyDate, time_zone: COMPANY_TIME_ZONE, version: 1 };
+}
+
 function minutesOfDayInCompanyTime(value: any) {
   const date = new Date(String(value || ''));
   if (!Number.isFinite(date.getTime())) return null;
@@ -469,14 +476,15 @@ async function ensureClockInAudit({ auditEntity, entry, target, actor, requestId
     authentication_method: authenticationMethodFor(actor, target),
     server_timestamp: employeeAttested ? (entry.missed_clock_in_reported_at || new Date().toISOString()) : entry.clock_in,
     request_id: requestId, time_entry_id: entry.id,
-    ...(employeeAttested ? {
-      reason: 'Employee-attested missed Clock In reconstruction',
-      details: {
+    ...(employeeAttested ? { reason: 'Employee-attested missed Clock In reconstruction' } : {}),
+    details: {
+      payroll_membership: payrollMembershipEnvelope(entry.clock_in),
+      ...(employeeAttested ? {
         clock_source: entry.clock_source,
         employee_attested_clock_in: entry.clock_in,
         reported_at: entry.missed_clock_in_reported_at || null,
-      },
-    } : {}),
+      } : {}),
+    },
   }, 'Clock In audit');
 }
 
@@ -2715,6 +2723,14 @@ Deno.serve(async (req) => {
       };
       const payrollMembershipFromAudit = (row: any) => {
         const details = row?.details || {};
+        const envelope = details.payroll_membership;
+        if (envelope && Number(envelope.version || 0) === 1 && String(envelope.time_zone || '') === COMPANY_TIME_ZONE) {
+          const clockIn = String(envelope.clock_in || '');
+          const companyDate = dateKeyInCompanyTime(clockIn);
+          if (clockIn && companyDate && companyDate === String(envelope.company_date || '')) {
+            return { company_date: companyDate, clock_in: clockIn, source: 'normalized_audit_envelope' };
+          }
+        }
         const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, String(row?.action || '') === 'clock_in' ? row?.server_timestamp : ''].filter(Boolean);
         for (const value of candidates) {
           const companyDate = dateKeyInCompanyTime(value);
@@ -6070,7 +6086,7 @@ Deno.serve(async (req) => {
             { id: intent.id, outcome: 'pending', request_id: requestId, time_entry_id: entry.id },
             { $set: {
               outcome: 'confirmed', server_timestamp: new Date().toISOString(),
-              details: { ...(intent.details || {}), corrected: entryAuditSnapshot(entry), recovered_after_entry_save: true },
+              details: { ...(intent.details || {}), payroll_membership: payrollMembershipEnvelope(entry.clock_in), corrected: entryAuditSnapshot(entry), recovered_after_entry_save: true },
             } },
           );
           if (!auditFinalized || auditFinalized.updated !== 1) {
@@ -6146,7 +6162,7 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
           time_entry_id: entry.id, reason,
-          details: { payload_hash: correctionPayloadHash, original: entryAuditSnapshot(entry), requested: nextFields },
+          details: { payload_hash: correctionPayloadHash, payroll_membership: payrollMembershipEnvelope(nextFields.clock_in), original: entryAuditSnapshot(entry), requested: nextFields },
         });
       }
       if (!intent?.id) throw new Error('Correction audit intent could not be persisted. No TimeEntry was changed.');
@@ -6204,6 +6220,7 @@ Deno.serve(async (req) => {
           details: {
             ...(intent.details || {}),
             payload_hash: correctionPayloadHash,
+            payroll_membership: payrollMembershipEnvelope(savedEntry.clock_in),
             corrected: entryAuditSnapshot(savedEntry),
           },
         } },
@@ -6608,7 +6625,7 @@ Deno.serve(async (req) => {
           user_name: target.full_name || target.email, actor_email: actorEmail, actor_role: actor.role,
           authentication_method: authenticationMethodFor(actor, target), server_timestamp: now, request_id: requestId,
           time_entry_id: entry.id, reason,
-          details: { payload_hash: archivePayloadHash, original: entryAuditSnapshot(entry) },
+          details: { payload_hash: archivePayloadHash, payroll_membership: payrollMembershipEnvelope(entry.clock_in), original: entryAuditSnapshot(entry) },
         });
       }
       if (!intent?.id) throw new Error('Archive audit intent could not be persisted. No TimeEntry was changed.');
@@ -6668,6 +6685,7 @@ Deno.serve(async (req) => {
           details: {
             ...(intent.details || {}),
             payload_hash: archivePayloadHash,
+            payroll_membership: payrollMembershipEnvelope(savedEntry.clock_in),
             archived_entry: entryAuditSnapshot(savedEntry),
           },
         } },
@@ -7573,6 +7591,7 @@ Deno.serve(async (req) => {
               reason: 'Recovered interrupted Clock Out audit finalization',
               details: {
                 payload_hash: clockOutPayloadHash,
+                payroll_membership: payrollMembershipEnvelope(entry.clock_in),
                 submitted_lunch_minutes: submittedClockOut.lunch_minutes,
                 lunch_minutes: Number(entry.lunch_minutes || 0), total_hours: Number(entry.total_hours || 0),
                 break_summary: recoveryBreakSummary, work_pause_summary: recoveryWorkPauseSummary,
@@ -7704,6 +7723,7 @@ Deno.serve(async (req) => {
         server_timestamp: savedEntry.clock_out, request_id: requestId, time_entry_id: savedEntry.id,
         details: {
           payload_hash: clockOutPayloadHash,
+          payroll_membership: payrollMembershipEnvelope(savedEntry.clock_in),
           submitted_lunch_minutes: submittedClockOut.lunch_minutes,
           lunch_minutes: lunchMinutes, total_hours: savedEntry.total_hours, result_clock_out: savedEntry.clock_out,
           break_summary: breakSummary, work_pause_summary: workPauseSummary,
