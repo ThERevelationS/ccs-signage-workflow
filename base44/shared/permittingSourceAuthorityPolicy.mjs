@@ -31,7 +31,7 @@ export function sourceSupportsRule(source,rule){
  if(ruleKind(rule)!=='administrative_instruction')return source?.authority_classification==='current_adopted' &&
   source.content_status==='current' && source.verification_status==='verified' && /^[a-f0-9]{64}$/.test(source.file_hash_sha256 || '');
  return Boolean(reviewedAdministrativeSource(source) && ADMIN_SOURCE_CATEGORIES[source.authority_classification]?.includes(rule.rule_category) &&
-  (!rule.unit || ['dollars','days','working days','business days'].includes(rule.unit.toLowerCase())));
+  (!rule.unit || (typeof rule.unit==='string' && ['dollars','days','working days','business days'].includes(rule.unit.toLowerCase()))));
 }
 export function safeAuthorityUrl(value){
  try{const u=new URL(value);return u.protocol==='https:' && !u.username && !u.password && !/[\u0000-\u001f\u007f]/.test(value)?u.href:'';}catch{return '';}
