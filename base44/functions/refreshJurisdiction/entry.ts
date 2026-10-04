@@ -19,15 +19,15 @@ import {
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
-async function readResearchDocumentBytes(response: Response) {
+async function readResearchDocumentBytes(response: Response, maxBytes = MAX_RESEARCH_DOCUMENT_BYTES) {
   const declaredLength = Number(response.headers.get('content-length') || 0);
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESEARCH_DOCUMENT_BYTES) {
-    throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
   }
   const reader = response.body?.getReader();
   if (!reader) {
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > MAX_RESEARCH_DOCUMENT_BYTES) throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+    if (bytes.byteLength > maxBytes) throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
     return bytes;
   }
   const chunks: Uint8Array[] = [];
@@ -37,9 +37,9 @@ async function readResearchDocumentBytes(response: Response) {
     if (done) break;
     if (!value) continue;
     total += value.byteLength;
-    if (total > MAX_RESEARCH_DOCUMENT_BYTES) {
+    if (total > maxBytes) {
       await reader.cancel().catch(() => {});
-      throw Object.assign(new Error('Research document exceeds the 50 MB safety limit.'), { status: 413 });
+      throw Object.assign(new Error('Official resource exceeds its byte safety limit.'), { status: 413 });
     }
     chunks.push(value);
   }
@@ -162,7 +162,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         });
         const contentType = String(pageResponse.headers.get('content-type') || '').toLowerCase();
         if (pageResponse.ok && (contentType.includes('text/html') || contentType.includes('application/xhtml+xml'))) {
-          const pageHtml = new TextDecoder().decode(await readResearchDocumentBytes(pageResponse));
+          const pageHtml = new TextDecoder().decode(await readResearchDocumentBytes(pageResponse, 2 * 1024 * 1024));
           const finalPageUrl = pageResponse.url || researchData.permitting_url;
           if (new URL(finalPageUrl).hostname.replace(/^www\./, '') !== new URL(researchData.permitting_url).hostname.replace(/^www\./, '')) {
             throw new Error('Permitting page redirected outside its official host.');
