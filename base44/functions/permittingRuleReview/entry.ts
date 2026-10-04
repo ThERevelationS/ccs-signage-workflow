@@ -57,7 +57,8 @@ Deno.serve(async req => {
     if (action==='approve') {
       const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
         profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
-      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument);
+      await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument,{segmentEntity:entities.PermittingSourceTextSegment,
+        profileEntity:entities.JurisdictionProfile,settingsEntity:entities.GlobalSettings});
       const administrative=ruleKind(rule)==='administrative_instruction';
       fields={...fields,status:'staff_approved',rule_kind:ruleKind(rule),is_operational:!administrative,is_workflow_instruction:administrative,conflict_state:'none',
         evidence_context:{...(rule.evidence_context || {}),approved_sources:snapshots.map(s=>({id:s.id,snapshot:s.snapshot}))},
