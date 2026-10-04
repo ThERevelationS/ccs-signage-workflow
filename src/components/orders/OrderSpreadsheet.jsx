@@ -465,6 +465,7 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       // The request can lose its response after Smartsheet and Base44 have already
       // committed successfully. Re-read durable Order markers before telling the
       // user to retry so an acknowledged-on-server sync is not pushed again.
+      let partialResultMessage = '';
       try {
         const verificationLoaded = await loadData(false);
         if (!verificationLoaded) throw new Error('Authoritative Order verification reload failed.');
@@ -474,10 +475,15 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
           setSyncMessage('Saved changes are synchronized.');
           return true;
         }
+        const completedCount = syncTargets.length - unresolvedTargets.length;
+        if (completedCount > 0) {
+          partialResultMessage = `${completedCount} Order${completedCount === 1 ? '' : 's'} synced successfully; ${unresolvedTargets.length} remain queued for Retry Sync. `;
+          setLastSynced(new Date());
+        }
       } catch (verificationError) {
         console.error("Could not verify uncertain Order sync:", verificationError);
       }
-      setSaveError(`Saved in Base44, but Smartsheet sync needs attention: ${error?.message || 'Sync could not be verified.'}`);
+      setSaveError(`Saved in Base44, but Smartsheet sync needs attention: ${partialResultMessage}${error?.message || 'Sync could not be verified.'}`);
       return false;
     } finally {
       syncInFlightRef.current = false;
