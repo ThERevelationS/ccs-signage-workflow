@@ -20,7 +20,7 @@ Deno.serve(async req => {
       if (!Number.isSafeInteger(skip) || skip<0) return Response.json({error:'Invalid source cursor.'},{status:400});
       const rows=await entities.PermittingSourceDocument.filter(query,'id',21,skip,[
         'id','title','jurisdiction_id','jurisdiction_name','issuing_office','authority_classification','verification_status',
-        'text_extraction_state','official_url']);
+        'text_extraction_state','official_url','jurisdiction_scope','authority_review','authority_review_state','updated_date']);
       if (!Array.isArray(rows)) throw Error('Source list did not return an array.');
       return Response.json({success:true,sources:rows.slice(0,20),has_more:rows.length>20,next_cursor:rows.length>20?String(skip+20):null,llm_calls:0});
     }
