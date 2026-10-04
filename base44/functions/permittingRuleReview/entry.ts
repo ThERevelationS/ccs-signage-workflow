@@ -57,6 +57,7 @@ Deno.serve(async req => {
       const snapshots=await verifyRuleForApproval(rule,{sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment});
       await assertApprovalSourcesCurrent(snapshots,entities.PermittingSourceDocument);
       fields={...fields,status:'staff_approved',is_operational:true,conflict_state:'none',
+        evidence_context:{...(rule.evidence_context || {}),approved_sources:snapshots.map(s=>({id:s.id,snapshot:s.snapshot}))},
         citations:rule.citations.map(c=>({...c,verification_status:'verified'}))};
     } else if (action==='reject') {
       if (rule.status==='superseded') throw evidenceError('Superseded history is preserved.');
