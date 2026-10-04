@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     const elapsedArchiveCycle = now.getTime() - Date.parse(stateRecord?.setting_value?.last_cycle_at || "");
     if (!manual && config.enabled && (!Number.isFinite(elapsedArchiveCycle) || elapsedArchiveCycle >= config.interval_minutes * 60000)) {
       archiveContinuation = await continueJurisdictionArchiveBacklog({
-        entity: Profiles, fetchSource: safeExternalFetch,
+        entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
       });
     }
