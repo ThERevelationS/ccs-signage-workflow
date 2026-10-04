@@ -202,6 +202,16 @@
       },
       "description": "Preserved initial physical PDF pages with extracted text, archive hash, parser method, and gaps. Later pages may live in immutable PermittingSourceTextSegment records; the committed cursor is in text_extraction_state. Original archive and review decisions remain intact."
     },
+    "authority_review": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Version-bound staff review of an administrative source publisher, current-source evidence and explicitly quoted geographic scope. Never establishes adopted law or resolves a job address."
+    },
+    "authority_review_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Durable manual authority-review audit create/application receipt. Unknown creates reconcile without repeated writes."
+    },
     "rule_import_state": {
       "type": "object",
       "additionalProperties": true,
