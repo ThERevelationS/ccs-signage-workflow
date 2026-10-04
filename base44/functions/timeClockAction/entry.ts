@@ -3069,6 +3069,9 @@ Deno.serve(async (req) => {
             if (!approvalEvidence.approved_by || !approvalEvidence.approved_at) {
               return Response.json({ success: false, retry_same_request: true, error: 'Shift approval provenance is incomplete. Approval manager and server timestamp are required before payroll finalization.' }, { status: 409 });
             }
+            if (!approvalEvidence.independent_review) {
+              return Response.json({ success: false, error: 'A shift in this pay period requires independent approval by another administrator before payroll can be finalized.' }, { status: 409 });
+            }
           }
           snapshotRows.push({
             id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out,
