@@ -22,8 +22,8 @@ export function isDownloadableResearchDocument(document = {}) {
 
 export function permittingDocumentType({ title = '', url = '' } = {}) {
   const haystack = (String(title) + ' ' + String(url)).toLowerCase();
-  if (/\bfee|cost|price\b/.test(haystack)) return 'fee_schedule';
-  if (/\bchecklist|submittal|requirements?\b/.test(haystack)) return 'checklist';
+  if (/\b(fee|cost|price)\b/.test(haystack)) return 'fee_schedule';
+  if (/\b(checklist|submittal|requirements?)\b/.test(haystack)) return 'checklist';
   if (/\bsign\b/.test(haystack) && /\bordinance|code|regulation|resolution\b/.test(haystack)) return 'sign_ordinance';
   if (/\bzoning\b/.test(haystack) && /\bcode|ordinance|resolution|regulation\b/.test(haystack)) return 'zoning_code';
   if (/\bpermit|application|apply|form\b/.test(haystack)) return 'permit_application';
