@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { auditOrderPermanentLinks, classifyOrderUnlinkedReviewHint } from '../base44/shared/smartsheetOrderLinkIntegrity.mjs';
+import { auditOrderPermanentLinks, classifyOrderUnlinkedReviewHint, classifyRemoteUnlinkedOrderRow } from '../base44/shared/smartsheetOrderLinkIntegrity.mjs';
 
 const sheetId = '4963691473987460';
 const bindings = {
@@ -47,6 +47,10 @@ assert.equal(report.counts.duplicate_base44_row_ids, 1);
 assert.equal(report.counts.duplicate_base44_link_records, 2);
 assert.equal(report.counts.linked_row_missing_remote, 1);
 assert.equal(report.counts.unlinked_smartsheet_rows, 3);
+assert.equal(report.counts.remote_blank_or_placeholder, 0);
+assert.equal(report.counts.remote_duplicate_looking_historical, 1);
+assert.equal(report.counts.remote_sparse_unlinked, 2);
+assert.equal(report.counts.remote_populated_unlinked, 0);
 assert.equal(report.link_health.clean, false);
 assert.equal(report.link_health.action_required, 8);
 console.log('PASS permanent-link audit classifies active Base44 and remote row identity problems without mutating data');
@@ -58,6 +62,8 @@ assert.equal(remote106.customer_name, 'Remote Same Name');
 assert.equal(remote106.description, 'No row id');
 assert.equal(remote106.request_type, 'Supplies');
 assert.equal(remote106.quantity, '6');
+assert.equal(remote106.evidence_kind, 'duplicate_looking_historical');
+assert.equal(remote106.candidate_links[0].base44_order_id, 'unlinked' === 'never' ? 'never' : 'matched');
 assert.equal(report.records_by_category.duplicate_base44_row_link[0].orders.length, 2);
 assert.equal(report.records_by_category.linked_row_missing_remote[0].base44_order_id, 'missing-remote');
 console.log('PASS unlinked remote rows expose identifying evidence while permanent IDs remain the only match key');
@@ -100,6 +106,23 @@ assert.equal(testReport.records_by_category.base44_unlinked[0].review_hint, 'lik
 assert.equal(testReport.link_health.action_required, 1);
 console.log('PASS likely historical test artifacts are review hints only and remain explicit unlinked issues');
 
+assert.equal(classifyRemoteUnlinkedOrderRow({ customer_name: '', description: '', request_type: '', quantity: '' }, []).kind, 'blank_or_placeholder');
+assert.equal(classifyRemoteUnlinkedOrderRow({ customer_name: 'Test', description: 'Placeholder', request_type: '', quantity: '' }, []).kind, 'blank_or_placeholder');
+assert.equal(classifyRemoteUnlinkedOrderRow({ customer_name: 'Acme', description: '', request_type: 'Supplies', quantity: '2' }, []).kind, 'sparse_unlinked_row');
+assert.equal(classifyRemoteUnlinkedOrderRow({ customer_name: 'Acme', description: 'Wall sign', request_type: 'Supplies', quantity: '2' }, []).kind, 'populated_unlinked_order');
+const duplicateHint = classifyRemoteUnlinkedOrderRow(
+  { customer_name: 'Acme', description: 'Wall sign', request_type: 'Supplies', quantity: '2' },
+  [{ id: 'linked-order', customer_name: 'Acme', description: 'Wall sign', request_type: 'Supplies', quantity: '2', smartsheet_row_id: '777' }],
+);
+assert.equal(duplicateHint.kind, 'duplicate_looking_historical');
+assert.equal(duplicateHint.candidate_links[0].base44_order_id, 'linked-order');
+assert.equal(duplicateHint.candidate_links[0].linked_smartsheet_row_id, '777');
+assert.equal(classifyRemoteUnlinkedOrderRow(
+  { customer_name: 'Acme', description: 'Wall sign', request_type: 'Supplies', quantity: '2' },
+  [{ id: 'linked-order', customer_name: 'Acme', description: 'Different sign', request_type: 'Supplies', quantity: '2', smartsheet_row_id: '777' }],
+).kind, 'populated_unlinked_order');
+console.log('PASS remote orphan evidence distinguishes placeholder, sparse, duplicate-looking and populated rows without establishing links');
+
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const ui = readFileSync('src/components/orders/OrderLinkIntegrityReview.jsx', 'utf8');
 const tools = readFileSync('src/components/orders/OrderReviewTools.jsx', 'utf8');
@@ -122,6 +145,10 @@ assert.match(ui, /matching_strategy !== "permanent_sheet_and_row_ids_only"/);
 assert.match(ui, /Current visual row:.*display only, never used for matching/);
 assert.match(ui, /Names, descriptions and visual row numbers are never used to repair links/);
 assert.match(ui, /No partial results are displayed and nothing was changed/);
+assert.match(ui, /Remote unlinked-row evidence/);
+assert.match(ui, /Classification uses visible row content only as a review hint\. Permanent row IDs remain the only identity used by sync/);
+assert.match(ui, /Visible-data duplicate hint only/);
+assert.match(ui, /They are not proposed links/);
 assert.match(ui, /Likely historical test artifact/);
 assert.match(ui, /review hint only\. Nothing is hidden, deleted, linked, or retired automatically/);
 assert.match(tools, /Review links/);
