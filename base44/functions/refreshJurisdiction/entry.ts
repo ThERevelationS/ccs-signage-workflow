@@ -5,17 +5,11 @@ import { hasWorkflowInvocationCapability } from '../../shared/workflowInvocation
 import { safeExternalFetch } from '../../shared/safeExternalFetch.ts';
 import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchSanitizer.ts';
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
-import { findExistingJurisdictionDocument, mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
+import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
 import { discoverOfficialPermittingResources } from '../../shared/jurisdictionPermittingLinkDiscovery.mjs';
-import {
-  DEFAULT_RESEARCH_ARCHIVE_LIMIT,
-  RESEARCH_EXTRACT_TIMEOUT_MS,
-  RESEARCH_FETCH_TIMEOUT_MS,
-  RESEARCH_UPLOAD_TIMEOUT_MS,
-  canArchiveResearchDocument,
-  withResearchArchiveTimeout,
-} from '../../shared/jurisdictionResearchArchiveBudget.mjs';
+import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArchiveBudget.mjs';
+import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 
 const MAX_RESEARCH_DOCUMENT_BYTES = 50 * 1024 * 1024;
 
@@ -227,108 +221,10 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         last_fetched: new Date().toISOString()
       }));
 
-      // Persist every discovered source URL immediately, but bound expensive
-      // archival work so one refresh cannot spend its whole execution window
-      // downloading/extracting a long document list. Later refreshes can archive
-      // additional sources that still lack file_url/source_sha256.
-      const processedDocs = [];
-      let archivesStarted = 0;
-      for (const doc of newAiDocs) {
-        const existing = findExistingJurisdictionDocument(jurisdiction.documents, doc);
-        const shouldArchive = canArchiveResearchDocument({
-          document: doc,
-          existingDocument: existing,
-          archivesStarted,
-          archiveLimit: DEFAULT_RESEARCH_ARCHIVE_LIMIT,
-        });
-        if (!shouldArchive) {
-          processedDocs.push(doc);
-          continue;
-        }
-        archivesStarted += 1;
-        let retainedDoc = doc;
-        try {
-          const downloadResult = await safeExternalFetch(doc.url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-            signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
-          });
-          if (!downloadResult.ok) {
-            processedDocs.push(doc);
-            continue;
-          }
-
-          const responseType = String(downloadResult.headers.get('content-type') || '').toLowerCase();
-          if (responseType.includes('text/html') || responseType.includes('application/xhtml+xml')) {
-            processedDocs.push(doc);
-            continue;
-          }
-          const fileBytes = await readResearchDocumentBytes(downloadResult);
-          if (fileBytes.byteLength === 0) {
-            processedDocs.push(doc);
-            continue;
-          }
-
-          const contentType = downloadResult.headers.get('content-type') || 'application/octet-stream';
-          const ext = doc.url.split('?')[0].split('.').pop()?.toLowerCase() || 'pdf';
-          const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
-          const mimeType = mimeMap[ext] || contentType.split(';')[0].trim() || 'application/octet-stream';
-
-          const fileName = decodeURIComponent(new URL(doc.url).pathname.split('/').pop() || `official-resource.${ext}`);
-          const fileBlob = new File([fileBytes], fileName, { type: mimeType });
-          const uploadResult = await withResearchArchiveTimeout(
-            base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob }),
-            RESEARCH_UPLOAD_TIMEOUT_MS,
-            'Research document upload',
-          );
-
-          if (!uploadResult?.file_url) {
-            processedDocs.push(doc);
-            continue;
-          }
-
-          // Persist successful archive evidence even if extraction fails. The
-          // deterministic path never invokes an LLM or extraction integration.
-          const digest = await crypto.subtle.digest('SHA-256', fileBytes);
-          retainedDoc = {
-            ...doc, file_url: uploadResult.file_url,
-            source_sha256: Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''),
-            source_bytes: fileBytes.byteLength,
-            stored_sha256: Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''),
-            stored_bytes: fileBytes.byteLength,
-            downloaded_at: new Date().toISOString(),
-          };
-          if (discoveryOnly) {
-            processedDocs.push(retainedDoc);
-            continue;
-          }
-          const extractResult = await withResearchArchiveTimeout(
-            base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
-              file_url: uploadResult.file_url,
-              json_schema: {
-                type: "object",
-                properties: {
-                  content: { type: "string", description: "Full text content of the document" },
-                  summary: { type: "string", description: "Summary of key sign permit requirements in this document" }
-                }
-              }
-            }),
-            RESEARCH_EXTRACT_TIMEOUT_MS,
-            'Research document extraction',
-          );
-
-          processedDocs.push({
-            ...retainedDoc,
-            extracted_text: extractResult?.output?.content || "",
-            ai_summary: extractResult?.output?.summary || doc.ai_summary
-          });
-        } catch (e) {
-          console.error(`Failed to process doc ${doc.title}:`, e.message);
-          processedDocs.push(retainedDoc);
-        }
-      }
-
-      documentAuthorityEvidence = processedDocs;
-      updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, processedDocs);
+      // Source retention commits before any network/upload work. Archival uses
+      // the same durable per-document receipt as scheduled continuation.
+      documentAuthorityEvidence = newAiDocs;
+      updateData.documents = mergeJurisdictionResearchDocuments(jurisdiction.documents, newAiDocs);
     }
 
     if (!discoveryOnly) updateData.last_updated = new Date().toISOString();
@@ -338,7 +234,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
     const finalUpdateData = invalidateVerifiedJurisdictionAfterResearch(jurisdiction, authorityGate.updateData);
 
-    const updated = await replaceJurisdictionFieldsIfUnchanged({
+    let updated = await replaceJurisdictionFieldsIfUnchanged({
       entity: base44.asServiceRole.entities.JurisdictionProfile,
       jurisdiction,
       nextFields: finalUpdateData,
@@ -348,5 +244,23 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
     });
 
-    return { success: true, jurisdiction: updated, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
+    let archival: any = null;
+    if (batchSettings.updateDocuments && !updated._manual_documents) {
+      try {
+        const result = await archiveKnownJurisdictionSource({
+          entity: base44.asServiceRole.entities.JurisdictionProfile, jurisdictionId: id,
+          fetchSource: safeExternalFetch,
+          uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
+          manual: false,
+        });
+        const { jurisdiction: archivedProfile, ...summary } = result;
+        archival = summary;
+        updated = archivedProfile || await base44.asServiceRole.entities.JurisdictionProfile.get(id);
+      } catch (error) {
+        // Retained links are already durable; archive failure cannot undo discovery.
+        archival = { success: false, error: String(error?.message || error) };
+        updated = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
+      }
+    }
+    return { success: true, jurisdiction: updated, archival, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
 }

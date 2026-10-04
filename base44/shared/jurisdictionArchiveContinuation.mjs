@@ -98,12 +98,12 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
   throw new Error('Archive write repeatedly conflicted; newer work was preserved.');
 }
 
-export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
+export async function archiveKnownJurisdictionSource({ entity, jurisdictionId, documentId = '', fetchSource, uploadFile, manual = false, token = crypto.randomUUID(), now = () => Date.now() }) {
   const initial = await entity.get(jurisdictionId);
   if (!initial?.id) throw new Error('Jurisdiction not found.');
   if (initial._manual_documents) return { success: true, skipped: true, reason: 'manual_collection', jurisdiction: initial };
   const docs = initial.documents || [];
-  const doc = docs.find(d => archiveDocumentEligible(d, { manual, now: now() }) &&
+  const doc = docs.find(d => (!documentId || d.id === documentId) && archiveDocumentEligible(d, { manual, now: now() }) &&
     !docs.some(other => other !== d && jurisdictionDocumentSourceKey(other) === jurisdictionDocumentSourceKey(d)));
   if (!doc) return { success: true, skipped: true, reason: 'no_eligible_file', jurisdiction: initial };
   let state = doc.archive_state || {};

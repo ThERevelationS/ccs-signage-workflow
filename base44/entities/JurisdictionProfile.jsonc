@@ -128,6 +128,31 @@
               "manual",
               "ai_discovered"
             ]
+          },
+          "archive_state": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Durable archival receipt and lease. uploading/upload_uncertain must never auto-retry; uploaded resumes readback of the same file. No regulatory authority is implied."
+          },
+          "archive_pinned": {
+            "type": "boolean",
+            "description": "Prevents automatic archival changes to this document."
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "source_bytes": {
+            "type": "integer"
+          },
+          "stored_sha256": {
+            "type": "string"
+          },
+          "stored_bytes": {
+            "type": "integer"
+          },
+          "downloaded_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }
