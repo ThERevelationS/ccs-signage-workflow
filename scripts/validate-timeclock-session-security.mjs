@@ -45,6 +45,19 @@ assert.equal(pendingReview.kind, 'pending_punch_review');
 assert.equal(pendingReview.count, 1);
 assert.equal(pendingReview.item.time_entry_id, 'old-entry');
 
+const pendingShiftReview = classifyTimeClockLoginStatus({
+  success: true,
+  status: 'clocked_out',
+  pending_shift_review: {
+    count: 1,
+    has_integrity_issue: false,
+    items: [{ time_entry_id: 'corrected-entry', review_state: 'awaiting_shift_approval' }],
+  },
+});
+assert.equal(pendingShiftReview.kind, 'pending_shift_review');
+assert.equal(pendingShiftReview.count, 1);
+assert.equal(pendingShiftReview.item.time_entry_id, 'corrected-entry');
+
 const transition = classifyTimeClockLoginStatus({
   success: true,
   status: 'clocked_in',
@@ -91,9 +104,13 @@ assert.match(source, /employee-session/);
 assert.match(source, /shared-session/);
 assert.match(source, /Previous punch report is awaiting manager review/);
 assert.match(source, /can still start a new shift normally/);
+assert.match(source, /Punch correction applied — shift still needs approval/);
+assert.match(source, /separate manager shift-approval step/);
 const quickClockSource = readFileSync(new URL('../src/components/timeclock/QuickClockSection.jsx', import.meta.url), 'utf8');
 assert.match(quickClockSource, /unresolved_punch_review/);
 assert.match(quickClockSource, /still awaiting manager follow-up/);
-console.log('PASS activity, background-return, credential-reset, and unresolved-punch return warnings are present');
+assert.match(quickClockSource, /pending_shift_review/);
+assert.match(quickClockSource, /final manager shift approval/);
+console.log('PASS activity, background-return, credential-reset, unresolved-punch, and corrected-shift approval warnings are present');
 
-console.log('PASS 5/5 Time Clock personal-session security scenarios');
+console.log('PASS 6/6 Time Clock personal-session security scenarios');
