@@ -79,10 +79,10 @@ check(page.includes('visibleSalesMoreAttentionGroups(pipelineSummary, attentionF
 check(page.includes('selectedMoreAttention ? `More: ${selectedMoreAttention.label}`') &&
   page.includes('title={selectedMoreAttention?.label || "All other Sales attention filters"}'),
   "When a hidden filter is active, users must see its selected name.");
-check(page.includes('aria-label="Clear active Sales information and attention filters"') &&
+check(page.includes('aria-label="Clear active Sales search, information, attention, and table column filters"') &&
   page.includes('hasActiveFilters &&') &&
-  page.includes('onClick={() => applyAttentionFilter("all")}'),
-  "Clear filters must be visible for active saved/attention filters and reset both.");
+  page.includes('onClick={clearActiveFilters}'),
+  "Clear filters must be visible for any active Sales criterion and clear the combined filter state.");
 check(page.includes('const quickAttentionVisible = !showDuplicateCleanup && !["insights", "daily"].includes(viewMode)') &&
   page.includes('(recordScope === "current" || recordScope === "all")'),
   "Quick filters must remain hidden in unrelated workspaces and views.");
