@@ -1,5 +1,5 @@
 import { loadRuleEvidence, assertEvidenceCurrent, validateRuleCandidates, extractionPrompt, EXTRACTION_RESPONSE_SCHEMA,
-  RULE_EVIDENCE_METHOD, evidenceDigest, evidenceEqual, evidenceError, sourceAuthoritySnapshot } from './permittingRuleEvidence.mjs';
+  RULE_EVIDENCE_METHOD, evidenceDigest, evidenceEqual, evidenceError } from './permittingRuleEvidence.mjs';
 
 const archiveIdentity=row=>JSON.stringify([row.id,row.archived_file_url,row.file_hash_sha256,row.file_bytes,row.jurisdiction_id]);
 const summarize=run=>({success:run.status==='complete',run_id:run.id,status:run.status,source_document_id:run.source_document_id,
@@ -153,7 +153,7 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
   }
   const rows=await ruleEntity.filter({extraction_key:candidate.extraction_key},'created_date',2,0);
   if (!Array.isArray(rows) || rows.length>1) throw evidenceError('Imported rule identity is ambiguous.');
-  let existing=rows[0];
+  let existing=rows[0],createdThisCall=false;
   if (existing && !evidenceEqual(candidateComparable(existing),candidateComparable(candidate)))
     throw evidenceError('An existing rule has staff edits or conflicting evidence; it is preserved.');
   if (receipt && (!existing || existing.id!==receipt.rule_id)) throw evidenceError('Previously imported rule requires reconciliation.');
@@ -162,7 +162,7 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
   run=await writeExtractionRun(runEntity,run,{import_state:creating});
   if (!existing && !['creating','uncertain'].includes(old.status) && !receipt) {
     await assertEvidenceCurrent({sourceEntity,segmentEntity,sourceDocumentId:unit.source.id},unit);
-    try {await ruleEntity.create({...candidate,extraction_run_id:run.id,status:candidate.status==='historical'?'historical':'needs_review',is_operational:false});}
+    try {await ruleEntity.create({...candidate,extraction_run_id:run.id,status:candidate.status==='historical'?'historical':'needs_review',is_operational:false});createdThisCall=true;}
     catch { /* Reconcile once; no duplicate create after an unknown result. */ }
     const after=await ruleEntity.filter({extraction_key:candidate.extraction_key},'created_date',2,0);
     if (after.length>1) throw evidenceError('Candidate import identity became ambiguous.');
@@ -174,5 +174,5 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
   }
   await writeExtractionRun(runEntity,run,{import_state:{...creating,status:'complete',lease_expires_at:'',rule_id:existing.id},
     import_receipts:{...(run.import_receipts || {}),[candidateIndex]:{rule_id:existing.id,extraction_key:candidate.extraction_key}}});
-  return {success:true,rule:existing,rules_created:receipt || rows.length?0:1,llm_calls:0};
+  return {success:true,rule:existing,rules_created:createdThisCall?1:0,llm_calls:0};
 }
