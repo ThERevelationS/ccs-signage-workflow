@@ -1,0 +1,212 @@
+{
+  "phase": "Phase 2 — scheduled archival verification and evidence-catalog integration",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "date": "2026-10-04",
+  "previous_checkpoint": "6ac20ae494614994299714ad",
+  "starting_git_head": "21134206f9139162e671bc2aa590d6ba47b0877f",
+  "validation_git_head": "7cf0109822d465e7b02a4bedb4f454a382c32081",
+  "manual_acceptance": {
+    "success": true,
+    "registered": 1,
+    "created": 1,
+    "source_document_id": "6ac2593367c75c73d83cf39b",
+    "runtime_ms": 6993,
+    "transport": "connected Base44 tools executing exact source helper",
+    "llm_calls": 0,
+    "downloads": 0,
+    "uploads": 0
+  },
+  "manual_transport_note": "Sandbox CLI authentication expired. No further CLI operations were used. The exact source helper was executed through authenticated Base44 entity tools; the deployed manual function route was compiled and tested with mocked SDK boundaries.",
+  "scheduled_backend_acceptance": {
+    "jurisdiction": "Batavia",
+    "source_document_id": "6ac25879c6eeff85438f9ba6",
+    "created_at": "2026-10-04T13:45:29.250000",
+    "service_role": true,
+    "content_status": "unknown",
+    "authority_classification": "unknown_review_required",
+    "verification_status": "needs_verification",
+    "note": "Live scheduled catalog creation confirms backend auto-sync. Oldest-first backlog selection was then refined and covered by focused regression; its next scheduled execution was not awaited."
+  },
+  "scheduled_archives_since_previous_checkpoint": [
+    {
+      "jurisdiction": "Campbell County",
+      "at": "2026-10-04T08:15:09.292Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Florence",
+      "at": "2026-10-04T08:30:03.730Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Fort Mitchell",
+      "at": "2026-10-04T08:45:44.148Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Southgate",
+      "at": "2026-10-04T09:01:57.034Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Bellevue",
+      "at": "2026-10-04T09:15:17.216Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Alexandria",
+      "at": "2026-10-04T09:30:25.096Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Park Hills",
+      "at": "2026-10-04T09:45:25.978Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Butler County",
+      "at": "2026-10-04T10:16:03.606Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Wilder",
+      "at": "2026-10-04T10:30:10.157Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Norwood",
+      "at": "2026-10-04T10:45:31.175Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Reading",
+      "at": "2026-10-04T11:00:06.190Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Grant County",
+      "at": "2026-10-04T11:15:05.542Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Warren County",
+      "at": "2026-10-04T11:30:47.394Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Montgomery",
+      "at": "2026-10-04T11:45:49.596Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Union",
+      "at": "2026-10-04T12:00:04.588Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Blue Ash",
+      "at": "2026-10-04T12:15:03.865Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "North Bend",
+      "at": "2026-10-04T12:31:29.942Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Pendleton County",
+      "at": "2026-10-04T12:45:12.937Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "City of Fort Thomas",
+      "at": "2026-10-04T13:03:05.958Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Village of Indian Hill",
+      "at": "2026-10-04T13:15:06.652Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Silverton",
+      "at": "2026-10-04T13:30:13.832Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    },
+    {
+      "jurisdiction": "Batavia",
+      "at": "2026-10-04T13:45:28.643Z",
+      "hashMatch": true,
+      "bytesMatch": true
+    }
+  ],
+  "morrow": {
+    "jurisdiction_id": "6ac1d67d439c92b783f2dd45",
+    "source_document_id": "6ac2593367c75c73d83cf39b",
+    "documents": 16,
+    "retained_sources_and_archive_evidence_unchanged": true,
+    "registration_only": true,
+    "sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+    "bytes": 95880,
+    "remaining_upload_uncertain": "ai_1791099930671_1"
+  },
+  "boone": {
+    "jurisdiction_id": "6ab7c6107f2251a8e8e48b90",
+    "documents": 36,
+    "exact_documents_equality_before_after": true
+  },
+  "dispatcher": {
+    "prior_enabled": true,
+    "restored_enabled": true,
+    "config": {
+      "enabled": true,
+      "interval_minutes": 15,
+      "max_dispatch_per_cycle": 5,
+      "max_in_flight": 20,
+      "daily_dispatch_limit": 40,
+      "retry_limit": 3
+    },
+    "daily_research_attempts_before": 40,
+    "daily_research_attempts_after": 40,
+    "state_unchanged": true
+  },
+  "validation": {
+    "tests_passed": 95,
+    "tests_failed": 0,
+    "bundles": [
+      "continueJurisdictionArchives",
+      "refreshJurisdiction",
+      "permittingResearchBacklogDispatch"
+    ],
+    "targeted_eslint": true,
+    "git_diff_check": true,
+    "full_build": true,
+    "build_warnings": [
+      "Existing baseline-browser-mapping data warning",
+      "Existing Browserslist data warning"
+    ]
+  },
+  "frontend_published": false,
+  "next_phase": "Phase 3 — bounded extraction of archived document text, with source/page provenance and separate adoption/authority review before operational facts."
+}
