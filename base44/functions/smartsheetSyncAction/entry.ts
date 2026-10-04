@@ -853,18 +853,31 @@ async function loadSingleSyncStatusRecord(base44: any) {
 async function claimSyncRun(base44: any, status: any) {
   const record = await loadSingleSyncStatusRecord(base44);
   const current = record?.setting_value || {};
-  // A run that has saved no progress for 5 minutes was killed by the platform time limit.
+  const currentIsOrderRun = current?.status === 'running' && (
+    current?.progress_dataset === 'orders' ||
+    /^Order Form\\b/.test(String(current?.current_step_label || '').trim()) ||
+    current?.action === 'push_saved_orders'
+  );
+  // Order Save & Sync is never auto-reclaimed merely because a transport wait
+  // is quiet. A 429 Retry-After/backoff is still active work, and another user
+  // must not start competing writes. After the Order stale threshold, require
+  // the explicit stale-run recovery path before a new coordinator claim.
+  if (currentIsOrderRun) {
+    const classification = classifyRecoverableStaleOrderSync(current, Date.now());
+    const detail = classification?.recoverable
+      ? 'The existing Order sync is stale and must be closed for review before another sync can start.'
+      : 'Another Order Save & Sync is already running.';
+    throw Object.assign(new Error(detail), { status: 409 });
+  }
+
+  // Preserve the existing coordinator behavior for non-Order consumers.
   const lastActivity = Date.parse(String(current?.updated_at || current?.started_at || ''));
   const abandoned = Number.isFinite(lastActivity) && Date.now() - lastActivity > 2 * 60_000;
   if (current?.status === 'running' && abandoned) {
     await checkAndSendSyncAlert(base44, current, []).catch(() => {});
   }
   if (current?.status === 'running' && !abandoned) {
-    const classification = classifyRecoverableStaleOrderSync(current, Date.now());
-    const detail = classification?.recoverable
-      ? 'The existing Order sync is stale and must be closed for review before another sync can start.'
-      : 'Another Smartsheet sync is already running.';
-    throw Object.assign(new Error(detail), { status: 409 });
+    throw Object.assign(new Error('Another Smartsheet sync is already running.'), { status: 409 });
   }
   const value = { ...status, updated_at: new Date().toISOString() };
   const result = await base44.asServiceRole.entities.GlobalSettings.updateMany(
