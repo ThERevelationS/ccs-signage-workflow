@@ -3316,7 +3316,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 11 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 12 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3337,8 +3337,12 @@ Deno.serve(async (req) => {
         const supersededGeneration = priorHistory.length ? priorHistory[priorHistory.length - 1] : null;
         const supersedesGenerationRequestId = String(supersededGeneration?.request_id || '');
         const authorizedByReopenRequestId = String(supersededGeneration?.invalidated_by_reopen_request_id || '');
-        if (supersededGeneration && (!supersedesGenerationRequestId || !authorizedByReopenRequestId)) {
-          return Response.json({ success: false, error: 'The prior payroll generation is missing authoritative reopen lineage. Admin investigation is required before re-finalization.' }, { status: 409 });
+        const generationCausalWindowStart = String(supersededGeneration?.invalidated_at || '');
+        const generationCausalWindowEnd = lockTimestamp;
+        if (supersededGeneration && (!supersedesGenerationRequestId || !authorizedByReopenRequestId || !generationCausalWindowStart ||
+            !Number.isFinite(Date.parse(generationCausalWindowStart)) || !Number.isFinite(Date.parse(generationCausalWindowEnd)) ||
+            Date.parse(generationCausalWindowStart) > Date.parse(generationCausalWindowEnd))) {
+          return Response.json({ success: false, error: 'The prior payroll generation is missing valid authoritative reopen/finalization boundaries. Admin investigation is required before re-finalization.' }, { status: 409 });
         }
         const generationChanges = [];
         if (supersededGeneration) {
@@ -3374,12 +3378,17 @@ Deno.serve(async (req) => {
                     String(appliedAudit.details?.correction_request_id || '') !== correctionRequestId) {
                   return Response.json({ success: false, error: 'Payroll correction evidence could not be verified before finalization.' }, { status: 409 });
                 }
+                const correctionAppliedAt = String(appliedAudit.server_timestamp || '');
+                if (supersededGeneration && (!Number.isFinite(Date.parse(correctionAppliedAt)) || Date.parse(correctionAppliedAt) < Date.parse(generationCausalWindowStart) || Date.parse(correctionAppliedAt) > Date.parse(generationCausalWindowEnd))) {
+                  return Response.json({ success: false, error: `Payroll correction for shift ${id} falls outside the authorized reopen-to-finalization window.` }, { status: 409 });
+                }
                 change.correction_provenance = {
                   correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
                   requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
                   review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
                   reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
                   applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
+                  applied_at: correctionAppliedAt,
                 };
               }
               if (!change.correction_provenance) {
@@ -3388,10 +3397,12 @@ Deno.serve(async (req) => {
                 const allowedActions = change.change_type === 'removed'
                   ? ['admin_archive']
                   : ['admin_correction', 'clock_in', 'clock_out', 'punch_exception'];
-                const candidates = causalAudits.filter((row: any) =>
-                  allowedActions.includes(String(row.action || '')) &&
-                  ['confirmed', 'recovered'].includes(String(row.outcome || ''))
-                ).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
+                const candidates = causalAudits.filter((row: any) => {
+                  const occurredAt = Date.parse(String(row.server_timestamp || ''));
+                  return allowedActions.includes(String(row.action || '')) &&
+                    ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+                    (!supersededGeneration || (Number.isFinite(occurredAt) && occurredAt >= Date.parse(generationCausalWindowStart) && occurredAt <= Date.parse(generationCausalWindowEnd)));
+                }).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
                 const cause = candidates[0];
                 if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative correction or Time Clock audit cause. Admin investigation is required before finalization.` }, { status: 409 });
                 change.action_provenance = {
@@ -3428,6 +3439,10 @@ Deno.serve(async (req) => {
             generation_changes_hash: generationChangesHash,
             generation_change_count: generationChanges.length,
             generation_reopen_reason: String(supersededGeneration?.invalidation_reason || ''),
+          } : {}),
+          ...(snapshotVersion >= 12 ? {
+            generation_causal_window_start: generationCausalWindowStart,
+            generation_causal_window_end: generationCausalWindowEnd,
           } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
