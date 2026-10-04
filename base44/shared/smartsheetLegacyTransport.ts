@@ -39,14 +39,14 @@ async function once(method, path, token, jsonBody) {
     throw error;
   } finally { clearTimeout(timeout); }
 }
-async function legacyRetry(call) {
+async function legacyRetry(call, { retryTimeout = true } = {}) {
   let timedOutRetried = false;
   let rateLimitRetries = 0;
   for (;;) {
     try { return await call(); }
     catch (error) {
       // On timeout, retry once before failing.
-      if (error?.timedOut && !timedOutRetried) {
+      if (error?.timedOut && retryTimeout && !timedOutRetried) {
         timedOutRetried = true;
         continue;
       }
@@ -67,3 +67,9 @@ async function legacyRetry(call) {
 }
 export const smartsheetGet = (path, token) => legacyRetry(() => once('GET', path, token));
 export const smartsheetWrite = (method, path, token, jsonBody) => legacyRetry(() => once(method, path, token, jsonBody));
+// Order writes use this variant because a timeout is an ambiguous outcome: the
+// remote mutation may have committed even though its response was lost. Never
+// resend that write automatically. Callers must recover by read-back or hold the
+// operation for review. Definitive HTTP 429 responses remain safe to retry.
+export const smartsheetWriteNoTimeoutRetry = (method, path, token, jsonBody) =>
+  legacyRetry(() => once(method, path, token, jsonBody), { retryTimeout: false });
