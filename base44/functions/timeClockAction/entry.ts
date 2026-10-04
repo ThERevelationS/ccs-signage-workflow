@@ -3227,7 +3227,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 10 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 11 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3291,6 +3291,25 @@ Deno.serve(async (req) => {
                   review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
                   reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
                   applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
+                };
+              }
+              if (!change.correction_provenance) {
+                const causalAudits = await auditEntity.filter({ time_entry_id: id });
+                if (!Array.isArray(causalAudits)) return Response.json({ success: false, error: 'Payroll change audit lookup failed before finalization.' }, { status: 409 });
+                const allowedActions = change.change_type === 'removed'
+                  ? ['admin_archive']
+                  : ['admin_correction', 'clock_in', 'clock_out', 'punch_exception'];
+                const candidates = causalAudits.filter((row: any) =>
+                  allowedActions.includes(String(row.action || '')) &&
+                  ['confirmed', 'recovered'].includes(String(row.outcome || ''))
+                ).sort((a: any, b: any) => String(b.server_timestamp || b.updated_date || '').localeCompare(String(a.server_timestamp || a.updated_date || '')));
+                const cause = candidates[0];
+                if (!cause?.id) return Response.json({ success: false, error: `Payroll ${change.change_type} shift ${id} has no authoritative correction or Time Clock audit cause. Admin investigation is required before finalization.` }, { status: 409 });
+                change.action_provenance = {
+                  audit_id: String(cause.id || ''), action: String(cause.action || ''), request_id: String(cause.request_id || ''),
+                  outcome: String(cause.outcome || ''), actor_email: asEmail(cause.actor_email), actor_role: String(cause.actor_role || ''),
+                  authentication_method: String(cause.authentication_method || ''), server_timestamp: String(cause.server_timestamp || ''),
+                  reason: String(cause.reason || ''),
                 };
               }
               generationChanges.push(change);
