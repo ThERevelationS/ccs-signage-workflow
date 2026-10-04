@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
 import { buildOpportunityBridgeDryRunPlan } from "../../shared/opportunityBridgeDryRunPlanner.mjs";
+import { evaluateOpportunityBridgeProductionReadiness } from "../../shared/opportunityBridgeProductionReadiness.mjs";
 import {
   OpportunityBridgeSimulationRequestError,
   OPPORTUNITY_BRIDGE_SIMULATION,
@@ -83,6 +84,14 @@ Deno.serve(async (req) => {
       opportunities,
     });
 
+    const generatedAt = new Date().toISOString();
+    const readiness = evaluateOpportunityBridgeProductionReadiness({
+      plan,
+      generatedAt,
+      now:generatedAt,
+      receiptSchemaActivated:false,
+      secondaryConfirmationConfigured:false,
+    });
     const selected = selectOpportunityBridgeSimulationRows(plan.rows, request).map(responseRow);
     return Response.json({
       success:true,
@@ -100,6 +109,8 @@ Deno.serve(async (req) => {
       },
       summary:plan.summary,
       source_audit:plan.source_audit,
+      readiness,
+      generated_at:generatedAt,
       selected_count:selected.length,
       selected_rows:selected,
     });
