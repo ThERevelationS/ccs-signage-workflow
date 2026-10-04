@@ -1360,6 +1360,28 @@ test('manager approval completes the unresolved shift while rejection leaves it 
   assert.equal(approved.body.entry.id, approveHarness.rows.TimeEntry[0].id);
   assert.equal(approved.body.entry.approval_status, 'needs_review');
 
+  const postCorrectionStatus = await approveHarness.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(postCorrectionStatus.status, 200, JSON.stringify(postCorrectionStatus.body));
+  assert.equal(postCorrectionStatus.body.unresolved_punch_review, undefined);
+  assert.equal(postCorrectionStatus.body.pending_shift_review.count, 1);
+  assert.equal(postCorrectionStatus.body.pending_shift_review.has_integrity_issue, false);
+  assert.equal(postCorrectionStatus.body.pending_shift_review.items[0].review_state, 'awaiting_shift_approval');
+  assert.equal(postCorrectionStatus.body.pending_shift_review.items[0].time_entry_id, approveHarness.rows.TimeEntry[0].id);
+
+  const reviewableEntry = approveHarness.rows.TimeEntry[0];
+  const shiftApproved = await approveHarness.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'approve-shift-after-correction-001', entry_id: reviewableEntry.id,
+    expected_updated_date: reviewableEntry.updated_date,
+    decision: 'approve', note: 'Final shift review after missed-punch correction',
+  });
+  assert.equal(shiftApproved.status, 200, JSON.stringify(shiftApproved.body));
+  assert.equal(approveHarness.rows.TimeEntry[0].approval_status, 'approved');
+  const settledStatus = await approveHarness.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(settledStatus.status, 200, JSON.stringify(settledStatus.body));
+  assert.equal(settledStatus.body.unresolved_punch_review, undefined);
+  assert.equal(settledStatus.body.pending_shift_review, undefined);
+
   const rejectHarness = setupStaleMissedPunch();
   await rejectHarness.invoke({
     action: 'resolve_punch_exception', target_email: employee.email,
