@@ -5,6 +5,21 @@ export const normalizeResearchJurisdictionType = (value) => {
   return ['county', 'city', 'village', 'township', 'planning_unit'].includes(type) ? type : 'city';
 };
 
+export const jurisdictionProfileTypeForQueueRow = (row = {}) => {
+  const type = normalizeResearchJurisdictionType(row?.jurisdiction_type);
+  return ['county', 'city', 'township'].includes(type) ? type : 'municipality';
+};
+
+export const profileHasResearchEvidence = (profile = {}) => {
+  if (String(profile?.website_url || '').trim()) return true;
+  if (String(profile?.permitting_url || '').trim()) return true;
+  if (String(profile?.ai_summary || '').trim()) return true;
+  if (Array.isArray(profile?.documents) && profile.documents.length > 0) return true;
+  if (profile?.permit_requirements && Object.keys(profile.permit_requirements).length > 0) return true;
+  if (profile?.contact_info && Object.values(profile.contact_info).some((value) => String(value || '').trim())) return true;
+  return false;
+};
+
 export function queueResearchIdentity(row = {}) {
   const type = normalizeResearchJurisdictionType(row.jurisdiction_type);
   const parent = type === 'county' ? '' : norm(row.parent_county_name);
