@@ -1,257 +1,52 @@
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.52";
-import {
-  normalizeSignType,
-  buildCitation,
-  defaultExtractionStatus,
-  isDraftSource,
-  isHistoricalSource,
-  isCurrentAdoptedSource,
-  canBeOperational,
-  type SourceDoc,
-} from "../../shared/permittingRuleExtraction.ts";
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
+import { normalizeSignType } from '../../shared/permittingRuleExtraction.ts';
+import { extractEvidenceUnit } from '../../shared/permittingRuleEvidenceRun.mjs';
 
-// ── PermittingRule extraction engine ──
-// Reads PermittingSourceDocument.extracted_text for a jurisdiction, uses InvokeLLM
-// to extract structured rules with citations, and creates PermittingRule records.
-// Admin-only. Scales to any jurisdiction but is invoked per-jurisdiction to control credit use.
-
-const RULE_CATEGORIES = [
-  "permit_applicability", "sign_type_rule", "dimensional", "illumination_electronic",
-  "submittal_requirement", "fee_timing", "exemption", "procedure", "other",
-];
-const SIGN_TYPES = [
-  "wall", "channel_letters", "cabinet", "monument", "pole_pylon", "ground",
-  "projecting", "blade", "awning_canopy", "window", "temporary", "banner",
-  "feather_flag", "real_estate", "construction", "directional", "incidental",
-  "menu_board", "emc", "digital", "changeable_copy", "roof", "subdivision", "special_district",
-];
-
-const EXTRACTION_PROMPT = (title: string, text: string) => `You are a regulatory extraction engine for sign-permitting rules. Extract structured rules from the following source document text.
-
-For each DISTINCT regulatory rule, extract:
-- rule_category: one of [${RULE_CATEGORIES.join(", ")}]
-- sign_type: the sign type in the source's own terminology (preserve verbatim, e.g. "ground sign", "monument", "building mounted"). Empty string if not sign-type-specific.
-- sign_type_normalized: map to one of [${SIGN_TYPES.join(", ")}] or empty string if not applicable
-- zoning_district_applicability: which zoning districts this applies to (e.g. "C-1, C-2", "all districts", "A-1 only"). Empty string if not district-specific.
-- trigger: what condition or action triggers this rule (e.g. "Erecting a ground sign in a commercial district")
-- requirement: the actual regulatory requirement, stated clearly and specifically
-- numeric_value: the numeric value if the requirement has one (e.g. 50 for 50%, 10 for 10 working days), or 0 if none
-- unit: the unit for numeric_value (e.g. "percent", "working days", "square feet", "feet", "seconds"), or empty string if none
-- exceptions: any exceptions or conditions that modify the requirement, or empty string
-- section_or_page: the section number or page where this rule appears (e.g. "3404.A.1", "Page 8", "3408.5.A.2.a")
-- excerpt: the EXACT text from the source that supports this rule (copy verbatim from the source, max 500 chars)
-- confidence: "high" if the rule is clearly and explicitly stated, "medium" if inferred from context, "low" if uncertain
-
-CRITICAL RULES:
-1. Every rule MUST have a non-empty section_or_page AND a non-empty excerpt copied verbatim from the source.
-2. Do NOT create vague or unsourced summaries. If you cannot cite the exact source text, do not create the rule.
-3. If the text does not contain a clear regulatory rule (e.g. it is a meeting agenda, GIS endpoint, or navigation page), return an empty rules array.
-4. Preserve source terminology in sign_type; use sign_type_normalized for the canonical mapping.
-5. Extract each distinct requirement as a separate rule — do not merge multiple requirements into one.
-6. For fee/timing rules, extract the specific fee amount or time period with the section/page reference.
-
-Source document title: ${title}
-
-Source document text:
-${text}`;
-
-const RESPONSE_SCHEMA = {
-  type: "object",
-  properties: {
-    rules: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          rule_category: { type: "string", enum: RULE_CATEGORIES },
-          sign_type: { type: "string" },
-          sign_type_normalized: { type: "string", enum: SIGN_TYPES },
-          zoning_district_applicability: { type: "string" },
-          trigger: { type: "string" },
-          requirement: { type: "string" },
-          numeric_value: { type: "number" },
-          unit: { type: "string" },
-          exceptions: { type: "string" },
-          section_or_page: { type: "string" },
-          excerpt: { type: "string" },
-          confidence: { type: "string", enum: ["high", "medium", "low"] },
-        },
-        required: ["rule_category", "requirement", "section_or_page", "excerpt", "confidence"],
-      },
-    },
-  },
-};
-
-// Skip these classifications — they are meeting minutes, GIS endpoints, or navigation pages
-// that do not contain extractable regulatory rules. This saves extraction credits.
-const SKIP_CLASSIFICATIONS = new Set(["legislative_evidence", "gis_resource"]);
-
-export default async function(req: Request): Promise<Response> {
+Deno.serve(async req => {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-    if (user.role !== "admin") return Response.json({ error: "Forbidden — admin only" }, { status: 403 });
-
-    const body = await req.json().catch(() => ({}));
-    const jurisdictionName = String(body.jurisdiction_name || "Boone County").trim();
-    const docIds: string[] | null = Array.isArray(body.doc_ids) && body.doc_ids.length > 0
-      ? body.doc_ids.map(String)
-      : null;
-    const dryRun = Boolean(body.dry_run);
-
-    // Fetch the JurisdictionProfile for linking
-    const jpPage = await base44.asServiceRole.entities.JurisdictionProfile.filter(
-      { name: jurisdictionName },
-      { limit: 5, fields: ["id", "name"] },
-    );
-    const jurisdictionId = jpPage.items[0]?.id || "";
-
-    // Fetch source documents — filter by jurisdiction; doc_ids are applied in-memory
-    // because the SDK does not support $in on the built-in id field.
-    const query: Record<string, unknown> = { jurisdiction_name: jurisdictionName };
-
-    const docs: SourceDoc[] = [];
-    let cursor: string | undefined;
-    do {
-      const page = await base44.asServiceRole.entities.PermittingSourceDocument.filter(
-        query,
-        { sort: "title", limit: 200, fields: [
-          "id", "title", "jurisdiction_name", "extracted_text", "official_url",
-          "file_hash_sha256", "authority_classification", "content_status",
-          "effective_or_adopted_date", "issuing_office", "source_type", "text_extraction_state",
-        ], ...(cursor ? { cursor } : {}) },
-      );
-      docs.push(...page.items as SourceDoc[]);
-      cursor = page.next_cursor;
-    } while (cursor && page.has_more);
-
-    // Apply doc_ids filter in memory
-    const filteredDocs = docIds
-      ? docs.filter((d) => docIds.includes(d.id))
-      : docs;
-
-    // Filter to docs with substantive text and non-skipped classifications
-    const extractable = filteredDocs.filter((d) => {
-      // This legacy route consumes inline text only. Partial extraction and
-      // segmented previews require the evidence-page route before rule analysis.
-      const textState = (d as any).text_extraction_state;
-      if (textState && (textState.preview_only || textState.storage_mode || textState.complete_document_text !== true)) return false;
-      const text = String((d as any).extracted_text || "");
-      if (text.length < 200) return false;
-      const cls = String((d as any).authority_classification || "").toLowerCase();
-      if (SKIP_CLASSIFICATIONS.has(cls)) return false;
-      return true;
-    });
-
-    if (dryRun) {
-      return Response.json({
-        success: true,
-        dry_run: true,
-        jurisdiction: jurisdictionName,
-        jurisdiction_id: jurisdictionId,
-        total_docs: filteredDocs.length,
-        extractable_docs: extractable.length,
-        skipped: filteredDocs.length - extractable.length,
-        docs: extractable.map((d) => ({ id: d.id, title: (d as any).title, text_length: String((d as any).extracted_text || "").length })),
-      });
+    const base44=createClientFromRequest(req);
+    const user=await base44.auth.me().catch(()=>null);
+    if (!user || user.role!=='admin') return Response.json({error:'Admin access required'},{status:403});
+    const body=await req.json().catch(()=>({}));
+    if (body.automatic===true || body.queued===true) return Response.json({error:'Queued extraction requires its own credit reservation; this route is manual only.'},{status:400});
+    const entities=base44.asServiceRole.entities;
+    const action=body.action || (body.dry_run?'preview':'extract');
+    if (action==='sources') {
+      const query:any={};
+      if (body.jurisdiction_id) query.jurisdiction_id=String(body.jurisdiction_id);
+      else if (body.jurisdiction_name) query.jurisdiction_name=String(body.jurisdiction_name).trim();
+      else return Response.json({error:'Select a jurisdiction.'},{status:400});
+      const skip=Number(body.cursor || 0);
+      if (!Number.isSafeInteger(skip) || skip<0) return Response.json({error:'Invalid source cursor.'},{status:400});
+      const rows=await entities.PermittingSourceDocument.filter(query,'id',21,skip,[
+        'id','title','jurisdiction_id','jurisdiction_name','issuing_office','authority_classification','verification_status',
+        'text_extraction_state','official_url']);
+      if (!Array.isArray(rows)) throw Error('Source list did not return an array.');
+      return Response.json({success:true,sources:rows.slice(0,20),has_more:rows.length>20,next_cursor:rows.length>20?String(skip+20):null,llm_calls:0});
     }
-
-    const extractionDate = new Date().toISOString();
-    const rulesToCreate: any[] = [];
-    const errors: string[] = [];
-    let docsProcessed = 0;
-    let llmCalls = 0;
-
-    for (const doc of extractable) {
-      const text = String((doc as any).extracted_text || "");
-      try {
-        const llmResponse = await base44.integrations.Core.InvokeLLM({
-          prompt: EXTRACTION_PROMPT((doc as any).title || "", text),
-          response_json_schema: RESPONSE_SCHEMA,
-        });
-        llmCalls++;
-
-        const extractedRules: any[] = (llmResponse as any)?.rules || [];
-        if (!Array.isArray(extractedRules) || extractedRules.length === 0) {
-          docsProcessed++;
-          continue;
-        }
-
-        const defaults = defaultExtractionStatus(doc);
-        const isDraft = isDraftSource(doc);
-        const isHist = isHistoricalSource(doc);
-
-        for (const r of extractedRules) {
-          // Validate: every rule must have section + excerpt
-          if (!r.section_or_page || !r.excerpt || !r.requirement) continue;
-
-          const citation = buildCitation(doc, r.section_or_page, r.excerpt, extractionDate);
-          const normalizedSignType = normalizeSignType(r.sign_type) || r.sign_type_normalized || null;
-
-          const rule = {
-            jurisdiction_name: jurisdictionName,
-            jurisdiction_id: jurisdictionId,
-            issuing_office: (doc as any).issuing_office || "",
-            rule_category: r.rule_category || "other",
-            sign_type: r.sign_type || "",
-            sign_type_normalized: normalizedSignType,
-            zoning_district_applicability: r.zoning_district_applicability || "",
-            trigger: r.trigger || "",
-            requirement: r.requirement,
-            numeric_value: typeof r.numeric_value === "number" ? r.numeric_value : null,
-            unit: r.unit || "",
-            exceptions: r.exceptions || "",
-            effective_date: (doc as any).effective_or_adopted_date || "",
-            status: defaults.status,
-            confidence: r.confidence === "high" ? "high" : (isDraft || isHist) ? "low" : (r.confidence || "medium"),
-            conflict_state: "none",
-            citations: [citation],
-            source_snapshot_sha256: doc.file_hash_sha256 || "",
-            is_operational: false,
-            draft_context: isDraft,
-            notes: isDraft ? "Extracted from a draft/proposed source — cannot reach staff_approved while authority gate says current adopted code is authoritative." : (isHist ? "Extracted from a historical source — fees/dates must be reconfirmed." : ""),
-            version: 1,
-          };
-          rulesToCreate.push(rule);
-        }
-        docsProcessed++;
-      } catch (e: any) {
-        errors.push(`${(doc as any).title || doc.id}: ${e.message || e}`);
+    if (action==='get_run') {
+      let run;
+      if (body.run_id) run=await entities.PermittingRuleExtractionRun.get(String(body.run_id));
+      else {
+        const id=String(body.request_id || '');
+        if (!/^[a-zA-Z0-9_-]{16,100}$/.test(id)) return Response.json({error:'A stable request id or run id is required.'},{status:400});
+        const rows=await entities.PermittingRuleExtractionRun.filter({request_key:'manual-rule-evidence:'+id},'created_date',2,0);
+        if (rows.length>1) throw Error('Extraction request identity is ambiguous.');
+        run=rows[0];
       }
+      return Response.json({success:true,run:run || null,not_found:!run,llm_calls:0});
     }
-
-    // Bulk create rules
-    let createdCount = 0;
-    if (rulesToCreate.length > 0) {
-      // bulkCreate in batches of 100
-      for (let i = 0; i < rulesToCreate.length; i += 100) {
-        const batch = rulesToCreate.slice(i, i + 100);
-        const result = await base44.asServiceRole.entities.PermittingRule.bulkCreate(batch);
-        createdCount += (result as any).length || batch.length;
-      }
-    }
-
-    // Summary by status and category
-    const byStatus: Record<string, number> = {};
-    const byCategory: Record<string, number> = {};
-    for (const r of rulesToCreate) {
-      byStatus[r.status] = (byStatus[r.status] || 0) + 1;
-      byCategory[r.rule_category] = (byCategory[r.rule_category] || 0) + 1;
-    }
-
-    return Response.json({
-      success: true,
-      jurisdiction: jurisdictionName,
-      jurisdiction_id: jurisdictionId,
-      docs_processed: docsProcessed,
-      llm_calls: llmCalls,
-      rules_created: createdCount,
-      by_status: byStatus,
-      by_category: byCategory,
-      errors: errors.slice(0, 10),
-    });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    if (!['extract','preview'].includes(action)) return Response.json({error:'Unknown extraction action.'},{status:400});
+    const sourceDocumentId=String(body.source_document_id || '').trim(),startPage=body.start_page ?? 1,pageCount=body.page_count ?? 1;
+    if (!sourceDocumentId || !Number.isInteger(startPage) || startPage<1 || !Number.isInteger(pageCount) || pageCount<1 || pageCount>5)
+      return Response.json({error:'Select one source document and one to five retained physical PDF pages.'},{status:400});
+    const result=await extractEvidenceUnit({sourceEntity:entities.PermittingSourceDocument,segmentEntity:entities.PermittingSourceTextSegment,
+      runEntity:entities.PermittingRuleExtractionRun,invokeLlm:data=>base44.asServiceRole.integrations.Core.InvokeLLM(data),
+      sourceDocumentId,startPage,pageCount,requestId:String(body.request_id || ''),dryRun:action==='preview',
+      requestedBy:user.email,normalizeSignType});
+    return Response.json(result);
+  } catch(error) {
+    console.error('permittingRuleExtraction:',error?.message || error);
+    return Response.json({error:error?.message || 'Evidence extraction could not complete safely.'},{status:error?.status || 500});
   }
-}
+});
