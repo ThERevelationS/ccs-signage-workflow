@@ -42,7 +42,7 @@ const email = 'worker@synthetic.invalid';
 const baseProps = {
   employeeStates: [], activeBreaks: [], activeWorkPauses: [],
   activeLaborSegments: [], correctionRequests: [], punchExceptions: [],
-  onRefresh: () => {}, onReviewEntry: () => {},
+  onRefresh: () => {}, onReviewEntry: () => {}, onApproveEntry: () => {},
 };
 function render(timeEntries, overrides = {}) {
   return renderToStaticMarkup(React.createElement(ExceptionCenter, {
@@ -139,6 +139,19 @@ assert.match(orphanPunchCaseMarkup, /Punch exception is missing its linked shift
 assert.match(orphanPunchCaseMarkup, /Investigate before approving or finalizing/);
 console.log('PASS orphaned punch exception becomes a critical management integrity alert');
 
+const correctedNeedsApprovalEntry = {
+  id: 'corrected-needs-approval', user_email: email, user_name: 'Synthetic Employee',
+  status: 'clocked_out', clock_in: '2026-09-27T14:00:00.000Z', clock_out: '2026-09-27T22:00:00.000Z',
+  approval_status: 'needs_review', last_correction_request_id: 'terminal-correction-001',
+};
+const correctedNeedsApprovalMarkup = render([correctedNeedsApprovalEntry]);
+assert.match(correctedNeedsApprovalMarkup, /Corrected shift awaits final approval/);
+assert.match(correctedNeedsApprovalMarkup, /separate manager shift approval is required/);
+assert.match(correctedNeedsApprovalMarkup, /Approve Shift/);
+const fullyApprovedMarkup = render([{ ...correctedNeedsApprovalEntry, approval_status: 'approved' }]);
+assert.doesNotMatch(fullyApprovedMarkup, /Corrected shift awaits final approval/);
+console.log('PASS corrected completed shift stays in Needs Attention until separate shift approval');
+
 const monitoredOldEntry = {
   id: 'monitored-old-entry', user_email: email, user_name: 'Synthetic Employee',
   status: 'clocked_in', clock_in: '2026-09-01T14:00:00.000Z',
@@ -197,4 +210,4 @@ const expiredAcknowledgementMarkup = render([acknowledgedOldEntry], {
 assert.match(expiredAcknowledgementMarkup, /Possible missed clock-out/);
 console.log('PASS expired Worked Through acknowledgement allows stale-shift warning to return');
 
-console.log('PASS 11/11 Time Clock management exception renderer scenarios');
+console.log('PASS 12/12 Time Clock management exception renderer scenarios');
