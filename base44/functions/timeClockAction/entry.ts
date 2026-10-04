@@ -3857,6 +3857,10 @@ Deno.serve(async (req) => {
             generation_audit_reconciliation_hash: generationAuditReconciliationHash,
             generation_audit_reconciliation_count: generationAuditReconciliation.length,
           } : {}),
+          ...(snapshotVersion >= 21 ? {
+            generation_membership_discovery_hash: generationMembershipDiscoveryHash,
+            generation_membership_discovery_count: generationMembershipDiscovery.length,
+          } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
         const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), ...(snapshotVersion >= 17 ? { generation_audit_reconciliation: generationAuditReconciliation } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
