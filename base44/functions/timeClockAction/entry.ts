@@ -3162,7 +3162,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 8 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 9 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3186,6 +3186,30 @@ Deno.serve(async (req) => {
         if (supersededGeneration && (!supersedesGenerationRequestId || !authorizedByReopenRequestId)) {
           return Response.json({ success: false, error: 'The prior payroll generation is missing authoritative reopen lineage. Admin investigation is required before re-finalization.' }, { status: 409 });
         }
+        const generationChanges = [];
+        if (supersededGeneration) {
+          const priorRows = Array.isArray(supersededGeneration.shift_manifest) ? supersededGeneration.shift_manifest : [];
+          const priorById = new Map(priorRows.map((row: any) => [String(row.id || ''), row]));
+          const currentById = new Map(snapshotRows.map((row: any) => [String(row.id || ''), row]));
+          const comparable = (row: any) => ({
+            user_email: asEmail(row?.user_email), clock_in: row?.clock_in || '', clock_out: row?.clock_out || '',
+            total_hours: Number(row?.total_hours || 0), approval_status: row?.approval_status || '',
+            approval_request_id: row?.approval_request_id || '',
+          });
+          const allIds = [...new Set([...priorById.keys(), ...currentById.keys()])].filter(Boolean).sort();
+          for (const id of allIds) {
+            const before = priorById.get(id);
+            const after = currentById.get(id);
+            if (!before) generationChanges.push({ time_entry_id: id, change_type: 'added', before: null, after: comparable(after) });
+            else if (!after) generationChanges.push({ time_entry_id: id, change_type: 'removed', before: comparable(before), after: null });
+            else {
+              const beforeComparable = comparable(before);
+              const afterComparable = comparable(after);
+              if (!constantTimeEqual(await payloadHash(beforeComparable), await payloadHash(afterComparable))) generationChanges.push({ time_entry_id: id, change_type: 'changed', before: beforeComparable, after: afterComparable });
+            }
+          }
+        }
+        const generationChangesHash = await payloadHash(generationChanges);
         const approvingManagers = [...new Set(snapshotRows.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
         const finalizerApprovalOverlap = approvingManagers.includes(actorEmail);
         const summaryCore = {
@@ -3204,9 +3228,14 @@ Deno.serve(async (req) => {
             supersedes_generation_request_id: supersedesGenerationRequestId,
             authorized_by_reopen_request_id: authorizedByReopenRequestId,
           } : {}),
+          ...(snapshotVersion >= 9 ? {
+            generation_changes_hash: generationChangesHash,
+            generation_change_count: generationChanges.length,
+            generation_reopen_reason: String(supersededGeneration?.invalidation_reason || ''),
+          } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
-        const summary = { ...summaryCore, shift_manifest: snapshotRows, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
+        const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
