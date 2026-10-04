@@ -2505,6 +2505,10 @@ Deno.serve(async (req) => {
               approvalEvidence.authentication_method = String(evidence[0].authentication_method || '');
               if (approvalEvidence.approver_role !== 'admin' || !['session', 'admin_kiosk'].includes(approvalEvidence.authentication_method)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift approval authority is invalid.', pay_period_id: period.id, generations: [] });
             }
+            if (Number(current.snapshot_version || 0) >= 6) {
+              approvalEvidence.independent_review = asEmail(evidence[0].actor_email) !== asEmail(entry.user_email);
+              if (!approvalEvidence.independent_review) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll shift does not prove independent manager approval.', pay_period_id: period.id, generations: [] });
+            }
           }
           const snapshotRow = { id: entry.id, user_email: asEmail(entry.user_email), clock_in: entry.clock_in, clock_out: entry.clock_out, total_hours: Number(entry.total_hours || 0), approval_status: entry.approval_status, approval_request_id: entry.approval_request_id || '', approval_evidence: approvalEvidence };
           snapshotRows.push(snapshotRow);
@@ -2706,6 +2710,10 @@ Deno.serve(async (req) => {
                   approvalEvidence.approver_role = String(evidence[0].actor_role || '');
                   approvalEvidence.authentication_method = String(evidence[0].authentication_method || '');
                   if (approvalEvidence.approver_role !== 'admin' || !['session', 'admin_kiosk'].includes(approvalEvidence.authentication_method)) return Response.json({ success: false, error: 'A finalized shift no longer proves authorized manager approval. Admin investigation is required.' }, { status: 409 });
+                }
+                if (Number(period.finalized_summary?.snapshot_version || 0) >= 6) {
+                  approvalEvidence.independent_review = asEmail(evidence[0].actor_email) !== asEmail(entry.user_email);
+                  if (!approvalEvidence.independent_review) return Response.json({ success: false, error: 'A finalized shift no longer proves independent manager approval. Admin investigation is required.' }, { status: 409 });
                 }
               }
               recoverySnapshotRows.push({
