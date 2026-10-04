@@ -52,9 +52,10 @@ async function writeReceipt(entity, snapshot, expected, next, fields = {}) {
   throw Error('Source text write repeatedly conflicted; newer work retained.');
 }
 
-export async function extractKnownSourceText({entity,sourceDocumentId,readAndExtract,automatic=true,token=crypto.randomUUID(),now=()=>Date.now()}) {
+export async function extractKnownSourceText({entity,sourceDocumentId,readAndExtract,canAutomaticallyExtract,automatic=true,token=crypto.randomUUID(),now=()=>Date.now()}) {
   const source=await entity.get(sourceDocumentId);
   if (!sourceTextEligible(source,{automatic,now:now()})) return {success:true,skipped:true,reason:'no_eligible_text_source'};
+  if (automatic && canAutomaticallyExtract && !await canAutomaticallyExtract(source)) return {success:true,skipped:true,reason:'profile_protected_or_archive_changed'};
   const old=source.text_extraction_state || {};
   const prior=source.extracted_pages || [];
   // Stored page sequence is the durable cursor, not a caller-supplied page number.
@@ -81,6 +82,7 @@ export async function extractKnownSourceText({entity,sourceDocumentId,readAndExt
     const nextPage=pages.length+1;
     const ocrPages=pages.filter(p=>p.needs_ocr_review).map(p=>p.page);
     const status=limit?'partial_limit':nextPage<=chunk.total_pages?'partial':ocrPages.length?'needs_ocr':'complete';
+    if (automatic && canAutomaticallyExtract && !await canAutomaticallyExtract(source)) throw Error('Profile protection or retained archive changed during extraction.');
     const receipt={...claimed,status,lease_expires_at:'',retry_after:'',failures:0,total_pages:chunk.total_pages,next_page:nextPage,
       pages_extracted:pages.length,needs_ocr_pages:ocrPages,completed_at:new Date(now()).toISOString(),error:'',
       complete_document_text:status==='complete'};
@@ -100,7 +102,10 @@ export async function continueSourceTextBacklog(options) {
   const rows=await options.entity.filter(sourceTextBacklogQuery(),'updated_date',20,0);
   for (const row of rows) {
     if (!sourceTextEligible(row)) continue;
-    try {return await extractKnownSourceText({...options,sourceDocumentId:row.id,automatic:true});}
+    try {
+      const result=await extractKnownSourceText({...options,sourceDocumentId:row.id,automatic:true});
+      if (!result.skipped) return result;
+    }
     catch(error){return {success:false,status:'claim_conflict',error:String(error.message||error)};}
   }
   return {success:true,skipped:true,reason:'no_eligible_text_source',sources_checked:rows.length};
