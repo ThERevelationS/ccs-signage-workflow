@@ -688,9 +688,9 @@ Deno.serve(async (req) => {
         if (String(exactReceipt.payload_fingerprint || '') !== fingerprint) return json({error:'This mechanic request id was already used with different data. Nothing was replayed.'},{status:409});
         if (workOrderHasMechanicReceipt(current,exactReceipt)) {
           await markMechanicReceiptApplied(Receipt,exactReceipt,current,exactReceipt.status !== 'applied');
-          return json({success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId,work_order:sanitizeWorkOrder(current)});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,recovered:exactReceipt.status !== 'applied',request_id:requestId});
         }
-        if (exactReceipt.status === 'applied') return json({success:true,reused:true,request_id:requestId,work_order:sanitizeWorkOrder(current)});
+        if (exactReceipt.status === 'applied') return mechanicWorkOrderResponse(Access,String(grant.id || ''),action,current,{success:true,reused:true,request_id:requestId});
         if (exactReceipt.status === 'started') return json({error:'This mechanic request is still being verified. Check current server state before retrying.'},{status:409});
         return json({error:'This mechanic request previously failed and was not replayed. Check current server state before trying again.'},{status:409});
       }
@@ -722,8 +722,8 @@ Deno.serve(async (req) => {
           await failMechanicReceipt(Receipt,receipt,reason);
           continue;
         }
+        const receiptAction = mechanicActionForReceipt(receipt);
         try {
-          const receiptAction = mechanicActionForReceipt(receipt);
           await requireCurrentMechanicGrant(Access,String(grant.id || ''),receiptAction,String(current.equipment_id || ''));
           const result = await base44.asServiceRole.functions.invoke('fleetWorkOrderAction',{
             action:'update',id,expected_updated_date:String(receipt?.result_summary?.expected_updated_date || ''),work_order:recovery.patch,
@@ -735,13 +735,14 @@ Deno.serve(async (req) => {
           const updated = result?.data?.work_order || await WorkOrder.get(id);
           await markMechanicReceiptApplied(Receipt,receipt,updated,true);
           await resolveReusedUploadReceipt(Receipt,receipt);
-          return json({error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true,work_order:sanitizeWorkOrder(updated)},{status:409});
+          return mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,updated,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
         } catch (error) {
+          if (isMechanicAccessChangedError(error)) throw error;
           const fresh = await WorkOrder.get(id).catch(()=>null);
           if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
             await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
             await resolveReusedUploadReceipt(Receipt,receipt);
-            return json({error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true,work_order:sanitizeWorkOrder(fresh)},{status:409});
+            return mechanicWorkOrderResponse(Access,String(grant.id || ''),receiptAction,fresh,{error:'A previous mechanic update was safely recovered. Refresh the current Fleet work order before making another change.',recovered_previous:true},{status:409});
           }
           await failMechanicReceipt(Receipt,receipt,error);
         }
