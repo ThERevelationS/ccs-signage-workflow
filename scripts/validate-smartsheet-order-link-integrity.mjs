@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { auditOrderPermanentLinks } from '../base44/shared/smartsheetOrderLinkIntegrity.mjs';
+import { auditOrderPermanentLinks, classifyOrderUnlinkedReviewHint } from '../base44/shared/smartsheetOrderLinkIntegrity.mjs';
 
 const sheetId = '4963691473987460';
 const bindings = {
@@ -40,6 +40,7 @@ assert.equal(report.counts.active_base44_orders, 7);
 assert.equal(report.counts.linked_to_configured_sheet, 4);
 assert.equal(report.counts.matched_permanent_links, 1);
 assert.equal(report.counts.base44_unlinked, 1);
+assert.equal(report.counts.base44_unlinked_likely_test_artifacts, 0);
 assert.equal(report.counts.invalid_base44_row_id, 1);
 assert.equal(report.counts.wrong_sheet_link, 1);
 assert.equal(report.counts.duplicate_base44_row_ids, 1);
@@ -82,6 +83,23 @@ assert.equal(nameCollision.counts.unlinked_smartsheet_rows, 1);
 assert.equal(nameCollision.counts.matched_permanent_links, 0);
 console.log('PASS matching names never create or imply a permanent link');
 
+const likelyTest = {
+  id: 'old-test', customer_name: 'This is a Test', description: 'This is a test of the ',
+  created_by: 'anonymous', created_by_id: 'anonymous', customer_id: null, work_order_id: '',
+  smartsheet_sheet_id: null, smartsheet_row_id: null, smartsheet_sync_snapshot: null,
+  smartsheet_last_synced_at: null, smartsheet_create_attempt: null, smartsheet_pending_local_sync: false,
+};
+assert.equal(classifyOrderUnlinkedReviewHint(likelyTest).kind, 'likely_historical_test_artifact');
+assert.equal(classifyOrderUnlinkedReviewHint({ ...likelyTest, customer_id: 'customer-1' }).kind, 'unlinked_order');
+assert.equal(classifyOrderUnlinkedReviewHint({ ...likelyTest, smartsheet_sync_snapshot: { '1': 'x' } }).kind, 'unlinked_order');
+assert.equal(classifyOrderUnlinkedReviewHint({ ...likelyTest, customer_name: 'Testing Equipment', description: 'Production order' }).kind, 'unlinked_order');
+const testReport = auditOrderPermanentLinks([likelyTest], [], sheetId, bindings);
+assert.equal(testReport.counts.base44_unlinked, 1);
+assert.equal(testReport.counts.base44_unlinked_likely_test_artifacts, 1);
+assert.equal(testReport.records_by_category.base44_unlinked[0].review_hint, 'likely_historical_test_artifact');
+assert.equal(testReport.link_health.action_required, 1);
+console.log('PASS likely historical test artifacts are review hints only and remain explicit unlinked issues');
+
 const backend = readFileSync('base44/functions/smartsheetSyncAction/entry.ts', 'utf8');
 const ui = readFileSync('src/components/orders/OrderLinkIntegrityReview.jsx', 'utf8');
 const tools = readFileSync('src/components/orders/OrderReviewTools.jsx', 'utf8');
@@ -104,6 +122,8 @@ assert.match(ui, /matching_strategy !== "permanent_sheet_and_row_ids_only"/);
 assert.match(ui, /Current visual row:.*display only, never used for matching/);
 assert.match(ui, /Names, descriptions and visual row numbers are never used to repair links/);
 assert.match(ui, /No partial results are displayed and nothing was changed/);
+assert.match(ui, /Likely historical test artifact/);
+assert.match(ui, /review hint only\. Nothing is hidden, deleted, linked, or retired automatically/);
 assert.match(tools, /Review links/);
 assert.match(tools, /<OrderLinkIntegrityReview/);
 console.log('PASS admin diagnostics expose a read-only link review without adding link controls to the everyday Order Form');
