@@ -2636,10 +2636,20 @@ Deno.serve(async (req) => {
               !constantTimeEqual(String(summary.generation_changes_hash || ''), await payloadHash(changes)) ||
               String(summary.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} change provenance failed verification.`, pay_period_id: period.id, generations: [] });
         }
+        if (Number(summary.snapshot_version || 0) >= 12) {
+          const predecessor = index > 0 ? history[index - 1] : null;
+          const expectedStart = String(predecessor?.invalidated_at || '');
+          const expectedEnd = String(summary.lock_timestamp || '');
+          if (String(summary.generation_causal_window_start || '') !== expectedStart ||
+              String(summary.generation_causal_window_end || '') !== expectedEnd ||
+              (predecessor && (!expectedStart || !inCausalWindow(expectedStart, expectedStart, expectedEnd)))) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} causal window failed verification.`, pay_period_id: period.id, generations: [] });
+        }
         if (Number(summary.snapshot_version || 0) >= 10) {
+          const windowStart = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_start || '') : '';
+          const windowEnd = Number(summary.snapshot_version || 0) >= 12 ? String(summary.generation_causal_window_end || '') : '';
           for (const change of summary.generation_changes || []) {
-            if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
-            if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} correction provenance failed verification.`, pay_period_id: period.id, generations: [] });
+            if (Number(summary.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} non-correction change provenance failed verification.`, pay_period_id: period.id, generations: [] });
           }
         }
         generations.push({
@@ -2677,10 +2687,20 @@ Deno.serve(async (req) => {
               !constantTimeEqual(String(current.generation_changes_hash || ''), await payloadHash(changes)) ||
               String(current.generation_reopen_reason || '') !== String(predecessor?.invalidation_reason || '')) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll change provenance failed verification.', pay_period_id: period.id, generations: [] });
         }
+        if (Number(current.snapshot_version || 0) >= 12) {
+          const predecessor = history.length ? history[history.length - 1] : null;
+          const expectedStart = String(predecessor?.invalidated_at || '');
+          const expectedEnd = String(current.lock_timestamp || '');
+          if (String(current.generation_causal_window_start || '') !== expectedStart ||
+              String(current.generation_causal_window_end || '') !== expectedEnd ||
+              (predecessor && (!expectedStart || !inCausalWindow(expectedStart, expectedStart, expectedEnd)))) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll causal window failed verification.', pay_period_id: period.id, generations: [] });
+        }
         if (Number(current.snapshot_version || 0) >= 10) {
+          const windowStart = Number(current.snapshot_version || 0) >= 12 ? String(current.generation_causal_window_start || '') : '';
+          const windowEnd = Number(current.snapshot_version || 0) >= 12 ? String(current.generation_causal_window_end || '') : '';
           for (const change of current.generation_changes || []) {
-            if (change?.correction_provenance && !await verifyCorrectionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
-            if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
+            if (change?.correction_provenance && !await verifyCorrectionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll correction provenance failed verification.', pay_period_id: period.id, generations: [] });
+            if (Number(current.snapshot_version || 0) >= 11 && !change?.correction_provenance && !await verifyActionProvenance(change, windowStart, windowEnd)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll non-correction change provenance failed verification.', pay_period_id: period.id, generations: [] });
           }
         }
         const lockedEntries = await entryEntity.filter({ pay_period_id: period.id });

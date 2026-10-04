@@ -133,3 +133,30 @@ test('backlog query excludes uncertain uploads and protected files without shrin
   assert.deepEqual(q.documents.$elemMatch['archive_state.status'].$nin,['complete','uploading','upload_uncertain','blocked','verification_blocked']);
   assert.deepEqual(q.state.$in,['OH','KY']);
 });
+
+test('automatic readback retries stop after three failures while keeping the known storage URL',async()=>{
+  const f=fixture({failReadback:true});let time=Date.now();
+  for(let i=0;i<3;i++){await archiveKnownJurisdictionSource({...f.api,now:()=>time});time+=24*60*60_000;}
+  const d=f.record().documents[0];
+  assert.equal(d.archive_state.status,'verification_blocked');
+  assert.equal(d.archive_state.file_url,'https://storage.test/archive.pdf');
+  assert.equal((await archiveKnownJurisdictionSource({...f.api,now:()=>time})).skipped,true);
+  assert.equal(f.calls.uploads,1);
+  f.recoverReadback();
+  assert.equal((await archiveKnownJurisdictionSource({...f.api,manual:true,now:()=>time})).archived,1);
+  assert.equal(f.calls.uploads,1);
+});
+
+test('automatic archival respects a jurisdiction opt-out; manual targeted work still succeeds',async()=>{
+  const f=fixture();f.patch({auto_refresh:false});
+  assert.equal((await archiveKnownJurisdictionSource(f.api)).reason,'auto_refresh_disabled');
+  assert.equal(f.calls.uploads,0);
+  assert.equal((await archiveKnownJurisdictionSource({...f.api,manual:true})).archived,1);
+});
+
+test('upload success without a returned receipt never triggers a second upload',async()=>{
+  const f=fixture();f.api.uploadFile=async()=>{f.calls.uploads++;return {};};
+  assert.equal((await archiveKnownJurisdictionSource(f.api)).status,'upload_uncertain');
+  assert.equal((await archiveKnownJurisdictionSource({...f.api,manual:true})).skipped,true);
+  assert.equal(f.calls.uploads,1);
+});
