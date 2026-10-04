@@ -88,7 +88,7 @@ test('uncertain candidate creation does not repeat, even manually; delayed rule 
  const args={...f.api,runId:run.run_id,candidateIndex:0};
  assert.equal((await importEvidenceCandidate(args)).status,'import_uncertain');
  assert.equal((await importEvidenceCandidate(args)).status,'import_uncertain');assert.equal(f.calls.ruleCreates,1);
- f.lateRule();assert.equal((await importEvidenceCandidate(args)).success,true);assert.equal(f.calls.ruleCreates,1);
+ f.lateRule();const late=await importEvidenceCandidate(args);assert.equal(late.success,true);assert.equal(late.rules_created,0);assert.equal(f.calls.ruleCreates,1);
 });
 test('concurrent candidate imports create only one rule',async()=>{
  const f=await ruleFixture(),run=await extractEvidenceUnit(f.api);
@@ -115,7 +115,10 @@ test('approval validates literal page hashes, source adoption/review, numbers an
  const f=await ruleFixture(),run=await extractEvidenceUnit(f.api),rule=run.candidates[0];
  assert.equal((await verifyRuleForApproval(rule,f.api)).length,1);
  for(const patch of [{numeric_value:999},{unit:'feet'},{requirement:'Maximum area is 500 square feet.'},
-  {jurisdiction_id:'wrong'},{draft_context:true},{citations:[{...rule.citations[0],text_sha256:'b'.repeat(64)}]}])
+  {jurisdiction_id:'wrong'},{draft_context:true},{trigger:'Unsupported staff trigger'},{exceptions:'Invented exemption'},
+  {rule_category:'unknown'},{evidence_context:{...rule.evidence_context,jurisdiction_scope:'Other office'}},
+  {citations:[{...rule.citations[0],archived_file_url:'https://wrong.test/file.pdf'}]},
+  {citations:[{...rule.citations[0],text_sha256:'b'.repeat(64)}]}])
   await assert.rejects(verifyRuleForApproval({...rule,...patch},f.api));
  f.patchSource({text_extraction_state:{...f.source().text_extraction_state,complete_document_text:false,status:'partial'}});
  await assert.rejects(verifyRuleForApproval(rule,f.api),/Complete/);
