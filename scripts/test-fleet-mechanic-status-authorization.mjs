@@ -45,9 +45,28 @@ test("idempotent Start/Save retry and recovery reads revalidate before returning
   assert.match(saveBlock, /await mechanicWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'save',fresh \|\| current,/);
 });
 
-test("primary Start/Save mutation acknowledgements remain on their existing path", () => {
+test("primary Start/Save success acknowledgements revalidate after durable receipt application", () => {
   const startBlock = between("if (action === 'start') {", "\n\n    if (action === 'save') {");
   const saveBlock = between("if (action === 'save') {", "\n\n    return json\(\{error:'Unsupported mechanic portal action\.'\}");
-  assert.match(startBlock, /return json\(\{success:true,request_id:mechanicMutation\.requestId,work_order:sanitizeWorkOrder\(updated\)\}\);/);
-  assert.match(saveBlock, /return json\(\{success:true,request_id:mechanicMutation\.requestId,work_order:sanitizeWorkOrder\(updated\)\}\);/);
+  assert.match(startBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'start',updated,/);
+  assert.match(saveBlock, /markMechanicReceiptApplied\(Receipt,receipt,updated,false\);[\s\S]*resolveReusedUploadReceipt\(Receipt,receipt\);[\s\S]*await mechanicCommittedWorkOrderResponse\(Access,String\(grant\.id \|\| ''\),'save',updated,/);
+  assert.match(startBlock, /catch \(error\) \{\n        if \(isMechanicAccessChangedError\(error\)\) throw error;/);
+  assert.match(saveBlock, /catch \(error\) \{\n        if \(isMechanicAccessChangedError\(error\)\) throw error;/);
+});
+
+test("repair-estimate Save/Submit revalidate after commit before returning financial details", () => {
+  const estimateBlock = between("if (action === 'estimate_save' || action === 'estimate_submit') {", "\n\n    if (action === 'start') {");
+  assert.match(estimateBlock, /await mechanicCommittedEstimateResponse\(Access,String\(grant\.id \|\| ''\),'estimate_save',String\(current\.equipment_id \|\| ''\),estimate,/);
+  assert.match(estimateBlock, /updateFleetRecordIfCurrent\([\s\S]*await Log\.create\([\s\S]*await mechanicCommittedEstimateResponse\(Access,String\(grant\.id \|\| ''\),'estimate_submit',String\(current\.equipment_id \|\| ''\),updated,/);
+  assert.equal(/return json\(\{success:true,estimate:sanitizeEstimate/.test(estimateBlock), false, "committed estimates must not bypass the final grant check");
+});
+
+test("post-commit authorization failures warn against blind replay", () => {
+  const helperStart = source.indexOf("function mechanicCommittedResponseAccessChangedError()");
+  const helperEnd = source.indexOf("\n\nasync function requireCurrentMechanicGrantForCommittedResponse", helperStart);
+  assert.ok(helperStart >= 0 && helperEnd > helperStart);
+  const helper = source.slice(helperStart, helperEnd);
+  assert.match(helper, /may have been committed/);
+  assert.match(helper, /Check current server state with CCS before retrying/);
+  assert.match(helper, /FLEET_MECHANIC_ACCESS_REVOKED/);
 });
