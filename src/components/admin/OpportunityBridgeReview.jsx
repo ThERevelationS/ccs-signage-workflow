@@ -160,6 +160,7 @@ export default function OpportunityBridgeReview() {
   }, [filter]);
 
   const summary = result?.summary || {};
+  const readiness = result?.readiness || null;
   const previousSummary = previous?.summary || null;
   const safeTotal = number(summary.proposed_create) + number(summary.proposed_recover_link) + number(summary.already_linked);
   const previousSafe = previousSummary
@@ -215,6 +216,59 @@ export default function OpportunityBridgeReview() {
         <MetricCard label="Historical deterministic Won" value={summary.historical_deterministic_won} delta={deltas.won} tone="emerald" />
         <MetricCard label="Held for review" value={summary.held} delta={deltas.held} tone="amber" />
       </section>
+
+      {readiness && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <h3 className="font-bold text-amber-950 dark:text-amber-100">Production Apply Readiness: {readiness.decision || "NO_GO"}</h3>
+              </div>
+              <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                Technical checks and rollout gates are evaluated separately. Production apply remains hard-disabled in source.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className={`rounded-full px-2.5 py-1 ${readiness.technical_ready ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                Technical: {readiness.technical_ready ? "READY" : "BLOCKED"}
+              </span>
+              <span className={`rounded-full px-2.5 py-1 ${readiness.rollout_ready ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-800"}`}>
+                Rollout: {readiness.rollout_ready ? "READY" : "LOCKED"}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {(readiness.checks || []).map((check) => (
+              <div key={check.key} className="flex items-start gap-2 rounded-lg border border-amber-200/80 bg-white/80 p-2.5 text-xs dark:border-amber-900 dark:bg-slate-900/70">
+                {check.pass
+                  ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />}
+                <div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{check.key.replaceAll("_", " ")}</div>
+                  <div className="mt-0.5 text-slate-600 dark:text-slate-400">{check.detail}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {(readiness.first_batch || []).length > 0 && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-white/80 p-3 dark:border-amber-900 dark:bg-slate-900/70">
+              <div className="text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-200">
+                Proposed first batch — planning only
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {readiness.first_batch.map((row) => (
+                  <span key={row.work_order_id} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {row.work_order_id}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
