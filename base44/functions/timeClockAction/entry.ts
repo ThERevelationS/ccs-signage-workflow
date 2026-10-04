@@ -2425,6 +2425,10 @@ Deno.serve(async (req) => {
           previous_history_hash: summary.previous_history_hash,
         };
         if (Number(summary.snapshot_version || 0) >= 3) chainCore.shift_manifest_hash = summary.shift_manifest_hash;
+        if (Number(summary.snapshot_version || 0) >= 7) {
+          chainCore.approving_managers = Array.isArray(summary.approving_managers) ? summary.approving_managers : [];
+          chainCore.finalizer_approval_overlap = summary.finalizer_approval_overlap === true;
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
@@ -2685,6 +2689,10 @@ Deno.serve(async (req) => {
               entry_snapshot_hash: period.finalized_summary.entry_snapshot_hash,
               previous_history_hash: period.finalized_summary.previous_history_hash,
               ...(Number(period.finalized_summary.snapshot_version || 0) >= 3 ? { shift_manifest_hash: period.finalized_summary.shift_manifest_hash } : {}),
+              ...(Number(period.finalized_summary.snapshot_version || 0) >= 7 ? {
+                approving_managers: Array.isArray(period.finalized_summary.approving_managers) ? period.finalized_summary.approving_managers : [],
+                finalizer_approval_overlap: period.finalized_summary.finalizer_approval_overlap === true,
+              } : {}),
             });
             if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
                 !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
@@ -3094,7 +3102,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 6 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 7 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3112,6 +3120,8 @@ Deno.serve(async (req) => {
         const totalHours = completedEntries.reduce((sum: number, entry: any) => sum + Number(entry.total_hours || 0), 0);
         const priorHistory = Array.isArray(period.finalized_summary_history) ? period.finalized_summary_history : [];
         const previousHistoryHash = await payloadHash(priorHistory);
+        const approvingManagers = [...new Set(snapshotRows.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
+        const finalizerApprovalOverlap = approvingManagers.includes(actorEmail);
         const summaryCore = {
           entry_count: completedEntries.length,
           employee_count: new Set(completedEntries.map((entry: any) => asEmail(entry.user_email))).size,
@@ -3123,6 +3133,8 @@ Deno.serve(async (req) => {
           entry_snapshot_hash: entrySnapshotHash,
           previous_history_hash: previousHistoryHash,
           shift_manifest_hash: entrySnapshotHash,
+          approving_managers: approvingManagers,
+          finalizer_approval_overlap: finalizerApprovalOverlap,
         };
         const snapshotChainHash = await payloadHash(summaryCore);
         const summary = { ...summaryCore, shift_manifest: snapshotRows, snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
