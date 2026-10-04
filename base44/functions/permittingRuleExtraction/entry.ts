@@ -119,7 +119,7 @@ export default async function(req: Request): Promise<Response> {
         { sort: "title", limit: 200, fields: [
           "id", "title", "jurisdiction_name", "extracted_text", "official_url",
           "file_hash_sha256", "authority_classification", "content_status",
-          "effective_or_adopted_date", "issuing_office", "source_type",
+          "effective_or_adopted_date", "issuing_office", "source_type", "text_extraction_state",
         ], ...(cursor ? { cursor } : {}) },
       );
       docs.push(...page.items as SourceDoc[]);
@@ -133,6 +133,10 @@ export default async function(req: Request): Promise<Response> {
 
     // Filter to docs with substantive text and non-skipped classifications
     const extractable = filteredDocs.filter((d) => {
+      // This legacy route consumes inline text only. Partial extraction and
+      // segmented previews require the evidence-page route before rule analysis.
+      const textState = (d as any).text_extraction_state;
+      if (textState && (textState.preview_only || textState.storage_mode || textState.complete_document_text !== true)) return false;
       const text = String((d as any).extracted_text || "");
       if (text.length < 200) return false;
       const cls = String((d as any).authority_classification || "").toLowerCase();
