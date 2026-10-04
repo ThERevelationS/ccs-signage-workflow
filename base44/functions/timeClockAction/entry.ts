@@ -2640,6 +2640,26 @@ Deno.serve(async (req) => {
         const semanticTerminalId = String(change.correction_provenance?.applied_audit_id || change.action_provenance?.audit_id || '');
         return semanticTerminalId === terminalAuditId;
       };
+      const verifyCausalChainCompleteness = async (change: any, windowStart = '', windowEnd = '') => {
+        const chain = change?.causal_chain;
+        if (!Array.isArray(chain) || !windowStart || !windowEnd) return false;
+        const authoritative = await auditEntity.filter({ time_entry_id: String(change.time_entry_id || '') });
+        if (!Array.isArray(authoritative)) return false;
+        const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
+        const expected = authoritative.filter((row: any) =>
+          relevantActions.includes(String(row.action || '')) &&
+          ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+          inCausalWindow(row.server_timestamp, windowStart, windowEnd)
+        ).sort((a: any, b: any) => {
+          const timeOrder = Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || ''));
+          return timeOrder || String(a.id || '').localeCompare(String(b.id || ''));
+        });
+        if (expected.length !== chain.length) return false;
+        return expected.every((row: any, index: number) =>
+          String(row.id || '') === String(chain[index]?.audit_id || '') &&
+          Number(chain[index]?.sequence || 0) === index + 1
+        );
+      };
       const generations = [];
       for (let index = 0; index < history.length; index += 1) {
         const summary = history[index];
