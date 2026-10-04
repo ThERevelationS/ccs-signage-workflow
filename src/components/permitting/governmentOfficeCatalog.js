@@ -26,6 +26,9 @@ export function normalizeGovernmentOfficeCatalogEntry(office) {
     ...source,
     ...(governmentOfficeId ? { government_office_id: governmentOfficeId } : {}),
     government_office: {
+      // Preserve retained identity evidence and state alongside normalized contacts.
+      // Older catalog edits must not discard metadata added by newer review paths.
+      ...metadata,
       name: clean(metadata.name) || clean(source.name),
       phone: clean(metadata.phone) || clean(source.contact_phone),
       email: clean(metadata.email) || clean(source.contact_email),
