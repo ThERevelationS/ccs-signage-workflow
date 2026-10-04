@@ -2722,10 +2722,26 @@ Deno.serve(async (req) => {
         if (!windowStart || !windowEnd) return false;
         const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
         const changedIds = new Set((summary.generation_changes || []).map((change: any) => String(change.time_entry_id || '')));
-        const periodEntryIds = [...new Set([
+        const periodEntryIdSet = new Set([
           ...(Array.isArray(predecessor?.shift_manifest) ? predecessor.shift_manifest.map((row: any) => String(row.id || '')) : []),
           ...(Array.isArray(summary.shift_manifest) ? summary.shift_manifest.map((row: any) => String(row.id || '')) : []),
-        ])].filter(Boolean).sort();
+        ].filter(Boolean));
+        if (Number(summary.snapshot_version || 0) >= 18) {
+          const windowAudits = await auditEntity.filter({ server_timestamp: { $gte: windowStart, $lte: windowEnd } });
+          if (!Array.isArray(windowAudits)) return false;
+          const candidateIds = [...new Set(windowAudits.filter((row: any) =>
+            relevantActions.includes(String(row.action || '')) &&
+            ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+            String(row.time_entry_id || '')
+          ).map((row: any) => String(row.time_entry_id || '')))];
+          for (const candidateId of candidateIds) {
+            if (periodEntryIdSet.has(candidateId)) continue;
+            const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
+            const companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
+            if (candidateEntry?.id && companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
+          }
+        }
+        const periodEntryIds = [...periodEntryIdSet].sort();
         const expected = [];
         for (const entryId of periodEntryIds) {
           const audits = await auditEntity.filter({ time_entry_id: entryId });
