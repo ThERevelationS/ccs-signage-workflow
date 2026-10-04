@@ -61,16 +61,15 @@ check(page.includes("salesAttentionOption(savedAttention) ? savedAttention : \"a
 check(page.includes('["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation)'),
   "Current Pipeline login must not restore an outcome-only Won/Lost status into the active workspace");
 
-check(page.includes('persistFilterPreferences({ informationFilter: value })'),
-  "Explicit Information Filter selections must be persisted");
+check(page.includes('persistFilterPreferences({ informationFilter: value, attention: "all" })'),
+  "Explicit Information Filter selections must persist while clearing the alternate attention mode");
 check(page.includes('persistFilterPreferences({ informationFilter: "all", attention: value })'),
   "Explicit attention-filter selections must persist and preserve the existing mutual-exclusion behavior");
 check(page.includes('persistFilterPreferences({ columnPresetId: "default" })') &&
       page.includes('persistFilterPreferences({ columnPresetId: preset.id })'),
   "Default and custom Column Filter selections must both persist");
-check(page.includes('persistFilterPreferences({ informationFilter: "won", attention: "all" })') &&
-      page.includes('persistFilterPreferences({ informationFilter: "lost", attention: "all" })'),
-  "Explicit outcome filter buttons must save their selected status");
+check(page.includes('persistFilterPreferences({ informationFilter: status, attention: "all" })'),
+  "Outcome KPI filter buttons must save their selected status through the shared fresh-drilldown path");
 
 check(page.includes("setRecordScope(value);") &&
       page.includes('setAttentionFilter("all");') &&
