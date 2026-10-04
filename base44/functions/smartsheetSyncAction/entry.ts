@@ -2083,6 +2083,58 @@ async function smartsheetSyncHandler(req: Request): Promise<Response> {
       });
     }
 
+    if (action === 'audit_order_link_integrity') {
+      // Admin-only, read-only permanent-ID reconciliation. Matching is based
+      // solely on configured sheet ID + permanent row ID; names and row order
+      // are display evidence only and are never used to create or repair links.
+      const { config } = await loadSyncConfig(base44);
+      const profile = config?.orders || {};
+      const sheetId = cleanText(profile?.smartsheet_sheet_id, 40);
+      const bindings = profile?.column_bindings || {};
+      const identityFields = ['customer_name', 'request_type', 'description', 'quantity'];
+      const identityColumnIds = [...new Set(identityFields
+        .map(field => cleanText(bindings?.[field], 40))
+        .filter(value => /^\d+$/.test(value)))];
+      if (!/^\d+$/.test(sheetId) || identityColumnIds.length === 0) {
+        return Response.json({ success: false,
+          error: 'Order Request needs a permanent sheet ID and at least one valid identity-column binding.' }, { status: 400 });
+      }
+
+      const allOrders = await loadAllEntityRows({
+        entity: base44.asServiceRole.entities.Order,
+        sort: 'id',
+        label: 'Order Form permanent-link read-only audit',
+      });
+      const sheetRows: any[] = [];
+      const pageSize = 200;
+      const guard = createSmartsheetOrderPageGuard({ pageSize, maxPages: 100 });
+      let sheetVersion: number | null = null;
+      for (let page = 1; page <= 100; page++) {
+        const params = new URLSearchParams({
+          page: String(page), pageSize: String(pageSize),
+          columnIds: identityColumnIds.join(','), exclude: 'nonexistentCells',
+        });
+        const result = await smartsheetGet(`/sheets/${sheetId}?${params.toString()}`, token);
+        verifyOrderCreateAuditSheetIdentity(result.body, sheetId);
+        const rows = normalizeSheetRows(result.body);
+        const complete = guard.accept(page, result.body, rows);
+        if (page === 1) sheetVersion = result.body.version;
+        sheetRows.push(...rows);
+        if (complete) break;
+      }
+      guard.assertComplete();
+
+      const audit = auditOrderPermanentLinks(allOrders, sheetRows, sheetId, bindings);
+      return Response.json({
+        success: true,
+        ...audit,
+        sheet_version: sheetVersion,
+        sheet_download_verified: true,
+        matching_strategy: 'permanent_sheet_and_row_ids_only',
+        identity_columns_downloaded: identityColumnIds,
+      });
+    }
+
     if (action === 'audit_order_create_attempts') {
       // Admin-session-only evidence review. No sync, marker clearing, POST or production writes.
       const { config } = await loadSyncConfig(base44);
