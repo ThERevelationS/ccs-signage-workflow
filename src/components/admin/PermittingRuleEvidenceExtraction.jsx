@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import PermittingSourceAuthorityReview from "./PermittingSourceAuthorityReview";
+import PermittingOfficeAuthorityReview from "./PermittingOfficeAuthorityReview";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -126,6 +127,8 @@ export default function PermittingRuleEvidenceExtraction({ jurisdictionName, onI
     {source && <PermittingSourceAuthorityReview key={source.id} source={source} disabled={Boolean(busy)}
       onBusy={value => setBusy(previous => value ? "authority_review" : previous === "authority_review" ? "" : previous)}
       onReviewed={sourceReviewed} />}
+    {source && <PermittingOfficeAuthorityReview key={source.id + ":" + (source.authority_review?.review_id || "")} source={source} disabled={Boolean(busy)}
+      onBusy={value => setBusy(previous => value ? "office_authority_review" : previous === "office_authority_review" ? "" : previous)} />}
     <div className="flex flex-wrap gap-2">
       <Button size="sm" variant="outline" disabled={Boolean(busy) || !selectedRange} onClick={() => act("preview")}>Preview selected pages</Button>
       <Button size="sm" disabled={Boolean(busy) || !preview || Boolean(result)} onClick={() => act("extract")}>Analyze selected pages</Button>
