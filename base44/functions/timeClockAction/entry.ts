@@ -3430,7 +3430,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 16 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 17 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3573,6 +3573,35 @@ Deno.serve(async (req) => {
           }
         }
         const generationChangesHash = await payloadHash(generationChanges);
+        const generationAuditReconciliation = [];
+        if (supersededGeneration) {
+          const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
+          const changedIds = new Set(generationChanges.map((change: any) => String(change.time_entry_id || '')));
+          const periodEntryIds = [...new Set([
+            ...(Array.isArray(supersededGeneration.shift_manifest) ? supersededGeneration.shift_manifest.map((row: any) => String(row.id || '')) : []),
+            ...snapshotRows.map((row: any) => String(row.id || '')),
+          ])].filter(Boolean).sort();
+          for (const entryId of periodEntryIds) {
+            const audits = await auditEntity.filter({ time_entry_id: entryId });
+            if (!Array.isArray(audits)) return Response.json({ success: false, error: 'Generation-wide payroll audit reconciliation failed before finalization.' }, { status: 409 });
+            for (const row of audits.filter((audit: any) =>
+              relevantActions.includes(String(audit.action || '')) &&
+              ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
+              inCausalWindow(audit.server_timestamp, generationCausalWindowStart, generationCausalWindowEnd)
+            )) {
+              generationAuditReconciliation.push({
+                audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
+                request_id: String(row.request_id || ''), server_timestamp: String(row.server_timestamp || ''),
+                classification: changedIds.has(entryId) ? 'mapped_payroll_delta' : 'net_non_payroll_affecting',
+              });
+            }
+          }
+          generationAuditReconciliation.sort((a: any, b: any) => {
+            const timeOrder = Date.parse(a.server_timestamp) - Date.parse(b.server_timestamp);
+            return timeOrder || a.audit_id.localeCompare(b.audit_id);
+          });
+        }
+        const generationAuditReconciliationHash = await payloadHash(generationAuditReconciliation);
         const approvingManagers = [...new Set(snapshotRows.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
         const finalizerApprovalOverlap = approvingManagers.includes(actorEmail);
         const summaryCore = {
@@ -3600,9 +3629,13 @@ Deno.serve(async (req) => {
             generation_causal_window_start: generationCausalWindowStart,
             generation_causal_window_end: generationCausalWindowEnd,
           } : {}),
+          ...(snapshotVersion >= 17 ? {
+            generation_audit_reconciliation_hash: generationAuditReconciliationHash,
+            generation_audit_reconciliation_count: generationAuditReconciliation.length,
+          } : {}),
         };
         const snapshotChainHash = await payloadHash(summaryCore);
-        const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
+        const summary = { ...summaryCore, shift_manifest: snapshotRows, ...(snapshotVersion >= 9 ? { generation_changes: generationChanges } : {}), ...(snapshotVersion >= 17 ? { generation_audit_reconciliation: generationAuditReconciliation } : {}), snapshot_active: true, snapshot_chain_hash: snapshotChainHash };
         const finalized = await payPeriodEntity.updateMany(
           { id: period.id, updated_date: period.updated_date, status: 'review', last_request_id: requestId },
           { $set: { status: 'finalized', finalized_at: now, finalized_by: actorEmail, finalization_note: note, last_request_id: requestId, finalized_summary: summary } },
