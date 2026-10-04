@@ -20,6 +20,8 @@ test("mechanic bootstrap revalidates the live grant after Fleet data loads and b
   assert.ok(freshScope > currentGrantRead, "scope projection must use the revalidated grant");
   assert.ok(freshEstimateCapability > currentGrantRead, "estimate capability must use the revalidated grant");
   assert.equal(block.includes("scopeForGrant(grant)"), false, "stale grant scope must not shape the bootstrap response");
+  assert.match(block, /if \(ownedByGrant && canEstimate\) repairEstimates\.push\(\{\.\.\.sanitizeEstimate\(estimate\),visibility:'mechanic'\}\)/, "full mechanic estimate details must require the fresh estimate permission");
+  assert.match(block, /ownedByGrant \? 'permission_removed' : 'other_mechanic'/, "permission removal must downgrade estimate data to a non-financial placeholder");
 });
 
 test("bootstrap passes the access entity into portal payload revalidation", () => {
