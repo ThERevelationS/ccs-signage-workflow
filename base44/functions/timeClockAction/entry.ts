@@ -3376,7 +3376,7 @@ Deno.serve(async (req) => {
           ['session', 'admin_kiosk'].includes(String(row.approval_evidence?.authentication_method || ''))
         );
         const hasIndependentApproval = hasApprovalAuthority && snapshotRows.every((row: any) => asEmail(row.approval_evidence?.approved_by) !== asEmail(row.user_email));
-        const snapshotVersion = hasIndependentApproval ? 14 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
+        const snapshotVersion = hasIndependentApproval ? 15 : hasApprovalAuthority ? 5 : hasApprovalProvenance ? 4 : 3;
         if (snapshotVersion < 5) {
           for (const row of snapshotRows) {
             if (row.approval_evidence) {
@@ -3490,6 +3490,30 @@ Deno.serve(async (req) => {
                   semantic_total_hours: Number(change.after?.total_hours || 0),
                 };
               }
+              const chainAudits = await auditEntity.filter({ time_entry_id: id });
+              if (!Array.isArray(chainAudits)) return Response.json({ success: false, error: 'Payroll causal-chain audit lookup failed before finalization.' }, { status: 409 });
+              const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
+              const orderedChain = chainAudits.filter((row: any) => {
+                const occurredAt = Date.parse(String(row.server_timestamp || ''));
+                return relevantActions.includes(String(row.action || '')) &&
+                  ['confirmed', 'recovered'].includes(String(row.outcome || '')) &&
+                  Number.isFinite(occurredAt) && occurredAt >= Date.parse(generationCausalWindowStart) && occurredAt <= Date.parse(generationCausalWindowEnd);
+              }).sort((a: any, b: any) => {
+                const timeOrder = Date.parse(String(a.server_timestamp || '')) - Date.parse(String(b.server_timestamp || ''));
+                return timeOrder || String(a.id || '').localeCompare(String(b.id || ''));
+              });
+              const terminalAuditId = String(change.correction_provenance?.applied_audit_id || change.action_provenance?.audit_id || '');
+              if (!terminalAuditId || !orderedChain.some((row: any) => String(row.id || '') === terminalAuditId)) {
+                return Response.json({ success: false, error: `Payroll change for shift ${id} is missing its semantic terminal cause from the authoritative causal chain.` }, { status: 409 });
+              }
+              change.causal_chain = orderedChain.map((row: any, chainIndex: number) => ({
+                sequence: chainIndex + 1, audit_id: String(row.id || ''), action: String(row.action || ''),
+                request_id: String(row.request_id || ''), outcome: String(row.outcome || ''),
+                actor_email: asEmail(row.actor_email), actor_role: String(row.actor_role || ''),
+                authentication_method: String(row.authentication_method || ''), server_timestamp: String(row.server_timestamp || ''),
+                reason: String(row.reason || ''),
+              }));
+              change.causal_terminal_audit_id = terminalAuditId;
               generationChanges.push(change);
             }
           }
