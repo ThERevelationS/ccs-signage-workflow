@@ -27,7 +27,31 @@ function remoteRowSummary(row, bindings) {
   };
 }
 
+export function classifyOrderUnlinkedReviewHint(order) {
+  const customer = clean(order?.customer_name, 180).toLowerCase();
+  const description = clean(order?.description, 320).toLowerCase();
+  const createdBy = clean(order?.created_by || order?.created_by_id, 180).toLowerCase();
+  const hasSyncEvidence = Boolean(
+    clean(order?.smartsheet_sheet_id, 40) ||
+    clean(order?.smartsheet_row_id, 40) ||
+    order?.smartsheet_sync_snapshot ||
+    clean(order?.smartsheet_last_synced_at, 80) ||
+    order?.smartsheet_create_attempt ||
+    order?.smartsheet_pending_local_sync === true
+  );
+  const hasBusinessRelationship = Boolean(clean(order?.customer_id, 180) || clean(order?.work_order_id, 180));
+  const obviousTestText = customer.includes('test') && description.includes('test');
+  if (!hasSyncEvidence && !hasBusinessRelationship && createdBy === 'anonymous' && obviousTestText) {
+    return {
+      kind: 'likely_historical_test_artifact',
+      reason: 'Anonymous unlinked Order with no customer/job relationship or sync evidence and explicit test-only customer/description text. Review before hiding or retiring; no automatic cleanup is performed.',
+    };
+  }
+  return { kind: 'unlinked_order', reason: '' };
+}
+
 function orderSummary(order) {
+  const reviewHint = classifyOrderUnlinkedReviewHint(order);
   return {
     base44_order_id: clean(order?.id, 180),
     customer_name: clean(order?.customer_name, 180),
@@ -39,6 +63,9 @@ function orderSummary(order) {
     create_attempt_status: clean(order?.smartsheet_create_attempt?.status, 80),
     created_date: clean(order?.created_date, 80),
     updated_date: clean(order?.updated_date, 80),
+    created_by: clean(order?.created_by || order?.created_by_id, 180),
+    review_hint: reviewHint.kind,
+    review_hint_reason: reviewHint.reason,
   };
 }
 
@@ -72,6 +99,7 @@ export function auditOrderPermanentLinks(orders, sheetRows, configuredSheetId, b
     linked_to_configured_sheet: 0,
     matched_permanent_links: 0,
     base44_unlinked: 0,
+    base44_unlinked_likely_test_artifacts: 0,
     invalid_base44_row_id: 0,
     wrong_sheet_link: 0,
     duplicate_base44_row_ids: 0,
@@ -86,7 +114,9 @@ export function auditOrderPermanentLinks(orders, sheetRows, configuredSheetId, b
     const orderSheet = clean(order?.smartsheet_sheet_id, 40);
     if (!rowRaw) {
       counts.base44_unlinked++;
-      if (categories.base44_unlinked.length < 100) categories.base44_unlinked.push(orderSummary(order));
+      const summary = orderSummary(order);
+      if (summary.review_hint === 'likely_historical_test_artifact') counts.base44_unlinked_likely_test_artifacts++;
+      if (categories.base44_unlinked.length < 100) categories.base44_unlinked.push(summary);
       continue;
     }
     const rowId = numericId(rowRaw);
