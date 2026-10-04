@@ -3,8 +3,10 @@ export const RESEARCH_FETCH_TIMEOUT_MS = 12_000;
 export const RESEARCH_UPLOAD_TIMEOUT_MS = 15_000;
 export const RESEARCH_EXTRACT_TIMEOUT_MS = 20_000;
 
+import { isDownloadableResearchDocument } from './jurisdictionPermittingLinkDiscovery.mjs';
+
 export function canArchiveResearchDocument({ document, existingDocument, archivesStarted = 0, archiveLimit = DEFAULT_RESEARCH_ARCHIVE_LIMIT } = {}) {
-  if (!document?.url) return false;
+  if (!document?.url || !isDownloadableResearchDocument(document)) return false;
   if (existingDocument?.source === 'manual') return false;
   if (existingDocument?.file_url || existingDocument?.source_sha256) return false;
   const limit = Math.max(0, Number(archiveLimit) || 0);
