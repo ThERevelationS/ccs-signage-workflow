@@ -121,9 +121,16 @@ export async function reviewOfficeAuthority(deps,{jurisdictionId,input={},action
   requested_by:actor,status:'creating',operation_id:crypto.randomUUID()};
  profile=await writeLedger(deps.profileEntity,profile,reservation,oldRaw);
  if(action==='verify'){
-  const freshProfile=await deps.profileEntity.get(jurisdictionId),fresh=await verifyEvidence(deps,freshProfile,input);
-  for(const k of ['profile_snapshot','office_snapshot','source_snapshot','source_review_id','role_proof','coverage_area'])
-   if(!evidenceEqual(fresh[k],event[k]))throw evidenceError('Source, profile or office evidence changed before recording this review. Reconcile the reserved decision.');
+  try{
+   const freshProfile=await deps.profileEntity.get(jurisdictionId),fresh=await verifyEvidence(deps,freshProfile,input);
+   for(const k of ['profile_snapshot','office_snapshot','source_snapshot','source_review_id','role_proof','coverage_area'])
+    if(!evidenceEqual(fresh[k],event[k]))throw evidenceError('Source, profile or office evidence changed before recording this review.');
+  }catch(error){
+   // No create has been attempted: releasing this exact reservation is safe.
+   const current=await deps.profileEntity.get(jurisdictionId);
+   await writeLedger(deps.profileEntity,current,{...reservation,status:'not_recorded',sequence:committed},reservation);
+   return{success:false,status:'not_recorded',retry_safe:true,error:error.message,llm_calls:0};
+  }
  }
  try{await deps.reviewEntity.create(event);}catch{/* Only exact readback: never retry an uncertain event create. */}
  const found=await findRequest(deps.reviewEntity,key);
@@ -138,7 +145,8 @@ export async function reviewOfficeAuthority(deps,{jurisdictionId,input={},action
 }
 export async function assessOfficeAuthorityReview(deps,event,profile){
  if(event.action==='revoke')return{verified:false,state:'revoked',reason:'Staff revoked this relationship.'};
- if(event.method!==OFFICE_AUTHORITY_METHOD || event.action!=='verify' || !event.requested_by || !Number.isFinite(Date.parse(event.requested_at)))
+ if(event.method!==OFFICE_AUTHORITY_METHOD || event.action!=='verify' || !event.requested_by || !Number.isFinite(Date.parse(event.requested_at)) ||
+  !event.review_input || typeof event.review_input!=='object' || !event.source_snapshot || !event.office_snapshot || !event.profile_snapshot)
   return{verified:false,state:'needs_review',reason:'Incomplete relationship review history.'};
  try{
   const fresh=await verifyEvidence(deps,profile,event.review_input);
