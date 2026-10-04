@@ -273,7 +273,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
           const mimeMap = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', txt: 'text/plain', csv: 'text/csv' };
           const mimeType = mimeMap[ext] || contentType.split(';')[0].trim() || 'application/octet-stream';
 
-          const fileBlob = new Blob([fileBytes], { type: mimeType });
+          const fileName = decodeURIComponent(new URL(doc.url).pathname.split('/').pop() || `official-resource.${ext}`);
+          const fileBlob = new File([fileBytes], fileName, { type: mimeType });
           const uploadResult = await withResearchArchiveTimeout(
             base44.asServiceRole.integrations.Core.UploadFile({ file: fileBlob }),
             RESEARCH_UPLOAD_TIMEOUT_MS,
