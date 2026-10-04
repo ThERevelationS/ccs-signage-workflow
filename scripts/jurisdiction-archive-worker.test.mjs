@@ -4,8 +4,9 @@ import { build } from 'esbuild';
 async function compile(name) {
   const output=await build({entryPoints:['base44/functions/'+name+'/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',plugins:[{name:'mock-boundaries',setup(b){
     b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'mock'}));
+    b.onResolve({filter:/jurisdictionSourceTextRuntime\.ts$/},()=>({path:'text-parser',namespace:'mock'}));
     b.onResolve({filter:/safeExternalFetch\.ts$/},()=>({path:'fetch',namespace:'mock'}));
-    b.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='sdk'?'export const createClientFromRequest = () => globalThis.workerFixture;':'export const safeExternalFetch = async () => { throw new Error("Unexpected network work"); };',loader:'js'}));
+    b.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='text-parser'?'export const readAndExtractSourcePdf = async () => { throw new Error("Unexpected text parsing"); };':path==='sdk'?'export const createClientFromRequest = () => globalThis.workerFixture;':'export const safeExternalFetch = async () => { throw new Error("Unexpected network work"); };',loader:'js'}));
   }}]});
   let handler;globalThis.Deno={serve:fn=>{handler=fn;}};
   await import('data:text/javascript;base64,'+Buffer.from(output.outputFiles[0].text).toString('base64')+'#'+name);
@@ -14,14 +15,14 @@ async function compile(name) {
 const worker=await compile('continueJurisdictionArchives');
 const dispatcher=await compile('permittingResearchBacklogDispatch');
 function setup({role='admin',enabled=true,atCap=false}={}) {
-  const calls={scans:0,research:0,writes:0};
+  const calls={scans:0,textScans:0,research:0,writes:0};
   const settings={filter:async query=>[{
     id:query.setting_key,updated_date:'v1',setting_key:query.setting_key,
     setting_value:query.setting_key.endsWith('config')?{enabled,interval_minutes:15,daily_dispatch_limit:40}:
       {daily_day_key:new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date()),dispatched_today:atCap?40:0,last_cycle_at:'2000-01-01T00:00:00Z'},
   }]};
   globalThis.workerFixture={auth:{me:async()=>role?{role}:null},asServiceRole:{
-    entities:{PermittingSourceDocument:{filter:async()=>{throw Error('Unexpected catalog lookup');},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents.$elemMatch);calls.scans++;return[];},
+    entities:{PermittingSourceDocument:{filter:async(q,s,l)=>{assert.ok(q.source_registration_key);assert.equal(l,20);calls.textScans++;return[];},create:async()=>{throw Error('Unexpected catalog create');}},GlobalSettings:settings,JurisdictionProfile:{filter:async(query,sort,limit)=>{assert.equal(limit,20);assert.equal(sort,'updated_date');assert.ok(query.documents.$elemMatch);calls.scans++;return[];},
       get:async()=>({id:'j',documents:[],updated_date:'v1'}),updateMany:async()=>{calls.writes++;return{updated:1};}}},
     integrations:{Core:{UploadFile:async()=>{throw Error('Unexpected upload');}}},
     functions:{invoke:async()=>{calls.research++;throw Error('Unexpected research');}},
@@ -51,6 +52,7 @@ test('dispatcher at its daily LLM limit still runs archival and makes no researc
   const r=await invoke(dispatcher,{});
   assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.dispatched_today,40);
   assert.equal(r.data.archive_continuation.reason,'no_eligible_file');
+  assert.equal(r.data.text_continuation.reason,'no_eligible_text_source');assert.equal(calls.textScans,1);
   assert.equal(calls.scans,2);assert.equal(calls.research,0);assert.equal(calls.writes,0);
 });
 
