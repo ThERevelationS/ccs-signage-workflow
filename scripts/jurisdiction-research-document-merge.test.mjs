@@ -268,8 +268,8 @@ test('both server refresh paths use safe merge and individual refresh skips pinn
   const individual = readFileSync('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   const batch = readFileSync('base44/functions/batchUpdateJurisdictions/entry.ts', 'utf8');
   assert.match(individual, /mergeJurisdictionResearchDocuments\(jurisdiction\.documents, processedDocs\)/);
-  assert.match(individual, /existing\?\.source_sha256/);
-  assert.match(individual, /existing\?\.file_url/);
+  assert.match(individual, /canArchiveResearchDocument/);
+  assert.match(individual, /existingDocument:\s*existing/);
   assert.match(batch, /mergeJurisdictionResearchDocuments\(jurisdiction\.documents, \[\.\.\.newDocs, \.\.\.countyDocs\]\)/);
   assert.match(batch, /documentEvidence:\s*updateData\.documents\s*\|\|\s*\[\]/);
   assert.match(individual, /replaceJurisdictionFieldsIfUnchanged/);
