@@ -166,6 +166,18 @@ test('concurrent staff decisions cannot both reserve the source review',async()=
   reviewSourceAuthority({...t.api,requestId:'source-review-request-00002'})]);
  assert.equal(t.f.calls.runCreates,1);assert.equal(t.f.source().verification_status,'verified');
 });
+test('simultaneous same-request deliveries create one audit; pending readback cannot steal its reservation',async()=>{
+ const t=await setup();await Promise.allSettled([reviewSourceAuthority(t.api),reviewSourceAuthority(t.api)]);
+ assert.equal(t.f.calls.runCreates,1);assert.equal(t.f.runs.length,1);assert.equal(t.f.source().verification_status,'verified');
+ const u=await setup(),create=u.api.auditEntity.create;
+ u.api.auditEntity.create=async data=>{
+  const marker=structuredClone(u.f.source().authority_review_state),writes=u.f.calls.sourceWrites;
+  const second=await reviewSourceAuthority(u.api);assert.equal(second.status,'review_uncertain');
+  assert.deepEqual(u.f.source().authority_review_state,marker);assert.equal(u.f.calls.sourceWrites,writes);
+  return create(data);
+ };
+ assert.equal((await reviewSourceAuthority(u.api)).status,'applied');assert.equal(u.f.calls.runCreates,1);assert.equal(u.f.calls.llm,0);
+});
 test('request id reuse with another decision/actor/source is rejected without altering review',async()=>{
  const t=await setup();await reviewSourceAuthority(t.api);const before=structuredClone(t.f.source());
  for(const args of [{actor:'other@example.test'},{input:{...t.input,review_notes:'A different review'}},{sourceDocumentId:'other'}])
