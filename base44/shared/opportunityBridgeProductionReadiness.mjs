@@ -1,0 +1,196 @@
+import { reconcileHistoricalSalesOutcome } from './historicalSalesOutcomeReconciliation.mjs';
+
+const clean = (value) => String(value ?? '').trim();
+
+export const OPPORTUNITY_BRIDGE_PRODUCTION_POLICY = Object.freeze({
+  VERSION: '0R-v1',
+  APPLY_ENABLED: false,
+  FIRST_BATCH_SIZE: 5,
+  MAX_BATCH_SIZE: 5,
+  PLAN_MAX_AGE_MS: 5 * 60 * 1000,
+  STOP_ON_FIRST_NON_SUCCESS: true,
+  REQUIRE_ADMIN_ROLE: true,
+  REQUIRE_SECONDARY_CONFIRMATION: true,
+  REQUIRE_FRESH_REPLAN_BEFORE_EACH_BATCH: true,
+  ROLLBACK_POLICY: 'forward_correction_only',
+  RETRY_POLICY: 'replan_and_reconcile_before_retry',
+  RECEIPT_SCHEMA_NAME: 'OpportunityBridgeOperationReceipt',
+});
+
+const RECEIPT_ANOMALY_STATES = new Set([
+  'duplicate_identity',
+  'identity_conflict',
+  'incomplete_existing_identity',
+  'invalid_source_identity',
+]);
+
+const UNEXPECTED_LINK_REASONS = new Set([
+  'work_order_opportunity_link_conflict',
+  'work_order_already_links_unmatched_opportunity',
+  'missing_linked_opportunity',
+  'opportunity_work_order_conflict',
+  'estimate_already_links_other_opportunity',
+]);
+
+export function historicalBridgeRuleContractPasses() {
+  const won = reconcileHistoricalSalesOutcome({
+    id:'fixture-won',
+    in_pipeline:true,
+    sales_status:'lead',
+    current_task_description:'Completed Sale',
+    date_order_created:'2026-01-15',
+  });
+  const completedWithoutOrder = reconcileHistoricalSalesOutcome({
+    id:'fixture-hold-completed',
+    in_pipeline:true,
+    sales_status:'lead',
+    current_task_description:'Completed Sale',
+    date_order_created:'',
+  });
+  const lost = reconcileHistoricalSalesOutcome({
+    id:'fixture-hold-lost',
+    in_pipeline:true,
+    sales_status:'lead',
+    current_task_description:'Lost - no response',
+    date_order_created:'',
+  });
+
+  return won?.safe_for_bridge === true &&
+    won?.proposed_stage === 'won' &&
+    (won?.reasons || []).includes('completed_sale_plus_valid_order_created') &&
+    completedWithoutOrder?.safe_for_bridge === false &&
+    lost?.safe_for_bridge === false;
+}
+
+export function selectOpportunityBridgeFirstBatch(rows = [], size = OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE) {
+  const limit = Math.max(0, Math.min(Number(size) || 0, OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.MAX_BATCH_SIZE));
+  return (Array.isArray(rows) ? rows : [])
+    .filter((row) =>
+      row?.action === 'proposed_create' &&
+      row?.sales_scope === 'current' &&
+      row?.receipt_state === 'clear' &&
+      row?.evidence_strength === 'strong_stable_anchor' &&
+      clean(row?.anchors?.customer_id) &&
+      !row?.historical_reconciliation
+    )
+    .sort((a, b) => clean(a?.work_order_id).localeCompare(clean(b?.work_order_id)))
+    .slice(0, limit);
+}
+
+function planAgeMs(generatedAt, now) {
+  const generated = Date.parse(clean(generatedAt));
+  const current = Date.parse(clean(now));
+  if (!Number.isFinite(generated) || !Number.isFinite(current)) return Number.POSITIVE_INFINITY;
+  return Math.max(0, current - generated);
+}
+
+export function evaluateOpportunityBridgeProductionReadiness({
+  plan = {},
+  generatedAt = '',
+  now = new Date().toISOString(),
+  receiptSchemaActivated = false,
+  secondaryConfirmationConfigured = false,
+} = {}) {
+  const rows = Array.isArray(plan?.rows) ? plan.rows : [];
+  const summary = plan?.summary || {};
+
+  const receiptAnomalies = rows.filter((row) =>
+    RECEIPT_ANOMALY_STATES.has(clean(row?.receipt_state)) ||
+    (row?.reasons || []).some((reason) => clean(reason).startsWith('receipt_'))
+  );
+
+  const unexpectedLinks = rows.filter((row) =>
+    (row?.reasons || []).some((reason) => UNEXPECTED_LINK_REASONS.has(clean(reason)))
+  );
+
+  const applyEligibleRows = rows.filter((row) =>
+    ['proposed_create','proposed_recover_link','already_linked'].includes(clean(row?.action))
+  );
+  const heldOrExcludedInsideApply = applyEligibleRows.filter((row) =>
+    ['hold','excluded'].includes(clean(row?.action))
+  );
+
+  const firstBatch = selectOpportunityBridgeFirstBatch(rows);
+  const age = planAgeMs(generatedAt, now);
+
+  const checks = [
+    {
+      key:'fresh_plan',
+      pass: age <= OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.PLAN_MAX_AGE_MS,
+      detail:Number.isFinite(age) ? `Plan age ${Math.round(age / 1000)}s` : 'Plan timestamp unavailable',
+    },
+    {
+      key:'no_receipt_identity_anomalies',
+      pass:receiptAnomalies.length === 0,
+      detail:`${receiptAnomalies.length} receipt identity anomalies`,
+    },
+    {
+      key:'no_unexpected_opportunity_links',
+      pass:unexpectedLinks.length === 0,
+      detail:`${unexpectedLinks.length} unexpected/conflicting Opportunity links`,
+    },
+    {
+      key:'held_rows_excluded_from_apply',
+      pass:heldOrExcludedInsideApply.length === 0,
+      detail:`${Number(summary?.held || 0)} held rows remain outside apply eligibility`,
+    },
+    {
+      key:'historical_reconciliation_rule_unchanged',
+      pass:historicalBridgeRuleContractPasses(),
+      detail:'Completed Sale + valid Order Created => Won; unsupported Completed/Lost/Closed remain review-only',
+    },
+    {
+      key:'first_batch_available',
+      pass:firstBatch.length === OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE,
+      detail:`${firstBatch.length}/${OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE} extra-conservative first-batch candidates available`,
+    },
+    {
+      key:'durable_receipt_schema_activated',
+      pass:receiptSchemaActivated === true,
+      detail:receiptSchemaActivated ? 'Durable receipt ledger activated' : 'Receipt ledger remains design-only',
+    },
+    {
+      key:'secondary_confirmation_configured',
+      pass:secondaryConfirmationConfigured === true,
+      detail:secondaryConfirmationConfigured ? 'Secondary confirmation configured' : 'Secondary confirmation not enabled yet',
+    },
+    {
+      key:'production_apply_enabled',
+      pass:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED === true,
+      detail:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED ? 'Production apply enabled' : 'Production apply is hard-disabled in source',
+    },
+  ];
+
+  const technicalChecks = checks.filter((check) =>
+    !['durable_receipt_schema_activated','secondary_confirmation_configured','production_apply_enabled'].includes(check.key)
+  );
+  const rolloutChecks = checks.filter((check) => !technicalChecks.includes(check));
+
+  return {
+    policy_version:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.VERSION,
+    decision:checks.every((check) => check.pass) ? 'GO' : 'NO_GO',
+    technical_ready:technicalChecks.every((check) => check.pass),
+    rollout_ready:rolloutChecks.every((check) => check.pass),
+    checks,
+    first_batch: firstBatch.map((row) => ({
+      work_order_id:clean(row?.work_order_id),
+      receipt_key:clean(row?.receipt_key),
+      customer_id:clean(row?.anchors?.customer_id),
+      sales_scope:clean(row?.sales_scope),
+      evidence_strength:clean(row?.evidence_strength),
+      action:clean(row?.action),
+    })),
+    policy:{
+      first_batch_size:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE,
+      max_batch_size:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.MAX_BATCH_SIZE,
+      stop_on_first_non_success:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.STOP_ON_FIRST_NON_SUCCESS,
+      require_admin_role:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.REQUIRE_ADMIN_ROLE,
+      require_secondary_confirmation:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.REQUIRE_SECONDARY_CONFIRMATION,
+      require_fresh_replan_before_each_batch:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.REQUIRE_FRESH_REPLAN_BEFORE_EACH_BATCH,
+      rollback_policy:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.ROLLBACK_POLICY,
+      retry_policy:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RETRY_POLICY,
+      receipt_schema_name:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.RECEIPT_SCHEMA_NAME,
+      apply_enabled:OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED,
+    },
+  };
+}
