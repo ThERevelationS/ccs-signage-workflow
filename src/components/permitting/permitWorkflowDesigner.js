@@ -1,0 +1,341 @@
+/**
+ * Permit Workflow Designer — deterministic resolution pipeline + AI composition.
+ *
+ * Uses the platform's native AI (InvokeLLM) from app code. No external LLM backend functions.
+ *
+ * Rules hierarchy (enforced by the authority gate):
+ *   1. staff_approved + is_operational  → approved rules (operational, cited as verified)
+ *   2. extracted / needs_review          → pending staff review (cited as needs_verification)
+ *   3. draft_context / historical       → never operational (cited as draft_context / historical)
+ *
+ * Gaps are surfaced honestly — the pipeline never invents requirements.
+ */
+
+import { base44 } from "@/api/base44Client";
+
+// ── Rules hierarchy ──
+
+const APPROVED_RULE_STATUS = "staff_approved";
+
+export function splitRulesByHierarchy(rules = []) {
+  const approved = [];
+  const pending = [];
+  const draftOrHistorical = [];
+  for (const rule of rules) {
+    if (rule.status === APPROVED_RULE_STATUS && rule.is_operational) {
+      approved.push(rule);
+    } else if (rule.draft_context || rule.status === "historical" || rule.status === "superseded") {
+      draftOrHistorical.push(rule);
+    } else {
+      pending.push(rule);
+    }
+  }
+  return { approved, pending, draftOrHistorical };
+}
+
+export function ruleToCitationBrief(rule) {
+  const citations = Array.isArray(rule.citations) ? rule.citations : [];
+  const primary = citations[0] || {};
+  return {
+    rule_id: rule.id,
+    rule_category: rule.rule_category,
+    sign_type: rule.sign_type_normalized || rule.sign_type || "",
+    requirement: rule.requirement || "",
+    numeric_value: rule.numeric_value,
+    unit: rule.unit,
+    section_or_page: primary.section_or_page || "",
+    official_url: primary.official_url || "",
+    source_document_id: primary.source_document_id || "",
+    verification_status: primary.verification_status || "needs_verification",
+    is_operational: Boolean(rule.is_operational),
+  };
+}
+
+// ── Source document helpers ──
+
+const FORM_SOURCE_TYPES = new Set(["permit_application", "checklist"]);
+const FEE_SOURCE_TYPES = new Set(["fee_schedule"]);
+
+export function categorizeSourceDocs(docs = []) {
+  const forms = [];
+  const feeSchedules = [];
+  const codeDocs = [];
+  const other = [];
+  for (const doc of docs) {
+    if (FORM_SOURCE_TYPES.has(doc.source_type)) forms.push(doc);
+    else if (FEE_SOURCE_TYPES.has(doc.source_type)) feeSchedules.push(doc);
+    else if (doc.source_type === "sign_ordinance" || doc.source_type === "zoning_code") codeDocs.push(doc);
+    else other.push(doc);
+  }
+  return { forms, feeSchedules, codeDocs, other };
+}
+
+function sourceDocBrief(doc) {
+  return {
+    id: doc.id,
+    title: doc.title,
+    source_type: doc.source_type,
+    official_url: doc.official_url || doc.online_form_url || "",
+    online_form_url: doc.online_form_url || "",
+    authority_classification: doc.authority_classification,
+    content_status: doc.content_status,
+    effective_or_adopted_date: doc.effective_or_adopted_date,
+  };
+}
+
+// ── Jurisdiction resolution ──
+
+/**
+ * Resolve a jurisdiction from an address string. Uses the existing findLocalityByAddress
+ * backend function when available; falls back to null (staff must select manually).
+ * Strict identity — no cross-jurisdiction promotion.
+ */
+export async function resolveJurisdictionFromAddress(address) {
+  if (!address || !address.trim()) return null;
+  try {
+    const res = await base44.functions.invoke("findLocalityByAddress", { address });
+    const data = res?.data || res;
+    if (data?.jurisdiction_id || data?.jurisdiction_name) {
+      return {
+        jurisdiction_id: data.jurisdiction_id || "",
+        jurisdiction_name: data.jurisdiction_name || data.locality_name || "",
+        state: data.state || "",
+        locality_id: data.locality_id || "",
+        locality_name: data.locality_name || data.jurisdiction_name || "",
+        matched_address: address,
+      };
+    }
+  } catch (_e) {
+    // findLocalityByAddress may not resolve; staff selects manually.
+  }
+  return null;
+}
+
+/**
+ * Load rules for a jurisdiction from PermittingRule, split by hierarchy.
+ */
+export async function loadJurisdictionRules(jurisdictionName) {
+  if (!jurisdictionName) return { approved: [], pending: [], draftOrHistorical: [] };
+  const { items } = await base44.entities.PermittingRule.filter(
+    { jurisdiction_name: jurisdictionName },
+    { sort: "-is_operational", limit: 200, fields: [
+      "id", "rule_category", "sign_type", "sign_type_normalized", "requirement",
+      "numeric_value", "unit", "zoning_district_applicability", "trigger",
+      "exceptions", "status", "is_operational", "draft_context", "confidence",
+      "citations", "jurisdiction_name", "issuing_office",
+    ] },
+  );
+  return splitRulesByHierarchy(items);
+}
+
+/**
+ * Load source documents for a jurisdiction from PermittingSourceDocument.
+ */
+export async function loadJurisdictionSourceDocs(jurisdictionName) {
+  if (!jurisdictionName) return { forms: [], feeSchedules: [], codeDocs: [], other: [], all: [] };
+  const { items } = await base44.entities.PermittingSourceDocument.filter(
+    { jurisdiction_name: jurisdictionName },
+    { sort: "-classified_at", limit: 100, fields: [
+      "id", "title", "source_type", "official_url", "online_form_url",
+      "authority_classification", "content_status", "effective_or_adopted_date",
+      "issuing_office", "jurisdiction_scope",
+    ] },
+  );
+  return { ...categorizeSourceDocs(items), all: items };
+}
+
+// ── AI composition ──
+
+const WORKFLOW_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    steps: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          office: { type: "string", description: "Responsible office (e.g. 'Boone County Planning Commission')" },
+          office_type: { type: "string", description: "Office category: Zoning, Building, Electrical, Right-of-Way, Design Review, etc." },
+          permit_type: { type: "string", description: "Permit type (e.g. 'Sign Permit', 'Electrical Permit', 'Variance')" },
+          action: { type: "string", description: "The action to take (e.g. 'Submit sign permit application with site plan')" },
+          required_documents: { type: "array", items: { type: "string" }, description: "Required drawings/documents" },
+          required_forms: { type: "array", items: { type: "string" }, description: "Required forms from source docs" },
+          submission_link: { type: "string", description: "Online submission URL if known, empty if not" },
+          target_days_from_start: { type: "number", description: "Target days from project start" },
+          dependencies: { type: "array", items: { type: "string" }, description: "Step indices (0-based) this depends on" },
+          followup_interval_days: { type: "number", description: "Follow-up interval in days" },
+          inspection_needed: { type: "boolean", description: "Whether an inspection is required" },
+          fee_expectation: { type: "string", description: "Fee expectation (label current vs historical)" },
+          exemption_applicable: { type: "string", description: "Applicable exemption if any, empty if none" },
+          variance_needed: { type: "boolean", description: "Whether a variance or conditional-use permit is needed" },
+          citations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                source_document_id: { type: "string" },
+                section_or_page: { type: "string" },
+                excerpt: { type: "string" },
+                rule_id: { type: "string" },
+              },
+            },
+            description: "Citations backing this step. Every material fact must have at least one citation.",
+          },
+          basis: { type: "string", enum: ["approved_rule", "pending_review", "staff_confirmation_needed"], description: "Whether this step is from an approved rule, pending-review rule, or requires staff confirmation" },
+          gap_reason: { type: "string", description: "If basis is staff_confirmation_needed, explain what is uncertain" },
+        },
+        required: ["office", "office_type", "permit_type", "action", "basis"],
+      },
+    },
+    gaps: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          description: { type: "string" },
+          reason: { type: "string" },
+        },
+      },
+      description: "Items that could not be determined from the available sources and require staff confirmation",
+    },
+    summary: { type: "string", description: "Brief summary of the generated workflow" },
+  },
+  required: ["steps", "gaps", "summary"],
+};
+
+function buildCompositionPrompt(input, rules, sourceDocs, jurisdiction) {
+  const approvedBriefs = rules.approved.map(ruleToCitationBrief);
+  const pendingBriefs = rules.pending.map(ruleToCitationBrief);
+  const formBriefs = sourceDocs.forms.map(sourceDocBrief);
+  const feeBriefs = sourceDocs.feeSchedules.map(sourceDocBrief);
+  const codeBriefs = sourceDocs.codeDocs.map(sourceDocBrief);
+
+  return `You are a sign-permitting workflow designer for a sign company. Generate a step-by-step permit workflow for the following project.
+
+STRICT RULES:
+1. Base every step on the provided approved rules and source documents. Cite the source for every material fact.
+2. Use approved rules as the primary basis. Label steps from approved rules as "approved_rule".
+3. Use pending-review (extracted) rules only as guidance, labeled "pending_review". Never treat them as operational.
+4. Draft/proposed/historical sources are NEVER operational. Do not use them as the basis for any step.
+5. If you cannot determine a requirement from the provided sources, surface it as a gap with basis "staff_confirmation_needed". Never invent requirements, fees, deadlines, or dimensions.
+6. Each step must cite at least one source document or rule (source_document_id + section_or_page + excerpt).
+7. Multiple permit/office lines are expected (zoning/sign, building, electrical, right-of-way, variance, design review, separate municipality/county lines).
+
+PROJECT INPUTS:
+- Project address: ${input.address || "(not provided)"}
+- Customer: ${input.customer || "(not provided)"}
+- Sign type(s): ${input.signTypes || "(not specified)"}
+- Dimensions: ${input.dimensions || "(not specified)"}
+- Illuminated: ${input.illuminated ? "Yes" : "No"}
+- Electrical work: ${input.electricalWork ? "Yes" : "No"}
+- Freestanding: ${input.freestanding ? "Yes" : "No"}
+- EMC/Digital: ${input.emcDigital ? "Yes" : "No"}
+- Temporary vs Permanent: ${input.temporaryVsPermanent || "(not specified)"}
+- New sign vs Face replacement vs Repair: ${input.newVsReplacement || "(not specified)"}
+- Zoning/Site context: ${input.zoningContext || "(not provided)"}
+- Customer exemption status: ${input.exemptionStatus || "(none claimed)"}
+
+JURISDICTION: ${jurisdiction?.jurisdiction_name || "(unresolved — staff must confirm)"}${jurisdiction?.state ? ", " + jurisdiction.state : ""}
+
+APPROVED RULES (operational, cite as verified):
+${JSON.stringify(approvedBriefs, null, 2) || "(none — all steps will need staff confirmation)"}
+
+PENDING-REVIEW RULES (extracted, not yet staff-approved — label as pending_review):
+${JSON.stringify(pendingBriefs, null, 2) || "(none)"}
+
+SOURCE DOCUMENTS — Forms/Checklists:
+${JSON.stringify(formBriefs, null, 2) || "(none found)"}
+
+SOURCE DOCUMENTS — Fee Schedules:
+${JSON.stringify(feeBriefs, null, 2) || "(none found — do not invent fees)"}
+
+SOURCE DOCUMENTS — Code/Ordinance:
+${JSON.stringify(codeBriefs, null, 2) || "(none found)"}
+
+Generate the workflow now. Remember: every step needs a citation; gaps must be surfaced honestly.`;
+}
+
+/**
+ * Compose a workflow draft using the platform's native AI (InvokeLLM).
+ * Returns a structured draft with steps and gaps.
+ */
+export async function composeWorkflowDraft(input, rules, sourceDocs, jurisdiction) {
+  const prompt = buildCompositionPrompt(input, rules, sourceDocs, jurisdiction);
+  const res = await base44.integrations.Core.InvokeLLM({
+    prompt,
+    add_context_from_internet: false,
+    response_json_schema: WORKFLOW_JSON_SCHEMA,
+  });
+  const draft = typeof res === "object" ? res : null;
+  if (!draft || !Array.isArray(draft.steps)) {
+    throw new Error("AI did not return a valid workflow draft");
+  }
+  return {
+    jurisdiction: {
+      jurisdiction_name: jurisdiction?.jurisdiction_name || "",
+      state: jurisdiction?.state || "",
+      jurisdiction_id: jurisdiction?.jurisdiction_id || "",
+      locality_id: jurisdiction?.locality_id || "",
+      locality_name: jurisdiction?.locality_name || "",
+    },
+    steps: draft.steps.map((step, index) => ({
+      ...step,
+      step_index: index,
+      citations: Array.isArray(step.citations) ? step.citations : [],
+    })),
+    gaps: Array.isArray(draft.gaps) ? draft.gaps : [],
+    summary: draft.summary || "",
+    generated_at: new Date().toISOString(),
+    input_summary: {
+      address: input.address || "",
+      sign_types: input.signTypes || "",
+      illuminated: Boolean(input.illuminated),
+      electrical_work: Boolean(input.electricalWork),
+      freestanding: Boolean(input.freestanding),
+      emc_digital: Boolean(input.emcDigital),
+    },
+    rule_counts: {
+      approved: rules.approved.length,
+      pending: rules.pending.length,
+      draft_or_historical: rules.draftOrHistorical.length,
+    },
+  };
+}
+
+// ── Full pipeline ──
+
+/**
+ * Run the full designer pipeline: resolve jurisdiction → load rules → load source docs → compose.
+ * @param {object} input - Form inputs (address, signTypes, illuminated, etc.)
+ * @param {object} [preselectedJurisdiction] - If opened from a jurisdiction panel, skip resolution.
+ * @returns {Promise<object>} The workflow draft.
+ */
+export async function runDesignerPipeline(input, preselectedJurisdiction = null) {
+  // 1. Resolve jurisdiction (strict identity — no cross-jurisdiction promotion)
+  let jurisdiction = preselectedJurisdiction;
+  if (!jurisdiction && input.address) {
+    jurisdiction = await resolveJurisdictionFromAddress(input.address);
+  }
+  if (!jurisdiction) {
+    return {
+      jurisdiction: { jurisdiction_name: "", state: "", jurisdiction_id: "", locality_id: "", locality_name: "" },
+      steps: [],
+      gaps: [{ description: "Jurisdiction could not be resolved from the address.", reason: "Staff must select the jurisdiction manually before generating the workflow." }],
+      summary: "Jurisdiction unresolved — staff confirmation required.",
+      generated_at: new Date().toISOString(),
+      input_summary: {},
+      rule_counts: { approved: 0, pending: 0, draft_or_historical: 0 },
+      jurisdiction_unresolved: true,
+    };
+  }
+
+  // 2. Load rules and source docs in parallel
+  const [rules, sourceDocs] = await Promise.all([
+    loadJurisdictionRules(jurisdiction.jurisdiction_name),
+    loadJurisdictionSourceDocs(jurisdiction.jurisdiction_name),
+  ]);
+
+  // 3. Compose workflow via native AI
+  const draft = await composeWorkflowDraft(input, rules, sourceDocs, jurisdiction);
+  return draft;
+}

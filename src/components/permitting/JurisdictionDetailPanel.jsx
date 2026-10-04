@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History, ShieldAlert } from "lucide-react";
+import { X, ExternalLink, FileText, MessageSquare, Loader2, Download, RefreshCw, ChevronDown, ChevronUp, CheckCircle, XCircle, Search, MapPin, DownloadCloud, History, ShieldAlert, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useResearchProgress } from "./ResearchProgressContext";
 import { format } from "date-fns";
@@ -29,6 +29,7 @@ import { generateJurisdictionPDF } from "./JurisdictionPDFReport";
 import JurisdictionActivityTab from "./JurisdictionActivityTab";
 import JurisdictionAuthorityStatus from "./JurisdictionAuthorityStatus";
 import SourceMonitorPanel from "./SourceMonitorPanel";
+import PermitWorkflowDesigner from "./PermitWorkflowDesigner";
 import { appendJurisdictionActivitySafely } from "./jurisdictionPersistence";
 import { assessJurisdictionTrust } from "./jurisdictionTrust";
 
@@ -83,6 +84,7 @@ export default function JurisdictionDetailPanel({ jurisdiction, duplicateCount =
   const [verificationSaving, setVerificationSaving] = useState(false);
   const [verificationError, setVerificationError] = useState("");
   const { startResearch, updateProgress, completeResearch } = useResearchProgress();
+  const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const trust = assessJurisdictionTrust(jurisdiction, duplicateCount);
   const pdfSources = (jurisdiction.documents || []).filter(doc => /\.pdf(?:[?#]|$)/i.test(doc.url || ""));
   const pendingPDFs = pdfSources.filter(doc => !doc.file_url && /^[a-f0-9]{64}$/i.test(doc.source_sha256 || "") && Number.isSafeInteger(Number(doc.source_bytes)) && Number(doc.source_bytes) > 0);
@@ -1390,6 +1392,35 @@ Answer only from the provided excerpts and cite the document title and official 
 
 
       </div>
+
+      {/* AI Permit Workflow Designer entry — preselects this jurisdiction */}
+      <div className="border-t p-3 bg-violet-50 border-l-4 border-l-violet-400">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowWorkflowDesigner(true)}
+          className="min-h-11 w-full gap-2 border-violet-300 bg-white text-violet-700 hover:bg-violet-100"
+        >
+          <Sparkles className="h-4 w-4" />
+          Design Permit Workflow (AI)
+        </Button>
+        <p className="mt-1 text-[11px] text-violet-700">
+          Generates a reviewable permit workflow from this jurisdiction's approved rules and source documents.
+        </p>
+      </div>
+
+      {showWorkflowDesigner && (
+        <PermitWorkflowDesigner
+          isOpen={showWorkflowDesigner}
+          onClose={() => setShowWorkflowDesigner(false)}
+          preselectedJurisdiction={{
+            jurisdiction_name: jurisdiction.name,
+            state: jurisdiction.state,
+            jurisdiction_id: jurisdiction.id,
+            locality_name: jurisdiction.name,
+          }}
+        />
+      )}
 
       {/* Chat Interface */}
       <div className="border-t p-3 bg-cyan-50 border-l-4 border-l-cyan-400">

@@ -4,11 +4,12 @@ import { createPageUrl } from "@/utils";
 import { useAuth } from "@/components/auth/EmailGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, UserRoundCheck, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronsDown, ChevronsUp, Loader2, MapPin, Settings, Search, Sparkles, UserRoundCheck, X } from "lucide-react";
 import PermitClientGroup from "@/components/permitting/PermitClientGroup";
 import LocalityInfoPopup from "@/components/permitting/LocalityInfoPopup";
 import PermitSettingsDialog from "@/components/permitting/PermitSettingsDialog";
 import JurisdictionsView from "@/components/permitting/JurisdictionsView";
+import PermitWorkflowDesigner from "@/components/permitting/PermitWorkflowDesigner";
 import WorkOrderDetailsDialog from "@/components/workflow/WorkOrderDetailsDialog";
 import StageTasksPanel from "@/components/workflow/StageTasksPanel";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
@@ -70,6 +71,7 @@ export default function Permitting() {
   const [taskDescriptions, setTaskDescriptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showWorkflowDesigner, setShowWorkflowDesigner] = useState(false);
   const [localityInfoId, setLocalityInfoId] = useState(null);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1061,6 +1063,16 @@ export default function Permitting() {
               >
                 <MapPin className="w-4 h-4" /> Jurisdictions
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowWorkflowDesigner(true)}
+                className="gap-1 border-violet-300 text-violet-800 hover:bg-violet-50"
+                title="AI-generate a reviewable permit workflow from approved rules"
+              >
+                <Sparkles className="w-4 h-4" /> Designer
+              </Button>
               {isRegistered && currentUser?.role === 'admin' && (
                 <Button onClick={() => setShowSettings(true)} size="sm" variant="outline" className="gap-1">
                   <Settings className="w-4 h-4" /> Settings
@@ -1179,6 +1191,15 @@ export default function Permitting() {
           onClose={() => setSelectedWorkOrder(null)}
           workOrder={selectedWorkOrder}
           onUpdate={() => loadData(false)}
+        />
+      )}
+
+      {showWorkflowDesigner && (
+        <PermitWorkflowDesigner
+          isOpen={showWorkflowDesigner}
+          onClose={() => { setShowWorkflowDesigner(false); loadData(false); }}
+          workOrder={selectedWorkOrder}
+          onLinesCreated={() => loadData(false)}
         />
       )}
     </div>
