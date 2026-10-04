@@ -338,9 +338,14 @@ export default function QuickClockSection({
       const status = response?.data || response;
       if (!status?.success) throw new Error(status?.error || "Authoritative Time Clock status could not be restored.");
       const restored = applyAuthoritativeStatus(status, authoritativeSessionUser, { sessionToken: authoritativeSessionToken });
+      const unresolvedPunchCount = Number(status?.unresolved_punch_review?.count || 0);
+      const hasUnresolvedPunchReview = Number.isFinite(unresolvedPunchCount) && unresolvedPunchCount > 0;
+      const unresolvedPunchLabel = unresolvedPunchCount === 1 ? "A previous punch report is" : `${unresolvedPunchCount} previous punch reports are`;
       if (restored === "clocked_in") {
         setPersistenceError("");
-        setRecognitionStatus(`Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
+        setRecognitionStatus(hasUnresolvedPunchReview
+          ? `Active shift restored. ${unresolvedPunchLabel} still awaiting manager follow-up.`
+          : `Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
       } else if (restored === "punch_resolution") {
         setPersistenceError("");
         setRecognitionStatus("Previous shift needs punch confirmation before a new Clock In.");
@@ -348,7 +353,9 @@ export default function QuickClockSection({
         setPersistenceError("");
       } else if (restored === "clocked_out") {
         setPersistenceError("");
-        setRecognitionStatus("");
+        setRecognitionStatus(hasUnresolvedPunchReview
+          ? `${unresolvedPunchLabel} still awaiting manager follow-up. You are currently Clocked Out.`
+          : "");
       }
       return status;
     } catch (err) {
