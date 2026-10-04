@@ -51,11 +51,17 @@ export default function TimeClockExceptionCenter({
   punchExceptions = [],
   onReviewEntry,
   onReviewCorrection,
+  onApproveEntry,
   onRefresh,
 }) {
   const nowMs = Date.now();
   const activeEntries = timeEntries.filter(entry => entry.status === "clocked_in" && !entry.archived_admin && !entry.archived_test_data);
   const unresolvedPunchEntries = timeEntries.filter(entry => entry.status === "needs_resolution" && !entry.archived_admin && !entry.archived_test_data);
+  const correctedNeedsReviewEntries = timeEntries.filter(entry =>
+    entry.status === "clocked_out" && entry.approval_status === "needs_review" &&
+    Boolean(String(entry.last_correction_request_id || "").trim()) &&
+    !entry.archived_admin && !entry.archived_test_data && !entry.pay_period_id
+  );
   const allEntryById = new Map(timeEntries.filter(entry => !entry.archived_admin && !entry.archived_test_data).map(entry => [entry.id, entry]));
   const activeEntryById = new Map(activeEntries.map(entry => [entry.id, entry]));
   const breakById = new Map(activeBreaks.map(row => [row.id, row]));
@@ -106,6 +112,18 @@ export default function TimeClockExceptionCenter({
       detail: "The employee reported a missed Clock Out. The old shift is preserved with no fabricated Clock Out and is excluded from active work while its correction awaits manager review. Pay-period finalization remains blocked until it is resolved.",
       entry,
       correctionRequest,
+    });
+  }
+
+  for (const entry of correctedNeedsReviewEntries) {
+    exceptions.push({
+      key: `corrected-shift-review:${entry.id}`,
+      severity: "warning",
+      icon: FileWarning,
+      title: "Corrected shift awaits final approval",
+      employee: entry.user_name || entry.user_email,
+      detail: "The employee correction has been applied and the missed-punch review is complete, but this completed shift is still Needs Review. A separate manager shift approval is required before pay-period finalization.",
+      approvalEntry: entry,
     });
   }
 
@@ -698,6 +716,10 @@ export default function TimeClockExceptionCenter({
                   {item.correctionRequest && typeof onReviewCorrection === "function" ? (
                     <Button type="button" size="sm" variant="outline" onClick={() => onReviewCorrection(item.correctionRequest)} className="shrink-0 bg-white/80">
                       Review Correction
+                    </Button>
+                  ) : item.approvalEntry && typeof onApproveEntry === "function" ? (
+                    <Button type="button" size="sm" variant="outline" onClick={() => onApproveEntry(item.approvalEntry)} className="shrink-0 bg-white/80 text-green-700">
+                      Approve Shift
                     </Button>
                   ) : item.entry && typeof onReviewEntry === "function" ? (
                     <Button type="button" size="sm" variant="outline" onClick={() => onReviewEntry(item.entry)} className="shrink-0 bg-white/80">
