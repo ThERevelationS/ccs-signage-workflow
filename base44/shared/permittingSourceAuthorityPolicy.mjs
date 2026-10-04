@@ -13,7 +13,7 @@ export function sourceIdentity(source){
 }
 export function reviewedAdministrativeSource(source){
  const review=source?.authority_review;
- return sourceRuleKind(source)==='administrative_instruction' && source.content_status==='current' &&
+ return Boolean(sourceRuleKind(source)==='administrative_instruction' && source.content_status==='current' &&
   source.verification_status==='verified' && /^[a-f0-9]{64}$/.test(source.file_hash_sha256 || '') &&
   review?.method===SOURCE_SCOPE_REVIEW_METHOD && review.status==='active' && review.review_id &&
   review.reviewed_by && Number.isFinite(Date.parse(review.reviewed_at)) &&
@@ -25,7 +25,7 @@ export function reviewedAdministrativeSource(source){
   ['OH','KY'].includes(review.profile.state) && review.publisher_name===source.issuing_office &&
   review.scope_label===source.jurisdiction_scope && ['unincorporated','named_jurisdiction','listed_areas'].includes(review.scope_kind) &&
   Array.isArray(review.named_areas) && review.named_areas.length>0 &&
-  Array.isArray(review.proofs) && review.proofs.length===2 && review.current_evidence_url && review.current_evidence_reference;
+  Array.isArray(review.proofs) && review.proofs.length===2 && review.current_evidence_url && review.current_evidence_reference);
 }
 export function sourceSupportsRule(source,rule){
  if(ruleKind(rule)!=='administrative_instruction')return source?.authority_classification==='current_adopted' &&
