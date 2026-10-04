@@ -20,6 +20,12 @@ import { Label } from "@/components/ui/label";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  persistColumnSortState,
+  readColumnSortConfig,
+  resolveColumnSortState,
+  updateColumnSortState,
+} from "@/components/shared/columnSortPersistence.mjs";
 
 // Helper to parse date string as local date
 const parseLocalDate = (dateString) => {
@@ -548,27 +554,29 @@ function CustomSortDialog({ isOpen, onClose, fieldName, fieldLabel, columnType, 
 // Hook to manage column sorting with custom filters
 export function useColumnSorting(storageKeyPrefix, userEmail) {
   const storageKey = `${storageKeyPrefix}_sort_${userEmail || 'guest'}`;
-  
-  const [sortConfig, setSortConfig] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Error loading sort config:", e);
-    }
-    return { key: null, direction: 'asc', customFilter: null };
-  });
 
-  // Save to localStorage when sort changes
+  const [sortState, setSortState] = useState(() => ({
+    storageKey,
+    config: readColumnSortConfig(storageKey),
+  }));
+  const resolvedSortState = resolveColumnSortState(sortState, storageKey);
+  const sortConfig = resolvedSortState.config;
+  const setSortConfig = (nextConfig) => {
+    setSortState((current) => updateColumnSortState(current, storageKey, nextConfig));
+  };
+
+  // Identity can change without this component remounting (guest -> user or
+  // User A -> User B). Reload that identity's state before any save can occur.
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(sortConfig));
-    } catch (e) {
-      console.error("Error saving sort config:", e);
-    }
-  }, [sortConfig, storageKey]);
+    if (sortState.storageKey === storageKey) return;
+    setSortState(resolveColumnSortState(sortState, storageKey));
+  }, [sortState, storageKey]);
+
+  // Never write a prior identity's in-memory sort/filter into a new identity's
+  // localStorage key during the transition render.
+  useEffect(() => {
+    persistColumnSortState(sortState, storageKey);
+  }, [sortState, storageKey]);
 
   const handleSort = (key, direction) => {
     setSortConfig({ key, direction, customFilter: null });
