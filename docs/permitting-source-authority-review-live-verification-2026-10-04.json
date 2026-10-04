@@ -1,0 +1,110 @@
+{
+  "phase": "4.1",
+  "name": "Administrative source publisher and scope review",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "source_head_at_validation": "91b7d762fe8733cd229a022c8e2076201d3a0c7e",
+  "checked_at": "2026-10-04T19:07:20.431Z",
+  "mode": "production-retained-evidence-read-only",
+  "llm_calls": 0,
+  "production_record_writes": 0,
+  "file_fetches": 0,
+  "source_checks": [
+    {
+      "source_id": "6ac2593367c75c73d83cf39b",
+      "jurisdiction_id": "6ac1d67d439c92b783f2dd45",
+      "source_sha256": "1d59276a3f0692738cc9eb67dd2853e9faefa457f335d4749090f53c67a5b39f",
+      "physical_pages": [
+        1,
+        2
+      ],
+      "page_hashes_verified": true,
+      "authority_classification": "application_form",
+      "verification_status": "needs_verification",
+      "current_review_eligible": false,
+      "current_adoption_established": false,
+      "literal_publisher_proof": true,
+      "office_coverage_unresolved": true,
+      "no_blanket_county_authority_inferred": true
+    },
+    {
+      "source_id": "6ac25be4207035a2e5be3827",
+      "jurisdiction_id": "6ac19dcc184935c1391ee468",
+      "source_sha256": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+      "physical_pages": [
+        1,
+        2
+      ],
+      "page_hashes_verified": true,
+      "authority_classification": "application_form",
+      "verification_status": "needs_verification",
+      "current_review_eligible": false,
+      "current_adoption_established": false,
+      "literal_publisher_proof": true,
+      "literal_listed_scope_proof": true,
+      "literal_candidate": {
+        "rule_kind": "administrative_instruction",
+        "status": "needs_review",
+        "is_operational": false,
+        "is_workflow_instruction": false,
+        "physical_page": 2
+      },
+      "unreviewed_instruction_approval_blocked": true
+    }
+  ],
+  "baseline_preservation": {
+    "Morrow_Campbell": {
+      "records": 2,
+      "preserved": true,
+      "changed_ids": []
+    },
+    "Boone_rules": {
+      "records": 101,
+      "preserved": true,
+      "changed_ids": []
+    },
+    "Boone_sources": {
+      "records": 48,
+      "preserved": true,
+      "changed_ids": []
+    },
+    "localities": {
+      "records": 2,
+      "preserved": true,
+      "changed_ids": []
+    },
+    "dispatcher": {
+      "records": 2,
+      "preserved": true,
+      "changed_ids": []
+    },
+    "office_catalog": {
+      "records": 1,
+      "preserved": true,
+      "changed_ids": []
+    }
+  },
+  "production_audit_records_created": 0,
+  "validation": {
+    "tests": 223,
+    "passed": 223,
+    "failed": 0,
+    "backend_bundles": [
+      "permittingSourceAuthorityReview",
+      "permittingRuleExtraction",
+      "permittingRuleReview",
+      "permittingRuleInvalidate"
+    ],
+    "targeted_ui_lint": "passed",
+    "full_npm_build": "passed",
+    "git_diff_check": "passed",
+    "frontend_published": false,
+    "mode": "Compiled handlers with isolated SDK repositories, plus read-only production retained evidence; not direct production HTTP mutation acceptance."
+  },
+  "remaining": [
+    "No current-form authority was asserted for Morrow or Campbell.",
+    "Staff review requires current official evidence and exact retained publisher/coverage quotes.",
+    "The reviewed-instruction flag is separate from operational regulatory rules and is not consumed by the legacy job workflow builder.",
+    "Unknown creates remain quarantined until their saved request can be reconciled; the original request is never blindly repeated.",
+    "Address/locality authority requires a separate explicit relationship; source publisher or county name is insufficient."
+  ]
+}
