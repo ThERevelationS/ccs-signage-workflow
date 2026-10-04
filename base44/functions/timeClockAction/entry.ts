@@ -2720,6 +2720,10 @@ Deno.serve(async (req) => {
                 approving_managers: Array.isArray(period.finalized_summary.approving_managers) ? period.finalized_summary.approving_managers : [],
                 finalizer_approval_overlap: period.finalized_summary.finalizer_approval_overlap === true,
               } : {}),
+              ...(Number(period.finalized_summary.snapshot_version || 0) >= 8 ? {
+                supersedes_generation_request_id: String(period.finalized_summary.supersedes_generation_request_id || ''),
+                authorized_by_reopen_request_id: String(period.finalized_summary.authorized_by_reopen_request_id || ''),
+              } : {}),
             });
             if (!constantTimeEqual(String(period.finalized_summary?.previous_history_hash || ''), currentHistoryHash) ||
                 !constantTimeEqual(String(period.finalized_summary?.snapshot_chain_hash || ''), expectedChainHash)) {
