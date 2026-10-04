@@ -2492,6 +2492,16 @@ Deno.serve(async (req) => {
           const expectedOverlap = manifestApprovers.includes(asEmail(summary.locked_by));
           if (JSON.stringify(manifestApprovers) !== JSON.stringify(summary.approving_managers || []) || expectedOverlap !== (summary.finalizer_approval_overlap === true)) return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} finalizer/approver provenance failed verification.`, pay_period_id: period.id, generations: [] });
         }
+        if (Number(summary.snapshot_version || 0) >= 8) {
+          const predecessor = index > 0 ? history[index - 1] : null;
+          const expectedSupersedes = String(predecessor?.request_id || '');
+          const expectedReopen = String(predecessor?.invalidated_by_reopen_request_id || '');
+          if (String(summary.supersedes_generation_request_id || '') !== expectedSupersedes ||
+              String(summary.authorized_by_reopen_request_id || '') !== expectedReopen ||
+              (predecessor && (!expectedSupersedes || !expectedReopen))) {
+            return Response.json({ success: true, verified: false, legacy: false, error: `Historical generation ${index + 1} replacement lineage does not match generation ${index} and its authorized reopen.`, pay_period_id: period.id, generations: [] });
+          }
+        }
         generations.push({
           generation: index + 1, state: 'retired', snapshot_version: Number(summary.snapshot_version || 0), finalized_at: summary.lock_timestamp || '', finalized_by: summary.locked_by || '',
           entry_count: Number(summary.entry_count || 0), employee_count: Number(summary.employee_count || 0), total_hours: Number(summary.total_hours || 0),
