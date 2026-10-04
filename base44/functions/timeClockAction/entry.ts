@@ -3794,6 +3794,7 @@ Deno.serve(async (req) => {
               }
             }
           }
+          generationMembershipDiscovery.sort((a: any, b: any) => a.time_entry_id.localeCompare(b.time_entry_id) || a.audit_id.localeCompare(b.audit_id));
           const periodEntryIds = [...periodEntryIdSet].sort();
           for (const entryId of periodEntryIds) {
             const audits = await auditEntity.filter({ time_entry_id: entryId });
@@ -3824,6 +3825,7 @@ Deno.serve(async (req) => {
           });
         }
         const generationAuditReconciliationHash = await payloadHash(generationAuditReconciliation);
+        const generationMembershipDiscoveryHash = await payloadHash(generationMembershipDiscovery);
         const approvingManagers = [...new Set(snapshotRows.map((row: any) => asEmail(row.approval_evidence?.approved_by)).filter(Boolean))].sort();
         const finalizerApprovalOverlap = approvingManagers.includes(actorEmail);
         const summaryCore = {
