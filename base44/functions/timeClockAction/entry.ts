@@ -5615,6 +5615,12 @@ Deno.serve(async (req) => {
           String(corrected.notes || '') === String(record.notes || '')
         );
       };
+      if (decision === 'approve' && actorEmail === target.email) {
+        return Response.json({
+          success: false,
+          error: 'You cannot approve your own Time Clock shift. Another administrator must review and approve this shift.',
+        }, { status: 403 });
+      }
       const approvalPayloadHash = await payloadHash({
         entry_id: entry.id,
         expected_updated_date: expectedUpdatedDate,
