@@ -3233,12 +3233,34 @@ Deno.serve(async (req) => {
           for (const id of allIds) {
             const before = priorById.get(id);
             const after = currentById.get(id);
-            if (!before) generationChanges.push({ time_entry_id: id, change_type: 'added', before: null, after: comparable(after) });
-            else if (!after) generationChanges.push({ time_entry_id: id, change_type: 'removed', before: comparable(before), after: null });
+            let change = null;
+            if (!before) change = { time_entry_id: id, change_type: 'added', before: null, after: comparable(after) };
+            else if (!after) change = { time_entry_id: id, change_type: 'removed', before: comparable(before), after: null };
             else {
               const beforeComparable = comparable(before);
               const afterComparable = comparable(after);
-              if (!constantTimeEqual(await payloadHash(beforeComparable), await payloadHash(afterComparable))) generationChanges.push({ time_entry_id: id, change_type: 'changed', before: beforeComparable, after: afterComparable });
+              if (!constantTimeEqual(await payloadHash(beforeComparable), await payloadHash(afterComparable))) change = { time_entry_id: id, change_type: 'changed', before: beforeComparable, after: afterComparable };
+            }
+            if (change) {
+              const currentEntry = currentEntryById.get(id);
+              const correctionRequestId = String(currentEntry?.last_correction_request_id || '');
+              if (correctionRequestId) {
+                const correction = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
+                const appliedAudit = correction?.applied_audit_id ? await auditEntity.get(correction.applied_audit_id).catch(() => null) : null;
+                if (!correction || String(correction.time_entry_id || '') !== id || !['approved', 'approved_modified'].includes(String(correction.status || '')) ||
+                    !appliedAudit || !['confirmed', 'recovered'].includes(String(appliedAudit.outcome || '')) || String(appliedAudit.time_entry_id || '') !== id ||
+                    String(appliedAudit.details?.correction_request_id || '') !== correctionRequestId) {
+                  return Response.json({ success: false, error: 'Payroll correction evidence could not be verified before finalization.' }, { status: 409 });
+                }
+                change.correction_provenance = {
+                  correction_request_id: correctionRequestId, submission_request_id: String(correction.request_id || ''),
+                  requested_by: asEmail(correction.user_email), requested_at: correction.requested_at || '', employee_reason: String(correction.employee_reason || ''),
+                  review_request_id: String(correction.review_request_id || ''), review_decision: String(correction.review_decision || ''),
+                  reviewed_by: asEmail(correction.reviewer_email), reviewed_at: correction.reviewed_at || '', reviewer_reason: String(correction.reviewer_reason || ''),
+                  applied_audit_id: String(appliedAudit.id || ''), applied_audit_request_id: String(appliedAudit.request_id || ''),
+                };
+              }
+              generationChanges.push(change);
             }
           }
         }
