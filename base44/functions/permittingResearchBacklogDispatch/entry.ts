@@ -15,6 +15,7 @@ import {
 
 import { continueJurisdictionArchiveBacklog } from "../../shared/jurisdictionArchiveContinuation.mjs";
 import { safeExternalFetch } from "../../shared/safeExternalFetch.ts";
+import { continueSourceTextBacklog, automaticSourceTextGuard } from "../../shared/jurisdictionSourceTextContinuation.mjs";
 
 const DISPATCH_VERSION = "continuous_v3_local_research";
 const PAGE_SIZE = 500;
@@ -124,12 +125,23 @@ Deno.serve(async (req) => {
     // Known-file archival needs no research credits and continues after the
     // daily research allowance is exhausted. One file per scheduled cycle.
     let archiveContinuation: any = null;
+    let textContinuation: any = null;
     const elapsedArchiveCycle = now.getTime() - Date.parse(stateRecord?.setting_value?.last_cycle_at || "");
     if (!manual && config.enabled && (!Number.isFinite(elapsedArchiveCycle) || elapsedArchiveCycle >= config.interval_minutes * 60000)) {
       archiveContinuation = await continueJurisdictionArchiveBacklog({
         entity: Profiles, catalogEntity: base44.asServiceRole.entities.PermittingSourceDocument, fetchSource: safeExternalFetch,
         uploadFile: data => base44.asServiceRole.integrations.Core.UploadFile(data),
       });
+      // Isolate parser loading/failure from the research dispatcher. No LLM call.
+      try {
+        const { readAndExtractSourcePdf } = await import('../../shared/jurisdictionSourceTextRuntime.ts');
+        textContinuation = await continueSourceTextBacklog({
+          entity: base44.asServiceRole.entities.PermittingSourceDocument,
+          readAndExtract: readAndExtractSourcePdf, canAutomaticallyExtract: automaticSourceTextGuard(Profiles),
+        });
+      } catch (error) {
+        textContinuation = { success: false, status: 'text_continuation_failed', error: String(error?.message || error) };
+      }
     }
 
     if (!decision.due) {
@@ -138,6 +150,7 @@ Deno.serve(async (req) => {
         skipped: true,
         reason: decision.reason,
         archive_continuation: archiveContinuation,
+        text_continuation: textContinuation,
         config,
         dispatched_today: decision.state.dispatched_today,
         daily_remaining: decision.dailyRemaining,
@@ -363,6 +376,7 @@ Deno.serve(async (req) => {
     return Response.json({
       success: failures.length === 0,
       archive_continuation: archiveContinuation,
+        text_continuation: textContinuation,
       config,
       state: nextState,
       in_flight_before: inFlightCount,
