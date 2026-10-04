@@ -175,9 +175,48 @@ export default function SalesPipeline() {
       ? null
       : selected.find((filter) => filter.type === "column_preset" && filter.id === savedColumnId) || null;
 
+    // Before Information/Attention became mutually exclusive, Attention saves
+    // always wrote Information=all, while Information saves could leave the
+    // previous Attention value behind. Therefore, a legacy record where both
+    // validated modes are active means the Information choice is newer and the
+    // Attention value is stale.
+    const hasLegacyFilterConflict = restoredInformation !== "all" && restoredAttention !== "all";
+    const normalizedAttention = hasLegacyFilterConflict ? "all" : restoredAttention;
+
     setFilterStatus(restoredInformation);
-    setAttentionFilter(restoredAttention);
+    setAttentionFilter(normalizedAttention);
     setActiveColumnPreset(restoredColumn);
+
+    if (hasLegacyFilterConflict) {
+      const repairIdentity = preferenceIdentityRef.current;
+      const repairSessionToken = sessionToken;
+      const expectedPreferences = {
+        information_filter: savedInformation,
+        attention_filter: savedAttention,
+        column_preset_id: savedColumnId,
+      };
+      const repairedPreferences = {
+        information_filter: restoredInformation,
+        attention_filter: normalizedAttention,
+        column_preset_id: savedColumnId,
+      };
+      preferenceSaveChainRef.current = preferenceSaveChainRef.current
+        .catch(() => undefined)
+        .then(() => {
+          if (preferenceIdentityRef.current !== repairIdentity) return undefined;
+          return saveSalesPipelinePreferencesSafely({
+            sessionToken: repairSessionToken,
+            preferences: repairedPreferences,
+            expectedPreferences,
+            label: "Sales Pipeline legacy filter preference repair",
+          });
+        })
+        .catch((error) => {
+          if (preferenceIdentityRef.current === repairIdentity) {
+            console.warn("Could not safely repair legacy Sales Pipeline filter preferences:", error);
+          }
+        });
+    }
   };
 
   const persistFilterPreferences = ({
