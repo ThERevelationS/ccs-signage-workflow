@@ -74,3 +74,11 @@ test('compiled manual catalog route registers during automatic pause, with no ne
   assert.equal(rows[0].content_status,'unknown');assert.equal(rows[0].authority_confidence,'unverified');
   assert.equal((await invoke(worker,body)).data.skipped,true);assert.equal(rows.length,1);assert.equal(calls.research,0);
 });
+
+test('text-parser failure is reported without interrupting credit-capped research dispatch',async()=>{
+ const calls=setup({atCap:true});
+ globalThis.workerFixture.asServiceRole.entities.PermittingSourceDocument.filter=async()=>{throw Error('Parser backlog unavailable');};
+ const r=await invoke(dispatcher,{});
+ assert.equal(r.status,200);assert.equal(r.data.reason,'daily_limit');assert.equal(r.data.text_continuation.status,'text_continuation_failed');
+ assert.equal(calls.research,0);assert.equal(calls.writes,0);
+});
