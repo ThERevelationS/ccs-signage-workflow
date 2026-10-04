@@ -43,7 +43,10 @@ test('concurrent source snapshot replacement returns conflict instead of stale e
   const row=structuredClone(f.source);if(++f.calls.reads>1)row.file_hash_sha256='b'.repeat(64);return row;};
  assert.equal((await invoke({source_document_id:'s'})).status,409);
 });
-test('legacy rule extraction explicitly skips partial text and segmented previews',async()=>{
+test('rule extraction selects retained pages explicitly rather than treating a segmented preview as a full code',async()=>{
  const code=await readFile('base44/functions/permittingRuleExtraction/entry.ts','utf8');
- assert.match(code,/"text_extraction_state"/);assert.match(code,/textState.preview_only \|\| textState.storage_mode \|\| textState.complete_document_text !== true/);
+ const helper=await readFile('base44/shared/permittingRuleEvidence.mjs','utf8');
+ assert.match(code,/extractEvidenceUnit/);assert.match(code,/pageCount>5/);
+ assert.match(helper,/readSourceEvidencePages/);assert.match(helper,/full_code_review:false/);
+ assert.match(helper,/!evidence.complete_document_text/);
 });
