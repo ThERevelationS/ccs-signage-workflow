@@ -1,6 +1,6 @@
 # Administrative source publisher and scope review
 
-Phase 4.1 completed 2026-10-04 in CCS Signage Workflow (68dfcc5e57bbbc35387da97c). This follows Phase 3.3 retained-page rule extraction under the user's current document-first roadmap. Source Git at release validation: 91b7d762fe8733cd229a022c8e2076201d3a0c7e. See permitting-source-authority-review-live-verification-2026-10-04.json for the actual production evidence checks.
+Phase 4.1 completed 2026-10-04 in CCS Signage Workflow (68dfcc5e57bbbc35387da97c). This follows Phase 3.3 retained-page rule extraction under the user's current document-first roadmap. Source Git at release validation: c199ad26a6635593d9984ed84ed4cab653625815. See permitting-source-authority-review-live-verification-2026-10-04.json for the actual production evidence checks.
 
 ## Evidence purpose
 
@@ -33,7 +33,7 @@ An optional canonical publisher link establishes publisher identity only. It exp
 - get_request: retrieve a stable request's immutable audit and current source receipt. applied is true only when the current archive identity and intended authority fields match. No mutation or LLM.
 - revalidate: explicitly check one bounded page of dependent rules using a cursor; no LLM.
 
-PermittingSourceAuthorityReview is an admin-readable/admin-creatable immutable audit entity (update/delete denied). The source authority_review_state records the create intent before an audit create. An uncertain audit create is read back by exact identity and never repeated. A delayed audit can be reconciled by resuming the same saved decision. Source application uses narrow conditional updates, rechecks actual profile/office/page evidence and converges on exact readback after a lost acknowledgement. Unknown or conflicting intents remain quarantined for deliberate reconciliation; there is no automatic reset or retry.
+PermittingSourceAuthorityReview is an admin-readable/admin-creatable immutable audit entity (update/delete denied). The source authority_review_state records the create intent before an audit create. The create reservation has a unique operation id and authenticated reviewer, so simultaneous deliveries of the same request cannot both create an audit. A read of a still-creating same-request intent does not mutate or steal its reservation. An uncertain audit create is read back by exact identity and never repeated. A delayed audit can be reconciled by resuming the same saved decision. Source application uses narrow conditional updates, rechecks actual profile/office/page evidence and converges on exact readback after a lost acknowledgement. Unknown or conflicting intents remain quarantined for deliberate reconciliation; there is no automatic reset or retry.
 
 Active or uncertain extraction/import intents block a conflicting scope change. The prepared UI stores the exact review request in sessionStorage before submission, freezes the preview decision and offers Check saved review / Resume same decision. A missing local decision is identified explicitly rather than silently generating another request. Source changes clear stale selected-page previews and retain all earlier backend extraction/rule records.
 
@@ -49,7 +49,7 @@ permittingSourceRuleInvalidation.mjs shares the existing bounded invalidation lo
 
 ## Validation and production boundaries
 
-223 focused permitting tests passed, including 25 new source-review/core/compiled-handler cases. Coverage includes exact quotes, wrong jurisdiction/state, drafts/adoption protection, county scope, office verification revocation, concurrent reviews, stale preview versions, changed pages, lost acknowledgements, uncertain create reconciliation, instruction/regulation separation, bounded invalidation and failed-row cursor recovery.
+224 focused permitting tests passed, including 26 new source-review/core/compiled-handler cases. Coverage includes exact quotes, wrong jurisdiction/state, drafts/adoption protection, county scope, office verification revocation, concurrent reviews, stale preview versions, changed pages, lost acknowledgements, uncertain create reconciliation, instruction/regulation separation, bounded invalidation and failed-row cursor recovery.
 
 Four affected backend functions bundled successfully. Targeted UI lint, git diff --check and one full npm run build passed. Existing browser-data age warnings were nonblocking.
 
