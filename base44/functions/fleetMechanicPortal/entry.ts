@@ -830,9 +830,9 @@ Deno.serve(async (req) => {
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
-          return json({success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        if (claim.receipt?.status === 'applied') return json({success:true,reused:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh || current)});
+        if (claim.receipt?.status === 'applied') return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
         return json({error:'This mechanic start request is already in progress. Check current server state before retrying.'},{status:409});
       }
       const receipt = claim.receipt;
@@ -854,7 +854,7 @@ Deno.serve(async (req) => {
         const fresh = await WorkOrder.get(id).catch(()=>null);
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
-          return json({success:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'start',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         await failMechanicReceipt(Receipt,receipt,error);
         throw error;
@@ -893,9 +893,9 @@ Deno.serve(async (req) => {
         if (fresh && workOrderHasMechanicReceipt(fresh,claim.receipt)) {
           await markMechanicReceiptApplied(Receipt,claim.receipt,fresh,true).catch(()=>null);
           await resolveReusedUploadReceipt(Receipt,claim.receipt);
-          return json({success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,reused:true,recovered:true,request_id:mechanicMutation.requestId});
         }
-        if (claim.receipt?.status === 'applied') return json({success:true,reused:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh || current)});
+        if (claim.receipt?.status === 'applied') return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh || current,{success:true,reused:true,request_id:mechanicMutation.requestId});
         return json({error:'This mechanic progress request is already in progress. Check current server state before retrying.'},{status:409});
       }
       let receipt = claim.receipt;
@@ -922,7 +922,7 @@ Deno.serve(async (req) => {
         if (fresh && workOrderHasMechanicReceipt(fresh,receipt)) {
           await markMechanicReceiptApplied(Receipt,receipt,fresh,true).catch(()=>null);
           await resolveReusedUploadReceipt(Receipt,receipt);
-          return json({success:true,recovered:true,request_id:mechanicMutation.requestId,work_order:sanitizeWorkOrder(fresh)});
+          return await mechanicWorkOrderResponse(Access,String(grant.id || ''),'save',fresh,{success:true,recovered:true,request_id:mechanicMutation.requestId});
         }
         await failMechanicReceipt(Receipt,receipt,error);
         throw error;
