@@ -40,7 +40,7 @@ The first acceptance harness incorrectly treated PDF.js warning lines on stdout 
 
 Automatic research was paused with conditional versioned updates and restored after each attempt. The config is enabled, 15 minutes / 5 research per cycle / 20 in flight / 40 attempts per day / retry 3. The research dispatch state and counter of 40 are exactly unchanged.
 
-Boone's 36 profile documents and 48 entire catalog records, Batavia's four profile documents, and Morrow/Campbell completed source text records compare exactly equal before/after. No source/archive, rule, real job, work-order record, or frontend publication was changed by this phase. Concurrent unrelated Git work was retained.
+Boone's 36 profile documents and 48 entire catalog records, Batavia's four profile documents, and Morrow/Campbell completed source text records compare exactly equal before/after. No original source/archive was removed or replaced, and no rule, real job, work-order record, or frontend publication was changed by this phase. Concurrent unrelated Git work was retained.
 
 ## Validation and remaining dependencies
 
