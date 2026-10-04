@@ -6,20 +6,20 @@ const summarize=run=>({success:run.status==='complete',run_id:run.id,status:run.
   candidates:run.candidates || [],candidates_staged:(run.candidates || []).length,rejected:run.rejected || [],error:run.error || '',
   rules_created:0,docs_processed:1,llm_attempts:run.llm_attempts || 0});
 
-async function writeSourceLedger(entity,snapshot,expected,next) {
+async function writeSourceLedger(entity,snapshot,expected,next,field='rule_extraction_state') {
   for (let attempt=0;attempt<3;attempt++) {
     const current=await entity.get(snapshot.id);
     if (archiveIdentity(current)!==archiveIdentity(snapshot)) throw evidenceError('Source archive or authority link changed.');
-    if (evidenceEqual(current.rule_extraction_state,next)) return current;
-    if (!evidenceEqual(current.rule_extraction_state || {},expected || {}) || !current.updated_date)
+    if (evidenceEqual(current[field],next)) return current;
+    if (!evidenceEqual(current[field] || {},expected || {}) || !current.updated_date)
       throw evidenceError('Source extraction reservation changed concurrently.');
     try {
-      const result=await entity.updateMany({id:current.id,updated_date:current.updated_date},{$set:{rule_extraction_state:next}});
+      const result=await entity.updateMany({id:current.id,updated_date:current.updated_date},{$set:{[field]:next}});
       if (result?.updated===1) return await entity.get(current.id);
       if (result?.updated!==0) throw evidenceError('Source reservation outcome unknown.');
     } catch(error) {
       const after=await entity.get(snapshot.id).catch(()=>null);
-      if (after && archiveIdentity(after)===archiveIdentity(snapshot) && evidenceEqual(after.rule_extraction_state,next)) return after;
+      if (after && archiveIdentity(after)===archiveIdentity(snapshot) && evidenceEqual(after[field],next)) return after;
       throw error;
     }
   }
@@ -151,6 +151,10 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
     if (old.candidate_index!==candidateIndex || old.extraction_key!==candidate.extraction_key)
       throw evidenceError('Reconcile the prior candidate import before starting another.');
   }
+  const globalOld=unit.source.rule_import_state || {};
+  if (Date.parse(globalOld.lease_expires_at || '')>now()) throw evidenceError('Another import is active for this source.');
+  if (['creating','uncertain'].includes(globalOld.status) && globalOld.extraction_key!==candidate.extraction_key)
+    throw evidenceError('Reconcile the prior source-wide candidate import before importing other evidence.');
   const rows=await ruleEntity.filter({extraction_key:candidate.extraction_key},'created_date',2,0);
   if (!Array.isArray(rows) || rows.length>1) throw evidenceError('Imported rule identity is ambiguous.');
   let existing=rows[0],createdThisCall=false;
@@ -159,8 +163,12 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
   if (receipt && (!existing || existing.id!==receipt.rule_id)) throw evidenceError('Previously imported rule requires reconciliation.');
   const creating={status:'creating',candidate_index:candidateIndex,extraction_key:candidate.extraction_key,claim_token:token,
     lease_expires_at:new Date(now()+90_000).toISOString()};
+  const globalCreating={...creating,run_id:run.id};
+  await writeSourceLedger(sourceEntity,unit.source,globalOld,globalCreating,'rule_import_state');
   run=await writeExtractionRun(runEntity,run,{import_state:creating});
-  if (!existing && !['creating','uncertain'].includes(old.status) && !receipt) {
+  const globalPriorIntent=['creating','uncertain'].includes(globalOld.status) ||
+    (globalOld.status==='complete' && globalOld.extraction_key===candidate.extraction_key && globalOld.rule_id);
+  if (!existing && !['creating','uncertain'].includes(old.status) && !globalPriorIntent && !receipt) {
     await assertEvidenceCurrent({sourceEntity,segmentEntity,sourceDocumentId:unit.source.id},unit);
     try {await ruleEntity.create({...candidate,extraction_run_id:run.id,status:candidate.status==='historical'?'historical':'needs_review',is_operational:false});createdThisCall=true;}
     catch { /* Reconcile once; no duplicate create after an unknown result. */ }
@@ -170,9 +178,11 @@ export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEnt
   }
   if (!existing || !evidenceEqual(candidateComparable(existing),candidateComparable(candidate))) {
     await writeExtractionRun(runEntity,run,{import_state:{...creating,status:'uncertain',lease_expires_at:''}});
+    await writeSourceLedger(sourceEntity,unit.source,globalCreating,{...globalCreating,status:'uncertain',lease_expires_at:''},'rule_import_state');
     return {success:false,status:'import_uncertain',rules_created:0,error:'Candidate create cannot be confirmed; prior intent retained.'};
   }
   await writeExtractionRun(runEntity,run,{import_state:{...creating,status:'complete',lease_expires_at:'',rule_id:existing.id},
     import_receipts:{...(run.import_receipts || {}),[candidateIndex]:{rule_id:existing.id,extraction_key:candidate.extraction_key}}});
+  await writeSourceLedger(sourceEntity,unit.source,globalCreating,{...globalCreating,status:'complete',lease_expires_at:'',rule_id:existing.id},'rule_import_state');
   return {success:true,rule:existing,rules_created:createdThisCall?1:0,llm_calls:0};
 }
