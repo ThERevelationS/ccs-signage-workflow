@@ -1,5 +1,7 @@
 # Segmented permitting PDF page evidence
 
+Follow-up: Phase 3.3 selected-page extraction and review is now documented in permitting-rule-page-evidence.md. Scheduled Batavia segment pages 11–15 were observed at 2026-10-04T16:30:33.600Z, closing the scheduled-invocation caveat recorded below. The Phase 3.2 acceptance notes below retain their original historical scope.
+
 Phase 3.2 completed 2026-10-04 in CCS Signage Workflow (68dfcc5e57bbbc35387da97c). Live verification is recorded in permitting-source-text-segments-live-verification-2026-10-04.json. This extends the Phase 3.1 text worker without replacing existing source text or authority review.
 
 ## Storage and progression
