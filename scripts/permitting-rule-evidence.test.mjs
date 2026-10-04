@@ -127,3 +127,14 @@ test('approval does not trust one good citation mixed with unsupported source ev
  const f=await ruleFixture(),run=await extractEvidenceUnit(f.api),rule=run.candidates[0];
  await assert.rejects(verifyRuleForApproval({...rule,citations:[...rule.citations,{...rule.citations[0],official_url:'https://wrong.test'}]},f.api));
 });
+test('timed-out manual LLM is counted once and never retried implicitly',async()=>{
+ const f=await ruleFixture(),realTimeout=globalThis.setTimeout;
+ f.api.invokeLlm=()=>{f.calls.llm++;return new Promise(()=>{});};
+ globalThis.setTimeout=(fn,ms,...args)=>realTimeout(fn,ms===60_000?1:ms,...args);
+ try {
+  const result=await extractEvidenceUnit(f.api);assert.equal(result.status,'llm_uncertain');assert.equal(result.llm_attempts,1);
+  assert.equal((await extractEvidenceUnit(f.api)).llm_calls,0);assert.equal(f.calls.llm,1);
+  f.advance();await assert.rejects(extractEvidenceUnit({...f.api,requestId:'manual-request-00000002'}),/Reconcile/);
+ } finally {globalThis.setTimeout=realTimeout;}
+});
+
