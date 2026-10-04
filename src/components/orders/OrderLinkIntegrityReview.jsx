@@ -45,6 +45,12 @@ function RecordCard({ item, category }) {
     <p className="mt-1 break-all">Base44 Order ID: {item.base44_order_id}</p>
     <p className="break-all">Stored sheet / row: {item.smartsheet_sheet_id || "—"} / {item.smartsheet_row_id || "—"}</p>
     {item.status && <p>Status: {item.status}</p>}
+    {item.review_hint === "likely_historical_test_artifact" && (
+      <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-900">
+        <p className="font-semibold">Likely historical test artifact</p>
+        <p>{item.review_hint_reason}</p>
+      </div>
+    )}
     {item.pending_local_sync && <p className="font-medium text-amber-800">Waiting for Save & Sync</p>}
     {item.create_attempt_status && <p>Create marker: {item.create_attempt_status}</p>}
   </div>;
@@ -159,6 +165,13 @@ export default function OrderLinkIntegrityReview({ open, onOpenChange, sessionTo
                 Verified sheet {report.sheet_id}, version {report.sheet_version} · {number(counts.smartsheet_rows_examined)} Smartsheet rows · {number(counts.active_base44_orders)} active Base44 Orders.
               </p>
             </div>
+
+            {Number(counts.base44_unlinked_likely_test_artifacts) > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                <p className="font-semibold">{number(counts.base44_unlinked_likely_test_artifacts)} unlinked Base44 Order{Number(counts.base44_unlinked_likely_test_artifacts) === 1 ? " looks" : "s look"} like historical test data.</p>
+                <p className="mt-1 text-xs">This is a review hint only. Nothing is hidden, deleted, linked, or retired automatically.</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               {[
