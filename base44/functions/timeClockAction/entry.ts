@@ -2746,7 +2746,7 @@ Deno.serve(async (req) => {
           for (const candidateId of candidateIds) {
             if (periodEntryIdSet.has(candidateId)) continue;
             const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
-            const companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
+            let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
             if (candidateEntry?.id && companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
           }
         }
@@ -3722,7 +3722,7 @@ Deno.serve(async (req) => {
             for (const candidateId of candidateIds) {
               if (periodEntryIdSet.has(candidateId)) continue;
               const candidateEntry = await entryEntity.get(candidateId).catch(() => null);
-              const companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
+              let companyDate = dateKeyInCompanyTime(candidateEntry?.clock_in);
               if (candidateEntry?.id && companyDate && companyDate >= period.start_date && companyDate <= period.end_date) periodEntryIdSet.add(candidateId);
             }
           }
