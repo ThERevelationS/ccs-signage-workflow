@@ -157,7 +157,6 @@ export default function OpportunityBridgeReview() {
 
   useEffect(() => {
     runSimulation({ preservePrevious:true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const summary = result?.summary || {};
