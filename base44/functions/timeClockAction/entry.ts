@@ -2509,6 +2509,10 @@ Deno.serve(async (req) => {
           chainCore.generation_causal_window_start = String(summary.generation_causal_window_start || '');
           chainCore.generation_causal_window_end = String(summary.generation_causal_window_end || '');
         }
+        if (Number(summary.snapshot_version || 0) >= 17) {
+          chainCore.generation_audit_reconciliation_hash = String(summary.generation_audit_reconciliation_hash || '');
+          chainCore.generation_audit_reconciliation_count = Number(summary.generation_audit_reconciliation_count || 0);
+        }
         const chainHash = await payloadHash(chainCore);
         if (!constantTimeEqual(String(summary.previous_history_hash || ''), prefixHash) || !constantTimeEqual(String(summary.snapshot_chain_hash || ''), chainHash)) return { verified: false, legacy: false, error: `${label} failed payroll history chain verification.` };
         return { verified: true, legacy: false };
