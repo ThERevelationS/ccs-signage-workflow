@@ -39,7 +39,11 @@ async function once(method, path, token, jsonBody) {
     throw error;
   } finally { clearTimeout(timeout); }
 }
-export async function retrySmartsheetCall(call, { retryTimeout = true } = {}) {
+export async function retrySmartsheetCall(call, {
+  retryTimeout = true,
+  maxRateLimitRetries = 3,
+  maxRateLimitWaitSeconds = Number.POSITIVE_INFINITY,
+} = {}) {
   let timedOutRetried = false;
   let rateLimitRetries = 0;
   for (;;) {
@@ -53,10 +57,15 @@ export async function retrySmartsheetCall(call, { retryTimeout = true } = {}) {
       }
       // On 429, read the Retry-After header and retry with exponential
       // backoff (max 3 retries). Falls back to 2/4/8s when no Retry-After.
-      if (error?.upstreamStatus === 429 && rateLimitRetries < 3) {
+      if (error?.upstreamStatus === 429 && rateLimitRetries < maxRateLimitRetries) {
         rateLimitRetries++;
         const retryAfterSeconds = Number(error?.retryAfter) || 0;
         const backoffSeconds = retryAfterSeconds > 0 ? retryAfterSeconds : 2 * Math.pow(2, rateLimitRetries - 1);
+        // Never retry before Smartsheet's Retry-After. Order writes set a
+        // bounded wait; if the server asks for longer, return control to the
+        // caller so the durable Order queue can retry later instead of holding
+        // the coordinator long enough to look abandoned.
+        if (backoffSeconds > maxRateLimitWaitSeconds) throw error;
         const started = performance.now();
         await new Promise(resolve => setTimeout(resolve, backoffSeconds * 1000));
         traceDelay('smartsheet_retry_wait', performance.now() - started, true);
@@ -73,4 +82,8 @@ export const smartsheetWrite = (method, path, token, jsonBody) => retrySmartshee
 // resend that write automatically. Callers must recover by read-back or hold the
 // operation for review. Definitive HTTP 429 responses remain safe to retry.
 export const smartsheetWriteNoTimeoutRetry = (method, path, token, jsonBody) =>
-  retrySmartsheetCall(() => once(method, path, token, jsonBody), { retryTimeout: false });
+  retrySmartsheetCall(() => once(method, path, token, jsonBody), {
+    retryTimeout: false,
+    maxRateLimitRetries: 3,
+    maxRateLimitWaitSeconds: 30,
+  });
