@@ -1768,6 +1768,31 @@ test('reconstructed missed Clock In remains Needs Review through Clock Out until
   assert.equal(reopenedStatus.body.pending_shift_review.items[0].review_state, 'awaiting_shift_approval');
 });
 
+test('reconstructed missed Clock In status fails closed when its Punch Exception linkage is inconsistent', async () => {
+  const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
+  h.rows.TimeClockPayPeriod = [];
+  const recovered = await h.invoke({
+    action: 'recover_missed_clock_in', target_email: employee.email,
+    request_id: 'late-clock-in-linkage-source-001',
+    claimed_clock_in: '2026-09-28T12:00:00.000Z',
+  });
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  const clockOut = await h.invoke({
+    action: 'clock_out', target_email: employee.email,
+    request_id: 'late-clock-in-linkage-out-001', lunch_minutes: 0,
+    job_allocations: [{ hours: 8, minutes: 0, is_inhouse: true, inhouse_task: 'Synthetic shop work' }],
+    notes: '',
+  });
+  assert.equal(clockOut.status, 200, JSON.stringify(clockOut.body));
+  h.rows.TimeClockPunchException[0].claimed_clock_in = '2026-09-28T13:00:00.000Z';
+  const status = await h.invoke({ action: 'status', target_email: employee.email });
+  assert.equal(status.status, 200, JSON.stringify(status.body));
+  assert.equal(status.body.pending_shift_review.count, 1);
+  assert.equal(status.body.pending_shift_review.has_integrity_issue, true);
+  assert.equal(status.body.pending_shift_review.items[0].review_kind, 'missed_clock_in');
+  assert.equal(status.body.pending_shift_review.items[0].review_state, 'needs_manager_investigation');
+});
+
 test('late-day missed Clock In recovery cannot reconstruct time inside a finalized pay period', async () => {
   const h = setup({ entryCount: 0, serverNow: '2026-09-28T20:00:00.000Z' });
   h.rows.TimeClockPayPeriod = [{
