@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "permitting_research_backlog_refill",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "dispatch_research": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "permittingResearchBacklogDispatch",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Refill permitting research backlog",
+            "description": "Release only the configured credit-controlled research batch"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Runs every 15 minutes and invokes the cost-controlled permitting research dispatcher. Runtime admin settings can pause dispatch, reduce batch size, cap active research, or impose a daily release limit without shrinking the statewide backlog.",
+  "name": "Permitting Research Backlog Refill",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/15 * * * *",
+      "one_time_date": null,
+      "timezone": "America/New_York",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}
