@@ -8,6 +8,7 @@ import { AlertCircle, Loader2, CheckCircle, SettingsIcon, RefreshCw, Shield, Dow
 import JurisdictionAccuracyAudit from "@/components/admin/JurisdictionAccuracyAudit";
 import JurisdictionMonitoringSettings from "@/components/admin/JurisdictionMonitoringSettings";
 import JurisdictionRewriteAuthorityAdmin from "@/components/admin/JurisdictionRewriteAuthorityAdmin";
+import PermittingResearchDispatchSettings from "@/components/admin/PermittingResearchDispatchSettings";
 import { loadAllEntityRows } from "@/components/estimator/loadAllEntityRows";
 
 export default function AdminPermittingSettings() {
@@ -175,6 +176,7 @@ export default function AdminPermittingSettings() {
           {[
             { key: "batch", label: "Batch Updates" },
             { key: "monitoring", label: "Change Monitoring" },
+            { key: "research", label: "Research Credits" },
             { key: "authority", label: "Rewrite Authority" },
             { key: "audit", label: "AI Accuracy Auditor" }
           ].map(tab => (
@@ -205,6 +207,8 @@ export default function AdminPermittingSettings() {
         )}
 
         {activeTab === "monitoring" && <JurisdictionMonitoringSettings />}
+
+        {activeTab === "research" && <PermittingResearchDispatchSettings />}
 
         {activeTab === "authority" && (
           <JurisdictionRewriteAuthorityAdmin
