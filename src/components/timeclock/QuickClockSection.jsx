@@ -341,11 +341,16 @@ export default function QuickClockSection({
       const unresolvedPunchCount = Number(status?.unresolved_punch_review?.count || 0);
       const hasUnresolvedPunchReview = Number.isFinite(unresolvedPunchCount) && unresolvedPunchCount > 0;
       const unresolvedPunchLabel = unresolvedPunchCount === 1 ? "A previous punch report is" : `${unresolvedPunchCount} previous punch reports are`;
+      const pendingShiftReviewCount = Number(status?.pending_shift_review?.count || 0);
+      const hasPendingShiftReview = Number.isFinite(pendingShiftReviewCount) && pendingShiftReviewCount > 0;
+      const pendingShiftLabel = pendingShiftReviewCount === 1 ? "A corrected shift still needs" : `${pendingShiftReviewCount} corrected shifts still need`;
       if (restored === "clocked_in") {
         setPersistenceError("");
         setRecognitionStatus(hasUnresolvedPunchReview
           ? `Active shift restored. ${unresolvedPunchLabel} still awaiting manager follow-up.`
-          : `Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
+          : hasPendingShiftReview
+            ? `Active shift restored. ${pendingShiftLabel} final manager shift approval.`
+            : `Active shift restored for ${status.user?.full_name || status.user?.email || email}.`);
       } else if (restored === "punch_resolution") {
         setPersistenceError("");
         setRecognitionStatus("Previous shift needs punch confirmation before a new Clock In.");
@@ -355,7 +360,9 @@ export default function QuickClockSection({
         setPersistenceError("");
         setRecognitionStatus(hasUnresolvedPunchReview
           ? `${unresolvedPunchLabel} still awaiting manager follow-up. You are currently Clocked Out.`
-          : "");
+          : hasPendingShiftReview
+            ? `${pendingShiftLabel} final manager shift approval. You are currently Clocked Out.`
+            : "");
       }
       return status;
     } catch (err) {
