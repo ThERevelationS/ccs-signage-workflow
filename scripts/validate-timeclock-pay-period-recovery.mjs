@@ -1951,6 +1951,116 @@ test('fresh duplicate approve and reopen requests are rejected after review stat
   assert.equal(reopenHarness.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
 });
 
+test('direct admin correction and shift approval serialize on the same employee mutation gate', async () => {
+  const correctionWins = setup();
+  correctionWins.rows.TimeClockPayPeriod = [];
+  const correctionEntry = correctionWins.rows.TimeEntry[0];
+  correctionEntry.approval_status = 'needs_review';
+  delete correctionEntry.approved_at;
+  delete correctionEntry.approved_by;
+  delete correctionEntry.approval_request_id;
+  const loadedVersion = correctionEntry.updated_date;
+  let releaseCorrection;
+  let correctionReachedWrite;
+  let correctionPaused = false;
+  const correctionAtWrite = new Promise((resolve) => { correctionReachedWrite = resolve; });
+  correctionWins.setBeforeUpdate(async (name, _query, update) => {
+    if (!correctionPaused && name === 'TimeEntry' && update.$set?.last_correction_request_id === 'race-admin-correction-001') {
+      correctionPaused = true;
+      correctionReachedWrite();
+      await new Promise((resolve) => { releaseCorrection = resolve; });
+    }
+  });
+  const correctionPromise = correctionWins.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'race-admin-correction-001', entry_id: correctionEntry.id,
+    expected_updated_date: loadedVersion, reason: 'Concurrent verified correction',
+    correction: {
+      clock_in: '2026-09-20T14:05:00.000Z', clock_out: '2026-09-20T22:05:00.000Z',
+      lunch_minutes: 0, notes: 'Concurrent correction', job_allocations: [],
+    },
+  });
+  await correctionAtWrite;
+  const blockedApproval = await correctionWins.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'race-approval-loser-001', entry_id: correctionEntry.id,
+    expected_updated_date: loadedVersion, decision: 'approve', note: 'Must wait for correction',
+  });
+  assert.equal(blockedApproval.status, 409, JSON.stringify(blockedApproval.body));
+  assert.match(blockedApproval.body.error, /Another correction submission or approval|being processed/i);
+  assert.equal(correctionWins.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 0);
+  releaseCorrection();
+  const corrected = await correctionPromise;
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  assert.equal(correctionWins.rows.TimeEntry[0].approval_status, 'needs_review');
+  assert.equal(correctionWins.rows.TimeEntry[0].last_correction_request_id, 'race-admin-correction-001');
+  assert.equal(correctionWins.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
+
+  const approvalWins = setup();
+  approvalWins.rows.TimeClockPayPeriod = [];
+  const approvalEntry = approvalWins.rows.TimeEntry[0];
+  approvalEntry.approval_status = 'needs_review';
+  delete approvalEntry.approved_at;
+  delete approvalEntry.approved_by;
+  delete approvalEntry.approval_request_id;
+  const approvalVersion = approvalEntry.updated_date;
+  let releaseApproval;
+  let approvalReachedWrite;
+  let approvalPaused = false;
+  const approvalAtWrite = new Promise((resolve) => { approvalReachedWrite = resolve; });
+  approvalWins.setBeforeUpdate(async (name, _query, update) => {
+    if (!approvalPaused && name === 'TimeEntry' && update.$set?.approval_status === 'approved') {
+      approvalPaused = true;
+      approvalReachedWrite();
+      await new Promise((resolve) => { releaseApproval = resolve; });
+    }
+  });
+  const approvalPromise = approvalWins.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'race-approval-winner-001', entry_id: approvalEntry.id,
+    expected_updated_date: approvalVersion, decision: 'approve', note: 'Concurrent manager approval',
+  });
+  await approvalAtWrite;
+  const blockedCorrection = await approvalWins.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'race-correction-loser-001', entry_id: approvalEntry.id,
+    expected_updated_date: approvalVersion, reason: 'Must wait for approval',
+    correction: {
+      clock_in: '2026-09-20T14:10:00.000Z', clock_out: '2026-09-20T22:10:00.000Z',
+      lunch_minutes: 0, notes: 'Must be blocked', job_allocations: [],
+    },
+  });
+  assert.equal(blockedCorrection.status, 409, JSON.stringify(blockedCorrection.body));
+  assert.match(blockedCorrection.body.error, /Another correction submission or shift approval|being processed/i);
+  assert.equal(approvalWins.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 0);
+  releaseApproval();
+  const approved = await approvalPromise;
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  assert.equal(approvalWins.rows.TimeEntry[0].approval_status, 'approved');
+  assert.equal(approvalWins.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
+
+  const approvedVersion = approvalWins.rows.TimeEntry[0].updated_date;
+  const afterApprovalCorrection = await approvalWins.invoke({
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'race-correction-after-approval-001', entry_id: approvalEntry.id,
+    expected_updated_date: approvedVersion, reason: 'Correction discovered after approval',
+    correction: {
+      clock_in: '2026-09-20T14:15:00.000Z', clock_out: '2026-09-20T22:15:00.000Z',
+      lunch_minutes: 0, notes: 'Approval must be invalidated', job_allocations: [],
+    },
+  });
+  assert.equal(afterApprovalCorrection.status, 200, JSON.stringify(afterApprovalCorrection.body));
+  const correctedAfterApproval = approvalWins.rows.TimeEntry[0];
+  assert.equal(correctedAfterApproval.approval_status, 'needs_review');
+  assert.equal(correctedAfterApproval.approval_request_id, undefined);
+  assert.equal(correctedAfterApproval.approved_at, undefined);
+  assert.equal(correctedAfterApproval.approved_by, undefined);
+  assert.equal(correctedAfterApproval.last_correction_request_id, 'race-correction-after-approval-001');
+  assert.equal(approvalWins.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
+  assert.equal(approvalWins.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction').length, 1);
+  assert.equal(approvalWins.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
+});
+
 test('direct admin correction remains Needs Review and final approval is bound to its confirmed correction audit', async () => {
   const h = setup();
   h.rows.TimeClockPayPeriod = [];
