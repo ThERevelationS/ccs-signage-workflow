@@ -604,7 +604,45 @@ export default function PayPeriodManager({
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"><ShieldX className="w-5 h-5 shrink-0" /><span>{historyResult?.error || "Payroll history was not verified. No snapshot history is being presented as trusted."}</span></div>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                <ShieldX className="w-5 h-5 shrink-0" />
+                <span>{historyResult?.error || "Payroll history was not verified. No snapshot history is being presented as trusted."}</span>
+              </div>
+              {historyResult?.conflict?.type === "payroll_membership_evidence" && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold">Administrator investigation required</div>
+                      <p className="mt-1 text-xs text-amber-900">
+                        Conflicting immutable audit evidence claims different payroll membership for TimeEntry <span className="font-mono break-all">{historyResult.conflict.time_entry_id || "Unknown"}</span>. No generation below is trusted or displayed until the conflict is resolved.
+                      </p>
+                      <div className="mt-3 max-h-[38vh] space-y-2 overflow-y-auto pr-1">
+                        {(Array.isArray(historyResult.conflict.evidence) ? historyResult.conflict.evidence : []).map((evidence, index) => (
+                          <div key={`${evidence.audit_id || "audit"}:${index}`} className="rounded border border-amber-200 bg-white p-2 text-xs">
+                            <div className="flex flex-wrap items-center justify-between gap-1">
+                              <span className="font-semibold">{evidence.action || "Audit evidence"}</span>
+                              <span>{formatEvidenceTime(evidence.server_timestamp)}</span>
+                            </div>
+                            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1 text-gray-700">
+                              <span>Company date: {evidence.company_date || "Unavailable"}</span>
+                              <span>Clock in: {formatEvidenceTime(evidence.clock_in)}</span>
+                              <span>Source: {evidence.source || "Unavailable"}</span>
+                              <span className="font-mono break-all">Audit: {evidence.audit_id || "Unavailable"}</span>
+                            </div>
+                            {evidence.request_id && <div className="mt-1 font-mono text-[10px] text-gray-500 break-all">Request: {evidence.request_id}</div>}
+                          </div>
+                        ))}
+                        {(!Array.isArray(historyResult.conflict.evidence) || historyResult.conflict.evidence.length === 0) && (
+                          <div className="rounded border border-amber-200 bg-white p-2 text-xs">The server identified a payroll-membership conflict but did not return individual evidence rows.</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
