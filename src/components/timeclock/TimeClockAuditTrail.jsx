@@ -155,27 +155,43 @@ export default function TimeClockAuditTrail({ investigation = null }) {
         <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-500 text-center">No audit records match the current filters.</div>
       ) : (
         <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-          {filtered.map((row) => (
-            <div key={row.id} className="rounded-xl border bg-white p-3">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <ClipboardList className="w-4 h-4 text-purple-600 shrink-0" />
-                    <span className="font-medium text-sm">{ACTION_LABELS[row.action] || row.action || "Time Clock action"}</span>
-                    <Badge variant="outline" className={outcomeClass(row.outcome)}>{row.outcome || "unknown"}</Badge>
+          {filtered.map((row) => {
+            const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
+            const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
+            return (
+              <div key={row.id} className={`rounded-xl border p-3 ${isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ClipboardList className={`w-4 h-4 shrink-0 ${isConflictEvidence ? "text-amber-700" : "text-purple-600"}`} />
+                      <span className="font-medium text-sm">{ACTION_LABELS[row.action] || row.action || "Time Clock action"}</span>
+                      <Badge variant="outline" className={outcomeClass(row.outcome)}>{row.outcome || "unknown"}</Badge>
+                      {isConflictEvidence && <Badge variant="outline" className="border-amber-400 bg-amber-100 text-amber-900">Conflicting evidence</Badge>}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{safeTime(row.server_timestamp)}</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{safeTime(row.server_timestamp)}</p>
                 </div>
-                {row.time_entry_id && <span className="text-[11px] text-gray-400 font-mono">Entry {row.time_entry_id.slice(0, 8)}</span>}
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <p><span className="text-gray-500">Employee:</span> <span className="text-gray-800">{row.user_name || row.user_email || "—"}</span></p>
+                  <p><span className="text-gray-500">Actor:</span> <span className="text-gray-800">{row.actor_email || "System"}</span></p>
+                  {row.reason && <p className="md:col-span-2"><span className="text-gray-500">Reason:</span> <span className="text-gray-800">{row.reason}</span></p>}
+                  {row.time_entry_id && <p className="md:col-span-2 break-all"><span className="text-gray-500">TimeEntry:</span> <span className="font-mono text-gray-700">{row.time_entry_id}</span></p>}
+                  {row.id && <p className="md:col-span-2 break-all"><span className="text-gray-500">Audit:</span> <span className="font-mono text-gray-700">{row.id}</span></p>}
+                  {row.request_id && <p className="md:col-span-2 break-all"><span className="text-gray-500">Request:</span> <span className="font-mono text-gray-700">{row.request_id}</span></p>}
+                  {isConflictEvidence && claimedEvidence && (
+                    <div className="md:col-span-2 mt-1 rounded border border-amber-200 bg-white p-2 text-amber-950">
+                      <div className="font-semibold">Payroll membership claimed by this audit</div>
+                      <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-1">
+                        <span>Company date: {claimedEvidence.company_date || "Unavailable"}</span>
+                        <span>Clock in: {safeTime(claimedEvidence.clock_in)}</span>
+                        <span>Source: {claimedEvidence.source || "Unavailable"}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                <p><span className="text-gray-500">Employee:</span> <span className="text-gray-800">{row.user_name || row.user_email || "—"}</span></p>
-                <p><span className="text-gray-500">Actor:</span> <span className="text-gray-800">{row.actor_email || "System"}</span></p>
-                {row.reason && <p className="md:col-span-2"><span className="text-gray-500">Reason:</span> <span className="text-gray-800">{row.reason}</span></p>}
-                {row.request_id && <p className="md:col-span-2 truncate" title={row.request_id}><span className="text-gray-500">Request:</span> <span className="font-mono text-gray-700">{row.request_id}</span></p>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
