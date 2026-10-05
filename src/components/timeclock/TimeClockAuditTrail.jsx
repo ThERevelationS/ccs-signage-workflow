@@ -55,27 +55,34 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const requestSequenceRef = useRef(0);
+  const mountedRef = useRef(true);
 
   const loadRows = async (timeEntryId = "") => {
+    if (!mountedRef.current) return;
     const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const scopedId = String(timeEntryId || "").trim();
       const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
-      if (requestSequence !== requestSequenceRef.current) return;
+      if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
       setRows(Array.isArray(loaded) ? loaded : []);
     } catch (err) {
-      if (requestSequence !== requestSequenceRef.current) return;
+      if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
       console.error("Time Clock audit load failed:", err);
       setError(err?.message || "Audit history could not be loaded.");
     } finally {
-      if (requestSequence === requestSequenceRef.current) setLoading(false);
+      if (mountedRef.current && requestSequence === requestSequenceRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     loadRows();
+    return () => {
+      mountedRef.current = false;
+      requestSequenceRef.current += 1;
+    };
   }, []);
 
   useEffect(() => {
