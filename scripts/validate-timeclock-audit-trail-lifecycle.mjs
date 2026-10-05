@@ -175,7 +175,13 @@ assert.match(loadRowsBlock.slice(integrityGuardStart, integrityGuardEnd), /misma
 assert.match(loadRowsBlock, /scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
 console.log('PASS ordinary unscoped recent-history responses bypass scoped TimeEntry rejection');
 
-assert.match(loadRowsBlock, /const requiredAuditIds = \[\.\.\.new Set\(/);
+assert.match(loadRowsBlock, /const requiredAuditIds = requiredEvidence\.map/);
+assert.match(loadRowsBlock, /const duplicateRequiredAuditIds = \[\.\.\.new Set\(requiredAuditIds\.filter/);
+assert.match(loadRowsBlock, /if \(duplicateRequiredAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-identity check failed/);
+assert.match(loadRowsBlock, /duplicate_conflict_audit_ids: duplicateRequiredAuditIds/);
+assert.ok(loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0') < loadRowsBlock.indexOf('missingAuditIds.length > 0'), 'expected evidence identity must be unique before completeness');
+console.log('PASS duplicate or contradictory expected conflict audit identities fail closed before completeness');
+
 assert.match(loadRowsBlock, /const returnedAuditIds = new Set\(loadedRows\.map/);
 assert.match(loadRowsBlock, /const missingAuditIds = requiredAuditIds\.filter\(\(id\) => !returnedAuditIds\.has\(id\)\)/);
 assert.match(loadRowsBlock, /if \(missingAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*completeness check failed/);
@@ -202,4 +208,4 @@ console.log('PASS conflict evidence comparison binds action, request, server tim
 assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\)/);
 console.log('PASS scoped refresh preserves the complete expected immutable conflict evidence');
 
-console.log('PASS 15/15 Time Clock Audit Trail lifecycle, integrity, completeness, evidence-content, and contract-version scenarios');
+console.log('PASS 16/16 Time Clock Audit Trail lifecycle, integrity, identity, completeness, evidence-content, and contract-version scenarios');
