@@ -86,7 +86,7 @@ const SALES_ACTIVITY_FIELDS = new Set([
   "current_task_assigned_to",
   "in_pipeline",
 ]);
-const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at"]);
+const INTERNAL_SALES_TRACKING_FIELDS = new Set(["sales_last_activity_at", "sales_stage_changed_at", "sales_quote_sent_verified_at"]);
 const CLOSEOUT_HISTORICAL_FIELDS = new Set([
   "date_estimate_sent",
   "follow_up_date",
@@ -925,7 +925,12 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
       return;
     }
 
-    const salesActivityChanged = Object.keys(proposedUpdates).some((changedField) =>
+    const quoteDateVerificationRequested = (
+      Object.prototype.hasOwnProperty.call(proposedUpdates, "date_estimate_sent")
+      && Boolean(String(proposedUpdates.date_estimate_sent || "").trim())
+      && !currentWo.sales_quote_sent_verified_at
+    );
+    const salesActivityChanged = quoteDateVerificationRequested || Object.keys(proposedUpdates).some((changedField) =>
       SALES_ACTIVITY_FIELDS.has(changedField) && JSON.stringify(currentWo[changedField]) !== JSON.stringify(proposedUpdates[changedField])
     );
     const activityStamp = salesActivityChanged ? new Date().toISOString() : "";
@@ -938,6 +943,7 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
     const mergedUpdates = { ...proposedUpdates, ...trackingUpdates };
     const changedFields = Object.keys(mergedUpdates).filter((changedField) =>
       JSON.stringify(currentWo[changedField]) !== JSON.stringify(mergedUpdates[changedField])
+      || (changedField === "date_estimate_sent" && quoteDateVerificationRequested)
     );
     if (changedFields.length === 0) return;
 
@@ -1026,8 +1032,16 @@ const SalesPipelineSpreadsheet = React.forwardRef(({ searchTerm = "", filterStat
           delete pendingHistoryFieldsRef.current[orderId];
           delete pendingRecordScopesRef.current[orderId];
         }
-        setWorkOrders((current) => current.map((row) => row.id === orderId ? { ...row, updated_date: saved.updated_date } : row));
-        setSelectedWorkOrder((selected) => selected?.id === orderId ? { ...selected, updated_date: saved.updated_date } : selected);
+        setWorkOrders((current) => current.map((row) => row.id === orderId ? {
+          ...row,
+          updated_date: saved.updated_date,
+          sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
+        } : row));
+        setSelectedWorkOrder((selected) => selected?.id === orderId ? {
+          ...selected,
+          updated_date: saved.updated_date,
+          sales_quote_sent_verified_at: saved.sales_quote_sent_verified_at || "",
+        } : selected);
         markWorkOrderNeedsSync(orderId);
         setQuickEditError("");
       } catch (error) {
