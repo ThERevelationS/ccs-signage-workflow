@@ -106,7 +106,7 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
     __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit },
     Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
-    Date: ServerDate, console,
+    Date: ServerDate, console: { error: () => {} },
   });
   vm.runInContext(compiled, context, { filename: 'synthetic-time-clock-handler.js' });
   assert.equal(typeof handler, 'function');
