@@ -3,6 +3,10 @@ import {assertSourceScopeReviewEvidence,safeAuthorityUrl} from './permittingSour
 import {readSourceEvidencePages} from './jurisdictionSourceTextSegments.mjs';
 import {replaceJurisdictionFieldsIfUnchanged} from './jurisdictionPersistence.mjs';
 
+import {verifyHtmlOfficeDelegation} from './permittingHtmlOfficeDelegation.mjs';
+const evidenceFields=['profile_snapshot','office_snapshot','source_snapshot','source_review_id','role_proof','coverage_area',
+ 'evidence_kind','html_evidence_id','publisher_snapshot','office_link_proof','role','role_label','coverage_kind','coverage_basis','source_profile_id'];
+
 export const OFFICE_AUTHORITY_METHOD='office-authority-v1';
 export const OFFICE_AUTHORITY_ROLES=['sign_permit','zoning','building','electrical','right_of_way','historic_review','planning','transportation','other'];
 const profileIdentity=p=>Object.fromEntries(['id','name','state','type'].map(k=>[k,p[k] ?? null]));
@@ -12,14 +16,14 @@ const validRequest=id=>/^[a-zA-Z0-9_-]{16,100}$/.test(id || '');
 const roleSignals={sign_permit:/sign[\s-]*(?:permit|application)|(?:permit|application)[\s-]*sign/i,
  zoning:/zoning/i,building:/building/i,electrical:/electric(?:al)?/i,right_of_way:/right[ -]of[ -]way|public works/i,
  historic_review:/historic|design review/i,planning:/planning/i,transportation:/transportation|department of transportation/i};
-export async function canonicalAuthorityOffice(settingsEntity,id,publisher){
+export async function canonicalAuthorityOffice(settingsEntity,id,publisher,state){
  const rows=await settingsEntity.filter({setting_key:'permitOfficeCatalog'},'id',2,0);
  if(!Array.isArray(rows) || rows.length!==1 || !Array.isArray(rows[0].setting_value?.items))throw evidenceError('Shared office catalog is missing or ambiguous.');
  const catalog=rows[0].setting_value.items,matches=catalog.filter(o=>(o.government_office_id || o.id)===id);
  const office=matches[0],meta=office?.government_office;
  if(matches.length!==1 || catalog.filter(o=>o.id===office?.id).length!==1 || !office?.id ||
   meta?.verification_status!=='staff_verified' || !meta.verified_by || !Number.isFinite(Date.parse(meta.verified_at)) ||
-  (meta.name || office.name)!==publisher || !safeAuthorityUrl(meta.source_url))
+  (publisher!==undefined && (meta.name || office.name)!==publisher) || (state!==undefined && meta.state!==state) || !safeAuthorityUrl(meta.source_url))
   throw evidenceError('Select a unique, current staff-verified canonical publisher office. A copied name/type does not establish identity.');
  return {government_office_id:id,catalog_office_id:office.id,name:meta.name || office.name,
   phone:meta.phone ?? office.contact_phone ?? '',email:meta.email ?? office.contact_email ?? '',
@@ -27,6 +31,9 @@ export async function canonicalAuthorityOffice(settingsEntity,id,publisher){
   source_url:meta.source_url,verified_by:meta.verified_by,verified_at:meta.verified_at,verification_status:meta.verification_status};
 }
 async function verifyEvidence(deps,profile,input){
+ if(input.evidence_kind && !['official_html','pdf'].includes(input.evidence_kind))throw evidenceError('Unknown relationship evidence kind.',400);
+ if(input.evidence_kind==='official_html')return verifyHtmlOfficeDelegation(deps,profile,input,canonicalAuthorityOffice);
+ if(input.html_evidence_id)throw evidenceError('HTML evidence requires an explicit native evidence kind.',400);
  const {sourceEntity,segmentEntity,profileEntity,settingsEntity}=deps;
  if(!profile?.id || !['OH','KY'].includes(profile.state))throw evidenceError('Select a canonical Ohio/Kentucky jurisdiction.',400);
  const sourceId=clean(input.source_document_id,100),officeId=clean(input.government_office_id,200);
@@ -123,7 +130,7 @@ export async function reviewOfficeAuthority(deps,{jurisdictionId,input={},action
  if(action==='verify'){
   try{
    const freshProfile=await deps.profileEntity.get(jurisdictionId),fresh=await verifyEvidence(deps,freshProfile,input);
-   for(const k of ['profile_snapshot','office_snapshot','source_snapshot','source_review_id','role_proof','coverage_area'])
+   for(const k of evidenceFields)
     if(!evidenceEqual(fresh[k],event[k]))throw evidenceError('Source, profile or office evidence changed before recording this review.');
   }catch(error){
    // No create has been attempted: releasing this exact reservation is safe.
@@ -150,7 +157,7 @@ export async function assessOfficeAuthorityReview(deps,event,profile){
   return{verified:false,state:'needs_review',reason:'Incomplete relationship review history.'};
  try{
   const fresh=await verifyEvidence(deps,profile,event.review_input);
-  for(const k of ['profile_snapshot','office_snapshot','source_snapshot','source_review_id','role_proof','coverage_area'])
+  for(const k of evidenceFields)
    if(!evidenceEqual(fresh[k],event[k]))throw evidenceError('Relationship identity or supporting source evidence changed.');
   return{verified:true,state:'staff_verified',reason:'Current office, role and explicit covered-area evidence.'};
  }catch(error){
