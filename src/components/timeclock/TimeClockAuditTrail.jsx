@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,19 +54,23 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
+  const requestSequenceRef = useRef(0);
 
   const loadRows = async (timeEntryId = "") => {
+    const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
     setError("");
     try {
       const scopedId = String(timeEntryId || "").trim();
       const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
+      if (requestSequence !== requestSequenceRef.current) return;
       setRows(Array.isArray(loaded) ? loaded : []);
     } catch (err) {
+      if (requestSequence !== requestSequenceRef.current) return;
       console.error("Time Clock audit load failed:", err);
       setError(err?.message || "Audit history could not be loaded.");
     } finally {
-      setLoading(false);
+      if (requestSequence === requestSequenceRef.current) setLoading(false);
     }
   };
 
