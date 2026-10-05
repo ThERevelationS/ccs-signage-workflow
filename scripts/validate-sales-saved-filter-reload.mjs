@@ -31,7 +31,7 @@ check(loader.includes('const savedColumnId = String(preferences?.column_preset_i
   loader.includes("setActiveColumnPreset(restoredColumn);"),
   "Reloading restores only a selected column preset and otherwise clears it.");
 check(loader.includes('const savedInformation = String(preferences?.information_filter || "all");') &&
-  loader.includes('selected.some((filter) => filter.type === "filter" && filter.id === savedInformation.slice("custom_".length))') &&
+  loader.includes('selected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null') &&
   loader.includes("resolveRestoredSalesFilterModes(restoredInformation, restoredAttention)") &&
   loader.includes("setFilterStatus(restoredModes.informationFilter);"),
   "Reloading restores a selected custom information filter through the mutually-exclusive restore normalizer.");
