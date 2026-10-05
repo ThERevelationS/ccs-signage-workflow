@@ -2834,6 +2834,7 @@ Deno.serve(async (req) => {
         }
         return null;
       };
+      const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = 1;
       const canonicalPayrollMembershipEvidence = (audits: any[], rejectConflicts = false) => {
         const candidates = (Array.isArray(audits) ? audits : []).map((membershipAudit: any) => ({
           membershipAudit,
@@ -2841,6 +2842,7 @@ Deno.serve(async (req) => {
         })).filter((candidate: any) => candidate.membership?.company_date);
         if (rejectConflicts && new Set(candidates.map((candidate: any) => `${candidate.membership.company_date}|${candidate.membership.clock_in}`)).size > 1) {
           const conflictEvidence = candidates.map((candidate: any) => ({
+            contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
             audit_id: String(candidate.membershipAudit.id || ''),
             action: String(candidate.membershipAudit.action || ''),
             request_id: String(candidate.membershipAudit.request_id || ''),
