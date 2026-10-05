@@ -30,7 +30,7 @@ try {
     'const workOrder = {id:"wo-mechanic",work_order_number:"WO-SYNTH-MECH",title:"Synthetic mechanic repair",description:"Synthetic recovery fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-mechanic",updated_date:"wo-rev-1",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}};',
     'const workOrder2 = {id:"wo-other",work_order_number:"WO-SYNTH-OTHER",title:"Second synthetic repair",description:"Second modal fixture",type:"repair",status:"open",priority:"low",equipment_id:"eq-other",updated_date:"wo-other-rev-1",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}};',
     'const secondEstimate = {id:"estimate-other",work_order_id:workOrder2.id,status:"draft",visibility:"mechanic",estimated_labor_hours:1.5,labor_rate:95,misc_total:0,parts_estimate:[],fluids_estimate:[],notes:"Second work order draft",updated_date:"estimate-other-rev-1"};',
-    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false,submitThenLoseAck:false,postCommitSave403:false,postCommitSubmit403:false,accessDenied:false,concurrentDraftOnSubmit:false,ccsTakesOwnershipOnSubmit:false,statusChangesOnSubmit:"",deferNextBootstrap:false,releaseDeferredBootstrap:null};',
+    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false,submitThenLoseAck:false,postCommitSave403:false,postCommitSubmit403:false,accessDenied:false,hidePrimaryFromBootstrap:false,scopeRemoveAfterSaveError:false,concurrentDraftOnSubmit:false,ccsTakesOwnershipOnSubmit:false,statusChangesOnSubmit:"",deferNextBootstrap:false,releaseDeferredBootstrap:null};',
     'window.__fleetMechanicEstimateFixture = state;',
     'const publicEstimate = () => {',
     ' const rows=[clone(secondEstimate)];',
@@ -40,7 +40,7 @@ try {
     ' if (state.owner === "conflict") return [{work_order_id:workOrder.id,visibility:"conflict",status:"conflict"},...rows];',
     ' return [{work_order_id:workOrder.id,visibility:"ccs_managed",status:"managed"},...rows];',
     '};',
-    'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{estimates:true}},active_work_orders:[clone(workOrder),clone(workOrder2)],recent_completed:[],equipment:[{id:"eq-mechanic",name:"Synthetic Fleet Van",status:"operational"},{id:"eq-other",name:"Second Synthetic Van",status:"operational"}],tasks:[],repair_estimates:publicEstimate()});',
+    'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{estimates:true}},active_work_orders:state.hidePrimaryFromBootstrap?[clone(workOrder2)]:[clone(workOrder),clone(workOrder2)],recent_completed:[],equipment:state.hidePrimaryFromBootstrap?[{id:"eq-other",name:"Second Synthetic Van",status:"operational"}]:[{id:"eq-mechanic",name:"Synthetic Fleet Van",status:"operational"},{id:"eq-other",name:"Second Synthetic Van",status:"operational"}],tasks:[],repair_estimates:state.hidePrimaryFromBootstrap?publicEstimate().filter(row=>row.work_order_id!==workOrder.id):publicEstimate()});',
     'export const base44 = {functions:{async invoke(name,payload){',
     ' if (name !== "fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
@@ -55,6 +55,7 @@ try {
     '   const row={...clone(payload.estimate),id:"estimate-mechanic",work_order_id:workOrder.id,status:"draft",approval_required:true,updated_date:"estimate-rev-"+(++revision)};',
     '   state.estimate=row;state.owner="mechanic";',
     '   if (state.postCommitSave403) {state.postCommitSave403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
+    '   if (state.scopeRemoveAfterSaveError) {state.scopeRemoveAfterSaveError=false;state.hidePrimaryFromBootstrap=true;return {data:{error:"Synthetic post-commit scope removal"}};}',
     '   if (state.loseAckAndFailRefresh) {state.loseAckAndFailRefresh=false;state.failNextBootstrap=true;throw new Error("Synthetic lost first-save acknowledgment");}',
     '   if (state.saveThenLoseAck) {state.saveThenLoseAck=false;throw new Error("Synthetic lost first-save acknowledgment");}',
     '   return {data:{success:true,estimate:clone(row)}};',
@@ -279,7 +280,39 @@ try {
     assert.equal(server.status,"submitted");
   });
 
-  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/11 PASS");
+  await run("Desktop: successful scope narrowing closes estimate modal and preserves uncertain recovery for later reauthorization",1440,async page => {
+    await page.getByLabel("Estimated labor hours").fill("6.75");
+    await page.getByLabel("Labor rate / hr").fill("150");
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.scopeRemoveAfterSaveError = true; });
+    await page.getByRole("button",{name:"Save Draft"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicEstimateFixture.actions.filter(row => row.action==="bootstrap").length === 2);
+    assert.equal(await page.getByRole("heading",{name:"Synthetic mechanic repair",exact:true}).count(),0,"out-of-scope estimate modal must close");
+    assert.equal(await page.getByText("WO-SYNTH-MECH",{exact:true}).count(),0,"out-of-scope work order must disappear");
+    assert.equal(await page.getByLabel("Estimated labor hours").count(),0,"out-of-scope estimate dollars must no longer be visible");
+    let server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.estimated_labor_hours,6.75,"server-side draft must remain committed once");
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap"]);
+
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.hidePrimaryFromBootstrap = false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByText("WO-SYNTH-MECH",{exact:true}).waitFor();
+    await page.getByText("WO-SYNTH-MECH",{exact:true}).locator("xpath=ancestor::button[1]").click();
+    const recovery = page.getByRole("alert");
+    await recovery.getByText(/Current server ownership must be checked/i).waitFor();
+    assert.equal(await page.getByLabel("Estimated labor hours").isDisabled(),true,"restored scope must keep uncertain estimate locked until verification");
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.equal((await actionNames(page)).filter(name=>name==="estimate_save").length,1,"scope restoration must not replay Save Draft");
+
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Current server estimate reloaded as draft.*Nothing was resubmitted automatically/i).waitFor();
+    assert.equal(await page.getByLabel("Estimated labor hours").inputValue(),"6.75");
+    assert.equal((await actionNames(page)).filter(name=>name==="estimate_save").length,1);
+    server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.estimated_labor_hours,6.75);
+  });
+
+  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/12 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
