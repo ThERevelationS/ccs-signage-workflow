@@ -7,7 +7,7 @@ import { sanitizeJurisdictionResearch } from '../../shared/jurisdictionResearchS
 import { invalidateVerifiedJurisdictionAfterResearch } from '../../shared/jurisdictionVerification.ts';
 import { mergeJurisdictionResearchDocuments } from '../../shared/jurisdictionResearchDocumentMerge.mjs';
 import { gateResearchRegulatoryPromotion } from '../../shared/jurisdictionResearchAuthorityGate.mjs';
-import { discoverOfficialPermittingResources } from '../../shared/jurisdictionPermittingLinkDiscovery.mjs';
+import { scanOfficialPermittingPages, combineResearchAndDiscoveredDocuments } from '../../shared/permittingDiscoveryScan.mjs';
 import { RESEARCH_FETCH_TIMEOUT_MS } from '../../shared/jurisdictionResearchArchiveBudget.mjs';
 import { archiveKnownJurisdictionSource } from '../../shared/jurisdictionArchiveContinuation.mjs';
 
@@ -145,30 +145,26 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
     if (!researchData) throw Object.assign(new Error('No research data returned'), { status: 400 });
 
-    // When the LLM identifies an official permitting/forms page but returns no
-    // document records, harvest relevant same-host links from that one verified
-    // page. This is a deterministic fallback, not an additional LLM call.
-    if ((!researchData.documents || researchData.documents.length === 0) && researchData.permitting_url) {
-      try {
-        const pageResponse = await safeExternalFetch(researchData.permitting_url, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-          signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
-        });
-        const contentType = String(pageResponse.headers.get('content-type') || '').toLowerCase();
-        if (pageResponse.ok && (contentType.includes('text/html') || contentType.includes('application/xhtml+xml'))) {
-          const pageHtml = new TextDecoder().decode(await readResearchDocumentBytes(pageResponse, 2 * 1024 * 1024));
-          const finalPageUrl = pageResponse.url || researchData.permitting_url;
-          if (new URL(finalPageUrl).hostname.replace(/^www\./, '') !== new URL(researchData.permitting_url).hostname.replace(/^www\./, '')) {
-            throw new Error('Permitting page redirected outside its official host.');
-          }
-          researchData.documents = discoverOfficialPermittingResources(pageHtml, finalPageUrl);
-        } else if (discoveryOnly) {
-          throw new Error('Official permitting page did not return an HTML resource.');
-        }
-      } catch (error) {
-        if (discoveryOnly) throw error;
-        console.warn(`Permitting page link harvest failed for ${jurisdiction.name || id}: ${error?.message || error}`);
-      }
+    // Harvest even when AI returns a partial document list. Discovery-only
+    // requests follow linked official pages without spending research credits.
+    let discoveryScan: any = null;
+    if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
+      discoveryScan = await scanOfficialPermittingPages({
+        seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1,
+        fetchPage: async (url: string) => {
+          const response = await safeExternalFetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
+          });
+          const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+          if (!response.ok || !/text\/html|application\/xhtml\+xml/.test(contentType))
+            throw new Error('Official permitting page did not return HTML.');
+          return { html: new TextDecoder().decode(await readResearchDocumentBytes(response, 2 * 1024 * 1024)),
+            finalUrl: response.url || url };
+        },
+      });
+      if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
+      researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
     }
 
     // Build update object — replace with new data, keep manual overrides
@@ -216,7 +212,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         url: d.url || "",
         doc_type: d.doc_type || "other",
         ai_summary: d.ai_summary || "",
-        source: "ai_discovered",
+        source: d.source === "official_page_harvest" ? "official_page_harvest" : "ai_discovered",
         verification_notes: d.verification_notes || "",
         last_fetched: new Date().toISOString()
       }));
@@ -263,5 +259,5 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         updated = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
       }
     }
-    return { success: true, jurisdiction: updated, archival, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
+    return { success: true, jurisdiction: updated, archival, discovery_scan: discoveryScan, discovery_only: discoveryOnly, research_attempts: discoveryOnly ? 0 : 1, discovered_documents: researchData.documents?.length || 0, runtime_ms: Date.now() - startedAt };
 }
