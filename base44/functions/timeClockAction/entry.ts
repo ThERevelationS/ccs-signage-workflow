@@ -357,7 +357,7 @@ async function unresolvedPunchReviewSummary({ entryEntity, correctionRequestEnti
   };
 }
 
-async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail }: any) {
+async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail }: any) {
   const reviewEntries = (await loadAllFilteredRows(
     entryEntity,
     { user_email: userEmail, status: 'clocked_out', approval_status: 'needs_review' },
@@ -371,30 +371,73 @@ async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntit
 
   const items: any[] = [];
   for (const entry of reviewEntries) {
-    const correctionRequestId = String(entry.last_correction_request_id || '').trim();
-    if (correctionRequestId) {
-      const correctionRequest = await correctionRequestEntity.get(correctionRequestId).catch(() => null);
-      const correctionStatus = String(correctionRequest?.status || '');
-      const linkageOk = Boolean(
-        correctionRequest?.id &&
-        asEmail(correctionRequest.user_email) === userEmail &&
-        String(correctionRequest.time_entry_id || '') === String(entry.id) &&
-        String(correctionRequest.id || '') === correctionRequestId &&
-        ['approved', 'approved_modified'].includes(correctionStatus) &&
-        Boolean(correctionRequest.applied_audit_id) &&
-        (!entry.correction_needs_review_request_id ||
-          String(entry.correction_needs_review_request_id || '') === String(correctionRequest.request_id || ''))
-      );
+    const correctionMarker = String(entry.last_correction_request_id || '').trim();
+    if (correctionMarker) {
+      const correctionRequest = await correctionRequestEntity.get(correctionMarker).catch(() => null);
+      if (correctionRequest?.id) {
+        const correctionStatus = String(correctionRequest.status || '');
+        const linkageOk = Boolean(
+          asEmail(correctionRequest.user_email) === userEmail &&
+          String(correctionRequest.time_entry_id || '') === String(entry.id) &&
+          String(correctionRequest.id || '') === correctionMarker &&
+          ['approved', 'approved_modified'].includes(correctionStatus) &&
+          Boolean(correctionRequest.applied_audit_id) &&
+          (!entry.correction_needs_review_request_id ||
+            String(entry.correction_needs_review_request_id || '') === String(correctionRequest.request_id || ''))
+        );
+        items.push({
+          review_kind: 'corrected_shift',
+          time_entry_id: entry.id,
+          clock_in: entry.clock_in || null,
+          clock_out: entry.clock_out || null,
+          approval_status: entry.approval_status || 'needs_review',
+          correction_request_id: correctionRequest.id,
+          correction_status: correctionStatus || null,
+          review_state: linkageOk ? 'awaiting_shift_approval' : 'needs_manager_investigation',
+          linkage_verified: linkageOk,
+        });
+        continue;
+      }
+
+      if (String(entry.clock_source || '') === 'admin_correction') {
+        const auditRows = await auditEntity.filter({
+          action: 'admin_correction', request_id: correctionMarker, time_entry_id: entry.id,
+        });
+        const directAudit = Array.isArray(auditRows) && auditRows.length === 1 ? auditRows[0] : null;
+        const corrected = directAudit?.details?.corrected || {};
+        const linkageOk = Boolean(
+          directAudit?.id &&
+          ['confirmed', 'recovered'].includes(String(directAudit.outcome || '')) &&
+          asEmail(directAudit.user_email) === userEmail &&
+          String(directAudit.time_entry_id || '') === String(entry.id) &&
+          String(directAudit.request_id || '') === correctionMarker &&
+          String(corrected.clock_in || '') === String(entry.clock_in || '') &&
+          String(corrected.clock_out || '') === String(entry.clock_out || '') &&
+          Number(corrected.lunch_minutes || 0) === Number(entry.lunch_minutes || 0) &&
+          String(corrected.notes || '') === String(entry.notes || '')
+        );
+        items.push({
+          review_kind: 'direct_admin_correction',
+          time_entry_id: entry.id,
+          clock_in: entry.clock_in || null,
+          clock_out: entry.clock_out || null,
+          approval_status: entry.approval_status || 'needs_review',
+          admin_correction_request_id: correctionMarker,
+          admin_correction_audit_id: directAudit?.id || null,
+          review_state: linkageOk ? 'awaiting_shift_approval' : 'needs_manager_investigation',
+          linkage_verified: linkageOk,
+        });
+        continue;
+      }
+
       items.push({
-        review_kind: 'corrected_shift',
+        review_kind: 'unknown_correction',
         time_entry_id: entry.id,
         clock_in: entry.clock_in || null,
         clock_out: entry.clock_out || null,
         approval_status: entry.approval_status || 'needs_review',
-        correction_request_id: correctionRequest?.id || correctionRequestId || null,
-        correction_status: correctionStatus || null,
-        review_state: linkageOk ? 'awaiting_shift_approval' : 'needs_manager_investigation',
-        linkage_verified: linkageOk,
+        review_state: 'needs_manager_investigation',
+        linkage_verified: false,
       });
       continue;
     }
@@ -429,6 +472,7 @@ async function correctedShiftReviewSummary({ entryEntity, correctionRequestEntit
     count: items.length,
     missed_clock_in_count: items.filter((item: any) => item.review_kind === 'missed_clock_in').length,
     corrected_shift_count: items.filter((item: any) => item.review_kind === 'corrected_shift').length,
+    direct_admin_correction_count: items.filter((item: any) => item.review_kind === 'direct_admin_correction').length,
     has_integrity_issue: items.some((item: any) => item.review_state === 'needs_manager_investigation'),
     items,
   };
@@ -2222,7 +2266,7 @@ Deno.serve(async (req) => {
         entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
       });
       const correctedShiftReview = await correctedShiftReviewSummary({
-        entryEntity, correctionRequestEntity, punchExceptionEntity, userEmail: target.email,
+        entryEntity, correctionRequestEntity, punchExceptionEntity, auditEntity, userEmail: target.email,
       });
       const reviewNoticeFields = {
         ...(unresolvedPunchReview ? { unresolved_punch_review: unresolvedPunchReview } : {}),
