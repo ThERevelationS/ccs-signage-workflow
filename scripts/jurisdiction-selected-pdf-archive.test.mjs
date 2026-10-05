@@ -83,3 +83,12 @@ test('classification does not override pinned/manual/collection protection or up
  for(const extra of [{pinned:true},{archive_pinned:true},{source:'manual'}]){const f=fixture({extra:{resource_classification:pdfHint,...extra}});assert.equal((await archiveKnownJurisdictionSource({...f.api,manual:false,knownPdf:null})).skipped,true);assert.equal(f.calls.uploads,0);}
  const f=fixture({extra:{resource_classification:pdfHint},uploadUncertain:true});const args={...f.api,manual:false,knownPdf:null};assert.equal((await archiveKnownJurisdictionSource(args)).status,'upload_uncertain');assert.equal((await archiveKnownJurisdictionSource(args)).skipped,true);assert.equal(f.calls.uploads,1);
 });
+
+test('classified PDF redirect outside canonical hosts cannot upload',async()=>{
+ const f=fixture({extra:{resource_classification:pdfHint}});const api={...f.api,manual:false,knownPdf:null,fetchSource:async()=>{const r=new Response(bytes,{headers:{'content-type':'application/pdf'}});Object.defineProperty(r,'url',{value:'https://other.example/form'});return r;}};
+ assert.equal((await archiveKnownJurisdictionSource(api)).status,'failed');assert.equal(f.calls.uploads,0);
+});
+test('classification changed during download preserves the newer receipt and prevents upload',async()=>{
+ const f=fixture({extra:{resource_classification:pdfHint}});const original=f.api.fetchSource;const api={...f.api,manual:false,knownPdf:null,fetchSource:async url=>{const result=await original(url);f.patch({documents:f.profile().documents.map(d=>d.id==='selected'?{...d,resource_classification:{kind:'html'}}:d)});return result;}};
+ const r=await archiveKnownJurisdictionSource(api);assert.equal(r.status,'receipt_conflict');assert.equal(f.calls.uploads,0);assert.equal(f.profile().documents[0].resource_classification.kind,'html');
+});
