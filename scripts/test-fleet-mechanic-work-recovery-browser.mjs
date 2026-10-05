@@ -27,10 +27,10 @@ try {
   await writeFile(path.join(scratch, "mockBase44.js"), [
     'const clone = value => JSON.parse(JSON.stringify(value));',
     'let revision = 1;',
-    'const state = {actions:[],loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
+    'const state = {actions:[],loseStartAck:false,loseSaveAck:false,failNextMutationStatus:false,staleNextSave:false,postCommitStart403:false,postCommitSave403:false,accessDenied:false,scopeRemoved:false,photoWrites:0,receipt:null,work:{id:"wo-work",work_order_number:"WO-SYNTH-WORK",title:"Synthetic work recovery",description:"Synthetic mechanic work mutation fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-work",updated_date:"wo-rev-1",actual_hours:"",corrective_action:"",notes:"",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}}};',
     'window.__fleetMechanicWorkFixture = state;',
     'const work = () => clone(state.work);',
-    'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{estimates:false}},active_work_orders:[work()],recent_completed:[],equipment:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
+    'const bootstrap = () => ({success:true,portal:{name:"Synthetic Mechanic",capabilities:{estimates:false}},active_work_orders:state.scopeRemoved?[]:[work()],recent_completed:[],equipment:state.scopeRemoved?[]:[{id:"eq-work",name:"Synthetic Fleet Van",status:"operational"}],tasks:[],repair_estimates:[]});',
     'const receiptFor = payload => state.receipt && state.receipt.action===payload.mutation_action && state.receipt.requestId===payload.request_id ? state.receipt : null;',
     'const applyStart = payload => { state.work={...state.work,status:"in_progress",started_date:"2026-09-29",updated_date:"wo-rev-"+(++revision)}; state.receipt={action:"start",requestId:payload.request_id,status:"applied"}; };',
     'const applySave = payload => {',
@@ -219,7 +219,18 @@ try {
     assert.equal((after.match(/Committed once but response blocked/g)||[]).length,1);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/6 PASS");
+  await run("Desktop: successful narrowed-scope refresh closes the open out-of-scope job",1440,async page => {
+    await page.getByLabel("Add mechanic note").fill("Local sensitive draft");
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.scopeRemoved = true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 2);
+    assert.equal(await page.getByRole("heading",{name:"Synthetic work recovery",exact:true}).count(),0,"out-of-scope modal must close after successful bootstrap");
+    assert.equal(await page.getByText("WO-SYNTH-WORK",{exact:true}).count(),0,"out-of-scope work order must disappear from the list");
+    assert.equal(await page.getByLabel("Add mechanic note").count(),0,"out-of-scope local draft must no longer be visible");
+    assert.deepEqual(await actionNames(page),["bootstrap","bootstrap"]);
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/7 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
