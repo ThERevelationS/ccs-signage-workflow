@@ -21,11 +21,26 @@ export function resolvePipelineLifecycleDates({
   estimateStatus,
   previousEstimateStatus = "",
   existingDateEstimateSent = "",
+  existingQuoteSentVerifiedAt = "",
   today,
   issuedQuoteDate = "",
   issuedQuoteVersion = 0,
 }) {
-  if (existingDateEstimateSent) return {};
+  if (existingDateEstimateSent) {
+    if (existingQuoteSentVerifiedAt) return {};
+    if (
+      ["sent", "approved", "archived", "cancelled"].includes(estimateStatus)
+      && Number(issuedQuoteVersion || 0) > 0
+      && issuedQuoteDate
+      && issuedQuoteDate === existingDateEstimateSent
+    ) {
+      // Re-submit the already stored date through the tracked WorkOrder save.
+      // The server will stamp quote-date verification from explicit estimator
+      // issuance evidence without changing the customer-facing date itself.
+      return { date_estimate_sent: issuedQuoteDate };
+    }
+    return {};
+  }
 
   if (
     estimateStatus === "sent" &&
