@@ -269,6 +269,9 @@ export function buildOpportunityBridgeAudit({
       if (status === 'won' && terminalKind && terminalKind !== 'won') review.push('won_status_terminal_task_conflict');
       if (status === 'lost' && terminalKind === 'won') review.push('lost_status_completed_sale_conflict');
     }
+    if (scope === 'legacy_history' && isLegacyTerminalSmartsheetSalesRecord(workOrder)) {
+      review.push('legacy_smartsheet_terminal_task_requires_review');
+    }
     if (scope === 'legacy_history' && terminalKind === 'closed') {
       review.push('legacy_closed_stage_ambiguous');
     }
