@@ -1,5 +1,6 @@
 import {createClientFromRequest} from 'npm:@base44/sdk@0.8.52';
 import {reviewOfficeAuthority,listOfficeAuthorityReviews,getOfficeAuthorityRequest} from '../../shared/permittingOfficeAuthority.mjs';
+import {htmlOfficeDelegationContext} from '../../shared/permittingHtmlOfficeDelegation.mjs';
 Deno.serve(async req=>{
  try{
   const base44=createClientFromRequest(req),user=await base44.auth.me().catch(()=>null);
@@ -10,8 +11,9 @@ Deno.serve(async req=>{
   if(!['list','context','get_request'].includes(action) && user.role!=='admin')
    return Response.json({error:'Admin access required for relationship review'},{status:403});
   const entities=base44.asServiceRole.entities,deps={profileEntity:entities.JurisdictionProfile,sourceEntity:entities.PermittingSourceDocument,
-   settingsEntity:entities.GlobalSettings,segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview};
+   settingsEntity:entities.GlobalSettings,segmentEntity:entities.PermittingSourceTextSegment,reviewEntity:entities.PermittingOfficeAuthorityReview,htmlEntity:entities.PermittingHtmlEvidence};
   if(action==='context'){
+   if(body.evidence_kind==='official_html')return Response.json(await htmlOfficeDelegationContext(deps,String(body.html_evidence_id || '')));
    const source=await entities.PermittingSourceDocument.get(String(body.source_document_id || ''));
    const profile=await entities.JurisdictionProfile.get(source.jurisdiction_id);
    const settings=await entities.GlobalSettings.filter({setting_key:'permitOfficeCatalog'},'id',2,0);
