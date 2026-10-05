@@ -67,6 +67,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
+  const [integrityDiagnostics, setIntegrityDiagnostics] = useState([]);
   const requestSequenceRef = useRef(0);
   const mountedRef = useRef(true);
 
@@ -75,6 +76,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
     setError("");
+    setIntegrityDiagnostics([]);
     try {
       const scopedId = String(timeEntryId || "").trim();
       const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
@@ -111,8 +113,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           }).filter(Boolean);
           if (malformedAuthoritativeMembershipRows.length > 0) {
             console.error("Time Clock audit integrity investigation authoritative evidence failure:", { requested_time_entry_id: scopedId, malformed_authoritative_membership_rows: malformedAuthoritativeMembershipRows });
-            setRows([]);
-            setError(`Payroll evidence integrity investigation found ${malformedAuthoritativeMembershipRows.length} malformed authoritative membership audit record${malformedAuthoritativeMembershipRows.length === 1 ? "" : "s"}. No scoped audit records are being presented as trusted evidence.`);
+            setIntegrityDiagnostics(malformedAuthoritativeMembershipRows);
+            setRows(loadedRows);
+            setError(`Payroll evidence integrity investigation found ${malformedAuthoritativeMembershipRows.length} malformed authoritative membership audit record${malformedAuthoritativeMembershipRows.length === 1 ? "" : "s"}. The scoped records below are diagnostic only and are not being presented as trusted payroll evidence.`);
             return;
           }
         }
@@ -262,6 +265,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
   const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
   const integrityInvestigation = investigationActive && investigation?.mode === "integrity";
+  const integrityDiagnosticByAuditId = useMemo(() => new Map(integrityDiagnostics.map((item) => [String(item?.audit_id || ""), item])), [integrityDiagnostics]);
 
   return (
     <div className="clay-card p-4">
@@ -330,9 +334,8 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         </Select>
       </div>
 
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>
-      ) : loading && rows.length === 0 ? (
+      {error && <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+      {loading && rows.length === 0 ? (
         <div className="flex items-center justify-center p-8 text-gray-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Loading audit history...</div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-500 text-center">No audit records match the current filters.</div>
@@ -341,8 +344,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           {filtered.map((row) => {
             const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
             const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
+            const integrityDiagnostic = integrityDiagnosticByAuditId.get(String(row.id || ""));
             return (
-              <div key={row.id} className={`rounded-xl border p-3 ${isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
+              <div key={row.id} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
