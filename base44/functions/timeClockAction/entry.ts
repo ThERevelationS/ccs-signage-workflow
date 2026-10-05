@@ -275,6 +275,13 @@ function validDateKey(value: unknown) {
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === key ? key : '';
 }
 
+function inCausalWindow(timestamp: any, start: any, end: any) {
+  const value = Date.parse(String(timestamp || ''));
+  const lower = Date.parse(String(start || ''));
+  const upper = Date.parse(String(end || ''));
+  return Number.isFinite(value) && Number.isFinite(lower) && Number.isFinite(upper) && lower <= value && value <= upper;
+}
+
 async function uniqueRow(entity: any, query: any, label: string) {
   const rows = await entity.filter(query);
   if (!Array.isArray(rows)) throw new Error(`${label} lookup did not return a record list.`);
@@ -2684,12 +2691,6 @@ Deno.serve(async (req) => {
         const approvalComplete = employees.every((employee: any) => employee.approved_shift_count === employee.shift_count && employee.approval_evidence_count === employee.shift_count);
         const verified = shiftCount === Number(summary.entry_count || 0) && employees.length === Number(summary.employee_count || 0) && Math.abs(totalHours - Number(summary.total_hours || 0)) < 0.005 && approvalComplete;
         return { verified, approval_complete: approvalComplete, shift_count: shiftCount, employee_count: employees.length, total_hours: totalHours, employees };
-      };
-      const inCausalWindow = (timestamp: any, start: any, end: any) => {
-        const value = Date.parse(String(timestamp || ''));
-        const lower = Date.parse(String(start || ''));
-        const upper = Date.parse(String(end || ''));
-        return Number.isFinite(value) && Number.isFinite(lower) && Number.isFinite(upper) && lower <= value && value <= upper;
       };
       const verifyCorrectionProvenance = async (change: any, windowStart = '', windowEnd = '') => {
         const provenance = change?.correction_provenance;
