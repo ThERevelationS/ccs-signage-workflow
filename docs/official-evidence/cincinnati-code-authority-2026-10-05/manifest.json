@@ -1,0 +1,135 @@
+{
+  "phase": 5,
+  "task": "Cincinnati code authority and legislative status",
+  "sources": [
+    {
+      "name": "clerk-code-notice",
+      "official_url": "https://www.cincinnati-oh.gov/council/references-resources/municipal-code/",
+      "archived_repo_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/clerk-code-notice.html",
+      "file_bytes": 53175,
+      "file_hash_sha256": "bd55b83816daccd76e41b821ec4982b0adb8a325bab42fcb6efe5cc9704f0dfa",
+      "retained_at": "2026-10-05T16:13:17.599Z",
+      "authority_approved": false,
+      "text_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/clerk-code-notice.txt",
+      "text_sha256": "986eadcf0953ab59ce4e144eea98ac5f576ba779d380049c3795ce4adcc9331e"
+    },
+    {
+      "name": "ordinance-380-2020-status",
+      "official_url": "https://cincinnatioh.legistar.com/LegislationDetail.aspx?GUID=4AB5D0DA-7914-42BE-86F7-9C570CA927AA&ID=4690902&Options=&Search=",
+      "archived_repo_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/ordinance-380-2020-status.html",
+      "file_bytes": 111486,
+      "file_hash_sha256": "1576cd46b5564acb33bdef406870a2afba893772921e593f9cc3e1e52e7be872",
+      "retained_at": "2026-10-05T16:13:17.935Z",
+      "authority_approved": false,
+      "text_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/ordinance-380-2020-status.txt",
+      "text_sha256": "0464809e8abb627d3cde9881644e3a0a59305f4cd4f9bdded6fdb483ed403220"
+    },
+    {
+      "name": "ordinance-380-2020-passed",
+      "official_url": "https://cincinnatioh.legistar.com/View.ashx?GUID=B18E7E4A-F6F3-4036-9443-2E6D9CD33F37&ID=8919574&M=F",
+      "archived_repo_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/ordinance-380-2020-passed.pdf",
+      "file_bytes": 779894,
+      "file_hash_sha256": "0d85a4e0487e0b4dfadddb52320f8a8975f3820d45a4a1e3026ae6cb4fb67cc8",
+      "retained_at": "2026-10-05T16:13:18.332Z",
+      "authority_approved": false,
+      "total_pages": 4,
+      "pages": [
+        {
+          "page": 1,
+          "text": "EMERGENCY\nof Olmntttiait\nAn ©riitnantf Mn. ^go -2020\nMODIFYING the provisions of Chapter 313,\"Outdoor Advertising Sign Excise Tax,\" of Title\nIII, \"Financial, Personnel, Procurement and Real Property Procedures,\" of the Cincinnati\nMunicipal Code by AMENDING Section 313-1-0,\"Outdoor Advertising Sign,\" and Section 313-\n5, \"Exemptions,\" and by REPEALING Section 313-7, \"Tax Not to be Separately Stated or\nCharged\"; and further MODIFYING the provisions of Chapter 895,\"Outdoor Advertising Signs,\"\nof Title VIII,\"Business Regulations,\" of the Cincinnati Municipal Code by AMENDING Section\n895-1-0, \"Outdoor Advertising Sign,\" and Section 895-2, \"Applicability,\" by REPEALING\nSection 895-10,\"Additional Permitted Uses of Outdoor Advertising Signs,\" and by ORDAINING\nnew Section 895-29,\"Severability,\" to provide additional clarity regarding the applicability ofthe\nCity's outdoor advertising excise tax to the owners and operators of outdoor advertising signs.\nWHEREAS,the City Council wishes to modify the provisions of Chapter 313, Outdoor\nAdvertising Sign Tax,\" and Chapter 895, \"Outdoor Advertising Signs,\" of the Cincinnati\nMunicipal Code to provide additional clarity regarding the applicability of the City's outdoor\nadvertising excise tax to the owners and operators of outdoor advertising signs; and\nWHEREAS,this includes Council's desire to repeal the provisions of Section 313-7,\"Tax\nNot to be Separately Stated or Charged,\" ofthe Cincinnati Municipal Code in order to remove that\nsection from the Cincinnati Municipal Code; now,therefore,\nBE IT ORDAINED by the Council of the City of Cincinnati, State of Ohio:\nSection 1. That Section 313-1-0, \"Outdoor Advertising Sign,\" and Section 313-5,\n\"Exemptions,\" of Chapter 313, \"Outdoor Advertising Sign Excise Tax,\" are hereby amended to\nread as follows:\nSec. 313-1-0. - Outdoor Advertising Sign.\n\"Outdoor Advertising Sign\" shall mean an outdoor advertising sign as that term is defined in\nCincinnati Municipal Code section 895-1-0, \"Outdoor Advertising Sign,\" and shall includo an\noutdoor advortioing sign used from time to time as a noncommercial sign or an on site commercial\nsign ao provided in section 895 10, \"Additional Pennitted Uses of Outdoor Advertising Signs.\"\nSec. 313-5. - Exemptions.\n(a) The tax shall not apply to the installation, placement, or maintenance of the\nfollowing outdoor advertising signs:",
+          "source_document_id": "retained-380-2020",
+          "source_sha256": "0d85a4e0487e0b4dfadddb52320f8a8975f3820d45a4a1e3026ae6cb4fb67cc8",
+          "text_sha256": "fb54401975777d651a9eea6d891d28fd96d8b62a465930a6807488c06597563c",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T16:14:27.212Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 2,
+          "text": "(i) Those signs that are not offered or made available bv an advertising host for\nuse by an advertiser in exchange for rent or other consideration within the\napplicable tax year, and for which signs the advertising host does not\nreceive^ or accrue the right to receive, rent or other consideration from an\nadvertiser in exchange for the use ofthe sign within the same tax year TbAWft\nsignc owned, controlled, leased, liconoed, or othcarwioo uood by the United\nStates, the State of Ohio, or the cit>^ of Cinoiimati;\n(ii) Those signs exempt from outdoor advertising sign regulations pursuant to\nCincinnati Municipal Code section 895-2, \"Applicabilityy\" or Cincinnati\nMumcipal Codo Section 1^127 07,\"Signs Located on Public Property\"; or\n(iii) Those signs not exceeding 36 square feet in total sign face area.\n(b) No exemption claimed under paragraph(a)(i)ofthis section shall be granted except\nupon a claim made, under penalty of peijury, at the time a return is filed pursuant\nto section 313-11.\nSection 2. That existing Section 313-1-0,\"Outdoor Advertising Sign,\" and Section 313-\n5,\"Exemptions,\" of Chapter 313,\"Outdoor Advertising Sign Excise Tax,\" are hereby repealed.\nSection 3. That Section 313-7,\"Tax Not to be Separately Stated or Charged,\" of Chapter\n313,\"Outdoor Advertising Sign Excise Tax,\" is hereby repealed.\nSection 4. That Section 895-1-0, \"Outdoor Advertising Sign,\" and Section 895-2,\n\"Applicability,\" of Chapter 895, \"Outdoor Advertising Signs,\" are hereby amended to read as\nfollows:\nSec. 895-1-0.- Outdoor Advertising Sign.\n\"Outdoor Advertising Sign\" means either of the following: (i) a sign for which its owner\nor operator receives, or is entitled to receive, rent or other consideration from another person or\nentity in exchange for the use ofthe sign, including for the placement ofa message on the sign: or\n(ii) a sign that is offered or made available bv its owner or operator for use bv another person or\nentity, including for the placement of a message on the sign, in exchange for rent or other\nconsideration shall have the same meaning as \"Off Sito Sign/ nr. thnt tnrm ir. HnfinnH in Sartinn\n1127 03 O,\"Off Site Sign,\" ofthe Cincinnati Municipal Codo.",
+          "source_document_id": "retained-380-2020",
+          "source_sha256": "0d85a4e0487e0b4dfadddb52320f8a8975f3820d45a4a1e3026ae6cb4fb67cc8",
+          "text_sha256": "9a5d80b3324991cac8a06f4270f09a7c2c5426c7415b6f2e7402ebdce416bd76",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T16:14:27.223Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 3,
+          "text": "Sec. 895-2.- Applicability.\nThe provisions of this Chapter apply to all outdoor advertising signs except as otherwise\nprovided by law. Signs not governed by this Chapter include:\n(a) Signs erected or displayed in the public right-of-way and authorized under Chapter 723\nofthe Municipal Code; and\n(b) Signs erected or displayed on Fountain Square pursuant to Rules and Regulations for\nthe Use of Fountain Square as authorized by Chapter 713 ofthe Municipal Code; and\n(c) Signs approved by the City for a special event authorized under chapter 765 of the\nMimicipal Code or other event authorized under Park Board rules; and\n(d) Signs erected or displayed on city-owned property by the City of Cincinnati or by a\nthird-party pursuant to a contract with the city subject to reasonable, uniform,\nviewpoint-neutral limitations that ensure the signs do not undermine the city's interests,\nincluding its interests in aesthetics and traffic safetvy; and\n(e) Signs erected or disnlaved on pronertv owned bv a governmental entitv pursuant to a\ncontract with the citv subject to reasonable limitations that ensure the signs do not\nimdermine the city's interests, including its interests in aesthetics and traffic safetv.\nSection 5. That existing Section 895-1-O,\"Outdoor Advertising Sign,\" and Section 895-\n2,\"Applicability,\" of Chapter 895,\"Outdoor Advertising Signs,\" are hereby repealed.\nSection 6. That Section 895-10, \"Additional Permitted Uses of Outdoor Advertising\nSigns,\" of Chapter 895,\"Outdoor Advertising Signs,\" is hereby repealed.\nSection 7. That Section 895-29, \"Severability,\" of Chapter 895, \"Outdoor Advertising\nSigns,\" is hereby ordained to read as follows:\nSec. 895-29.- Severability.\nIfany section,subsection,subdivision,paragraph,sentence, clause or phrase ofthis chapter\nor any part thereof is for any reason held to be unconstitutional, such decision shall not affect the\nvalidity of the remaining portions of this chapter or any part thereof. The city council hereby\ndeclares that it would have passed each section, subsection, subdivision, paragraph, sentence,\nclause or phrase thereof, irrespective of the fact that any one or more sections, subsections,\nsubdivisions, paragraphs, sentences, clauses or phrases be declared unconstitutional.\nSection 8. That if any section, subsection, subdivision, paragraph, sentence, clause or\nphrase of this ordinance or any part thereof is for any reason held to be unconstitutional, such",
+          "source_document_id": "retained-380-2020",
+          "source_sha256": "0d85a4e0487e0b4dfadddb52320f8a8975f3820d45a4a1e3026ae6cb4fb67cc8",
+          "text_sha256": "8e68b21b8f98eedeaff7d4004405cf16ed2f59d2ff3ecf1c180af76b971e4120",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T16:14:27.231Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 4,
+          "text": "decision shall not affect the validity ofthe remaining portions ofthis ordinance or any part thereof.\nThe city council hereby declares that it would have passed each section, subsection, subdivision,\nparagraph,sentence, clause or phrase thereof, irrespective ofthe fact that any one or more sections,\nsubsections, subdivisions, paragraphs, sentences, clauses or phrases be declared unconstitutional.\nSection 9. That this ordinance shall be an emergency measure necessary for the\npreservation ofthe public peace, health, safety, and general welfare and shall, subject to the terms\nof Article II, Section 6 of the Charter, be effective immediately. The reason for the emergency is\nthe immediate need to provide additional clarity regarding the applicability of the City's outdoor\nadvertising excise tax to the owners and operators of outdoor advertising signs.\nPassed: Klbvmhtf 1,9- _,2020\nJohn Cranley, Mayor\nAttest:\nClerk\nNew language underscored. Deleted language indicated by strikethrough.\nIN ACCORDAJ^WITH hK UIM44—\nCL^KOFCOUNCl^",
+          "source_document_id": "retained-380-2020",
+          "source_sha256": "0d85a4e0487e0b4dfadddb52320f8a8975f3820d45a4a1e3026ae6cb4fb67cc8",
+          "text_sha256": "39f11a80ebb3e600a2ddbae378313bccea00cbee8ce259340b1944e9da924923",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T16:14:27.235Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ],
+      "text_extraction_complete": true,
+      "amendment_markup_review_required": true,
+      "current_compiled_law_established": false
+    },
+    {
+      "name": "proposed-202301577-status",
+      "official_url": "https://cincinnatioh.legistar.com/LegislationDetail.aspx?GUID=E215FCA3-9594-4FD0-9348-5E9CD4EB3828&ID=6258838&Options=&Search=",
+      "archived_repo_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/proposed-202301577-status.html",
+      "file_bytes": 96097,
+      "file_hash_sha256": "b19496807f99e58cae729f9ef4e8f790be5fde228216ce96b5402718a51f39b0",
+      "retained_at": "2026-10-05T16:13:18.612Z",
+      "authority_approved": false,
+      "text_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/proposed-202301577-status.txt",
+      "text_sha256": "9b46cfe3166002c3ecb373c62426379e8671f12e35bf8d470c01cc24fcdc4d8a"
+    },
+    {
+      "name": "city-referred-online-code",
+      "official_url": "https://library.municode.com/oh/cincinnati/codes/code_of_ordinances",
+      "archived_repo_path": "docs/official-evidence/cincinnati-code-authority-2026-10-05/city-referred-online-code.html",
+      "file_bytes": 6095,
+      "file_hash_sha256": "1616314af9651a7ca7a904089981ce426e49ccf621a8dd01f27074e4b649f757",
+      "retained_at": "2026-10-05T16:13:18.747Z",
+      "authority_approved": false,
+      "text_extraction_complete": false,
+      "coverage": "Web application shell: static projection is empty. No chapter text captured."
+    }
+  ],
+  "llm_calls": 0,
+  "current_compiled_law_established": false,
+  "findings": [
+    {
+      "file": "202002117",
+      "ordinance": "0380-2020",
+      "status": "Passed Emergency",
+      "final_action": "2020-11-12",
+      "scope": "Chapter 895 definition/applicability amendments and Chapter 313 excise-tax amendments",
+      "not_current_compilation": true,
+      "deleted_and_added_markup_requires_visual_review": true
+    },
+    {
+      "file": "202301577",
+      "status": "Indefinitely Postponed",
+      "final_action": "2023-06-21",
+      "scope": "Proposed sandwich-board/Urban Design Overlay amendment",
+      "adoption_established": false
+    },
+    {
+      "source": "clerk-code-notice",
+      "online_version_official": false,
+      "official_version": "Clerk of Council office; general-information online version may differ."
+    }
+  ],
+  "next": "Acquire complete published Chapters 1427 and 895 including publication cutoff and amendment history; visually review legislative markup before deriving replacement text."
+}
