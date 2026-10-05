@@ -6,7 +6,7 @@ import { createHmac, webcrypto } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { transformSync } from 'esbuild';
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
 
 const secret = 'synthetic-session-signing-key';
 const staleMonitorWorkflow = readFileSync(new URL('../base44/workflows/Time Clock Stale Shift Monitor.jsonc', import.meta.url), 'utf8');
@@ -17,8 +17,8 @@ const compiled = transformSync(
   source
     .replace("import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';",
       'const createClientFromRequest = globalThis.__syntheticClient;')
-    .replace("import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit } from '../../shared/timeClockPayrollMembershipEvidence.mjs';",
-      'const { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit } = globalThis.__payrollMembershipEvidence;'),
+    .replace("import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } from '../../shared/timeClockPayrollMembershipEvidence.mjs';",
+      'const { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence } = globalThis.__payrollMembershipEvidence;'),
   { loader: 'ts', format: 'cjs', target: 'es2022' },
 ).code;
 
@@ -103,7 +103,7 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
   let handler = null;
   const context = vm.createContext({
     __syntheticClient: () => client,
-    __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipFromAudit },
+    __payrollMembershipEvidence: { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, normalizedPayrollMembershipFromAudit, payrollMembershipConflictEvidenceIsMalformed, payrollMembershipFromAudit, validatePayrollMembershipConflictEvidence },
     Deno: { serve: (fn) => { handler = fn; }, env: { get: (key) => key === 'SESSION_SIGNING_SECRET' ? secret : '' } },
     crypto: webcrypto, TextEncoder, TextDecoder, Response, Request, btoa, atob,
     Date: ServerDate, console: { error: () => {} },
