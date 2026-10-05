@@ -17,6 +17,7 @@ console.log('PASS approval retry persists and reuses the exact original manager-
 
 assert.match(source, /Interrupted manager shift review needs recovery/);
 assert.match(source, /Resume interrupted review/);
+assert.match(source, /Resume that exact review before starting another approval or reopen action/);
 assert.match(source, /resumeApprovalRecovery/);
 assert.match(source, /Exact retry mode/);
 assert.match(source, /disabled=\{approvalBusy \|\| Boolean\(approvalRetryPayload\)\}/);
