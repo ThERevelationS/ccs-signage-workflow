@@ -1,0 +1,82 @@
+{
+  "phase": 5,
+  "phase_name": "Official-source collection and verified archives",
+  "task": "Version-bound visual transcription candidates",
+  "source_document_id": "6ac3a54ac1ce2adba5b92cb8",
+  "record": {
+    "source_document_id": "6ac3a54ac1ce2adba5b92cb8",
+    "source_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+    "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/550d0c6c4_site-plan-information.pdf",
+    "file_bytes": 57368,
+    "page": 1,
+    "ocr_record_key": "5277569645f94e8f19aebabfbb712856086f256528aa6054cf2d9256a2ef51da",
+    "ocr_record_sha256": "1416245313bcf30c3721d5f0bf2d43135b7744ff37eabf6f5092f16b9f8e8612",
+    "render": {
+      "sha256": "ac53b8729376073571723ed378bd2342b186999b7f43880683098f297ff79d00",
+      "method": "pdftoppm-r200-singlefile-png",
+      "width": 1700,
+      "height": 2200
+    },
+    "spans": [
+      {
+        "text": "All site plans must be drawn to scale!",
+        "kind": "instruction_excerpt",
+        "region_label": "Top instruction paragraph, underlined sentence",
+        "region": [
+          0.16,
+          0.068,
+          0.74,
+          0.035
+        ]
+      },
+      {
+        "text": "Please illustrate all buildings, structures, streets and alleys on the lot. Indicate any buildings or structures that are adjacent to the lot.",
+        "kind": "instruction_excerpt",
+        "region_label": "Bottom left instruction paragraph below business example",
+        "region": [
+          0.12,
+          0.78,
+          0.34,
+          0.095
+        ]
+      }
+    ],
+    "observation_kind": "agent_visual_transcription",
+    "coverage": "selected_excerpts_only",
+    "request_id": "cincinnati-site-plan-visual-20261005-v1",
+    "record_key": "a6add3d145891492c1b462243565b23576b9914a464230d447bf2b9449b93851",
+    "payload_sha256": "64f3e4df9a57e6dded2872ed9ba5c6c7c123a64c1099f133d1b74ae26adc7374",
+    "submitted_by": "brettheinlein1@gmail.com",
+    "retained_at": "2026-10-05T14:45:30.105Z",
+    "review_status": "pending_staff_review",
+    "record_sha256": "4b0268bd8b5af8185aef0e9d5b268d9afbe39be1515349dc5cb9232fd3cddf64"
+  },
+  "live_checks": {
+    "preview": true,
+    "retention": true,
+    "request_readback": true,
+    "corrected_text_citation": true,
+    "fabricated_dimensional_excerpt_rejected": true
+  },
+  "verification": {
+    "tests_passed": 87,
+    "tests_failed": 0,
+    "backend_bundle_passed": true,
+    "build_passed": true,
+    "only_source_fields_changed": [
+      "ocr_transcriptions",
+      "updated_date"
+    ],
+    "original_ocr_and_extraction_preserved": true,
+    "source_authority_and_approval_preserved": true
+  },
+  "limitations": [
+    "Selected instruction excerpts only, not a full-page transcription or diagram review.",
+    "Candidates remain pending_staff_review; no approved regulation or current authority was established.",
+    "Page-render metadata is declared provenance; the backend validates the retained PDF bytes and physical page, not PNG rendering.",
+    "Existing PDF operator extraction remains needs_ocr and complete_document_text false.",
+    "The electronic guide's 24-hour PDF/48-hour HTML conflict remains unresolved."
+  ],
+  "next": "Cincinnati sign/application applicability and office coverage review using retained official evidence.",
+  "llm_calls": 0
+}
