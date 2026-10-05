@@ -37,6 +37,42 @@
       "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/certificate-of-appropriateness.html",
       "authority_approved": false,
       "app_storage_archive_completed": false
+    },
+    {
+      "name": "coa-staff-application",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic Web Changes 2022/COA- staff level.pdf",
+      "final_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/COA-%20staff%20level.pdf",
+      "retrieved_at": "2026-10-05T15:12:04.807Z",
+      "content_type": "application/pdf",
+      "file_bytes": 158030,
+      "file_hash_sha256": "2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/coa-staff-application.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "hcb-documents-required",
+      "official_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic Web Changes 2022/Documents Required List- updated new 3.22.pdf",
+      "final_url": "https://www.cincinnati-oh.gov/sites/planning/assets/Historic%20Web%20Changes%202022/Documents%20Required%20List-%20updated%20new%203.22.pdf",
+      "retrieved_at": "2026-10-05T15:12:05.066Z",
+      "content_type": "application/pdf",
+      "file_bytes": 308135,
+      "file_hash_sha256": "4a5f830247f2203447db1ddc466321df5a759e04fba3544b08d0c131815abc28",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/hcb-documents-required.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "required-permit-documentation",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/required-permit-documentation/",
+      "retrieved_at": "2026-10-05T15:12:05.284Z",
+      "content_type": "application/pdf;charset=UTF-8",
+      "file_bytes": 62913,
+      "file_hash_sha256": "af738d3b63da1dbb4facd405d59f5e6371548ec318472d15fb2958fe177290b4",
+      "archived_repo_path": "docs/official-evidence/cincinnati-applicability-2026-10-05/required-permit-documentation.pdf",
+      "authority_approved": false,
+      "app_storage_archive_completed": false
     }
   ],
   "llm_calls": 0,
