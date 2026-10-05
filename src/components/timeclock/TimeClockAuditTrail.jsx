@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipFromAudit } from "../../../base44/shared/timeClockPayrollMembershipEvidence.mjs";
 
 const TimeClockAudit = base44.entities.TimeClockAudit;
 
@@ -46,44 +47,6 @@ function safeTime(value) {
   } catch {
     return "Unknown time";
   }
-}
-
-const COMPANY_TIME_ZONE = "America/New_York";
-const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = 1;
-
-function companyDateForInstant(value) {
-  const date = new Date(String(value || ""));
-  if (Number.isNaN(date.getTime())) return "";
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: COMPANY_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return values.year && values.month && values.day ? `${values.year}-${values.month}-${values.day}` : "";
-}
-
-function payrollMembershipFromAudit(row) {
-  const details = row?.details || {};
-  const action = String(row?.action || "");
-  const envelope = details.payroll_membership;
-  if (envelope) {
-    const clockIn = String(envelope.clock_in || "");
-    const companyDate = companyDateForInstant(clockIn);
-    const semanticClockIn = action === "clock_in" ? String(details.employee_attested_clock_in || row?.server_timestamp || "")
-      : action === "clock_out" ? String(details.result_clock_in || "")
-        : action === "admin_correction" ? String(details.corrected?.clock_in || "")
-          : action === "admin_archive" ? String(details.archived_entry?.clock_in || details.original?.clock_in || "") : "";
-    if (Number(envelope.version || 0) !== 1 || String(envelope.time_zone || "") !== COMPANY_TIME_ZONE || !clockIn || !companyDate || companyDate !== String(envelope.company_date || "") || semanticClockIn !== clockIn) return null;
-    return { company_date: companyDate, clock_in: clockIn, source: "verified_normalized_audit_envelope" };
-  }
-  const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, action === "clock_in" ? row?.server_timestamp : ""].filter(Boolean);
-  for (const value of candidates) {
-    const companyDate = companyDateForInstant(value);
-    if (companyDate) return { company_date: companyDate, clock_in: String(value), source: "immutable_audit" };
-  }
-  return null;
 }
 
 function conflictEvidenceMatchesAudit(expected, row) {
