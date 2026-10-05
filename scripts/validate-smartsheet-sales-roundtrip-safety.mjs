@@ -155,8 +155,8 @@ assert.match(
 );
 assert.match(
   backend,
-  /salesPendingSnapshotRepairs\.push\([\s\S]*?smartsheet_sync_snapshot: repairedSnapshot/,
-  "Locally pending rows must be able to receive only newly bound remote snapshot columns.",
+  /salesRemoteSnapshot = plan\.snapshot;[\s\S]*?toUpdate\.push\(\{ id: existing\.id,[\s\S]*?_remoteSnapshot: salesRemoteSnapshot/,
+  "Reconciled Sales pull snapshots must flow through the verified metadata path after held fields are preserved.",
 );
 assert.match(
   backend,
