@@ -179,6 +179,7 @@ export default function PayPeriodManager({
   timeEntries = [],
   correctionRequests = [],
   onEntriesChanged,
+  onInvestigateAudit,
 }) {
   const [periods, setPeriods] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -618,6 +619,17 @@ export default function PayPeriodManager({
                       <p className="mt-1 text-xs text-amber-900">
                         Conflicting immutable audit evidence claims different payroll membership for TimeEntry <span className="font-mono break-all">{historyResult.conflict.time_entry_id || "Unknown"}</span>. No generation below is trusted or displayed until the conflict is resolved.
                       </p>
+                      {historyResult.conflict.time_entry_id && onInvestigateAudit && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 bg-white border-amber-300 text-amber-950"
+                          onClick={() => onInvestigateAudit({ time_entry_id: historyResult.conflict.time_entry_id })}
+                        >
+                          <ClipboardList className="w-4 h-4 mr-1" />Investigate in Audit Trail
+                        </Button>
+                      )}
                       <div className="mt-3 max-h-[38vh] space-y-2 overflow-y-auto pr-1">
                         {(Array.isArray(historyResult.conflict.evidence) ? historyResult.conflict.evidence : []).map((evidence, index) => (
                           <div key={`${evidence.audit_id || "audit"}:${index}`} className="rounded border border-amber-200 bg-white p-2 text-xs">
