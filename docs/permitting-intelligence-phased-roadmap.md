@@ -30,8 +30,8 @@ Use `5.08 of 5.10 (step 8 of 10)` in progress reports. These are ordered milesto
 | 5.05 | Deterministic PDF text handoff | Pipeline tested; pilot evidence retained |
 | 5.06 | Resumable capped-index pagination | Live verified |
 | 5.07 | Guarded failed-page retry and accurate outcomes | Live verified |
-| 5.08 | Guarded selected-depth recovery and sign-gap acceptance | In progress |
-| 5.09 | Ohio/Kentucky pipeline acceptance across source patterns | Pending |
+| 5.08 | Guarded selected-depth recovery and sign-gap acceptance | Live sign-gap acceptance verified; other gaps retained |
+| 5.09 | Ohio/Kentucky pipeline acceptance across source patterns | In progress |
 | 5.10 | Collection acceptance review, documented gaps and Phase 6 handoff | Pending |
 
 Phase 5 ends only when 5.10 is accepted. Steps 5.01–5.07 have implementation/pilot evidence; the final review must audit their limits rather than interpreting seven milestones as a percentage of statewide data gathered.
