@@ -53,12 +53,14 @@ const COMPANY_TIME_ZONE = "America/New_York";
 function companyDateForInstant(value) {
   const date = new Date(String(value || ""));
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-CA", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: COMPANY_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(date);
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return values.year && values.month && values.day ? `${values.year}-${values.month}-${values.day}` : "";
 }
 
 function payrollMembershipFromAudit(row) {
