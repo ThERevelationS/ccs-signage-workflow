@@ -626,7 +626,10 @@ export default function PayPeriodManager({
                           variant="outline"
                           className="mt-3 bg-white border-amber-300 text-amber-950"
                           onClick={() => {
-                            onInvestigateAudit({ time_entry_id: historyResult.conflict.time_entry_id });
+                            onInvestigateAudit({
+                              time_entry_id: historyResult.conflict.time_entry_id,
+                              evidence: Array.isArray(historyResult.conflict.evidence) ? historyResult.conflict.evidence : [],
+                            });
                             setHistoryPeriod(null);
                             setHistoryResult(null);
                           }}
