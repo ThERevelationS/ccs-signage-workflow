@@ -75,6 +75,23 @@ test('compiled manual catalog route registers during automatic pause, with no ne
   assert.equal((await invoke(worker,body)).data.skipped,true);assert.equal(rows.length,1);assert.equal(calls.research,0);
 });
 
+test('compiled known PDF route rejects automatic, unselected, malformed and catalog-only requests before writes',async()=>{
+ for(const body of [
+ {automatic:true,known_pdf:{sha256:'a'.repeat(64),bytes:10}},
+ {jurisdiction_id:'j',known_pdf:{sha256:'a'.repeat(64),bytes:10}},
+ {jurisdiction_id:'j',document_id:'d',known_pdf:{sha256:'bad',bytes:10}},
+ {jurisdiction_id:'j',document_id:'d',known_pdf:{sha256:'a'.repeat(64),bytes:1}},
+ {jurisdiction_id:'j',document_id:'d',catalog_only:true,known_pdf:{sha256:'a'.repeat(64),bytes:10}},
+ ]){
+ const calls=setup();assert.equal((await invoke(worker,body)).status,400);assert.equal(calls.writes,0);assert.equal(calls.scans,0);
+ }
+});
+test('compiled selected PDF route still requires admin access',async()=>{
+ const calls=setup({role:'user'});
+ assert.equal((await invoke(worker,{jurisdiction_id:'j',document_id:'d',known_pdf:{sha256:'a'.repeat(64),bytes:10}})).status,403);
+ assert.equal(calls.writes,0);
+});
+
 test('text-parser failure is reported without interrupting credit-capped research dispatch',async()=>{
  const calls=setup({atCap:true});
  globalThis.workerFixture.asServiceRole.entities.PermittingSourceDocument.filter=async()=>{throw Error('Parser backlog unavailable');};
