@@ -48,7 +48,7 @@ function safeTime(value) {
   }
 }
 
-export default function TimeClockAuditTrail() {
+export default function TimeClockAuditTrail({ investigation = null }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -73,6 +73,29 @@ export default function TimeClockAuditTrail() {
     loadRows();
   }, []);
 
+  useEffect(() => {
+    const timeEntryId = String(investigation?.time_entry_id || "").trim();
+    if (!timeEntryId) return;
+    let cancelled = false;
+    const loadInvestigationRows = async () => {
+      setLoading(true);
+      setError("");
+      setActionFilter("all");
+      setSearch(timeEntryId);
+      try {
+        const loaded = await TimeClockAudit.filter({ time_entry_id: timeEntryId }, "-server_timestamp", 100);
+        if (!cancelled) setRows(Array.isArray(loaded) ? loaded : []);
+      } catch (err) {
+        console.error("Time Clock audit investigation load failed:", err);
+        if (!cancelled) setError(err?.message || "Audit evidence for this TimeEntry could not be loaded.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadInvestigationRows();
+    return () => { cancelled = true; };
+  }, [investigation?.nonce, investigation?.time_entry_id]);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return rows.filter((row) => {
@@ -84,6 +107,8 @@ export default function TimeClockAuditTrail() {
         row.actor_email,
         row.reason,
         row.request_id,
+        row.time_entry_id,
+        row.id,
         ACTION_LABELS[row.action] || row.action,
       ].some((value) => String(value || "").toLowerCase().includes(needle));
     });
@@ -110,7 +135,7 @@ export default function TimeClockAuditTrail() {
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employee, actor, reason, request id..." className="pl-9" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employee, actor, TimeEntry, audit or request id..." className="pl-9" />
         </div>
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
