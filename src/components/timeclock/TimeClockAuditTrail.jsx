@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 const TimeClockAudit = base44.entities.TimeClockAudit;
@@ -101,6 +101,9 @@ export default function TimeClockAuditTrail({ investigation = null }) {
   }, [rows, search, actionFilter]);
 
   const actions = useMemo(() => [...new Set(rows.map((row) => row.action).filter(Boolean))].sort(), [rows]);
+  const investigationEvidence = Array.isArray(investigation?.evidence) ? investigation.evidence : [];
+  const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
+  const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
 
   return (
     <div className="clay-card p-4">
@@ -117,6 +120,18 @@ export default function TimeClockAuditTrail({ investigation = null }) {
           Refresh
         </Button>
       </div>
+
+      {investigationActive && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <div className="font-semibold">Payroll membership conflict investigation</div>
+              <div className="mt-1 text-xs">Showing authoritative audit history specifically for TimeEntry <span className="font-mono break-all">{investigation.time_entry_id}</span>. Rows labeled <strong>Conflicting evidence</strong> are the immutable audits that triggered the payroll verification block.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <div className="relative flex-1">
