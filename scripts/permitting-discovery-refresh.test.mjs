@@ -1,3 +1,4 @@
+import { readPermittingResourceResponse } from '../base44/shared/permittingResourceResponse.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +10,7 @@ const compiled=ts.transpileModule(entry.slice(entry.indexOf('async function refr
 function harness({profile={},ai={},pages={}}={}) {
   const initial={id:'fixture',name:'Fixture',state:'OH',type:'city',updated_date:'v1',permitting_url:'https://city.gov/permits',documents:[{id:'manual',url:'https://city.gov/old.pdf',source:'manual',file_url:'stored',extracted_text:'preserve'}],...profile};
   let written, researchCalls=0;const fetched=[];
-  const deps={scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,mergeJurisdictionResearchDocuments,
+  const deps={readPermittingResourceResponse,scanOfficialPermittingPages,combineResearchAndDiscoveredDocuments,mergeJurisdictionResearchDocuments,
     safeExternalFetch:async url=>{fetched.push(url);if(!(url in pages))throw Error('fixture unavailable');return new Response(pages[url],{headers:{'content-type':'text/html'}});},
     RESEARCH_FETCH_TIMEOUT_MS:12000,readResearchDocumentBytes:async response=>new Uint8Array(await response.arrayBuffer()),
     sanitizeJurisdictionResearch:v=>v,gateResearchRegulatoryPromotion:({updateData})=>({blocked:false,updateData}),

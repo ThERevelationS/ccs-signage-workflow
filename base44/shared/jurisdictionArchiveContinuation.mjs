@@ -85,6 +85,7 @@ async function transition(entity, id, doc, expected, nextState, flatPatch = {}) 
     if (matching.length !== 1) throw new Error('Archive source changed or has duplicate identities.');
     const source = matching[0];
     if (source.source === 'manual' || source.pinned === true || source.archive_pinned === true) throw new Error('Archive source became protected.');
+    if (!sameState(source.resource_classification, doc.resource_classification)) throw new Error('Resource classification changed concurrently.');
     const converged = sameState(source.archive_state, nextState) && Object.entries(flatPatch).every(([key, value]) => source[key] === value);
     if (converged) return current;
     if (!sameState(source.archive_state || {}, expected || {}) || source.file_url || source.source_sha256) throw new Error('Archive source or receipt changed concurrently.');
@@ -135,7 +136,7 @@ export async function archiveKnownJurisdictionSource({ entity, catalogEntity, ju
   let stage = resumeUpload ? 'verify' : 'download';
   const fetchBytes = async (url, requirePdf = false) => withResearchArchiveTimeout((async () => {
     const response = await fetchSource(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS) });
-    if (requirePdf && response.url && !url.startsWith(state.file_url || 'NO_STORED_URL')) authorizedHtmlUrl(initial, response.url);
+    if (requirePdf && response.url) authorizedHtmlUrl(initial, response.url);
     if (requirePdf && !/^application\/pdf(?:\s*;|$)/i.test(response.headers.get('content-type') || ''))
       throw new Error('Selected official resource did not return PDF content.');
     return readBytes(response);

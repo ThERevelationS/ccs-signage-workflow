@@ -52,7 +52,8 @@ export function mergeJurisdictionResearchDocuments(existingDocuments, researched
       id: existing.id || researched.id,
       url: existing.url || researched.url,
       source: existing.source || researched.source,
-      resource_classification: existing.resource_classification || researched.resource_classification,
+      ...((existing.resource_classification || researched.resource_classification) ?
+        { resource_classification: existing.resource_classification || researched.resource_classification } : {}),
       // A newly discovered version cannot silently replace an archived PDF.
       file_url: existing.file_url || researched.file_url,
       extracted_text: archived

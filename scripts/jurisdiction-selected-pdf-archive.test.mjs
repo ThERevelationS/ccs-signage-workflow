@@ -64,3 +64,22 @@ test('readback resumes the saved upload and rejects changed retained expectation
  f.recover();assert.equal((await archiveKnownJurisdictionSource(f.api)).archived,1);
  assert.equal(f.calls.uploads,1);assert.equal(f.calls.downloads,1);assert.equal(f.calls.readbacks,2);
 });
+
+const pdfHint={kind:'pdf',method:'http-mime-signature-v1',source_url:'https://city.example/forms/sign-application/'};
+test('classified extensionless PDF uses the automatic hash/readback/catalog pipeline',async()=>{
+ const f=fixture({extra:{resource_classification:pdfHint}});const r=await archiveKnownJurisdictionSource({...f.api,manual:false,knownPdf:null});
+ assert.equal(r.archived,1);assert.equal(r.catalog.created,1);assert.equal(f.calls.uploads,1);assert.equal(f.profile().documents[0].stored_sha256,knownPdf.sha256);
+ assert.equal(f.rows[0].verification_status,'needs_verification');assert.equal(f.rows[0].content_status,'unknown');
+});
+test('classified resource changed to HTML or forged PDF cannot upload',async()=>{
+ for(const options of [{contentType:'text/html'},{responseBytes:Buffer.from('not a PDF')}]){const f=fixture({...options,extra:{resource_classification:pdfHint}});const r=await archiveKnownJurisdictionSource({...f.api,manual:false,knownPdf:null});assert.equal(r.status,'failed');assert.equal(f.calls.uploads,0);}
+});
+test('classified automatic retry verifies saved upload rather than uploading again',async()=>{
+ const f=fixture({extra:{resource_classification:pdfHint},readbackFails:true});const args={...f.api,manual:false,knownPdf:null};assert.equal((await archiveKnownJurisdictionSource(args)).status,'uploaded');f.recover();
+ // Automatic backoff is retained; an authorized manual retry resumes this receipt.
+ assert.equal((await archiveKnownJurisdictionSource({...args,manual:true})).archived,1);assert.equal(f.calls.uploads,1);assert.equal(f.calls.downloads,1);
+});
+test('classification does not override pinned/manual/collection protection or upload uncertainty',async()=>{
+ for(const extra of [{pinned:true},{archive_pinned:true},{source:'manual'}]){const f=fixture({extra:{resource_classification:pdfHint,...extra}});assert.equal((await archiveKnownJurisdictionSource({...f.api,manual:false,knownPdf:null})).skipped,true);assert.equal(f.calls.uploads,0);}
+ const f=fixture({extra:{resource_classification:pdfHint},uploadUncertain:true});const args={...f.api,manual:false,knownPdf:null};assert.equal((await archiveKnownJurisdictionSource(args)).status,'upload_uncertain');assert.equal((await archiveKnownJurisdictionSource(args)).skipped,true);assert.equal(f.calls.uploads,1);
+});
