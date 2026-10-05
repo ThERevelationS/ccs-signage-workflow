@@ -640,10 +640,14 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         correctionRequests={correctionRequests}
         onEntriesChanged={loadData}
-        onInvestigateAudit={({ time_entry_id }) => {
+        onInvestigateAudit={({ time_entry_id, evidence = [] }) => {
           const normalizedId = String(time_entry_id || "").trim();
           if (!normalizedId) return;
-          setAuditInvestigation({ time_entry_id: normalizedId, nonce: Date.now() });
+          setAuditInvestigation({
+            time_entry_id: normalizedId,
+            evidence: Array.isArray(evidence) ? evidence : [],
+            nonce: Date.now(),
+          });
           window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
         }}
       />
