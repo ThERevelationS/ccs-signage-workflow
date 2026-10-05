@@ -1784,10 +1784,13 @@ async function pushDataset(
       current: orderProcessedCount,
       total: pendingRecords.length,
       fraction: orderTimeBudgetReached ? 0.97 : 0.99,
-      item_label: orderTimeBudgetReached ? 'Safe time limit reached' : 'Finalizing Order sync',
+      item_label: orderTimeBudgetReached ? 'Safe time limit reached'
+        : (conflicts.length || orderFailedRecordIds.size ? 'Order sync needs review' : 'Finalizing Order sync'),
       detail: orderTimeBudgetReached
         ? `${Math.max(0, pendingRecords.length - orderProcessedCount).toLocaleString()} Order${pendingRecords.length - orderProcessedCount === 1 ? '' : 's'} remain safely queued for the next sync`
-        : `${orderProcessedCount.toLocaleString()} Order${orderProcessedCount === 1 ? '' : 's'} processed`,
+        : (conflicts.length || orderFailedRecordIds.size
+          ? `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} · ${orderFailedRecordIds.size} Order${orderFailedRecordIds.size === 1 ? '' : 's'} with errors remain isolated for review/retry`
+          : `${orderProcessedCount.toLocaleString()} Order${orderProcessedCount === 1 ? '' : 's'} processed and verified`),
     });
   }
 
