@@ -2796,7 +2796,19 @@ Deno.serve(async (req) => {
           membership: payrollMembershipFromAudit(membershipAudit),
         })).filter((candidate: any) => candidate.membership?.company_date);
         if (rejectConflicts && new Set(candidates.map((candidate: any) => `${candidate.membership.company_date}|${candidate.membership.clock_in}`)).size > 1) {
-          return { conflict: true, candidates };
+          const conflictEvidence = candidates.map((candidate: any) => ({
+            audit_id: String(candidate.membershipAudit.id || ''),
+            action: String(candidate.membershipAudit.action || ''),
+            request_id: String(candidate.membershipAudit.request_id || ''),
+            server_timestamp: String(candidate.membershipAudit.server_timestamp || ''),
+            company_date: String(candidate.membership.company_date || ''),
+            clock_in: String(candidate.membership.clock_in || ''),
+            source: String(candidate.membership.source || ''),
+          })).sort((a: any, b: any) =>
+            a.company_date.localeCompare(b.company_date) || a.clock_in.localeCompare(b.clock_in) ||
+            a.server_timestamp.localeCompare(b.server_timestamp) || a.audit_id.localeCompare(b.audit_id)
+          );
+          return { conflict: true, conflict_evidence: conflictEvidence.slice(0, 20) };
         }
         candidates.sort((a: any, b: any) => {
           const aNormalized = a.membership.source === 'verified_normalized_audit_envelope' ? 0 : 1;
@@ -3850,7 +3862,15 @@ Deno.serve(async (req) => {
                 discoveryEvidence = snapshotVersion >= 22
                   ? canonicalPayrollMembershipEvidence(membershipAudits, snapshotVersion >= 23)
                   : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
-                if (discoveryEvidence?.conflict) return Response.json({ success: false, error: 'Conflicting payroll membership evidence requires administrator investigation before finalization.' }, { status: 409 });
+                if (discoveryEvidence?.conflict) return Response.json({
+                  success: false,
+                  error: 'Conflicting payroll membership evidence requires administrator investigation before finalization.',
+                  conflict: {
+                    type: 'payroll_membership_evidence',
+                    time_entry_id: candidateId,
+                    evidence: discoveryEvidence.conflict_evidence,
+                  },
+                }, { status: 409 });
                 if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
               }
               if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
