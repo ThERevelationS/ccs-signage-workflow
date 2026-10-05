@@ -110,10 +110,17 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
   });
   vm.runInContext(compiled, context, { filename: 'synthetic-time-clock-handler.js' });
   assert.equal(typeof handler, 'function');
-  const payload = Buffer.from(JSON.stringify({
-    email: administrator.email, iat: Date.now() - 1000, exp: Date.now() + 60_000,
-  })).toString('base64url');
-  const session_token = payload + '.' + createHmac('sha256', secret).update(payload).digest('base64url');
+  const sessionTokenFor = (user) => {
+    const payload = Buffer.from(JSON.stringify({
+      email: user.email, iat: Date.now() - 1000, exp: Date.now() + 60_000,
+    })).toString('base64url');
+    return payload + '.' + createHmac('sha256', secret).update(payload).digest('base64url');
+  };
+  const session_token = sessionTokenFor(administrator);
+  async function invokeAs(user, body) {
+    const response = await handler({ json: async () => ({ ...body, session_token: sessionTokenFor(user) }) });
+    return { status: response.status, body: await response.json() };
+  }
   async function invoke(body) {
     const response = await handler({ json: async () => ({ ...body, session_token }) });
     return { status: response.status, body: await response.json() };
@@ -128,7 +135,7 @@ function setup({ entryCount = 1, serverNow = null } = {}) {
     return invoke({ action: 'clock_in', request_id, target_email: employee.email });
   }
   return {
-    rows, action, clockIn, invoke,
+    rows, action, clockIn, invoke, invokeAs,
     setBeforeUpdate(fn) { beforeUpdate = fn; },
     setAfterRowUpdate(fn) { afterRowUpdate = fn; },
     period: () => rows.TimeClockPayPeriod[0],
