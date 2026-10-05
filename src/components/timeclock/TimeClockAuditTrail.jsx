@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ClipboardList, Loader2, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipFromAudit } from "../../../base44/shared/timeClockPayrollMembershipEvidence.mjs";
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipCompanyDate, payrollMembershipFromAudit } from "../../../base44/shared/timeClockPayrollMembershipEvidence.mjs";
 
 const TimeClockAudit = base44.entities.TimeClockAudit;
 
@@ -122,7 +122,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           invalid_server_timestamp: !isIsoInstant(item?.server_timestamp),
           invalid_clock_in: !isIsoInstant(item?.clock_in),
           invalid_company_date: !isCompanyDate(item?.company_date),
-        })).filter((item) => item.missing_fields.length > 0 || item.invalid_contract_version || item.invalid_action || item.invalid_source || item.invalid_server_timestamp || item.invalid_clock_in || item.invalid_company_date);
+          company_date_clock_in_mismatch: isIsoInstant(item?.clock_in) && isCompanyDate(item?.company_date) && payrollMembershipCompanyDate(item.clock_in) !== String(item.company_date),
+          invalid_action_source_pair: String(item?.source || "") === "verified_normalized_audit_envelope" && !supportedEvidenceActions.has(String(item?.action || "")),
+        })).filter((item) => item.missing_fields.length > 0 || item.invalid_contract_version || item.invalid_action || item.invalid_source || item.invalid_server_timestamp || item.invalid_clock_in || item.invalid_company_date || item.company_date_clock_in_mismatch || item.invalid_action_source_pair);
         if (malformedRequiredEvidence.length > 0) {
           console.error("Time Clock audit investigation evidence-shape failure:", {
             requested_time_entry_id: scopedId,
