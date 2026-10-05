@@ -231,7 +231,62 @@ try {
     assert.deepEqual(await actionNames(page),["bootstrap","bootstrap"]);
   });
 
-  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/7 PASS");
+  await run("Desktop: Start and Save capability refreshes immediately govern the open modal",1440,async page => {
+    await page.getByLabel("Labor hours").fill("8.5");
+    await page.getByLabel("Corrective action / work performed").fill("Unsaved local corrective action");
+    await page.getByLabel("Add mechanic note").fill("Unsaved local mechanic note");
+    await page.evaluate(() => { const s=window.__fleetMechanicWorkFixture;s.work={...s.work,actual_hours:1.25,corrective_action:"Server value before capability changes"}; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 2);
+    assert.equal(await page.getByLabel("Labor hours").inputValue(),"8.5","unchanged Save permission must preserve legitimate unsaved progress");
+    assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),1);
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),1);
+
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=false; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 3);
+    assert.equal(await page.getByRole("button",{name:"Mark Work Started"}).count(),0,"Start control must disappear when permission is removed");
+    await page.getByText(/does not currently allow starting work/i).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),1,"Save remains available when its permission is unchanged");
+    assert.equal(await page.getByLabel("Labor hours").inputValue(),"8.5");
+
+    await page.evaluate(() => { window.__fleetMechanicWorkFixture.startPermission=true; });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Mark Work Started"}).waitFor();
+
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.work={...s.work,actual_hours:2.75,corrective_action:"Authoritative server progress after Save removal"};
+      s.savePermission=false;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.waitForFunction(() => window.__fleetMechanicWorkFixture.actions.filter(row => row.action==="bootstrap").length === 5);
+    assert.equal(await page.getByRole("button",{name:"Save Progress"}).count(),0,"Save control must disappear when permission is removed");
+    assert.equal(await page.getByLabel("Labor hours").isDisabled(),true);
+    assert.equal(await page.getByLabel("Corrective action / work performed").isDisabled(),true);
+    assert.equal(await page.getByLabel("Add mechanic note").isDisabled(),true);
+    assert.equal(await page.locator('input[type="file"]').isDisabled(),true);
+    assert.equal(await page.getByLabel("Labor hours").inputValue(),"2.75","Save removal must reseed from fresh server state");
+    assert.equal(await page.getByLabel("Corrective action / work performed").inputValue(),"Authoritative server progress after Save removal");
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"","stale unsaved note must be purged when Save permission changes");
+
+    await page.evaluate(() => {
+      const s=window.__fleetMechanicWorkFixture;
+      s.work={...s.work,actual_hours:4.5,corrective_action:"Newest authoritative server progress"};
+      s.savePermission=true;
+    });
+    await page.getByRole("button",{name:"Refresh"}).click();
+    await page.getByRole("button",{name:"Save Progress"}).waitFor();
+    assert.equal(await page.getByLabel("Labor hours").isEnabled(),true);
+    assert.equal(await page.getByLabel("Labor hours").inputValue(),"4.5","restored Save permission must use newest server state");
+    assert.equal(await page.getByLabel("Corrective action / work performed").inputValue(),"Newest authoritative server progress");
+    assert.equal(await page.getByLabel("Add mechanic note").inputValue(),"");
+    const names=await actionNames(page);
+    assert.equal(names.filter(name=>name==="start").length,0,"capability refresh must never invoke Start");
+    assert.equal(names.filter(name=>name==="save").length,0,"capability refresh must never invoke Save");
+  });
+
+  console.log("Fleet mechanic work recovery browser acceptance: " + passed + "/8 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
