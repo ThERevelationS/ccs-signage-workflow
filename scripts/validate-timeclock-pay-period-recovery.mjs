@@ -1956,8 +1956,10 @@ test('final corrected-shift approval is bound to terminal correction evidence', 
   const approvalSlice = source.slice(source.indexOf('const verifyResolvedCorrectionForApproval'), source.indexOf('if (action === \'admin_archive_entry\')'));
   assert.match(approvalSlice, /approved_modified/);
   assert.match(approvalSlice, /applied_audit_id/);
-  assert.match(approvalSlice, /details\?\.corrected/);
+  assert.match(source, /const correctionAuditMatchesRecord/);
+  assert.match(source, /details\?\.corrected/);
   assert.match(approvalSlice, /correction_request_id/);
+  assert.match(approvalSlice, /directAudits/);
   assert.match(approvalSlice, /verifyResolvedCorrectionForApproval\(entry\)/);
   assert.match(approvalSlice, /verifyResolvedCorrectionForApproval\(savedEntry\)/);
 });
