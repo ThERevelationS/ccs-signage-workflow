@@ -1,0 +1,116 @@
+{
+  "observed_at": "2026-10-05T15:12:27.077Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "jurisdiction": {
+    "id": "6ac1a123edda6d8dd942690b",
+    "name": "Cincinnati",
+    "state": "OH",
+    "updated_date": "2026-10-05T13:53:41.633000",
+    "document_count": 13
+  },
+  "office_catalog": {
+    "id": "69e14b004e01bf082f0f8c75",
+    "updated_date": "2026-10-05T02:29:45.065000",
+    "office_count": 9,
+    "offices": [
+      {
+        "id": "1776693091752-0.8897164525624395",
+        "name": "City of Cincinnati Department of Buildings & Inspections",
+        "identity_status": "staff_verified",
+        "workflow_step_count": 5
+      },
+      {
+        "id": "1776692961965-0.8021021998915965",
+        "name": "(IBI) Inspection Bureau, Inc.",
+        "identity_status": "not_verified",
+        "workflow_step_count": 5
+      },
+      {
+        "id": "office-cincinnati-planning-engagement-oh",
+        "name": "City of Cincinnati Department of City Planning and Engagement",
+        "identity_status": "staff_verified",
+        "workflow_step_count": 0
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "6ac3abe5613df02af1acc4f7",
+      "updated_date": "2026-10-05T13:55:31.887000",
+      "title": "Cincinnati Electronic Document Submission Guidelines PDF — 24/48-hour conflict; review pending",
+      "file_hash_sha256": "daa0ac20ff2329777eb0155658c48a1fbbbf20f011429318c117e480bb634630",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/electronic-document-submission-guidelines/",
+      "file_bytes": 225549,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/073a7b7e6_electronic-document-submission-guidelines.pdf",
+      "text_extraction_status": "complete",
+      "authority_classification": "unknown_review_required",
+      "verification_status": "needs_verification",
+      "complete_document_text": true
+    },
+    {
+      "id": "6ac3a54ac1ce2adba5b92cb8",
+      "updated_date": "2026-10-05T14:45:30.282000",
+      "title": "Cincinnati Site Plan Information — applicability unreviewed",
+      "file_hash_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+      "file_bytes": 57368,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/550d0c6c4_site-plan-information.pdf",
+      "text_extraction_status": "needs_ocr",
+      "authority_classification": "unknown_review_required",
+      "verification_status": "needs_verification",
+      "complete_document_text": false
+    },
+    {
+      "id": "6ac3a51f33beec629ba497e0",
+      "updated_date": "2026-10-05T13:39:14.435000",
+      "title": "Cincinnati Building Permit Application — applicability unreviewed",
+      "file_hash_sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+      "file_bytes": 252768,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/51dece9a0_building-permit-application-fillable-form.pdf",
+      "text_extraction_status": "complete",
+      "authority_classification": "application_form",
+      "verification_status": "needs_verification",
+      "complete_document_text": true
+    },
+    {
+      "id": "6ac39c24c9f6d0eebf320a13",
+      "updated_date": "2026-10-05T13:07:50.807000",
+      "title": "Cincinnati Outdoor Advertising Sign Application — applicability requires review",
+      "file_hash_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+      "file_bytes": 63094,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/2116473d8_outdoor-advertising-sign-application.pdf",
+      "text_extraction_status": "complete",
+      "authority_classification": "application_form",
+      "verification_status": "needs_verification",
+      "complete_document_text": true
+    },
+    {
+      "id": "6ac39c0e6657049fb11cd757",
+      "updated_date": "2026-10-05T13:07:50.078000",
+      "title": "Cincinnati Signs Informational Handout — official PDF; authority unreviewed",
+      "file_hash_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "file_bytes": 282256,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/427b15b63_signs-informational-handout.pdf",
+      "text_extraction_status": "complete",
+      "authority_classification": "unknown_review_required",
+      "verification_status": "needs_verification",
+      "complete_document_text": true
+    },
+    {
+      "id": "6ac2cc6b5063fe274d7c6b61",
+      "updated_date": "2026-10-05T13:30:11.313000",
+      "title": "Cincinnati Form-Based Code (Final Draft)",
+      "file_hash_sha256": "f8d4ba291658ceced68de014910b0c2d282079083802ec96e9ba812f1e50336d",
+      "official_url": "https://formbasedcodes.org/wp-content/uploads/2014/07/Cincinnati-Form-Based-Code_FinalDraft_Web.pdf",
+      "file_bytes": 5816727,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/033fca6d8_Cincinnati-Form-Based-Code_FinalDraft_Web.pdf",
+      "text_extraction_status": "partial",
+      "authority_classification": "draft_proposed",
+      "verification_status": "needs_verification",
+      "complete_document_text": false
+    }
+  ]
+}
