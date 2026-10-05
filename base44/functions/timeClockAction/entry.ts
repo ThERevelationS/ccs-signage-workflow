@@ -2874,20 +2874,20 @@ Deno.serve(async (req) => {
           const storedDiscovery = summary?.generation_membership_discovery;
           if (!Array.isArray(storedDiscovery) || Number(summary.generation_membership_discovery_count || 0) !== storedDiscovery.length ||
               !constantTimeEqual(String(summary.generation_membership_discovery_hash || ''), await payloadHash(storedDiscovery)) ||
-              !constantTimeEqual(await payloadHash(expectedMembershipDiscovery), await payloadHash(storedDiscovery))) return false;
+              !constantTimeEqual(await payloadHash(expectedMembershipDiscovery), await payloadHash(storedDiscovery))) return failed();
         }
         const periodEntryIds = [...periodEntryIdSet].sort();
         const expected = [];
         for (const entryId of periodEntryIds) {
           const audits = await auditEntity.filter({ time_entry_id: entryId });
-          if (!Array.isArray(audits)) return false;
+          if (!Array.isArray(audits)) return failed();
           for (const row of audits.filter((audit: any) =>
             relevantActions.includes(String(audit.action || '')) &&
             ['confirmed', 'recovered'].includes(String(audit.outcome || '')) &&
             inCausalWindow(audit.server_timestamp, windowStart, windowEnd)
           )) {
             if (row.details?.payroll_membership && ['clock_in', 'clock_out', 'admin_correction', 'admin_archive'].includes(String(row.action || '')) &&
-                !normalizedPayrollMembershipFromAudit(row)) return false;
+                !normalizedPayrollMembershipFromAudit(row)) return failed();
             const membership = Number(summary.snapshot_version || 0) >= 20 ? normalizedPayrollMembershipFromAudit(row) : null;
             expected.push({
               audit_id: String(row.id || ''), time_entry_id: entryId, action: String(row.action || ''),
