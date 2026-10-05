@@ -1,0 +1,42 @@
+{
+  "phase": "4.9",
+  "verified_at": "2026-10-05T02:31:43.717Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "catalog_id": "69e14b004e01bf082f0f8c75",
+  "before_updated_date": "2026-10-04T21:54:55.008000",
+  "after_updated_date": "2026-10-05T02:29:45.065000",
+  "before_offices": 8,
+  "after_offices": 9,
+  "existing_office_id": "1776693091752-0.8897164525624395",
+  "new_office_id": "office-cincinnati-planning-engagement-oh",
+  "save_mode": "Expected updated_date compare-and-set of setting_value assembled from the fresh full catalog; exactly one updated record. Nested-array push was rejected and one readback confirmed no mutation before the compatible conditional save.",
+  "save_result": {
+    "success": true,
+    "updated": 1,
+    "has_more": false
+  },
+  "live_readback_matches_proposal": true,
+  "other_seven_offices_preserved": true,
+  "existing_buildings_workflow_type_name_notes_preserved": true,
+  "tracker_localities_unchanged": 2,
+  "cincinnati_profile_documents_unchanged": 4,
+  "retained_original_html_pages": 7,
+  "retained_original_pdf_files": 2,
+  "retained_sources_hash_and_bytes_verified": 9,
+  "literal_identity_contact_proofs_verified": 10,
+  "focused_tests_passed": 44,
+  "authority_relationships_created": 0,
+  "jobs_modified": 0,
+  "work_orders_modified": 0,
+  "dispatch_modified": false,
+  "llm_calls": 0,
+  "frontend_published": false,
+  "backend_deploy_needed": false,
+  "app_storage_archive_completed": false,
+  "limitations": [
+    "Identity verification does not approve permit roles, coverage, source-currentness, adoption, or address authority.",
+    "PDF originals retained in the Git-backed evidence bundle; Base44 storage/catalog registration and page extraction remain pending.",
+    "Existing locality copies retain their original independent contacts and workflows; no automatic propagation or authority inference."
+  ]
+}
