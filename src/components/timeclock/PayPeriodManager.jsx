@@ -610,6 +610,20 @@ export default function PayPeriodManager({
                 <ShieldX className="w-5 h-5 shrink-0" />
                 <span>{historyResult?.error || "Payroll history was not verified. No snapshot history is being presented as trusted."}</span>
               </div>
+              {historyResult?.conflict?.type === "payroll_membership_evidence_invalid" && (
+                <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-950">
+                  <div className="flex items-start gap-2">
+                    <ShieldX className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold">Payroll evidence integrity failure</div>
+                      <p className="mt-1 text-xs text-red-900">
+                        The server detected malformed immutable payroll-membership provenance for TimeEntry <span className="font-mono break-all">{historyResult.conflict.time_entry_id || "Unknown"}</span>. No malformed evidence was returned and no payroll generation is being trusted. Administrator investigation is required before finalization can proceed.
+                      </p>
+                      <div className="mt-2 text-xs text-red-800">Use the Time Clock Audit Trail to review the TimeEntry and its immutable audit records. This integrity failure is intentionally not treated as an ordinary evidence conflict.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {historyResult?.conflict?.type === "payroll_membership_evidence" && (
                 <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
                   <div className="flex items-start gap-2">
