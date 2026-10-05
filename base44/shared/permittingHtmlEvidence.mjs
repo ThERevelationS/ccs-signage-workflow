@@ -194,7 +194,7 @@ export async function retainHtmlEvidence(deps,{jurisdictionId,officialUrl,title,
   // This invocation has not attempted any write or create. A new preview is safe.
   throw Object.assign(error,{retry_safe:true});
  }
- const evidenceKey=await evidenceDigest({jurisdiction_id:profile.id,official_url:url,final_url:snapshot.final_url,file_hash_sha256:snapshot.file_hash_sha256,method:HTML_EVIDENCE_METHOD});
+ const evidenceKey=await evidenceDigest({profile:profileIdentity(profile),official_url:url,final_url:snapshot.final_url,file_hash_sha256:snapshot.file_hash_sha256,method:HTML_EVIDENCE_METHOD});
  const state={request_key:key,request_id:requestId,payload_sha256:payload,requested_by:actor,status:'creating',evidence_key:evidenceKey,
   profile_snapshot:profileIdentity(profile),official_url:url,file_hash_sha256:snapshot.file_hash_sha256,text_sha256:snapshot.text_sha256,file_bytes:snapshot.file_bytes};
  profile=await writeReceipt(deps.profileEntity,profile,old,state);
