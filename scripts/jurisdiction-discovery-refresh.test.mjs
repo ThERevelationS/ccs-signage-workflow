@@ -49,6 +49,7 @@ function setup({ role = 'admin', documents = [], manual = false, extractionFails
     } },
     fetch: async url => {
       if (url === pageUrl) return new Response(page, { headers: { 'content-type': 'text/html' } });
+      if (url === 'https://county.gov/Zoning/zoning_regulations.php') return new Response('<p>Zoning regulations</p>', {headers:{'content-type':'text/html'}});
       calls.downloads++;
       return new Response(htmlFile ? '<html>error</html>' : '%PDF-1.7 sample', { headers: { 'content-type': htmlFile ? 'text/html' : 'application/pdf' } });
     },
@@ -117,6 +118,8 @@ test('normal manual research remains allowed while archival defers AI extraction
 test('source contract keeps discovery bounded and authenticated', async () => {
   const source = await readFile('base44/functions/refreshJurisdiction/entry.ts', 'utf8');
   assert.match(source, /discoveryOnly && \(isScheduledRun \|\| isTargetedAutomation\)/);
-  assert.match(source, /readResearchDocumentBytes\(pageResponse, 2 \* 1024 \* 1024\)/);
+  assert.match(source, /readPermittingResourceResponse\(response\)/);
+  const reader = await readFile('base44/shared/permittingResourceResponse.mjs', 'utf8');
+  assert.match(reader, /htmlMaxBytes = 2 \* 1024 \* 1024/);
   assert.match(source, /AbortSignal\.timeout\(RESEARCH_FETCH_TIMEOUT_MS\)/);
 });
