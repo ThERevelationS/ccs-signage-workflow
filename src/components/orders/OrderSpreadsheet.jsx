@@ -337,6 +337,29 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
     }
   };
 
+  useEffect(() => {
+    const refreshAuthoritativeOrders = () => loadData(false);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') loadData(false);
+    };
+    window.addEventListener('online', refreshAuthoritativeOrders);
+    window.addEventListener('focus', refreshAuthoritativeOrders);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.removeEventListener('online', refreshAuthoritativeOrders);
+      window.removeEventListener('focus', refreshAuthoritativeOrders);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [workOrderFilter]);
+
+  useEffect(() => {
+    if (pendingSyncCount <= 0) return undefined;
+    // While durable Order markers are pending, reconcile them frequently so a
+    // refreshed/reopened tab learns promptly which rows the backend completed.
+    const interval = setInterval(() => loadData(false), 5000);
+    return () => clearInterval(interval);
+  }, [pendingSyncCount, workOrderFilter]);
+
   const saveAllChanges = async () => {
     if (saveInFlightRef.current || dateNeededSaveInFlightRef.current) return { complete: false, savedIds: [], busy: true };
     const changes = Object.fromEntries(
