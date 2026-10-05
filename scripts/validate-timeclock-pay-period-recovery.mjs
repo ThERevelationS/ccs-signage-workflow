@@ -2061,6 +2061,45 @@ test('direct admin correction and shift approval serialize on the same employee 
   assert.equal(approvalWins.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
 });
 
+test('exact direct admin correction retry releases a stranded shared mutation gate after saved correction', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod = [];
+  const entry = h.rows.TimeEntry[0];
+  const payload = {
+    action: 'admin_correct_entry', target_email: employee.email,
+    request_id: 'direct-admin-gate-recovery-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Verified correction with interrupted gate release',
+    correction: {
+      clock_in: '2026-09-20T14:20:00.000Z', clock_out: '2026-09-20T22:20:00.000Z',
+      lunch_minutes: 0, notes: 'Gate recovery test', job_allocations: [],
+    },
+  };
+  let failRelease = true;
+  h.setBeforeUpdate((entity, query, update) => {
+    if (failRelease && entity === 'TimeClockEmployeeState' &&
+        query.correction_create_request_id === payload.request_id &&
+        update.$set?.correction_create_status === 'idle') {
+      failRelease = false;
+      throw new Error('synthetic direct admin correction gate release interruption');
+    }
+  });
+  const interrupted = await h.invoke(payload);
+  assert.equal(interrupted.status, 500, JSON.stringify(interrupted.body));
+  assert.equal(h.rows.TimeEntry[0].last_correction_request_id, payload.request_id);
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'needs_review');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === payload.request_id).length, 1);
+  assert.equal(h.rows.TimeClockAudit.find((row) => row.action === 'admin_correction' && row.request_id === payload.request_id)?.outcome, 'confirmed');
+  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_status, 'creating');
+  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_request_id, payload.request_id);
+
+  h.setBeforeUpdate(null);
+  const recovered = await h.invoke(payload);
+  assert.equal(recovered.status, 200, JSON.stringify(recovered.body));
+  assert.equal(recovered.body.reused, true);
+  assert.equal(h.rows.TimeClockEmployeeState[0].correction_create_status, 'idle');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === payload.request_id).length, 1);
+});
+
 test('direct admin correction remains Needs Review and final approval is bound to its confirmed correction audit', async () => {
   const h = setup();
   h.rows.TimeClockPayPeriod = [];
