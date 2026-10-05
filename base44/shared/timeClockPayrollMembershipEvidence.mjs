@@ -91,3 +91,39 @@ export function payrollMembershipFromAudit(row) {
   }
   return null;
 }
+
+export function classifyAuthoritativePayrollAuditIntegrity(rows) {
+  const loadedRows = Array.isArray(rows) ? rows : [];
+  const auditIds = loadedRows.map((row) => String(row?.id || '').trim());
+  const duplicateAuditIds = [...new Set(auditIds.filter((id, index) => id && auditIds.indexOf(id) !== index))];
+  const duplicateAuditIdSet = new Set(duplicateAuditIds);
+
+  const diagnostics = loadedRows.map((row, rowIndex) => {
+    const auditId = auditIds[rowIndex];
+    const membership = payrollMembershipFromAudit(row);
+    let validation = null;
+    if (membership) {
+      const evidence = {
+        contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
+        audit_id: auditId,
+        action: String(row?.action || ''),
+        request_id: String(row?.request_id || ''),
+        server_timestamp: String(row?.server_timestamp || ''),
+        company_date: String(membership.company_date || ''),
+        clock_in: String(membership.clock_in || ''),
+        source: String(membership.source || ''),
+      };
+      const candidateValidation = validatePayrollMembershipConflictEvidence(evidence);
+      if (payrollMembershipConflictEvidenceIsMalformed(candidateValidation)) validation = candidateValidation;
+    }
+    const duplicateImmutableAuditId = Boolean(auditId && duplicateAuditIdSet.has(auditId));
+    return validation || duplicateImmutableAuditId ? {
+      audit_id: auditId,
+      diagnostic_row_index: rowIndex,
+      validation,
+      duplicate_immutable_audit_id: duplicateImmutableAuditId,
+    } : null;
+  }).filter(Boolean);
+
+  return { diagnostics, duplicate_audit_ids: duplicateAuditIds };
+}
