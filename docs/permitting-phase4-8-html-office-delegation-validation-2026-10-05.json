@@ -1,0 +1,80 @@
+{
+  "phase": "4.8",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "initial_git_head": "d4ba37c8b55a90c9a46f104aaadceaf2a9942bd9",
+  "prior_checkpoint": "6ac2f7c859cafd516447c21c",
+  "prior_git_commit": "3b41320e6dafe77163788c7245330c719354a75f",
+  "validation": {
+    "focused_tests": 113,
+    "passed": 113,
+    "new_delegation_tests": 22,
+    "targeted_lint": "passed",
+    "backend_bundle": "passed (58.3 kB)",
+    "git_diff_check": "passed",
+    "full_build": "npm run build exited 0; fresh dist/index.html verified",
+    "frontend_published": false,
+    "production_version_deployment": "No separate production-version deployment performed; affected backend/schema sandbox writes auto-sync. Live editor function tester used preview version with production entities.",
+    "llm_calls": 0,
+    "uploads": 0,
+    "dispatch_paused": false,
+    "jobs_or_work_orders_modified": false
+  },
+  "live": {
+    "new_review_id": "6ac30088e65bdaab6db96b07",
+    "request_id": "ccs_alexandria_zoning_html_phase48_v1",
+    "jurisdiction_id": "6ac19ef89c23eb7c0fdbf6f1",
+    "role": "zoning",
+    "scope": "Alexandria",
+    "sequence": 2,
+    "evidence_kind": "official_html",
+    "html_evidence_id": "6ac2f628a5e8d3e42019f3d7",
+    "reviewer": "brettheinlein1@gmail.com",
+    "reviewed_at": "2026-10-05T01:42:31.592Z",
+    "readback": {
+      "zoning": "staff_verified",
+      "existing_sign_permit": "staff_verified"
+    },
+    "address_authority_resolved": false,
+    "regulatory_authority_established": false
+  },
+  "preservation": {
+    "profiles": [
+      {
+        "id": "6ac19dcc184935c1391ee468",
+        "documents_exact": true,
+        "non_review_fields_exact": true
+      },
+      {
+        "id": "6ac19ef89c23eb7c0fdbf6f1",
+        "documents_exact": true,
+        "non_review_fields_exact": true
+      }
+    ],
+    "prior_events_exact": true,
+    "html_record_exact": true,
+    "catalog_exact": true,
+    "new_event_count": 1,
+    "county_profile_exact": true,
+    "config": [
+      {
+        "id": "6ac1b28c47233270cfeeb0f9",
+        "setting_key": "permitting_research_dispatch_config",
+        "setting_value": {
+          "enabled": true,
+          "interval_minutes": 15,
+          "max_dispatch_per_cycle": 5,
+          "max_in_flight": 20,
+          "daily_dispatch_limit": 40,
+          "retry_limit": 3
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Only explicit city zoning-department management/review delegations with a direct canonical-office URL in the same literal block are supported by this native HTML path.",
+    "Current verification requires a bounded official-page fetch; fetch failure returns verification_unavailable.",
+    "Volatile raw markup changes are tolerated only while projected text, final URL and exact delegated office link remain unchanged.",
+    "No building/electrical/regulatory/adoption/address authority is inferred. Other wording, roles and jurisdiction types require separately designed evidence review."
+  ]
+}
