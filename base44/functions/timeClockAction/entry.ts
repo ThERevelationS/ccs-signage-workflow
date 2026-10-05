@@ -6224,6 +6224,8 @@ Deno.serve(async (req) => {
         return Response.json({ success: false, error: 'Administrator corrections require valid punch timestamps.' }, { status: 400 });
       }
       if (clockOut && clockOut.getTime() < clockIn.getTime()) return Response.json({ success: false, error: 'Clock-out cannot be earlier than clock-in.' }, { status: 400 });
+      const correctedClockInDay = dateKeyInCompanyTime(clockIn.toISOString());
+      if (!correctedClockInDay) return Response.json({ success: false, error: 'The corrected Clock In cannot be mapped to the company payroll date.' }, { status: 400 });
       if (entry.status === 'clocked_out' && !clockOut) {
         return Response.json({ success: false, error: 'A completed shift cannot be reopened by clearing its clock-out. Create a reviewed correction instead.' }, { status: 400 });
       }
@@ -6371,6 +6373,29 @@ Deno.serve(async (req) => {
         }, { status: 409 });
       }
       try {
+      // Finalization holds this same employee mutation gate through commit. Check
+      // the corrected company date only after acquiring it so a destination
+      // period cannot become finalized between validation and the correction write.
+      const finalizedPeriods = await payPeriodEntity.filter({ status: 'finalized' });
+      if (!Array.isArray(finalizedPeriods)) throw new Error('Finalized pay-period lookup did not return a record list.');
+      const invalidFinalizedPeriod = finalizedPeriods.find((period: any) => {
+        const start = validDateKey(period.start_date);
+        const end = validDateKey(period.end_date);
+        return !start || !end || start > end;
+      });
+      if (invalidFinalizedPeriod) {
+        return Response.json({ success: false, error: 'A finalized pay period has invalid date boundaries. Admin review is required before correcting this shift.' }, { status: 409 });
+      }
+      const destinationClosedPeriod = finalizedPeriods.find((period: any) =>
+        correctedClockInDay >= period.start_date && correctedClockInDay <= period.end_date,
+      );
+      if (destinationClosedPeriod) {
+        return Response.json({
+          success: false,
+          error: `The corrected Clock In belongs to finalized pay period ${destinationClosedPeriod.label || 'a closed period'} (${destinationClosedPeriod.start_date} to ${destinationClosedPeriod.end_date}). Reopen that destination period before moving this shift into it.`,
+          finalized_pay_period_id: destinationClosedPeriod.id,
+        }, { status: 409 });
+      }
       const now = new Date().toISOString();
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
