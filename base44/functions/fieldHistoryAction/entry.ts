@@ -19,7 +19,7 @@ async function fieldHistoryHandler(req) {
     const entity=base44.asServiceRole.entities[type], record=await entity.get(body.entity_id);
     if(!record)return Response.json({error:'Record not found.'},{status:404});
     if(body.action==='save') {
-      const patch=body.next_fields, expected=body.expected_fields;
+      const patch={...(body.next_fields||{})}, expected=body.expected_fields;
       if(!patch || !expected || !Object.keys(patch).length || Array.isArray(patch))throw Object.assign(new Error('A field update and its baseline are required.'),{status:400});
       if(record.deleted===true)throw Object.assign(new Error('This record is in Trash. Restore it first.'),{status:409});
       for(const [f,v] of Object.entries(patch)) {
@@ -28,6 +28,12 @@ async function fieldHistoryHandler(req) {
         if(!equivalent(record[f],expected[f]) && !equivalent(record[f],v))throw Object.assign(new Error('This field changed in another session: '+f+'. Reload before saving.'),{status:409});
       }
       for(const [f,v] of Object.entries(body.guard_fields||{}))if(!equivalent(record[f],v))throw Object.assign(new Error('The record no longer matches its loaded state.'),{status:409});
+      if(type==='WorkOrder' && Object.prototype.hasOwnProperty.call(patch,'date_estimate_sent')) {
+        const nextQuoteDate=String(patch.date_estimate_sent||'').slice(0,10);
+        const today=new Date().toISOString().slice(0,10);
+        if(nextQuoteDate && nextQuoteDate>today)throw Object.assign(new Error('Quote sent date cannot be in the future.'),{status:400});
+        patch.sales_quote_sent_verified_at=nextQuoteDate ? new Date().toISOString() : '';
+      }
       if(Object.entries(patch).every(([f,v])=>equivalent(record[f],v)))return Response.json({success:true,record});
       if(body.expected_version && body.expected_version!==record.updated_date)throw Object.assign(new Error('The record changed. Reload before saving.'),{status:409});
       if(type==='Order')patch.smartsheet_pending_local_sync=true;
