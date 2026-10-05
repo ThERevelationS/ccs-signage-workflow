@@ -259,6 +259,77 @@
       "type": "string",
       "format": "date-time",
       "description": "When the authority_classification was computed and persisted."
+    },
+    "ocr_evidence": {
+      "type": "array",
+      "maxItems": 5,
+      "description": "Bounded append-only administrator-supplied OCR evidence. Each receipt is tied to verified PDF bytes and physical page, retained unreviewed, with method and content integrity hashes. Kept separate from extracted_text/pages and all authority reviews. Read through permittingSourceOcrEvidence; never substitute into approved regulations automatically.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "record_key": {
+            "type": "string"
+          },
+          "source_document_id": {
+            "type": "string"
+          },
+          "source_sha256": {
+            "type": "string"
+          },
+          "archived_file_url": {
+            "type": "string"
+          },
+          "file_bytes": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 30000
+          },
+          "text_sha256": {
+            "type": "string"
+          },
+          "payload_sha256": {
+            "type": "string"
+          },
+          "record_sha256": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "extracted_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retained_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "input_kind": {
+            "type": "string",
+            "enum": [
+              "administrator_supplied_ocr"
+            ]
+          },
+          "review_status": {
+            "type": "string",
+            "enum": [
+              "unreviewed"
+            ]
+          }
+        }
+      }
     }
   },
   "required": [
