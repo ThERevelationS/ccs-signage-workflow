@@ -311,7 +311,7 @@ export function buildSmartsheetControlledCreationProposals({
 
     // A post-baseline terminal task is not evidence of an authoritative modern outcome.
     if (dataset === "sales") {
-      const task = text(originalValues.current_task_description).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const task = text(originalValues.current_task_description).toLowerCase();
       if (TERMINAL_TASK_PATTERN.test(task)) {
         blockers.push(problem("terminal_task_review", "Terminal task text needs manual review", "Do not turn legacy-like task text into a modern Lead, Won, or Lost outcome."));
       }
