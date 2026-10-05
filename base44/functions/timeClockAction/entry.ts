@@ -3019,7 +3019,8 @@ Deno.serve(async (req) => {
         }
         if (Number(current.snapshot_version || 0) >= 17) {
           const priorForAudit = history.length ? history[history.length - 1] : null;
-          if (!await verifyGenerationAuditReconciliation(current, priorForAudit)) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll whole-period audit reconciliation failed verification.', pay_period_id: period.id, generations: [] });
+          const auditReconciliation = await verifyGenerationAuditReconciliation(current, priorForAudit);
+          if (!auditReconciliation.verified) return Response.json({ success: true, verified: false, legacy: false, error: 'Current payroll whole-period audit reconciliation failed verification.', conflict: auditReconciliation.conflict || undefined, pay_period_id: period.id, generations: [] });
         }
         if (Number(current.snapshot_version || 0) >= 10) {
           const windowStart = Number(current.snapshot_version || 0) >= 12 ? String(current.generation_causal_window_start || '') : '';
