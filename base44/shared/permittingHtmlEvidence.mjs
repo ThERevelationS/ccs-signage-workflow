@@ -146,7 +146,11 @@ async function findEvidence(entity,key){
 async function writeReceipt(entity,profile,expected,next){
  try{return await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,nextFields:{html_evidence_state:next},
   guardFields:{...Object.fromEntries(Object.keys(profileIdentity(profile)).map(k=>[k,profile[k]])),html_evidence_state:expected},maxAttempts:1,label:'Manual HTML evidence retention'});}
- catch(error){throw evidenceError(error.message);}
+ catch(error){
+  const after=await entity.get(profile.id).catch(()=>null);
+  if(after && evidenceEqual(after.html_evidence_state,next) && evidenceEqual(profileIdentity(after),profileIdentity(profile)))return after;
+  throw evidenceError(error.message);
+ }
 }
 async function reconcile(deps,profile,state){
  if(!evidenceEqual(profileIdentity(profile),state.profile_snapshot))throw evidenceError('Canonical profile identity changed after the HTML save reservation.');
@@ -181,9 +185,15 @@ export async function retainHtmlEvidence(deps,{jurisdictionId,officialUrl,title,
   await validateHtmlEvidence(row);
   return{success:true,status:'retained',evidence:htmlEvidenceSummary(row),replayed:true,llm_calls:0};
  }
- if(!expectedUpdatedDate || expectedUpdatedDate!==profile.updated_date)throw evidenceError('Profile changed; reload current evidence before capture.');
- const snapshot=await fetchHtmlSnapshot({profile,officialUrl:url,fetchImpl:deps.fetchImpl,now});
- if(expectedTextSha256 && snapshot.text_sha256!==expectedTextSha256)throw evidenceError('Official page text changed after preview; preview the current response before capture.');
+ let snapshot;
+ try{
+  if(!expectedUpdatedDate || expectedUpdatedDate!==profile.updated_date)throw evidenceError('Profile changed; reload current evidence before capture.');
+  snapshot=await fetchHtmlSnapshot({profile,officialUrl:url,fetchImpl:deps.fetchImpl,now});
+  if(expectedTextSha256 && snapshot.text_sha256!==expectedTextSha256)throw evidenceError('Official page text changed after preview; preview the current response before capture.');
+ }catch(error){
+  // This invocation has not attempted any write or create. A new preview is safe.
+  throw Object.assign(error,{retry_safe:true});
+ }
  const evidenceKey=await evidenceDigest({jurisdiction_id:profile.id,official_url:url,final_url:snapshot.final_url,file_hash_sha256:snapshot.file_hash_sha256,method:HTML_EVIDENCE_METHOD});
  const state={request_key:key,request_id:requestId,payload_sha256:payload,requested_by:actor,status:'creating',evidence_key:evidenceKey,
   profile_snapshot:profileIdentity(profile),official_url:url,file_hash_sha256:snapshot.file_hash_sha256,text_sha256:snapshot.text_sha256,file_bytes:snapshot.file_bytes};
