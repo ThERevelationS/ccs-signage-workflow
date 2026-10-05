@@ -150,8 +150,8 @@ assert.doesNotMatch(
 );
 assert.match(
   backend,
-  /salesRecordHasLocalChangesSinceSnapshot\([\s\S]*?salesLocalPendingPreserved\.push\(existing\.id\)[\s\S]*?continue;/,
-  "Pull must preserve locally changed linked Sales records instead of overwriting them.",
+  /planSalesFieldPull\(existing, fieldValues, salesRemoteSnapshot, bindings\)[\s\S]*?if \(plan\.held\.length\)[\s\S]*?salesLocalPendingPreserved\.push\(existing\.id\)/,
+  "Pull must preserve held locally changed Sales fields instead of overwriting them.",
 );
 assert.match(
   backend,
