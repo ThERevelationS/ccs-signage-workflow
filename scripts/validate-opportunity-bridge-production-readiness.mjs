@@ -21,7 +21,7 @@ const safeRow = (id, overrides = {}) => ({
 });
 
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.APPLY_ENABLED, false);
-assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE, 5);
+assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.FIRST_BATCH_SIZE, 1);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.MAX_BATCH_SIZE, 5);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.STOP_ON_FIRST_NON_SUCCESS, true);
 assert.equal(OPPORTUNITY_BRIDGE_PRODUCTION_POLICY.ROLLBACK_POLICY, 'forward_correction_only');
@@ -44,7 +44,7 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
     { ...safeRow('held'), action:'hold', reasons:['manual_review'] },
   ];
   const first = selectOpportunityBridgeFirstBatch(rows);
-  assert.deepEqual(first.map((row) => row.work_order_id), ['wo-1','wo-2','wo-3','wo-4','wo-5']);
+  assert.deepEqual(first.map((row) => row.work_order_id), ['wo-1']);
 }
 
 {
@@ -79,7 +79,7 @@ assert.equal(historicalBridgeRuleContractPasses(), true);
   assert.equal(readiness.technical_ready, true);
   assert.equal(readiness.rollout_ready, false);
   assert.equal(readiness.decision, 'NO_GO');
-  assert.equal(readiness.first_batch.length, 5);
+  assert.equal(readiness.first_batch.length, 1);
   assert.equal(readiness.checks.find((check)=>check.key==='durable_receipt_schema_activated').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='secondary_confirmation_configured').pass, false);
   assert.equal(readiness.checks.find((check)=>check.key==='production_apply_enabled').pass, false);
