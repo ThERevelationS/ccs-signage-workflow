@@ -304,7 +304,8 @@ export default function SalesOpportunityDialog({
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(3) })}>+3 days</Button>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(7) })}>+7 days</Button>}
                   {attentionKeys.has("next_action") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ follow_up_date: futureDateStamp(14) })}>+14 days</Button>}
-                  {attentionKeys.has("quote_timing_missing") && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Quote sent today</Button>}
+                  {attentionKeys.has("quote_timing_missing") && workOrder.date_estimate_sent && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ date_estimate_sent: workOrder.date_estimate_sent })}>Confirm stored quote date</Button>}
+                  {attentionKeys.has("quote_timing_missing") && !workOrder.date_estimate_sent && <Button type="button" size="sm" variant="outline" className="h-11 shrink-0 border-amber-300 bg-white px-3 text-xs sm:h-7" onClick={() => update({ date_estimate_sent: format(new Date(), "yyyy-MM-dd") })}>Quote sent today</Button>}
                 </div>
               )}
             </section>
@@ -441,7 +442,12 @@ export default function SalesOpportunityDialog({
                     {!workOrder.date_estimate_sent && quoteAging.awaitingResponse && isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-11 px-3 text-xs sm:h-9" onClick={() => update({ date_estimate_sent: todayStamp })}>Today</Button>}
                   </div>
                   {quoteAging.awaitingResponse ? (
-                    quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}</div> : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
+                    quoteAging.tracked ? <div className={`mt-1 text-xs ${quoteAging.veryAged ? "font-semibold text-rose-700" : quoteAging.aged ? "font-semibold text-amber-700" : "text-gray-500"}`}>Quote age: {quoteAging.ageDays} day{quoteAging.ageDays === 1 ? "" : "s"}</div> : workOrder.date_estimate_sent ? (
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs font-medium text-amber-700">Stored legacy quote date is not verified for aging.</div>
+                        {isRegistered && !closeout && <Button type="button" size="sm" variant="outline" className="h-8 border-amber-300 bg-white px-2.5 text-xs text-amber-800" onClick={() => update({ date_estimate_sent: workOrder.date_estimate_sent })}>Confirm stored date</Button>}
+                      </div>
+                    ) : <div className="mt-1 text-xs font-medium text-amber-700">Quote timing is missing. Set the actual sent date to start trustworthy aging.</div>
                   ) : null}
                 </div>
                 <div>
