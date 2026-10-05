@@ -57,7 +57,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const requestSequenceRef = useRef(0);
   const mountedRef = useRef(true);
 
-  const loadRows = async (timeEntryId = "") => {
+  const loadRows = async (timeEntryId = "", expectedAuditIds = []) => {
     if (!mountedRef.current) return;
     const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
@@ -78,6 +78,19 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           setError(`Audit investigation integrity check failed: ${mismatchedRows.length} returned record${mismatchedRows.length === 1 ? " does" : "s do"} not belong to TimeEntry ${scopedId}. No scoped audit records are being displayed.`);
           return;
         }
+        const requiredAuditIds = [...new Set((Array.isArray(expectedAuditIds) ? expectedAuditIds : []).map((id) => String(id || "").trim()).filter(Boolean))];
+        const returnedAuditIds = new Set(loadedRows.map((row) => String(row?.id || "").trim()).filter(Boolean));
+        const missingAuditIds = requiredAuditIds.filter((id) => !returnedAuditIds.has(id));
+        if (missingAuditIds.length > 0) {
+          console.error("Time Clock audit investigation completeness failure:", {
+            requested_time_entry_id: scopedId,
+            missing_conflict_audit_ids: missingAuditIds,
+            returned_audit_count: loadedRows.length,
+          });
+          setRows([]);
+          setError(`Audit investigation completeness check failed: ${missingAuditIds.length} expected conflict audit record${missingAuditIds.length === 1 ? " is" : "s are"} missing from the scoped result. No scoped audit records are being displayed.`);
+          return;
+        }
       }
       setRows(loadedRows);
     } catch (err) {
@@ -92,10 +105,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   useEffect(() => {
     mountedRef.current = true;
     const initialTimeEntryId = String(investigation?.time_entry_id || "").trim();
+    const initialExpectedAuditIds = (Array.isArray(investigation?.evidence) ? investigation.evidence : []).map((item) => item?.audit_id);
     if (initialTimeEntryId) {
       setActionFilter("all");
       setSearch(initialTimeEntryId);
-      loadRows(initialTimeEntryId);
+      loadRows(initialTimeEntryId, initialExpectedAuditIds);
     } else {
       loadRows();
     }
@@ -118,8 +132,9 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     if (!changed || !timeEntryId) return;
     setActionFilter("all");
     setSearch(timeEntryId);
-    loadRows(timeEntryId);
-  }, [investigation?.nonce, investigation?.time_entry_id]);
+    const expectedAuditIds = (Array.isArray(investigation?.evidence) ? investigation.evidence : []).map((item) => item?.audit_id);
+    loadRows(timeEntryId, expectedAuditIds);
+  }, [investigation?.nonce, investigation?.time_entry_id, investigation?.evidence]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -154,7 +169,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           </h3>
           <p className="text-xs text-gray-500 mt-1">Recent authoritative Time Clock actions. This view is read-only.</p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={() => loadRows(investigation?.time_entry_id)} disabled={loading} className="gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => loadRows(investigation?.time_entry_id, investigationEvidence.map((item) => item?.audit_id))} disabled={loading} className="gap-2">
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Refresh
         </Button>
