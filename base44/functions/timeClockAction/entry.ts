@@ -2849,7 +2849,7 @@ Deno.serve(async (req) => {
             let discoveryEvidence = null;
             if (!companyDate && Number(summary.snapshot_version || 0) >= 19) {
               const membershipAudits = await auditEntity.filter({ time_entry_id: candidateId });
-              if (!Array.isArray(membershipAudits)) return false;
+              if (!Array.isArray(membershipAudits)) return failed();
               discoveryEvidence = Number(summary.snapshot_version || 0) >= 22
                 ? canonicalPayrollMembershipEvidence(membershipAudits, Number(summary.snapshot_version || 0) >= 23)
                 : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
