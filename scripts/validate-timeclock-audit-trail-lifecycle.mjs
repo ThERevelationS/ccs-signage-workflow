@@ -10,8 +10,13 @@ assert.equal(PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, 1, 'shared payroll-me
 assert.match(backendSource, /from '\.\.\/\.\.\/shared\/timeClockPayrollMembershipEvidence\.mjs'/);
 assert.match(source, /from "\.\.\/\.\.\/\.\.\/base44\/shared\/timeClockPayrollMembershipEvidence\.mjs"/);
 assert.match(backendSource, /contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
+assert.match(backendSource, /validatePayrollMembershipConflictEvidence/);
+assert.match(backendSource, /payrollMembershipConflictEvidenceIsMalformed/);
+assert.match(backendSource, /conflict_evidence_invalid: true/);
+assert.match(backendSource, /conflict_evidence: \[\]/);
 assert.match(source, /Number\(expected\?\.contract_version \|\| 0\) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
 console.log('PASS payroll membership evidence producer and verifier import one shared versioned contract');
+console.log('PASS backend conflict-evidence producer validates the complete shared contract and fails closed before emitting malformed evidence');
 
 const COMPANY_TIME_ZONE = 'America/New_York';
 const canonicalPayrollMembership = payrollMembershipFromAudit;
