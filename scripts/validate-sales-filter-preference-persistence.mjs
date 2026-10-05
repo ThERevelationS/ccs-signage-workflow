@@ -53,7 +53,7 @@ check(page.includes("loadSalesPipelinePreferencesSafely({ sessionToken") &&
       page.includes("Promise.all(["),
   "Saved presets and active preferences must load together on login");
 check(page.includes('savedInformation.startsWith("custom_")') &&
-      page.includes('selected.some((filter) => filter.type === "filter"'),
+      page.includes('selected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null'),
   "A saved custom Information Filter must restore only while still available to that user");
 check(page.includes('selected.find((filter) => filter.type === "column_preset"') &&
       page.includes('column_preset_id'),
