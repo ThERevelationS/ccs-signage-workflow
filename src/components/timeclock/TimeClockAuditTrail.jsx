@@ -66,7 +66,20 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
       const scopedId = String(timeEntryId || "").trim();
       const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
       if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
-      setRows(Array.isArray(loaded) ? loaded : []);
+      const loadedRows = Array.isArray(loaded) ? loaded : [];
+      if (scopedId) {
+        const mismatchedRows = loadedRows.filter((row) => String(row?.time_entry_id || "").trim() !== scopedId);
+        if (mismatchedRows.length > 0) {
+          console.error("Time Clock audit investigation integrity failure:", {
+            requested_time_entry_id: scopedId,
+            mismatched_audit_ids: mismatchedRows.map((row) => row?.id).filter(Boolean),
+          });
+          setRows([]);
+          setError(`Audit investigation integrity check failed: ${mismatchedRows.length} returned record${mismatchedRows.length === 1 ? " does" : "s do"} not belong to TimeEntry ${scopedId}. No scoped audit records are being displayed.`);
+          return;
+        }
+      }
+      setRows(loadedRows);
     } catch (err) {
       if (!mountedRef.current || requestSequence !== requestSequenceRef.current) return;
       console.error("Time Clock audit load failed:", err);
