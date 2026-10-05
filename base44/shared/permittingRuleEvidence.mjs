@@ -1,6 +1,6 @@
 import { readSourceEvidencePages } from './jurisdictionSourceTextSegments.mjs';
 import { textSha256 } from './jurisdictionSourcePdfText.mjs';
-import {sourceRuleKind,ruleKind,sourceSupportsRule,assertSourceScopeReviewEvidence} from './permittingSourceAuthorityPolicy.mjs';
+import {ADMIN_SOURCE_CATEGORIES,sourceRuleKind,ruleKind,sourceSupportsRule,assertSourceScopeReviewEvidence} from './permittingSourceAuthorityPolicy.mjs';
 
 export const RULE_EVIDENCE_METHOD='literal-page-v1';
 export const RULE_CATEGORIES=['permit_applicability','sign_type_rule','dimensional','illumination_electronic','submittal_requirement','fee_timing','exemption','procedure','other'];
@@ -55,6 +55,9 @@ function numericEvidence(excerpt,requirement,value) {
 export async function prepareRuleCandidate(unit,raw,{extractionDate,normalizeSignType=()=>null}={}) {
   const source=unit.source,page=unit.evidence.pages.find(p=>p.page===raw.physical_page);
   if (!page || !RULE_CATEGORIES.includes(raw.rule_category)) throw evidenceError('Candidate page or category is outside the selected evidence.');
+  const allowedCategories=ADMIN_SOURCE_CATEGORIES[source.authority_classification];
+  if (allowedCategories && !allowedCategories.includes(raw.rule_category))
+    throw evidenceError('Candidate category is outside this administrative source purpose.');
   if (!literal(page.text,raw.excerpt) || raw.excerpt.trim().length<15) throw evidenceError('Citation excerpt is not an exact contiguous page quote.');
   if (!literal(raw.excerpt,raw.requirement) || raw.requirement.trim().length<10) throw evidenceError('Requirement must be a literal part of its cited excerpt.');
   const section=raw.section_reference || '';

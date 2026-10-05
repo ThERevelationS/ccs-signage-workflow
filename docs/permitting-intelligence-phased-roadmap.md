@@ -17,27 +17,40 @@ Establish safe research/import structures, provenance, merge behavior, staff own
 ## Phase 5 — Official-source collection and verified archives
 Collect current official permitting sources, forms, online application links, ordinances, fee schedules, checklists, instructions, and related documents. Preserve exact source URLs, file archives, hashes, byte counts, timestamps, extracted text, and evidence boundaries. Never invent missing documents or promote historical material to current policy without evidence.
 
-### Phase 5 milestone numbering — fixed endpoint 5.10
+### Phase 5 decimal milestones — endpoint 5.9
 
-Use `5.08 of 5.10 (step 8 of 10)` in progress reports. These are ordered milestone identifiers, not decimal arithmetic or percentages. This replaces the earlier whole-number-only reporting convention at the user's request. Add newly found defects to their existing milestone; do not silently extend the endpoint. Phase 5 completion concerns the reusable collection pipeline; statewide inventory coverage remains Phase 10. Historical work in Phases 1–4 still requires its own acceptance and is not automatically declared complete.
+Use numerically increasing decimals with one digit after the point. Never extend a phase to .10. If finer detail is needed, use explicit task counts under the milestone. Phase 5 collection completion concerns the reusable pipeline; statewide coverage remains Phase 10. Historical numbering in dated receipts is superseded by this table.
 
-| Step | Acceptance milestone | Current status |
+| Decimal | Milestone | Status |
 |---|---|---|
-| 5.01 | Shared same-host official resource discovery | Implemented and tested |
-| 5.02 | Sign-form ranking and extensionless PDF routing | Implemented and tested |
-| 5.03 | Durable frontier, atomic merge and continuation | Implemented and tested |
-| 5.04 | Original-byte archive verification and catalog handoff | Live pilot verified |
-| 5.05 | Deterministic PDF text handoff | Pipeline tested; pilot evidence retained |
-| 5.06 | Resumable capped-index pagination | Live verified |
-| 5.07 | Guarded failed-page retry and accurate outcomes | Live verified |
-| 5.08 | Guarded selected-depth recovery and sign-gap acceptance | Live sign-gap acceptance verified; other gaps retained |
-| 5.09 | Ohio/Kentucky pipeline acceptance across source patterns | Live discovery verified; archive/text reconciliation pending |
-| 5.10 | Collection acceptance review, documented gaps and Phase 6 handoff | Pending |
+| 5.1 | Shared discovery, sign ranking and PDF routing | Implemented/tested |
+| 5.2 | Durable frontier and atomic continuation | Implemented/tested |
+| 5.3 | Verified byte archives and catalog | Live pilot verified |
+| 5.4 | Deterministic PDF text | Tested; pilot evidence retained |
+| 5.5 | Capped-index recovery | Live verified |
+| 5.6 | Failed-page recovery | Live verified |
+| 5.7 | Selected depth/sign-gap recovery | Live verified; other gaps retained |
+| 5.8 | Ohio/Kentucky pipeline acceptance | Discovery passed; archive/text reconciliation remains |
+| 5.9 | Final collection review and handoff | Outstanding |
 
-Phase 5 ends only when 5.10 is accepted. Steps 5.01–5.07 have implementation/pilot evidence; the final review must audit their limits rather than interpreting seven milestones as a percentage of statewide data gathered.
+Phase 6 development may proceed on retained evidence while 5.8–5.9 remain explicitly open; starting Phase 6 does not certify Phase 5 complete.
 
 ## Phase 6 — Exact-citation AI extraction
 Extract requirements, forms, fees, submission steps, responsible offices, applicability conditions, and conflicts from archived official sources with exact citations and source-version awareness.
+
+### Phase 6 decimal milestones — endpoint 6.9
+
+| Decimal | Milestone | Status |
+|---|---|---|
+| 6.1 | Audit and enforce source-purpose/citation eligibility | Active |
+| 6.2 | Retained text and source-version readiness | Pending |
+| 6.3 | Structured candidate schema and explicit applicability | Pending |
+| 6.4 | Literal citations, numeric units and page validation | Pending |
+| 6.5 | Idempotent extraction, continuation and credit accounting | Pending |
+| 6.6 | Conflicts, missing evidence and historical source handling | Pending |
+| 6.7 | Ohio/Kentucky supervised extraction acceptance | Pending |
+| 6.8 | Review-ready candidate presentation and handoff | Pending |
+| 6.9 | Final extraction acceptance before Phase 7 | Pending |
 
 ## Phase 7 — Staff-approved regulations
 Provide staff review/approval workflows for extracted requirements, conflicts, applicability, superseded material, exceptions, and local knowledge. Preserve review history and source lineage.

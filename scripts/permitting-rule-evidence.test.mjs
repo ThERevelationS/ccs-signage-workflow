@@ -159,3 +159,15 @@ test('timed-out manual LLM is counted once and never retried implicitly',async()
  } finally {globalThis.setTimeout=realTimeout;}
 });
 
+
+
+test('administrative extraction rejects regulatory categories before staging, while retaining literal submission instructions',async()=>{
+ for (const classification of ['application_form','checklist','fee_schedule','administrative_guidance']) {
+  const f=await ruleFixture({source:{authority_classification:classification}}), unit=await loadRuleEvidence(f.api);
+  await assert.rejects(prepareRuleCandidate(unit,f.raw),/administrative source purpose/);
+  const raw={...f.raw,rule_category:classification==='fee_schedule'?'procedure':'submittal_requirement',excerpt:'Submit two drawings with the application.',requirement:'Submit two drawings with the application.',numeric_literal:''};
+  const candidate=await prepareRuleCandidate(unit,raw);
+  assert.equal(candidate.rule_kind,'administrative_instruction');assert.equal(candidate.is_operational,false);
+  const batch=await validateRuleCandidates(unit,{rules:[f.raw,raw]});assert.equal(batch.candidates.length,1);assert.equal(batch.rejected.length,1);
+ }
+});
