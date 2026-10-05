@@ -101,7 +101,7 @@ export default function PermittingOfficeAuthorityReview({ source, disabled, onBu
       <div><Label>{isHtml ? "Verified responsible office" : "Verified publisher office"}</Label><select className="w-full border rounded p-2" value={form.government_office_id} onChange={e => change("government_office_id", e.target.value)}>
         <option value="">Select canonical office</option>{context.offices.map(o => <option key={o.catalog_id} value={o.id}>{o.name} · {o.verification_status.replaceAll("_", " ")}</option>)}
       </select></div>
-      {!context.offices.length && <p className="text-amber-800">No shared office matches the reviewed publisher. Add and verify its identity in Permitting Settings first.</p>}
+      {!context.offices.length && <p className="text-amber-800">{isHtml ? "No verified shared office is available for this state." : "No shared office matches the reviewed publisher."} Add and verify its identity in Permitting Settings first.</p>}
       <div className="grid gap-2 md:grid-cols-2">
         <div><Label>Office role</Label><select className="w-full border rounded p-2" value={form.role} onChange={e => change("role", e.target.value)}>
           {LOCALITY_AUTHORITY_ROLES.filter(([role]) => !isHtml || role === "zoning").map(([role, name]) => <option key={role} value={role}>{name}</option>)}
