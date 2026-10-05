@@ -13,6 +13,71 @@ assert.match(backendSource, /contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTR
 assert.match(source, /Number\(expected\?\.contract_version \|\| 0\) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
 console.log('PASS payroll membership evidence producer and verifier share one explicit contract version');
 
+const COMPANY_TIME_ZONE = 'America/New_York';
+const companyDateForInstant = (value) => {
+  const date = new Date(String(value || ''));
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: COMPANY_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return values.year && values.month && values.day ? `${values.year}-${values.month}-${values.day}` : '';
+};
+const canonicalPayrollMembership = (row) => {
+  const details = row?.details || {};
+  const action = String(row?.action || '');
+  const envelope = details.payroll_membership;
+  if (envelope) {
+    const clockIn = String(envelope.clock_in || '');
+    const companyDate = companyDateForInstant(clockIn);
+    const semanticClockIn = action === 'clock_in' ? String(details.employee_attested_clock_in || row?.server_timestamp || '')
+      : action === 'clock_out' ? String(details.result_clock_in || '')
+        : action === 'admin_correction' ? String(details.corrected?.clock_in || '')
+          : action === 'admin_archive' ? String(details.archived_entry?.clock_in || details.original?.clock_in || '') : '';
+    if (Number(envelope.version || 0) !== 1 || String(envelope.time_zone || '') !== COMPANY_TIME_ZONE || !clockIn || !companyDate || companyDate !== String(envelope.company_date || '') || !semanticClockIn || semanticClockIn !== clockIn) return null;
+    return { company_date: companyDate, clock_in: clockIn, source: 'verified_normalized_audit_envelope' };
+  }
+  const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, action === 'clock_in' ? row?.server_timestamp : ''].filter(Boolean);
+  for (const value of candidates) {
+    const companyDate = companyDateForInstant(value);
+    if (companyDate) return { company_date: companyDate, clock_in: String(value), source: 'immutable_audit' };
+  }
+  return null;
+};
+
+const membershipFixtures = [
+  {
+    name: 'verified normalized clock-out envelope',
+    row: { action: 'clock_out', server_timestamp: '2026-10-05T20:00:00.000Z', details: { result_clock_in: '2026-10-05T12:30:00.000Z', payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z' } } },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z', source: 'verified_normalized_audit_envelope' },
+  },
+  {
+    name: 'Eastern company date crosses UTC midnight',
+    row: { action: 'clock_in', server_timestamp: '2026-10-06T02:15:00.000Z', details: { employee_attested_clock_in: '2026-10-06T02:15:00.000Z', payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-06T02:15:00.000Z' } } },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-06T02:15:00.000Z', source: 'verified_normalized_audit_envelope' },
+  },
+  {
+    name: 'malformed normalized envelope rejects rather than falling back',
+    row: { action: 'admin_correction', details: { corrected: { clock_in: '2026-10-05T13:00:00.000Z' }, original: { clock_in: '2026-10-05T12:00:00.000Z' }, payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-04', clock_in: '2026-10-05T13:00:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'legacy immutable audit uses stable candidate precedence',
+    row: { action: 'admin_correction', details: { payroll_clock_in: '2026-10-05T11:00:00.000Z', original: { clock_in: '2026-10-05T12:00:00.000Z' }, corrected: { clock_in: '2026-10-05T13:00:00.000Z' } } },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-05T11:00:00.000Z', source: 'immutable_audit' },
+  },
+  {
+    name: 'legacy clock-in falls back to immutable server timestamp',
+    row: { action: 'clock_in', server_timestamp: '2026-10-05T14:45:00.000Z', details: {} },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-05T14:45:00.000Z', source: 'immutable_audit' },
+  },
+  { name: 'unusable legacy evidence rejects', row: { action: 'clock_out', details: { detected_clock_in: 'not-a-date' } }, expected: null },
+];
+for (const fixture of membershipFixtures) assert.deepEqual(canonicalPayrollMembership(fixture.row), fixture.expected, fixture.name);
+assert.match(backendSource, /const candidates = \[details\.payroll_clock_in, details\.original\?\.clock_in, details\.corrected\?\.clock_in, details\.employee_attested_clock_in, details\.detected_clock_in, details\.claimed_clock_in,/);
+assert.match(source, /const candidates = \[details\.payroll_clock_in, details\.original\?\.clock_in, details\.corrected\?\.clock_in, details\.employee_attested_clock_in, details\.detected_clock_in, details\.claimed_clock_in,/);
+assert.match(backendSource, /if \(envelope\) return normalizedPayrollMembershipFromAudit\(row\)/);
+assert.match(source, /if \(envelope\) \{[\s\S]*return null;[\s\S]*verified_normalized_audit_envelope/);
+console.log(`PASS ${membershipFixtures.length}/${membershipFixtures.length} canonical payroll-membership normalization fixtures and backend/frontend contract guards`);
+
 assert.match(source, /const requestSequenceRef = useRef\(0\)/);
 assert.match(source, /const mountedRef = useRef\(true\)/);
 assert.match(source, /const requestSequence = \+\+requestSequenceRef\.current/);
