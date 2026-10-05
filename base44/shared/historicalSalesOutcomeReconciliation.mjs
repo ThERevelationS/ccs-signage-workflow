@@ -8,9 +8,9 @@ export const HISTORICAL_SALES_RECONCILIATION = Object.freeze({
 
 export function historicalTerminalTaskFamily(value) {
   const task = clean(value);
-  if (/^completed sales?\b/i.test(task)) return 'completed_sale';
-  if (/^lost\b/i.test(task)) return 'lost';
-  if (/^closed\b/i.test(task)) return 'closed';
+  if (/^completed sales?(?:$|\s*-)/i.test(task)) return 'completed_sale';
+  if (/^lost(?:$|\s*-)/i.test(task)) return 'lost';
+  if (/^closed(?:$|\s*-)/i.test(task)) return 'closed';
   return '';
 }
 
