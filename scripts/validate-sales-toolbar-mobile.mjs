@@ -81,11 +81,11 @@ check(page.includes('activeColumnPreset={activeColumnPreset}') &&
   "Existing Sales data flow and selected column preset remain untouched.");
 
 const kanban = readFileSync("src/components/sales/SalesPipelineKanban.jsx", "utf8");
-check(/role="group"\s+aria-label=\{`Follow-up quick actions for \$\{workOrder\.client_name/.test(kanban),
-  "Kanban follow-up quick actions expose their customer-specific label as an accessible group.");
-check(kanban.includes("aria-label={`Assign ${workOrder.client_name || 'Unnamed opportunity'} to me`}"),
+check(/role="group"\s+aria-label=\{`Follow-up quick actions for \$\{opportunityDisplayName/.test(kanban),
+  "Kanban follow-up quick actions expose their clarified customer-specific label as an accessible group.");
+check(kanban.includes("aria-label={`Assign ${opportunityDisplayName} to me`}"),
   "Kanban Assign to me identifies the affected opportunity to assistive technology.");
-check(kanban.includes("aria-label={`Set actual quote sent date to today for ${workOrder.client_name || 'Unnamed opportunity'}`}"),
+check(kanban.includes("aria-label={`Set actual quote sent date to today for ${opportunityDisplayName}`}"),
   "Kanban quote Today shortcut identifies the affected opportunity to assistive technology.");
 
 const dateHelper = kanban.match(/const localDate = \(value\) => \{[\s\S]*?\n\};/)?.[0];
