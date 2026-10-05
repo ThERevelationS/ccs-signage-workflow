@@ -1,0 +1,1199 @@
+{
+  "phase": 5,
+  "task": "Reusable official-page discovery replay",
+  "mode": "offline replay of previously retained original HTML; no live freshness or full-jurisdiction coverage claim",
+  "results": [
+    {
+      "jurisdiction": "Cincinnati OH",
+      "retained_path": "docs/official-evidence/cincinnati-currentness-2026-10-05/sign-forms.html",
+      "retained_sha256": "5fcca5a58c328754a9581c101dc3822a38c9d282c32fc52eb5e732fafa634200",
+      "seed_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "resource_count": 56,
+      "downloadable_count": 0,
+      "pending_pages": [
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/police/special-events-permits-regulations-auctions/property-auto-auctions/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/manager/special-events/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/council/references-resources/municipal-code/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/manager/internal-audit/internal-audit-s-fraud-waste-and-abuse-online-form/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/inclusion/registration-certification/business-enterprise-certification/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/submit-permit-application-other-required-documents/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-costs/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/contractor-registration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/working-with-other-departments/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/",
+          "depth": 1
+        },
+        {
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/permit-review-process/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/targeted-plan-review-times/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/relevant-codes/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/premium-services/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/development-services-manager/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/commercial-courtesy-inspection-program/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/coordinated-site-review/",
+          "depth": 1
+        },
+        {
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/alternate-premium-permit-review-process/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/consumer-affairs-assistance/building-residential-construction-project/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/elevator-registration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/certificate-of-occupancy/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/construction-inspections/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/elevator-inspections/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/mechanical-inspections/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/plumbing-inspections/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/at-risk-historic-buildings/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/condemned-buildings-list1/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/code-enforcement-quarterly-abatement-fee/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/code-enforcement-appeals/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/deck-safety-check-program/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/essential-services/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/facade-and-fire-escape-inspection-programs/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/housing-resources/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/landlord-education-program-registration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/landlord-responsibility/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/relocation-assistance/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/residential-rental-inspection/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/residential-rental-registration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacated-condemned-buildings-vbml/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacant-building-registration/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacant-foreclosed-property-registration-vfpr/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/planning/zoning-administration",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+          "depth": 1
+        },
+        {
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+          "depth": 1
+        },
+        {
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+          "depth": 1
+        }
+      ],
+      "gaps": [],
+      "authority_established": false,
+      "jurisdiction_coverage_complete": false,
+      "documents": [
+        {
+          "title": "Official permitting/forms page",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Retained official permitting/forms source; regulatory authority requires separate review. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Licenses & Permits",
+          "url": "https://www.cincinnati-oh.gov/buildings",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Permits Guide",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zoning",
+          "url": "https://www.cincinnati-oh.gov/planning/zoning-administration/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Property Maintenance",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Police Auctions",
+          "url": "https://www.cincinnati-oh.gov/police/special-events-permits-regulations-auctions/property-auto-auctions/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Permit Forms",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Event Permits",
+          "url": "https://www.cincinnati-oh.gov/manager/special-events/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "City Charter & Municipal Code",
+          "url": "https://www.cincinnati-oh.gov/council/references-resources/municipal-code/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Ethics, Fraud, Waste and Abuse Hotline",
+          "url": "https://www.cincinnati-oh.gov/manager/internal-audit/internal-audit-s-fraud-waste-and-abuse-online-form/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Apply today!",
+          "url": "https://www.cincinnati-oh.gov/inclusion/registration-certification/business-enterprise-certification/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Permit Forms & Applications",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Permit Center",
+          "url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Electronic Plan Submission",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/submit-permit-application-other-required-documents/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Permit Costs",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-costs/",
+          "doc_type": "fee_schedule",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Contractor Registration",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/contractor-registration/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Working With Other Departments",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/working-with-other-departments/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Plan Examination",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Tier 1: Same Day Plan Review",
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/permit-review-process/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Targeted Plan Review Times",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/targeted-plan-review-times/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Relevant Codes",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/relevant-codes/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Premium Services",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-plan-examination/premium-services/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Business Development Services",
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Development Services Manager",
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/development-services-manager/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Commercial Courtesy Inspection Program",
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/commercial-courtesy-inspection-program/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Coordinated Site Review",
+          "url": "https://www.cincinnati-oh.gov/buildings/business-development-services/coordinated-site-review/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Tier 2: Review by Appointment",
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/permit-guide/alternate-premium-permit-review-process/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Residential Construction Project",
+          "url": "https://www.cincinnati-oh.gov/buildings/consumer-affairs-assistance/building-residential-construction-project/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Inspections Related To Building Permits, And Construction",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Elevator Registration",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/elevator-registration/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Certificate of Occupancy",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/certificate-of-occupancy/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Construction Inspections",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/construction-inspections/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Elevator Inspections",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/elevator-inspections/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Mechanical Inspections",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/mechanical-inspections/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Plumbing Inspections",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-construction-inspections/plumbing-inspections/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "At-Risk Historic Buildings",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/at-risk-historic-buildings/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Demolition Hearings",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/condemned-buildings-list1/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Code Enforcement Quarterly Abatement Fee",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/code-enforcement-quarterly-abatement-fee/",
+          "doc_type": "fee_schedule",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Code Enforcement Appeals",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/code-enforcement-appeals/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Deck Safety Check Program",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/deck-safety-check-program/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Essential Services",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/essential-services/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Facade and Fire Escape Inspection Programs",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/facade-and-fire-escape-inspection-programs/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Housing Resources",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/housing-resources/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Landlord Education Program Registration",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/landlord-education-program-registration/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Landlord Responsibility",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/landlord-responsibility/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Relocation Assistance",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/relocation-assistance/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Residential Rental Inspection",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/residential-rental-inspection/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Residential Rental Registration",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/residential-rental-registration/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Vacated & Condemned Buildings (VBML)",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacated-condemned-buildings-vbml/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Vacant Building Registration",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacant-building-registration/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Vacant Foreclosed Property Registration (VFPR)",
+          "url": "https://www.cincinnati-oh.gov/buildings/property-maintenance-code-enforcement/vacant-foreclosed-property-registration-vfpr/",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zoning Administration",
+          "url": "https://www.cincinnati-oh.gov/planning/zoning-administration",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Application",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/building-permit-application-fillable-form/",
+          "doc_type": "checklist",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Outdoor Advertising Sign Application",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+          "doc_type": "checklist",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Site Plan",
+          "url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/site-plan-information/",
+          "doc_type": "checklist",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Signs Informational Handout",
+          "url": "http://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+          "doc_type": "checklist",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_page_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+          "discovery_depth": 0
+        }
+      ]
+    },
+    {
+      "jurisdiction": "Alexandria KY",
+      "retained_path": "docs/official-evidence/alexandria-zoning-2026-10-04.html",
+      "retained_sha256": "5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904",
+      "seed_url": "https://alexandriaky.gov/zoning-department/",
+      "resource_count": 3,
+      "downloadable_count": 0,
+      "pending_pages": [
+        {
+          "url": "https://alexandriaky.gov/planning-zoning/",
+          "depth": 1
+        },
+        {
+          "url": "https://alexandriaky.gov/forms/",
+          "depth": 1
+        }
+      ],
+      "gaps": [],
+      "authority_established": false,
+      "jurisdiction_coverage_complete": false,
+      "documents": [
+        {
+          "title": "Boards &#038; Commissions",
+          "url": "https://alexandriaky.gov/planning-zoning/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://alexandriaky.gov/zoning-department/",
+          "discovery_page_url": "https://alexandriaky.gov/zoning-department/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zoning Department",
+          "url": "https://alexandriaky.gov/zoning-department/",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://alexandriaky.gov/zoning-department/",
+          "discovery_page_url": "https://alexandriaky.gov/zoning-department/",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Forms",
+          "url": "https://alexandriaky.gov/forms/",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://alexandriaky.gov/zoning-department/",
+          "discovery_page_url": "https://alexandriaky.gov/zoning-department/",
+          "discovery_depth": 0
+        }
+      ]
+    },
+    {
+      "jurisdiction": "Campbell County KY",
+      "retained_path": "docs/official-evidence/campbell-forms-2026-10-04.html",
+      "retained_sha256": "0aa9cfe382bfe59ddb2d933ad879c597222c1eba03a2cd9a0ea772562f1899e3",
+      "seed_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+      "resource_count": 30,
+      "downloadable_count": 1,
+      "pending_pages": [
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=292",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=276",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=281",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=286",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=294",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=297",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item&id=3389",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=283",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=2214",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=289",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=300",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=282",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=279",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=2215",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=277",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=414",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=287",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=298",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=299",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=301",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=302",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=303",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=304",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=285",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=293",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=9",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=16",
+          "depth": 1
+        },
+        {
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=17",
+          "depth": 1
+        }
+      ],
+      "gaps": [],
+      "authority_established": false,
+      "jurisdiction_coverage_complete": false,
+      "documents": [
+        {
+          "title": "Encroachment Permit Application",
+          "url": "https://campbellcountyky.gov/egov/documents/1619184202_14016.pdf",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Is A Permit Required?",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=292",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Building Permit Application Instructions",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=276",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Deck Permit Handout",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=281",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Fee Schedule",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=286",
+          "doc_type": "fee_schedule",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Miscellaneous Building Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=294",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Residential Building Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=297",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Farm Exempt Miscellaneous Residential Building Permit",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item&id=3389",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Electrical Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=283",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "HVAC Residential Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=2214",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "HVAC Commercial and Multi Family Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=289",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Swimming Pool Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=300",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Demolition Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=282",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Commercial and Multi Family Building Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=279",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Temporary Structure Permit",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=2215",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Cellular or Wireless Communication Facility Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=277",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Encroachment or Addressing Permit",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=414",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Final or Condominium Plat Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=287",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Sign Permit Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=298",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Site Dev Plan Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=299",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Text Amendment Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=301",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zone Change Application",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=302",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zoning Appeal",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=303",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Zoning Review - Conditional Use - Variance",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=304",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "FEMA: Elevation Certification Application and Instructions",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=285",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "KDOW: Stream Construction Permit",
+          "url": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=293",
+          "doc_type": "permit_application",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Economic Development Office",
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=9",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Planning & Zoning & Building Inspections",
+          "url": "https://campbellcountyky.gov/department/index.php?structureid=37",
+          "doc_type": "other",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "Code of Ordinances",
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=16",
+          "doc_type": "zoning_code",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        },
+        {
+          "title": "911 Service Fee",
+          "url": "https://campbellcountyky.gov/division/blocks.php?structureid=17",
+          "doc_type": "fee_schedule",
+          "source": "official_page_harvest",
+          "verification_notes": "Discovered from the retained official permitting/forms page; authority not inferred. Discovery page: https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_page_url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+          "discovery_depth": 0
+        }
+      ]
+    }
+  ],
+  "production_record_writes": 0,
+  "llm_calls": 0
+}

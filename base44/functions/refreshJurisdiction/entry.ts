@@ -150,22 +150,22 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     let discoveryScan: any = null;
     if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
       try {
-      discoveryScan = await scanOfficialPermittingPages({
-        seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1,
-        fetchPage: async (url: string) => {
-          const response = await safeExternalFetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
-          });
-          const contentType = String(response.headers.get('content-type') || '').toLowerCase();
-          if (!response.ok || !/text\/html|application\/xhtml\+xml/.test(contentType))
-            throw new Error('Official permitting page did not return HTML.');
-          return { html: new TextDecoder().decode(await readResearchDocumentBytes(response, 2 * 1024 * 1024)),
-            finalUrl: response.url || url };
-        },
-      });
-      if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
-      researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
+        discoveryScan = await scanOfficialPermittingPages({
+          seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1,
+          fetchPage: async (url: string) => {
+            const response = await safeExternalFetch(url, {
+              headers: { 'User-Agent': 'Mozilla/5.0' },
+              signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
+            });
+            const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+            if (!response.ok || !/text\/html|application\/xhtml\+xml/.test(contentType))
+              throw new Error('Official permitting page did not return HTML.');
+            return { html: new TextDecoder().decode(await readResearchDocumentBytes(response, 2 * 1024 * 1024)),
+              finalUrl: response.url || url };
+          },
+        });
+        if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
+        researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
       } catch (error) {
         if (discoveryOnly) throw error;
         discoveryScan = { success: false, documents: [], gaps: [{ reason: 'discovery_failed', requires_review: true }],
