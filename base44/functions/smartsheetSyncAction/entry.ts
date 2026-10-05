@@ -1586,9 +1586,10 @@ async function pushDataset(
     }
   }
 
-  // Phase 2: Batch Smartsheet write. Order rows are not considered complete
-  // from the write acknowledgement alone; each affected permanent row is
-  // freshly read back and compared with its exact expected snapshot.
+  // Phase 2: Batch Smartsheet write. Neither Sales nor Order rows are
+  // considered complete from the write acknowledgement alone; affected
+  // permanent rows are freshly read back before Base44 sync metadata advances.
+  let salesBatchWriteError = '';
   let orderBatchWriteError = '';
   if (deferredSmartsheetWrites.length) {
     if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
@@ -1616,7 +1617,58 @@ async function pushDataset(
         }] : []));
     } catch (err: any) {
       if (dataset === 'orders') orderBatchWriteError = err?.message || 'unknown error';
-      else errors.push('Batch Smartsheet write (' + deferredSmartsheetWrites.length + ' rows): ' + (err?.message || 'unknown error'));
+      else salesBatchWriteError = err?.message || 'unknown error';
+    }
+  }
+
+  const salesRemoteVerifiedIds = new Set<string>();
+  if (dataset === 'sales' && deferredSalesVerification.size) {
+    for (const [recordId, verification] of deferredSalesVerification) {
+      if (!verification.requiresRemoteWrite) salesRemoteVerifiedIds.add(recordId);
+    }
+    const remoteChecks = [...deferredSalesVerification.entries()]
+      .filter(([, verification]) => verification.requiresRemoteWrite);
+    const assigneeColumnId = cleanText(bindings?.current_task_assigned_to, 40);
+    const verificationBatchSize = 100;
+    for (let start = 0; start < remoteChecks.length; start += verificationBatchSize) {
+      const batch = remoteChecks.slice(start, start + verificationBatchSize);
+      try {
+        if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
+        const rowIds = batch.map(([, verification]) => verification.rowId);
+        const columnIds = [...new Set(Object.values(bindings)
+          .map((id: any) => String(id).trim()).filter((id: string) => /^\d+$/.test(id)))];
+        const params = new URLSearchParams({
+          rowIds: rowIds.join(','),
+          columnIds: columnIds.join(','),
+          exclude: 'nonexistentCells',
+        });
+        const verificationResult = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
+        if (String(verificationResult.body?.id ?? '') !== sheetId) {
+          throw new Error('Smartsheet returned a different sheet during Sales write verification.');
+        }
+        const freshRows = new Map(normalizeSheetRows(verificationResult.body)
+          .map((row: any) => [String(row.id), row]));
+        for (const [recordId, verification] of batch) {
+          const freshRow: any = freshRows.get(verification.rowId);
+          const actualSnapshot = freshRow ? buildSalesPullSnapshot(freshRow, bindings) : null;
+          if (freshRow && salesSnapshotsEqual(verification.expectedSnapshot, actualSnapshot, assigneeColumnId)) {
+            salesRemoteVerifiedIds.add(recordId);
+          } else {
+            salesFailedRecordIds.add(recordId);
+            errors.push(recordId + ': Sales Smartsheet update could not be verified by read-back. Base44 sync metadata was not advanced.');
+          }
+        }
+      } catch (err: any) {
+        const detail = err?.message || 'remote verification failed';
+        for (const [recordId] of batch) {
+          salesFailedRecordIds.add(recordId);
+          errors.push(recordId + ': Sales Smartsheet write outcome could not be verified (' + detail + '). Base44 sync metadata was not advanced.');
+        }
+      }
+    }
+    if (salesBatchWriteError && remoteChecks.some(([recordId]) => !salesRemoteVerifiedIds.has(recordId))) {
+      errors.push('Batch Sales Smartsheet write reported: ' + salesBatchWriteError +
+        '. Only rows independently read back as correct can advance Base44 sync metadata.');
     }
   }
 
