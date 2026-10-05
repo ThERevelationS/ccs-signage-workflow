@@ -354,6 +354,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
                       <span className="font-medium text-sm">{ACTION_LABELS[row.action] || row.action || "Time Clock action"}</span>
                       <Badge variant="outline" className={outcomeClass(row.outcome)}>{row.outcome || "unknown"}</Badge>
                       {isConflictEvidence && <Badge variant="outline" className="border-amber-400 bg-amber-100 text-amber-900">Conflicting evidence</Badge>}
+                      {integrityDiagnostic && <Badge variant="outline" className="border-red-400 bg-red-100 text-red-900">Malformed authoritative provenance</Badge>}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{safeTime(row.server_timestamp)}</p>
                   </div>
@@ -365,6 +366,12 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
                   {row.time_entry_id && <p className="md:col-span-2 break-all"><span className="text-gray-500">TimeEntry:</span> <span className="font-mono text-gray-700">{row.time_entry_id}</span></p>}
                   {row.id && <p className="md:col-span-2 break-all"><span className="text-gray-500">Audit:</span> <span className="font-mono text-gray-700">{row.id}</span></p>}
                   {row.request_id && <p className="md:col-span-2 break-all"><span className="text-gray-500">Request:</span> <span className="font-mono text-gray-700">{row.request_id}</span></p>}
+                  {integrityDiagnostic && (
+                    <div className="md:col-span-2 mt-1 rounded border border-red-300 bg-white p-2 text-red-950">
+                      <div className="font-semibold">Diagnostic only — not trusted payroll evidence</div>
+                      <div className="mt-1 text-xs">This authoritative audit record failed the shared payroll-membership evidence contract. Audit ID: <span className="font-mono break-all">{row.id || "Missing immutable audit ID"}</span>.</div>
+                    </div>
+                  )}
                   {isConflictEvidence && claimedEvidence && (
                     <div className="md:col-span-2 mt-1 rounded border border-amber-200 bg-white p-2 text-amber-950">
                       <div className="font-semibold">Payroll membership claimed by this audit</div>
