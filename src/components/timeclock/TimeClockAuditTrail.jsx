@@ -92,6 +92,30 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           return;
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
+        if (integrityMode) {
+          const malformedAuthoritativeMembershipRows = loadedRows.map((row) => {
+            const membership = payrollMembershipFromAudit(row);
+            if (!membership) return null;
+            const evidence = {
+              contract_version: PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
+              audit_id: String(row?.id || ""),
+              action: String(row?.action || ""),
+              request_id: String(row?.request_id || ""),
+              server_timestamp: String(row?.server_timestamp || ""),
+              company_date: String(membership.company_date || ""),
+              clock_in: String(membership.clock_in || ""),
+              source: String(membership.source || ""),
+            };
+            const validation = validatePayrollMembershipConflictEvidence(evidence);
+            return payrollMembershipConflictEvidenceIsMalformed(validation) ? { audit_id: evidence.audit_id, validation } : null;
+          }).filter(Boolean);
+          if (malformedAuthoritativeMembershipRows.length > 0) {
+            console.error("Time Clock audit integrity investigation authoritative evidence failure:", { requested_time_entry_id: scopedId, malformed_authoritative_membership_rows: malformedAuthoritativeMembershipRows });
+            setRows([]);
+            setError(`Payroll evidence integrity investigation found ${malformedAuthoritativeMembershipRows.length} malformed authoritative membership audit record${malformedAuthoritativeMembershipRows.length === 1 ? "" : "s"}. No scoped audit records are being presented as trusted evidence.`);
+            return;
+          }
+        }
         const missingRequiredAuditIdCount = requiredEvidence.filter((item) => !String(item?.audit_id || "").trim()).length;
         if (missingRequiredAuditIdCount > 0) {
           console.error("Time Clock audit investigation evidence-identity failure:", {
