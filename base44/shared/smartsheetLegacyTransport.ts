@@ -43,6 +43,8 @@ export async function retrySmartsheetCall(call, {
   retryTimeout = true,
   maxRateLimitRetries = 3,
   maxRateLimitWaitSeconds = Number.POSITIVE_INFINITY,
+  onRateLimitWait = null,
+  onRateLimitRetry = null,
 } = {}) {
   let timedOutRetried = false;
   let rateLimitRetries = 0;
@@ -66,9 +68,15 @@ export async function retrySmartsheetCall(call, {
         // caller so the durable Order queue can retry later instead of holding
         // the coordinator long enough to look abandoned.
         if (backoffSeconds > maxRateLimitWaitSeconds) throw error;
+        if (typeof onRateLimitWait === 'function') {
+          try { await onRateLimitWait({ attempt: rateLimitRetries, waitSeconds: backoffSeconds, retryAfterSeconds }); } catch {}
+        }
         const started = performance.now();
         await new Promise(resolve => setTimeout(resolve, backoffSeconds * 1000));
         traceDelay('smartsheet_retry_wait', performance.now() - started, true);
+        if (typeof onRateLimitRetry === 'function') {
+          try { await onRateLimitRetry({ attempt: rateLimitRetries, waitSeconds: backoffSeconds }); } catch {}
+        }
         continue;
       }
       throw error;
@@ -81,9 +89,11 @@ export const smartsheetWrite = (method, path, token, jsonBody) => retrySmartshee
 // remote mutation may have committed even though its response was lost. Never
 // resend that write automatically. Callers must recover by read-back or hold the
 // operation for review. Definitive HTTP 429 responses remain safe to retry.
-export const smartsheetWriteNoTimeoutRetry = (method, path, token, jsonBody) =>
+export const smartsheetWriteNoTimeoutRetry = (method, path, token, jsonBody, options = {}) =>
   retrySmartsheetCall(() => once(method, path, token, jsonBody), {
     retryTimeout: false,
     maxRateLimitRetries: 3,
     maxRateLimitWaitSeconds: 30,
+    onRateLimitWait: options?.onRateLimitWait,
+    onRateLimitRetry: options?.onRateLimitRetry,
   });
