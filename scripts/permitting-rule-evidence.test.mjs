@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ruleFixture} from './permitting-rule-evidence-fixture.mjs';
-import {loadRuleEvidence,prepareRuleCandidate,validateRuleCandidates,verifyRuleForApproval,assertEvidenceCurrent} from '../base44/shared/permittingRuleEvidence.mjs';
+import {loadRuleEvidence,prepareRuleCandidate,validateRuleCandidates,verifyRuleForApproval,assertEvidenceCurrent,assertRuleApplicabilityEvidence} from '../base44/shared/permittingRuleEvidence.mjs';
 import {extractEvidenceUnit,importEvidenceCandidate} from '../base44/shared/permittingRuleEvidenceRun.mjs';
 test('exact selected page evidence stages one candidate without creating or activating rules; replay consumes no credits',async()=>{
  const f=await ruleFixture();const r=await extractEvidenceUnit(f.api);
@@ -179,4 +179,27 @@ test('extraction readiness rejects missing or malformed archive identity before 
   await assert.rejects(extractEvidenceUnit(f.api),/retained archive/);
   assert.equal(f.calls.llm,0);assert.equal(f.runs.length,0);assert.equal(f.rules.length,0);
  }
+});
+
+test('omitted applicability stays unknown through staging and import; staff applicability edits are preserved',async()=>{
+ const f=await ruleFixture();const staged=await extractEvidenceUnit(f.api);
+ const applicability=staged.candidates[0].evidence_context.applicability;
+ assert.equal(applicability.address_applicability,'requires_review');
+ for(const field of Object.values(applicability.fields))assert.deepEqual(field,{status:'not_established_in_excerpt',literal:''});
+ await importEvidenceCandidate({...f.api,runId:f.runs[0].id,candidateIndex:0});
+ assert.deepEqual(f.rules[0].evidence_context.applicability,applicability);
+ f.rules[0].evidence_context.applicability.address_applicability='all_addresses';
+ assert.throws(()=>assertRuleApplicabilityEvidence(f.rules[0]),/Applicability evidence/);
+ await assert.rejects(importEvidenceCandidate({...f.api,runId:f.runs[0].id,candidateIndex:0}),/staff edits/);
+ assert.equal(f.rules[0].evidence_context.applicability.address_applicability,'all_addresses');
+});
+test('quoted applicability stays literal without granting address applicability; invented universal scope is rejected',async()=>{
+ const f=await ruleFixture(),unit=await loadRuleEvidence(f.api);
+ const raw={...f.raw,excerpt:f.text,sign_type:'Sign',trigger:'before installation',exceptions:''};
+ const candidate=await prepareRuleCandidate(unit,raw);
+ assert.deepEqual(candidate.evidence_context.applicability.fields.trigger,{status:'quoted',literal:'before installation'});
+ assert.equal(candidate.evidence_context.applicability.address_applicability,'requires_review');
+ assertRuleApplicabilityEvidence(candidate);
+ await assert.rejects(prepareRuleCandidate(unit,{...raw,zoning_district_applicability:'all districts'}),/literal/);
+ assertRuleApplicabilityEvidence({evidence_context:{}});
 });

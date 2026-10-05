@@ -126,9 +126,9 @@ export async function extractEvidenceUnit({sourceEntity,segmentEntity,runEntity,
 }
 
 function candidateComparable(row) {
-  return Object.fromEntries(['jurisdiction_id','jurisdiction_name','rule_kind','rule_category','requirement','numeric_literal','numeric_value','unit',
+  return {applicability:row.evidence_context?.applicability ?? null,...Object.fromEntries(['jurisdiction_id','jurisdiction_name','rule_kind','rule_category','requirement','numeric_literal','numeric_value','unit',
     'sign_type','sign_type_normalized','zoning_district_applicability','trigger','exceptions','source_snapshot_sha256','extraction_key',
-    'evidence_validation'].map(key=>[key,row[key] ?? null]));
+    'evidence_validation'].map(key=>[key,row[key] ?? null]))};
 }
 export async function importEvidenceCandidate({sourceEntity,segmentEntity,runEntity,ruleEntity,runId,candidateIndex,token=crypto.randomUUID(),now=()=>Date.now()}) {
   let run=await runEntity.get(runId);
