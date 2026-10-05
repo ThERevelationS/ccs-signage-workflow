@@ -225,14 +225,30 @@ assert.match(
 );
 assert.match(
   backend,
-  /await smartsheetWrite\('PUT'[\s\S]*?if \(dataset === 'sales'\)[\s\S]*?const verifyResult = await smartsheetGet\([\s\S]*?salesSnapshotsEqual\([\s\S]*?Sales Smartsheet update could not be verified by read-back[\s\S]*?updated\.push\(record\.id\)/,
-  "Existing Sales-row PUT must be read back and canonically verified before it is counted updated or Base44 sync metadata advances.",
+  /deferredSalesVerification\.set\([\s\S]*?expectedSnapshot: batchSnapshot[\s\S]*?requiresRemoteWrite: fieldPlan\.outgoing\.length > 0/,
+  "Existing Sales-row plans must retain the permanent row ID and exact expected snapshot for later read-back.",
+);
+assert.match(
+  backend,
+  /const salesRemoteVerifiedIds = new Set<string>\(\)[\s\S]*?verificationResult = await smartsheetGet\([\s\S]*?salesSnapshotsEqual\(verification\.expectedSnapshot, actualSnapshot, assigneeColumnId\)[\s\S]*?Sales Smartsheet update could not be verified by read-back/,
+  "Existing Sales-row batch PUTs must be re-read and canonically verified.",
+);
+assert.match(
+  backend,
+  /const verifiedSalesUpdates = deferredBase44Updates\.filter[\s\S]*?salesRemoteVerifiedIds\.has\(String\(update\.id\)\)[\s\S]*?bulkUpdate\(verifiedSalesUpdates\)[\s\S]*?findUnverifiedSyncMetadata\(verifiedSalesUpdates, verifiedRecords\)[\s\S]*?updated\.push\(recordId\)/,
+  "Sales Base44 metadata may advance and count updated only after remote and metadata read-back verification.",
 );
 const salesPutVerificationIndex = backend.indexOf("Sales Smartsheet update could not be verified by read-back");
-const salesMetadataIndex = backend.indexOf("Sales Base44 sync metadata could not be verified after the Smartsheet write", salesPutVerificationIndex);
-const salesUpdatedIndex = backend.indexOf("else if (salesSuccessfulWrite === 'updated') updated.push(record.id);", salesMetadataIndex);
-assert.ok(salesPutVerificationIndex >= 0 && salesMetadataIndex > salesPutVerificationIndex && salesUpdatedIndex > salesMetadataIndex,
-  "Sales PUT success accounting must occur only after Smartsheet and Base44 metadata verification.");
+const salesVerifiedUpdateIndex = backend.indexOf("const verifiedSalesUpdates = deferredBase44Updates.filter", salesPutVerificationIndex);
+const salesMetadataIndex = backend.indexOf("Sales Base44 sync metadata could not be verified after the Smartsheet write", salesVerifiedUpdateIndex);
+const salesUpdatedIndex = backend.indexOf("updated.push(recordId);", salesMetadataIndex);
+assert.ok(
+  salesPutVerificationIndex >= 0 &&
+  salesVerifiedUpdateIndex > salesPutVerificationIndex &&
+  salesMetadataIndex > salesVerifiedUpdateIndex &&
+  salesUpdatedIndex > salesMetadataIndex,
+  "Sales PUT success accounting must occur only after Smartsheet and Base44 metadata verification."
+);
 
 const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
 const salesLinkVerificationIndex = backend.indexOf("Sales create permanent link verification", salesCreateGuardIndex);
