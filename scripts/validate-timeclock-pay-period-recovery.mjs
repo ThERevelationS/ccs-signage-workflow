@@ -1864,6 +1864,93 @@ test('pay-period finalization requires audit evidence for request-marked approva
   assert.equal(blockedAudit.details.approval_evidence_missing_count, 1);
 });
 
+test('simultaneous shift approvals serialize to one winner and exact retry reuses one audit', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod = [];
+  const entry = h.rows.TimeEntry[0];
+  entry.approval_status = 'needs_review';
+  delete entry.approved_at;
+  delete entry.approved_by;
+  delete entry.approval_request_id;
+  const loadedVersion = entry.updated_date;
+  let releaseFirst;
+  let firstReachedWrite;
+  let paused = false;
+  const reachedWrite = new Promise((resolve) => { firstReachedWrite = resolve; });
+  h.setBeforeUpdate(async (name, _query, update) => {
+    if (!paused && name === 'TimeEntry' && update.$set?.approval_status === 'approved') {
+      paused = true;
+      firstReachedWrite();
+      await new Promise((resolve) => { releaseFirst = resolve; });
+    }
+  });
+  const firstRequest = {
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'parallel-shift-approval-one-001', entry_id: entry.id,
+    expected_updated_date: loadedVersion, decision: 'approve', note: 'First manager review',
+  };
+  const secondRequest = {
+    ...firstRequest,
+    request_id: 'parallel-shift-approval-two-001', note: 'Competing manager review',
+  };
+  const firstPromise = h.invoke(firstRequest);
+  await reachedWrite;
+  const second = await h.invoke(secondRequest);
+  assert.equal(second.status, 409, JSON.stringify(second.body));
+  assert.match(second.body.error, /Another correction submission or approval|review state changed|already approved/i);
+  releaseFirst();
+  const first = await firstPromise;
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
+  assert.equal(h.rows.TimeEntry[0].approval_request_id, firstRequest.request_id);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
+  const retry = await h.invoke(firstRequest);
+  assert.equal(retry.status, 200, JSON.stringify(retry.body));
+  assert.equal(retry.body.reused, true);
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
+});
+
+test('fresh duplicate approve and reopen requests are rejected after review state changes', async () => {
+  const approveHarness = setup();
+  approveHarness.rows.TimeClockPayPeriod = [];
+  const approveEntry = approveHarness.rows.TimeEntry[0];
+  approveEntry.approval_status = 'needs_review';
+  const firstApprove = await approveHarness.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'state-transition-approve-one-001', entry_id: approveEntry.id,
+    expected_updated_date: approveEntry.updated_date, decision: 'approve', note: 'Reviewed once',
+  });
+  assert.equal(firstApprove.status, 200, JSON.stringify(firstApprove.body));
+  const approvedEntry = approveHarness.rows.TimeEntry[0];
+  const duplicateApprove = await approveHarness.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'state-transition-approve-two-001', entry_id: approvedEntry.id,
+    expected_updated_date: approvedEntry.updated_date, decision: 'approve', note: 'Must not overwrite approval',
+  });
+  assert.equal(duplicateApprove.status, 409, JSON.stringify(duplicateApprove.body));
+  assert.match(duplicateApprove.body.error, /already approved|review state changed/i);
+  assert.equal(approveHarness.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
+
+  const reopenHarness = setup();
+  reopenHarness.rows.TimeClockPayPeriod = [];
+  const reopenEntry = reopenHarness.rows.TimeEntry[0];
+  const firstReopen = await reopenHarness.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'state-transition-reopen-one-001', entry_id: reopenEntry.id,
+    expected_updated_date: reopenEntry.updated_date, decision: 'reopen', note: 'Needs another review',
+  });
+  assert.equal(firstReopen.status, 200, JSON.stringify(firstReopen.body));
+  const reopenedEntry = reopenHarness.rows.TimeEntry[0];
+  const duplicateReopen = await reopenHarness.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'state-transition-reopen-two-001', entry_id: reopenedEntry.id,
+    expected_updated_date: reopenedEntry.updated_date, decision: 'reopen', note: 'Must not rewrite reopen',
+  });
+  assert.equal(duplicateReopen.status, 409, JSON.stringify(duplicateReopen.body));
+  assert.match(duplicateReopen.body.error, /no longer approved|Reload/i);
+  assert.equal(reopenHarness.rows.TimeClockAudit.filter((row) => row.action === 'time_approval').length, 1);
+});
+
 test('direct admin correction remains Needs Review and final approval is bound to its confirmed correction audit', async () => {
   const h = setup();
   h.rows.TimeClockPayPeriod = [];
