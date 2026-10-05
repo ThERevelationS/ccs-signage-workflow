@@ -187,6 +187,20 @@ assert.doesNotMatch(source, /integrityDiagnosticByAuditId/);
 assert.match(source, /integrityInvestigation \? `diagnostic-row-\$\{sourceRowIndex\}`/);
 console.log('PASS integrity mode preserves every duplicate immutable Audit-ID row as a separate diagnostic and never collapses duplicate identity through an ID-keyed map');
 
+const mixedDuplicateRows = [
+  { id: 'audit-duplicate', action: 'clock_in', request_id: 'request-valid', server_timestamp: '2026-10-05T13:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T13:00:00.000Z' } },
+  { id: 'audit-duplicate', action: 'clock_in', request_id: '', server_timestamp: '2026-10-05T14:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T14:00:00.000Z' } },
+];
+const mixedDuplicateIntegrity = classifyAuthoritativePayrollAuditIntegrity(mixedDuplicateRows);
+assert.deepEqual(mixedDuplicateIntegrity.duplicate_audit_ids, ['audit-duplicate']);
+assert.equal(mixedDuplicateIntegrity.diagnostics.length, 2);
+assert.deepEqual(mixedDuplicateIntegrity.diagnostics.map((item) => item.diagnostic_row_index), [0, 1]);
+assert.equal(mixedDuplicateIntegrity.diagnostics[0].duplicate_immutable_audit_id, true);
+assert.equal(mixedDuplicateIntegrity.diagnostics[0].validation, null, 'valid duplicate row must not inherit malformed provenance from its same-ID neighbor');
+assert.equal(mixedDuplicateIntegrity.diagnostics[1].duplicate_immutable_audit_id, true);
+assert.ok(mixedDuplicateIntegrity.diagnostics[1].validation?.missing_fields.includes('request_id'), 'malformed duplicate row must retain its own provenance failure');
+console.log('PASS mixed valid/malformed duplicate Audit-ID rows keep deterministic row-local provenance classification without cross-row inheritance');
+
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
 assert.match(source, /setSearch\(""\);[\s\S]*setActionFilter\("all"\);[\s\S]*onExitInvestigation/);
 console.log('PASS exiting investigation clears filters and reloads recent audit history');
