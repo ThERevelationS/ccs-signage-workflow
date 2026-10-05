@@ -653,7 +653,10 @@ export default function TimeClockAdmin() {
       />
 
       <div id="time-clock-audit-trail" className="scroll-mt-4">
-        <TimeClockAuditTrail investigation={auditInvestigation} />
+        <TimeClockAuditTrail
+          investigation={auditInvestigation}
+          onExitInvestigation={() => setAuditInvestigation(null)}
+        />
       </div>
 
       {staleActiveEntries.length > 0 && (
