@@ -42,8 +42,8 @@ Extract requirements, forms, fees, submission steps, responsible offices, applic
 
 | Decimal | Milestone | Status |
 |---|---|---|
-| 6.1 | Audit and enforce source-purpose/citation eligibility | Active |
-| 6.2 | Retained text and source-version readiness | Pending |
+| 6.1 | Audit and enforce source-purpose/citation eligibility | Category validation tested; broader acceptance at 6.9 |
+| 6.2 | Retained text and source-version readiness | Active: archive identity guard tested; live reconciliation pending |
 | 6.3 | Structured candidate schema and explicit applicability | Pending |
 | 6.4 | Literal citations, numeric units and page validation | Pending |
 | 6.5 | Idempotent extraction, continuation and credit accounting | Pending |
