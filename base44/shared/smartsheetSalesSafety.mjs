@@ -18,7 +18,6 @@ export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
   "estimator",
   "date_initial_contact",
   "site_survey_date",
-  "date_estimate_sent",
   "date_order_created",
   "project_install_date",
   "permit_receipt_confirmed_date",
