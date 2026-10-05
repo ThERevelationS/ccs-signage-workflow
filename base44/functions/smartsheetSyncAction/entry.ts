@@ -1766,9 +1766,10 @@ async function pushDataset(
   }
   if (dataset === 'orders') {
     await reportOrderProgress({
-      phase: orderTimeBudgetReached ? 'paused' : 'finishing',
+      phase: orderTimeBudgetReached ? 'paused' : (conflicts.length || orderFailedRecordIds.size ? 'needs_review' : 'finishing'),
       current: orderProcessedCount,
       total: pendingRecords.length,
+      fraction: orderTimeBudgetReached ? 0.97 : 0.99,
       item_label: orderTimeBudgetReached ? 'Safe time limit reached' : 'Finalizing Order sync',
       detail: orderTimeBudgetReached
         ? `${Math.max(0, pendingRecords.length - orderProcessedCount).toLocaleString()} Order${pendingRecords.length - orderProcessedCount === 1 ? '' : 's'} remain safely queued for the next sync`
