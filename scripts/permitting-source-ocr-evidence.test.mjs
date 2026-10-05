@@ -90,3 +90,30 @@ test('backend entry bundles with staff RLS reads and admin-only mutations',async
  const result=await build({entryPoints:['base44/functions/permittingSourceOcrEvidence/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',external:['npm:*']});
  assert.ok(result.outputFiles[0].text.includes('Deno.serve'));
 });
+
+test('HTTP handler blocks unauthenticated/admin-only actions and keeps staff reads under caller RLS',async()=>{
+ let handler,activeClient;const previousDeno=globalThis.Deno,previousClient=globalThis.__ocrTestClient;
+ globalThis.Deno={serve:fn=>{handler=fn;}};
+ const b=await build({entryPoints:['base44/functions/permittingSourceOcrEvidence/entry.ts'],bundle:true,write:false,format:'esm',platform:'neutral',plugins:[{name:'test-sdk',setup(b){
+ b.onResolve({filter:/^npm:@base44\/sdk/},()=>({path:'sdk',namespace:'stub'}));
+ b.onResolve({filter:/jurisdictionSourceTextRuntime\.ts$/},()=>({path:'runtime',namespace:'stub'}));
+ b.onLoad({filter:/.*/,namespace:'stub'},args=>({contents:args.path==='sdk'?'export const createClientFromRequest=()=>globalThis.__ocrTestClient;':'export const readAndExtractSourcePdf=async()=>{throw Error("Runtime should not execute for staff reads");};',loader:'js'}));
+ }}]});
+ try {
+ await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'));
+ const call=async(user,body)=>{
+ globalThis.__ocrTestClient={auth:{me:async()=>user},entities:{PermittingSourceDocument:activeClient?.entity},
+ asServiceRole:{get entities(){throw Error('Staff reached service role');}}};
+ return handler(new Request('https://example.test/ocr',{method:'POST',body:JSON.stringify(body)}));
+ };
+ assert.equal((await call(null,{action:'read',source_document_id:'s'})).status,403);
+ const user={role:'user',email:'staff@example.com'};
+ for(const action of ['retain','preview'])assert.equal((await call(user,{action,source_document_id:'s'})).status,403);
+ assert.equal((await call(user,{action:'approve',source_document_id:'s'})).status,400);
+ activeClient=setup();const retained=await retain(activeClient);
+ const response=await call(user,{action:'read',source_document_id:'s',record_key:retained.record.record_key});
+ assert.equal(response.status,200);assert.equal((await response.json()).record.review_status,'unreviewed');
+ const citation=await call(user,{action:'cite',source_document_id:'s',record_key:retained.record.record_key,excerpt:'invented'});
+ assert.equal(citation.status,409);assert.equal(activeClient.writes,1);
+ }finally{globalThis.Deno=previousDeno;globalThis.__ocrTestClient=previousClient;}
+});
