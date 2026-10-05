@@ -1369,6 +1369,13 @@ async function pushDataset(
     )) {
       errors.push(`${record.id}: Text date option requires verified Smartsheet column type before push. No row was written.`);
       orderFailedRecordIds.add(String(record.id));
+      await reportOrderProgress({
+        phase: 'needs_review', current: orderProcessedCount, total: pendingRecords.length,
+        fraction: 0.1 + (0.35 * (orderProcessedCount / Math.max(1, pendingRecords.length))),
+        item_label: orderProgressItemLabel(record),
+        detail: 'Text date/receipt choice needs verified Smartsheet column-type review before this Order can be written',
+        record_id: record.id, smartsheet_row_id: cleanText(record?.smartsheet_row_id, 40),
+      });
       continue;
     }
     // Preserve Smartsheet's contact when the stored Base44 email is missing or malformed.
