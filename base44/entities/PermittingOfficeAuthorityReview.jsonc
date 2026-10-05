@@ -3,6 +3,27 @@
   "type": "object",
   "description": "Immutable staff-reviewed office role and explicit jurisdiction coverage. Event creation plus a matching committed profile receipt records the decision; fresh evidence checks determine current verification. Never establishes address authority or changes job workflows.",
   "properties": {
+    "evidence_kind": {
+      "type": "string",
+      "enum": [
+        "pdf",
+        "official_html"
+      ]
+    },
+    "html_evidence_id": {
+      "type": "string"
+    },
+    "publisher_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "office_link_proof": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "regulatory_authority_established": {
+      "type": "boolean"
+    },
     "request_key": {
       "type": "string"
     },
