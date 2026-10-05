@@ -49,6 +49,20 @@ function safeTime(value) {
   }
 }
 
+function integrityValidationSummary(validation) {
+  const failures = [];
+  if (validation?.missing_fields?.length) failures.push(`Missing: ${validation.missing_fields.join(", ")}`);
+  if (validation?.invalid_contract_version) failures.push("Unsupported evidence contract version");
+  if (validation?.invalid_action) failures.push("Unsupported audit action");
+  if (validation?.invalid_source) failures.push("Unsupported evidence source");
+  if (validation?.invalid_server_timestamp) failures.push("Invalid server timestamp");
+  if (validation?.invalid_clock_in) failures.push("Invalid clock-in timestamp");
+  if (validation?.invalid_company_date) failures.push("Invalid company date");
+  if (validation?.company_date_clock_in_mismatch) failures.push("Company date does not match clock-in in America/New_York");
+  if (validation?.invalid_action_source_pair) failures.push("Invalid action/source combination");
+  return failures;
+}
+
 function conflictEvidenceMatchesAudit(expected, row) {
   const membership = payrollMembershipFromAudit(row);
   return Number(expected?.contract_version || 0) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION
@@ -370,6 +384,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
                     <div className="md:col-span-2 mt-1 rounded border border-red-300 bg-white p-2 text-red-950">
                       <div className="font-semibold">Diagnostic only — not trusted payroll evidence</div>
                       <div className="mt-1 text-xs">This authoritative audit record failed the shared payroll-membership evidence contract. Audit ID: <span className="font-mono break-all">{row.id || "Missing immutable audit ID"}</span>.</div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {integrityValidationSummary(integrityDiagnostic.validation).map((failure) => (
+                          <Badge key={failure} variant="outline" className="border-red-300 bg-red-50 text-red-900">{failure}</Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {isConflictEvidence && claimedEvidence && (
