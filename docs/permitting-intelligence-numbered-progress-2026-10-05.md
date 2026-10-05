@@ -52,3 +52,7 @@ Sign resources now survive crowded alphabetical link caps; saved frontiers use r
 ## Phase 5 capped-page recovery
 
 Admin discovery-only recovery now resumes saved link-limit gaps across requests, preserving completed scans, pending work and documents. Page hashes guard against skipped links after source changes. Verified 58 tests, backend bundles and app build. Next: live Cincinnati recovery and PDF archive handoff. See `permitting-phase5-capped-page-recovery-2026-10-05.md`.
+
+## Phase 5 live recovery acceptance
+
+Cincinnati capped index recovered 169 links across two portions, clearing its link-limit gap; 64 additional resource records retained, all prior document IDs and archive identities preserved. Recovery uses ordered resource-list hashes; 59 tests and build pass. Fetch/depth gaps remain. See `permitting-phase5-live-capped-recovery-2026-10-05.md`.
