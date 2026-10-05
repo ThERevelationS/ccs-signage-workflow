@@ -103,4 +103,4 @@ console.log('PASS conflict evidence comparison binds action, request, server tim
 assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\)/);
 console.log('PASS scoped refresh preserves the complete expected immutable conflict evidence');
 
-console.log('PASS 14/14 Time Clock Audit Trail lifecycle, integrity, completeness, and evidence-content scenarios');
+console.log('PASS 15/15 Time Clock Audit Trail lifecycle, integrity, completeness, evidence-content, and contract-version scenarios');
