@@ -521,28 +521,50 @@ export default function TimeClockAdmin() {
       setApprovalRequestId(requestId);
       persistAdminRequestId(requestAction, approvalEntry.id, requestId);
     }
+    const frozenPayload = approvalRetryPayload?.request_id === requestId ? approvalRetryPayload : {
+      request_id: requestId,
+      entry_id: approvalEntry.id,
+      target_email: approvalEntry.user_email,
+      expected_updated_date: approvalEntry.updated_date,
+      decision: approvalDecision,
+      note: approvalNote.trim(),
+      entry_snapshot: {
+        id: approvalEntry.id,
+        user_email: approvalEntry.user_email,
+        user_name: approvalEntry.user_name || "",
+        clock_in: approvalEntry.clock_in || null,
+        clock_out: approvalEntry.clock_out || null,
+        total_hours: Number(approvalEntry.total_hours || 0),
+        approval_status: approvalEntry.approval_status || "unreviewed",
+        updated_date: approvalEntry.updated_date,
+        pay_period_id: approvalEntry.pay_period_id || null,
+      },
+    };
+    persistApprovalRetry(frozenPayload);
+    setApprovalRetryPayload(frozenPayload);
+    setPendingApprovalRecovery(frozenPayload);
     try {
       const response = await base44.functions.invoke("timeClockAction", {
         action: "admin_set_entry_approval",
         session_token: sessionToken,
-        target_email: approvalEntry.user_email,
-        request_id: requestId,
-        entry_id: approvalEntry.id,
-        expected_updated_date: approvalEntry.updated_date,
-        decision: approvalDecision,
-        note: approvalNote.trim(),
+        target_email: frozenPayload.target_email,
+        request_id: frozenPayload.request_id,
+        entry_id: frozenPayload.entry_id,
+        expected_updated_date: frozenPayload.expected_updated_date,
+        decision: frozenPayload.decision,
+        note: frozenPayload.note,
       });
       const data = functionData(response);
-      if (!data?.success) {
-        const err = new Error(data?.error || "The approval was not confirmed by the server.");
-        err.retrySameRequest = data?.retry_same_request === true;
-        throw err;
-      }
+      if (!data?.success) throw adminActionError(data, "The approval was not confirmed by the server.");
       clearAdminRequestId(approvalRequestStorageAction("approve"), approvalEntry.id);
       clearAdminRequestId(approvalRequestStorageAction("reopen"), approvalEntry.id);
+      clearApprovalRetry("approve", approvalEntry.id);
+      clearApprovalRetry("reopen", approvalEntry.id);
       setApprovalEntry(null);
       setApprovalNote("");
       setApprovalRequestId("");
+      setApprovalRetryPayload(null);
+      setPendingApprovalRecovery(null);
       await loadData();
     } catch (err) {
       const data = err?.response?.data || {};
@@ -551,11 +573,16 @@ export default function TimeClockAdmin() {
       if (!retainRequest) {
         const message = data?.error || err?.message || "The approval could not be completed safely.";
         clearAdminRequestId(requestAction, approvalEntry.id);
+        clearApprovalRetry(approvalDecision, approvalEntry.id);
+        setApprovalRetryPayload(null);
+        setPendingApprovalRecovery(null);
         await loadData();
         setApprovalEntry(null);
         setApprovalNote("");
         setApprovalRequestId("");
         setTimeEntryError(message);
+      } else {
+        setPendingApprovalRecovery(frozenPayload);
       }
     } finally {
       setApprovalBusy(false);
