@@ -49,6 +49,7 @@ function safeTime(value) {
 }
 
 const COMPANY_TIME_ZONE = "America/New_York";
+const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = 1;
 
 function companyDateForInstant(value) {
   const date = new Date(String(value || ""));
@@ -87,7 +88,8 @@ function payrollMembershipFromAudit(row) {
 
 function conflictEvidenceMatchesAudit(expected, row) {
   const membership = payrollMembershipFromAudit(row);
-  return String(row?.id || "") === String(expected?.audit_id || "")
+  return Number(expected?.contract_version || 0) === PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION
+    && String(row?.id || "") === String(expected?.audit_id || "")
     && String(row?.action || "") === String(expected?.action || "")
     && String(row?.request_id || "") === String(expected?.request_id || "")
     && String(row?.server_timestamp || "") === String(expected?.server_timestamp || "")
