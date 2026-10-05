@@ -132,8 +132,9 @@ assert.equal(opportunityStageFromWorkOrder({ in_pipeline:false, current_task_des
     smartsheet_sheet_id:'10', smartsheet_row_id:'21',
   }];
   const audit = buildOpportunityBridgeAudit({ workOrders });
+  assert.equal(audit.rows[0].sales_scope, 'legacy_history');
   assert.equal(audit.rows[0].decision, OPPORTUNITY_BRIDGE_DECISIONS.MANUAL_REVIEW);
-  assert.ok(audit.rows[0].review_reasons.includes('open_status_terminal_task_conflict'));
+  assert.ok(audit.rows[0].review_reasons.includes('legacy_smartsheet_terminal_task_requires_review'));
 }
 
 {

@@ -1,0 +1,115 @@
+{
+  "method": "bounded-manual-official-capture-v1",
+  "llm_calls": 0,
+  "authority_verified": false,
+  "sources": [
+    {
+      "name": "buildings-about",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/",
+      "retrieved_at": "2026-10-05T02:26:23.909Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 69598,
+      "file_hash_sha256": "59857eb9abb1822738b13bacea187401b3fa4c57e690b13a3babc43664a6ca90",
+      "text_sha256": "a5a188637e83f8f935cc8fc7fd1ef545e5a0a5337a8562cff2624af95de830ed",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-about.txt"
+    },
+    {
+      "name": "buildings-contact",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/contact-us/",
+      "retrieved_at": "2026-10-05T02:26:26.047Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 79023,
+      "file_hash_sha256": "36bda9f755a4b48ef2a2730a7e18408a4fb02e9c15f5c2dc028610b3d08e730c",
+      "text_sha256": "36426432182ef7e466f33d190a97670f76a0b7457b6ae9d389ec7deeb8240a5b",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/buildings-contact.txt"
+    },
+    {
+      "name": "permit-center",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/about-buildings-inspections/permit-center/",
+      "retrieved_at": "2026-10-05T02:26:27.947Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 69551,
+      "file_hash_sha256": "9919254a2bbb984e1267a7777fad68bbf9c6099831b75b8bd5e9b13257ef139e",
+      "text_sha256": "5a934435858484e3b712dbe1cc39c9c3b49165c2749ae0288be7f6cfba50b03e",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/permit-center.txt"
+    },
+    {
+      "name": "planning-about",
+      "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/",
+      "retrieved_at": "2026-10-05T02:26:29.696Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 60034,
+      "file_hash_sha256": "163a2f8b956770c58c097dd68ada6adc55e192ed4fd66b37f51b3ca8c1ed0b78",
+      "text_sha256": "1a66b9e613dc41c98706d22bcab09f1987de36d06ebc20faa0b8b83ec3e7090e",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-about.txt"
+    },
+    {
+      "name": "planning-contact",
+      "official_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/about-city-planning/contact-us/",
+      "retrieved_at": "2026-10-05T02:26:31.514Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 59937,
+      "file_hash_sha256": "feab4e75cd2ead0cf6cea51fd87b51110370e590a4a16e4272e90f4368b1aa3a",
+      "text_sha256": "0fdbe7a63f54aa39f3f354eeca893eb0e33c9bf5261aeccef9a1499169701260",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/planning-contact.txt"
+    },
+    {
+      "name": "zoning-relocation",
+      "official_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+      "final_url": "https://www.cincinnati-oh.gov/planning/zoning-administration/relocation-of-zoning-division-to-the-city-planning-and-engagement-department/",
+      "retrieved_at": "2026-10-05T02:26:33.059Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 62359,
+      "file_hash_sha256": "d8968e83b33a50ebf6795e3b040eeedf81dc1181e1a264e8471084b76f5eb3e0",
+      "text_sha256": "feab57a1ffa782fc34b588585c3bd364f261d498501bc475168df29ced219f87",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/zoning-relocation.txt"
+    },
+    {
+      "name": "sign-forms",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/sign/",
+      "retrieved_at": "2026-10-05T02:26:35.214Z",
+      "content_type": "text/html;charset=UTF-8",
+      "file_bytes": 67011,
+      "file_hash_sha256": "c88f76511d38497f885d3543260528156a40c8a5c71d55de477ebe61bdbcd848",
+      "text_sha256": "1f068931112f3d0a21b5b827310e1c3ab5c631e3924b80f3d100c2e14fceb430",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-forms.html",
+      "normalized_text_path": "docs/official-evidence/cincinnati-2026-10-05/sign-forms.txt"
+    },
+    {
+      "name": "sign-handout",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/signs-informational-handout/",
+      "retrieved_at": "2026-10-05T02:26:35.536Z",
+      "content_type": "application/pdf",
+      "file_bytes": 282256,
+      "file_hash_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/sign-handout.pdf",
+      "authority_status": "unreviewed",
+      "app_storage_archive_completed": false
+    },
+    {
+      "name": "outdoor-advertising-application",
+      "official_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+      "final_url": "https://www.cincinnati-oh.gov/buildings/building-permit-forms-applications/application-forms/all-forms-handouts-checklists-alphabetical-list/outdoor-advertising-sign-application/",
+      "retrieved_at": "2026-10-05T02:26:35.827Z",
+      "content_type": "application/pdf",
+      "file_bytes": 63094,
+      "file_hash_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+      "archived_repo_path": "docs/official-evidence/cincinnati-2026-10-05/outdoor-advertising-application.pdf",
+      "authority_status": "unreviewed",
+      "app_storage_archive_completed": false
+    }
+  ]
+}
