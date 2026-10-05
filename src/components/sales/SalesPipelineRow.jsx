@@ -14,6 +14,7 @@ import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { openExternalHttpUrl, safeExternalHttpUrl } from "@/utils/safeExternalUrl";
 import TaskAssigneeSelect from "@/components/sales/TaskAssigneeSelect";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", className: "bg-blue-50 text-blue-700" },
@@ -97,6 +98,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
   const quoteAging = getQuoteAgingState(wo);
   const attentionItems = getActionableSalesAttentionItems(wo);
   const likelyPlaceholder = isLikelySalesPlaceholder(wo);
+  const opportunityDisplayName = salesOpportunityDisplayName(wo, "Unnamed customer");
   const coreBridgeUrl = safeExternalHttpUrl(wo.corbridge_link);
   const expectedCloseStamp = String(wo.expected_close_date || "").slice(0, 10);
   const isOpen = !["won", "lost"].includes(wo.sales_status);
@@ -120,7 +122,7 @@ const SalesPipelineRow = memo(function SalesPipelineRow({
               case "client_name": return (
                 <td key={columnId} className="px-1 py-0.5 border-r" onContextMenu={(e) => handleContextMenu(e, wo, "client_name", "Customer", wo.client_name)}>
             <button onClick={() => setSelectedWorkOrder(wo)} className="h-7 w-full text-xs text-left px-1 hover:bg-blue-50 rounded flex items-center gap-1 text-blue-600">
-              <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{wo.client_name || "Unnamed"}</span>
+              <LinkIcon className="w-3 h-3 flex-shrink-0" /><span className="min-w-0 flex-1 truncate">{opportunityDisplayName}</span>
               {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800" title="Exact placeholder customer name detected. Review before removing from Current Pipeline.">TEST</span>}
               {attentionItems.length > 0 && <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800" title={`Needs attention: ${attentionItems.map((item) => item.label).join(", ")}`}>!{attentionItems.length}</span>}
             </button>
