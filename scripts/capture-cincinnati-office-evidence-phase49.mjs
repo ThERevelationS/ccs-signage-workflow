@@ -8,7 +8,7 @@ const manifest=[];
 for(const [name,path,kind] of sources){
  const url='https://www.cincinnati-oh.gov'+path;
  if(kind!=='pdf'){
- const r=await fetchHtmlSnapshot({profile:{website:'https://www.cincinnati-oh.gov'},officialUrl:url});
+ const r=await fetchHtmlSnapshot({profile:{website_url:'https://www.cincinnati-oh.gov'},officialUrl:url});
  const bytes=Buffer.from(r.raw_html_base64,'base64'),raw=dir+'/'+name+'.html',text=dir+'/'+name+'.txt';
  await writeFile(raw,bytes,{flag:'wx'});await writeFile(text,r.text,{flag:'wx'});
  manifest.push({name,official_url:url,final_url:r.final_url,retrieved_at:r.retrieved_at,content_type:r.content_type,file_bytes:bytes.length,file_hash_sha256:hash(bytes),text_sha256:hash(r.text),archived_repo_path:raw,normalized_text_path:text});
