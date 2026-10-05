@@ -6482,17 +6482,7 @@ Deno.serve(async (req) => {
         return Boolean(verified?.id && String(verified.status || '') === expectedCaseStatus &&
           (decision !== 'approve' || String(verified.resolution_audit_id || '') === String(approvalAuditId || '')));
       };
-      const verifyResolvedCorrectionForApproval = async (record: any) => {
-        const linkedRequestId = String(record?.correction_needs_review_request_id || '');
-        if (!linkedRequestId) return true;
-        const rows = await correctionRequestEntity.filter({ request_id: linkedRequestId, time_entry_id: record.id });
-        if (!Array.isArray(rows) || rows.length !== 1) return false;
-        const linked = rows[0];
-        if (asEmail(linked.user_email) !== target.email ||
-            !['approved', 'approved_modified'].includes(String(linked.status || '')) ||
-            String(record.last_correction_request_id || '') !== String(linked.id || '') ||
-            !linked.applied_audit_id) return false;
-        const appliedAudit = await auditEntity.get(linked.applied_audit_id).catch(() => null);
+      const correctionAuditMatchesRecord = (appliedAudit: any, record: any, correctionRequestId = '') => {
         const corrected = appliedAudit?.details?.corrected || {};
         return Boolean(
           appliedAudit?.id &&
@@ -6500,12 +6490,45 @@ Deno.serve(async (req) => {
           String(appliedAudit.action || '') === 'admin_correction' &&
           String(appliedAudit.time_entry_id || '') === record.id &&
           asEmail(appliedAudit.user_email) === target.email &&
-          String(appliedAudit.details?.correction_request_id || '') === String(linked.id || '') &&
+          (!correctionRequestId || String(appliedAudit.details?.correction_request_id || '') === correctionRequestId) &&
           String(corrected.clock_in || '') === String(record.clock_in || '') &&
           String(corrected.clock_out || '') === String(record.clock_out || '') &&
           Number(corrected.lunch_minutes || 0) === Number(record.lunch_minutes || 0) &&
           String(corrected.notes || '') === String(record.notes || '')
         );
+      };
+      const verifyResolvedCorrectionForApproval = async (record: any) => {
+        const linkedRequestId = String(record?.correction_needs_review_request_id || '');
+        const correctionMarker = String(record?.last_correction_request_id || '');
+        if (linkedRequestId) {
+          const rows = await correctionRequestEntity.filter({ request_id: linkedRequestId, time_entry_id: record.id });
+          if (!Array.isArray(rows) || rows.length !== 1) return false;
+          const linked = rows[0];
+          if (asEmail(linked.user_email) !== target.email ||
+              !['approved', 'approved_modified'].includes(String(linked.status || '')) ||
+              correctionMarker !== String(linked.id || '') ||
+              !linked.applied_audit_id) return false;
+          const appliedAudit = await auditEntity.get(linked.applied_audit_id).catch(() => null);
+          return correctionAuditMatchesRecord(appliedAudit, record, String(linked.id || ''));
+        }
+        if (!correctionMarker) return true;
+
+        const linkedById = await correctionRequestEntity.get(correctionMarker).catch(() => null);
+        if (linkedById?.id) {
+          if (asEmail(linkedById.user_email) !== target.email ||
+              String(linkedById.time_entry_id || '') !== String(record.id) ||
+              !['approved', 'approved_modified'].includes(String(linkedById.status || '')) ||
+              !linkedById.applied_audit_id) return false;
+          const appliedAudit = await auditEntity.get(linkedById.applied_audit_id).catch(() => null);
+          return correctionAuditMatchesRecord(appliedAudit, record, String(linkedById.id || ''));
+        }
+
+        if (String(record.clock_source || '') !== 'admin_correction') return false;
+        const directAudits = await auditEntity.filter({
+          action: 'admin_correction', request_id: correctionMarker, time_entry_id: record.id,
+        });
+        if (!Array.isArray(directAudits) || directAudits.length !== 1) return false;
+        return correctionAuditMatchesRecord(directAudits[0], record);
       };
       if (decision === 'approve' && actorEmail === target.email) {
         return Response.json({
