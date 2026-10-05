@@ -81,10 +81,13 @@ test('actual refresh retry clears successful gap and preserves unrelated pending
  assert.ok(r.jurisdiction.documents.some(d=>d.url.endsWith('/sign.pdf')));
 });
 
-test('failed recovery with empty pending list cannot report a successful scan or write profile',async()=>{
+test('failed recovery with empty pending list reports failure and persists only retained progress',async()=>{
  const root='https://city.gov/permits';
  const state={method:'official-page-frontier-v1',seed_url:root,max_depth:2,visited_urls:[root],pending_pages:[],gaps:[{url:root,reason:'page_fetch_failed',depth:0,requires_review:true}],attempted_pages_total:1};
  const h=harness({profile:{discovery_scan_state:state}});
- await assert.rejects(h.run(true,true),/could not read/);
- assert.equal(h.written,undefined);assert.deepEqual(h.initial.discovery_scan_state,state);
+ const r=await h.run(true,true);
+ assert.equal(r.discovery_scan.success,false);assert.equal(r.discovery_scan.traversal_complete,false);
+ assert.deepEqual(r.jurisdiction.discovery_scan_state.gaps,state.gaps);
+ assert.equal(r.jurisdiction.discovery_scan_state.attempted_pages_total,2);
+ assert.deepEqual(r.jurisdiction.documents,h.initial.documents);assert.equal(h.researchCalls,0);
 });
