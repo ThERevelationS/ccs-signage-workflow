@@ -1,0 +1,130 @@
+{
+  "phase": "4 — Office authority and evidence",
+  "chunk": "Cincinnati PDF page evidence",
+  "completed": true,
+  "verified_at": "2026-10-05T13:01:14.925Z",
+  "llm_calls": 0,
+  "uploads": 0,
+  "invocation_environment": "Authenticated Base44 preview function tests against production entities",
+  "backend_deployed": false,
+  "frontend_published": false,
+  "protected_fields_preserved": true,
+  "focused_tests_passed": 40,
+  "authority_approved": false,
+  "observed_revision_labels": {
+    "handout": "Rev. 5/2017",
+    "application": "CEG REVISED 03/18"
+  },
+  "sources": [
+    {
+      "id": "6ac39c0e6657049fb11cd757",
+      "file_hash_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "file_bytes": 282256,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/427b15b63_signs-informational-handout.pdf",
+      "authority_classification": "unknown_review_required",
+      "verification_status": "needs_verification",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/427b15b63_signs-informational-handout.pdf",
+        "claim_token": "cfd298ac-5e36-405c-b96b-d9b5ed724e9f",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T13:00:24.459Z",
+        "attempts": 1,
+        "next_page": 4,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 3,
+        "pages_extracted": 3,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T13:00:24.737Z",
+        "completed_at": "2026-10-05T13:00:24.737Z",
+        "complete_document_text": true
+      },
+      "extracted_pages": [
+        {
+          "page": 1,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nI. WHY IS A BUILDING PERMIT REQUIRED FOR A SIGN?\nA permit or Zoning Certificate of Compliance is required for all signs to control visual clutter and assure\nsigns are safely and properly installed.\nII. WHAT CODES/REGULATIONS ARE APPLICABLE?\nBefore a temporary or permanent sign is installed, a permit must be obtained except for painted wall signs\nand sign face changes. A Zoning Certificate of Compliance or a Certificate of Appropriateness must be\nobtained for new painted wall signs or sign face changes in Urban Design or Historic Districts. Even though\na Certificate of Compliance is not required for other painted wall signs and sign face changes, they are\nstrictly regulated by the Zoning Code. Please call the Zoning office at 352-3313 for the regulations\nappropriate to a particular site. Better yet, apply for a Certificate of Compliance to receive written Zoning\napproval prior to painting the sign, thereby avoiding orders to remove or modify the sign.\nIn addition, signs that are classified as outdoor advertising signs, including painted wall signs, are licensed\nby Chapter 895 Cincinnati Municipal Code. See the handout entitled Outdoor Advertising Signs for the\ninformation necessary for review and approval.\nContact the following agencies:\nBuilding Code and Zoning Code Plans Examination - 352-3313\nOutdoor Advertising Sign Inspections - 352-3267\nIII. HOW DO I OBTAIN A PERMIT?\nComplete an application for a permit and submit three copies of plans for review to the Permit Center, 805\nCentral Avenue, Suite 500, Cincinnati, Ohio 45202. The description sheet for Temporary and Portable\nSigns may be submitted in lieu of plans for temporary and portable signs complying with Section 1427-13\nof the Cincinnati Zoning Code. The plans shall include the following:\nA. Plot Plan - Drawn to scale showing:\n1. The amount of street frontage per business\n2. Distance (in feet) from sign to lot lines and structures\n3. North arrow\n4. Location and description of existing and proposed signs\nB. Sign Illustrations\n1. The size and shape of the sign\n2. Details of how the sign is to be supported, attached, anchored, connected, braced, including\nfoundations for poles, sign sections, etc.; indication of existing and proposed materials; design\nloading specifications (wind, soil bearing capacity); structural calculations or stamped drawings may\nbe required.\n3. The message and height of letters on the sign SIGNS Your Resource Partner in Building a Safer\nCincinnati Buildings & Inspections\n4. Lamp location (if the sign is not illuminated, indicate on the plans)\nSIGNS",
+          "source_document_id": "6ac39c0e6657049fb11cd757",
+          "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+          "text_sha256": "660dc5820e4e3e9fc56f0e70d810fdd39bbd23e62c5c522233141a7e508ca0ab",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T13:00:24.737Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 2,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nNOTE : Per City Municipal Code #502-22; signs shall not display symbols, which could be confused\nfor traffic control devices, or, if illuminated, they shall not display flashing red, amber, or green\nlights. It is preferable that these colors not be used at all in sign lighting.\nC. Electrical or Lighting Information\n1. All electrical devices and circuitry must be tested and listed by an approved organization -UL or\nother. A separate electrical permit is required (contact Inspection Bureau Incorporated (IBI), at 381-\n6080).\nIV. WHAT HAPPENS AFTER I APPLY FOR MY PERMIT?\nThe aforementioned agencies will review the application. If any of the agencies has questions or\ncomments, they will contact the person listed on the application. Upon receipt of the necessary plan\nrevisions and approvals, the Permit Center will notify the applicant that the permit is ready and the balance\nof the permit fee will be due. Contact the Permit Center at 352-3271.\nIF YOU, AS THE OWNER OF THE BUSINESS, MOVE OR GO OUT OF BUSINESS, YOU SHOULD\nTAKE DOWN YOUR SIGN --- RELOCATED SIGNS REQUIRE A PERMIT.\nV. INSPECTIONS REQUIRED (24-hour minimum notice)\nA. Foundation Inspection - If a footing is needed, the excavation must be inspected for depth and size\nbefore the concrete is placed; call 352-3267.\nB. Sign Mounting/Attachment Inspection - If the sign is attached to a standard or other structure, please\ncall 352-3267.\nC. Electrical Inspection - If the sign is illuminated or wired for electricity, contact IBI at 381-6080.\nD. Final Inspection - When all work is completed call 352-3267.\nIT IS YOUR RESPONSIBILITY TO CALL FOR ALL INSPECTIONS.\nVI. TEMPORARY AND PORTABLE SIGNS\nTemporary signs are regulated by the Cincinnati Zoning Code, Section 1427-13.\nTemporary signs require a permit each time the sign is placed on the property. The sign must be properly\ninstalled, anchored, electrically wired and inspected each time.\nCONTACT THE DEPARTMENT OF TRANSPORTATION AND ENGINEERING (352-3463) FOR SIGNS IN\nTHE PUBLIC RIGHT OF WAY.",
+          "source_document_id": "6ac39c0e6657049fb11cd757",
+          "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+          "text_sha256": "3332e42bc5f3e729df67815a00ee503b3e408cdfc0f087527cae87f2f2c47f92",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T13:00:24.737Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        },
+        {
+          "page": 3,
+          "text": "Permit Center  805 Central Avenue, Suite 500  Cincinnati, Ohio 45202\nP 513-352-3271  F 513-352-2579  www.cincinnati-oh.gov\nRev. 5/2017",
+          "source_document_id": "6ac39c0e6657049fb11cd757",
+          "source_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+          "text_sha256": "1b56527998c34e26a58e454565c920a4cb2111bffb8b70b8d88195e5ac240402",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T13:00:24.737Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    },
+    {
+      "id": "6ac39c24c9f6d0eebf320a13",
+      "file_hash_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+      "file_bytes": 63094,
+      "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/2116473d8_outdoor-advertising-sign-application.pdf",
+      "authority_classification": "application_form",
+      "verification_status": "needs_verification",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/2116473d8_outdoor-advertising-sign-application.pdf",
+        "claim_token": "e73e55ce-1788-42b7-a13c-a7dfd2bc3dd6",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T13:00:34.826Z",
+        "attempts": 1,
+        "next_page": 2,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 1,
+        "pages_extracted": 1,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T13:00:35.103Z",
+        "completed_at": "2026-10-05T13:00:35.103Z",
+        "complete_document_text": true
+      },
+      "extracted_pages": [
+        {
+          "page": 1,
+          "text": "Sign Location Address (Please print in blue or black ink only)\nSign Owner - Name (Print) Street Number & Name City / State / Zip Code Phone No / Fax No\nAdditional Location Information Face Direction\nE-mail Address\nPart A - Identi fi cation\nOutdoor Advertising\nSign Permit\nINITIALIZED BY\n805 CENTRAL AVE, SUITE 500\nCINCINNATI OHIO 45202\nP 513 352 3271\nF 513 352 2579\nWWW.CINCINNATI-OH.GOV\nCAGIS.HAMILTON-CO.ORG\nBUILDINGS &\nINSPECTIONS\nPart B - Permit Type (Please Check One)\nPart D - Costs and Authorizations\nPayment must be included with the application. (Payable to the City of Cincinnati)\nSubmit two (2) copies of all required materials.\nThe owner or agent of this sign and undersigned does hereby certify that the information and statements given on the application, drawings, and inspections are to the\nbest of their knowledge, true and correct. The undersigned further certi fi es their authorization to grant consent to the inspection by employees of the City of Cincinnati of the\ndescribed premises at any time when work on those premises is ongoing and hereby grants their consent.\nApplicant’s Signature __________________________________________________ Date ___________________\nFOR OFFICE USE ONLY Permit Processing Fee ______________________\nReviewed By:\n__________________________________________________________________\nZoning Plan Examiner Date\nCEG REVISED 03/18\nPart C - Description of Work\nSign Lighted?\nSign Faces: 1. Height __________, Width ___________, Area ___________ sq ft\nAnnual Permit Construction Permit Replacement Permit Credit Permit\nProperty Owner - Name (Print) Street Number & Name City / State / Zip Code Phone No / Fax No\nContact Person - Name (Print) Phone No\nE-mail Address Contact Person - Name (Print) Phone No\nDocumentation Type Showing Right to Occupy: Lease Deed\nDate Sign was fi rst placed in continuous use as an advertising sign:\nHas a Zoning Certi fi cate of Occupancy been issued? No Yes - Certifcate No: ________________________\nSign constructed or enlarged since February 1, 1989? No Yes - Adv. Sign Permit No: __________________\nSign Type: Single Face Back to Back Double Face\nSign Mounting: Ground Roof Wall Other _______________________\nNo Yes - Type ________________________________________\nTop of Sign ________ Feet Above Ground Roadway\n2. Height __________, Width ___________, Area ___________ sq ft\n3. Height __________, Width ___________, Area ___________ sq ft\n4. Height __________, Width ___________, Area ___________ sq ft - TOTAL (all faces) _______ sq ft",
+          "source_document_id": "6ac39c24c9f6d0eebf320a13",
+          "source_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+          "text_sha256": "06593f4d9f68801be0d3d0e4cc5859994ae552e17861797ffa9e255fce05c163",
+          "method": "pdfjs-4.8.69-text-v1",
+          "extracted_at": "2026-10-05T13:00:35.103Z",
+          "truncated": false,
+          "needs_ocr_review": false
+        }
+      ]
+    }
+  ]
+}
