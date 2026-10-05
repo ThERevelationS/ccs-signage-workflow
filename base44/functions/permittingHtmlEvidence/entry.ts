@@ -48,5 +48,5 @@ Deno.serve(async req=>{
   return Response.json(await retainHtmlEvidence(deps,{jurisdictionId,officialUrl:String(body.official_url || ''),title:body.title,
    requestId:String(body.request_id || ''),expectedUpdatedDate:body.expected_updated_date,expectedTextSha256:body.expected_text_sha256,
    officialSourceConfirmed:body.official_source_confirmed,actor:user.email}));
- }catch(error){return Response.json({success:false,error:error?.message || 'HTML evidence could not complete safely.',llm_calls:0},{status:error?.status || 500});}
+ }catch(error){return Response.json({success:false,error:error?.message || 'HTML evidence could not complete safely.',...(error?.retry_safe===true?{status:'not_recorded',retry_safe:true}:{}),llm_calls:0},{status:error?.status || 500});}
 });
