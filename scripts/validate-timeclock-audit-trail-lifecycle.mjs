@@ -1,7 +1,7 @@
 // Source-level regression coverage for Time Clock Audit Trail async lifecycle guarantees.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
+import { PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION, payrollMembershipCompanyDate, payrollMembershipFromAudit } from '../base44/shared/timeClockPayrollMembershipEvidence.mjs';
 
 const source = readFileSync(new URL('../src/components/timeclock/TimeClockAuditTrail.jsx', import.meta.url), 'utf8');
 const backendSource = readFileSync(new URL('../base44/functions/timeClockAction/entry.ts', import.meta.url), 'utf8');
@@ -92,7 +92,25 @@ const membershipFixtures = [
 for (const fixture of membershipFixtures) assert.deepEqual(canonicalPayrollMembership(fixture.row), fixture.expected, fixture.name);
 assert.doesNotMatch(backendSource, /const payrollMembershipFromAudit =/);
 assert.doesNotMatch(source, /function payrollMembershipFromAudit\(/);
+assert.doesNotMatch(backendSource, /const normalizedPayrollMembershipFromAudit =/);
+assert.doesNotMatch(source, /function normalizedPayrollMembershipFromAudit\(/);
+assert.doesNotMatch(backendSource, /function payrollMembershipCompanyDate\(/);
+assert.doesNotMatch(source, /function payrollMembershipCompanyDate\(/);
 console.log(`PASS ${membershipFixtures.length}/${membershipFixtures.length} canonical payroll-membership fixtures execute the shared backend/frontend implementation`);
+
+const companyDateFixtures = [
+  ['spring DST before jump', '2026-03-08T06:59:59.999Z', '2026-03-08'],
+  ['spring DST after jump', '2026-03-08T07:00:00.000Z', '2026-03-08'],
+  ['fall DST first 1:30', '2026-11-01T05:30:00.000Z', '2026-11-01'],
+  ['fall DST repeated 1:30', '2026-11-01T06:30:00.000Z', '2026-11-01'],
+  ['Eastern previous date before spring transition', '2026-03-08T04:59:59.999Z', '2026-03-07'],
+];
+for (const [name, instant, expected] of companyDateFixtures) assert.equal(payrollMembershipCompanyDate(instant), expected, name);
+console.log(`PASS ${companyDateFixtures.length}/${companyDateFixtures.length} payroll-membership company-date DST boundary fixtures`);
+
+const malformedInputs = [null, undefined, '', 0, false, {}, [], { details: null }, { action: 17, details: { payroll_membership: 'bad' } }, { action: 'clock_in', details: { payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: {}, clock_in: {} } } }];
+for (const value of malformedInputs) assert.equal(payrollMembershipFromAudit(value), null, `malformed evidence must reject: ${JSON.stringify(value)}`);
+console.log(`PASS ${malformedInputs.length}/${malformedInputs.length} malformed/non-string payroll-membership inputs fail closed`);
 
 assert.match(source, /const requestSequenceRef = useRef\(0\)/);
 assert.match(source, /const mountedRef = useRef\(true\)/);
