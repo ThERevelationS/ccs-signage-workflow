@@ -466,6 +466,11 @@ export default function TimeClockAdmin() {
   };
 
   const openApprovalDialog = (entry, decision) => {
+    if (pendingApprovalRecovery &&
+        (pendingApprovalRecovery.entry_id !== entry?.id || pendingApprovalRecovery.decision !== decision)) {
+      setTimeEntryError("An interrupted manager shift review is still pending in this session. Resume that exact review before starting another approval or reopen action.");
+      return;
+    }
     const requestAction = approvalRequestStorageAction(decision);
     const recoveredPayload = storedApprovalRetry(decision, entry?.id);
     const recoveredRequestId = storedAdminRequestId(requestAction, entry?.id);
@@ -478,7 +483,10 @@ export default function TimeClockAdmin() {
       setApprovalRetryPayload(recoveredPayload);
       return;
     }
-    if (recoveredRequestId && !recoveredPayload) clearAdminRequestId(requestAction, entry?.id);
+    if (recoveredRequestId && !recoveredPayload) {
+      clearAdminRequestId(requestAction, entry?.id);
+      clearApprovalRetry(decision, entry?.id);
+    }
     const requestId = newRequestId();
     if (entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
     setApprovalEntry(entry);
