@@ -30,7 +30,7 @@ try {
     'const workOrder = {id:"wo-mechanic",work_order_number:"WO-SYNTH-MECH",title:"Synthetic mechanic repair",description:"Synthetic recovery fixture",type:"repair",status:"open",priority:"medium",equipment_id:"eq-mechanic",updated_date:"wo-rev-1",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}};',
     'const workOrder2 = {id:"wo-other",work_order_number:"WO-SYNTH-OTHER",title:"Second synthetic repair",description:"Second modal fixture",type:"repair",status:"open",priority:"low",equipment_id:"eq-other",updated_date:"wo-other-rev-1",parts_used:[],fluids_used:[],before_photos:[],problem_photos:[],after_photos:[],approval_block:{blocked:false,reason:""}};',
     'const secondEstimate = {id:"estimate-other",work_order_id:workOrder2.id,status:"draft",visibility:"mechanic",estimated_labor_hours:1.5,labor_rate:95,misc_total:0,parts_estimate:[],fluids_estimate:[],notes:"Second work order draft",updated_date:"estimate-other-rev-1"};',
-    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false,submitThenLoseAck:false,concurrentDraftOnSubmit:false,ccsTakesOwnershipOnSubmit:false,statusChangesOnSubmit:"",deferNextBootstrap:false,releaseDeferredBootstrap:null};',
+    'const state = {actions:[],estimate:null,owner:"none",failNextBootstrap:false,saveThenLoseAck:false,adminWinsOnSave:false,loseAckAndFailRefresh:false,submitThenLoseAck:false,postCommitSave403:false,postCommitSubmit403:false,accessDenied:false,concurrentDraftOnSubmit:false,ccsTakesOwnershipOnSubmit:false,statusChangesOnSubmit:"",deferNextBootstrap:false,releaseDeferredBootstrap:null};',
     'window.__fleetMechanicEstimateFixture = state;',
     'const publicEstimate = () => {',
     ' const rows=[clone(secondEstimate)];',
@@ -45,6 +45,7 @@ try {
     ' if (name !== "fleetMechanicPortal") throw new Error("Unexpected synthetic function: "+name);',
     ' state.actions.push(clone(payload));',
     ' if (payload.action === "bootstrap") {',
+    '   if (state.accessDenied) return {data:{error:"This mechanic portal link is invalid, expired, revoked, or outside its current equipment scope."}};',
     '   if (state.failNextBootstrap) {state.failNextBootstrap=false; throw new Error("Synthetic bootstrap unavailable");}',
     '   if (state.deferNextBootstrap) {const snapshot=bootstrap();state.deferNextBootstrap=false;return await new Promise(resolve=>{state.releaseDeferredBootstrap=()=>{state.releaseDeferredBootstrap=null;resolve({data:snapshot});};});}',
     '   return {data:bootstrap()};',
@@ -53,6 +54,7 @@ try {
     '   if (state.adminWinsOnSave) {state.owner="ccs";state.estimate={id:"estimate-admin",work_order_id:workOrder.id,status:"draft",updated_date:"admin-rev-1"};return {data:{error:"CCS or another mechanic already manages the estimate for this work order."}};}',
     '   const row={...clone(payload.estimate),id:"estimate-mechanic",work_order_id:workOrder.id,status:"draft",approval_required:true,updated_date:"estimate-rev-"+(++revision)};',
     '   state.estimate=row;state.owner="mechanic";',
+    '   if (state.postCommitSave403) {state.postCommitSave403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
     '   if (state.loseAckAndFailRefresh) {state.loseAckAndFailRefresh=false;state.failNextBootstrap=true;throw new Error("Synthetic lost first-save acknowledgment");}',
     '   if (state.saveThenLoseAck) {state.saveThenLoseAck=false;throw new Error("Synthetic lost first-save acknowledgment");}',
     '   return {data:{success:true,estimate:clone(row)}};',
@@ -64,6 +66,7 @@ try {
     '   if (state.statusChangesOnSubmit) {const next=state.statusChangesOnSubmit;state.statusChangesOnSubmit="";state.estimate={...state.estimate,status:next,updated_date:"estimate-rev-"+(++revision)};return {data:{error:"Only a draft or changes-requested estimate can be submitted."}};}',
     '   const row={...state.estimate,status:"submitted",updated_date:"estimate-rev-"+(++revision)};',
     '   state.estimate=row;',
+    '   if (state.postCommitSubmit403) {state.postCommitSubmit403=false;state.accessDenied=true;return {data:{error:"This mechanic link changed after the Fleet operation may have been committed. No Fleet result data was returned. Check current server state with CCS before retrying."}};}',
     '   if (state.submitThenLoseAck) {state.submitThenLoseAck=false;throw new Error("Synthetic lost submit acknowledgment");}',
     '   return {data:{success:true,estimate:clone(row),auto_approved:false}};',
     ' }',
@@ -229,7 +232,54 @@ try {
     assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap"]);
   });
 
-  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/9 PASS");
+  await run("Desktop: post-commit Save Draft 403 locks estimate editing and never replays the save",1440,async page => {
+    await page.getByLabel("Estimated labor hours").fill("6.5");
+    await page.getByLabel("Labor rate / hr").fill("155");
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.postCommitSave403 = true; });
+    await page.getByRole("button",{name:"Save Draft"}).click();
+    const recovery = page.getByRole("alert");
+    await recovery.getByText(/Current server ownership must be checked/i).waitFor();
+    await page.getByText(/may have been committed/i).waitFor();
+    assert.equal(await page.getByLabel("Estimated labor hours").isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap"]);
+    let server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.estimated_labor_hours,6.5,"server-side draft must remain committed");
+    assert.equal(server.labor_rate,155);
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Current server ownership could not be verified/i).waitFor();
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","bootstrap","bootstrap"],"explicit reconciliation may retry bootstrap only, never Save Draft");
+    assert.equal((await actionNames(page)).filter(name=>name==="estimate_save").length,1);
+    server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.estimated_labor_hours,6.5);
+  });
+
+  await run("Mobile: post-commit Submit 403 keeps submitted server state and never resubmits",390,async page => {
+    await page.getByLabel("Estimated labor hours").fill("5");
+    await page.getByLabel("Labor rate / hr").fill("145");
+    await page.evaluate(() => { window.__fleetMechanicEstimateFixture.postCommitSubmit403 = true; });
+    await page.getByRole("button",{name:"Submit Estimate"}).click();
+    const recovery = page.getByRole("alert");
+    await recovery.getByText(/Current server ownership must be checked/i).waitFor();
+    await page.getByText(/may have been committed/i).waitFor();
+    assert.equal(await page.getByLabel("Estimated labor hours").isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Save Draft"}).count(),0);
+    assert.equal(await page.getByRole("button",{name:"Submit Estimate"}).count(),0);
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap"]);
+    let server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.status,"submitted","server-side submit must remain committed");
+    await recovery.getByRole("button",{name:"Check Current Server State"}).click();
+    await page.getByText(/Current server ownership could not be verified/i).waitFor();
+    assert.deepEqual(await actionNames(page),["bootstrap","estimate_save","estimate_submit","bootstrap","bootstrap"],"explicit reconciliation may retry bootstrap only, never Submit Estimate");
+    const names = await actionNames(page);
+    assert.equal(names.filter(name=>name==="estimate_save").length,1);
+    assert.equal(names.filter(name=>name==="estimate_submit").length,1);
+    server = await page.evaluate(() => window.__fleetMechanicEstimateFixture.estimate);
+    assert.equal(server.status,"submitted");
+  });
+
+  console.log("Fleet mechanic repair-estimate browser acceptance: " + passed + "/11 PASS");
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (vite) await vite.close().catch(() => {});
