@@ -368,7 +368,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
               ? integrityDiagnosticByAuditId.get(String(row.id))
               : integrityDiagnosticByRowIndex.get(sourceRowIndex);
             return (
-              <div key={row.id} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
+              <div key={String(row.id || "").trim() || `diagnostic-row-${sourceRowIndex}`} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
