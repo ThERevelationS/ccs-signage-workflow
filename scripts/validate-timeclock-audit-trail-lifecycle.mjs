@@ -60,6 +60,51 @@ const membershipFixtures = [
     expected: null,
   },
   {
+    name: 'verified normalized admin correction envelope',
+    row: { action: 'admin_correction', details: { corrected: { clock_in: '2026-10-05T13:15:00.000Z' }, payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T13:15:00.000Z' } } },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-05T13:15:00.000Z', source: 'verified_normalized_audit_envelope' },
+  },
+  {
+    name: 'verified normalized admin archive envelope prefers archived entry',
+    row: { action: 'admin_archive', details: { archived_entry: { clock_in: '2026-10-05T14:00:00.000Z' }, original: { clock_in: '2026-10-05T13:00:00.000Z' }, payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T14:00:00.000Z' } } },
+    expected: { company_date: '2026-10-05', clock_in: '2026-10-05T14:00:00.000Z', source: 'verified_normalized_audit_envelope' },
+  },
+  {
+    name: 'normalized clock-in semantic mismatch rejects',
+    row: { action: 'clock_in', server_timestamp: '2026-10-05T15:00:00.000Z', details: { employee_attested_clock_in: '2026-10-05T14:59:00.000Z', payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T15:00:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'normalized clock-out semantic mismatch rejects',
+    row: { action: 'clock_out', details: { result_clock_in: '2026-10-05T12:29:00.000Z', payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'normalized admin correction semantic mismatch rejects',
+    row: { action: 'admin_correction', details: { corrected: { clock_in: '2026-10-05T13:14:00.000Z' }, payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T13:15:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'normalized admin archive semantic mismatch rejects',
+    row: { action: 'admin_archive', details: { archived_entry: { clock_in: '2026-10-05T13:59:00.000Z' }, payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T14:00:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'unsupported normalized envelope version rejects',
+    row: { action: 'clock_out', details: { result_clock_in: '2026-10-05T12:30:00.000Z', payroll_membership: { version: 2, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'wrong normalized envelope time zone rejects',
+    row: { action: 'clock_out', details: { result_clock_in: '2026-10-05T12:30:00.000Z', payroll_membership: { version: 1, time_zone: 'UTC', company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z' } } },
+    expected: null,
+  },
+  {
+    name: 'normalized envelope on unsupported action rejects',
+    row: { action: 'notes_update', details: { payroll_membership: { version: 1, time_zone: COMPANY_TIME_ZONE, company_date: '2026-10-05', clock_in: '2026-10-05T12:30:00.000Z' } } },
+    expected: null,
+  },
+  {
     name: 'legacy immutable audit uses stable candidate precedence',
     row: { action: 'admin_correction', details: { payroll_clock_in: '2026-10-05T11:00:00.000Z', original: { clock_in: '2026-10-05T12:00:00.000Z' }, corrected: { clock_in: '2026-10-05T13:00:00.000Z' } } },
     expected: { company_date: '2026-10-05', clock_in: '2026-10-05T11:00:00.000Z', source: 'immutable_audit' },
