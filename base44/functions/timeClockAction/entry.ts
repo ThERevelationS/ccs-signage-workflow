@@ -2806,15 +2806,7 @@ Deno.serve(async (req) => {
           Number(chain[index]?.sequence || 0) === index + 1
         );
       };
-      const payrollMembershipSemanticClockIn = (row: any) => {
-        const details = row?.details || {};
-        const action = String(row?.action || '');
-        if (action === 'clock_in') return String(details.employee_attested_clock_in || row?.server_timestamp || '');
-        if (action === 'clock_out') return String(details.result_clock_in || '');
-        if (action === 'admin_correction') return String(details.corrected?.clock_in || '');
-        if (action === 'admin_archive') return String(details.archived_entry?.clock_in || details.original?.clock_in || '');
-        return '';
-      };
+      // Payroll-membership evidence normalization is shared with the admin Audit Trail verifier.
       const normalizedPayrollMembershipFromAudit = (row: any) => {
         const envelope = row?.details?.payroll_membership;
         if (!envelope || Number(envelope.version || 0) !== 1 || String(envelope.time_zone || '') !== COMPANY_TIME_ZONE) return null;
