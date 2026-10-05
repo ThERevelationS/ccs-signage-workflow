@@ -1,0 +1,33 @@
+{
+  "phase": "4 — Office authority and evidence",
+  "chunk": "Cincinnati document registration",
+  "completed": true,
+  "verified_at": "2026-10-05T12:47:01.412Z",
+  "invocation_environment": "Base44 authenticated preview function test, production entities",
+  "backend_deployed": false,
+  "frontend_published": false,
+  "llm_calls": 0,
+  "original_documents_preserved": 4,
+  "unrelated_profile_fields_preserved": true,
+  "provenance_correction": "Two system-added Phase 4.10 links changed from manual to official_retained before upload; content unchanged; no staff manual overrides changed.",
+  "sources": [
+    {
+      "document_id": "cincinnati-official-sign-handout-20261005",
+      "archive_status": "complete",
+      "stored_bytes": 282256,
+      "stored_sha256": "a535c6728b536e98d2a5cf36e3611fd977da18dd53cebb842b78667c940615fb",
+      "source_document_id": "6ac39c0e6657049fb11cd757",
+      "storage_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/427b15b63_signs-informational-handout.pdf"
+    },
+    {
+      "document_id": "cincinnati-official-outdoor-advertising-application-20261005",
+      "archive_status": "complete",
+      "stored_bytes": 63094,
+      "stored_sha256": "df1691dba89b795e8f339a82cdf00a35074925a5398d468fe3809fb0ed1bd40a",
+      "source_document_id": "6ac39c24c9f6d0eebf320a13",
+      "storage_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/2116473d8_outdoor-advertising-sign-application.pdf"
+    }
+  ],
+  "app_page_extraction_pending": true,
+  "authority_review_pending": true
+}
