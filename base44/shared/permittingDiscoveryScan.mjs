@@ -1,3 +1,4 @@
+import { PDF_RESOURCE_METHOD } from './permittingResourceResponse.mjs';
 import { discoverOfficialPermittingResources, isDownloadableResearchDocument } from './jurisdictionPermittingLinkDiscovery.mjs';
 
 const key = value => { const u = new URL(value); u.hash = ''; u.hostname = u.hostname.replace(/^www\./, ''); return u.href; };
@@ -38,6 +39,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       const finalUrl = scopedUrl(response.finalUrl || next.url, seedUrl), finalKey = key(finalUrl);
       if (finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
       visited.add(finalKey);
+      if (response.resource_kind === 'pdf' && response.classification_method === PDF_RESOURCE_METHOD) {
+        const existing = documents.get(nextKey) || { title: 'Official PDF resource', url: next.url, doc_type: 'other', source: 'official_page_harvest' };
+        documents.set(nextKey, { ...existing, resource_classification: { kind: 'pdf', method: PDF_RESOURCE_METHOD,
+          source_url: existing.url, final_url: finalUrl }, verification_notes: (existing.verification_notes || '') +
+          ' PDF MIME type and signature checked; full-byte archival and authority review remain required.' });
+        pages.push({ ...next, final_url: finalUrl, status: 'classified_pdf' });
+        continue;
+      }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
       const found = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100 });
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length });
@@ -59,12 +68,12 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       gaps.push({ url: next.url, reason: 'page_fetch_failed', detail: reason, requires_review: true });
     }
   }
-  return { success: pages.some(p => p.status === 'scanned'), documents: [...documents.values()], pages,
+  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)), documents: [...documents.values()], pages,
     pending_pages: pending.filter(p => !visited.has(key(p.url))), gaps, attempted_pages: attempted,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
     jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',
-      'Extensionless files require content-type classification before automatic archival.',
+      'PDF classification is a routing hint; full original-byte verification occurs during archival.',
       'Pending pages and failures are returned; a durable cross-run frontier is not yet implemented.'] };
 }
 
@@ -75,7 +84,13 @@ export function combineResearchAndDiscoveredDocuments(researched, discovered) {
   for (const doc of [...(Array.isArray(researched) ? researched : []), ...(Array.isArray(discovered) ? discovered : [])]) {
     if (!doc?.url) continue;
     let sourceKey; try { sourceKey = key(doc.url); } catch { continue; }
-    if (seen.has(sourceKey)) continue;
+    if (seen.has(sourceKey)) {
+      if (doc.resource_classification?.method === PDF_RESOURCE_METHOD) {
+        const index = rows.findIndex(row => key(row.url) === sourceKey);
+        rows[index] = { ...rows[index], resource_classification: { ...doc.resource_classification, source_url: rows[index].url } };
+      }
+      continue;
+    }
     seen.add(sourceKey); rows.push(doc);
   }
   return rows;

@@ -169,6 +169,11 @@
           "downloaded_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "resource_classification": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Deterministic MIME/signature routing hint bound to source_url. Not an archive, currentness, applicability or authority approval."
           }
         }
       }

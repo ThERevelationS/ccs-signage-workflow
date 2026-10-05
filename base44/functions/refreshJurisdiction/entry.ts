@@ -1,3 +1,4 @@
+import { readPermittingResourceResponse } from '../../shared/permittingResourceResponse.mjs';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { jurisdictionProtectionGuards, replaceJurisdictionFieldsIfUnchanged } from '../../shared/jurisdictionPersistence.mjs';
 import { loadAllEntityRows } from '../../shared/pagedEntityRows.ts';
@@ -157,11 +158,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
               headers: { 'User-Agent': 'Mozilla/5.0' },
               signal: AbortSignal.timeout(RESEARCH_FETCH_TIMEOUT_MS),
             });
-            const contentType = String(response.headers.get('content-type') || '').toLowerCase();
-            if (!response.ok || !/text\/html|application\/xhtml\+xml/.test(contentType))
-              throw new Error('Official permitting page did not return HTML.');
-            return { html: new TextDecoder().decode(await readResearchDocumentBytes(response, 2 * 1024 * 1024)),
-              finalUrl: response.url || url };
+            const resource = await readPermittingResourceResponse(response);
+            return { ...resource, finalUrl: response.url || url };
           },
         });
         if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
@@ -221,6 +219,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         ai_summary: d.ai_summary || "",
         source: d.source === "official_page_harvest" ? "official_page_harvest" : "ai_discovered",
         verification_notes: d.verification_notes || "",
+        ...(d.resource_classification ? { resource_classification: d.resource_classification } : {}),
         last_fetched: new Date().toISOString()
       }));
 

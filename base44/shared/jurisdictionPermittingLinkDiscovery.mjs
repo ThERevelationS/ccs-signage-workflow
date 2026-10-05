@@ -1,3 +1,4 @@
+import { hasClassifiedPdfResource } from './permittingResourceResponse.mjs';
 const RELEVANT_LINK_RE = /\b(signs?|zoning|permits?|applications?|apply|forms?|fees?|checklists?|submittals?|building|development|ordinances?|codes?|regulations?|resolutions?|variances?|conditional use)\b/i;
 const DOWNLOADABLE_RE = /\.(pdf|doc|docx|xls|xlsx|csv|txt)(?:$|[?#])/i;
 
@@ -22,7 +23,7 @@ function linkWords(value) {
 }
 
 export function isDownloadableResearchDocument(document = {}) {
-  return DOWNLOADABLE_RE.test(String(document?.url || ''));
+  return DOWNLOADABLE_RE.test(String(document?.url || '')) || hasClassifiedPdfResource(document);
 }
 
 export function permittingDocumentType({ title = '', url = '' } = {}) {
