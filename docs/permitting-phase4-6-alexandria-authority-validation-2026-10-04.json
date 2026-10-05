@@ -1,0 +1,270 @@
+{
+  "phase": "4.6",
+  "local_date": "2026-10-04",
+  "recorded_at": "2026-10-05T00:16:28.695Z",
+  "app_id": "68dfcc5e57bbbc35387da97c",
+  "account": "brettheinlein1@gmail.com",
+  "previous_checkpoint": "6ac2d0f68cb112b2dc195b56",
+  "initial_git": "7b0b4a0db3ca2d008915e03b68921acbd38c7aeb",
+  "resumed_git": "50a497bfbb2b18277919443c71bfda3720dde743",
+  "scope": "Alexandria city sign-permit application administration, current form resource and county relationship renewal",
+  "evidence": [
+    {
+      "path": "docs/official-evidence/alexandria-zoning-2026-10-04.html",
+      "url": "https://alexandriaky.gov/zoning-department/",
+      "bytes": 165415,
+      "sha256": "5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904",
+      "claim": "City website confirms zoning department managed/reviewed by county department and directly links verified county department URL; corroboration only for this sign application decision."
+    },
+    {
+      "path": "docs/official-evidence/campbell-forms-2026-10-04.html",
+      "url": "https://campbellcountyky.gov/topic/index.php?structureid=78",
+      "bytes": 30963,
+      "sha256": "0aa9cfe382bfe59ddb2d933ad879c597222c1eba03a2cd9a0ea772562f1899e3",
+      "rechecked_same_bytes": true
+    },
+    {
+      "path": "docs/official-evidence/campbell-sign-application-2024-07.pdf",
+      "url": "https://campbellcountyky.gov/egov/documents/1721136718_69637.pdf",
+      "document_center": "https://campbellcountyky.gov/egov/apps/document/center.egov?view=item;id=298",
+      "bytes": 169996,
+      "sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+      "source_and_stored_readback_match": true,
+      "new_uploads": 0,
+      "complete_extracted_pages": 2
+    }
+  ],
+  "source_review": {
+    "source_id": "6ac2cd6ac48508a21056b654",
+    "request": "ccs_campbell_form_202407_alex_scope_v1",
+    "audit_id": "6ac2eaca2bd262c1e5d8b0e3",
+    "status": "applied",
+    "named_areas": [
+      "Unincorporated Campbell County",
+      "Alexandria"
+    ],
+    "proof_page": 1,
+    "scope_excerpt": "1. Project Located In:\nUnincorporated Campbell County\nAlexandria",
+    "page_text_sha256": "a8c6db4b1e90bbbfa18c59864022758958315eff6a2857b40ca6f34f62367849",
+    "revalidation": {
+      "success": true,
+      "rules_checked": 0,
+      "rules_flagged": 0,
+      "has_more": false,
+      "llm_calls": 0
+    }
+  },
+  "relationships": [
+    {
+      "jurisdiction_id": "6ac19ef89c23eb7c0fdbf6f1",
+      "name": "Alexandria",
+      "role": "sign_permit",
+      "coverage_basis": "explicit_named_service_area",
+      "event_id": "6ac2eb90f8bcb50b57854bd2",
+      "request": "ccs_alexandria_sign_202407_v1",
+      "sequence": 1,
+      "state": "staff_verified",
+      "current": true,
+      "committed": true
+    },
+    {
+      "jurisdiction_id": "6ac19dcc184935c1391ee468",
+      "name": "Unincorporated Campbell County",
+      "role": "sign_permit",
+      "event_id": "6ac2eb53cf1b41b8482a8219",
+      "request": "ccs_campbell_sign_unincorp_alexscope_v1",
+      "sequence": 2,
+      "state": "staff_verified",
+      "current": true,
+      "committed": true,
+      "prior_immutable_event": "6ac2cfa47d520cab91e9bb0e",
+      "prior_event_state": "historical"
+    }
+  ],
+  "city_current_resource": {
+    "id": "manual-alexandria-sign-2024-07-ef0a7045fb83",
+    "title": "Current Campbell County Sign Permit Application — Rev.07/2024 (Alexandria)",
+    "url": "https://campbellcountyky.gov/egov/documents/1721136718_69637.pdf",
+    "file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/6fb7361ff_1721136718_69637.pdf",
+    "doc_type": "permit_application",
+    "source": "manual",
+    "archive_pinned": true,
+    "source_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+    "source_bytes": 169996,
+    "stored_sha256": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+    "stored_bytes": 169996,
+    "ai_summary": "Official current form explicitly lists Alexandria. Reuses the byte-verified shared Campbell archive and source catalog record 6ac2cd6ac48508a21056b654; sign-application office responsibility is reviewed separately. This form is administrative evidence and does not establish adopted sign rules or job-address authority."
+  },
+  "city_resource_receipt": {
+    "success": true,
+    "updated": 1,
+    "has_more": false
+  },
+  "city_old_source_id": "6ac27480e3ab333468e8cdf7",
+  "city_old_source_status": "superseded/historical",
+  "city_old_source_receipt": {
+    "success": true,
+    "updated": 1,
+    "has_more": false
+  },
+  "old_city_cited_rules": 0,
+  "preservation": {
+    "settings": [
+      {
+        "key": "permitOfficeCatalog",
+        "exact": true,
+        "changed_keys": []
+      },
+      {
+        "key": "permitting_research_dispatch_config",
+        "exact": true,
+        "changed_keys": []
+      },
+      {
+        "key": "permitting_research_dispatch_state",
+        "exact": true,
+        "changed_keys": []
+      }
+    ],
+    "localities_exact_by_id": true,
+    "profiles": [
+      {
+        "id": "6ac19dcc184935c1391ee468",
+        "name": "Campbell County",
+        "original_documents_exact": true,
+        "docs_before": 5,
+        "docs_after": 5,
+        "other_fields_exact": true,
+        "receipt": {
+          "request_key": "office-authority:6ac19dcc184935c1391ee468:ccs_campbell_sign_unincorp_alexscope_v1",
+          "payload_sha256": "b280ed3c5ecb0062934fcfa67cc90516f96eb1f468f844439b8d2abeb5fd572f",
+          "sequence": 2,
+          "committed_sequence": 2,
+          "requested_by": "brettheinlein1@gmail.com",
+          "status": "complete",
+          "operation_id": "b055cdcd-29a9-41d9-b824-6542473f154a",
+          "review_id": "6ac2eb53cf1b41b8482a8219"
+        }
+      },
+      {
+        "id": "6ac19ef89c23eb7c0fdbf6f1",
+        "name": "Alexandria",
+        "original_documents_exact": true,
+        "docs_before": 3,
+        "docs_after": 4,
+        "other_fields_exact": true,
+        "receipt": {
+          "request_key": "office-authority:6ac19ef89c23eb7c0fdbf6f1:ccs_alexandria_sign_202407_v1",
+          "payload_sha256": "a5b3a7c2411de8ff5515e5dbd10e39827c066094eb2ff1e5a1eccbd6ce6fe5c4",
+          "sequence": 1,
+          "committed_sequence": 1,
+          "requested_by": "brettheinlein1@gmail.com",
+          "status": "complete",
+          "operation_id": "6331ffa0-07c9-430c-824f-4807d01b846d",
+          "review_id": "6ac2eb90f8bcb50b57854bd2"
+        }
+      },
+      {
+        "id": "6ac19efe3d63fffd1cbfe880",
+        "name": "Highland Heights",
+        "original_documents_exact": true,
+        "docs_before": 3,
+        "docs_after": 3,
+        "other_fields_exact": true,
+        "receipt": null
+      }
+    ],
+    "sources": [
+      {
+        "id": "6ac27480e3ab333468e8cdf7",
+        "protected_fields_exact": true,
+        "hash": "77058e0522fe160e2ad42f663d5447fc021da1dc5a6f2cdda2d8dc678802a8ef",
+        "bytes": 47262,
+        "content_status": "superseded",
+        "verification_status": "historical"
+      },
+      {
+        "id": "6ac2cd6ac48508a21056b654",
+        "protected_fields_exact": true,
+        "hash": "ef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718",
+        "bytes": 169996,
+        "content_status": "current",
+        "verification_status": "verified"
+      },
+      {
+        "id": "6ac2cd8586ccf99cac0358f0",
+        "protected_fields_exact": true,
+        "hash": "7bd719d36299c543e240759d8868412a8abef1e6377a0afa161fe976164a842d",
+        "bytes": 96677,
+        "content_status": "unknown",
+        "verification_status": "needs_verification"
+      }
+    ],
+    "earlier_relationship_events_exact": true,
+    "earlier_source_audits_exact": true,
+    "relationship_records": [
+      {
+        "id": "6ac2eb90f8bcb50b57854bd2",
+        "jurisdiction_id": "6ac19ef89c23eb7c0fdbf6f1",
+        "source_review_id": "ccs_campbell_form_202407_alex_scope_v1",
+        "sequence": 1,
+        "coverage": "Alexandria"
+      },
+      {
+        "id": "6ac2eb53cf1b41b8482a8219",
+        "jurisdiction_id": "6ac19dcc184935c1391ee468",
+        "source_review_id": "ccs_campbell_form_202407_alex_scope_v1",
+        "sequence": 2,
+        "coverage": "Unincorporated Campbell County"
+      },
+      {
+        "id": "6ac2cfa47d520cab91e9bb0e",
+        "jurisdiction_id": "6ac19dcc184935c1391ee468",
+        "source_review_id": "ccs_campbell_form_202407_unincorp_v1",
+        "sequence": 1,
+        "coverage": "Unincorporated Campbell County"
+      }
+    ],
+    "source_audits": [
+      {
+        "id": "6ac2eaca2bd262c1e5d8b0e3",
+        "key": "source-authority-review:ccs_campbell_form_202407_alex_scope_v1"
+      },
+      {
+        "id": "6ac2ce8a01cbc0a56cbcfbe3",
+        "key": "source-authority-review:ccs_campbell_form_202407_unincorp_v1"
+      }
+    ]
+  },
+  "validation": {
+    "focused_tests": 64,
+    "focused_test_command": "node --test scripts/permitting-office-authority.test.mjs scripts/permitting-source-authority.test.mjs scripts/jurisdiction-archive-catalog.test.mjs",
+    "full_build": {
+      "stdout": "\n> base44-app@0.0.0 build\n> vite build\n\n[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`\nBrowserslist: browsers data (caniuse-lite) is 13 months old. Please run:\n  npx update-browserslist-db@latest\n  Why you should do it regularly: https://github.com/browserslist/update-db#readme\n",
+      "stderr": "",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 30943
+    },
+    "git_check": {
+      "stdout": "9156cc9359395b32c69ab50d30cb54fe496d4f92\nM\tbase44/functions/timeClockAction/entry.ts\nM\tsrc/pages/SalesPipeline.jsx\n5d3a32d3214b0b3e573f176bbd1fedbccfb782141001367fae26c245e640b904  docs/official-evidence/alexandria-zoning-2026-10-04.html\nef0a7045fb835dbf76aa12751d12ced8f1560a75614c0a1125ca9d328b080718  docs/official-evidence/campbell-sign-application-2024-07.pdf\n0aa9cfe382bfe59ddb2d933ad879c597222c1eba03a2cd9a0ea772562f1899e3  docs/official-evidence/campbell-forms-2026-10-04.html\n✔ changed profile, page proof or source review id blocks instruction approval (6.484521ms)\n✔ revocation retains source and immutable earlier review; old instruction requires re-review (1.778749ms)\n✔ new scoped reviews create distinct candidate identities and preserve prior evidence (2.694984ms)\n✔ rule recheck validates instruction profile/scope even if source bytes are unchanged (1.757837ms)\nℹ tests 64\nℹ suites 0\nℹ pass 64\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 340.423996\n2026-10-05 00:13:43.504836298 +0000 528 dist/index.html\n",
+      "stderr": "",
+      "exit_code": 0,
+      "truncated": false,
+      "duration_ms": 2863
+    }
+  },
+  "live_surface": "Authenticated Base44 editor preview-version function tester against production entities. No backend resources changed/deployed. Data review and preservation verified using live entities and fresh handler list/get_request reads.",
+  "frontend_published": false,
+  "new_llm_calls": 0,
+  "new_uploads": 0,
+  "automatic_dispatch_paused": false,
+  "production_jobs_or_work_orders_modified": false,
+  "limits": [
+    "No automatic postal-city or parcel authority resolution.",
+    "No zoning/building/electrical relationship or regulatory adoption inferred.",
+    "2021 service matrix remains unknown/needs_verification.",
+    "Manual current-form resource reuses the existing verified archive and shared county source; no duplicate city catalog or upload was fabricated."
+  ],
+  "next": "Retain and cite official HTML department/service evidence through a native evidence-review path so zoning and other office responsibilities can be reviewed from literal current website text without manufacturing PDF authority; then expand scoped city coverage."
+}
