@@ -89,7 +89,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
 
             <div className="mb-3" onClick={(event) => event.stopPropagation()}>
               <div className="mb-1 text-xs text-muted-foreground">Task assigned to</div>
-              <TaskAssigneeSelect value={wo.current_task_assigned_to || ""} users={users} disabled={!isRegistered || !isOpen} onChange={(name) => onUpdateWorkOrder?.(wo.id, "current_task_assigned_to", name)} context={wo.client_name || "this opportunity"} />
+              <TaskAssigneeSelect value={wo.current_task_assigned_to || ""} users={users} disabled={!isRegistered || !isOpen} onChange={(name) => onUpdateWorkOrder?.(wo.id, "current_task_assigned_to", name)} context={opportunityDisplayName} />
             </div>
 
             {wo.current_task_description && (
@@ -158,7 +158,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                   value={wo.expected_close_date || ""}
                   onChange={(event) => onUpdateWorkOrder?.(wo.id, "expected_close_date", event.target.value)}
                   className={`mt-1 h-11 w-full rounded-md border bg-white px-2 text-sm text-gray-800 outline-none focus:ring-2 ${expectedCloseOverdue ? "border-rose-200 focus:border-rose-400 focus:ring-rose-100" : "border-cyan-200 focus:border-cyan-400 focus:ring-cyan-100"}`}
-                  aria-label={`Expected close date for ${wo.client_name || "opportunity"}`}
+                  aria-label={`Expected close date for ${opportunityDisplayName}`}
                 />
               </label>
             )}
@@ -177,7 +177,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
                         if (!nextDate || nextDate <= futureDateStamp(0)) onUpdateWorkOrder?.(wo.id, "date_estimate_sent", nextDate);
                       }}
                       className="h-11 min-w-0 flex-1 rounded-md border border-amber-200 bg-white px-2 text-sm text-gray-800 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                      aria-label={`Actual quote sent date for ${wo.client_name || "opportunity"}`}
+                      aria-label={`Actual quote sent date for ${opportunityDisplayName}`}
                     />
                     <button type="button" onClick={() => onUpdateWorkOrder?.(wo.id, "date_estimate_sent", futureDateStamp(0))} className="h-11 shrink-0 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-800 active:bg-amber-100">Today</button>
                   </div>
