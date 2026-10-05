@@ -71,3 +71,15 @@ test("post-commit authorization failures warn against blind replay", () => {
   assert.match(helper, /Check current server state with CCS before retrying/);
   assert.match(helper, /FLEET_MECHANIC_ACCESS_REVOKED/);
 });
+
+test("bootstrap publishes live Start/Save/estimate capabilities from the current grant", () => {
+  const payloadStart = source.indexOf("async function portalPayload(");
+  const payloadEnd = source.indexOf("\n\nfunction decodePhotos", payloadStart);
+  assert.ok(payloadStart >= 0 && payloadEnd > payloadStart);
+  const block = source.slice(payloadStart,payloadEnd);
+  assert.match(block, /currentActions = new Set\(Array\.isArray\(currentGrant\?\.allowed_actions\)[\s\S]*\['bootstrap','start','save'\]\)/);
+  assert.match(block, /const canStart = currentActions\.has\('start'\);/);
+  assert.match(block, /const canSave = currentActions\.has\('save'\);/);
+  assert.match(block, /const canEstimate = currentActions\.has\('estimate_submit'\);/);
+  assert.match(block, /capabilities:\{start:canStart,save:canSave,estimates:canEstimate\}/);
+});
