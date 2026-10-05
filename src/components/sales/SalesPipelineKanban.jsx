@@ -111,7 +111,7 @@ export default function SalesPipelineKanban({ workOrders = [], onUpdateWorkOrder
                       className={`rounded-lg border bg-white p-3 shadow-sm transition ${draggedId === workOrder.id ? "opacity-60" : "hover:border-gray-300 hover:shadow"}`}
                     >
                       <button type="button" onClick={() => onOpenDetails?.(workOrder)}
-                        aria-label={`Open sales details for ${workOrder.client_name || 'Unnamed opportunity'}`}
+                        aria-label={`Open sales details for ${opportunityDisplayName}`}
                         className="block min-h-11 w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
                         <div className="flex min-w-0 items-center gap-1.5">
                           <div className="min-w-0 flex-1 truncate text-sm font-semibold text-blue-700">{opportunityDisplayName}</div>
