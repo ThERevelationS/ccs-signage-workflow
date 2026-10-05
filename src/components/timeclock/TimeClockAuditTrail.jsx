@@ -55,11 +55,12 @@ export default function TimeClockAuditTrail({ investigation = null }) {
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
 
-  const loadRows = async () => {
+  const loadRows = async (timeEntryId = "") => {
     setLoading(true);
     setError("");
     try {
-      const loaded = await TimeClockAudit.filter({}, "-server_timestamp", 100);
+      const scopedId = String(timeEntryId || "").trim();
+      const loaded = await TimeClockAudit.filter(scopedId ? { time_entry_id: scopedId } : {}, "-server_timestamp", 100);
       setRows(Array.isArray(loaded) ? loaded : []);
     } catch (err) {
       console.error("Time Clock audit load failed:", err);
@@ -76,24 +77,9 @@ export default function TimeClockAuditTrail({ investigation = null }) {
   useEffect(() => {
     const timeEntryId = String(investigation?.time_entry_id || "").trim();
     if (!timeEntryId) return;
-    let cancelled = false;
-    const loadInvestigationRows = async () => {
-      setLoading(true);
-      setError("");
-      setActionFilter("all");
-      setSearch(timeEntryId);
-      try {
-        const loaded = await TimeClockAudit.filter({ time_entry_id: timeEntryId }, "-server_timestamp", 100);
-        if (!cancelled) setRows(Array.isArray(loaded) ? loaded : []);
-      } catch (err) {
-        console.error("Time Clock audit investigation load failed:", err);
-        if (!cancelled) setError(err?.message || "Audit evidence for this TimeEntry could not be loaded.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    loadInvestigationRows();
-    return () => { cancelled = true; };
+    setActionFilter("all");
+    setSearch(timeEntryId);
+    loadRows(timeEntryId);
   }, [investigation?.nonce, investigation?.time_entry_id]);
 
   const filtered = useMemo(() => {
@@ -126,7 +112,7 @@ export default function TimeClockAuditTrail({ investigation = null }) {
           </h3>
           <p className="text-xs text-gray-500 mt-1">Recent authoritative Time Clock actions. This view is read-only.</p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={loadRows} disabled={loading} className="gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => loadRows(investigation?.time_entry_id)} disabled={loading} className="gap-2">
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Refresh
         </Button>
