@@ -1456,7 +1456,7 @@ export default function TimeClockAdmin() {
                   rows={3}
                   maxLength={500}
                   placeholder={approvalDecision === "approve" ? "Optional review note" : "Explain why this shift needs review again."}
-                  disabled={approvalBusy}
+                  disabled={approvalBusy || Boolean(approvalRetryPayload)}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   {approvalDecision === "approve" ? "Optional. Approval identity and server timestamp are always audited." : "Required when reopening an approved shift."}
