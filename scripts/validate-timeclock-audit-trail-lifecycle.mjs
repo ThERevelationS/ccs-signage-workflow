@@ -168,8 +168,12 @@ assert.match(source, /const membership = payrollMembershipFromAudit\(row\)/);
 assert.match(source, /validatePayrollMembershipConflictEvidence\(evidence\)/);
 assert.match(source, /payrollMembershipConflictEvidenceIsMalformed\(validation\)/);
 assert.match(source, /malformed_authoritative_membership_rows/);
-assert.match(source, /No scoped audit records are being presented as trusted evidence/);
-console.log('PASS integrity investigation validates reconstructed authoritative membership rows through the shared contract and fails closed');
+assert.match(source, /setIntegrityDiagnostics\(malformedAuthoritativeMembershipRows\)/);
+assert.match(source, /setRows\(loadedRows\)/);
+assert.match(source, /diagnostic only and are not being presented as trusted payroll evidence/);
+assert.match(source, /Malformed authoritative provenance/);
+assert.match(source, /Diagnostic only — not trusted payroll evidence/);
+console.log('PASS integrity investigation identifies malformed authoritative membership rows while keeping their scoped display explicitly diagnostic and untrusted');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
 assert.match(source, /setSearch\(""\);[\s\S]*setActionFilter\("all"\);[\s\S]*onExitInvestigation/);
