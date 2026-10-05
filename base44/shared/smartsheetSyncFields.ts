@@ -31,7 +31,6 @@ export const SALES_MAPPABLE_FIELDS: MappableField[] = [
   { key: "close_date", label: "Close Date", type: "date" },
   { key: "expected_close_date", label: "Expected Close Date", type: "date" },
   { key: "date_initial_contact", label: "Date Initial Contact", type: "date" },
-  { key: "date_estimate_sent", label: "Date Estimate Sent", type: "date" },
   { key: "date_order_created", label: "Date Order Created", type: "date" },
   { key: "project_install_date", label: "Project Install Date", type: "date" },
   { key: "permit_submitted_date", label: "Permit Submitted", type: "date" },
