@@ -56,3 +56,7 @@ Admin discovery-only recovery now resumes saved link-limit gaps across requests,
 ## Phase 5 live recovery acceptance
 
 Cincinnati capped index recovered 169 links across two portions, clearing its link-limit gap; 64 additional resource records retained, all prior document IDs and archive identities preserved. Recovery uses ordered resource-list hashes; 59 tests and build pass. Fetch/depth gaps remain. See `permitting-phase5-live-capped-recovery-2026-10-05.md`.
+
+## Phase 5 live archive handoff
+
+Selected official COA PDF archived and cataloged: 158,030 bytes, matching source/stored SHA-256; source `6ac3e5b86c944422b102d089` remains needs_verification. Content matches an older COA archive, so no new revision/currentness claim. Phase 5 remains active: remaining depth/fetch gaps and varied OH/KY shared-pipeline acceptance precede Phase 6 exact-citation AI extraction. No frontend publish or approved-rule changes.

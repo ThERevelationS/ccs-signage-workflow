@@ -6,4 +6,6 @@ The committed live run scanned portions at offsets 0 and 100, collecting 100 + 6
 
 Validation: 59 focused tests pass, both affected backend bundles pass, app build passes with only existing browser-data warnings. Tests distinguish changed resource links from unrelated markup changes.
 
-Selected official COA application archival was initiated through the existing guarded archive function. Its final receipt is recorded separately after verification. No frontend publishing.
+The selected official COA application completed the live archive/catalog handoff: one upload, 158,030 source and stored bytes, matching SHA-256 `2fb4743d8862c1d3f90e8542099d86cfbf02259f88b0f98c93e218d1ab208258`. Catalog source `6ac3e5b86c944422b102d089` was registered and remains `needs_verification`. Harvest document `ai_1791220689462_57` retains the verified archive. These bytes match the earlier COA archive: the 2025 filename does not establish a new revision or currentness. No approved regulations changed. No frontend publishing.
+
+Phase 5 remains active. Next: resolve remaining depth/fetch gaps with preserved history, then verify the shared discovery/archive/text pipeline against varied Ohio and Kentucky source patterns. Phase 6 (exact-citation AI extraction) follows Phase 5 acceptance.
