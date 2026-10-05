@@ -97,6 +97,7 @@ import { filterOrderCustomerJobs, verifyActiveOrderCustomerJob, orderCustomerJob
 import { orderHistoryLayout } from "@/components/orders/orderHistoryLayout";
 import { remainingOrderPendingAfterImmediateSave } from "@/components/orders/orderImmediatePending.mjs";
 import { pushSavedOrdersToSmartsheet, summarizeSavedOrderSync } from "@/components/orders/orderSaveSync";
+import { durablePendingOrderIds } from "@/components/orders/orderSyncReconnect.mjs";
 import { canUseOrderExport } from "../../../base44/shared/orderExportAccess.mjs";
 import { effectiveOrderStatus, isFulfilledOrder, orderMatchesReceivedFilter, orderStatusAfterOrderedDateChange } from "../../../base44/shared/smartsheetOrderReceivedState.mjs";
 import { ColumnHeaderContextMenu, useColumnSorting } from "@/components/shared/ColumnHeaderContextMenu";
@@ -311,18 +312,17 @@ const OrderSpreadsheet = React.forwardRef(({ workOrderFilter = null, compact = f
       setOrders(ordersData);
       setWorkOrders(workOrdersData);
       setUsers(usersData);
-      for (const order of ordersData) {
-        const orderId = String(order?.id || '').trim();
-        if (!orderId) continue;
-        if (order?.smartsheet_pending_local_sync === true) {
-          pendingSyncIdsRef.current.add(orderId);
-          if (!pendingSyncVersionRef.current.has(orderId)) pendingSyncVersionRef.current.set(orderId, 0);
-        } else {
-          pendingSyncIdsRef.current.delete(orderId);
-          pendingSyncVersionRef.current.delete(orderId);
-        }
+      const durablePendingIds = new Set(durablePendingOrderIds(ordersData));
+      for (const orderId of [...pendingSyncVersionRef.current.keys()]) {
+        if (!durablePendingIds.has(orderId)) pendingSyncVersionRef.current.delete(orderId);
       }
-      setPendingSyncCount(pendingSyncIdsRef.current.size);
+      for (const orderId of durablePendingIds) {
+        if (!pendingSyncVersionRef.current.has(orderId)) pendingSyncVersionRef.current.set(orderId, 0);
+      }
+      // A reload/reopen is authoritative: rebuild the Retry Sync queue from the
+      // durable Base44 marker instead of trusting stale in-memory browser state.
+      pendingSyncIdsRef.current = durablePendingIds;
+      setPendingSyncCount(durablePendingIds.size);
       // Store original data for comparison
       ordersData.forEach(order => {
         originalOrdersRef.current[order.id] = { ...order };
