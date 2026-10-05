@@ -42,11 +42,12 @@ function decodeText(text){
 }
 // Conservative static-text projection, never an HTML renderer or an adopted-code parser.
 // Original response bytes remain intact. External CSS, JavaScript and linked files are not evaluated.
-export function projectHtmlText(html){
+export function projectHtmlText(html,{includeLinks=false}={}){
  if(typeof html!=='string' || !/<(?:html|body)\b/i.test(html))throw evidenceError('The response is not a recognizable HTML document.',400);
  const markup=html.replace(/<!--[\s\S]*?-->/g,'').replace(/<(script|style|noscript)\b(?:"[^"]*"|'[^']*'|[^'">])*?>[\s\S]*?<\/\1\s*>/gi,'');
  const tokens=markup.match(/<(?:"[^"]*"|'[^']*'|[^'">])*?>|[^<]+|</g) || [];
  if(tokens.length>50_000)throw evidenceError('HTML markup exceeds the bounded static-text parser.',400);
+ const anchors=[];let anchor=null;
  const stack=[],parts=[],excluded=new Set(['head','script','style','template','noscript','svg','math','nav','header','footer']);
  const breaks=new Set(['p','div','li','h1','h2','h3','h4','h5','h6','br','hr','tr','td','th','section','article','address','dt','dd']);
  const voids=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
@@ -56,6 +57,10 @@ export function projectHtmlText(html){
    if(!match)continue;
    const closing=Boolean(match[1]),tag=match[2].toLowerCase(),suppressed=stack.some(s=>s.skip);
    if(closing){
+    if(tag==='a' && anchor){
+     if(!suppressed)anchors.push({...anchor,end:parts.join('').length});
+     anchor=null;
+    }
     const i=stack.map(s=>s.tag).lastIndexOf(tag);
     const excludedRoot=stack.findIndex(s=>s.skip);
     if(i>=0 && (excludedRoot<0 || i>=excludedRoot))stack.splice(i);
@@ -64,6 +69,11 @@ export function projectHtmlText(html){
     if(breaks.has(tag) && !suppressed)parts.push('\n');
     const hidden=/\s(?:hidden(?:\s|=|\/?>)|aria-hidden\s*=\s*["']?true\b)/i.test(token) ||
      /style\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(token);
+    if(tag==='a'){
+     // Only quoted absolute destinations are usable as office-identity evidence.
+     const href=token.match(/\shref\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
+     anchor=!suppressed && !hidden && href?{start:parts.join('').length,href:decodeText(href[1] ?? href[2])}:null;
+    }
     if(!voids.has(tag) && !/\/\s*>$/.test(token)){
      if(stack.length>=200)throw evidenceError('HTML nesting exceeds its processing bound.',400);
      stack.push({tag,skip:suppressed || excluded.has(tag) || hidden});
@@ -71,11 +81,23 @@ export function projectHtmlText(html){
    }
   }else if(!stack.some(s=>s.skip))parts.push(decodeText(token).replace(/\s+/g,' '));
  }
- const lines=parts.join('').split('\n').map(s=>s.replace(/[\t \u00a0]+/g,' ').trim()).filter(Boolean);
+ const joined=parts.join(''),rawLines=joined.split('\n');
+ const lines=rawLines.map(s=>s.replace(/[\t \u00a0]+/g,' ').trim()).filter(Boolean);
+ const links=[];let offset=0,block=0;
+ for(const line of rawLines){
+  if(line.trim()){
+   block++;
+   for(const a of anchors.filter(a=>a.start>=offset && a.end<=offset+line.length)){
+    const text=joined.slice(a.start,a.end).replace(/[\t \u00a0]+/g,' ').trim();
+    if(text && publicUrl(a.href))links.push({block,text,url:publicUrl(a.href).href});
+   }
+  }
+  offset+=line.length+1;
+ }
  const text=lines.join('\n');
  if(!text || text.length>HTML_MAX_TEXT || lines.length>1000 || lines.some(s=>s.length>12_000))
   throw evidenceError('Static page text is empty or exceeds its bounded evidence projection. Original evidence must be retained by another route.',400);
- return {text,blocks:lines.map((text,i)=>({block:i+1,text})),limitations:['Static response text only; external CSS, scripts and linked content are not evaluated.','Navigation, headers, footers and explicit hidden/script content are excluded.','Retained text is unreviewed and does not establish office responsibility, coverage or adopted law.']};
+ return {text,blocks:lines.map((text,i)=>({block:i+1,text})),...(includeLinks?{links}:{}),limitations:['Static response text only; external CSS, scripts and linked content are not evaluated.','Navigation, headers, footers and explicit hidden/script content are excluded.','Retained text is unreviewed and does not establish office responsibility, coverage or adopted law.']};
 }
 export async function fetchHtmlSnapshot({profile,officialUrl,fetchImpl=fetch,now=()=>Date.now()}){
  const original=authorizedHtmlUrl(profile,officialUrl),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12_000);
