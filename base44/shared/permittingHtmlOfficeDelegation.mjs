@@ -1,7 +1,7 @@
 import {evidenceEqual,evidenceError} from './permittingRuleEvidence.mjs';
 import {authorizedHtmlUrl,readHtmlEvidence,fetchHtmlSnapshot,projectHtmlText,htmlEvidenceSummary} from './permittingHtmlEvidence.mjs';
 const identity=p=>Object.fromEntries(['id','name','state','type','website_url','permitting_url'].map(k=>[k,p[k] ?? null]));
-const escaped=s=>s.replace(/[.*+?^${()|[\]\\]/g,'\\$&');
+const escaped=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const rawText=row=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Uint8Array.from(atob(row.raw_html_base64),c=>c.charCodeAt(0)));
 const destination=value=>{const u=new URL(value);u.hash='';return u.href;};
 // This first native HTML path is deliberately confined to an explicit municipal zoning-department delegation.
@@ -12,8 +12,10 @@ export async function verifyHtmlOfficeDelegation(deps,profile,input,getOffice){
   throw evidenceError('HTML delegation requires the publishing city, its exact named coverage and the zoning role.',400);
  if(typeof input.review_notes!=='string' || !input.review_notes.trim() || input.review_notes.length>2000 ||
   typeof input.office_alias!=='string' || input.office_alias.trim().length<10 || input.office_alias.length>200 ||
-  typeof input.government_office_id!=='string' || input.government_office_id.length>200 ||
-  input.role_proof?.physical_page!==undefined || input.role_label && (typeof input.role_label!=='string' || input.role_label.length>120))
+  typeof input.government_office_id!=='string' || !input.government_office_id || input.government_office_id.length>200 ||
+  typeof input.html_evidence_id!=='string' || !input.html_evidence_id || input.html_evidence_id.length>100 ||
+  typeof input.role_proof?.excerpt!=='string' || input.role_proof.physical_page!==undefined ||
+  input.role_label && input.role_label!=='Zoning department management and review')
   throw evidenceError('Enter bounded review notes, the literal responsible-office name and a native HTML block.',400);
  const row=await deps.htmlEntity.get(String(input.html_evidence_id || ''));
  const citation=(await readHtmlEvidence(row,{block:input.role_proof?.block,excerpt:input.role_proof?.excerpt})).citation;
