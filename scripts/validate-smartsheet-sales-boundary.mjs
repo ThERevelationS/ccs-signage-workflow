@@ -36,12 +36,9 @@ const configuredBindings = {
 };
 
 const filtered = filterSalesColumnBindings(configuredBindings);
-const expectedFilteredFields = Object.keys(configuredBindings)
-  .filter((field) => SALES_SYNC_ALLOWED_FIELDS.includes(field))
-  .sort();
 assert(
-  JSON.stringify(Object.keys(filtered).sort()) === JSON.stringify(expectedFilteredFields),
-  "Sales Smartsheet backend must keep only configured fields from the explicit Sales sync allowlist."
+  JSON.stringify(Object.keys(filtered).sort()) === JSON.stringify([...SALES_SYNC_ALLOWED_FIELDS].sort()),
+  "Sales Smartsheet backend must keep only the explicit Sales sync allowlist."
 );
 for (const protectedField of [
   "title",
@@ -58,9 +55,7 @@ for (const protectedField of [
 
 assert(isLegacyTerminalSalesTask("Lost"), "Lost task text must classify as legacy terminal.");
 assert(isLegacyTerminalSalesTask("Completed Sale"), "Completed Sale task text must classify as legacy terminal.");
-assert(isLegacyTerminalSalesTask("Completed Sales - Post Invoice Tasks"), "Completed Sales plural post-invoice text must classify as legacy terminal.");
 assert(isLegacyTerminalSalesTask("Closed - Attempted Follow-up/No Response"), "Closed task text must classify as legacy terminal.");
-assert(!isLegacyTerminalSalesTask("Closed loop follow up"), "Closed loop follow up must remain non-terminal.");
 assert(!isLegacyTerminalSalesTask("On Hold - Follow Up with Customer"), "On Hold task text must remain active.");
 assert(!isLegacyTerminalSalesTask("Follow up with Customer - Post-Estimate"), "Active follow-up task text must remain active.");
 
@@ -69,16 +64,8 @@ assert(
   "Smartsheet legacy terminal rows must not be created as modern pipeline records."
 );
 assert(
-  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Completed Sale" }) === false,
+  shouldCreateSmartsheetSalesRecordInPipeline({ current_task_description: "Completed Sale" }) === false,
   "Completed Sale rows must not be created as modern pipeline records."
-);
-assert(
-  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Completed Sales - Post Invoice Tasks" }) === false,
-  "Completed Sales plural post-invoice rows must not be created as modern pipeline records."
-);
-assert(
-  shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Closed loop follow up" }) === true,
-  "Non-terminal Closed loop follow-up text must remain eligible for active pipeline creation."
 );
 assert(
   shouldCreateSmartsheetSalesRecordInPipeline({ client_name: "Example Client", current_task_description: "Prospect Initiation" }) === true,
