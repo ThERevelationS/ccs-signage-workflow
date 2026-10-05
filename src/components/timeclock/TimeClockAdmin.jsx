@@ -54,6 +54,7 @@ import {
   companyDateTimeInputFromIso,
   parseCompanyDateTimeInput,
   shiftDurationSummary,
+  formatCompanyDateTime,
 } from "@/components/timeclock/timeClockCompanyTime";
 
 const TimeEntry = base44.entities.TimeEntry;
@@ -92,6 +93,33 @@ function persistAdminRequestId(action, entryId, requestId) {
 
 function clearAdminRequestId(action, entryId) {
   try { sessionStorage.removeItem(adminRequestStorageKey(action, entryId)); } catch {}
+}
+
+function approvalRetryStorageKey(decision, entryId) {
+  return `${adminRequestStorageKey(approvalRequestStorageAction(decision), entryId)}:payload`;
+}
+
+function storedApprovalRetry(decision, entryId) {
+  try {
+    const raw = sessionStorage.getItem(approvalRetryStorageKey(decision, entryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.entry_id !== entryId || parsed.decision !== decision || !parsed.request_id || !parsed.expected_updated_date || !parsed.target_email) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function persistApprovalRetry(payload) {
+  try {
+    sessionStorage.setItem(approvalRetryStorageKey(payload.decision, payload.entry_id), JSON.stringify(payload));
+  } catch {}
+}
+
+function clearApprovalRetry(decision, entryId) {
+  try { sessionStorage.removeItem(approvalRetryStorageKey(decision, entryId)); } catch {}
 }
 
 function approvalRequestStorageAction(decision) {
@@ -146,6 +174,8 @@ export default function TimeClockAdmin() {
   const [approvalNote, setApprovalNote] = useState("");
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalRequestId, setApprovalRequestId] = useState("");
+  const [approvalRetryPayload, setApprovalRetryPayload] = useState(null);
+  const [pendingApprovalRecovery, setPendingApprovalRecovery] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
   const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
