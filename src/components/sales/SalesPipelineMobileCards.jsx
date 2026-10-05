@@ -7,6 +7,7 @@ import { getQuoteAgingState } from "@/components/sales/salesQuoteAging";
 import { getActionableSalesAttentionItems } from "@/components/sales/salesAttention";
 import { isLikelySalesPlaceholder } from "@/components/sales/salesPlaceholder";
 import { buildSalesPersonSelectModel } from "@/components/sales/salesPersonIdentity.mjs";
+import { salesOpportunityDisplayName } from "@/components/sales/salesOpportunityIdentity.mjs";
 
 const SALES_STATUSES = [
   { value: "lead", label: "Lead", color: "bg-blue-100 text-blue-700" },
@@ -50,6 +51,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
         const attentionItems = getActionableSalesAttentionItems(wo, today);
         const attentionKeys = new Set(attentionItems.map((item) => item.key));
         const likelyPlaceholder = isLikelySalesPlaceholder(wo);
+        const opportunityDisplayName = salesOpportunityDisplayName(wo);
         const salesOwnerLabel = buildSalesPersonSelectModel(wo.sales_rep, users).canonical;
         return (
           <div
@@ -61,7 +63,7 @@ export default function SalesPipelineMobileCards({ workOrders, onOpenDetails, on
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <div className="flex min-w-0 items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate text-base font-semibold text-gray-800">{wo.client_name}</p>
+                  <p className="min-w-0 flex-1 truncate text-base font-semibold text-gray-800">{opportunityDisplayName}</p>
                   {likelyPlaceholder && <span className="flex-shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-800">TEST</span>}
                 </div>
                 {wo.title && <p className="text-gray-500 text-sm truncate">{wo.title}</p>}
