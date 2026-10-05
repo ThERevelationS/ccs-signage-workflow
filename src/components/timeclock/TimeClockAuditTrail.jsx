@@ -106,7 +106,8 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         const malformedRequiredEvidence = requiredEvidence.map((item) => ({
           audit_id: String(item?.audit_id || "").trim(),
           missing_fields: requiredEvidenceFields.filter((field) => !String(item?.[field] || "").trim()),
-        })).filter((item) => item.missing_fields.length > 0);
+          invalid_contract_version: Number(item?.contract_version || 0) !== PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION,
+        })).filter((item) => item.missing_fields.length > 0 || item.invalid_contract_version);
         if (malformedRequiredEvidence.length > 0) {
           console.error("Time Clock audit investigation evidence-shape failure:", {
             requested_time_entry_id: scopedId,
