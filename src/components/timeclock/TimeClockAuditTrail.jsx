@@ -70,7 +70,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const requestSequenceRef = useRef(0);
   const mountedRef = useRef(true);
 
-  const loadRows = async (timeEntryId = "", expectedEvidence = []) => {
+  const loadRows = async (timeEntryId = "", expectedEvidence = [], integrityMode = false) => {
     if (!mountedRef.current) return;
     const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
@@ -184,10 +184,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     mountedRef.current = true;
     const initialTimeEntryId = String(investigation?.time_entry_id || "").trim();
     const initialExpectedEvidence = Array.isArray(investigation?.evidence) ? investigation.evidence : [];
+    const initialIntegrityMode = investigation?.mode === "integrity";
     if (initialTimeEntryId) {
       setActionFilter("all");
       setSearch(initialTimeEntryId);
-      loadRows(initialTimeEntryId, initialExpectedEvidence);
+      loadRows(initialTimeEntryId, initialExpectedEvidence, initialIntegrityMode);
     } else {
       loadRows();
     }
@@ -211,8 +212,8 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
     setActionFilter("all");
     setSearch(timeEntryId);
     const expectedEvidence = Array.isArray(investigation?.evidence) ? investigation.evidence : [];
-    loadRows(timeEntryId, expectedEvidence);
-  }, [investigation?.nonce, investigation?.time_entry_id, investigation?.evidence]);
+    loadRows(timeEntryId, expectedEvidence, investigation?.mode === "integrity");
+  }, [investigation?.nonce, investigation?.time_entry_id, investigation?.evidence, investigation?.mode]);
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
