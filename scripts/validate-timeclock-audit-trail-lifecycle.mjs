@@ -38,4 +38,31 @@ assert.match(mountBlock, /return \(\) => \{[\s\S]*mountedRef\.current = false;[\
 assert.match(source, /if \(!mountedRef\.current\) return;/);
 console.log('PASS unmount invalidates in-flight audit requests and suppresses late state updates');
 
-console.log('PASS 5/5 Time Clock Audit Trail lifecycle scenarios');
+const loadRowsStart = source.indexOf('const loadRows = async');
+const mountEffectBoundary = source.indexOf('useEffect(() => {', loadRowsStart);
+assert.ok(loadRowsStart >= 0 && mountEffectBoundary > loadRowsStart);
+const loadRowsBlock = source.slice(loadRowsStart, mountEffectBoundary);
+
+assert.match(loadRowsBlock, /const scopedId = String\(timeEntryId \|\| ""\)\.trim\(\)/);
+assert.match(loadRowsBlock, /TimeClockAudit\.filter\(scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
+assert.match(loadRowsBlock, /const mismatchedRows = loadedRows\.filter\(\(row\) => String\(row\?\.time_entry_id \|\| ""\)\.trim\(\) !== scopedId\)/);
+assert.match(loadRowsBlock, /if \(mismatchedRows\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*setError\(`/);
+assert.ok(loadRowsBlock.indexOf('setRows([]);') < loadRowsBlock.indexOf('setRows(loadedRows);'), 'scoped integrity rejection must occur before accepting returned rows');
+console.log('PASS exact scoped audit rows are accepted only after TimeEntry integrity validation');
+
+assert.match(loadRowsBlock, /mismatchedRows\.length > 0/);
+assert.match(loadRowsBlock, /No scoped audit records are being displayed/);
+assert.match(loadRowsBlock, /mismatched_audit_ids: mismatchedRows\.map/);
+console.log('PASS mixed-TimeEntry scoped responses are rejected wholesale with diagnostic audit IDs');
+
+assert.match(loadRowsBlock, /String\(row\?\.time_entry_id \|\| ""\)\.trim\(\) !== scopedId/);
+console.log('PASS scoped rows missing a TimeEntry ID are treated as integrity failures');
+
+const integrityGuardStart = loadRowsBlock.indexOf('if (scopedId) {');
+const integrityGuardEnd = loadRowsBlock.indexOf('setRows(loadedRows);', integrityGuardStart);
+assert.ok(integrityGuardStart >= 0 && integrityGuardEnd > integrityGuardStart);
+assert.match(loadRowsBlock.slice(integrityGuardStart, integrityGuardEnd), /mismatchedRows/);
+assert.match(loadRowsBlock, /scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
+console.log('PASS ordinary unscoped recent-history responses bypass scoped TimeEntry rejection');
+
+console.log('PASS 9/9 Time Clock Audit Trail lifecycle and result-integrity scenarios');
