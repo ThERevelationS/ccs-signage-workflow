@@ -9,7 +9,7 @@ const ORDER_TYPES = Object.freeze({
   supplies: "Supplies",
   other: "Other",
 });
-const TERMINAL_TASKS = new Set(["lost", "completed sale", "closed"]);
+const TERMINAL_TASK_PATTERN = /^(lost\\b|completed sales?\\b|closed\\b)/;
 
 function text(value) {
   return String(value ?? "").trim();
@@ -312,7 +312,7 @@ export function buildSmartsheetControlledCreationProposals({
     // A post-baseline terminal task is not evidence of an authoritative modern outcome.
     if (dataset === "sales") {
       const task = text(originalValues.current_task_description).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-      if (TERMINAL_TASKS.has(task)) {
+      if (TERMINAL_TASK_PATTERN.test(task)) {
         blockers.push(problem("terminal_task_review", "Terminal task text needs manual review", "Do not turn legacy-like task text into a modern Lead, Won, or Lost outcome."));
       }
       if (payload.date_estimate_sent && payload.date_estimate_sent > today) {
