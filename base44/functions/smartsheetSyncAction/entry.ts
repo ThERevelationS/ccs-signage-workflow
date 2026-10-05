@@ -1190,7 +1190,7 @@ async function pushDataset(
 
   if (dataset === 'orders') {
     await reportOrderProgress({
-      phase: 'backup', current: 0, total: pendingRecords.length,
+      phase: 'backup', current: 0, total: pendingRecords.length, fraction: 0.02,
       item_label: 'Preparing verified Order Request backup',
       detail: `${pendingRecords.length.toLocaleString()} changed Order${pendingRecords.length === 1 ? '' : 's'} queued`,
     });
@@ -1298,7 +1298,7 @@ async function pushDataset(
     for (let preFetchPage = 1; ; preFetchPage++) {
       if (typeof options?.assertRunOwnership === 'function') await options.assertRunOwnership();
       await reportSalesProgress({phase:'reading',total:pendingRecords.length,item_label:'Reading Smartsheet sheet'});
-      await reportOrderProgress({phase:'reading',current:0,total:pendingRecords.length,item_label:'Reading Smartsheet sheet',detail:'Single sheet download'});
+      await reportOrderProgress({phase:'reading',current:0,total:pendingRecords.length,fraction:0.08,item_label:'Reading Smartsheet sheet',detail:'Downloading current Order Request values by permanent IDs'});
       const preFetchParams = new URLSearchParams({ page: String(preFetchPage), pageSize: String(preFetchPageSize), columnIds: preFetchColumnIds.join(','), exclude: 'nonexistentCells' });
       const sheetResponse = await smartsheetGet(`/sheets/${sheetId}?${preFetchParams.toString()}`, token);
       if (preFetchPage === 1 && (String(sheetResponse.body?.id) !== sheetId || !Object.values(bindings).every(id => sheetResponse.body?.columns?.some(c => String(c.id) === String(id)))))
@@ -1349,11 +1349,12 @@ async function pushDataset(
     if (dataset === 'orders') {
       const rowId = cleanText(record?.smartsheet_row_id, 40);
       await reportOrderProgress({
-        phase: /^\d+$/.test(rowId) ? 'update' : 'create',
+        phase: /^\d+$/.test(rowId) ? 'checking' : 'create',
         current: orderProcessedCount,
         total: pendingRecords.length,
+        fraction: 0.1 + (0.35 * (orderProcessedCount / Math.max(1, pendingRecords.length))),
         item_label: orderProgressItemLabel(record),
-        detail: /^\d+$/.test(rowId) ? `Checking and updating Smartsheet row ${rowId}` : 'Creating and permanently linking a new Smartsheet row',
+        detail: /^\d+$/.test(rowId) ? `Checking Smartsheet row ${rowId} field by field` : 'Creating and permanently linking a new Smartsheet row',
         record_id: record.id,
         smartsheet_row_id: /^\d+$/.test(rowId) ? rowId : '',
       });
