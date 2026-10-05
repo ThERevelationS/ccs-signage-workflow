@@ -28,7 +28,7 @@ export const SALES_SYNC_ALLOWED_FIELDS = Object.freeze([
 ]);
 
 const SALES_SYNC_ALLOWED_FIELD_SET = new Set(SALES_SYNC_ALLOWED_FIELDS);
-const LEGACY_TERMINAL_TASK_PATTERN = /^(lost\b|completed sales?\b|closed\b)/i;
+const LEGACY_TERMINAL_TASK_PATTERN = /^(lost(?:$|\s*-)|completed sales?(?:$|\s*-)|closed(?:$|\s*-))/i;
 
 export function filterSalesColumnBindings(bindings = {}) {
   if (!bindings || typeof bindings !== "object" || Array.isArray(bindings)) return {};
