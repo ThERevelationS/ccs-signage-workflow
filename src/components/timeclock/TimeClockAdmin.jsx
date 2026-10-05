@@ -149,6 +149,7 @@ export default function TimeClockAdmin() {
   const [approvalError, setApprovalError] = useState("");
   const [detailEntry, setDetailEntry] = useState(null);
   const [correctionReviewRequestId, setCorrectionReviewRequestId] = useState("");
+  const [auditInvestigation, setAuditInvestigation] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -639,9 +640,17 @@ export default function TimeClockAdmin() {
         timeEntries={timeEntries}
         correctionRequests={correctionRequests}
         onEntriesChanged={loadData}
+        onInvestigateAudit={({ time_entry_id }) => {
+          const normalizedId = String(time_entry_id || "").trim();
+          if (!normalizedId) return;
+          setAuditInvestigation({ time_entry_id: normalizedId, nonce: Date.now() });
+          window.setTimeout(() => document.getElementById("time-clock-audit-trail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+        }}
       />
 
-      <TimeClockAuditTrail />
+      <div id="time-clock-audit-trail" className="scroll-mt-4">
+        <TimeClockAuditTrail investigation={auditInvestigation} />
+      </div>
 
       {staleActiveEntries.length > 0 && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
