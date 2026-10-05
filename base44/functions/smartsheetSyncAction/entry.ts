@@ -1448,7 +1448,22 @@ async function pushDataset(
               toTop: true,
               cells: freshCells.map((c) => ({ columnId: c.columnId, value: c.value,
                 ...(c.displayValue ? { displayValue: c.displayValue } : {}) })),
-            }]);
+            }], {
+              onRateLimitWait: async ({ attempt, waitSeconds }: any) => reportOrderProgress({
+                phase: 'waiting_rate_limit', current: orderProcessedCount, total: pendingRecords.length,
+                fraction: 0.46,
+                item_label: orderProgressItemLabel(freshOrder),
+                detail: `Smartsheet rate limit: waiting ${waitSeconds}s before create retry ${attempt}/3`,
+                record_id: freshOrder.id,
+              }),
+              onRateLimitRetry: async ({ attempt }: any) => reportOrderProgress({
+                phase: 'retrying', current: orderProcessedCount, total: pendingRecords.length,
+                fraction: 0.48,
+                item_label: orderProgressItemLabel(freshOrder),
+                detail: `Retrying new-row create after Smartsheet rate limit (${attempt}/3)`,
+                record_id: freshOrder.id,
+              }),
+            });
             return result.body;
           },
           makeSnapshot: (freshOrder: any) => buildSnapshot(freshOrder, bindings, 'orders'),
