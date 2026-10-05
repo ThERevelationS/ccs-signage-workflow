@@ -6297,6 +6297,12 @@ Deno.serve(async (req) => {
           if (!finalized) return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved and audited but employee state finalization is still incomplete. Retry this same correction request.' }, { status: 409 });
         }
         if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered' || intent?.outcome === 'pending') {
+          const completedGateReleased = await releaseCompletedCorrectionCreateLock(
+            stateEntity, state.id, requestId, entry.id, correctionPayloadHash,
+          );
+          if (!completedGateReleased) {
+            return Response.json({ success: false, retry_same_request: true, error: 'The correction is saved, but the shared correction/approval lock still needs recovery. Retry this same correction request.' }, { status: 409 });
+          }
           return Response.json({ success: true, entry, audit_id: intent?.id || null, reused: true });
         }
       }
@@ -6306,6 +6312,19 @@ Deno.serve(async (req) => {
       if (String(entry.updated_date || '') !== expectedUpdatedDate) {
         return Response.json({ success: false, error: 'This time entry changed in another session. Reload before correcting it.' }, { status: 409 });
       }
+      const adminCorrectionGate = await claimCorrectionCreateLock(
+        stateEntity, state.id, requestId, entry.id, correctionPayloadHash,
+      );
+      if (!adminCorrectionGate?.acquired) {
+        return Response.json({
+          success: false,
+          ...(adminCorrectionGate?.retry_same_request ? { retry_same_request: true } : {}),
+          error: adminCorrectionGate?.investigation
+            ? adminCorrectionGate.error
+            : 'Another correction submission or shift approval is being processed for this employee. Retry after the current action finishes.',
+        }, { status: 409 });
+      }
+      try {
       const now = new Date().toISOString();
       const nextFields: any = {
         clock_in: clockIn.toISOString(),
@@ -6438,6 +6457,23 @@ Deno.serve(async (req) => {
       }
 
       return Response.json({ success: true, entry: savedEntry, audit_id: intent.id });
+      } finally {
+        const released = await releaseCorrectionCreateLock(
+          stateEntity, state.id, requestId, entry.id, correctionPayloadHash,
+          String(adminCorrectionGate.claim_token || ''),
+        );
+        if (!released) {
+          const currentGate = await freshState(stateEntity, state.id).catch(() => null);
+          const gateStatus = String(currentGate?.correction_create_status || '');
+          const safelyReleased = currentGate?.id && (
+            gateStatus === 'idle' ||
+            (gateStatus === 'creating' && String(currentGate.correction_create_request_id || '') !== requestId)
+          );
+          if (!safelyReleased) {
+            throw new Error('The administrative correction gate could not be released or verified after processing. Retry the same correction request to recover its lock.');
+          }
+        }
+      }
     }
 
     if (action === 'admin_set_entry_approval') {
