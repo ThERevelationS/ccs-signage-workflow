@@ -162,12 +162,12 @@ assert.match(transitionBlock, /const expectedEvidence = Array\.isArray\(investig
 assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence, investigation\?\.mode === "integrity"\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
 
-assert.match(loadRowsBlock, /if \(integrityMode\)/);
-assert.match(loadRowsBlock, /const membership = payrollMembershipFromAudit\(row\)/);
-assert.match(loadRowsBlock, /validatePayrollMembershipConflictEvidence\(evidence\)/);
-assert.match(loadRowsBlock, /payrollMembershipConflictEvidenceIsMalformed\(validation\)/);
-assert.match(loadRowsBlock, /malformed_authoritative_membership_rows/);
-assert.match(loadRowsBlock, /No scoped audit records are being presented as trusted evidence/);
+assert.match(source, /if \(integrityMode\)/);
+assert.match(source, /const membership = payrollMembershipFromAudit\(row\)/);
+assert.match(source, /validatePayrollMembershipConflictEvidence\(evidence\)/);
+assert.match(source, /payrollMembershipConflictEvidenceIsMalformed\(validation\)/);
+assert.match(source, /malformed_authoritative_membership_rows/);
+assert.match(source, /No scoped audit records are being presented as trusted evidence/);
 console.log('PASS integrity investigation validates reconstructed authoritative membership rows through the shared contract and fails closed');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
