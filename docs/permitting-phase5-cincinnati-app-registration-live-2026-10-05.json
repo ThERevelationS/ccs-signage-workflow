@@ -798,5 +798,12 @@
     "excerpt": "No additional application form is required.",
     "success": true
   },
-  "next": "Retain current zoning administration HTML and collect adopted Cincinnati Chapters 1427/895; resolve applicability and submission conflicts."
+  "next": "Retain current zoning administration HTML and collect adopted Cincinnati Chapters 1427/895; resolve applicability and submission conflicts.",
+  "validation": {
+    "independent_storage_hash_byte_checks": 5,
+    "pages_matching_retained_local_extraction": 9,
+    "html_text_matches_retained_projection": true,
+    "live_literal_citation_passed": true,
+    "verified_at": "2026-10-05T15:53:04.525Z"
+  }
 }
