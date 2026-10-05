@@ -6614,6 +6614,13 @@ Deno.serve(async (req) => {
       if (intent?.outcome === 'confirmed' || intent?.outcome === 'recovered') {
         return Response.json({ success: false, error: 'This approval request was already confirmed but the TimeEntry marker does not match. Admin investigation is required.' }, { status: 409 });
       }
+      const currentApprovalStatus = String(entry.approval_status || 'unreviewed');
+      if (decision === 'approve' && !['unreviewed', 'needs_review'].includes(currentApprovalStatus)) {
+        return Response.json({ success: false, error: 'This shift is already approved or its review state changed in another session. Reload before taking another approval action.' }, { status: 409 });
+      }
+      if (decision === 'reopen' && currentApprovalStatus !== 'approved') {
+        return Response.json({ success: false, error: 'This shift is no longer approved. Reload before sending it back for review.' }, { status: 409 });
+      }
       if (entryIsPayPeriodLocked(entry)) {
         return Response.json({ success: false, error: 'This shift is locked by a finalized pay period. Reopen that pay period before changing manager approval.' }, { status: 409 });
       }
