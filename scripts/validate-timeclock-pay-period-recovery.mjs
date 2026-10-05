@@ -858,6 +858,15 @@ test('cross-pay-period direct correction requires both finalized periods reopene
   const periodAction = (pay_period_id, decision, request_id, note = '') => h.invoke({
     action: 'pay_period_status', pay_period_id, decision, request_id, note,
   });
+  h.rows.TimeEntry[0].approval_status = 'needs_review';
+  const initialEntry = h.rows.TimeEntry[0];
+  const initialApproval = await h.invoke({
+    action: 'admin_set_entry_approval', target_email: employee.email,
+    request_id: 'cross-period-initial-approval-001', entry_id: initialEntry.id,
+    expected_updated_date: initialEntry.updated_date, decision: 'approve', note: 'Initial independent manager review',
+  });
+  assert.equal(initialApproval.status, 200, JSON.stringify(initialApproval.body));
+  assert.equal(h.rows.TimeEntry[0].approval_status, 'approved');
 
   const sourceFinalized = await periodAction('synthetic-period', 'finalize', 'cross-period-source-finalize-001');
   assert.equal(sourceFinalized.status, 200, JSON.stringify(sourceFinalized.body));
