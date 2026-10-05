@@ -20,6 +20,11 @@
       ],
       "default": "county"
     },
+    "html_evidence_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Durable manual HTML evidence reservation/receipt. Unknown creates reconcile the same source hash without repeating creation. Does not modify documents, reviewed authority or automated queue accounting."
+    },
     "office_authority_review_state": {
       "type": "object",
       "additionalProperties": true,
