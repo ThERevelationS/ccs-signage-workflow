@@ -120,6 +120,7 @@ export default function SalesPipeline() {
     setActiveColumnPreset(null);
     setFilterStatus("all");
     setAttentionFilter("all");
+    setFilterReconciliationNotice("");
     setSaveSyncState({ busy: false, ok: null, message: "" });
     loadActiveFilters();
   }, [currentUser?.email, sessionToken]);
@@ -247,13 +248,21 @@ export default function SalesPipeline() {
     let disposed = false;
     let refreshTimer = null;
 
-    const unsubscribe = SalesFilter.subscribe(() => {
-      if (disposed || refreshTimer !== null) return;
-      refreshTimer = window.setTimeout(() => {
-        refreshTimer = null;
-        if (!disposed) loadActiveFiltersRef.current();
-      }, 75);
-    });
+    let unsubscribe = null;
+    try {
+      unsubscribe = SalesFilter.subscribe(() => {
+        if (disposed || refreshTimer !== null) return;
+        refreshTimer = window.setTimeout(() => {
+          refreshTimer = null;
+          if (disposed) return;
+          Promise.resolve(loadActiveFiltersRef.current()).catch((error) => {
+            console.warn("Could not refresh Sales saved filters after a live change:", error);
+          });
+        }, 75);
+      });
+    } catch (error) {
+      console.warn("Could not subscribe to live Sales saved-filter changes:", error);
+    }
 
     return () => {
       disposed = true;
@@ -297,12 +306,14 @@ export default function SalesPipeline() {
   };
 
   const applyAttentionFilter = (value) => {
+    setFilterReconciliationNotice("");
     setAttentionFilter(value);
     setFilterStatus("all");
     persistFilterPreferences({ informationFilter: "all", attention: value });
   };
 
   const applyInformationFilter = (value) => {
+    setFilterReconciliationNotice("");
     setFilterStatus(value);
     setAttentionFilter("all");
     persistFilterPreferences({ informationFilter: value, attention: "all" });
@@ -327,6 +338,7 @@ export default function SalesPipeline() {
   };
 
   const clearActiveFilters = () => {
+    setFilterReconciliationNotice("");
     setSearchTerm("");
     setAttentionFilter("all");
     setFilterStatus("all");
@@ -375,6 +387,7 @@ export default function SalesPipeline() {
               <span className="sr-only">Workspace</span>
               <Select value={recordScope} onValueChange={(value) => {
                 setRecordScope(value);
+                setFilterReconciliationNotice("");
                 setSearchTerm("");
                 setAttentionFilter("all");
                 setFilterStatus("all");
@@ -619,10 +632,12 @@ export default function SalesPipeline() {
                 if (value === "manage_columns") {
                   setShowColumnFilterDialog(true);
                 } else if (value === "default") {
+                  setFilterReconciliationNotice("");
                   setActiveColumnPreset(null);
                   persistFilterPreferences({ columnPresetId: "default" });
                 } else if (value) {
                   const preset = activeFilters.find(f => f.id === value);
+                  setFilterReconciliationNotice("");
                   setActiveColumnPreset(preset || null);
                   if (preset?.type === "column_preset") persistFilterPreferences({ columnPresetId: preset.id });
                 }
@@ -669,6 +684,23 @@ export default function SalesPipeline() {
             )}
             
           </div>
+          {filterReconciliationNotice && !showDuplicateCleanup && (
+            <div
+              role="status"
+              aria-label="Sales saved filter changed"
+              className="mt-2 flex min-h-10 items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900"
+            >
+              <span className="min-w-0">{filterReconciliationNotice}</span>
+              <button
+                type="button"
+                onClick={() => setFilterReconciliationNotice("")}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                aria-label="Dismiss saved filter change notice"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          )}
           {saveSyncState.message && !showDuplicateCleanup && (
             <div
               role={saveSyncState.ok === false ? "alert" : "status"}
