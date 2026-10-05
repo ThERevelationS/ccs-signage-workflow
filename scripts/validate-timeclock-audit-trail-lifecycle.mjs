@@ -267,7 +267,7 @@ assert.match(source, /membership\?\.clock_in/);
 assert.match(source, /membership\?\.source/);
 console.log('PASS conflict evidence comparison binds action, request, server time, company date, clock-in, and source');
 
-assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence\)/);
-console.log('PASS scoped refresh preserves the complete expected immutable conflict evidence');
+assert.match(source, /loadRows\(investigation\?\.time_entry_id, investigationEvidence, integrityInvestigation\)/);
+console.log('PASS scoped refresh preserves expected immutable conflict evidence and the active investigation integrity mode');
 
 console.log('PASS 17/17 Time Clock Audit Trail lifecycle, integrity, identity, completeness, evidence-content, and contract-version scenarios');
