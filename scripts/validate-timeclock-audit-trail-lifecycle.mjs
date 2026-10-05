@@ -185,6 +185,14 @@ console.log('PASS blank or missing expected conflict audit identities fail close
 assert.match(loadRowsBlock, /const requiredEvidenceFields = \["action", "request_id", "server_timestamp", "company_date", "clock_in", "source"\]/);
 assert.match(loadRowsBlock, /missing_fields: requiredEvidenceFields\.filter/);
 assert.match(loadRowsBlock, /invalid_contract_version: Number\(item\?\.contract_version \|\| 0\) !== PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
+assert.match(loadRowsBlock, /supportedEvidenceActions = new Set\(\["clock_in", "clock_out", "admin_correction", "admin_archive"\]\)/);
+assert.match(loadRowsBlock, /supportedEvidenceSources = new Set\(\["verified_normalized_audit_envelope", "immutable_audit"\]\)/);
+assert.match(loadRowsBlock, /invalid_action: !supportedEvidenceActions\.has/);
+assert.match(loadRowsBlock, /invalid_source: !supportedEvidenceSources\.has/);
+assert.match(loadRowsBlock, /invalid_server_timestamp: !isIsoInstant/);
+assert.match(loadRowsBlock, /invalid_clock_in: !isIsoInstant/);
+assert.match(loadRowsBlock, /invalid_company_date: !isCompanyDate/);
+assert.match(loadRowsBlock, /date\.toISOString\(\)\.slice\(0, 10\) === String\(value\)/);
 assert.match(loadRowsBlock, /if \(malformedRequiredEvidence\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-shape check failed/);
 assert.match(loadRowsBlock, /malformed_conflict_evidence: malformedRequiredEvidence/);
 assert.ok(loadRowsBlock.indexOf('malformedRequiredEvidence.length > 0') < loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0'), 'expected evidence shape must be valid before identity/completeness checks');
