@@ -156,14 +156,19 @@ export default function SalesPipeline() {
       return;
     }
     const SalesFilter = base44.entities.SalesFilter;
-    const [allFilters, preferences] = await Promise.all([
-      loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" }),
-      loadSalesPipelinePreferencesSafely({ sessionToken, label: "Sales Pipeline filter preferences" })
-        .catch((error) => {
-          console.error("Could not restore Sales Pipeline filter preferences:", error);
-          return { information_filter: "all", attention_filter: "all", column_preset_id: "default" };
-        }),
-    ]);
+    let allFilters;
+    let preferences;
+    try {
+      [allFilters, preferences] = await Promise.all([
+        loadAllEntityRows({ entity: SalesFilter, sort: null, label: "Sales Pipeline saved filters" }),
+        loadSalesPipelinePreferencesSafely({ sessionToken, label: "Sales Pipeline filter preferences" }),
+      ]);
+    } catch (error) {
+      if (requestId === activeFiltersLoadRef.current) {
+        console.warn("Could not refresh Sales Pipeline saved filters; keeping the current visible state:", error);
+      }
+      return;
+    }
     if (requestId !== activeFiltersLoadRef.current) return;
     const selected = allFilters.filter(f => f.selected_by?.some(email => email?.toLowerCase() === userEmail));
     setActiveFilters(selected);
