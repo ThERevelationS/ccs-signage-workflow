@@ -171,6 +171,27 @@ test('retained Alexandria HTML fixture projects explicit service text without fa
  assert.ok(p.blocks.some(b=>b.text.includes('The City of Alexandria')));
  assert.ok(p.blocks.every(b=>Number.isInteger(b.block) && !Object.hasOwn(b,'physical_page')));
 });
+
+test('missing optional website metadata is preserved and does not break the first capture',async()=>{
+ const f=setup();delete f.profile.website_url;await f.retain();assert.equal(f.calls.create,1);assert.equal(f.profile.website_url,undefined);
+});
+test('a failed fetch before any write is explicitly safe to preview again',async()=>{
+ const f=setup();f.failFetch();await assert.rejects(f.retain(),e=>e.retry_safe===true);assert.equal(f.calls.create,0);assert.equal(f.calls.writes,0);
+});
+test('changed canonical identity blocks uncertain-save reconciliation and preserves the prior reservation',async()=>{
+ const f=setup({createMode:'missing'});await f.retain();f.lateCreate();f.profile.name='Changed Town';
+ await assert.rejects(f.retain(),/identity changed/);assert.equal(f.calls.create,1);assert.equal(f.profile.html_evidence_state.status,'uncertain');
+});
+test('retention after a canonical identity edit preserves the old immutable version and creates distinct provenance',async()=>{
+ const f=setup();await f.retain();const original=clone(f.rows[0]);f.profile.name='New Town';f.profile.updated_date='new';
+ await f.retain({requestId:'html-capture-request-00002',expectedUpdatedDate:'new'});assert.equal(f.rows.length,2);assert.deepEqual(f.rows[0],original);
+});
+test('the capture handler reports stale preview as not-recorded rather than uncertain',async()=>{
+ const f=routeFixture();const r=await f.call({action:'capture',jurisdiction_id:'profile',official_url:f.args.officialUrl,title:f.args.title,
+  request_id:f.args.requestId,expected_updated_date:'stale',official_source_confirmed:true});
+ assert.equal(r.status,409);assert.equal(r.data.status,'not_recorded');assert.equal(r.data.retry_safe,true);assert.equal(f.calls.create,0);assert.equal(f.calls.writes,0);
+});
+
 test('schema preserves immutable evidence RLS and adds only an isolated profile receipt',async()=>{
  const schema=JSON.parse(await readFile('base44/entities/PermittingHtmlEvidence.jsonc','utf8'));
  assert.equal(schema.rls.update,false);assert.equal(schema.rls.delete,false);assert.equal(schema.rls.create.user_condition.role,'admin');
