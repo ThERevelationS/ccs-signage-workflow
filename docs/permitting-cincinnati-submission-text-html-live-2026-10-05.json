@@ -1,0 +1,141 @@
+{
+  "phase": "Phase 4 — Office authority and evidence",
+  "chunk": "Cincinnati submission text and official HTML retention",
+  "date": "2026-10-05",
+  "backend_execution": "Signed-in editor Test Function; live entities; no frontend publish or deployment claimed",
+  "llm_calls": 0,
+  "source_documents": [
+    {
+      "id": "6ac3a51f33beec629ba497e0",
+      "text_extraction_state": {
+        "status": "complete",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/51dece9a0_building-permit-application-fillable-form.pdf",
+        "claim_token": "38a899e7-1f40-4b2b-aa2c-ec10a8290f2f",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T13:39:13.793Z",
+        "attempts": 1,
+        "next_page": 3,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 2,
+        "pages_extracted": 2,
+        "needs_ocr_pages": [],
+        "needs_ocr_page_count": 0,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T13:39:14.120Z",
+        "completed_at": "2026-10-05T13:39:14.120Z",
+        "complete_document_text": true
+      },
+      "pages": [
+        {
+          "page": 1,
+          "source_sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+          "text_sha256": "4cd45d1897e71c6e22f85aae0852cc9c057c296639356df76d8cf69ba152e4ea",
+          "needs_ocr_review": false,
+          "truncated": false
+        },
+        {
+          "page": 2,
+          "source_sha256": "8ce8eb93feb12ee02f12e25318a00078dc41eee8dd6be16d539a82b2c3780841",
+          "text_sha256": "d5ff6f1887d3243240f1a34eea4fc5993f1e741946a1c9da4913ea55730dcd48",
+          "needs_ocr_review": false,
+          "truncated": false
+        }
+      ]
+    },
+    {
+      "id": "6ac3a54ac1ce2adba5b92cb8",
+      "text_extraction_state": {
+        "status": "needs_ocr",
+        "method": "pdfjs-4.8.69-text-v1",
+        "source_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+        "archived_file_url": "https://base44.app/api/apps/68dfcc5e57bbbc35387da97c/files/mp/public/68dfcc5e57bbbc35387da97c/550d0c6c4_site-plan-information.pdf",
+        "claim_token": "bc484820-c51d-43e7-a1a5-36eaf454ebae",
+        "lease_expires_at": "",
+        "last_attempt_at": "2026-10-05T13:39:36.844Z",
+        "attempts": 1,
+        "next_page": 2,
+        "error": "",
+        "retry_after": "",
+        "failures": 0,
+        "total_pages": 1,
+        "pages_extracted": 1,
+        "needs_ocr_pages": [
+          1
+        ],
+        "needs_ocr_page_count": 1,
+        "truncated_pages": [],
+        "truncated_page_count": 0,
+        "last_chunk_completed_at": "2026-10-05T13:39:37.117Z",
+        "completed_at": "",
+        "complete_document_text": false
+      },
+      "pages": [
+        {
+          "page": 1,
+          "source_sha256": "f3e12e0038ca81a2d86625bd71ee6a4b0440167c272d8a2ebd59ae8a02a8f74d",
+          "text_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "needs_ocr_review": true,
+          "truncated": false
+        }
+      ]
+    }
+  ],
+  "html_evidence": {
+    "id": "6ac3a8f5ba1cd9e4db999cb2",
+    "title": "Cincinnati electronic document submission instructions",
+    "official_url": "https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/",
+    "final_url": "https://www.cincinnati-oh.gov/buildings/submitting-your-application/electronic-document-submission/",
+    "file_bytes": 72560,
+    "file_hash_sha256": "15778d1b420be465d3641841833cd9714ef3b55a6fb67b35f6a2a0ee9b39834d",
+    "text_sha256": "af5988146285a92db894539e71df7eb65a71c65f492f0d1d6275dce677b7cc05",
+    "total_blocks": 190,
+    "verification_status": "retained_unreviewed",
+    "request_id": "cincinnati-electronic-guidelines-20261005-v1",
+    "retrieved_at": "2026-10-05T13:41:09.123Z",
+    "citation_check": {
+      "success": true,
+      "block": 80,
+      "authority_established": false
+    }
+  },
+  "verification": {
+    "tests_passed": 67,
+    "tests_failed": 0,
+    "hashes": "Retained HTML bytes/length, HTML text, and all 3 page text hashes independently verified",
+    "profile_changed_fields": [
+      "html_evidence_state",
+      "updated_date"
+    ],
+    "source_changed_fields": [
+      {
+        "id": "6ac3a51f33beec629ba497e0",
+        "changed_fields": [
+          "extracted_text",
+          "extracted_pages",
+          "text_extraction_state",
+          "updated_date"
+        ]
+      },
+      {
+        "id": "6ac3a54ac1ce2adba5b92cb8",
+        "changed_fields": [
+          "extracted_text",
+          "extracted_pages",
+          "text_extraction_state",
+          "updated_date"
+        ]
+      }
+    ],
+    "all_documents_and_unrelated_profile_fields_preserved": true
+  },
+  "gaps": [
+    "Site-plan page 1 has no embedded text and needs OCR/manual review; complete_document_text remains false.",
+    "HTML remains retained_unreviewed; source currency, sign applicability and office authority require review."
+  ],
+  "next": "Resolve site-plan OCR evidence and compare the linked electronic-submission PDF with retained HTML before authority review"
+}
