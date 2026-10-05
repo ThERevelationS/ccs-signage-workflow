@@ -3,6 +3,7 @@ import { discoverOfficialPermittingResources, isDownloadableResearchDocument } f
 
 const key = value => { const u = new URL(value); u.hash = ''; u.hostname = u.hostname.replace(/^www\./, ''); return u.href; };
 function scopedUrl(value, seed) {
+  if (typeof value !== 'string' || value.length > 2000) throw Error('Discovery URL exceeds its storage bounds.');
   const u = new URL(value), root = new URL(seed);
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password ||
       u.hostname.replace(/^www\./, '') !== root.hostname.replace(/^www\./, '') || u.port !== root.port)
@@ -25,13 +26,15 @@ function pagePriority(doc = {}) {
 // than silently claiming that a bounded traversal covered the jurisdiction.
 export const DISCOVERY_CURSOR_METHOD = 'official-page-frontier-v1';
 const CURSOR_MAX_ITEMS = 5000;
+const CURSOR_MAX_CHARS = 1024 * 1024;
 const frontierError = message => Object.assign(Error(message), { frontier_review_required: true });
 function validateCursor(cursor, seedUrl, maxDepth) {
   try {
   if (!cursor || cursor.blocked || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
       !Number.isInteger(cursor.attempted_pages_total) || cursor.attempted_pages_total < 0 ||
       !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||
-      cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS)
+      cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS ||
+      JSON.stringify(cursor).length > CURSOR_MAX_CHARS)
     throw frontierError('Saved discovery frontier requires review; source, format or bounds changed.');
   for (const url of cursor.visited_urls) scopedUrl(url, seedUrl);
   for (const page of cursor.pending_pages) {
@@ -79,6 +82,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length });
       if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', requires_review: true });
       for (const doc of found) {
+        if (doc.url.length > 2000) { gaps.push({url:finalUrl,reason:'oversized_resource_url',requires_review:true}); continue; }
         const sourceKey = key(doc.url);
         if (!documents.has(sourceKey)) documents.set(sourceKey, { ...doc,
           discovery_page_url: finalUrl, discovery_depth: next.depth,
@@ -99,7 +103,8 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   const continuationState = { method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
     visited_urls: [...visited], pending_pages: pendingPages, gaps,
     attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
-  if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS)
+  if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS ||
+      JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)
     throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
   return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && !pendingPages.length), documents: [...documents.values()], pages,
     pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume),
