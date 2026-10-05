@@ -91,7 +91,17 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
           setError(`Audit investigation integrity check failed: ${mismatchedRows.length} returned record${mismatchedRows.length === 1 ? " does" : "s do"} not belong to TimeEntry ${scopedId}. No scoped audit records are being displayed.`);
           return;
         }
-        const requiredEvidence = (Array.isArray(expectedEvidence) ? expectedEvidence : []).filter((item) => String(item?.audit_id || "").trim());
+        const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
+        const missingRequiredAuditIdCount = requiredEvidence.filter((item) => !String(item?.audit_id || "").trim()).length;
+        if (missingRequiredAuditIdCount > 0) {
+          console.error("Time Clock audit investigation evidence-identity failure:", {
+            requested_time_entry_id: scopedId,
+            missing_conflict_audit_id_count: missingRequiredAuditIdCount,
+          });
+          setRows([]);
+          setError(`Audit investigation evidence-identity check failed: ${missingRequiredAuditIdCount} expected conflict evidence record${missingRequiredAuditIdCount === 1 ? " has" : "s have"} no immutable audit ID. No scoped audit records are being displayed.`);
+          return;
+        }
         const requiredAuditIds = requiredEvidence.map((item) => String(item.audit_id).trim());
         const duplicateRequiredAuditIds = [...new Set(requiredAuditIds.filter((id, index) => requiredAuditIds.indexOf(id) !== index))];
         if (duplicateRequiredAuditIds.length > 0) {
