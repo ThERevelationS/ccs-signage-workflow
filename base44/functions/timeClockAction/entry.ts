@@ -2853,7 +2853,7 @@ Deno.serve(async (req) => {
               discoveryEvidence = Number(summary.snapshot_version || 0) >= 22
                 ? canonicalPayrollMembershipEvidence(membershipAudits, Number(summary.snapshot_version || 0) >= 23)
                 : membershipAudits.map((membershipAudit: any) => ({ membershipAudit, membership: payrollMembershipFromAudit(membershipAudit) })).find((candidate: any) => candidate.membership?.company_date) || null;
-              if (discoveryEvidence?.conflict) return false;
+              if (discoveryEvidence?.conflict) return failed({ type: 'payroll_membership_evidence', time_entry_id: candidateId, evidence: discoveryEvidence.conflict_evidence });
               if (discoveryEvidence) companyDate = discoveryEvidence.membership.company_date;
             }
             if (companyDate && companyDate >= period.start_date && companyDate <= period.end_date) {
