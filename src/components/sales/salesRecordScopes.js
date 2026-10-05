@@ -1,6 +1,8 @@
 import { isSmartsheetSalesImportShell } from "../../../base44/shared/smartsheetSalesImportEligibility.mjs";
-
-const LEGACY_TERMINAL_TASK_PATTERN = /^(lost\b|completed sale\b|closed\b)/i;
+import {
+  historicalTerminalTaskFamily,
+  isLegacyTerminalSmartsheetSalesRecord,
+} from "../../../base44/shared/historicalSalesOutcomeReconciliation.mjs";
 
 export const isModernSalesRecord = (workOrder) => workOrder?.in_pipeline === true;
 
@@ -8,15 +10,16 @@ export const isOpenSalesStatus = (workOrder) => !["won", "lost"].includes(workOr
 
 export const isCurrentPipelineOpportunity = (workOrder) =>
   isModernSalesRecord(workOrder) && isOpenSalesStatus(workOrder) &&
-  !isSmartsheetSalesImportShell(workOrder);
+  !isSmartsheetSalesImportShell(workOrder) &&
+  !isLegacyTerminalSmartsheetSalesRecord(workOrder);
 
 export const isTrustedSalesOutcome = (workOrder) =>
   isModernSalesRecord(workOrder) && ["won", "lost"].includes(workOrder?.sales_status);
 
 export const isLegacyClosedSalesRecord = (workOrder) => {
+  if (isLegacyTerminalSmartsheetSalesRecord(workOrder)) return true;
   if (isModernSalesRecord(workOrder)) return false;
-  const legacyTask = String(workOrder?.current_task_description || "").trim();
-  return LEGACY_TERMINAL_TASK_PATTERN.test(legacyTask);
+  return Boolean(historicalTerminalTaskFamily(workOrder?.current_task_description));
 };
 
 export const getSalesRecordClassification = (workOrder) => {
