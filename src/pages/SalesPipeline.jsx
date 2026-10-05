@@ -95,11 +95,13 @@ export default function SalesPipeline() {
   const [activeFilters, setActiveFilters] = useState([]);
   const [activeColumnPreset, setActiveColumnPreset] = useState(null);
   const [columnHeaderFilter, setColumnHeaderFilter] = useState(null);
+  const [filterReconciliationNotice, setFilterReconciliationNotice] = useState("");
   const canImportExport = currentUser?.role === "admin" || currentUser?.can_import_export === true;
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const spreadsheetRef = useRef(null);
   const activeFiltersLoadRef = useRef(0);
+  const loadActiveFiltersRef = useRef(() => Promise.resolve());
   const preferenceSaveChainRef = useRef(Promise.resolve());
   const preferenceIdentityRef = useRef("");
   const [saveSyncState, setSaveSyncState] = useState({ busy: false, ok: null, message: "" });
@@ -166,8 +168,15 @@ export default function SalesPipeline() {
     setActiveFilters(selected);
 
     const savedInformation = String(preferences?.information_filter || "all");
-    const restoredInformation = savedInformation.startsWith("custom_")
-      ? (selected.some((filter) => filter.type === "filter" && filter.id === savedInformation.slice("custom_".length)) ? savedInformation : "all")
+    const savedCustomFilterId = savedInformation.startsWith("custom_")
+      ? savedInformation.slice("custom_".length)
+      : "";
+    const savedCustomFilter = savedCustomFilterId
+      ? selected.find((filter) => filter.type === "filter" && filter.id === savedCustomFilterId) || null
+      : null;
+    const missingInformationReference = Boolean(savedCustomFilterId && !savedCustomFilter);
+    const restoredInformation = savedCustomFilterId
+      ? (savedCustomFilter ? savedInformation : "all")
       : (["all", "lead", "quoted", "follow_up", "on_hold"].includes(savedInformation) ? savedInformation : "all");
     const savedAttention = String(preferences?.attention_filter || "all");
     const restoredAttention = salesAttentionOption(savedAttention) ? savedAttention : "all";
@@ -175,6 +184,7 @@ export default function SalesPipeline() {
     const restoredColumn = savedColumnId === "default"
       ? null
       : selected.find((filter) => filter.type === "column_preset" && filter.id === savedColumnId) || null;
+    const missingColumnReference = savedColumnId !== "default" && !restoredColumn;
 
     // Before Information/Attention became mutually exclusive, Attention saves
     // always wrote Information=all, while Information saves could leave the
@@ -187,8 +197,17 @@ export default function SalesPipeline() {
     setFilterStatus(restoredModes.informationFilter);
     setAttentionFilter(restoredModes.attentionFilter);
     setActiveColumnPreset(restoredColumn);
+    if (missingInformationReference && missingColumnReference) {
+      setFilterReconciliationNotice("A saved Information Filter and Column Filter are no longer available. Both were reset.");
+    } else if (missingInformationReference) {
+      setFilterReconciliationNotice("The active saved Information Filter is no longer available. Showing All Statuses.");
+    } else if (missingColumnReference) {
+      setFilterReconciliationNotice("The active saved Column Filter is no longer available. Showing Default View.");
+    } else {
+      setFilterReconciliationNotice("");
+    }
 
-    if (hasLegacyFilterConflict) {
+    if (hasLegacyFilterConflict || missingInformationReference || missingColumnReference) {
       const repairIdentity = preferenceIdentityRef.current;
       const repairSessionToken = sessionToken;
       const expectedPreferences = {
@@ -199,7 +218,7 @@ export default function SalesPipeline() {
       const repairedPreferences = {
         information_filter: restoredModes.informationFilter,
         attention_filter: restoredModes.attentionFilter,
-        column_preset_id: savedColumnId,
+        column_preset_id: restoredColumn?.id || "default",
       };
       preferenceSaveChainRef.current = preferenceSaveChainRef.current
         .catch(() => undefined)
@@ -209,16 +228,39 @@ export default function SalesPipeline() {
             sessionToken: repairSessionToken,
             preferences: repairedPreferences,
             expectedPreferences,
-            label: "Sales Pipeline legacy filter preference repair",
+            label: "Sales Pipeline filter preference repair",
           });
         })
         .catch((error) => {
           if (preferenceIdentityRef.current === repairIdentity) {
-            console.warn("Could not safely repair legacy Sales Pipeline filter preferences:", error);
+            console.warn("Could not safely repair Sales Pipeline filter preferences:", error);
           }
         });
     }
   };
+
+  loadActiveFiltersRef.current = loadActiveFilters;
+
+  useEffect(() => {
+    if (!currentUser?.email || !sessionToken) return undefined;
+    const SalesFilter = base44.entities.SalesFilter;
+    let disposed = false;
+    let refreshTimer = null;
+
+    const unsubscribe = SalesFilter.subscribe(() => {
+      if (disposed || refreshTimer !== null) return;
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = null;
+        if (!disposed) loadActiveFiltersRef.current();
+      }, 75);
+    });
+
+    return () => {
+      disposed = true;
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
+  }, [currentUser?.email, sessionToken]);
 
   const persistFilterPreferences = ({
     informationFilter = filterStatus,
