@@ -49,6 +49,11 @@ test('static HTML projection preserves literal entities and excludes scripts, na
  assert.equal(p.blocks.length,4);assert.equal(p.text.includes('law'),false);
  assert.equal(projectHtmlText('<html><body><p>Town &#65; &#x42; &unknown; <span title="x > y">C</span></p></body></html>').text,'Town A B &unknown; C');
 });
+test('script strings and excluded template markup cannot inject projected office claims',()=>{
+ const p=projectHtmlText('<html><body><main><script>const x="</main><p>Invented responsible office</p>";</script><template></main><p>Invented coverage</p></template><p>Actual office evidence.</p></main></body></html>');
+ assert.equal(p.text,'Actual office evidence.');
+ assert.throws(()=>projectHtmlText('<html><body>'+ '<div>'.repeat(201)+'Office'+ '</div>'.repeat(201)+'</body></html>'),/nesting/);
+});
 test('capture retains all original response bytes including excluded content',async()=>{
  const f=setup();const r=await f.retain();assert.equal(r.status,'retained');const row=f.rows[0];
  assert.equal(Buffer.from(row.raw_html_base64,'base64').toString(),html);assert.equal(row.file_bytes,Buffer.byteLength(html));
