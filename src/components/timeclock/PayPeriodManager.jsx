@@ -625,7 +625,11 @@ export default function PayPeriodManager({
                           size="sm"
                           variant="outline"
                           className="mt-3 bg-white border-amber-300 text-amber-950"
-                          onClick={() => onInvestigateAudit({ time_entry_id: historyResult.conflict.time_entry_id })}
+                          onClick={() => {
+                            onInvestigateAudit({ time_entry_id: historyResult.conflict.time_entry_id });
+                            setHistoryPeriod(null);
+                            setHistoryResult(null);
+                          }}
                         >
                           <ClipboardList className="w-4 h-4 mr-1" />Investigate in Audit Trail
                         </Button>
