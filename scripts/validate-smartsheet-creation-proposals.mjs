@@ -31,7 +31,7 @@ const source = (rowId, rowNumber, values, customerResolution = exactAlias, statu
 const binding = (fields) => Object.fromEntries(fields.map((field, index) => [field, { column_id: String(index + 1) }]));
 const salesBinding = binding([
   "client_name", "est_inv_at", "current_task_description", "lead_source",
-  "estimate_amount", "date_estimate_sent", "date_initial_contact",
+  "estimate_amount", "date_initial_contact",
 ]);
 const ordersBinding = binding([
   "customer_name", "request_type", "description", "quantity", "requestor_name", "date_needed",
@@ -145,7 +145,7 @@ assert.deepEqual(existing.customer.relationship, { field: "customer_id", existin
 assert.equal(existing.proposed_payload.customer_id, "customer-1");
 assert.equal(existing.proposed_payload.client_name, "Acme Signs", "Existing Customer must use canonical name");
 assert.equal(existing.proposed_payload.estimate_amount, 1234.5);
-assert.equal(existing.proposed_payload.date_estimate_sent, "2026-09-21");
+assert.ok(!("date_estimate_sent" in existing.proposed_payload), "Smartsheet creation must not populate Base44-only Estimate Sent.");
 assert.equal(existing.proposed_payload.lead_source, "Referral");
 assert.equal(existing.proposed_payload.current_stage, "sales");
 assert.equal(existing.proposed_payload.sales_status, "lead");
@@ -154,7 +154,7 @@ assert.equal(existing.proposed_payload.smartsheet_row_id, "s-existing");
 assert.equal(existing.proposed_payload.smartsheet_sheet_id, SALES_ID);
 for (const forbidden of [
   "sales_last_activity_at", "sales_stage_changed_at", "smartsheet_last_synced_at",
-  "quote_date", "close_date", "estimate_id", "probability", "profit_margin",
+  "quote_date", "date_estimate_sent", "close_date", "estimate_id", "probability", "profit_margin",
 ]) {
   assert.ok(!(forbidden in existing.proposed_payload), `Must not fabricate ${forbidden}`);
 }
@@ -229,7 +229,9 @@ for (const id of ["s-dup-1", "s-dup-2"]) {
   assert.ok(has(row(sales, id), "possible_duplicate_new_rows"));
 }
 assert.ok(has(row(sales, "s-terminal"), "terminal_task_review"));
-assert.ok(has(row(sales, "s-future"), "future_estimate_sent"));
+assert.ok(!has(row(sales, "s-future"), "future_estimate_sent"));
+assert.ok(!("date_estimate_sent" in row(sales, "s-future").proposed_payload),
+  "A Smartsheet quote-date value is ignored rather than imported into the authoritative Base44 field.");
 assert.ok(has(row(sales, "s-money"), "invalid_field"));
 assert.ok(has(row(sales, "s-date"), "invalid_field"));
 assert.ok(has(row(sales, "s-candidate"), "existing_record_candidate"));
