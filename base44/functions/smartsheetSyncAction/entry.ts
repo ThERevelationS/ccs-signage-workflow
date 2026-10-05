@@ -1611,6 +1611,11 @@ async function pushDataset(
           columnIds: columnIds.join(','),
           exclude: 'nonexistentCells',
         });
+        await reportOrderProgress({
+          phase: 'verifying', current: orderProcessedCount, total: pendingRecords.length, fraction: 0.6,
+          item_label: `Verifying ${remoteChecks.length} written Order${remoteChecks.length === 1 ? '' : 's'}`,
+          detail: 'Re-reading permanent Smartsheet rows before Base44 can mark them complete',
+        });
         const verificationResult = await smartsheetGet('/sheets/' + sheetId + '?' + params.toString(), token);
         if (String(verificationResult.body?.id ?? '') !== sheetId) {
           throw new Error('Smartsheet returned a different sheet during Order write verification.');
