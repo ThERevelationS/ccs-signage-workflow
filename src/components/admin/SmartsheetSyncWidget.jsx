@@ -18,6 +18,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const [dismissed, setDismissed] = useState(false);
   const [dismissedSuccessRun, setDismissedSuccessRun] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statusReadError, setStatusReadError] = useState(false);
   const [recoveringStaleRun, setRecoveringStaleRun] = useState(false);
   const [recoveryError, setRecoveryError] = useState("");
   const prevRunningRef = useRef(false);
@@ -32,8 +33,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
       const configRecord = Array.isArray(configRecords) ? configRecords[0] : configRecords;
       setStatus(statusRecord?.setting_value || null);
       setConfig(configRecord?.setting_value || null);
+      setStatusReadError(false);
     } catch {
-      // silent — widget is best-effort
+      // Preserve the last known authoritative state, but mark it unverified so
+      // a browser/network outage cannot be mistaken for a stalled backend run.
+      setStatusReadError(true);
     } finally {
       setLoading(false);
     }
@@ -47,6 +51,21 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
       compactOrderForm && status?.status === 'running' ? 1000 : 5000);
     return () => clearInterval(interval);
   }, [loadStatus, compactOrderForm, status?.status]);
+
+  useEffect(() => {
+    const refresh = () => loadStatus();
+    const refreshVisible = () => {
+      if (document.visibilityState === 'visible') loadStatus();
+    };
+    window.addEventListener('online', refresh);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refreshVisible);
+    return () => {
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refreshVisible);
+    };
+  }, [loadStatus]);
 
   // Reset dismissed when a new sync starts on other pages.
   useEffect(() => {
@@ -79,8 +98,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   // The shared widget historically waits 30m before declaring a run stale.
   // Order Form now emits frequent heartbeats, so five quiet minutes is enough
   // to say the run is stalled without changing other CCS sync consumers.
-  const isRunning = interpretedStatus.isRunning && !orderProgress.stalled;
-  const isStale = interpretedStatus.isStale || orderProgress.stalled;
+  const reconnectingStatus = Boolean(statusReadError && interpretedStatus.isRunning);
+  const isRunning = interpretedStatus.isRunning && (reconnectingStatus || !orderProgress.stalled);
+  const isStale = !statusReadError && (interpretedStatus.isStale || orderProgress.stalled);
   const ageMinutes = orderProgress.stalled && orderProgress.heartbeatAgeMs !== null
     ? Math.floor(orderProgress.heartbeatAgeMs / 60000) : interpretedStatus.ageMinutes;
   const results = status?.results || [];
@@ -98,12 +118,14 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const progressCurrent = orderProgress.current;
   const progressTotal = orderProgress.total;
   const progressItemLabel = orderProgress.itemLabel;
-  const progressDetail = orderProgress.detail;
-  const progressPhaseLabel = orderProgress.phaseLabel;
+  const progressDetail = reconnectingStatus
+    ? 'Connection to Base44 was lost. The backend run remains authoritative; reconnecting now to confirm what finished and what still needs Retry Sync.'
+    : orderProgress.detail;
+  const progressPhaseLabel = reconnectingStatus ? 'Reconnecting to sync status' : orderProgress.phaseLabel;
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const staleSales = isStale && /^Sales Pipeline\b/.test(currentStepLabel) && interpretedStatus.isStale;
-  const canRecoverStaleOrderRun = (compactOrderForm || staleSales) && isStale && status?.status === 'running' &&
+  const canRecoverStaleOrderRun = !statusReadError && (compactOrderForm || staleSales) && isStale && status?.status === 'running' &&
     currentUser?.role === 'admin' && Boolean(sessionToken);
   const recoverStaleRun = async () => {
     if (!canRecoverStaleOrderRun || recoveringStaleRun) return;
