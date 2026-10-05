@@ -2871,7 +2871,19 @@ Deno.serve(async (req) => {
             !constantTimeEqual(String(summary.generation_audit_reconciliation_hash || ''), await payloadHash(stored))) return failed();
         const windowStart = String(summary.generation_causal_window_start || '');
         const windowEnd = String(summary.generation_causal_window_end || '');
-        if (!windowStart || !windowEnd) return failed();
+        if (!windowEnd || !Number.isFinite(Date.parse(windowEnd))) return failed();
+        if (!predecessor) {
+          if (windowStart) return failed();
+          if (stored.length !== 0) return failed();
+          if (Number(summary.snapshot_version || 0) >= 21) {
+            const storedDiscovery = summary?.generation_membership_discovery;
+            if (!Array.isArray(storedDiscovery) || storedDiscovery.length !== 0 ||
+                Number(summary.generation_membership_discovery_count || 0) !== 0 ||
+                !constantTimeEqual(String(summary.generation_membership_discovery_hash || ''), await payloadHash([]))) return failed();
+          }
+          return { verified: true, conflict: null };
+        }
+        if (!windowStart || !Number.isFinite(Date.parse(windowStart)) || Date.parse(windowStart) > Date.parse(windowEnd)) return failed();
         const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
         const changedIds = new Set((summary.generation_changes || []).map((change: any) => String(change.time_entry_id || '')));
         const periodEntryIdSet = new Set([

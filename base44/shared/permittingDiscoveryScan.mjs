@@ -78,11 +78,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         continue;
       }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
+      const contentHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(response.html)))].map(b => b.toString(16).padStart(2,'0')).join('');
+      if (recoveryGap?.link_content_sha256 && recoveryGap.link_content_sha256 !== contentHash)
+        throw Error('Capped page changed during recovery; saved offset requires review.');
       const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
       const found = batch;
       if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length, ...(recoveryGap ? {recovered_link_offset:offset} : {}) });
-      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, requires_review: true });
+      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, link_content_sha256:contentHash, requires_review: true });
       for (const doc of found) {
         if (doc.url.length > 2000) { gaps.push({url:finalUrl,reason:'oversized_resource_url',requires_review:true}); continue; }
         const sourceKey = key(doc.url);

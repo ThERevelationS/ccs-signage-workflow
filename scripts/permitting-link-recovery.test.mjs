@@ -27,3 +27,10 @@ test('invalid offset fails before network and completed recovery is a no-op',asy
  await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverLinkLimits:true,fetchPage:async()=>{reads++;}}));assert.equal(reads,0);
  c.gaps=[];const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverLinkLimits:true,fetchPage:async()=>{reads++;}});assert.equal(reads,0);assert.deepEqual(r.pending_pages,c.pending_pages);
 });
+
+
+test('changed page cannot silently skip links using an old offset',async()=>{
+ const first=await scanOfficialPermittingPages({seedUrl:seed,resume:cursor(),maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html,finalUrl:index})});
+ const second=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html:html+'<p>changed</p>',finalUrl:index})});
+ assert.deepEqual(second.gaps,first.gaps);assert.equal(second.documents.length,0);assert.equal(second.pages[0].status,'failed');
+});
