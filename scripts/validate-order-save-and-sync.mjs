@@ -96,7 +96,8 @@ assert.match(ui, /summarizeSavedOrderSync\(result, \{ expectedOrderCount: orderI
 assert.equal(schema.properties.smartsheet_pending_local_sync.type, 'boolean');
 assert.equal(schema.properties.smartsheet_pending_local_sync.default, false);
 assert.match(ui, /pendingSyncIdsRef = useRef\(new Set\(\)\)/);
-assert.match(ui, /order\?\.smartsheet_pending_local_sync === true[\s\S]*?pendingSyncIdsRef\.current\.add/);
+assert.match(ui, /durablePendingOrderIds\(ordersData\)/);
+assert.match(ui, /pendingSyncIdsRef\.current = durablePendingIds/);
 assert.match(ui, /nextFields: \{ \.\.\.cleanedUpdates, smartsheet_pending_local_sync: true \}/);
 assert.match(ui, /nextFields: \{ \.\.\.nextFields, smartsheet_pending_local_sync: true \}/);
 assert.match(ui, /smartsheet_pending_local_sync: true\n\s*\};/);
