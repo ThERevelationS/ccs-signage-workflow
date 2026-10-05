@@ -2807,27 +2807,6 @@ Deno.serve(async (req) => {
         );
       };
       // Payroll-membership evidence normalization is shared with the admin Audit Trail verifier.
-      const normalizedPayrollMembershipFromAudit = (row: any) => {
-        const envelope = row?.details?.payroll_membership;
-        if (!envelope || Number(envelope.version || 0) !== 1 || String(envelope.time_zone || '') !== COMPANY_TIME_ZONE) return null;
-        const clockIn = String(envelope.clock_in || '');
-        const companyDate = dateKeyInCompanyTime(clockIn);
-        const semanticClockIn = payrollMembershipSemanticClockIn(row);
-        if (!clockIn || !companyDate || companyDate !== String(envelope.company_date || '') || !semanticClockIn || semanticClockIn !== clockIn) return null;
-        return { company_date: companyDate, clock_in: clockIn, source: 'verified_normalized_audit_envelope' };
-      };
-      const payrollMembershipFromAudit = (row: any) => {
-        const details = row?.details || {};
-        const envelope = details.payroll_membership;
-        if (envelope) return normalizedPayrollMembershipFromAudit(row);
-        const candidates = [details.payroll_clock_in, details.original?.clock_in, details.corrected?.clock_in, details.employee_attested_clock_in, details.detected_clock_in, details.claimed_clock_in, String(row?.action || '') === 'clock_in' ? row?.server_timestamp : ''].filter(Boolean);
-        for (const value of candidates) {
-          const companyDate = dateKeyInCompanyTime(value);
-          if (companyDate) return { company_date: companyDate, clock_in: String(value), source: 'immutable_audit' };
-        }
-        return null;
-      };
-      const PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION = 1;
       const canonicalPayrollMembershipEvidence = (audits: any[], rejectConflicts = false) => {
         const candidates = (Array.isArray(audits) ? audits : []).map((membershipAudit: any) => ({
           membershipAudit,
