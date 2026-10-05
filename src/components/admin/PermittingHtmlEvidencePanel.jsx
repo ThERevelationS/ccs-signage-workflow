@@ -62,7 +62,7 @@ export default function PermittingHtmlEvidencePanel({jurisdictionName,disabled,o
     if(!mounted.current)return;
     setResult(d);
     if(d.success && d.status==="retained"){clearPending();setEvidenceId(d.evidence.id);setConfirmed(false);}
-    else setError(d.error || "Capture outcome is uncertain. Check or resume this same saved request.");
+    else { if(d.retry_safe===true)clearPending(); setError(d.error || "Capture outcome is uncertain. Check or resume this same saved request."); }
     return;
    }
    if(action==="check"){
