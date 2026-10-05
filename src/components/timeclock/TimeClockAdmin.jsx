@@ -237,6 +237,8 @@ export default function TimeClockAdmin() {
       setActiveLaborSegments(laborSegments);
       setCorrectionRequests(corrections);
       setPunchExceptions(punchExceptionRows);
+      const recovery = entries.flatMap((entry) => ["approve", "reopen"].map((decision) => storedApprovalRetry(decision, entry.id))).find(Boolean) || null;
+      setPendingApprovalRecovery(recovery);
     } catch (err) {
       console.error("Error loading data:", err);
     }
@@ -465,14 +467,40 @@ export default function TimeClockAdmin() {
 
   const openApprovalDialog = (entry, decision) => {
     const requestAction = approvalRequestStorageAction(decision);
+    const recoveredPayload = storedApprovalRetry(decision, entry?.id);
     const recoveredRequestId = storedAdminRequestId(requestAction, entry?.id);
-    const requestId = recoveredRequestId || newRequestId();
-    if (!recoveredRequestId && entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
+    if (recoveredPayload?.request_id && recoveredRequestId === recoveredPayload.request_id) {
+      setApprovalEntry(recoveredPayload.entry_snapshot || entry);
+      setApprovalDecision(decision);
+      setApprovalNote(recoveredPayload.note || "");
+      setApprovalError("This is an interrupted approval action. Retry uses the exact original shift version, decision, note, and request ID.");
+      setApprovalRequestId(recoveredPayload.request_id);
+      setApprovalRetryPayload(recoveredPayload);
+      return;
+    }
+    if (recoveredRequestId && !recoveredPayload) clearAdminRequestId(requestAction, entry?.id);
+    const requestId = newRequestId();
+    if (entry?.id) persistAdminRequestId(requestAction, entry.id, requestId);
     setApprovalEntry(entry);
     setApprovalDecision(decision);
     setApprovalNote("");
     setApprovalError("");
     setApprovalRequestId(requestId);
+    setApprovalRetryPayload(null);
+  };
+
+  const resumeApprovalRecovery = (payload) => {
+    if (!payload?.entry_id || !payload?.request_id || !payload?.decision) return;
+    setApprovalEntry(payload.entry_snapshot || timeEntries.find((entry) => entry.id === payload.entry_id) || {
+      id: payload.entry_id,
+      user_email: payload.target_email,
+      updated_date: payload.expected_updated_date,
+    });
+    setApprovalDecision(payload.decision);
+    setApprovalNote(payload.note || "");
+    setApprovalRequestId(payload.request_id);
+    setApprovalRetryPayload(payload);
+    setApprovalError("Retrying the exact interrupted manager approval payload. Values are frozen until the server confirms or rejects this request.");
   };
 
   const handleApproval = async () => {
