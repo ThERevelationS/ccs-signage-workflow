@@ -145,10 +145,11 @@ async function findEvidence(entity,key){
 }
 async function writeReceipt(entity,profile,expected,next){
  try{return await replaceJurisdictionFieldsIfUnchanged({entity,jurisdiction:profile,nextFields:{html_evidence_state:next},
-  guardFields:{...profileIdentity(profile),html_evidence_state:expected},maxAttempts:1,label:'Manual HTML evidence retention'});}
+  guardFields:{...Object.fromEntries(Object.keys(profileIdentity(profile)).map(k=>[k,profile[k]])),html_evidence_state:expected},maxAttempts:1,label:'Manual HTML evidence retention'});}
  catch(error){throw evidenceError(error.message);}
 }
 async function reconcile(deps,profile,state){
+ if(!evidenceEqual(profileIdentity(profile),state.profile_snapshot))throw evidenceError('Canonical profile identity changed after the HTML save reservation.');
  const row=await findEvidence(deps.htmlEntity,state.evidence_key);
  if(!row)return{success:false,status:'save_uncertain',request_id:state.request_id,error:'No matching retained evidence is visible. This uncertain create is not repeated.',llm_calls:0};
  await validateHtmlEvidence(row);
@@ -166,7 +167,7 @@ export async function retainHtmlEvidence(deps,{jurisdictionId,officialUrl,title,
  if(profile.id!==jurisdictionId || !['OH','KY'].includes(profile.state))throw evidenceError('Select the canonical Ohio/Kentucky profile.',400);
  const url=authorizedHtmlUrl(profile,officialUrl),label=clean(title,200),key=requestKey(profile.id,requestId);
  const payload=await evidenceDigest({jurisdiction_id:profile.id,official_url:url,title:label,expected_text_sha256:expectedTextSha256 || null});
- const old=profile.html_evidence_state || null;
+ const old=profile.html_evidence_state;
  if(old?.request_key===key){
   if(old.payload_sha256!==payload || old.requested_by!==actor)throw evidenceError('Saved HTML request belongs to another decision or reviewer.');
   return reconcile(deps,profile,old);
