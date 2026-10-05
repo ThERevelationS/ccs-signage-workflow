@@ -1396,6 +1396,15 @@ async function pushDataset(
         fieldPlan = await planFieldPush({base44,record,dataset,bindings,remoteRow:currentRows[0],rawSheet:rowResult.body,get:async path=>smartsheetGet(path,token),cells,...(dataset==='sales'?{salesReviews,queueSalesReview:review=>queuedSalesReviews.push(review)}:{})});
         if(fieldPlan.unresolved.length) {
           conflicts.push(record.id);
+          if (dataset === 'orders') {
+            await reportOrderProgress({
+              phase: 'needs_review', current: orderProcessedCount, total: pendingRecords.length,
+              fraction: 0.1 + (0.35 * (orderProcessedCount / Math.max(1, pendingRecords.length))),
+              item_label: orderProgressItemLabel(record),
+              detail: `${fieldPlan.unresolved.length} field${fieldPlan.unresolved.length === 1 ? '' : 's'} need conflict review; verified fields remain isolated`,
+              record_id: record.id, smartsheet_row_id: existingRowId,
+            });
+          }
           if(dataset!=='sales' || (!fieldPlan.outgoing.length && !Object.keys(fieldPlan.incoming).length))continue;
         }
         // Collect for batch write/update — no per-record GETs or verify reads.
