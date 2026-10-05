@@ -108,12 +108,20 @@ test('HTTP handler blocks unauthenticated/admin-only actions and keeps staff rea
  };
  assert.equal((await call(null,{action:'read',source_document_id:'s'})).status,403);
  const user={role:'user',email:'staff@example.com'};
- for(const action of ['retain','preview'])assert.equal((await call(user,{action,source_document_id:'s'})).status,403);
+ for(const action of ['retain','preview','retain_transcription'])assert.equal((await call(user,{action,source_document_id:'s'})).status,403);
  assert.equal((await call(user,{action:'approve',source_document_id:'s'})).status,400);
  activeClient=setup();const retained=await retain(activeClient);
  const response=await call(user,{action:'read',source_document_id:'s',record_key:retained.record.record_key});
  assert.equal(response.status,200);assert.equal((await response.json()).record.review_status,'unreviewed');
  const citation=await call(user,{action:'cite',source_document_id:'s',record_key:retained.record.record_key,excerpt:'invented'});
  assert.equal(citation.status,409);assert.equal(activeClient.writes,1);
+ const {retainVisualTranscription}=await import('../base44/shared/permittingVisualTranscription.mjs');
+ const visual=await retainVisualTranscription({...activeClient,body:{request_id:'visual-http-request-001',source_sha256:sha,expected_updated_date:activeClient.row.updated_date,ocr_record_key:retained.record.record_key,render:{sha256:'b'.repeat(64),method:'pdftoppm',width:1700,height:2200},spans:[{text:'All site plans must be drawn to scale!',kind:'instruction_excerpt',region_label:'top paragraph',region:[0.1,0.1,0.5,0.1]}]}});
+ const visualResponse=await call(user,{action:'read_transcription',source_document_id:'s',record_key:visual.record.record_key});
+ assert.equal(visualResponse.status,200);assert.equal((await visualResponse.json()).record.review_status,'pending_staff_review');
+ const exactVisual=await call(user,{action:'cite_transcription',source_document_id:'s',record_key:visual.record.record_key,span:1,excerpt:'drawn to scale!'});
+ assert.equal(exactVisual.status,200);assert.equal((await exactVisual.json()).citation.evidence_kind,'visual_transcription_candidate');
+ const fabricatedVisual=await call(user,{action:'cite_transcription',source_document_id:'s',record_key:visual.record.record_key,span:1,excerpt:'invented'});
+ assert.equal(fabricatedVisual.status,409);assert.equal(activeClient.writes,2);
  }finally{globalThis.Deno=previousDeno;globalThis.__ocrTestClient=previousClient;}
 });
