@@ -109,7 +109,11 @@ export async function reviewOfficeAuthority(deps,{jurisdictionId,input={},action
  if(!Number.isSafeInteger(committed) || committed<0)throw evidenceError('Office review sequence requires reconciliation.');
  let fields;
  if(action==='verify'){
-  fields=await verifyEvidence(deps,profile,input);
+  try{fields=await verifyEvidence(deps,profile,input);}
+  catch(error){
+   if(!dryRun && input.evidence_kind==='official_html')return{success:false,status:'not_recorded',retry_safe:true,error:error.message,llm_calls:0};
+   throw error;
+  }
   fields.relation_key=await evidenceDigest({jurisdiction_id:jurisdictionId,government_office_id:fields.office_snapshot.government_office_id,
    role:fields.role,coverage_area:fields.coverage_area});
  }else{
