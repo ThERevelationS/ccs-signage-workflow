@@ -210,7 +210,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       guardFields: { ...jurisdictionProtectionGuards(jurisdiction, finalUpdateData, {
         respectManualProtection: batchSettings.skipManualData !== false,
       }), ...(discoveryScan?.continuation_state ? { _manual_documents: jurisdiction._manual_documents,
-        permitting_url: jurisdiction.permitting_url, website_url: jurisdiction.website_url } : {}) },
+        ...(Object.hasOwn(finalUpdateData, 'permitting_url') ? {} : { permitting_url: jurisdiction.permitting_url }),
+        ...(Object.hasOwn(finalUpdateData, 'website_url') ? {} : { website_url: jurisdiction.website_url }) } : {}) },
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
     });
 

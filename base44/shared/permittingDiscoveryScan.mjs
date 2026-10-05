@@ -27,6 +27,7 @@ export const DISCOVERY_CURSOR_METHOD = 'official-page-frontier-v1';
 const CURSOR_MAX_ITEMS = 5000;
 function validateCursor(cursor, seedUrl, maxDepth) {
   if (!cursor || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
+      !Number.isInteger(cursor.attempted_pages_total) || cursor.attempted_pages_total < 0 ||
       !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||
       cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS)
     throw Error('Saved discovery frontier requires review; source, format or bounds changed.');
