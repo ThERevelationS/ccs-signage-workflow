@@ -182,10 +182,10 @@ assert.match(source, /`diagnostic-row-\$\{sourceRowIndex\}`/);
 assert.match(source, /row\.id \|\| "Missing immutable audit ID"/);
 console.log('PASS integrity investigation identifies malformed authoritative membership rows, explains failed rules, and uses row-local diagnostic identity for every diagnostic row without promoting it to authoritative evidence');
 
-assert.match(loadRowsBlock, /const duplicateIntegrityAuditIds = \[\.\.\.new Set\(integrityAuditIdList\.filter/);
-assert.match(loadRowsBlock, /const duplicateIntegrityAuditIdSet = new Set\(duplicateIntegrityAuditIds\)/);
-assert.match(loadRowsBlock, /duplicate_immutable_audit_id: duplicateImmutableAuditId/);
-assert.match(loadRowsBlock, /duplicate_immutable_audit_ids: duplicateIntegrityAuditIds/);
+assert.match(source, /const duplicateIntegrityAuditIds = \[\.\.\.new Set\(integrityAuditIdList\.filter/);
+assert.match(source, /const duplicateIntegrityAuditIdSet = new Set\(duplicateIntegrityAuditIds\)/);
+assert.match(source, /duplicate_immutable_audit_id: duplicateImmutableAuditId/);
+assert.match(source, /duplicate_immutable_audit_ids: duplicateIntegrityAuditIds/);
 assert.match(source, /Duplicate immutable Audit ID/);
 assert.match(source, /shared by multiple authoritative records/);
 assert.doesNotMatch(source, /integrityDiagnosticByAuditId/);
