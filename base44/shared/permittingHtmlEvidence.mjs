@@ -57,7 +57,7 @@ export function projectHtmlText(html,{includeLinks=false}={}){
    if(!match)continue;
    const closing=Boolean(match[1]),tag=match[2].toLowerCase(),suppressed=stack.some(s=>s.skip);
    if(closing){
-    if(tag==='a' && anchor){
+    if(includeLinks && tag==='a' && anchor){
      if(!suppressed)anchors.push({...anchor,end:parts.join('').length});
      anchor=null;
     }
@@ -69,7 +69,7 @@ export function projectHtmlText(html,{includeLinks=false}={}){
     if(breaks.has(tag) && !suppressed)parts.push('\n');
     const hidden=/\s(?:hidden(?:\s|=|\/?>)|aria-hidden\s*=\s*["']?true\b)/i.test(token) ||
      /style\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(token);
-    if(tag==='a'){
+    if(includeLinks && tag==='a'){
      // Only quoted absolute destinations are usable as office-identity evidence.
      const href=token.match(/\shref\s*=\s*(?:"([^"]*)"|'([^']*)')/i);
      anchor=!suppressed && !hidden && href?{start:parts.join('').length,href:decodeText(href[1] ?? href[2])}:null;
