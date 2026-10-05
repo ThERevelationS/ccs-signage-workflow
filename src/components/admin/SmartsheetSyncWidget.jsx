@@ -119,7 +119,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const progressTotal = orderProgress.total;
   const progressItemLabel = orderProgress.itemLabel;
   const progressDetail = reconnectingStatus
-    ? 'Connection to Base44 was lost. The backend run remains authoritative; reconnecting now to confirm what finished and what still needs Retry Sync.'
+    ? 'Could not refresh Base44 sync status. The last known backend run remains authoritative; reconnecting now to confirm what finished and what still needs Retry Sync.'
     : orderProgress.detail;
   const progressPhaseLabel = reconnectingStatus ? 'Reconnecting to sync status' : orderProgress.phaseLabel;
   const progressPercent = orderProgress.show ? orderProgress.percent
