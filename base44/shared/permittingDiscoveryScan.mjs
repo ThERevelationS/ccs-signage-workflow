@@ -1,5 +1,5 @@
 import { PDF_RESOURCE_METHOD } from './permittingResourceResponse.mjs';
-import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority } from './jurisdictionPermittingLinkDiscovery.mjs';
+import { discoverOfficialPermittingResources, isDownloadableResearchDocument, permittingResourcePriority, permittingResourceSnapshot } from './jurisdictionPermittingLinkDiscovery.mjs';
 
 const key = value => { const u = new URL(value); u.hash = ''; u.hostname = u.hostname.replace(/^www\./, ''); return u.href; };
 function scopedUrl(value, seed) {
@@ -58,7 +58,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
     const recoveryGap = recoverLinkLimits ? gaps.find(g => g.reason === 'page_link_limit') : null;
     const inferredDepth = recoveryGap && [...priorDocuments.values()].find(d => d.discovery_page_url && key(d.discovery_page_url) === key(recoveryGap.url))?.discovery_depth;
     const next = recoveryGap ? {url:recoveryGap.url, depth:recoveryGap.depth ?? inferredDepth ?? maxDepth} : pending.shift();
-    const offset = recoveryGap?.link_offset ?? 0;
+    const offset = recoveryGap?.link_hash_method === 'ordered-resource-list-v1' ? (recoveryGap.link_offset ?? 0) : 0;
     if (!Number.isInteger(offset) || offset < 0 || offset > 5000 || !Number.isInteger(next.depth) || next.depth < 0 || next.depth > maxDepth)
       throw frontierError('Saved link recovery bounds require review.');
     const nextKey = key(next.url);
@@ -78,14 +78,14 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         continue;
       }
       if (typeof response.html !== 'string' || !response.html.trim()) throw Error('Official page returned no usable static HTML.');
-      const contentHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(response.html)))].map(b => b.toString(16).padStart(2,'0')).join('');
-      if (recoveryGap?.link_content_sha256 && recoveryGap.link_content_sha256 !== contentHash)
+      const contentHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(permittingResourceSnapshot(response.html,finalUrl).map(d=>({url:d.url,title:d.title}))))))].map(b => b.toString(16).padStart(2,'0')).join('');
+      if (recoveryGap?.link_hash_method === 'ordered-resource-list-v1' && recoveryGap.link_content_sha256 && recoveryGap.link_content_sha256 !== contentHash)
         throw Error('Capped page changed during recovery; saved offset requires review.');
       const batch = discoverOfficialPermittingResources(response.html, finalUrl, { maxLinks: 100, offset });
       const found = batch;
       if (recoveryGap) gaps.splice(gaps.indexOf(recoveryGap), 1);
       pages.push({ ...next, final_url: finalUrl, status: 'scanned', discovered_resources: found.length, ...(recoveryGap ? {recovered_link_offset:offset} : {}) });
-      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, link_content_sha256:contentHash, requires_review: true });
+      if (found.length === 100) gaps.push({ url: finalUrl, reason: 'page_link_limit', depth:next.depth, link_offset:offset + found.length, link_content_sha256:contentHash, link_hash_method:'ordered-resource-list-v1', requires_review: true });
       for (const doc of found) {
         if (doc.url.length > 2000) { gaps.push({url:finalUrl,reason:'oversized_resource_url',requires_review:true}); continue; }
         const sourceKey = key(doc.url);

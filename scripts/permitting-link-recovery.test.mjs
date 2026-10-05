@@ -17,13 +17,13 @@ test('legacy capped index drains across requests without resetting unrelated pro
  assert.equal(state.attempted_pages_total,5);
 });
 test('failure preserves offset and does not consume pending work',async()=>{
- const before=cursor();before.gaps[0].link_offset=100;
+ const before=cursor();before.gaps[0].link_offset=100;before.gaps[0].link_hash_method='ordered-resource-list-v1';
  const r=await scanOfficialPermittingPages({seedUrl:seed,resume:before,maxPages:3,recoverLinkLimits:true,fetchPage:async()=>{throw Error('temporary failure');}});
  assert.deepEqual(r.continuation_state.gaps,before.gaps);assert.deepEqual(r.pending_pages,before.pending_pages);
  assert.equal(r.attempted_pages,1);
 });
 test('invalid offset fails before network and completed recovery is a no-op',async()=>{
- let reads=0;const c=cursor();c.gaps[0].link_offset=-1;
+ let reads=0;const c=cursor();c.gaps[0].link_offset=-1;c.gaps[0].link_hash_method='ordered-resource-list-v1';
  await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverLinkLimits:true,fetchPage:async()=>{reads++;}}));assert.equal(reads,0);
  c.gaps=[];const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverLinkLimits:true,fetchPage:async()=>{reads++;}});assert.equal(reads,0);assert.deepEqual(r.pending_pages,c.pending_pages);
 });
@@ -31,6 +31,12 @@ test('invalid offset fails before network and completed recovery is a no-op',asy
 
 test('changed page cannot silently skip links using an old offset',async()=>{
  const first=await scanOfficialPermittingPages({seedUrl:seed,resume:cursor(),maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html,finalUrl:index})});
- const second=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html:html+'<p>changed</p>',finalUrl:index})});
+ const second=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html:html+'<a href="/sign-new/">Sign new</a>',finalUrl:index})});
  assert.deepEqual(second.gaps,first.gaps);assert.equal(second.documents.length,0);assert.equal(second.pages[0].status,'failed');
+});
+
+test('changing unrelated page markup does not block resource pagination',async()=>{
+ const first=await scanOfficialPermittingPages({seedUrl:seed,resume:cursor(),maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html,finalUrl:index})});
+ const second=await scanOfficialPermittingPages({seedUrl:seed,resume:first.continuation_state,maxPages:1,recoverLinkLimits:true,fetchPage:async()=>({html:html+'<p>dynamic nonce</p>',finalUrl:index})});
+ assert.equal(second.pages[0].status,'scanned');assert.equal(second.gaps.find(g=>g.reason==='page_link_limit').link_offset,200);
 });

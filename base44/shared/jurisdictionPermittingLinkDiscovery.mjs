@@ -49,11 +49,11 @@ export function permittingDocumentType({ title = '', url = '' } = {}) {
   return 'other';
 }
 
-export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offset = 0 } = {}) {
+function collectOfficialPermittingResources(html, pageUrl, { maxLinks = 25, offset = 0 } = {}) {
   let page;
   try { page = new URL(String(pageUrl || '').trim()); } catch { return []; }
   if (!['http:', 'https:'].includes(page.protocol) || page.username || page.password) return [];
-  const limit = Math.max(0, Math.min(100, Math.floor(Number(maxLinks) || 0)));
+  const limit = Math.max(0, Math.min(5001, Math.floor(Number(maxLinks) || 0)));
   if (!limit) return [];
   const markup = String(html || '').replace(/<!--[\s\S]*?-->|<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   let base = page;
@@ -114,4 +114,13 @@ export function discoverOfficialPermittingResources(html, pageUrl, { maxLinks = 
     Number(isDownloadableResearchDocument(b)) - Number(isDownloadableResearchDocument(a)));
   if (!Number.isInteger(offset) || offset < 0 || offset > 5000) throw Error('Invalid discovery link offset.');
   return [...results, ...candidates].slice(offset, offset + limit);
+}
+
+export function discoverOfficialPermittingResources(html, pageUrl, {maxLinks=25,offset=0}={}) {
+  return collectOfficialPermittingResources(html,pageUrl,{maxLinks:Math.min(100,maxLinks),offset});
+}
+export function permittingResourceSnapshot(html,pageUrl) {
+  const rows=collectOfficialPermittingResources(html,pageUrl,{maxLinks:5001});
+  if(rows.length>5000) throw Error('Page resource storage bounds require review.');
+  return rows;
 }

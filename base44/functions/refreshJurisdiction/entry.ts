@@ -188,6 +188,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
         source: d.source === "official_page_harvest" ? "official_page_harvest" : "ai_discovered",
         verification_notes: d.verification_notes || "",
         ...(d.resource_classification ? { resource_classification: d.resource_classification } : {}),
+        ...(d.discovery_page_url ? {discovery_page_url:d.discovery_page_url, discovery_depth:d.discovery_depth} : {}),
         last_fetched: new Date().toISOString()
       }));
 
