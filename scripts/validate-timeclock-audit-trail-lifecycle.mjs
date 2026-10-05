@@ -182,6 +182,14 @@ assert.match(loadRowsBlock, /missing_conflict_audit_id_count: missingRequiredAud
 assert.match(loadRowsBlock, /const requiredAuditIds = requiredEvidence\.map/);
 assert.ok(loadRowsBlock.indexOf('missingRequiredAuditIdCount > 0') < loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0'), 'expected audit IDs must be present before duplicate detection');
 console.log('PASS blank or missing expected conflict audit identities fail closed instead of being filtered away');
+assert.match(loadRowsBlock, /const requiredEvidenceFields = \["action", "request_id", "server_timestamp", "company_date", "clock_in", "source"\]/);
+assert.match(loadRowsBlock, /missing_fields: requiredEvidenceFields\.filter/);
+assert.match(loadRowsBlock, /invalid_contract_version: Number\(item\?\.contract_version \|\| 0\) !== PAYROLL_MEMBERSHIP_EVIDENCE_CONTRACT_VERSION/);
+assert.match(loadRowsBlock, /if \(malformedRequiredEvidence\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-shape check failed/);
+assert.match(loadRowsBlock, /malformed_conflict_evidence: malformedRequiredEvidence/);
+assert.ok(loadRowsBlock.indexOf('malformedRequiredEvidence.length > 0') < loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0'), 'expected evidence shape must be valid before identity/completeness checks');
+assert.ok(loadRowsBlock.indexOf('malformedRequiredEvidence.length > 0') < loadRowsBlock.indexOf('contradictoryEvidence.length > 0'), 'malformed expected provenance must be distinguished from authoritative evidence contradiction');
+console.log('PASS malformed expected conflict provenance fails closed as an evidence-shape error before authoritative comparison');
 assert.match(loadRowsBlock, /const duplicateRequiredAuditIds = \[\.\.\.new Set\(requiredAuditIds\.filter/);
 assert.match(loadRowsBlock, /if \(duplicateRequiredAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-identity check failed/);
 assert.match(loadRowsBlock, /duplicate_conflict_audit_ids: duplicateRequiredAuditIds/);
