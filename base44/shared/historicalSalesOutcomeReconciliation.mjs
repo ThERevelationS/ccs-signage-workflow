@@ -8,7 +8,7 @@ export const HISTORICAL_SALES_RECONCILIATION = Object.freeze({
 
 export function historicalTerminalTaskFamily(value) {
   const task = clean(value);
-  if (/^completed sale\b/i.test(task)) return 'completed_sale';
+  if (/^completed sales?\b/i.test(task)) return 'completed_sale';
   if (/^lost\b/i.test(task)) return 'lost';
   if (/^closed\b/i.test(task)) return 'closed';
   return '';
@@ -16,7 +16,7 @@ export function historicalTerminalTaskFamily(value) {
 
 export function historicalTerminalTaskSubtype(value) {
   const task = clean(value).toLowerCase();
-  if (/^completed sale\b/.test(task)) return task === 'completed sale' ? 'completed_sale' : 'completed_sale_variant';
+  if (/^completed sales?\b/.test(task)) return task === 'completed sale' ? 'completed_sale' : 'completed_sale_variant';
   if (/^lost\s*-\s*we took too long\b/.test(task)) return 'lost_too_long';
   if (/^lost\b/.test(task)) return 'lost';
   if (/^closed\s*-\s*did not lose\b/.test(task)) return 'closed_did_not_lose';
