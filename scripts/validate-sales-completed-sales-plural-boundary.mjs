@@ -79,7 +79,8 @@ const spreadsheet = readFileSync("src/components/sales/SalesPipelineSpreadsheet.
 const legacyQuery = spreadsheet.split("const LEGACY_CLOSED_QUERY = {")[1]?.split("\n};")[0] || "";
 check(!legacyQuery.includes("in_pipeline:"), "Legacy History query no longer drops stale in_pipeline=true historical imports.");
 check(legacyQuery.includes("completed sales?"), "Legacy History query includes singular and plural Completed Sale/Sales forms.");
-check(legacyQuery.includes("closed(?:$|\\s*-)"), "Legacy History query excludes non-terminal Closed phrases.");
+check(legacyQuery.includes("closed(?:$|") && legacyQuery.includes("completed sales?(?:$|"),
+  "Legacy History query uses exact-or-hyphen terminal families instead of broad word-prefix matching.");
 
 const proposal = readFileSync("src/components/admin/smartsheetControlledCreationProposalModel.js", "utf8");
 check(proposal.includes("completed sales?"), "Controlled creation review recognizes plural Completed Sales text.");
