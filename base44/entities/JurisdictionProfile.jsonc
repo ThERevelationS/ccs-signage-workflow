@@ -376,6 +376,11 @@
     "verification_notes": {
       "type": "string",
       "description": "Optional staff notes describing verification scope, source, or caveats."
+    },
+    "discovery_scan_state": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "URL-bound deterministic discovery frontier. Pending pages, visited URLs and unresolved gaps commit atomically with retained documents using profile version guards. No authority or locality completeness is implied."
     }
   },
   "required": [

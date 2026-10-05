@@ -23,12 +23,35 @@ function pagePriority(doc = {}) {
 // No LLM, uploads, entity writes, or rule promotion. The caller supplies the
 // SSRF-safe, size/time-limited HTML fetcher. Pending pages are explicit rather
 // than silently claiming that a bounded traversal covered the jurisdiction.
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2 }) {
+export const DISCOVERY_CURSOR_METHOD = 'official-page-frontier-v1';
+const CURSOR_MAX_ITEMS = 5000;
+function validateCursor(cursor, seedUrl, maxDepth) {
+  if (!cursor || cursor.method !== DISCOVERY_CURSOR_METHOD || key(cursor.seed_url) !== key(seedUrl) || cursor.max_depth !== maxDepth ||
+      !Array.isArray(cursor.pending_pages) || !Array.isArray(cursor.visited_urls) || !Array.isArray(cursor.gaps) ||
+      cursor.pending_pages.length + cursor.visited_urls.length + cursor.gaps.length > CURSOR_MAX_ITEMS)
+    throw Error('Saved discovery frontier requires review; source, format or bounds changed.');
+  for (const url of cursor.visited_urls) scopedUrl(url, seedUrl);
+  for (const page of cursor.pending_pages) {
+    scopedUrl(page.url, seedUrl);
+    if (!Number.isInteger(page.depth) || page.depth < 0 || page.depth > maxDepth) throw Error('Saved discovery page depth requires review.');
+  }
+  for (const gap of cursor.gaps) { scopedUrl(gap.url, seedUrl); if (typeof gap.reason !== 'string') throw Error('Saved discovery gap requires review.'); }
+}
+
+export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [] }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
-  const pending = [{ url: seedUrl, depth: 0 }], queued = new Set([key(seedUrl)]), visited = new Set();
-  const documents = new Map(), pages = [], gaps = [];
+  if (resume) validateCursor(resume, seedUrl, maxDepth);
+  const pending = resume ? resume.pending_pages.map(p => ({ url: p.url, depth: p.depth })) : [{ url: seedUrl, depth: 0 }];
+  const visited = new Set((resume?.visited_urls || []).map(key));
+  const gaps = (resume?.gaps || []).map(g => ({ ...g }));
+  const queued = new Set([...visited, ...pending.map(p => key(p.url)), ...gaps.map(g => key(g.url))]);
+  const documents = new Map(), pages = [];
+  // Existing retained document metadata supplies labels/classification for a
+  // pending URL; it is not copied into the new scan's write set.
+  const priorDocuments = new Map();
+  for (const doc of existingDocuments || []) { try { priorDocuments.set(key(doc.url), doc); } catch {} }
   let attempted = 0;
   while (pending.length && attempted < maxPages) {
     const next = pending.shift(), nextKey = key(next.url);
@@ -40,7 +63,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       if (finalKey !== nextKey && visited.has(finalKey)) { pages.push({ ...next, final_url: finalUrl, status: 'redirect_duplicate' }); continue; }
       visited.add(finalKey);
       if (response.resource_kind === 'pdf' && response.classification_method === PDF_RESOURCE_METHOD) {
-        const existing = documents.get(nextKey) || { title: 'Official PDF resource', url: next.url, doc_type: 'other', source: 'official_page_harvest' };
+        const existing = documents.get(nextKey) || priorDocuments.get(nextKey) || { title: 'Official PDF resource', url: next.url, doc_type: 'other', source: 'official_page_harvest' };
         documents.set(nextKey, { ...existing, resource_classification: { kind: 'pdf', method: PDF_RESOURCE_METHOD,
           source_url: existing.url, final_url: finalUrl }, verification_notes: (existing.verification_notes || '') +
           ' PDF MIME type and signature checked; full-byte archival and authority review remain required.' });
@@ -60,7 +83,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
         queued.add(sourceKey);
         if (next.depth >= maxDepth) { gaps.push({ url: doc.url, reason: 'depth_frontier', requires_review: true }); continue; }
         pending.push({ url: doc.url, depth: next.depth + 1 });
-        pending.sort((a, b) => pagePriority(documents.get(key(b.url))) - pagePriority(documents.get(key(a.url))));
+        pending.sort((a, b) => pagePriority(documents.get(key(b.url)) || priorDocuments.get(key(b.url))) - pagePriority(documents.get(key(a.url)) || priorDocuments.get(key(a.url))));
       }
     } catch (error) {
       const reason = String(error?.message || error).slice(0, 300);
@@ -68,13 +91,19 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       gaps.push({ url: next.url, reason: 'page_fetch_failed', detail: reason, requires_review: true });
     }
   }
-  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)), documents: [...documents.values()], pages,
-    pending_pages: pending.filter(p => !visited.has(key(p.url))), gaps, attempted_pages: attempted,
+  const pendingPages = pending.filter(p => !visited.has(key(p.url)));
+  const continuationState = { method: DISCOVERY_CURSOR_METHOD, seed_url: seedUrl, max_depth: maxDepth,
+    visited_urls: [...visited], pending_pages: pendingPages, gaps,
+    attempted_pages_total: (Number(resume?.attempted_pages_total) || 0) + attempted };
+  if (continuationState.visited_urls.length + pendingPages.length + gaps.length > CURSOR_MAX_ITEMS)
+    throw Error('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
+  return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && !pendingPages.length), documents: [...documents.values()], pages,
+    pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume),
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
     jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',
       'PDF classification is a routing hint; full original-byte verification occurs during archival.',
-      'Pending pages and failures are returned; a durable cross-run frontier is not yet implemented.'] };
+      'Saved failed pages and depth/link gaps require separate review; traversal completion does not establish locality coverage.'] };
 }
 
 // A partial AI answer cannot suppress deterministic official-page discovery.

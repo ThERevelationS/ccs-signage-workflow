@@ -118,6 +118,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       try {
         discoveryScan = await scanOfficialPermittingPages({
           seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1,
+          resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
             const response = await safeExternalFetch(url, {
               headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -127,7 +128,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
             return { ...resource, finalUrl: response.url || url };
           },
         });
-        if (discoveryOnly && !discoveryScan.success) throw new Error('Official-page discovery could not read the selected source.');
+        if (discoveryOnly && !discoveryScan.success && !jurisdiction.discovery_scan_state) throw new Error('Official-page discovery could not read the selected source.');
         researchData.documents = combineResearchAndDiscoveredDocuments(researchData.documents, discoveryScan.documents);
       } catch (error) {
         if (discoveryOnly) throw error;
@@ -138,7 +139,8 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     }
 
     // Build update object — replace with new data, keep manual overrides
-    const updateData = {};
+    const updateData: any = {};
+    if (discoveryScan?.continuation_state) updateData.discovery_scan_state = discoveryScan.continuation_state;
 
     if (batchSettings.updateWebsites && (!batchSettings.skipManualData || !jurisdiction._manual_website_url)) {
       if (researchData.website_url) updateData.website_url = researchData.website_url;
@@ -205,9 +207,10 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
       entity: base44.asServiceRole.entities.JurisdictionProfile,
       jurisdiction,
       nextFields: finalUpdateData,
-      guardFields: jurisdictionProtectionGuards(jurisdiction, finalUpdateData, {
+      guardFields: { ...jurisdictionProtectionGuards(jurisdiction, finalUpdateData, {
         respectManualProtection: batchSettings.skipManualData !== false,
-      }),
+      }), ...(discoveryScan?.continuation_state ? { _manual_documents: jurisdiction._manual_documents,
+        permitting_url: jurisdiction.permitting_url, website_url: jurisdiction.website_url } : {}) },
       label: `Jurisdiction research refresh ${jurisdiction.name || id}`,
     });
 
