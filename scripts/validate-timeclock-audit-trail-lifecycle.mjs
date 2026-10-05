@@ -175,7 +175,13 @@ assert.match(loadRowsBlock.slice(integrityGuardStart, integrityGuardEnd), /misma
 assert.match(loadRowsBlock, /scopedId \? \{ time_entry_id: scopedId \} : \{\}/);
 console.log('PASS ordinary unscoped recent-history responses bypass scoped TimeEntry rejection');
 
+assert.match(loadRowsBlock, /const requiredEvidence = Array\.isArray\(expectedEvidence\) \? expectedEvidence : \[\]/);
+assert.match(loadRowsBlock, /const missingRequiredAuditIdCount = requiredEvidence\.filter\(\(item\) => !String\(item\?\.audit_id \|\| ""\)\.trim\(\)\)\.length/);
+assert.match(loadRowsBlock, /if \(missingRequiredAuditIdCount > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*no immutable audit ID/);
+assert.match(loadRowsBlock, /missing_conflict_audit_id_count: missingRequiredAuditIdCount/);
 assert.match(loadRowsBlock, /const requiredAuditIds = requiredEvidence\.map/);
+assert.ok(loadRowsBlock.indexOf('missingRequiredAuditIdCount > 0') < loadRowsBlock.indexOf('duplicateRequiredAuditIds.length > 0'), 'expected audit IDs must be present before duplicate detection');
+console.log('PASS blank or missing expected conflict audit identities fail closed instead of being filtered away');
 assert.match(loadRowsBlock, /const duplicateRequiredAuditIds = \[\.\.\.new Set\(requiredAuditIds\.filter/);
 assert.match(loadRowsBlock, /if \(duplicateRequiredAuditIds\.length > 0\)[\s\S]*setRows\(\[\]\);[\s\S]*evidence-identity check failed/);
 assert.match(loadRowsBlock, /duplicate_conflict_audit_ids: duplicateRequiredAuditIds/);
