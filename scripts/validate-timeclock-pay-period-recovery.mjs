@@ -2080,7 +2080,7 @@ test('exact direct admin correction retry releases a stranded shared mutation ga
         query.correction_create_request_id === payload.request_id &&
         update.$set?.correction_create_status === 'idle') {
       failRelease = false;
-      throw new Error('synthetic direct admin correction gate release interruption');
+      h.rows.TimeClockEmployeeState[0].updated_date = '2026-09-20T00:00:59.999Z';
     }
   });
   const interrupted = await h.invoke(payload);
