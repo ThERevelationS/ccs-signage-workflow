@@ -99,6 +99,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
   const progressTotal = orderProgress.total;
   const progressItemLabel = orderProgress.itemLabel;
   const progressDetail = orderProgress.detail;
+  const progressPhaseLabel = orderProgress.phaseLabel;
   const progressPercent = orderProgress.show ? orderProgress.percent
     : totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const staleSales = isStale && /^Sales Pipeline\b/.test(currentStepLabel) && interpretedStatus.isStale;
@@ -162,7 +163,7 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               <span className="shrink-0 font-semibold text-slate-800 dark:text-slate-100">{isRunning ? "Syncing" : "Sync Complete"}</span>
               <span className="min-w-0 truncate text-[11px] text-slate-500 dark:text-slate-300">
                 {isRunning
-                  ? `${currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
+                  ? `${progressPhaseLabel || currentStepLabel || "Working…"}${progressTotal > 0 ? ` · ${progressCurrent}/${progressTotal}` : ''}${progressItemLabel ? ` · ${progressItemLabel}` : ''} · ${progressPercent}%`
                   : `${datasetLabel}${directionLabel ? ` ${directionLabel}` : ""} · +${created.toLocaleString()} created · ↑${updated.toLocaleString()} updated`}
               </span>
               {!isRunning && <span className="shrink-0 text-[10px] text-slate-400">just now</span>}
@@ -175,6 +176,11 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
               </button>
             )}
           </div>
+          {isRunning && progressDetail && (
+            <div className="mt-0.5 truncate pl-9 text-[10px] leading-tight text-slate-500 dark:text-slate-400" aria-live="polite">
+              {progressDetail}
+            </div>
+          )}
           {isRunning && (
             <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
               <div className="h-full rounded-full bg-blue-500 transition-all duration-500"
@@ -262,8 +268,9 @@ export default function SmartsheetSyncWidget({ compactOrderForm = false, session
                 {completedSteps}/{totalSteps} steps
               </span>
             </div>
-            {(progressItemLabel || progressDetail) && (
+            {(progressPhaseLabel || progressItemLabel || progressDetail) && (
               <div className="rounded-md border border-blue-100 bg-blue-50/70 px-2 py-1.5 text-[10px] leading-snug text-slate-700 dark:border-blue-900/60 dark:bg-blue-950/25 dark:text-slate-200" aria-live="polite">
+                {progressPhaseLabel && <div className="font-semibold text-blue-800 dark:text-blue-300">{progressPhaseLabel}</div>}
                 {progressItemLabel && <div className="truncate font-medium">{progressItemLabel}</div>}
                 {progressDetail && <div className="truncate text-slate-500 dark:text-slate-400">{progressDetail}</div>}
               </div>
