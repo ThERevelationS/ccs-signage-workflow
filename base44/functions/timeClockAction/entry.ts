@@ -2820,12 +2820,13 @@ Deno.serve(async (req) => {
         return candidates[0] || null;
       };
       const verifyGenerationAuditReconciliation = async (summary: any, predecessor: any) => {
+        const failed = (conflict: any = null) => ({ verified: false, conflict });
         const stored = summary?.generation_audit_reconciliation;
         if (!Array.isArray(stored) || Number(summary.generation_audit_reconciliation_count || 0) !== stored.length ||
-            !constantTimeEqual(String(summary.generation_audit_reconciliation_hash || ''), await payloadHash(stored))) return false;
+            !constantTimeEqual(String(summary.generation_audit_reconciliation_hash || ''), await payloadHash(stored))) return failed();
         const windowStart = String(summary.generation_causal_window_start || '');
         const windowEnd = String(summary.generation_causal_window_end || '');
-        if (!windowStart || !windowEnd) return false;
+        if (!windowStart || !windowEnd) return failed();
         const relevantActions = ['admin_archive', 'admin_correction', 'clock_in', 'clock_out', 'punch_exception', 'correction_request'];
         const changedIds = new Set((summary.generation_changes || []).map((change: any) => String(change.time_entry_id || '')));
         const periodEntryIdSet = new Set([
