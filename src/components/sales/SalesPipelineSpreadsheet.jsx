@@ -104,7 +104,7 @@ const LEGACY_CLOSED_QUERY = {
   is_rider: false,
   // Query terminal-task candidates regardless of stale in_pipeline state.
   // isLegacyClosedSalesRecord applies the authoritative client-side scope rule.
-  current_task_description: { $regex: "^(lost\\b|completed sales?\\b|closed\\b)", $options: "i" },
+  current_task_description: { $regex: "^(lost(?:$|\\s*-)|completed sales?(?:$|\\s*-)|closed(?:$|\\s*-))", $options: "i" },
   deleted: { $ne: true },
 };
 const ALL_RECORDS_ACTIVE_QUERY = { is_rider: false, completed: false, deleted: { $ne: true } };
