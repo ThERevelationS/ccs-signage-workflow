@@ -10,11 +10,7 @@ function normalizeTerminalTask(value) {
     .replace(/\s+/g, " ");
 }
 
-const SALES_TERMINAL_TASKS = new Set([
-  "lost",
-  "completed sale",
-  "closed",
-]);
+const SALES_TERMINAL_TASK_PATTERN = /^(lost\b|completed sales?\b|closed\b)/;
 
 function rowLabel(row, dataset) {
   if (dataset === "sales") {
@@ -103,7 +99,7 @@ export function classifySmartsheetRolloutRow(row, dataset, { baseline = null, sh
   if (dataset === "sales") {
     const taskText = cleanText(row?.values?.current_task_description);
     const normalizedTask = normalizeTerminalTask(taskText);
-    if (SALES_TERMINAL_TASKS.has(normalizedTask)) {
+    if (SALES_TERMINAL_TASK_PATTERN.test(normalizedTask)) {
       return {
         ...base,
         outcome: "legacy_terminal",
