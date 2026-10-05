@@ -253,13 +253,14 @@ assert.ok(
 const salesCreateGuardIndex = backend.indexOf("Sales Smartsheet create returned no usable permanent row ID");
 const salesLinkVerificationIndex = backend.indexOf("Sales create permanent link verification", salesCreateGuardIndex);
 const salesLinkFailureIndex = backend.indexOf("Sales permanent Smartsheet link could not be verified after create", salesLinkVerificationIndex);
+const salesCreateMetadataIndex = backend.indexOf("Sales Base44 sync metadata could not be verified after the Smartsheet write", salesLinkFailureIndex);
 const salesCreatedIndex = backend.indexOf("if (salesSuccessfulWrite === 'created') created.push(record.id);", salesCreateGuardIndex);
 assert.ok(
   salesCreateGuardIndex >= 0 &&
   salesLinkVerificationIndex > salesCreateGuardIndex &&
   salesLinkFailureIndex > salesLinkVerificationIndex &&
-  salesMetadataIndex > salesLinkFailureIndex &&
-  salesCreatedIndex > salesMetadataIndex,
+  salesCreateMetadataIndex > salesLinkFailureIndex &&
+  salesCreatedIndex > salesCreateMetadataIndex,
   "Sales create must verify its permanent Base44 row/sheet link and metadata before counting creation.",
 );
 assert.match(
