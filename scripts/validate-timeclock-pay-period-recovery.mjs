@@ -1079,6 +1079,75 @@ test('cross-pay-period employee correction approval requires destination reopen 
   assert.equal(destinationVerify.body.verified, true, JSON.stringify(destinationVerify.body));
 });
 
+test('destination finalization gate wins over a simultaneous employee correction review', async () => {
+  const h = setup();
+  h.rows.TimeClockPayPeriod.push({
+    id: 'employee-race-destination', label: 'Employee Race Destination',
+    start_date: '2026-09-27', end_date: '2026-10-03', status: 'review', last_request_id: '',
+    updated_date: '2026-09-20T00:00:00.000Z',
+  });
+  const entry = h.rows.TimeEntry[0];
+  const submitted = await h.invokeAs(employee, {
+    action: 'submit_correction_request', target_email: employee.email,
+    request_id: 'employee-race-submit-001', entry_id: entry.id,
+    expected_updated_date: entry.updated_date, reason: 'Move this shift into the adjacent payroll period',
+    requested_changes: {
+      clock_in: '2026-09-27T14:00:00.000Z', clock_out: '2026-09-27T22:00:00.000Z',
+      lunch_minutes: 0, notes: 'Synthetic race correction',
+    },
+  });
+  assert.equal(submitted.status, 200, JSON.stringify(submitted.body));
+  let request = h.rows.TimeClockCorrectionRequest.find((row) => row.request_id === 'employee-race-submit-001');
+  assert.ok(request?.id);
+
+  let gateEntered;
+  const entered = new Promise((resolve) => { gateEntered = resolve; });
+  let releaseFinalization;
+  h.setAfterRowUpdate(async (entity, _query, update, row) => {
+    if (entity === 'TimeClockEmployeeState' && update.$set?.correction_create_status === 'creating' &&
+        row.user_email === employee.email && row.correction_create_time_entry_id === 'pay_period:employee-race-destination') {
+      gateEntered();
+      await new Promise((resolve) => { releaseFinalization = resolve; });
+    }
+  });
+
+  const finalizePromise = h.invoke({
+    action: 'pay_period_status', pay_period_id: 'employee-race-destination', decision: 'finalize',
+    request_id: 'employee-race-destination-finalize-001', note: '',
+  });
+  await entered;
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  const competingReview = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'employee-race-review-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date, decision: 'approve',
+    reason: 'Employee correction is accurate',
+  });
+  assert.equal(competingReview.status, 409, JSON.stringify(competingReview.body));
+  assert.match(competingReview.body.error, /Another correction submission|employee mutation gate|being processed|current action/i);
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  assert.equal(request.status, 'pending');
+  assert.equal(h.rows.TimeEntry[0].clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(h.rows.TimeClockAudit.filter((row) => row.action === 'admin_correction' && row.request_id === 'employee-race-review-001').length, 0);
+
+  releaseFinalization();
+  const finalized = await finalizePromise;
+  assert.equal(finalized.status, 200, JSON.stringify(finalized.body));
+  assert.equal(h.rows.TimeClockPayPeriod.find((row) => row.id === 'employee-race-destination').status, 'finalized');
+
+  request = h.rows.TimeClockCorrectionRequest.find((row) => row.id === request.id);
+  const blockedAfterFinalize = await h.invoke({
+    action: 'review_correction_request', target_email: employee.email,
+    request_id: 'employee-race-review-after-finalize-001', correction_request_id: request.id,
+    expected_request_updated_date: request.updated_date, decision: 'approve',
+    reason: 'Employee correction is accurate',
+  });
+  assert.equal(blockedAfterFinalize.status, 409, JSON.stringify(blockedAfterFinalize.body));
+  assert.equal(blockedAfterFinalize.body.finalized_pay_period_id, 'employee-race-destination');
+  assert.equal(h.rows.TimeEntry[0].clock_in, '2026-09-20T14:00:00.000Z');
+  assert.equal(h.rows.TimeClockEmployeeState.find((row) => row.user_email === employee.email).correction_create_status, 'idle');
+});
+
 test('Clock In gate wins and finalization retries into an active-shift block', async () => {
   // Keep the authoritative punch within the period being finalized; a shift
   // starting after its end date is correctly excluded from that period.
