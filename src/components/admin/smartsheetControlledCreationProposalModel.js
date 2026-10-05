@@ -9,7 +9,7 @@ const ORDER_TYPES = Object.freeze({
   supplies: "Supplies",
   other: "Other",
 });
-const TERMINAL_TASK_PATTERN = /^(lost\b|completed sales?\b|closed\b)/;
+const TERMINAL_TASK_PATTERN = /^(lost(?:$|\s*-)|completed sales?(?:$|\s*-)|closed(?:$|\s*-))/;
 
 function text(value) {
   return String(value ?? "").trim();
