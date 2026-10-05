@@ -109,7 +109,7 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
         }
         const requiredEvidence = Array.isArray(expectedEvidence) ? expectedEvidence : [];
         if (integrityMode) {
-          const malformedAuthoritativeMembershipRows = loadedRows.map((row) => {
+          const malformedAuthoritativeMembershipRows = loadedRows.map((row, rowIndex) => {
             const membership = payrollMembershipFromAudit(row);
             if (!membership) return null;
             const evidence = {
@@ -123,7 +123,11 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
               source: String(membership.source || ""),
             };
             const validation = validatePayrollMembershipConflictEvidence(evidence);
-            return payrollMembershipConflictEvidenceIsMalformed(validation) ? { audit_id: evidence.audit_id, validation } : null;
+            return payrollMembershipConflictEvidenceIsMalformed(validation) ? {
+              audit_id: evidence.audit_id,
+              diagnostic_row_index: rowIndex,
+              validation,
+            } : null;
           }).filter(Boolean);
           if (malformedAuthoritativeMembershipRows.length > 0) {
             console.error("Time Clock audit integrity investigation authoritative evidence failure:", { requested_time_entry_id: scopedId, malformed_authoritative_membership_rows: malformedAuthoritativeMembershipRows });
@@ -279,7 +283,8 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
   const conflictAuditIds = useMemo(() => new Set(investigationEvidence.map((item) => String(item?.audit_id || "")).filter(Boolean)), [investigationEvidence]);
   const investigationActive = Boolean(String(investigation?.time_entry_id || "").trim());
   const integrityInvestigation = investigationActive && investigation?.mode === "integrity";
-  const integrityDiagnosticByAuditId = useMemo(() => new Map(integrityDiagnostics.map((item) => [String(item?.audit_id || ""), item])), [integrityDiagnostics]);
+  const integrityDiagnosticByAuditId = useMemo(() => new Map(integrityDiagnostics.filter((item) => String(item?.audit_id || "").trim()).map((item) => [String(item.audit_id), item])), [integrityDiagnostics]);
+  const integrityDiagnosticByRowIndex = useMemo(() => new Map(integrityDiagnostics.filter((item) => !String(item?.audit_id || "").trim()).map((item) => [Number(item?.diagnostic_row_index), item])), [integrityDiagnostics]);
 
   return (
     <div className="clay-card p-4">
@@ -356,9 +361,12 @@ export default function TimeClockAuditTrail({ investigation = null, onExitInvest
       ) : (
         <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
           {filtered.map((row) => {
+            const sourceRowIndex = rows.indexOf(row);
             const isConflictEvidence = conflictAuditIds.has(String(row.id || ""));
             const claimedEvidence = investigationEvidence.find((item) => String(item?.audit_id || "") === String(row.id || ""));
-            const integrityDiagnostic = integrityDiagnosticByAuditId.get(String(row.id || ""));
+            const integrityDiagnostic = String(row.id || "").trim()
+              ? integrityDiagnosticByAuditId.get(String(row.id))
+              : integrityDiagnosticByRowIndex.get(sourceRowIndex);
             return (
               <div key={row.id} className={`rounded-xl border p-3 ${integrityDiagnostic ? "border-red-400 bg-red-50 ring-1 ring-red-200" : isConflictEvidence ? "border-amber-400 bg-amber-50 ring-1 ring-amber-200" : "bg-white"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
