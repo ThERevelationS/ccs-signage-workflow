@@ -60,3 +60,7 @@ Cincinnati capped index recovered 169 links across two portions, clearing its li
 ## Phase 5 live archive handoff
 
 Selected official COA PDF archived and cataloged: 158,030 bytes, matching source/stored SHA-256; source `6ac3e5b86c944422b102d089` remains needs_verification. Content matches an older COA archive, so no new revision/currentness claim. Phase 5 remains active: remaining depth/fetch gaps and varied OH/KY shared-pipeline acceptance precede Phase 6 exact-citation AI extraction. No frontend publish or approved-rule changes.
+
+## Phase 5 rediscovery metadata persistence
+
+Fixed shared document merge losing newly observed discovery page/depth for already-known URLs. Deterministic harvest may fill an absent pair; existing observations, document IDs, archived bytes/hashes, manual and pinned records remain preserved. AI or malformed metadata cannot supply recovery depth. This prevents future rediscovery metadata loss; it does not retroactively establish legacy depth or clear existing gaps. 45 focused tests pass, refresh and batch-update backend bundles pass, full build passes. Phase 5 remains active. Next: guarded legacy gap recovery and varied Ohio/Kentucky discovery/archive/text acceptance, before Phase 6 exact-citation AI extraction. Backend/shared changes auto-sync; no frontend publish.
