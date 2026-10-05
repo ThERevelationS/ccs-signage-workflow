@@ -58,9 +58,10 @@ assert.match(transport, /onRateLimitRetry = null/);
 assert.match(transport, /await onRateLimitWait\(\{ attempt: rateLimitRetries, waitSeconds: backoffSeconds, retryAfterSeconds \}\)/);
 assert.match(transport, /await onRateLimitRetry\(\{ attempt: rateLimitRetries, waitSeconds: backoffSeconds \}\)/);
 
-for (const phase of ['backup','reading','checking','writing','waiting_rate_limit','retrying','verifying','confirming','needs_review']) {
+for (const phase of ['backup','reading','writing','waiting_rate_limit','retrying','verifying','confirming','needs_review']) {
   assert.match(backend, new RegExp("phase: '" + phase + "'"));
 }
+assert.match(backend, /phase: \/\^\\d\+\$\/\.test\(rowId\) \? 'checking' : 'create'/);
 assert.match(backend, /Smartsheet rate limit: waiting \$\{waitSeconds\}s before create retry \$\{attempt\}\/3/);
 assert.match(backend, /Rate limited: waiting \$\{waitSeconds\}s before write retry \$\{attempt\}\/3/);
 assert.match(backend, /Verifying Smartsheet row \$\{verification\.rowId\} · \$\{verifyIndex \+ 1\}\/\$\{remoteChecks\.length\}/);
