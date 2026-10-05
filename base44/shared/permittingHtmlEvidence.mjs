@@ -44,7 +44,9 @@ function decodeText(text){
 // Original response bytes remain intact. External CSS, JavaScript and linked files are not evaluated.
 export function projectHtmlText(html){
  if(typeof html!=='string' || !/<(?:html|body)\b/i.test(html))throw evidenceError('The response is not a recognizable HTML document.',400);
- const tokens=html.replace(/<!--[\s\S]*?-->/g,'').match(/<(?:"[^"]*"|'[^']*'|[^'">])*?>|[^<]+|</g) || [];
+ const markup=html.replace(/<!--[\s\S]*?-->/g,'').replace(/<(script|style|noscript)\b(?:"[^"]*"|'[^']*'|[^'">])*?>[\s\S]*?<\/\1\s*>/gi,'');
+ const tokens=markup.match(/<(?:"[^"]*"|'[^']*'|[^'">])*?>|[^<]+|</g) || [];
+ if(tokens.length>50_000)throw evidenceError('HTML markup exceeds the bounded static-text parser.',400);
  const stack=[],parts=[],excluded=new Set(['head','script','style','template','noscript','svg','math','nav','header','footer']);
  const breaks=new Set(['p','div','li','h1','h2','h3','h4','h5','h6','br','hr','tr','td','th','section','article','address','dt','dd']);
  const voids=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
@@ -55,13 +57,17 @@ export function projectHtmlText(html){
    const closing=Boolean(match[1]),tag=match[2].toLowerCase(),suppressed=stack.some(s=>s.skip);
    if(closing){
     const i=stack.map(s=>s.tag).lastIndexOf(tag);
-    if(i>=0)stack.splice(i);
+    const excludedRoot=stack.findIndex(s=>s.skip);
+    if(i>=0 && (excludedRoot<0 || i>=excludedRoot))stack.splice(i);
     if(breaks.has(tag) && !stack.some(s=>s.skip))parts.push('\n');
    }else{
     if(breaks.has(tag) && !suppressed)parts.push('\n');
     const hidden=/\s(?:hidden(?:\s|=|\/?>)|aria-hidden\s*=\s*["']?true\b)/i.test(token) ||
      /style\s*=\s*["'][^"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(token);
-    if(!voids.has(tag) && !/\/\s*>$/.test(token))stack.push({tag,skip:suppressed || excluded.has(tag) || hidden});
+    if(!voids.has(tag) && !/\/\s*>$/.test(token)){
+     if(stack.length>=200)throw evidenceError('HTML nesting exceeds its processing bound.',400);
+     stack.push({tag,skip:suppressed || excluded.has(tag) || hidden});
+    }
    }
   }else if(!stack.some(s=>s.skip))parts.push(decodeText(token).replace(/\s+/g,' '));
  }
