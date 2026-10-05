@@ -66,6 +66,7 @@ export default function FleetMechanic() {
   const [workRecovery, setWorkRecovery] = useState(null);
   const portalRequestRef = useRef(0);
   const selectedWorkOrderRef = useRef(null);
+  const estimateCapabilityRef = useRef(null);
 
   const fetchPortalPayload = async () => {
     const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
@@ -79,6 +80,9 @@ export default function FleetMechanic() {
     const all = [...(result?.active_work_orders || []), ...(result?.recent_completed || [])];
     const selectedId = selectedWorkOrderRef.current;
     const freshSelected = selectedId ? all.find(row => row.id === selectedId) || null : null;
+    const previousCanEstimate = estimateCapabilityRef.current;
+    const nextCanEstimate = !!result?.portal?.capabilities?.estimates;
+    estimateCapabilityRef.current = nextCanEstimate;
     if (selectedId && !freshSelected) {
       selectedWorkOrderRef.current = null;
       setSelected(null);
@@ -92,7 +96,13 @@ export default function FleetMechanic() {
       setSavedMessage("");
       return;
     }
-    if (freshSelected) setSelected(freshSelected);
+    if (freshSelected) {
+      setSelected(freshSelected);
+      if (previousCanEstimate !== null && previousCanEstimate !== nextCanEstimate) {
+        const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === selectedId) || null;
+        setEstimateForm(nextCanEstimate ? estimateSeed(freshEstimate) : estimateSeed(null));
+      }
+    }
   };
 
   const applyWorkOrderSnapshot = workOrder => {
