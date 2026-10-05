@@ -35,7 +35,7 @@ function validateCursor(cursor, seedUrl, maxDepth) {
   } catch (error) { throw frontierError(error.message || 'Saved discovery frontier requires review.'); }
 }
 
-export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false }) {
+export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages = 3, maxDepth = 2, resume = null, existingDocuments = [], recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl = null }) {
   seedUrl = scopedUrl(seedUrl, seedUrl);
   if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 30 ||
       !Number.isInteger(maxDepth) || maxDepth < 0 || maxDepth > 5) throw Error('Invalid discovery request size.');
@@ -52,14 +52,17 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
   // Apply current resource ranking to a saved frontier as well as new links.
   // The saved URLs/depths remain intact; no pages or review gaps are reset.
   pending.sort((a, b) => permittingResourcePriority(priorDocuments.get(key(b.url)) || {url:b.url}) - permittingResourcePriority(priorDocuments.get(key(a.url)) || {url:a.url}));
-  if (recoverLinkLimits && recoverFetchFailures) throw frontierError('Select one discovery recovery mode.');
-  const recoveryReason = recoverLinkLimits ? 'page_link_limit' : recoverFetchFailures ? 'page_fetch_failed' : null;
+  if (Number(recoverLinkLimits) + Number(recoverFetchFailures) + Number(recoverDepthUrl !== null) > 1) throw frontierError('Select one discovery recovery mode.');
+  const selectedDepthKey = recoverDepthUrl !== null ? key(scopedUrl(recoverDepthUrl, seedUrl)) : null;
+  if (selectedDepthKey && !gaps.some(g => g.reason === 'depth_frontier' && key(g.url) === selectedDepthKey))
+    throw frontierError('Selected depth URL is not a saved review gap.');
+  const recoveryReason = selectedDepthKey ? 'depth_frontier' : recoverLinkLimits ? 'page_link_limit' : recoverFetchFailures ? 'page_fetch_failed' : null;
   if (recoveryReason && !resume) throw frontierError('Link recovery requires saved discovery progress.');
   let attempted = 0;
-  while ((recoveryReason ? gaps.some(g => g.reason === recoveryReason) : pending.length) && attempted < maxPages) {
-    const recoveryGap = recoveryReason ? gaps.find(g => g.reason === recoveryReason) : null;
+  while ((recoveryReason ? gaps.some(g => g.reason === recoveryReason) : pending.length) && attempted < (selectedDepthKey ? 1 : maxPages)) {
+    const recoveryGap = recoveryReason ? gaps.find(g => g.reason === recoveryReason && (!selectedDepthKey || key(g.url) === selectedDepthKey)) : null;
     const inferredDepth = recoveryGap && [...priorDocuments.values()].find(d => d.discovery_page_url && key(d.discovery_page_url) === key(recoveryGap.url))?.discovery_depth;
-    const next = recoveryGap ? {url:recoveryGap.url, depth:recoveryGap.depth ?? inferredDepth ?? maxDepth} : pending.shift();
+    const next = recoveryGap ? {url:recoveryGap.url, depth:selectedDepthKey ? maxDepth : recoveryGap.depth ?? inferredDepth ?? maxDepth} : pending.shift();
     const offset = recoveryGap?.link_hash_method === 'ordered-resource-list-v1' ? (recoveryGap.link_offset ?? 0) : 0;
     if (!Number.isInteger(offset) || offset < 0 || offset > 5000 || !Number.isInteger(next.depth) || next.depth < 0 || next.depth > maxDepth)
       throw frontierError('Saved link recovery bounds require review.');
@@ -117,7 +120,7 @@ export async function scanOfficialPermittingPages({ seedUrl, fetchPage, maxPages
       JSON.stringify(continuationState).length > CURSOR_MAX_CHARS)
     throw frontierError('Discovery frontier storage bounds reached; prior saved progress must be preserved for review.');
   return { success: pages.some(p => ['scanned', 'classified_pdf'].includes(p.status)) || Boolean(resume && attempted === 0 && !pendingPages.length), documents: [...documents.values()], pages,
-    pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits, recovering_fetch_failures: recoverFetchFailures,
+    pending_pages: pendingPages, gaps, attempted_pages: attempted, continuation_state: continuationState, resumed: Boolean(resume), recovering_link_limits: recoverLinkLimits, recovering_fetch_failures: recoverFetchFailures, recovering_depth_url: recoverDepthUrl,
     traversal_complete: pending.every(p => visited.has(key(p.url))) && gaps.length === 0,
     jurisdiction_coverage_complete: false, authority_established: false, llm_calls: 0,
     limitations: ['Static same-host HTML discovery only; external department/code/portal referrals require separately established scope.',

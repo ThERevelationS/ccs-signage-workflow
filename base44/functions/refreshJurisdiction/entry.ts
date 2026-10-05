@@ -22,6 +22,9 @@ Deno.serve(async (req) => {
     const isTargetedAutomation = await hasWorkflowInvocationCapability(body, 'refreshJurisdictionTargeted');
     const { jurisdiction_id, jurisdictionId, settings } = body;
     const discoveryOnly = body?.discovery_only === true;
+    const recoverDepthUrl = body.recover_depth_url ?? null;
+    if (recoverDepthUrl !== null && (!discoveryOnly || typeof recoverDepthUrl !== 'string')) return Response.json({error:'Depth recovery requires discovery-only mode and a selected URL'}, {status:400});
+    if (recoverDepthUrl !== null && (body.recover_fetch_failures === true || body.recover_link_limits === true)) return Response.json({error:'Select one recovery mode'}, {status:400});
     if (body.recover_fetch_failures === true && !discoveryOnly) return Response.json({error:'Fetch recovery requires discovery-only mode'}, {status:400});
     if (body.recover_fetch_failures === true && body.recover_link_limits === true) return Response.json({error:'Select one recovery mode'}, {status:400});
     if (body.recover_link_limits === true && !discoveryOnly) return Response.json({error:'Link recovery requires discovery-only mode'}, {status:400});
@@ -44,7 +47,7 @@ Deno.serve(async (req) => {
     if (id || settings || discoveryOnly) {
       if (isScheduledRun) return Response.json({ error: 'Scheduled refresh does not accept caller-selected jurisdiction data' }, { status: 400 });
       if (!id) return Response.json({ error: 'Jurisdiction id is required for a targeted refresh' }, { status: 400 });
-      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true);
+      const result = await refreshJurisdictionRecord(base44, id, settings, discoveryOnly, body.defer_archive !== true && !isScheduledRun && !isTargetedAutomation, body.recover_link_limits === true, body.recover_fetch_failures === true, recoverDepthUrl);
       return Response.json(result);
     }
 
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false) {
+async function refreshJurisdictionRecord(base44: any, id: string, settings?: any, discoveryOnly = false, archiveAfterRefresh = true, recoverLinkLimits = false, recoverFetchFailures = false, recoverDepthUrl: string | null = null) {
     const startedAt = Date.now();
     const jurisdiction = await base44.asServiceRole.entities.JurisdictionProfile.get(id);
     if (!jurisdiction) throw Object.assign(new Error('Jurisdiction not found'), { status: 404 });
@@ -120,7 +123,7 @@ async function refreshJurisdictionRecord(base44: any, id: string, settings?: any
     if (researchData.permitting_url && batchSettings.updateDocuments && !jurisdiction._manual_documents) {
       try {
         discoveryScan = await scanOfficialPermittingPages({
-          seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1, recoverLinkLimits, recoverFetchFailures,
+          seedUrl: researchData.permitting_url, maxPages: discoveryOnly ? 3 : 1, recoverLinkLimits, recoverFetchFailures, recoverDepthUrl,
           resume: jurisdiction.discovery_scan_state || null, existingDocuments: jurisdiction.documents || [],
           fetchPage: async (url: string) => {
             const response = await safeExternalFetch(url, {

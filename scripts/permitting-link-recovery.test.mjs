@@ -67,3 +67,21 @@ test('recovery modes cannot combine or run without saved state',async()=>{
  await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:cursor(),recoverFetchFailures:true,recoverLinkLimits:true,fetchPage}));
  await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,recoverFetchFailures:true,fetchPage}));assert.equal(reads,0);
 });
+
+
+test('selected depth recovery fetches one saved gap and leaves children as gaps without consuming pending work',async()=>{
+ const c=cursor();c.gaps=[{url:index,reason:'depth_frontier',requires_review:true},{url:'https://county.gov/other/',reason:'depth_frontier',requires_review:true}];
+ const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverDepthUrl:index,fetchPage:async url=>{assert.equal(url,index);return {html:'<a href="/sign.pdf">Sign Application</a><a href="/sign/detail/">Sign details</a>',finalUrl:index};}});
+ assert.equal(r.attempted_pages,1);assert.equal(r.pages[0].depth,2);assert.deepEqual(r.pending_pages,c.pending_pages);
+ assert.ok(!r.gaps.some(g=>g.url===index));assert.ok(r.gaps.some(g=>g.url==='https://county.gov/other/'));
+ assert.ok(r.gaps.some(g=>g.url==='https://county.gov/sign/detail/'&&g.reason==='depth_frontier'));assert.equal(r.llm_calls,0);
+ assert.ok(r.documents.some(d=>d.url==='https://county.gov/sign.pdf'));
+});
+
+test('selected depth failure preserves its gap and foreign or unsaved selections never fetch',async()=>{
+ const c=cursor();c.gaps=[{url:index,reason:'depth_frontier',requires_review:true}];let reads=0;
+ const fetchPage=async()=>{reads++;throw Error('timeout');};
+ for(const url of ['https://foreign.gov/form/','https://county.gov/unsaved/']) await assert.rejects(scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverDepthUrl:url,fetchPage}));
+ assert.equal(reads,0);
+ const r=await scanOfficialPermittingPages({seedUrl:seed,resume:c,recoverDepthUrl:index,fetchPage});assert.deepEqual(r.gaps,c.gaps);assert.equal(reads,1);
+});
