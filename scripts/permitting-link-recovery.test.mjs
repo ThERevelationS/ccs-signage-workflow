@@ -12,7 +12,7 @@ test('legacy capped index drains across requests without resetting unrelated pro
   r.documents.forEach(d=>urls.add(d.url));state=r.continuation_state;
   assert.ok(state.visited_urls.includes(seed));assert.ok(state.pending_pages.some(p=>p.url==='https://county.gov/fees/'));
  }
- assert.equal(urls.size,243); // index + 240 applications + sign + synthetic index source? actual index is one
+ assert.equal(urls.size,242); // index + 240 applications + sign
  assert.equal(state.gaps.filter(g=>g.reason==='page_link_limit').length,0);
  assert.equal(state.attempted_pages_total,5);
 });
