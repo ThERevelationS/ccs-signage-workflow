@@ -16,12 +16,12 @@ export function historicalTerminalTaskFamily(value) {
 
 export function historicalTerminalTaskSubtype(value) {
   const task = clean(value).toLowerCase();
-  if (/^completed sales?\b/.test(task)) return task === 'completed sale' ? 'completed_sale' : 'completed_sale_variant';
+  if (/^completed sales?(?:$|\s*-)/.test(task)) return task === 'completed sale' ? 'completed_sale' : 'completed_sale_variant';
   if (/^lost\s*-\s*we took too long\b/.test(task)) return 'lost_too_long';
-  if (/^lost\b/.test(task)) return 'lost';
+  if (/^lost(?:$|\s*-)/.test(task)) return 'lost';
   if (/^closed\s*-\s*did not lose\b/.test(task)) return 'closed_did_not_lose';
   if (/^closed\s*-\s*attempted follow-up\/no response\b/.test(task)) return 'closed_no_response';
-  if (/^closed\b/.test(task)) return 'closed_other';
+  if (/^closed(?:$|\s*-)/.test(task)) return 'closed_other';
   return '';
 }
 
