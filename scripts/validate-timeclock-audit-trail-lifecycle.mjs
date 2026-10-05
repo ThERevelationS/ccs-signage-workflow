@@ -146,7 +146,8 @@ assert.ok(mountEffectStart >= 0 && previousRefStart > mountEffectStart);
 const mountBlock = source.slice(mountEffectStart, previousRefStart);
 assert.match(mountBlock, /const initialTimeEntryId = String\(investigation\?\.time_entry_id \|\| ""\)\.trim\(\)/);
 assert.match(mountBlock, /const initialExpectedEvidence = Array\.isArray\(investigation\?\.evidence\) \? investigation\.evidence : \[\]/);
-assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId, initialExpectedEvidence\)[\s\S]*else[\s\S]*loadRows\(\)/);
+assert.match(mountBlock, /const initialIntegrityMode = investigation\?\.mode === "integrity"/);
+assert.match(mountBlock, /if \(initialTimeEntryId\)[\s\S]*loadRows\(initialTimeEntryId, initialExpectedEvidence, initialIntegrityMode\)[\s\S]*else[\s\S]*loadRows\(\)/);
 assert.equal((mountBlock.match(/loadRows\(/g) || []).length, 2, 'mount effect should choose exactly one of scoped or recent-history loading');
 console.log('PASS initial scoped mount chooses one deterministic audit request');
 
@@ -158,8 +159,16 @@ assert.match(transitionBlock, /previous\.nonce !== investigation\?\.nonce \|\| p
 assert.match(transitionBlock, /if \(!changed \|\| !timeEntryId\) return/);
 assert.match(transitionBlock, /setSearch\(timeEntryId\)/);
 assert.match(transitionBlock, /const expectedEvidence = Array\.isArray\(investigation\?\.evidence\) \? investigation\.evidence : \[\]/);
-assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence\)/);
+assert.match(transitionBlock, /loadRows\(timeEntryId, expectedEvidence, investigation\?\.mode === "integrity"\)/);
 console.log('PASS rapid investigation changes request the newest TimeEntry scope');
+
+assert.match(loadRowsBlock, /if \(integrityMode\)/);
+assert.match(loadRowsBlock, /const membership = payrollMembershipFromAudit\(row\)/);
+assert.match(loadRowsBlock, /validatePayrollMembershipConflictEvidence\(evidence\)/);
+assert.match(loadRowsBlock, /payrollMembershipConflictEvidenceIsMalformed\(validation\)/);
+assert.match(loadRowsBlock, /malformed_authoritative_membership_rows/);
+assert.match(loadRowsBlock, /No scoped audit records are being presented as trusted evidence/);
+console.log('PASS integrity investigation validates reconstructed authoritative membership rows through the shared contract and fails closed');
 
 assert.match(source, /onExitInvestigation\(\);[\s\S]*loadRows\(\);/);
 assert.match(source, /setSearch\(""\);[\s\S]*setActionFilter\("all"\);[\s\S]*onExitInvestigation/);
