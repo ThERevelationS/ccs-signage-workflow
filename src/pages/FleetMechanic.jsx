@@ -67,6 +67,7 @@ export default function FleetMechanic() {
   const portalRequestRef = useRef(0);
   const selectedWorkOrderRef = useRef(null);
   const estimateCapabilityRef = useRef(null);
+  const saveCapabilityRef = useRef(null);
 
   const fetchPortalPayload = async () => {
     const { data: result } = await base44.functions.invoke("fleetMechanicPortal", { action: "bootstrap", token });
@@ -82,7 +83,10 @@ export default function FleetMechanic() {
     const freshSelected = selectedId ? all.find(row => row.id === selectedId) || null : null;
     const previousCanEstimate = estimateCapabilityRef.current;
     const nextCanEstimate = !!result?.portal?.capabilities?.estimates;
+    const previousCanSave = saveCapabilityRef.current;
+    const nextCanSave = result?.portal?.capabilities?.save !== false;
     estimateCapabilityRef.current = nextCanEstimate;
+    saveCapabilityRef.current = nextCanSave;
     if (selectedId && !freshSelected) {
       selectedWorkOrderRef.current = null;
       setSelected(null);
@@ -101,6 +105,15 @@ export default function FleetMechanic() {
       if (previousCanEstimate !== null && previousCanEstimate !== nextCanEstimate) {
         const freshEstimate = (result?.repair_estimates || []).find(row => row.work_order_id === selectedId) || null;
         setEstimateForm(nextCanEstimate ? estimateSeed(freshEstimate) : estimateSeed(null));
+      }
+      if (previousCanSave !== null && previousCanSave !== nextCanSave) {
+        setForm({ actual_hours:freshSelected.actual_hours ?? "", corrective_action:freshSelected.corrective_action || "", mechanic_note:"" });
+        setPhotos(current => {
+          current.forEach(row => URL.revokeObjectURL(row.preview));
+          return [];
+        });
+        setActionError("");
+        setSavedMessage("");
       }
     }
   };
@@ -399,7 +412,7 @@ export default function FleetMechanic() {
       </div>
     </main>
 
-    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} workRecovery={workRecovery?.workOrderId===selected.id?workRecovery:null} onCheckWorkState={()=>recoverWorkMutation(workRecovery,workRecovery?.reason||"Previous mechanic work-order update was not confirmed.")} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} recoveryRequired={estimateRecovery?.workOrderId===selected.id} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)} onCheckEstimateState={()=>refreshEstimateState(selected.id,estimateRecovery?.reason||"Previous repair-estimate request was not confirmed.",true)}/>} 
+    {selected && <JobModal workOrder={selected} equipment={equipmentById[selected.equipment_id]} task={taskById[selected.maintenance_task_id]} form={form} setForm={setForm} photos={photos} setPhotos={setPhotos} onAddPhotos={addPhotos} onClose={closeJob} onStart={startJob} onSave={saveProgress} busy={busy} error={actionError} saved={savedMessage} workRecovery={workRecovery?.workOrderId===selected.id?workRecovery:null} onCheckWorkState={()=>recoverWorkMutation(workRecovery,workRecovery?.reason||"Previous mechanic work-order update was not confirmed.")} canStart={data?.portal?.capabilities?.start !== false} canSave={data?.portal?.capabilities?.save !== false} canEstimate={!!data?.portal?.capabilities?.estimates} estimate={estimateByWorkOrder[selected.id]||null} estimateForm={estimateForm} setEstimateForm={setEstimateForm} recoveryRequired={estimateRecovery?.workOrderId===selected.id} onSaveEstimate={()=>saveEstimate(false)} onSubmitEstimate={()=>saveEstimate(true)} onCheckEstimateState={()=>refreshEstimateState(selected.id,estimateRecovery?.reason||"Previous repair-estimate request was not confirmed.",true)}/>} 
   </Standalone>;
 }
 
@@ -407,7 +420,7 @@ function Standalone({children, portalName = ""}) {
   return <div className="min-h-screen bg-slate-50 text-slate-900"><header className="bg-slate-950 text-white"><div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><Wrench className="w-5 h-5"/></div><div><div className="font-bold leading-tight">CCS Fleet</div><div className="text-xs text-slate-300">{portalName || "Mechanic Portal"}</div></div></div></header>{children}<footer className="border-t border-slate-200 bg-white"><div className="max-w-5xl mx-auto px-4 py-4 text-xs text-slate-400 text-center">Standalone external mechanic portal · No access to CCS Signage Workflow navigation or administration</div></footer></div>;
 }
 
-function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved,workRecovery,onCheckWorkState,canEstimate,estimate,estimateForm,setEstimateForm,recoveryRequired,onSaveEstimate,onSubmitEstimate,onCheckEstimateState}) {
+function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddPhotos,onClose,onStart,onSave,busy,error,saved,workRecovery,onCheckWorkState,canStart,canSave,canEstimate,estimate,estimateForm,setEstimateForm,recoveryRequired,onSaveEstimate,onSubmitEstimate,onCheckEstimateState}) {
   const completed = workOrder.status === "completed";
   const approvalBlocked = !completed && workOrder.status !== "in_progress" && workOrder.approval_block?.blocked === true;
   const workRecoveryRequired = !!workRecovery;
@@ -430,13 +443,14 @@ function JobModal({workOrder,equipment,task,form,setForm,photos,setPhotos,onAddP
 
       {!completed && <Section title="Mechanic Progress">
         {workRecoveryRequired&&<div role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><div className="font-semibold">Current server state must be checked.</div><p className="mt-1 text-xs text-amber-800">Start Work, progress fields, notes, photos, and Save Progress are locked until CCS Fleet confirms whether the previous mechanic request was applied. Nothing will be replayed automatically.</p><button type="button" onClick={onCheckWorkState} disabled={busy==="work-recovery"} className="mt-3 min-h-11 w-full sm:w-auto px-4 rounded-xl border border-amber-500 bg-white font-semibold text-amber-900 inline-flex items-center justify-center gap-2 disabled:opacity-50">{busy==="work-recovery"?<Loader2 className="w-4 h-4 animate-spin"/>:<RefreshCw className="w-4 h-4"/>}Check Current Server State</button></div>}
-        {workOrder.status!=="in_progress"&&<button onClick={onStart} disabled={!!busy||approvalBlocked||workRecoveryRequired} className="mb-4 w-full sm:w-auto min-h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy==="start"?<Loader2 className="w-4 h-4 animate-spin"/>:approvalBlocked?<Clock3 className="w-4 h-4"/>:<Activity className="w-4 h-4"/>}{approvalBlocked?"Waiting for CCS Approval":"Mark Work Started"}</button>}
-        <fieldset disabled={approvalBlocked||workRecoveryRequired||!!busy} className="disabled:opacity-55">
+        {canStart&&workOrder.status!=="in_progress"&&<button onClick={onStart} disabled={!!busy||approvalBlocked||workRecoveryRequired} className="mb-4 w-full sm:w-auto min-h-11 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy==="start"?<Loader2 className="w-4 h-4 animate-spin"/>:approvalBlocked?<Clock3 className="w-4 h-4"/>:<Activity className="w-4 h-4"/>}{approvalBlocked?"Waiting for CCS Approval":"Mark Work Started"}</button>}
+        {!canStart&&workOrder.status!=="in_progress"&&<div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">This mechanic link does not currently allow starting work.</div>}
+        <fieldset disabled={!canSave||approvalBlocked||workRecoveryRequired||!!busy} className="disabled:opacity-55">
           <div className="grid sm:grid-cols-2 gap-4"><label className="text-sm"><span className="block text-xs font-semibold text-slate-500 mb-1">Labor hours</span><input type="number" min="0" step="0.25" value={form.actual_hours} onChange={e=>setForm(prev=>({...prev,actual_hours:e.target.value}))} className="w-full rounded-xl border border-slate-300 px-3 py-2.5"/></label><div className="text-xs text-slate-500 flex items-end pb-2"><Clock3 className="w-4 h-4 mr-1.5"/>CCS staff performs final completion and inventory posting.</div></div>
           <label className="block text-sm mt-4"><span className="block text-xs font-semibold text-slate-500 mb-1">Corrective action / work performed</span><textarea rows={5} value={form.corrective_action} onChange={e=>setForm(prev=>({...prev,corrective_action:e.target.value}))} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" placeholder="Describe the repair or service performed…"/></label>
           <label className="block text-sm mt-4"><span className="block text-xs font-semibold text-slate-500 mb-1">Add mechanic note</span><textarea rows={3} value={form.mechanic_note} onChange={e=>setForm(prev=>({...prev,mechanic_note:e.target.value}))} className="w-full rounded-xl border border-slate-300 px-3 py-2.5" placeholder="This note is appended with your portal name and timestamp."/></label>
           <div className="mt-4"><div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold text-slate-500">After photos</span><label className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 cursor-pointer"><Camera className="w-4 h-4"/>Add photos<input type="file" accept="image/*" multiple className="hidden" onChange={onAddPhotos}/></label></div>{photos.length>0&&<div className="grid grid-cols-3 gap-2 mt-2">{photos.map((photo,index)=><div key={`${photo.name}-${index}`} className="relative aspect-square"><img src={photo.preview} alt="" className="w-full h-full object-cover rounded-xl"/><button onClick={()=>{URL.revokeObjectURL(photo.preview);setPhotos(prev=>prev.filter((_,i)=>i!==index));}} className="absolute top-1 right-1 rounded-full bg-black/70 text-white p-1"><X className="w-3.5 h-3.5"/></button></div>)}</div>}</div>
-          <button onClick={onSave} disabled={!!busy||approvalBlocked} className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy==="save"?<Loader2 className="w-4 h-4 animate-spin"/>:<Save className="w-4 h-4"/>}Save Progress</button>
+          {canSave&&<button onClick={onSave} disabled={!!busy||approvalBlocked} className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy==="save"?<Loader2 className="w-4 h-4 animate-spin"/>:<Save className="w-4 h-4"/>}Save Progress</button>}
         </fieldset>
       </Section>}
       {completed&&<div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">Completed {workOrder.completed_date?fmtDate(workOrder.completed_date):""}. This record is read-only in the mechanic portal.</div>}
